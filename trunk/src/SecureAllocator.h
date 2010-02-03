@@ -97,7 +97,7 @@ public:
 		// Lock the memory so it doesn't get swapped out
 		if (mlock((const void*) r, n * sizeof(T)) != 0)
 		{
-			// Hmmm... best to not return any allocated space and cause some trouble
+			// Hmmm... best to not return any allocated space in this case
 			free(r);
 
 			return NULL;
