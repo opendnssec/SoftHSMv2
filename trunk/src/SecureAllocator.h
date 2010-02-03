@@ -35,6 +35,9 @@
  obtaining sensitive data from memory
  *****************************************************************************/
 
+#ifndef _SOFTHSM_V2_SECUREALLOCATOR_H
+#define _SOFTHSM_V2_SECUREALLOCATOR_H
+
 #include <limits>
 #include <stdlib.h>
 #ifdef SENSITIVE_NON_PAGED
@@ -147,4 +150,6 @@ public:
 	inline bool operator==(SecureAllocator const&) { return true; }
 	inline bool operator!=(SecureAllocator const&) { return false; }
 };
+
+#endif // !_SOFTHSM_V2_SECUREALLOCATOR_H
 
