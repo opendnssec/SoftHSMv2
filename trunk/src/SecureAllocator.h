@@ -44,6 +44,7 @@
 #include <malloc.h>
 #include <sys/mman.h>
 #endif // SENSITIVE_NON_PAGED
+#include "log.h"
 
 template<class T> class SecureAllocator
 {
@@ -97,9 +98,18 @@ public:
 		// Allocate memory on a page boundary
 		pointer r = (pointer) valloc(n * sizeof(T));
 
+		if (r == NULL)
+		{
+			ERROR_MSG("Out of memory");
+
+			return NULL;
+		}
+
 		// Lock the memory so it doesn't get swapped out
 		if (mlock((const void*) r, n * sizeof(T)) != 0)
 		{
+			ERROR_MSG("Could not allocate non-paged memory for secure storage");
+
 			// Hmmm... best to not return any allocated space in this case
 			free(r);
 
@@ -108,7 +118,16 @@ public:
 
 		return r;
 #else
-		return (pointer)(::operator new(n * sizeof(T)));
+		pointer r = (pointer)(::operator new(n * sizeof(T)));
+
+		if (r == NULL)
+		{
+			ERROR_MSG("Out of memory");
+
+			return NULL;
+		}
+
+		return r;
 #endif // SENSITIVE_NON_PAGED
 	}
 

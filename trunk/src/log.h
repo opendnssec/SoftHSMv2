@@ -43,11 +43,6 @@
 extern "C" {
 #endif // __cplusplus
 
-// For compilers that don't support the __FUNCTION__ directive
-#ifndef __FUNCTION__
-#define __FUNCTION__ "unknown"
-#endif // !__FUNCTION__
-
 // The log levels
 #define SOFTERROR	1
 #define SOFTWARNING	2
@@ -67,28 +62,28 @@ extern "C" {
 
 // Logging errors
 #if SOFTLOGLEVEL >= SOFTERROR
-#define ERROR_MSG(...) log(LOG_ERR, __FUNCTION__, __FILE__, __LINE__, __VA_ARGS__);
+#define ERROR_MSG(...) log(LOG_ERR, __func__, __FILE__, __LINE__, __VA_ARGS__);
 #else
 #define ERROR_MSG(...)
 #endif
 
 // Logging warnings
 #if SOFTLOGLEVEL >= SOFTWARNING
-#define WARNING_MSG(...) log(LOG_WARNING, __FUNCTION__, __FILE__, __LINE__, __VA_ARGS__);
+#define WARNING_MSG(...) log(LOG_WARNING, __func__, __FILE__, __LINE__, __VA_ARGS__);
 #else
 #define WARNING_MSG(...)
 #endif
 
 // Logging information
 #if SOFTLOGLEVEL >= SOFTINFO
-#define INFO_MSG(...) log(LOG_INFO, __FUNCTION__, __FILE__, __LINE__, __VA_ARGS__);
+#define INFO_MSG(...) log(LOG_INFO, __func__, __FILE__, __LINE__, __VA_ARGS__);
 #else
 #define INFO_MSG(...)
 #endif
 
 // Logging debug information
 #if SOFTLOGLEVEL >= SOFTDEBUG
-#define DEBUG_MSG(...) log(LOG_DEBUG, __FUNCTION__, __FILE__, __LINE__, __VA_ARGS__);
+#define DEBUG_MSG(...) log(LOG_DEBUG, __func__, __FILE__, __LINE__, __VA_ARGS__);
 #else
 #define DEBUG_MSG(...)
 #endif
