@@ -60,32 +60,35 @@ extern "C" {
 // Set this define to log the function name
 #undef SOFTHSM_LOG_FUNCTION_NAME
 
+// Define this symbol (either here or in the build setup) to log to stderr
+#undef DEBUG_LOG_STDERR
+
 // Logging errors
 #if SOFTLOGLEVEL >= SOFTERROR
-#define ERROR_MSG(...) log(LOG_ERR, __func__, __FILE__, __LINE__, __VA_ARGS__);
+#define ERROR_MSG(format, ...) log(LOG_ERR, __func__, __FILE__, __LINE__, format,  __VA_ARGS__);
 #else
-#define ERROR_MSG(...)
+#define ERROR_MSG(format, ...)
 #endif
 
 // Logging warnings
 #if SOFTLOGLEVEL >= SOFTWARNING
-#define WARNING_MSG(...) log(LOG_WARNING, __func__, __FILE__, __LINE__, __VA_ARGS__);
+#define WARNING_MSG(format, ...) log(LOG_WARNING, __func__, __FILE__, __LINE__, format, __VA_ARGS__);
 #else
-#define WARNING_MSG(...)
+#define WARNING_MSG(format, ...)
 #endif
 
 // Logging information
 #if SOFTLOGLEVEL >= SOFTINFO
-#define INFO_MSG(...) log(LOG_INFO, __func__, __FILE__, __LINE__, __VA_ARGS__);
+#define INFO_MSG(format, ...) log(LOG_INFO, __func__, __FILE__, __LINE__, format, __VA_ARGS__);
 #else
-#define INFO_MSG(...)
+#define INFO_MSG(format, ...)
 #endif
 
 // Logging debug information
 #if SOFTLOGLEVEL >= SOFTDEBUG
-#define DEBUG_MSG(...) log(LOG_DEBUG, __func__, __FILE__, __LINE__, __VA_ARGS__);
+#define DEBUG_MSG(format, ...) log(LOG_DEBUG, __func__, __FILE__, __LINE__, format, __VA_ARGS__);
 #else
-#define DEBUG_MSG(...)
+#define DEBUG_MSG(format, ...)
 #endif
 
 // Function definitions
