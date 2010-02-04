@@ -41,10 +41,11 @@
 #include <limits>
 #include <stdlib.h>
 #ifdef SENSITIVE_NON_PAGED
-#include <malloc.h>
 #include <sys/mman.h>
 #endif // SENSITIVE_NON_PAGED
+#include "config.h"
 #include "log.h"
+#include "SecureMemoryRegistry.h"
 
 template<class T> class SecureAllocator
 {
@@ -116,6 +117,9 @@ public:
 			return NULL;
 		}
 
+		// Register the memory in the secure memory registry
+		SecureMemoryRegistry::i()->add(r, n * sizeof(T));
+
 		return r;
 #else
 		pointer r = (pointer)(::operator new(n * sizeof(T)));
@@ -126,6 +130,9 @@ public:
 
 			return NULL;
 		}
+
+		// Register the memory in the secure memory registry
+		SecureMemoryRegistry::i()->add(r, n * sizeof(T));
 
 		return r;
 #endif // SENSITIVE_NON_PAGED
@@ -141,6 +148,9 @@ public:
 
 		// Toggle all bits off
 		memset(p, 0x00, n * sizeof(T));
+
+		// Unregister the memory from the secure memory registry
+		SecureMemoryRegistry::i()->remove(p);
 
 #ifdef SENSITIVE_NON_PAGED
 		munlock((const void*) p, n * sizeof(T));
