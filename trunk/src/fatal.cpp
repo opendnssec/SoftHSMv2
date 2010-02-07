@@ -38,6 +38,7 @@
 #include "log.h"
 #include "fatal.h"
 #include "SecureMemoryRegistry.h"
+#include "pkcs11.h"
 
 void FatalException(void)
 {
@@ -51,5 +52,15 @@ void FatalException(void)
 
 	// Wipe as much of the securely allocated memory as possible
 	SecureMemoryRegistry::i()->wipe();
+
+	try
+	{
+		ERROR_MSG("A fatal exception occurred; exiting...");
+	}
+	catch (...)
+	{
+	}
+
+	exit(CKR_GENERAL_ERROR);
 }
 
