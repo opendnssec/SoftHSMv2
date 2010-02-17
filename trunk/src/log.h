@@ -66,34 +66,34 @@ extern "C" {
 
 // Logging errors
 #if SOFTLOGLEVEL >= SOFTERROR
-#define ERROR_MSG(...) log(LOG_ERR, __func__, __FILE__, __LINE__, __VA_ARGS__);
+#define ERROR_MSG(...) softHSMLog(LOG_ERR, __func__, __FILE__, __LINE__, __VA_ARGS__);
 #else
 #define ERROR_MSG(...)
 #endif
 
 // Logging warnings
 #if SOFTLOGLEVEL >= SOFTWARNING
-#define WARNING_MSG(...) log(LOG_WARNING, __func__, __FILE__, __LINE__, __VA_ARGS__);
+#define WARNING_MSG(...) softHSMLog(LOG_WARNING, __func__, __FILE__, __LINE__, __VA_ARGS__);
 #else
 #define WARNING_MSG(...)
 #endif
 
 // Logging information
 #if SOFTLOGLEVEL >= SOFTINFO
-#define INFO_MSG(...) log(LOG_INFO, __func__, __FILE__, __LINE__, __VA_ARGS__);
+#define INFO_MSG(...) softHSMLog(LOG_INFO, __func__, __FILE__, __LINE__, __VA_ARGS__);
 #else
 #define INFO_MSG(...)
 #endif
 
 // Logging debug information
 #if SOFTLOGLEVEL >= SOFTDEBUG
-#define DEBUG_MSG(...) log(LOG_DEBUG, __func__, __FILE__, __LINE__, __VA_ARGS__);
+#define DEBUG_MSG(...) softHSMLog(LOG_DEBUG, __func__, __FILE__, __LINE__, __VA_ARGS__);
 #else
 #define DEBUG_MSG(...)
 #endif
 
 // Function definitions
-void log(const int loglevel, const char* functionName, const char* fileName, const int lineNo, const char* ...);
+void softHSMLog(const int loglevel, const char* functionName, const char* fileName, const int lineNo, const char* format, ...);
 
 #if defined(__cplusplus)
 }

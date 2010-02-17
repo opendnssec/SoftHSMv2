@@ -34,8 +34,11 @@
 
 #include "config.h"
 #include "log.h"
+#include "Configuration.h"
+#include "XMLConfigLoader.h"
 #include "cryptoki.h"
 #include "SoftHSM.h"
+#include "osmutex.h"
 
 /*****************************************************************************
  Implementation of SoftHSM class specific functions
@@ -55,6 +58,18 @@ SoftHSM* SoftHSM::i()
 	return instance;
 }
 
+// Constructor
+SoftHSM::SoftHSM()
+{
+	isInitialised = false;
+
+	// Reset mutex functions
+	externalCreateMutex = NULL_PTR;
+	externalDestroyMutex = NULL_PTR;
+	externalLockMutex = NULL_PTR;
+	externalUnlockMutex = NULL_PTR;
+}
+
 /*****************************************************************************
  Implementation of PKCS #11 functions
  *****************************************************************************/
@@ -62,7 +77,22 @@ SoftHSM* SoftHSM::i()
 // PKCS #11 initialisation function
 CK_RV SoftHSM::C_Initialize(CK_VOID_PTR pInitArgs) 
 {
-	return CKR_FUNCTION_NOT_SUPPORTED;
+	// Check if PKCS #11 is already initialised
+	if (isInitialised)
+	{
+		return CKR_CRYPTOKI_ALREADY_INITIALIZED;
+	}
+
+	// TODO: check args
+	// TODO: copy mutex functions
+
+	// (Re)load the configuration
+	Configuration::i()->reload(XMLConfigurationLoader::i());
+
+	// Set the state to initialised
+	isInitialised = true;
+
+	return CKR_OK;
 }
 
 // PKCS #11 finalisation function
@@ -495,5 +525,54 @@ CK_RV SoftHSM::C_CancelFunction(CK_SESSION_HANDLE hSession)
 CK_RV SoftHSM::C_WaitForSlotEvent(CK_FLAGS flags, CK_SLOT_ID_PTR pSlot, CK_VOID_PTR pReserved)
 {
 	return CKR_FUNCTION_NOT_SUPPORTED;
+}
+
+// Mutex functions
+CK_RV SoftHSM::createMutex(CK_VOID_PTR_PTR newMutex)
+{
+	if (externalCreateMutex != NULL_PTR)
+	{
+		return externalCreateMutex(newMutex);
+	}
+	else
+	{
+		return OSCreateMutex(newMutex);
+	}
+}
+
+CK_RV SoftHSM::destroyMutex(CK_VOID_PTR mutex)
+{
+	if (externalDestroyMutex != NULL_PTR)
+	{
+		return externalDestroyMutex(mutex);
+	}
+	else
+	{
+		return OSDestroyMutex(mutex);
+	}
+}
+
+CK_RV SoftHSM::lockMutex(CK_VOID_PTR mutex)
+{
+	if (externalLockMutex != NULL_PTR)
+	{
+		return externalLockMutex(mutex);
+	}
+	else
+	{
+		return OSLockMutex(mutex);
+	}
+}
+
+CK_RV SoftHSM::unlockMutex(CK_VOID_PTR mutex)
+{
+	if (externalUnlockMutex != NULL_PTR)
+	{
+		return externalUnlockMutex(mutex);
+	}
+	else
+	{
+		return OSUnlockMutex(mutex);
+	}
 }
 

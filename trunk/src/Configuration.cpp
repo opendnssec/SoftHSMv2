@@ -124,7 +124,10 @@ void Configuration::reload()
 		booleanConfiguration.clear();
 
 		// Reload the configuration
-		configLoader->loadConfiguration();
+		if (!configLoader->loadConfiguration())
+		{
+			WARNING_MSG("Failed to load the SoftHSM configuration");
+		}
 	}
 }
 

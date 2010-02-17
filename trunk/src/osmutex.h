@@ -1,7 +1,8 @@
 /* $Id$ */
 
 /*
- * Copyright (c) 2010 SURFnet bv
+ * Copyright (c) 2008-2010 .SE (The Internet Infrastructure Foundation).
+ * Copyright (c) 2010      SURFnet bv
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -27,53 +28,30 @@
  */
 
 /*****************************************************************************
- log.cpp
+ osmutex.h
 
- Implements logging functions. This file is based on the concepts from 
- SoftHSM v1 but extends the logging functions with support for a variable
- argument list as defined in stdarg (3).
+ Contains OS-specific implementations of intraprocess mutex functions. This
+ implementation is based on SoftHSM v1
  *****************************************************************************/
 
-#include <stdarg.h>
-#include <syslog.h>
-#include <stdio.h>
-#include <sstream>
-#include <vector>
+#ifndef _SOFTHSM_V2_OSMUTEX_H
+#define _SOFTHSM_V2_OSMUTEX_H
+
 #include "config.h"
-#include "log.h"
+#include "pkcs11.h"
 
-void softHSMLog(const int loglevel, const char* functionName, const char* fileName, const int lineNo, const char* format, ...)
-{
-	std::stringstream prepend;
+#if defined(__cplusplus)
+extern "C" {
+#endif // __cplusplus
 
-#ifdef SOFTHSM_LOG_FILE_AND_LINE
-	prepend << fileName << "(" << lineNo << ")";
-#ifndef SOFTHSM_LOG_FUNCTION_NAME
-	prepend << ":";
-#endif // !SOFTHSM_LOG_FUNCTION_NAME
-	prepend << " ";
-#endif // SOFTHSM_LOG_FILE_AND_LINE
+CK_RV OSCreateMutex(CK_VOID_PTR_PTR newMutex);
+CK_RV OSDestroyMutex(CK_VOID_PTR mutex);
+CK_RV OSLockMutex(CK_VOID_PTR mutex);
+CK_RV OSUnlockMutex(CK_VOID_PTR mutex);
 
-#ifdef SOFTHSM_LOG_FUNCTION_NAME
-	prepend << functionName << ": ";
-#endif // SOFTHSM_LOG_FUNCTION_NAME
-
-	// Print the format to a log message
-	std::vector<char> logMessage;
-	va_list args;
-
-	logMessage.resize(4096);
-
-	va_start(args, format);
-	vsnprintf(&logMessage[0], 4096, format, args);
-	va_end(args);
-
-	// And log it
-	syslog(loglevel, "%s%s", prepend.str().c_str(), &logMessage[0]);
-
-#ifdef DEBUG_LOG_STDERR
-	fprintf(stderr, "%s%s\n", prepend.str().c_str(), &logMessage[0]);
-	fflush(stderr);
-#endif // DEBUG_LOG_STDERR
+#if defined(__cplusplus)
 }
+#endif
+
+#endif // !_SOFTHSM_V2_OSMUTEX_H
 
