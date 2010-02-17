@@ -35,6 +35,7 @@
 #ifndef _SOFTHSM_V2_CONFIGURATION_H
 #define _SOFTHSM_V2_CONFIGURATION_H
 
+#include "config.h"
 #include <string>
 #include <map>
 
