@@ -27,31 +27,39 @@
  */
 
 /*****************************************************************************
- SymmetricKey.h
+ CryptoFactory.cpp
 
- Base class for symmetric key classes
+ This class is a factory for all cryptographic algorithm implementations. It
+ is an abstract base class for a factory that produces cryptographic library
+ specific implementations of cryptographic algorithms.
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_SYMMETRICKEY_H
-#define _SOFTHSM_V2_SYMMETRICKEY_H
-
 #include "config.h"
-#include "ByteString.h"
-#include "Serialisable.h"
+#include "CryptoFactory.h"
 
-class SymmetricKey : public Serialisable
+#if defined(WITH_OPENSSL)
+
+#include "OSSLCryptoFactory.h"
+
+// Return the one-and-only instance
+CryptoFactory* CryptoFactory::i()
 {
-public:
-	// Base constructors
-	SymmetricKey() { }
+	return OSSLCryptoFactory::i();
+}
 
-	SymmetricKey(const SymmetricKey& in) { }
+#elif defined(WITH_BOTAN)
 
-	// Destructor
-	virtual ~SymmetricKey() { }
+#include "BotanCryptoFactory.h"
 
-private:
-};
+// Return the one-and-only instance
+CryptoFactory* CryptoFactory::i()
+{
+	return BotanCryptoFactory::i();
+}
 
-#endif // !_SOFTHSM_V2_SYMMETRICKEY_H
+#else
+
+#error "You must configure a cryptographic library to use"
+
+#endif
 

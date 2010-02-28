@@ -37,6 +37,7 @@
 
 #include <vector>
 #include <stdlib.h>
+#include <limits.h>
 #include "config.h"
 #include "SecureAllocator.h"
 
@@ -58,7 +59,7 @@ public:
 	ByteString& operator+=(const unsigned char byte);
 
 	// Return a substring
-	ByteString substr(const size_t start, const size_t len = 0) const;
+	ByteString substr(const size_t start, const size_t len = SIZE_T_MAX) const;
 
 	// Array operator
 	unsigned char& operator[](size_t pos);

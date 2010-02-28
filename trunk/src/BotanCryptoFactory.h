@@ -2,6 +2,7 @@
 
 /*
  * Copyright (c) 2010 SURFnet bv
+ * Copyright (c) 2010 .SE (The Internet Infrastructure Foundation)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,31 +28,49 @@
  */
 
 /*****************************************************************************
- SymmetricKey.h
+ BotanCryptoFactory.h
 
- Base class for symmetric key classes
+ This is a Botan based cryptographic algorithm factory
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_SYMMETRICKEY_H
-#define _SOFTHSM_V2_SYMMETRICKEY_H
+#ifndef _SOFTHSM_V2_BOTANCRYPTOFACTORY_H
+#define _SOFTHSM_V2_BOTANCRYPTOFACTORY_H
 
 #include "config.h"
-#include "ByteString.h"
-#include "Serialisable.h"
+#include "CryptoFactory.h"
+#include "SymmetricAlgorithm.h"
+#include "AsymmetricAlgorithm.h"
+#include "HashAlgorithm.h"
+#include "RNG.h"
 
-class SymmetricKey : public Serialisable
+class BotanCryptoFactory : public CryptoFactory
 {
 public:
-	// Base constructors
-	SymmetricKey() { }
+	// Return the one-and-only instance
+	static BotanCryptoFactory* i();
 
-	SymmetricKey(const SymmetricKey& in) { }
+	// Create a concrete instance of a symmetric algorithm
+	virtual SymmetricAlgorithm* getSymmetricAlgorithm(std::string algorithm);
+
+	// Create a concrete instance of an asymmetric algorithm
+	virtual AsymmetricAlgorithm* getAsymmetricAlgorithm(std::string algorithm);
+
+	// Create a concrete instance of a hash algorithm
+	virtual HashAlgorithm* getHashAlgorithm(std::string algorithm);
+
+	// Create a concrete instance of an RNG
+	virtual RNG* getRNG(std::string name = "default");
 
 	// Destructor
-	virtual ~SymmetricKey() { }
+	virtual ~BotanCryptoFactory() { }
 
 private:
+	// Constructor
+	BotanCryptoFactory() { }
+
+	// The one-and-only instance
+	static BotanCryptoFactory* instance;
 };
 
-#endif // !_SOFTHSM_V2_SYMMETRICKEY_H
+#endif // !_SOFTHSM_V2_BOTANCRYPTOFACTORY_H
 

@@ -37,6 +37,7 @@
 
 #include "config.h"
 #include "ByteString.h"
+#include "Serialisable.h"
 
 class PrivateKey : public Serialisable
 {

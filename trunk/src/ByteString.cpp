@@ -71,7 +71,7 @@ ByteString& ByteString::operator+=(const unsigned char byte)
 }
 
 // Return a substring
-ByteString ByteString::substr(const size_t start, const size_t len /* = 0 */) const
+ByteString ByteString::substr(const size_t start, const size_t len /* = SIZE_T_MAX */) const
 {
 	size_t retLen = (len > 0) ? std::min(len, byteString.size() - start) : byteString.size() - start;
 

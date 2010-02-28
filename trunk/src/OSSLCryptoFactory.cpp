@@ -27,31 +27,61 @@
  */
 
 /*****************************************************************************
- SymmetricKey.h
+ OSSLCryptoFactory.cpp
 
- Base class for symmetric key classes
+ This is an OpenSSL based cryptographic algorithm factory
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_SYMMETRICKEY_H
-#define _SOFTHSM_V2_SYMMETRICKEY_H
-
 #include "config.h"
-#include "ByteString.h"
-#include "Serialisable.h"
+#include "OSSLCryptoFactory.h"
 
-class SymmetricKey : public Serialisable
+// Initialise the one-and-only instance
+OSSLCryptoFactory* OSSLCryptoFactory::instance = NULL;
+
+// Return the one-and-only instance
+OSSLCryptoFactory* OSSLCryptoFactory::i()
 {
-public:
-	// Base constructors
-	SymmetricKey() { }
+	if (instance == NULL)
+	{
+		instance = new OSSLCryptoFactory();
+	}
 
-	SymmetricKey(const SymmetricKey& in) { }
+	return instance;
+}
 
-	// Destructor
-	virtual ~SymmetricKey() { }
+// Create a concrete instance of a symmetric algorithm
+SymmetricAlgorithm* OSSLCryptoFactory::getSymmetricAlgorithm(std::string algorithm)
+{
+	// TODO: add algorithm implementations
 
-private:
-};
+	// No algorithm implementation is available
+	return NULL;
+}
 
-#endif // !_SOFTHSM_V2_SYMMETRICKEY_H
+// Create a concrete instance of an asymmetric algorithm
+AsymmetricAlgorithm* OSSLCryptoFactory::getAsymmetricAlgorithm(std::string algorithm)
+{
+	// TODO: add algorithm implementations
+
+	// No algorithm implementation is available
+	return NULL;
+}
+
+// Create a concrete instance of a hash algorithm
+HashAlgorithm* OSSLCryptoFactory::getHashAlgorithm(std::string algorithm)
+{
+	// TODO: add algorithm implementations
+
+	// No algorithm implementation is available
+	return NULL;
+}
+
+// Create a concrete instance of an RNG
+RNG* OSSLCryptoFactory::getRNG(std::string name /* = "default" */)
+{
+	// TODO: add algorithm implementations
+
+	// No algorithm implementation is available
+	return NULL;
+}
 

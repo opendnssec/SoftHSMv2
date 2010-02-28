@@ -27,31 +27,45 @@
  */
 
 /*****************************************************************************
- SymmetricKey.h
+ CryptoFactory.h
 
- Base class for symmetric key classes
+ This class is a factory for all cryptographic algorithm implementations. It
+ is an abstract base class for a factory that produces cryptographic library
+ specific implementations of cryptographic algorithms.
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_SYMMETRICKEY_H
-#define _SOFTHSM_V2_SYMMETRICKEY_H
+#ifndef _SOFTHSM_V2_CRYPTOFACTORY_H
+#define _SOFTHSM_V2_CRYPTOFACTORY_H
 
 #include "config.h"
-#include "ByteString.h"
-#include "Serialisable.h"
+#include "SymmetricAlgorithm.h"
+#include "AsymmetricAlgorithm.h"
+#include "HashAlgorithm.h"
+#include "RNG.h"
 
-class SymmetricKey : public Serialisable
+class CryptoFactory
 {
 public:
-	// Base constructors
-	SymmetricKey() { }
+	// Return the one-and-only instance
+	static CryptoFactory* i();
 
-	SymmetricKey(const SymmetricKey& in) { }
+	// Create a concrete instance of a symmetric algorithm
+	virtual SymmetricAlgorithm* getSymmetricAlgorithm(std::string algorithm) = 0;
+
+	// Create a concrete instance of an asymmetric algorithm
+	virtual AsymmetricAlgorithm* getAsymmetricAlgorithm(std::string algorithm) = 0;
+
+	// Create a concrete instance of a hash algorithm
+	virtual HashAlgorithm* getHashAlgorithm(std::string algorithm) = 0;
+
+	// Create a concrete instance of an RNG
+	virtual RNG* getRNG(std::string name = "default") = 0;
 
 	// Destructor
-	virtual ~SymmetricKey() { }
+	virtual ~CryptoFactory() { }
 
 private:
 };
 
-#endif // !_SOFTHSM_V2_SYMMETRICKEY_H
+#endif // !_SOFTHSM_V2_CRYPTOFACTORY_H
 

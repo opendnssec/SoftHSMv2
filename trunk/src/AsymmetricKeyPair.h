@@ -39,6 +39,7 @@
 #include "ByteString.h"
 #include "PublicKey.h"
 #include "PrivateKey.h"
+#include "Serialisable.h"
 
 class AsymmetricKeyPair : public Serialisable
 {

@@ -27,31 +27,49 @@
  */
 
 /*****************************************************************************
- SymmetricKey.h
+ OSSLCryptoFactory.h
 
- Base class for symmetric key classes
+ This is an OpenSSL based cryptographic algorithm factory
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_SYMMETRICKEY_H
-#define _SOFTHSM_V2_SYMMETRICKEY_H
+#ifndef _SOFTHSM_V2_OSSLCRYPTOFACTORY_H
+#define _SOFTHSM_V2_OSSLCRYPTOFACTORY_H
 
 #include "config.h"
-#include "ByteString.h"
-#include "Serialisable.h"
+#include "CryptoFactory.h"
+#include "SymmetricAlgorithm.h"
+#include "AsymmetricAlgorithm.h"
+#include "HashAlgorithm.h"
+#include "RNG.h"
 
-class SymmetricKey : public Serialisable
+class OSSLCryptoFactory : public CryptoFactory
 {
 public:
-	// Base constructors
-	SymmetricKey() { }
+	// Return the one-and-only instance
+	static OSSLCryptoFactory* i();
 
-	SymmetricKey(const SymmetricKey& in) { }
+	// Create a concrete instance of a symmetric algorithm
+	virtual SymmetricAlgorithm* getSymmetricAlgorithm(std::string algorithm);
+
+	// Create a concrete instance of an asymmetric algorithm
+	virtual AsymmetricAlgorithm* getAsymmetricAlgorithm(std::string algorithm);
+
+	// Create a concrete instance of a hash algorithm
+	virtual HashAlgorithm* getHashAlgorithm(std::string algorithm);
+
+	// Create a concrete instance of an RNG
+	virtual RNG* getRNG(std::string name = "default");
 
 	// Destructor
-	virtual ~SymmetricKey() { }
+	virtual ~OSSLCryptoFactory() { }
 
 private:
+	// Constructor
+	OSSLCryptoFactory() { }
+
+	// The one-and-only instance
+	static OSSLCryptoFactory* instance;
 };
 
-#endif // !_SOFTHSM_V2_SYMMETRICKEY_H
+#endif // !_SOFTHSM_V2_OSSLCRYPTOFACTORY_H
 
