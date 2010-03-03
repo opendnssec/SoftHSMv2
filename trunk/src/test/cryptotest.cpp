@@ -3,7 +3,7 @@
 /*
  * Copyright (c) 2010 SURFnet bv
  * All rights reserved.
- *
+ * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -12,7 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- *
+ * 
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -27,56 +27,22 @@
  */
 
 /*****************************************************************************
- ByteString.h
+ cryptotest.cpp
 
- A string class for byte strings stored in securely allocated memory
+ The main test executor for tests on the cryptographic functions in SoftHSM v2
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_BYTESTRING_H
-#define _SOFTHSM_V2_BYTESTRING_H
+#include <cppunit/extensions/TestFactoryRegistry.h>
+#include <cppunit/ui/text/TestRunner.h>
 
-#include <vector>
-#include <stdlib.h>
-#include <limits.h>
-#include "config.h"
-#include "SecureAllocator.h"
-
-class ByteString
+int main(int argc, char* argv[])
 {
-public:
-	// Constructors
-	ByteString();
+	CppUnit::TextUi::TestRunner runner;
+	CppUnit::TestFactoryRegistry &registry = CppUnit::TestFactoryRegistry::getRegistry();
 
-	ByteString(const unsigned char* bytes, const size_t bytesLen);
+	runner.addTest(registry.makeTest());
+	runner.run();
 
-	ByteString(const ByteString& in);
-
-	// Destructor
-	virtual ~ByteString() { }
-
-	// Append data
-	ByteString& operator+=(const ByteString& append);
-	ByteString& operator+=(const unsigned char byte);
-
-	// Return a substring
-	ByteString substr(const size_t start, const size_t len = SIZE_T_MAX) const;
-
-	// Array operator
-	unsigned char& operator[](size_t pos);
-
-	// Return the byte string
-	unsigned char* byte_str();
-
-	// Return the size
-	size_t size() const;
-
-	// Comparison
-	bool operator==(const ByteString& compareTo) const;
-	bool operator!=(const ByteString& compareTo) const;
-
-private:
-	std::vector<unsigned char, SecureAllocator<unsigned char> > byteString;
-};
-
-#endif // !_SOFTHSM_V2_BYTESTRING_H
+	return 0;
+}
 

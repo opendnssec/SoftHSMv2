@@ -27,56 +27,33 @@
  */
 
 /*****************************************************************************
- ByteString.h
+ ByteStringTests.h
 
- A string class for byte strings stored in securely allocated memory
+ Contains test cases to test the ByteString class
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_BYTESTRING_H
-#define _SOFTHSM_V2_BYTESTRING_H
+#ifndef _SOFTHSM_V2_BYTESTRINGTESTS_H
+#define _SOFTHSM_V2_BYTESTRINGTESTS_H
 
-#include <vector>
-#include <stdlib.h>
-#include <limits.h>
-#include "config.h"
-#include "SecureAllocator.h"
+#include <cppunit/extensions/HelperMacros.h>
 
-class ByteString
+class ByteStringTests : public CppUnit::TestFixture
 {
+	CPPUNIT_TEST_SUITE(ByteStringTests);
+	CPPUNIT_TEST(testIntegrity);
+	CPPUNIT_TEST(testAppend);
+	CPPUNIT_TEST(testSubstr);
+	CPPUNIT_TEST_SUITE_END();
+
 public:
-	// Constructors
-	ByteString();
+	void testIntegrity();
+	void testAppend();
+	void testSubstr();
 
-	ByteString(const unsigned char* bytes, const size_t bytesLen);
+	void setUp();
+	void tearDown();
 
-	ByteString(const ByteString& in);
-
-	// Destructor
-	virtual ~ByteString() { }
-
-	// Append data
-	ByteString& operator+=(const ByteString& append);
-	ByteString& operator+=(const unsigned char byte);
-
-	// Return a substring
-	ByteString substr(const size_t start, const size_t len = SIZE_T_MAX) const;
-
-	// Array operator
-	unsigned char& operator[](size_t pos);
-
-	// Return the byte string
-	unsigned char* byte_str();
-
-	// Return the size
-	size_t size() const;
-
-	// Comparison
-	bool operator==(const ByteString& compareTo) const;
-	bool operator!=(const ByteString& compareTo) const;
-
-private:
-	std::vector<unsigned char, SecureAllocator<unsigned char> > byteString;
 };
 
-#endif // !_SOFTHSM_V2_BYTESTRING_H
+#endif // !_SOFTHSM_V2_BYTESTRINGTESTS_H
 

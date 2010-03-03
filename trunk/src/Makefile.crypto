@@ -1,0 +1,32 @@
+# Temporary Makefile that is used until this project has been auto'd by Rickard ;-)
+#
+# $Id$
+
+LDFLAGS+=-lcrypto
+
+CRYPTOSOURCES=\
+BotanCryptoFactory.cpp \
+ByteString.cpp \
+CryptoFactory.cpp \
+OSSLCryptoFactory.cpp \
+SecureMemoryRegistry.cpp \
+log.cpp
+CRYPTOHEADERS=\
+AsymmetricAlgorithm.h \
+AsymmetricKeyPair.h \
+BotanCryptoFactory.h \
+ByteString.h \
+CryptoFactory.h \
+HashAlgorithm.h \
+OSSLCryptoFactory.h \
+PrivateKey.h \
+PublicKey.h \
+RNG.h \
+SecureAllocator.h \
+SecureMemoryRegistry.h \
+Serialisable.h \
+SymmetricAlgorithm.h \
+SymmetricKey.h \
+log.h
+CRYPTOOBJECTS1=$(CRYPTOSOURCES:.cpp=.o)
+CRYPTOOBJECTS=$(CRYPTOOBJECTS1:.c=.o)
