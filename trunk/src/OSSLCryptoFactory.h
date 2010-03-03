@@ -65,7 +65,7 @@ public:
 
 private:
 	// Constructor
-	OSSLCryptoFactory() { }
+	OSSLCryptoFactory();
 
 	// The one-and-only instance
 	static OSSLCryptoFactory* instance;

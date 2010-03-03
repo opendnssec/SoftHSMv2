@@ -35,6 +35,7 @@
 #ifndef _SOFTHSM_V2_SYMMETRICALGORITHM_H
 #define _SOFTHSM_V2_SYMMETRICALGORITHM_H
 
+#include <string>
 #include "config.h"
 #include "SymmetricKey.h"
 #include "RNG.h"
@@ -49,12 +50,12 @@ public:
 	virtual ~SymmetricAlgorithm() { }
 
 	// Encryption functions
-	virtual bool encryptInit(const SymmetricKey* key, const ByteString& IV = ByteString()) = 0;
+	virtual bool encryptInit(const SymmetricKey* key, const std::string mode = "CBC", const ByteString& IV = ByteString()) = 0;
 	virtual bool encryptUpdate(const ByteString& data, ByteString& encryptedData) = 0;
 	virtual bool encryptFinal(ByteString& encryptedData) = 0;
 
 	// Decryption functions
-	virtual bool decryptInit(const SymmetricKey* key, const ByteString& IV = ByteString()) = 0;
+	virtual bool decryptInit(const SymmetricKey* key, const std::string mode = "CBC", const ByteString& IV = ByteString()) = 0;
 	virtual bool decryptUpdate(const ByteString& encryptedData, ByteString& data) = 0;
 	virtual bool decryptFinal(ByteString& data) = 0;
 

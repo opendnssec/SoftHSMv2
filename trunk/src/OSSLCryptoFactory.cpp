@@ -35,8 +35,17 @@
 #include "config.h"
 #include "OSSLCryptoFactory.h"
 
+#include <openssl/ssl.h>
+
 // Initialise the one-and-only instance
 OSSLCryptoFactory* OSSLCryptoFactory::instance = NULL;
+
+// Constructor
+OSSLCryptoFactory::OSSLCryptoFactory()
+{
+	// Initialise OpenSSL
+	OpenSSL_add_all_algorithms();
+}
 
 // Return the one-and-only instance
 OSSLCryptoFactory* OSSLCryptoFactory::i()

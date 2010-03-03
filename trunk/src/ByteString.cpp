@@ -63,11 +63,15 @@ ByteString& ByteString::operator+=(const ByteString& append)
 	byteString.resize(newLen);
 
 	memcpy(&byteString[curLen], &append.byteString[0], append.byteString.size());
+
+	return *this;
 }
 
 ByteString& ByteString::operator+=(const unsigned char byte)
 {
 	byteString.push_back(byte);
+
+	return *this;
 }
 
 // Return a substring
