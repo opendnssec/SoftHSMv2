@@ -78,5 +78,10 @@ private:
 	std::vector<unsigned char, SecureAllocator<unsigned char> > byteString;
 };
 
+// Add data
+ByteString operator+(const ByteString& lhs, const ByteString& rhs);
+ByteString operator+(const unsigned char lhs, const ByteString& rhs);
+ByteString operator+(const ByteString& lhs, const unsigned char rhs);
+
 #endif // !_SOFTHSM_V2_BYTESTRING_H
 

@@ -135,5 +135,31 @@ void ByteStringTests::testAppend()
 
 void ByteStringTests::testSubstr()
 {
+	unsigned char testData[] = { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
+	                             0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10 };
+
+	ByteString b;
+	ByteString b1(testData, sizeof(testData));
+
+	// Take a substring
+	b = b1.substr(8, 4);
+	
+	// Check b
+	CPPUNIT_ASSERT(b.size() == 4);
+	CPPUNIT_ASSERT(memcmp(b.byte_str(), &testData[8], 4) == 0);
+
+	// Take another substring
+	b = b1.substr(8);
+
+	// Check b
+	CPPUNIT_ASSERT(b.size() == 8);
+	CPPUNIT_ASSERT(memcmp(b.byte_str(), &testData[8], 8) == 0);
+
+	// Two substrings added should yield the original string
+	b = b1.substr(0, 8) + b1.substr(8);
+
+	// Check b
+	CPPUNIT_ASSERT(b.size() == sizeof(testData));
+	CPPUNIT_ASSERT(memcmp(b.byte_str(), testData, sizeof(testData)) == 0);
 }
 

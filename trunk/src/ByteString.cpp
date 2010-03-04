@@ -78,7 +78,7 @@ ByteString& ByteString::operator+=(const unsigned char byte)
 // Return a substring
 ByteString ByteString::substr(const size_t start, const size_t len /* = SIZE_T_MAX */) const
 {
-	size_t retLen = (len > 0) ? std::min(len, byteString.size() - start) : byteString.size() - start;
+	size_t retLen = std::min(len, byteString.size() - start);
 
 	if (start >= byteString.size())
 	{
@@ -88,6 +88,31 @@ ByteString ByteString::substr(const size_t start, const size_t len /* = SIZE_T_M
 	{
 		return ByteString(&byteString[start], retLen);
 	}
+}
+
+// Add data
+ByteString operator+(const ByteString& lhs, const ByteString& rhs)
+{
+	ByteString rv = lhs;
+	rv += rhs;
+
+	return rv;
+}
+
+ByteString operator+(const unsigned char lhs, const ByteString& rhs)
+{
+	ByteString rv(&lhs, 1);
+	rv += rhs;
+
+	return rv;
+}
+
+ByteString operator+(const ByteString& lhs, const unsigned char rhs)
+{
+	ByteString rv = lhs;
+	rv += rhs;
+
+	return rv;
 }
 
 // Array operator
