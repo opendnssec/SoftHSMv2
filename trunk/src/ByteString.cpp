@@ -58,11 +58,12 @@ ByteString::ByteString(const ByteString& in)
 ByteString& ByteString::operator+=(const ByteString& append)
 {
 	size_t curLen = byteString.size();
-	size_t newLen = curLen + append.byteString.size();
+	size_t toAdd = append.byteString.size();
+	size_t newLen = curLen + toAdd;
 
 	byteString.resize(newLen);
 
-	memcpy(&byteString[curLen], &append.byteString[0], append.byteString.size());
+	memcpy(&byteString[curLen], &append.byteString[0], toAdd);
 
 	return *this;
 }

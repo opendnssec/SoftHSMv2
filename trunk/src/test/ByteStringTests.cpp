@@ -90,6 +90,47 @@ void ByteStringTests::testIntegrity()
 
 void ByteStringTests::testAppend()
 {
+	unsigned char testData[] = { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
+	                             0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10 };
+
+	ByteString b;
+	ByteString b1(testData, sizeof(testData));
+
+	// Test that b is empty and b1 is not
+	CPPUNIT_ASSERT((b.size() == 0) && (b1.size() == sizeof(testData)));
+
+	// Append 1 byte to b
+	b += 0x01;
+
+	// Check the contents of b
+	CPPUNIT_ASSERT(b.size() == 1);
+	CPPUNIT_ASSERT(b[0] == 0x01);
+
+	// Append another byte to b
+	b += 0x02;
+
+	// Check the contents of b
+	CPPUNIT_ASSERT(b.size() == 2);
+	CPPUNIT_ASSERT((b[0] == 0x01) && (b[1] == 0x02));
+
+	// Append b1 to b
+	b += b1;
+
+	// Check the contents of b
+	CPPUNIT_ASSERT(b.size() == 2 + sizeof(testData));
+	CPPUNIT_ASSERT((b[0] == 0x01) && (b[1] == 0x02));
+	CPPUNIT_ASSERT(memcmp(&b[2], testData, sizeof(testData)) == 0);
+
+	// Append b to b
+	b += b;
+
+	// Check the contents of b
+	CPPUNIT_ASSERT(b.size() == 2 * (2 + sizeof(testData)));
+	CPPUNIT_ASSERT((b[0] == 0x01) && (b[1] == 0x02) && 
+	               (b[(2 + sizeof(testData)) + 0] == 0x01) &&
+		       (b[(2 + sizeof(testData)) + 1] == 0x02));
+	CPPUNIT_ASSERT((memcmp(&b[2], testData, sizeof(testData)) == 0) &&
+	               (memcmp(&b[2 + 2 + sizeof(testData)], testData, sizeof(testData)) == 0));
 }
 
 void ByteStringTests::testSubstr()
