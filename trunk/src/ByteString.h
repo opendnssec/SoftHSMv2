@@ -45,7 +45,7 @@ class ByteString
 {
 public:
 	// Constructors
-	ByteString();
+	ByteString(const size_t initialSize = 0);
 
 	ByteString(const unsigned char* bytes, const size_t bytesLen);
 
@@ -69,6 +69,12 @@ public:
 
 	// Return the size
 	size_t size() const;
+
+	// Resize
+	void resize(const size_t newSize);
+
+	// Wipe
+	void wipe(const size_t newSize = 0);
 
 	// Comparison
 	bool operator==(const ByteString& compareTo) const;

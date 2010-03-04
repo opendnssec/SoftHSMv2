@@ -38,8 +38,9 @@
 #include "ByteString.h"
 
 // Constructors
-ByteString::ByteString()
+ByteString::ByteString(size_t initialSize /* = 0 */)
 {
+	byteString.resize(initialSize);
 }
 
 ByteString::ByteString(const unsigned char* bytes, const size_t bytesLen)
@@ -131,6 +132,18 @@ unsigned char* ByteString::byte_str()
 size_t ByteString::size() const
 {
 	return byteString.size();
+}
+
+void ByteString::resize(const size_t newSize)
+{
+	byteString.resize(newSize);
+}
+
+void ByteString::wipe(const size_t newSize /* = 0 */)
+{
+	this->resize(newSize);
+
+	memset(&byteString[0], 0x00, byteString.size());
 }
 
 // Comparison

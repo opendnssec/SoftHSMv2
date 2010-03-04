@@ -27,48 +27,26 @@
  */
 
 /*****************************************************************************
- SymmetricKey.h
+ OSSLRNG.cpp
 
- Base class for symmetric key classes
+ OpenSSL random number generator class
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_SYMMETRICKEY_H
-#define _SOFTHSM_V2_SYMMETRICKEY_H
-
 #include "config.h"
-#include "ByteString.h"
-#include "Serialisable.h"
+#include "OSSLRNG.h"
+#include <openssl/rand.h>
 
-class SymmetricKey : public Serialisable
+// Generate random data
+bool OSSLRNG::generateRandom(ByteString& data, const size_t len)
 {
-public:
-	// Base constructors
-	SymmetricKey(size_t bitLen = 0);
+	data.wipe(len);
 
-	SymmetricKey(const SymmetricKey& in);
+	return RAND_bytes(&data[0], len);
+}
 
-	// Destructor
-	virtual ~SymmetricKey() { }
-
-	// Set the key
-	virtual bool setKeyBits(const ByteString& keybits);
-
-	// Get the key
-	virtual ByteString& getKeyBits();
-
-	// Serialisation
-	virtual ByteString serialise() const;
-
-	// Retrieve the bit length
-	virtual size_t getBitLen() const;
-
-private:
-	// The key
-	ByteString keyData;
-
-	// The key length in bits
-	size_t bitLen;
-};
-
-#endif // !_SOFTHSM_V2_SYMMETRICKEY_H
+// Seed the random pool
+void OSSLRNG::seed(ByteString& seedData)
+{
+	RAND_seed(seedData.byte_str(), seedData.size());
+}
 

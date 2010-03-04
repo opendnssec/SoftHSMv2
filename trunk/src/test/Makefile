@@ -18,9 +18,18 @@ CRYPTOOBJECTS:=$(patsubst %,../%,$(CRYPTOOBJECTS))
 
 CRYPTOTESTSOURCES=$(CRYPTOSOURCES) \
 cryptotest.cpp \
-ByteStringTests.cpp
+ByteStringTests.cpp \
+RNGTests.cpp \
+chisq.c \
+ent.c \
+iso8859.c \
+randtest.c
 CRYPTOTESTHEADERS=$(CRYPTOHEADERS) \
-ByteStringTests.h
+ByteStringTests.h \
+RNGTests.h \
+ent.h \
+iso8859.h \
+randtest.h
 CRYPTOTESTOBJECTS1=$(CRYPTOTESTSOURCES:.cpp=.o)
 CRYPTOTESTOBJECTS=$(CRYPTOTESTOBJECTS1:.c=.o)
 

@@ -27,48 +27,17 @@
  */
 
 /*****************************************************************************
- SymmetricKey.h
+ AESKey.h
 
- Base class for symmetric key classes
+ AES key symmetric key class
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_SYMMETRICKEY_H
-#define _SOFTHSM_V2_SYMMETRICKEY_H
+#ifndef _SOFTHSM_V2_AESKEY_H
+#define _SOFTHSM_V2_AESKEY_H
 
 #include "config.h"
 #include "ByteString.h"
-#include "Serialisable.h"
+#include "SymmetricKey.h"
 
-class SymmetricKey : public Serialisable
-{
-public:
-	// Base constructors
-	SymmetricKey(size_t bitLen = 0);
-
-	SymmetricKey(const SymmetricKey& in);
-
-	// Destructor
-	virtual ~SymmetricKey() { }
-
-	// Set the key
-	virtual bool setKeyBits(const ByteString& keybits);
-
-	// Get the key
-	virtual ByteString& getKeyBits();
-
-	// Serialisation
-	virtual ByteString serialise() const;
-
-	// Retrieve the bit length
-	virtual size_t getBitLen() const;
-
-private:
-	// The key
-	ByteString keyData;
-
-	// The key length in bits
-	size_t bitLen;
-};
-
-#endif // !_SOFTHSM_V2_SYMMETRICKEY_H
+class AESKey : public SymmetricKey;
 

@@ -27,48 +27,32 @@
  */
 
 /*****************************************************************************
- SymmetricKey.h
+ ent.h
 
- Base class for symmetric key classes
+ Header file to give access to the modified ent.c implementation
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_SYMMETRICKEY_H
-#define _SOFTHSM_V2_SYMMETRICKEY_H
+#ifndef _SOFTHSM_V2_ENT_H
+#define _SOFTHSM_V2_ENT_H
 
-#include "config.h"
-#include "ByteString.h"
-#include "Serialisable.h"
+#if defined(__cplusplus)
+extern "C" {
+#endif
 
-class SymmetricKey : public Serialisable
-{
-public:
-	// Base constructors
-	SymmetricKey(size_t bitLen = 0);
+void doEnt
+(
+	unsigned char* data, 
+	size_t len, 
+	double* pEntropy,
+	double* pChiProbability,
+	double* pArithMean,
+	double* pMontePi,
+	double* pSerialCorrelation
+);
 
-	SymmetricKey(const SymmetricKey& in);
+#if defined(__cplusplus)
+}
+#endif
 
-	// Destructor
-	virtual ~SymmetricKey() { }
-
-	// Set the key
-	virtual bool setKeyBits(const ByteString& keybits);
-
-	// Get the key
-	virtual ByteString& getKeyBits();
-
-	// Serialisation
-	virtual ByteString serialise() const;
-
-	// Retrieve the bit length
-	virtual size_t getBitLen() const;
-
-private:
-	// The key
-	ByteString keyData;
-
-	// The key length in bits
-	size_t bitLen;
-};
-
-#endif // !_SOFTHSM_V2_SYMMETRICKEY_H
+#endif // !_SOFTHSM_V2_ENT_H
 

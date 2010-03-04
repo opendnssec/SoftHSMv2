@@ -27,48 +27,45 @@
  */
 
 /*****************************************************************************
- SymmetricKey.h
+ RNGTests.cpp
 
- Base class for symmetric key classes
+ Contains test cases to test the RNG class
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_SYMMETRICKEY_H
-#define _SOFTHSM_V2_SYMMETRICKEY_H
+#include <stdlib.h>
+#include <cppunit/extensions/HelperMacros.h>
+#include "RNGTests.h"
+#include "CryptoFactory.h"
+#include "RNG.h"
 
-#include "config.h"
-#include "ByteString.h"
-#include "Serialisable.h"
+CPPUNIT_TEST_SUITE_REGISTRATION(RNGTests);
 
-class SymmetricKey : public Serialisable
+void RNGTests::setUp()
 {
-public:
-	// Base constructors
-	SymmetricKey(size_t bitLen = 0);
+	rng = NULL;
 
-	SymmetricKey(const SymmetricKey& in);
+	rng = CryptoFactory::i()->getRNG();
 
-	// Destructor
-	virtual ~SymmetricKey() { }
+	// Check the RNG
+	CPPUNIT_ASSERT(rng != NULL);
+}
 
-	// Set the key
-	virtual bool setKeyBits(const ByteString& keybits);
+void RNGTests::tearDown()
+{
+	if (rng != NULL)
+	{
+		delete rng;
+	}
+}
 
-	// Get the key
-	virtual ByteString& getKeyBits();
+void RNGTests::testSimpleComparison()
+{
+	ByteString a,b;
 
-	// Serialisation
-	virtual ByteString serialise() const;
-
-	// Retrieve the bit length
-	virtual size_t getBitLen() const;
-
-private:
-	// The key
-	ByteString keyData;
-
-	// The key length in bits
-	size_t bitLen;
-};
-
-#endif // !_SOFTHSM_V2_SYMMETRICKEY_H
+	CPPUNIT_ASSERT(rng->generateRandom(a, 256));
+	CPPUNIT_ASSERT(rng->generateRandom(b, 256));
+	CPPUNIT_ASSERT(a.size() == 256);
+	CPPUNIT_ASSERT(b.size() == 256);
+	CPPUNIT_ASSERT(a != b);
+}
 

@@ -27,48 +27,31 @@
  */
 
 /*****************************************************************************
- SymmetricKey.h
+ SymmetricAlgorithm.cpp
 
- Base class for symmetric key classes
+ Base class for symmetric algorithm classes
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_SYMMETRICKEY_H
-#define _SOFTHSM_V2_SYMMETRICKEY_H
+#include "SymmetricAlgorithm.h"
 
-#include "config.h"
-#include "ByteString.h"
-#include "Serialisable.h"
-
-class SymmetricKey : public Serialisable
+// Key factory
+bool SymmetricAlgorithm::generateKey(SymmetricKey& key, RNG* rng /* = NULL */)
 {
-public:
-	// Base constructors
-	SymmetricKey(size_t bitLen = 0);
+	if (rng == NULL)
+	{
+		return false;
+	}
 
-	SymmetricKey(const SymmetricKey& in);
+	if (key.getBitLen() == 0)
+	{
+		return false;
+	}
 
-	// Destructor
-	virtual ~SymmetricKey() { }
+	return rng->generateRandom(key.getKeyBits(), key.getBitLen()/8);
+}
 
-	// Set the key
-	virtual bool setKeyBits(const ByteString& keybits);
-
-	// Get the key
-	virtual ByteString& getKeyBits();
-
-	// Serialisation
-	virtual ByteString serialise() const;
-
-	// Retrieve the bit length
-	virtual size_t getBitLen() const;
-
-private:
-	// The key
-	ByteString keyData;
-
-	// The key length in bits
-	size_t bitLen;
-};
-
-#endif // !_SOFTHSM_V2_SYMMETRICKEY_H
+bool SymmetricAlgorithm::reconstructKey(SymmetricKey& key, const ByteString& serialisedData)
+{
+	return key.setKeyBits(serialisedData);
+}
 

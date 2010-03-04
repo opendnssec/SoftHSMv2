@@ -9,7 +9,10 @@ BotanCryptoFactory.cpp \
 ByteString.cpp \
 CryptoFactory.cpp \
 OSSLCryptoFactory.cpp \
+OSSLRNG.cpp \
 SecureMemoryRegistry.cpp \
+SymmetricAlgorithm.cpp \
+SymmetricKey.cpp \
 log.cpp
 CRYPTOHEADERS=\
 AsymmetricAlgorithm.h \
@@ -19,6 +22,7 @@ ByteString.h \
 CryptoFactory.h \
 HashAlgorithm.h \
 OSSLCryptoFactory.h \
+OSSLRNG.h \
 PrivateKey.h \
 PublicKey.h \
 RNG.h \

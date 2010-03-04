@@ -27,48 +27,56 @@
  */
 
 /*****************************************************************************
- SymmetricKey.h
+ SymmetricKey.cpp
 
  Base class for symmetric key classes
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_SYMMETRICKEY_H
-#define _SOFTHSM_V2_SYMMETRICKEY_H
-
 #include "config.h"
 #include "ByteString.h"
 #include "Serialisable.h"
+#include "SymmetricKey.h"
 
-class SymmetricKey : public Serialisable
+// Base constructors
+SymmetricKey::SymmetricKey(size_t bitLen /* = 0 */)
 {
-public:
-	// Base constructors
-	SymmetricKey(size_t bitLen = 0);
+	this->bitLen = bitLen;
+}
 
-	SymmetricKey(const SymmetricKey& in);
+SymmetricKey::SymmetricKey(const SymmetricKey& in)
+{
+	keyData = in.keyData;
+	bitLen = in.bitLen;
+}
 
-	// Destructor
-	virtual ~SymmetricKey() { }
+// Set the key
+bool SymmetricKey::setKeyBits(const ByteString& keybits)
+{
+	if ((bitLen > 0) && ((keybits.size() * 8) != bitLen))
+	{
+		return false;
+	}	
 
-	// Set the key
-	virtual bool setKeyBits(const ByteString& keybits);
+	keyData = keybits;
 
-	// Get the key
-	virtual ByteString& getKeyBits();
+	return true;
+}
 
-	// Serialisation
-	virtual ByteString serialise() const;
+// Get the key
+ByteString& SymmetricKey::getKeyBits()
+{
+	return keyData;
+}
 
-	// Retrieve the bit length
-	virtual size_t getBitLen() const;
+// Serialisation
+ByteString SymmetricKey::serialise() const
+{
+	return keyData;
+}
 
-private:
-	// The key
-	ByteString keyData;
-
-	// The key length in bits
-	size_t bitLen;
-};
-
-#endif // !_SOFTHSM_V2_SYMMETRICKEY_H
+// Retrieve the bit length
+size_t SymmetricKey::getBitLen() const
+{
+	return bitLen;
+}
 

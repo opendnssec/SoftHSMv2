@@ -60,9 +60,8 @@ public:
 	virtual bool decryptFinal(ByteString& data) = 0;
 
 	// Key factory
-	virtual bool generateKey(SymmetricKey& key, size_t keySize = 0, RNG* rng = NULL) = 0;
-	virtual bool blankKey(SymmetricKey& key) = 0;
-	virtual bool reconstructKey(SymmetricKey& key, const ByteString& serialisedData) = 0;
+	virtual bool generateKey(SymmetricKey& key, RNG* rng = NULL);
+	virtual bool reconstructKey(SymmetricKey& key, const ByteString& serialisedData);
 
 private:
 };

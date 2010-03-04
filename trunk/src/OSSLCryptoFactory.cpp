@@ -34,6 +34,7 @@
 
 #include "config.h"
 #include "OSSLCryptoFactory.h"
+#include "OSSLRNG.h"
 
 #include <openssl/ssl.h>
 
@@ -88,7 +89,10 @@ HashAlgorithm* OSSLCryptoFactory::getHashAlgorithm(std::string algorithm)
 // Create a concrete instance of an RNG
 RNG* OSSLCryptoFactory::getRNG(std::string name /* = "default" */)
 {
-	// TODO: add algorithm implementations
+	if (name == "default")
+	{
+		return new OSSLRNG();
+	}
 
 	// No algorithm implementation is available
 	return NULL;

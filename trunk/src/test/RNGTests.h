@@ -27,48 +27,33 @@
  */
 
 /*****************************************************************************
- SymmetricKey.h
+ RNGTests.h
 
- Base class for symmetric key classes
+ Contains test cases to test the RNG class
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_SYMMETRICKEY_H
-#define _SOFTHSM_V2_SYMMETRICKEY_H
+#ifndef _SOFTHSM_V2_RNGTESTS_H
+#define _SOFTHSM_V2_RNGTESTS_H
 
-#include "config.h"
-#include "ByteString.h"
-#include "Serialisable.h"
+#include <cppunit/extensions/HelperMacros.h>
+#include "RNG.h"
 
-class SymmetricKey : public Serialisable
+class RNGTests : public CppUnit::TestFixture
 {
+	CPPUNIT_TEST_SUITE(RNGTests);
+	CPPUNIT_TEST(testSimpleComparison);
+	CPPUNIT_TEST_SUITE_END();
+
 public:
-	// Base constructors
-	SymmetricKey(size_t bitLen = 0);
+	void testSimpleComparison();
 
-	SymmetricKey(const SymmetricKey& in);
-
-	// Destructor
-	virtual ~SymmetricKey() { }
-
-	// Set the key
-	virtual bool setKeyBits(const ByteString& keybits);
-
-	// Get the key
-	virtual ByteString& getKeyBits();
-
-	// Serialisation
-	virtual ByteString serialise() const;
-
-	// Retrieve the bit length
-	virtual size_t getBitLen() const;
+	void setUp();
+	void tearDown();
 
 private:
-	// The key
-	ByteString keyData;
-
-	// The key length in bits
-	size_t bitLen;
+	// RNG instance
+	RNG* rng;
 };
 
-#endif // !_SOFTHSM_V2_SYMMETRICKEY_H
+#endif // !_SOFTHSM_V2_RNGTESTS_H
 

@@ -53,7 +53,7 @@ public:
 	virtual bool generateRandom(ByteString& data, const size_t len) = 0;
 
 	// Seed the random pool
-	virtual void seed(const ByteString& seedData);
+	virtual void seed(ByteString& seedData) = 0;
 
 private:
 };
