@@ -35,6 +35,7 @@
 #include <string>
 #include <map>
 #include "Configuration.h"
+#include "log.h"
 
 // Initialise the one-and-only instance
 Configuration* Configuration::instance = NULL;
