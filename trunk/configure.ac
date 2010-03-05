@@ -83,6 +83,7 @@ AC_PROG_LIBTOOL
 AC_CONFIG_FILES([
 	Makefile
 	src/Makefile
+	src/lib/Makefile
 ])
 
 AC_OUTPUT
