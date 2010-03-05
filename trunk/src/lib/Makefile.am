@@ -2,8 +2,10 @@
 
 MAINTAINERCLEANFILES = 		$(srcdir)/Makefile.in
 
-AM_CPPFLAGS = 			-DWITH_OPENSSL
-AM_CFLAGS = 			-DWITH_OPENSSL
+AM_CPPFLAGS = 			-I$(srcdir)/cryptoki_compat \
+				-DWITH_OPENSSL
+AM_CFLAGS = 			-I$(srcdir)/cryptoki_compat \
+				-DWITH_OPENSSL
 
 lib_LTLIBRARIES =		libsofthsm.la
 libsofthsm_la_SOURCES =		Configuration.cpp \
@@ -24,4 +26,5 @@ libsofthsm_la_SOURCES =		Configuration.cpp \
 libsofthsm_la_LIBADD =		-lcrypto
 libsofthsm_la_LDFLAGS =		-version-info @VERSION_INFO@
 
-EXTRA_DIST =			$(srcdir)/*.h
+EXTRA_DIST =			$(srcdir)/*.h \
+				$(srcdir)/cryptoki_compat/*.h
