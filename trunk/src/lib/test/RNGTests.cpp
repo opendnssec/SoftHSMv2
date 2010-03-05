@@ -37,6 +37,8 @@
 #include "RNGTests.h"
 #include "CryptoFactory.h"
 #include "RNG.h"
+#include "ent.h"
+#include <stdio.h>
 
 CPPUNIT_TEST_SUITE_REGISTRATION(RNGTests);
 
@@ -67,5 +69,22 @@ void RNGTests::testSimpleComparison()
 	CPPUNIT_ASSERT(a.size() == 256);
 	CPPUNIT_ASSERT(b.size() == 256);
 	CPPUNIT_ASSERT(a != b);
+}
+
+void RNGTests::testEnt()
+{
+	ByteString a;
+	double entropy, chiProbability, arithMean, montePi, serialCorrelation;
+
+	// Generate 10MB of random data
+	CPPUNIT_ASSERT(rng->generateRandom(a, 10*1024*1024));
+
+	// Perform entropy tests
+	doEnt(a.byte_str(), a.size(), &entropy, &chiProbability, &arithMean, &montePi, &serialCorrelation);
+
+	// Check entropy
+	CPPUNIT_ASSERT(entropy >= 7.999);
+	CPPUNIT_ASSERT((arithMean >= 127.4) && (arithMean <= 127.6));
+	CPPUNIT_ASSERT(serialCorrelation <= 0.001);
 }
 

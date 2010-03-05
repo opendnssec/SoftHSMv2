@@ -42,10 +42,12 @@ class RNGTests : public CppUnit::TestFixture
 {
 	CPPUNIT_TEST_SUITE(RNGTests);
 	CPPUNIT_TEST(testSimpleComparison);
+	CPPUNIT_TEST(testEnt);
 	CPPUNIT_TEST_SUITE_END();
 
 public:
 	void testSimpleComparison();
+	void testEnt();
 
 	void setUp();
 	void tearDown();
