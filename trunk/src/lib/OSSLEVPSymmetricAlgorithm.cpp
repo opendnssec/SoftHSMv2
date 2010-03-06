@@ -26,6 +26,8 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+// TODO: Store EVP context in securely allocated memory
+
 /*****************************************************************************
  OSSLEVPSymmetricAlgorithm.cpp
 
