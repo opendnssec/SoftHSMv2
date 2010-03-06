@@ -128,6 +128,12 @@ unsigned char* ByteString::byte_str()
 	return &byteString[0];
 }
 
+// Return the const byte string
+const unsigned char* ByteString::const_byte_str() const
+{
+	return (const unsigned char*) &byteString[0];
+}
+
 // The size of the byte string
 size_t ByteString::size() const
 {

@@ -27,70 +27,56 @@
  */
 
 /*****************************************************************************
- ByteString.h
+ OSSLAES.cpp
 
- A string class for byte strings stored in securely allocated memory
+ OpenSSL AES implementation
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_BYTESTRING_H
-#define _SOFTHSM_V2_BYTESTRING_H
-
-#include <vector>
-#include <stdlib.h>
-#include <limits.h>
 #include "config.h"
-#include "SecureAllocator.h"
+#include "OSSLAES.h"
+#include <algorithm>
 
-class ByteString
+const EVP_CIPHER* OSSLAES::getCipher() const
 {
-public:
-	// Constructors
-	ByteString(const size_t initialSize = 0);
+	// Check currentKey bit length; AES only supports 128 or 256 bit currentKeys
+	if ((currentKey->getBitLen() != 128) && (currentKey->getBitLen() != 256))
+	{
+		ERROR_MSG("Invalid AES currentKey length (%d bits)", currentKey->getBitLen());
 
-	ByteString(const unsigned char* bytes, const size_t bytesLen);
+		return NULL;
+	}
 
-	ByteString(const ByteString& in);
+	// Determine the cipher mode
+	if (currentCipherMode == "cbc")
+	{
+		if (currentKey->getBitLen() == 128)
+		{
+			return EVP_aes_128_cbc();
+		}
+		else if (currentKey->getBitLen() == 256)
+		{
+			return EVP_aes_256_cbc();
+		}
+	}
+	else if (currentCipherMode == "ecb")
+	{
+		if (currentKey->getBitLen() == 128)
+		{
+			return EVP_aes_128_ecb();
+		}
+		else if (currentKey->getBitLen() == 256)
+		{
+			return EVP_aes_256_ecb();
+		}
+	}
 
-	// Destructor
-	virtual ~ByteString() { }
+	ERROR_MSG("Invalid AES cipher mode %s", currentCipherMode.c_str());
 
-	// Append data
-	ByteString& operator+=(const ByteString& append);
-	ByteString& operator+=(const unsigned char byte);
+	return NULL;
+}
 
-	// Return a substring
-	ByteString substr(const size_t start, const size_t len = SIZE_T_MAX) const;
-
-	// Array operator
-	unsigned char& operator[](size_t pos);
-
-	// Return the byte string
-	unsigned char* byte_str();
-
-	// Return the const byte string
-	const unsigned char* const_byte_str() const;
-
-	// Return the size
-	size_t size() const;
-
-	// Resize
-	void resize(const size_t newSize);
-
-	// Wipe
-	void wipe(const size_t newSize = 0);
-
-	// Comparison
-	bool operator==(const ByteString& compareTo) const;
-	bool operator!=(const ByteString& compareTo) const;
-
-private:
-	std::vector<unsigned char, SecureAllocator<unsigned char> > byteString;
-};
-
-// Add data
-ByteString operator+(const ByteString& lhs, const ByteString& rhs);
-ByteString operator+(const unsigned char lhs, const ByteString& rhs);
-ByteString operator+(const ByteString& lhs, const unsigned char rhs);
-
-#endif // !_SOFTHSM_V2_BYTESTRING_H
+size_t OSSLAES::getBlockSize() const
+{
+	return 8;
+}
 

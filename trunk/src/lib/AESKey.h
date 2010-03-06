@@ -39,5 +39,9 @@
 #include "ByteString.h"
 #include "SymmetricKey.h"
 
-class AESKey : public SymmetricKey;
+class AESKey : public SymmetricKey
+{
+};
+
+#endif // !SOFTHSM_V2_AESKEY_H
 

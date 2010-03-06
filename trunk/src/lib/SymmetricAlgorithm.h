@@ -44,26 +44,40 @@ class SymmetricAlgorithm
 {
 public:
 	// Base constructors
-	SymmetricAlgorithm() { }
+	SymmetricAlgorithm();
 
 	// Destructor
 	virtual ~SymmetricAlgorithm() { }
 
 	// Encryption functions
-	virtual bool encryptInit(const SymmetricKey* key, const std::string mode = "CBC", const ByteString& IV = ByteString()) = 0;
-	virtual bool encryptUpdate(const ByteString& data, ByteString& encryptedData) = 0;
-	virtual bool encryptFinal(ByteString& encryptedData) = 0;
+	virtual bool encryptInit(const SymmetricKey* key, const std::string mode = "cbc", const ByteString& IV = ByteString());
+	virtual bool encryptUpdate(const ByteString& data, ByteString& encryptedData);
+	virtual bool encryptFinal(ByteString& encryptedData);
 
 	// Decryption functions
-	virtual bool decryptInit(const SymmetricKey* key, const std::string mode = "CBC", const ByteString& IV = ByteString()) = 0;
-	virtual bool decryptUpdate(const ByteString& encryptedData, ByteString& data) = 0;
-	virtual bool decryptFinal(ByteString& data) = 0;
+	virtual bool decryptInit(const SymmetricKey* key, const std::string mode = "cbc", const ByteString& IV = ByteString());
+	virtual bool decryptUpdate(const ByteString& encryptedData, ByteString& data);
+	virtual bool decryptFinal(ByteString& data);
 
 	// Key factory
 	virtual bool generateKey(SymmetricKey& key, RNG* rng = NULL);
 	virtual bool reconstructKey(SymmetricKey& key, const ByteString& serialisedData);
 
-private:
+protected:
+	// The current cipher mode
+	std::string currentCipherMode;
+
+	// The current key
+	const SymmetricKey* currentKey;
+
+	// The current operation
+	enum
+	{
+		NONE,
+		ENCRYPT,
+		DECRYPT
+	} 
+	currentOperation;
 };
 
 #endif // !_SOFTHSM_V2_SYMMETRICALGORITHM_H

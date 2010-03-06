@@ -54,7 +54,7 @@ public:
 	virtual bool setKeyBits(const ByteString& keybits);
 
 	// Get the key
-	virtual ByteString& getKeyBits();
+	virtual const ByteString& getKeyBits() const;
 
 	// Serialisation
 	virtual ByteString serialise() const;

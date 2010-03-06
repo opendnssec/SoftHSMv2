@@ -8,7 +8,9 @@ CRYPTOSOURCES=\
 BotanCryptoFactory.cpp \
 ByteString.cpp \
 CryptoFactory.cpp \
+OSSLAES.cpp \
 OSSLCryptoFactory.cpp \
+OSSLEVPSymmetricAlgorithm.cpp \
 OSSLRNG.cpp \
 SecureMemoryRegistry.cpp \
 SymmetricAlgorithm.cpp \
@@ -21,7 +23,9 @@ BotanCryptoFactory.h \
 ByteString.h \
 CryptoFactory.h \
 HashAlgorithm.h \
+OSSLAES.h \
 OSSLCryptoFactory.h \
+OSSLEVPSymmetricAlgorithm.h \
 OSSLRNG.h \
 PrivateKey.h \
 PublicKey.h \

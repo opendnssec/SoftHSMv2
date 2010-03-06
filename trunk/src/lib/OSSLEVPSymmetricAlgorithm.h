@@ -27,70 +27,47 @@
  */
 
 /*****************************************************************************
- ByteString.h
+ OSSLEVPSymmetricAlgorithm.h
 
- A string class for byte strings stored in securely allocated memory
+ OpenSSL AES implementation
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_BYTESTRING_H
-#define _SOFTHSM_V2_BYTESTRING_H
+#ifndef _SOFTHSM_V2_OSSLEVPSYMMETRICALGORITHM_H
+#define _SOFTHSM_V2_OSSLEVPSYMMETRICALGORITHM_H
 
-#include <vector>
-#include <stdlib.h>
-#include <limits.h>
+#include <openssl/evp.h>
+#include <string>
 #include "config.h"
-#include "SecureAllocator.h"
+#include "SymmetricKey.h"
+#include "SymmetricAlgorithm.h"
 
-class ByteString
+class OSSLEVPSymmetricAlgorithm : public SymmetricAlgorithm
 {
 public:
-	// Constructors
-	ByteString(const size_t initialSize = 0);
-
-	ByteString(const unsigned char* bytes, const size_t bytesLen);
-
-	ByteString(const ByteString& in);
-
 	// Destructor
-	virtual ~ByteString() { }
+	virtual ~OSSLEVPSymmetricAlgorithm() { }
 
-	// Append data
-	ByteString& operator+=(const ByteString& append);
-	ByteString& operator+=(const unsigned char byte);
+	// Encryption functions
+	virtual bool encryptInit(const SymmetricKey* key, const std::string mode = "cbc", const ByteString& IV = ByteString());
+	virtual bool encryptUpdate(const ByteString& data, ByteString& encryptedData);
+	virtual bool encryptFinal(ByteString& encryptedData);
 
-	// Return a substring
-	ByteString substr(const size_t start, const size_t len = SIZE_T_MAX) const;
+	// Decryption functions
+	virtual bool decryptInit(const SymmetricKey* key, const std::string mode = "cbc", const ByteString& IV = ByteString());
+	virtual bool decryptUpdate(const ByteString& encryptedData, ByteString& data);
+	virtual bool decryptFinal(ByteString& data);
 
-	// Array operator
-	unsigned char& operator[](size_t pos);
+protected:
+	// Return the right EVP cipher for the operation
+	virtual const EVP_CIPHER* getCipher() const = 0;
 
-	// Return the byte string
-	unsigned char* byte_str();
-
-	// Return the const byte string
-	const unsigned char* const_byte_str() const;
-
-	// Return the size
-	size_t size() const;
-
-	// Resize
-	void resize(const size_t newSize);
-
-	// Wipe
-	void wipe(const size_t newSize = 0);
-
-	// Comparison
-	bool operator==(const ByteString& compareTo) const;
-	bool operator!=(const ByteString& compareTo) const;
+	// Return the block size
+	virtual size_t getBlockSize() const = 0;
 
 private:
-	std::vector<unsigned char, SecureAllocator<unsigned char> > byteString;
+	// The current EVP context
+	EVP_CIPHER_CTX curCTX;
 };
 
-// Add data
-ByteString operator+(const ByteString& lhs, const ByteString& rhs);
-ByteString operator+(const unsigned char lhs, const ByteString& rhs);
-ByteString operator+(const ByteString& lhs, const unsigned char rhs);
-
-#endif // !_SOFTHSM_V2_BYTESTRING_H
+#endif // !_SOFTHSM_V2_OSSLEVPSYMMETRICALGORITHM_H
 

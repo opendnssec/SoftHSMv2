@@ -33,6 +33,85 @@
  *****************************************************************************/
 
 #include "SymmetricAlgorithm.h"
+#include <algorithm>
+#include <string.h>
+
+SymmetricAlgorithm::SymmetricAlgorithm()
+{
+	currentCipherMode = "invalid";
+	currentKey = NULL;
+}
+
+bool SymmetricAlgorithm::encryptInit(const SymmetricKey* key, const std::string mode /* = "CBC" */, const ByteString& IV /* = ByteString() */)
+{
+	if ((key == NULL) || (currentOperation != NONE))
+	{
+		return false;
+	}
+
+	currentKey = key;
+	currentCipherMode.clear();
+	transform(mode.begin(), mode.end(), currentCipherMode.begin(), tolower);
+	currentOperation = ENCRYPT;
+
+	return true;
+}
+
+bool SymmetricAlgorithm::encryptUpdate(const ByteString& data, ByteString& encryptedData)
+{
+	if (currentOperation != ENCRYPT)
+	{
+		return false;
+	}
+
+	return true;
+}
+
+bool SymmetricAlgorithm::encryptFinal(ByteString& encryptedData)
+{
+	if (currentOperation != ENCRYPT)
+	{
+		return false;
+	}
+
+	return true;
+}
+
+bool SymmetricAlgorithm::decryptInit(const SymmetricKey* key, const std::string mode /* = "CBC" */, const ByteString& IV /* = ByteString() */)
+{
+	if ((key == NULL) || (currentOperation != NONE))
+	{
+		return false;
+	}
+
+	currentKey = key;
+	currentCipherMode.clear();
+	transform(mode.begin(), mode.end(), currentCipherMode.begin(), tolower);
+	currentOperation = DECRYPT;
+
+	return true;
+}
+
+
+bool SymmetricAlgorithm::decryptUpdate(const ByteString& encryptedData, ByteString& data)
+{
+	if (currentOperation != DECRYPT)
+	{
+		return false;
+	}
+
+	return true;
+}
+
+bool SymmetricAlgorithm::decryptFinal(ByteString& data)
+{
+	if (currentOperation != DECRYPT)
+	{
+		return false;
+	}
+
+	return true;
+}
 
 // Key factory
 bool SymmetricAlgorithm::generateKey(SymmetricKey& key, RNG* rng /* = NULL */)
@@ -47,7 +126,16 @@ bool SymmetricAlgorithm::generateKey(SymmetricKey& key, RNG* rng /* = NULL */)
 		return false;
 	}
 
-	return rng->generateRandom(key.getKeyBits(), key.getBitLen()/8);
+	ByteString keyBits;
+	
+	if (!rng->generateRandom(keyBits, key.getBitLen()/8))
+	{
+		return false;
+	}
+
+	key.setKeyBits(keyBits);
+
+	return true;
 }
 
 bool SymmetricAlgorithm::reconstructKey(SymmetricKey& key, const ByteString& serialisedData)

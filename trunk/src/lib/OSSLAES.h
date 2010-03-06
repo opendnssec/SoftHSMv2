@@ -27,70 +27,32 @@
  */
 
 /*****************************************************************************
- ByteString.h
+ OSSLAES.h
 
- A string class for byte strings stored in securely allocated memory
+ OpenSSL AES implementation
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_BYTESTRING_H
-#define _SOFTHSM_V2_BYTESTRING_H
+#ifndef _SOFTHSM_V2_OSSLAES_H
+#define _SOFTHSM_V2_OSSLAES_H
 
-#include <vector>
-#include <stdlib.h>
-#include <limits.h>
+#include <openssl/evp.h>
+#include <string>
 #include "config.h"
-#include "SecureAllocator.h"
+#include "OSSLEVPSymmetricAlgorithm.h"
 
-class ByteString
+class OSSLAES : public OSSLEVPSymmetricAlgorithm
 {
 public:
-	// Constructors
-	ByteString(const size_t initialSize = 0);
-
-	ByteString(const unsigned char* bytes, const size_t bytesLen);
-
-	ByteString(const ByteString& in);
-
 	// Destructor
-	virtual ~ByteString() { }
+	virtual ~OSSLAES() { }
 
-	// Append data
-	ByteString& operator+=(const ByteString& append);
-	ByteString& operator+=(const unsigned char byte);
+protected:
+	// Return the right EVP cipher for the operation
+	virtual const EVP_CIPHER* getCipher() const;
 
-	// Return a substring
-	ByteString substr(const size_t start, const size_t len = SIZE_T_MAX) const;
-
-	// Array operator
-	unsigned char& operator[](size_t pos);
-
-	// Return the byte string
-	unsigned char* byte_str();
-
-	// Return the const byte string
-	const unsigned char* const_byte_str() const;
-
-	// Return the size
-	size_t size() const;
-
-	// Resize
-	void resize(const size_t newSize);
-
-	// Wipe
-	void wipe(const size_t newSize = 0);
-
-	// Comparison
-	bool operator==(const ByteString& compareTo) const;
-	bool operator!=(const ByteString& compareTo) const;
-
-private:
-	std::vector<unsigned char, SecureAllocator<unsigned char> > byteString;
+	// Return the block size
+	virtual size_t getBlockSize() const;
 };
 
-// Add data
-ByteString operator+(const ByteString& lhs, const ByteString& rhs);
-ByteString operator+(const unsigned char lhs, const ByteString& rhs);
-ByteString operator+(const ByteString& lhs, const unsigned char rhs);
-
-#endif // !_SOFTHSM_V2_BYTESTRING_H
+#endif // !_SOFTHSM_V2_SYMMETRICALGORITHM_H
 

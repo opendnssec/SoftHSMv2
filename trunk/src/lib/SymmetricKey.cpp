@@ -63,7 +63,7 @@ bool SymmetricKey::setKeyBits(const ByteString& keybits)
 }
 
 // Get the key
-ByteString& SymmetricKey::getKeyBits()
+const ByteString& SymmetricKey::getKeyBits() const
 {
 	return keyData;
 }
