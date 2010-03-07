@@ -27,37 +27,62 @@
  */
 
 /*****************************************************************************
- ByteStringTests.h
+ AESTests.cpp
 
- Contains test cases to test the ByteString class
+ Contains test cases to test the AES implementation
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_BYTESTRINGTESTS_H
-#define _SOFTHSM_V2_BYTESTRINGTESTS_H
-
+#include <stdlib.h>
 #include <cppunit/extensions/HelperMacros.h>
+#include "AESTests.h"
+#include "CryptoFactory.h"
+#include "AESKey.h"
+#include <stdio.h>
 
-class ByteStringTests : public CppUnit::TestFixture
+CPPUNIT_TEST_SUITE_REGISTRATION(AESTests);
+
+void AESTests::setUp()
 {
-	CPPUNIT_TEST_SUITE(ByteStringTests);
-	CPPUNIT_TEST(testIntegrity);
-	CPPUNIT_TEST(testAppend);
-	CPPUNIT_TEST(testSubstr);
-	CPPUNIT_TEST(testFromHexStr);
-	CPPUNIT_TEST(testXOR);
-	CPPUNIT_TEST_SUITE_END();
+	aes = NULL;
 
-public:
-	void testIntegrity();
-	void testAppend();
-	void testSubstr();
-	void testFromHexStr();
-	void testXOR();
+	aes = CryptoFactory::i()->getSymmetricAlgorithm("aes");
 
-	void setUp();
-	void tearDown();
+	// Check the return value
+	CPPUNIT_ASSERT(aes != NULL);
+}
 
-};
+void AESTests::tearDown()
+{
+	if (aes != NULL)
+	{
+		delete aes;
+	}
+}
 
-#endif // !_SOFTHSM_V2_BYTESTRINGTESTS_H
+void AESTests::testCBCDecrypt()
+{
+	// Load test vectors
+	#include "aes_cbc_d_tv.h"
+
+	// Perform the test with the NIST test vectors for 128 bit keys
+	ByteString blankKey;
+	blankKey.wipe(16);
+
+	AESKey aes128Key(128);
+	aes128Key.setKeyBits(blankKey);
+
+	ByteString IV, prevCT, CT, CV;
+	IV.wipe(16);
+	CT.wipe(16);
+
+	for (int i = 0; i < 400; i++)
+	{
+		for (int j = 0; j < 9999; j++)
+		{
+			
+		}
+
+
+	}
+}
 

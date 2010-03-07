@@ -18,6 +18,7 @@ CRYPTOOBJECTS:=$(patsubst %,../%,$(CRYPTOOBJECTS))
 
 CRYPTOTESTSOURCES=$(CRYPTOSOURCES) \
 cryptotest.cpp \
+AESTests.cpp \
 ByteStringTests.cpp \
 RNGTests.cpp \
 chisq.c \
@@ -25,6 +26,7 @@ ent.c \
 iso8859.c \
 randtest.c
 CRYPTOTESTHEADERS=$(CRYPTOHEADERS) \
+AESTests.h \
 ByteStringTests.h \
 RNGTests.h \
 ent.h \

@@ -163,3 +163,31 @@ void ByteStringTests::testSubstr()
 	CPPUNIT_ASSERT(memcmp(b.byte_str(), testData, sizeof(testData)) == 0);
 }
 
+void ByteStringTests::testFromHexStr()
+{
+	unsigned char testData[] = { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
+	                             0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10 };
+
+	ByteString b("0102030405060708090a0b0c0d0e0f10");
+	ByteString b1("0102030405060708090A0B0C0D0E0F10");
+
+	CPPUNIT_ASSERT(memcmp(b.byte_str(), testData, sizeof(testData)) == 0);
+	CPPUNIT_ASSERT(memcmp(b1.byte_str(), testData, sizeof(testData)) == 0);
+}
+
+void ByteStringTests::testXOR()
+{
+	unsigned char left[]	= { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08 };
+	unsigned char right[]	= { 0x80, 0x70, 0x60, 0x50, 0x40, 0x30, 0x20, 0x10 };
+	unsigned char xorred[]	= { 0x81, 0x72, 0x63, 0x54, 0x45, 0x36, 0x27, 0x18 };
+
+	ByteString l(left, 8);
+	ByteString r(right, 8);
+	ByteString x(xorred, 8);
+	ByteString xed;
+
+	xed = l ^ r;
+
+	CPPUNIT_ASSERT(xed == x);
+}
+

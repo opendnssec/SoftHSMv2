@@ -27,37 +27,33 @@
  */
 
 /*****************************************************************************
- ByteStringTests.h
+ AESTests.h
 
- Contains test cases to test the ByteString class
+ Contains test cases to test the AES implementation
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_BYTESTRINGTESTS_H
-#define _SOFTHSM_V2_BYTESTRINGTESTS_H
+#ifndef _SOFTHSM_V2_AESTESTS_H
+#define _SOFTHSM_V2_AESTESTS_H
 
 #include <cppunit/extensions/HelperMacros.h>
+#include "SymmetricAlgorithm.h"
 
-class ByteStringTests : public CppUnit::TestFixture
+class AESTests : public CppUnit::TestFixture
 {
-	CPPUNIT_TEST_SUITE(ByteStringTests);
-	CPPUNIT_TEST(testIntegrity);
-	CPPUNIT_TEST(testAppend);
-	CPPUNIT_TEST(testSubstr);
-	CPPUNIT_TEST(testFromHexStr);
-	CPPUNIT_TEST(testXOR);
+	CPPUNIT_TEST_SUITE(AESTests);
+	CPPUNIT_TEST(testCBCDecrypt);
 	CPPUNIT_TEST_SUITE_END();
 
 public:
-	void testIntegrity();
-	void testAppend();
-	void testSubstr();
-	void testFromHexStr();
-	void testXOR();
+	void testCBCDecrypt();
 
 	void setUp();
 	void tearDown();
 
+private:
+	// AES instance
+	SymmetricAlgorithm* aes;
 };
 
-#endif // !_SOFTHSM_V2_BYTESTRINGTESTS_H
+#endif // !_SOFTHSM_V2_AESTESTS_H
 
