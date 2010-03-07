@@ -33,6 +33,7 @@
  *****************************************************************************/
 
 #include <algorithm>
+#include <string>
 #include "config.h"
 #include "log.h"
 #include "ByteString.h"
@@ -48,6 +49,27 @@ ByteString::ByteString(const unsigned char* bytes, const size_t bytesLen)
 	byteString.resize(bytesLen);
 
 	memcpy(&byteString[0], bytes, bytesLen);
+}
+
+ByteString::ByteString(const char* hexString)
+{
+	std::string hex = std::string(hexString);
+
+	if (hex.size() % 2 != 0)
+	{
+		hex = "0" + hex;
+	}
+
+	for (size_t i = 0; i < hex.size(); i += 2)
+	{
+		std::string byteStr;
+		byteStr += hex[i];
+		byteStr += hex[i+1];
+
+		unsigned char byteVal = (unsigned char) strtoul(byteStr.c_str(), NULL, 16);
+
+		this->operator+=(byteVal);
+	}
 }
 
 ByteString::ByteString(const ByteString& in)
@@ -171,5 +193,19 @@ bool ByteString::operator!=(const ByteString& compareTo) const
 	}
 
 	return (memcmp(&byteString[0], &compareTo.byteString[0], this->size()) != 0);
+}
+
+// XOR data
+ByteString operator^(const ByteString& lhs, const ByteString& rhs)
+{
+	size_t xorLen = std::min(lhs.size(), rhs.size());
+	ByteString rv;
+
+	for (size_t i = 0; i < xorLen; i++)
+	{
+		rv += lhs.const_byte_str()[i] ^ rhs.const_byte_str()[i];
+	}
+
+	return rv;
 }
 

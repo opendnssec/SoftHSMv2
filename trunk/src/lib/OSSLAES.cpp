@@ -38,8 +38,10 @@
 
 const EVP_CIPHER* OSSLAES::getCipher() const
 {
-	// Check currentKey bit length; AES only supports 128 or 256 bit currentKeys
-	if ((currentKey->getBitLen() != 128) && (currentKey->getBitLen() != 256))
+	// Check currentKey bit length; AES only supports 128, 192 or 256 bit keys
+	if ((currentKey->getBitLen() != 128) && 
+	    (currentKey->getBitLen() != 192) &&
+            (currentKey->getBitLen() != 256))
 	{
 		ERROR_MSG("Invalid AES currentKey length (%d bits)", currentKey->getBitLen());
 
@@ -47,22 +49,30 @@ const EVP_CIPHER* OSSLAES::getCipher() const
 	}
 
 	// Determine the cipher mode
-	if (currentCipherMode == "cbc")
+	if (!strcmp(currentCipherMode.c_str(), "cbc"))
 	{
 		if (currentKey->getBitLen() == 128)
 		{
 			return EVP_aes_128_cbc();
+		}
+		else if (currentKey->getBitLen() == 192)
+		{
+			return EVP_aes_192_cbc();
 		}
 		else if (currentKey->getBitLen() == 256)
 		{
 			return EVP_aes_256_cbc();
 		}
 	}
-	else if (currentCipherMode == "ecb")
+	else if (!strcmp(currentCipherMode.c_str(), "ecb"))
 	{
 		if (currentKey->getBitLen() == 128)
 		{
 			return EVP_aes_128_ecb();
+		}
+		else if (currentKey->getBitLen() == 192)
+		{
+			return EVP_aes_192_ecb();
 		}
 		else if (currentKey->getBitLen() == 256)
 		{
@@ -77,6 +87,7 @@ const EVP_CIPHER* OSSLAES::getCipher() const
 
 size_t OSSLAES::getBlockSize() const
 {
-	return 8;
+	// The block size is 128 bits
+	return 128 >> 3;
 }
 

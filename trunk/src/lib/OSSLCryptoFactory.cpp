@@ -35,7 +35,10 @@
 #include "config.h"
 #include "OSSLCryptoFactory.h"
 #include "OSSLRNG.h"
+#include "OSSLAES.h"
 
+#include <algorithm>
+#include <string.h>
 #include <openssl/ssl.h>
 
 // Initialise the one-and-only instance
@@ -62,19 +65,34 @@ OSSLCryptoFactory* OSSLCryptoFactory::i()
 // Create a concrete instance of a symmetric algorithm
 SymmetricAlgorithm* OSSLCryptoFactory::getSymmetricAlgorithm(std::string algorithm)
 {
-	// TODO: add algorithm implementations
+	std::string lcAlgo;
+	std::transform(algorithm.begin(), algorithm.end(), lcAlgo.begin(), tolower);
 
-	// No algorithm implementation is available
-	return NULL;
+	if (!strcmp(lcAlgo.c_str(), "aes"))
+	{
+		return new OSSLAES();
+	}
+	else 
+	{
+		// No algorithm implementation is available
+		ERROR_MSG("Unknown algorithm '%s'", lcAlgo.c_str());
+
+		return NULL;
+	}
 }
 
 // Create a concrete instance of an asymmetric algorithm
 AsymmetricAlgorithm* OSSLCryptoFactory::getAsymmetricAlgorithm(std::string algorithm)
 {
-	// TODO: add algorithm implementations
+	std::string lcAlgo;
+	std::transform(algorithm.begin(), algorithm.end(), lcAlgo.begin(), tolower);
 
-	// No algorithm implementation is available
-	return NULL;
+	{
+		// No algorithm implementation is available
+		ERROR_MSG("Unknown algorithm '%s'", algorithm.c_str());
+
+		return NULL;
+	}
 }
 
 // Create a concrete instance of a hash algorithm

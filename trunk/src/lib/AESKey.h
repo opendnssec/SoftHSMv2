@@ -41,6 +41,9 @@
 
 class AESKey : public SymmetricKey
 {
+public:
+	// Base constructor
+	AESKey(size_t bitLen = 0) : SymmetricKey(bitLen) { }
 };
 
 #endif // !SOFTHSM_V2_AESKEY_H

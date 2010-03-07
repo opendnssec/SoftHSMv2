@@ -49,6 +49,8 @@ public:
 
 	ByteString(const unsigned char* bytes, const size_t bytesLen);
 
+	ByteString(const char* hexString);
+
 	ByteString(const ByteString& in);
 
 	// Destructor
@@ -91,6 +93,9 @@ private:
 ByteString operator+(const ByteString& lhs, const ByteString& rhs);
 ByteString operator+(const unsigned char lhs, const ByteString& rhs);
 ByteString operator+(const ByteString& lhs, const unsigned char rhs);
+
+// XOR data
+ByteString operator^(const ByteString& lhs, const ByteString& rhs);
 
 #endif // !_SOFTHSM_V2_BYTESTRING_H
 
