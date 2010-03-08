@@ -40,6 +40,7 @@ SymmetricAlgorithm::SymmetricAlgorithm()
 {
 	currentCipherMode = "invalid";
 	currentKey = NULL;
+	currentOperation = NONE;
 }
 
 bool SymmetricAlgorithm::encryptInit(const SymmetricKey* key, const std::string mode /* = "CBC" */, const ByteString& IV /* = ByteString() */)
@@ -51,6 +52,7 @@ bool SymmetricAlgorithm::encryptInit(const SymmetricKey* key, const std::string 
 
 	currentKey = key;
 	currentCipherMode.clear();
+	currentCipherMode.resize(mode.size());
 	transform(mode.begin(), mode.end(), currentCipherMode.begin(), tolower);
 	currentOperation = ENCRYPT;
 
@@ -74,6 +76,8 @@ bool SymmetricAlgorithm::encryptFinal(ByteString& encryptedData)
 		return false;
 	}
 
+	currentOperation = NONE;
+
 	return true;
 }
 
@@ -86,6 +90,7 @@ bool SymmetricAlgorithm::decryptInit(const SymmetricKey* key, const std::string 
 
 	currentKey = key;
 	currentCipherMode.clear();
+	currentCipherMode.resize(mode.size());
 	transform(mode.begin(), mode.end(), currentCipherMode.begin(), tolower);
 	currentOperation = DECRYPT;
 
@@ -109,6 +114,8 @@ bool SymmetricAlgorithm::decryptFinal(ByteString& data)
 	{
 		return false;
 	}
+
+	currentOperation = NONE;
 
 	return true;
 }

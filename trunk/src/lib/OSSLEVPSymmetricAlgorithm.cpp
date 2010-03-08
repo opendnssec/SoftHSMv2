@@ -217,6 +217,9 @@ bool OSSLEVPSymmetricAlgorithm::decryptUpdate(const ByteString& encryptedData, B
 	data.resize(encryptedData.size() + getBlockSize() - 1);
 
 	int outLen = data.size();
+
+	ERROR_MSG("Decrypting %d bytes into buffer of %d bytes", encryptedData.size(), data.size());
+
 	if (!EVP_DecryptUpdate(&curCTX, &data[0], &outLen, (unsigned char*) encryptedData.const_byte_str(), encryptedData.size()))
 	{
 		ERROR_MSG("EVP_DecryptUpdate failed");
@@ -226,6 +229,8 @@ bool OSSLEVPSymmetricAlgorithm::decryptUpdate(const ByteString& encryptedData, B
 
 		return false;
 	}
+
+	ERROR_MSG("Decrypt returned %d bytes of data", outLen);
 
 	// Resize the output block
 	data.resize(outLen);
@@ -244,10 +249,11 @@ bool OSSLEVPSymmetricAlgorithm::decryptFinal(ByteString& data)
 	data.resize(getBlockSize());
 
 	int outLen = data.size();
+	int rv;
 
-	if (!EVP_DecryptFinal(&curCTX, &data[0], &outLen))
+	if (!(rv = EVP_DecryptFinal(&curCTX, &data[0], &outLen)))
 	{
-		ERROR_MSG("EVP_DecryptFinal failed");
+		ERROR_MSG("EVP_DecryptFinal failed (0x%08X)", rv);
 
 		return false;
 	}

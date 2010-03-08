@@ -66,9 +66,10 @@ OSSLCryptoFactory* OSSLCryptoFactory::i()
 SymmetricAlgorithm* OSSLCryptoFactory::getSymmetricAlgorithm(std::string algorithm)
 {
 	std::string lcAlgo;
+	lcAlgo.resize(algorithm.size());
 	std::transform(algorithm.begin(), algorithm.end(), lcAlgo.begin(), tolower);
 
-	if (!strcmp(lcAlgo.c_str(), "aes"))
+	if (!lcAlgo.compare("aes"))
 	{
 		return new OSSLAES();
 	}
@@ -85,6 +86,7 @@ SymmetricAlgorithm* OSSLCryptoFactory::getSymmetricAlgorithm(std::string algorit
 AsymmetricAlgorithm* OSSLCryptoFactory::getAsymmetricAlgorithm(std::string algorithm)
 {
 	std::string lcAlgo;
+	lcAlgo.resize(algorithm.size());
 	std::transform(algorithm.begin(), algorithm.end(), lcAlgo.begin(), tolower);
 
 	{

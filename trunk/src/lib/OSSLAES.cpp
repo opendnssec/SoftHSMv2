@@ -49,7 +49,7 @@ const EVP_CIPHER* OSSLAES::getCipher() const
 	}
 
 	// Determine the cipher mode
-	if (!strcmp(currentCipherMode.c_str(), "cbc"))
+	if (!currentCipherMode.compare("cbc"))
 	{
 		if (currentKey->getBitLen() == 128)
 		{
@@ -64,7 +64,7 @@ const EVP_CIPHER* OSSLAES::getCipher() const
 			return EVP_aes_256_cbc();
 		}
 	}
-	else if (!strcmp(currentCipherMode.c_str(), "ecb"))
+	else if (!currentCipherMode.compare("ecb"))
 	{
 		if (currentKey->getBitLen() == 128)
 		{

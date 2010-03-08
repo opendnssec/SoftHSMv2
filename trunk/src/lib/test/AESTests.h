@@ -41,16 +41,22 @@
 class AESTests : public CppUnit::TestFixture
 {
 	CPPUNIT_TEST_SUITE(AESTests);
-	CPPUNIT_TEST(testCBCDecrypt);
+	CPPUNIT_TEST(testCBC);
+	CPPUNIT_TEST(testECB);
 	CPPUNIT_TEST_SUITE_END();
 
 public:
-	void testCBCDecrypt();
+	void testCBC();
+	void testECB();
 
 	void setUp();
 	void tearDown();
 
 private:
+	void writeTmpFile(ByteString& data);
+
+	void readTmpFile(ByteString& data);
+
 	// AES instance
 	SymmetricAlgorithm* aes;
 };
