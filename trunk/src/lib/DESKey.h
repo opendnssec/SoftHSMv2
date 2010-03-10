@@ -27,32 +27,28 @@
  */
 
 /*****************************************************************************
- OSSLAES.h
+ DESKey.h
 
- OpenSSL AES implementation
+ Base class for symmetric key classes
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_OSSLAES_H
-#define _SOFTHSM_V2_OSSLAES_H
+#ifndef _SOFTHSM_V2_DESKEY_H
+#define _SOFTHSM_V2_DESKEY_H
 
-#include <openssl/evp.h>
-#include <string>
 #include "config.h"
-#include "OSSLEVPSymmetricAlgorithm.h"
+#include "ByteString.h"
+#include "Serialisable.h"
+#include "SymmetricKey.h"
 
-class OSSLAES : public OSSLEVPSymmetricAlgorithm
+class DESKey : public SymmetricKey
 {
 public:
-	// Destructor
-	virtual ~OSSLAES() { }
-
-protected:
-	// Return the right EVP cipher for the operation
-	virtual const EVP_CIPHER* getCipher() const;
-
-	// Return the block size
-	virtual size_t getBlockSize() const;
+	// Base constructor
+	DESKey(size_t bitLen = 0) : SymmetricKey(bitLen) { }
+	
+	// Set the key
+	virtual bool setKeyBits(const ByteString& keybits);
 };
 
-#endif // !_SOFTHSM_V2_OSSLAES_H
+#endif // !_SOFTHSM_V2_DESKEY_H
 

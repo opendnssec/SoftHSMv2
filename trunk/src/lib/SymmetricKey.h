@@ -62,7 +62,7 @@ public:
 	// Retrieve the bit length
 	virtual size_t getBitLen() const;
 
-private:
+protected:
 	// The key
 	ByteString keyData;
 

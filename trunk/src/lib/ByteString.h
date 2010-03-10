@@ -36,6 +36,7 @@
 #define _SOFTHSM_V2_BYTESTRING_H
 
 #include <vector>
+#include <string>
 #include <stdlib.h>
 #include <limits.h>
 #include "config.h"
@@ -71,6 +72,9 @@ public:
 
 	// Return the const byte string
 	const unsigned char* const_byte_str() const;
+
+	// Return a hexadecimal character representation of the string
+	std::string hex_str() const;
 
 	// Return the size
 	size_t size() const;

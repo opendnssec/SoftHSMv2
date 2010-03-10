@@ -8,8 +8,10 @@ CRYPTOSOURCES=\
 BotanCryptoFactory.cpp \
 ByteString.cpp \
 CryptoFactory.cpp \
+DESKey.cpp \
 OSSLAES.cpp \
 OSSLCryptoFactory.cpp \
+OSSLDES.cpp \
 OSSLEVPSymmetricAlgorithm.cpp \
 OSSLRNG.cpp \
 SecureMemoryRegistry.cpp \
@@ -19,12 +21,15 @@ log.cpp
 CRYPTOHEADERS=\
 AsymmetricAlgorithm.h \
 AsymmetricKeyPair.h \
+AESKey.h \
 BotanCryptoFactory.h \
 ByteString.h \
 CryptoFactory.h \
+DESKey.h \
 HashAlgorithm.h \
 OSSLAES.h \
 OSSLCryptoFactory.h \
+OSSLDES.h \
 OSSLEVPSymmetricAlgorithm.h \
 OSSLRNG.h \
 PrivateKey.h \

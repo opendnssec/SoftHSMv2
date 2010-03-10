@@ -34,6 +34,7 @@
 
 #include <stdlib.h>
 #include <cppunit/extensions/HelperMacros.h>
+#include <string>
 #include "ByteStringTests.h"
 #include "ByteString.h"
 
@@ -189,5 +190,20 @@ void ByteStringTests::testXOR()
 	xed = l ^ r;
 
 	CPPUNIT_ASSERT(xed == x);
+}
+
+void ByteStringTests::testToHexStr()
+{
+	ByteString b("0102030405060708090A0B0C0D0E0F");
+	ByteString b1("DEADBEEF");
+	ByteString b2("deadC0FFEE");
+
+	std::string s = b.hex_str();
+	std::string s1 = b1.hex_str();
+	std::string s2 = b2.hex_str();
+
+	CPPUNIT_ASSERT(s.compare("0102030405060708090A0B0C0D0E0F") == 0);
+	CPPUNIT_ASSERT(s1.compare("DEADBEEF") == 0);
+	CPPUNIT_ASSERT(s2.compare("DEADC0FFEE") == 0);
 }
 

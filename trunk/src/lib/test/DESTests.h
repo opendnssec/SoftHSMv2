@@ -27,32 +27,43 @@
  */
 
 /*****************************************************************************
- OSSLAES.h
+ DESTests.h
 
- OpenSSL AES implementation
+ Contains test cases to test the DES implementation
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_OSSLAES_H
-#define _SOFTHSM_V2_OSSLAES_H
+#ifndef _SOFTHSM_V2_DESTESTS_H
+#define _SOFTHSM_V2_DESTESTS_H
 
-#include <openssl/evp.h>
-#include <string>
-#include "config.h"
-#include "OSSLEVPSymmetricAlgorithm.h"
+#include <cppunit/extensions/HelperMacros.h>
+#include "SymmetricAlgorithm.h"
 
-class OSSLAES : public OSSLEVPSymmetricAlgorithm
+class DESTests : public CppUnit::TestFixture
 {
+	CPPUNIT_TEST_SUITE(DESTests);
+	CPPUNIT_TEST(testCBC);
+	CPPUNIT_TEST(testECB);
+	CPPUNIT_TEST(testOFB);
+	CPPUNIT_TEST(testCFB);
+	CPPUNIT_TEST_SUITE_END();
+
 public:
-	// Destructor
-	virtual ~OSSLAES() { }
+	void testCBC();
+	void testECB();
+	void testOFB();
+	void testCFB();
 
-protected:
-	// Return the right EVP cipher for the operation
-	virtual const EVP_CIPHER* getCipher() const;
+	void setUp();
+	void tearDown();
 
-	// Return the block size
-	virtual size_t getBlockSize() const;
+private:
+	void writeTmpFile(ByteString& data);
+
+	void readTmpFile(ByteString& data);
+
+	// DES instance
+	SymmetricAlgorithm* des;
 };
 
-#endif // !_SOFTHSM_V2_OSSLAES_H
+#endif // !_SOFTHSM_V2_DESTESTS_H
 

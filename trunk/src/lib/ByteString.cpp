@@ -156,6 +156,22 @@ const unsigned char* ByteString::const_byte_str() const
 	return (const unsigned char*) &byteString[0];
 }
 
+// Return a hexadecimal character representation of the string
+std::string ByteString::hex_str() const
+{
+	std::string rv;
+	char hex[3];
+
+	for (size_t i = 0; i < byteString.size(); i++)
+	{
+		sprintf(hex, "%02X", byteString[i]);
+
+		rv += hex;
+	}
+
+	return rv;
+}
+
 // The size of the byte string
 size_t ByteString::size() const
 {

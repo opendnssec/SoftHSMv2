@@ -27,25 +27,31 @@
  */
 
 /*****************************************************************************
- OSSLAES.cpp
+ OSSLDES.cpp
 
- OpenSSL AES implementation
+ OpenSSL (3)DES implementation
  *****************************************************************************/
 
 #include "config.h"
-#include "OSSLAES.h"
+#include "OSSLDES.h"
 #include <algorithm>
 
-const EVP_CIPHER* OSSLAES::getCipher() const
+const EVP_CIPHER* OSSLDES::getCipher() const
 {
-	// Check currentKey bit length; AES only supports 128, 192 or 256 bit keys
-	if ((currentKey->getBitLen() != 128) && 
-	    (currentKey->getBitLen() != 192) &&
-            (currentKey->getBitLen() != 256))
+	// Check currentKey bit length; 3DES only supports 56-bit, 112-bit or 168-bit keys 
+	if ((currentKey->getBitLen() != 56) && 
+	    (currentKey->getBitLen() != 112) &&
+            (currentKey->getBitLen() != 168))
 	{
-		ERROR_MSG("Invalid AES currentKey length (%d bits)", currentKey->getBitLen());
+		ERROR_MSG("Invalid DES currentKey length (%d bits)", currentKey->getBitLen());
 
 		return NULL;
+	}
+
+	// People shouldn't really be using 56-bit DES keys, generate a warning
+	if (currentKey->getBitLen() == 56)
+	{
+		WARNING_MSG("CAUTION: use of 56-bit DES keys is not recommended!");
 	}
 
 	// Determine the cipher mode
@@ -53,35 +59,59 @@ const EVP_CIPHER* OSSLAES::getCipher() const
 	{
 		switch(currentKey->getBitLen())
 		{
-			case 128:
-				return EVP_aes_128_cbc();
-			case 192:
-				return EVP_aes_192_cbc();
-			case 256:
-				return EVP_aes_256_cbc();
+			case 56:
+				return EVP_des_cbc();
+			case 112:
+				return EVP_des_ede_cbc();
+			case 168:
+				return EVP_des_ede3_cbc();
 		};
 	}
 	else if (!currentCipherMode.compare("ecb"))
 	{
 		switch(currentKey->getBitLen())
 		{
-			case 128:
-				return EVP_aes_128_ecb();
-			case 192:
-				return EVP_aes_192_ecb();
-			case 256:
-				return EVP_aes_256_ecb();
+			case 56:
+				return EVP_des_ecb();
+			case 112:
+				return EVP_des_ede_ecb();
+			case 168:
+				return EVP_des_ede3_ecb();
+		};
+	}
+	else if (!currentCipherMode.compare("ofb"))
+	{
+		switch(currentKey->getBitLen())
+		{
+			case 56:
+				return EVP_des_ofb();
+			case 112:
+				return EVP_des_ede_ofb();
+			case 168:
+				return EVP_des_ede3_ofb();
+		};
+	}
+	else if (!currentCipherMode.compare("cfb"))
+	{
+		switch(currentKey->getBitLen())
+		{
+			case 56:
+				return EVP_des_cfb();
+			case 112:
+				return EVP_des_ede_cfb();
+			case 168:
+				return EVP_des_ede3_cfb();
 		};
 	}
 
-	ERROR_MSG("Invalid AES cipher mode %s", currentCipherMode.c_str());
+	ERROR_MSG("Invalid DES cipher mode %s", currentCipherMode.c_str());
 
 	return NULL;
 }
 
-size_t OSSLAES::getBlockSize() const
+size_t OSSLDES::getBlockSize() const
 {
-	// The block size is 128 bits
-	return 128 >> 3;
+	// The block size is 64 bits
+	return 64 >> 3;
 }
 

@@ -20,6 +20,7 @@ CRYPTOTESTSOURCES=$(CRYPTOSOURCES) \
 cryptotest.cpp \
 AESTests.cpp \
 ByteStringTests.cpp \
+DESTests.cpp \
 RNGTests.cpp \
 chisq.c \
 ent.c \
@@ -28,6 +29,7 @@ randtest.c
 CRYPTOTESTHEADERS=$(CRYPTOHEADERS) \
 AESTests.h \
 ByteStringTests.h \
+DESTests.h \
 RNGTests.h \
 ent.h \
 iso8859.h \

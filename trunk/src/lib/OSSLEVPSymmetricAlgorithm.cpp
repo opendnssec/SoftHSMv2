@@ -143,6 +143,9 @@ bool OSSLEVPSymmetricAlgorithm::encryptFinal(ByteString& encryptedData)
 		return false;
 	}
 
+	// Resize the output block
+	encryptedData.resize(outLen);
+
 	return true;
 }
 
@@ -257,6 +260,9 @@ bool OSSLEVPSymmetricAlgorithm::decryptFinal(ByteString& data)
 
 		return false;
 	}
+
+	// Resize the output block
+	data.resize(outLen);
 
 	return true;
 }

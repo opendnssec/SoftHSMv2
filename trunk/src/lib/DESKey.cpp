@@ -27,32 +27,46 @@
  */
 
 /*****************************************************************************
- OSSLAES.h
+ DESKey.cpp
 
- OpenSSL AES implementation
+ DES key class
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_OSSLAES_H
-#define _SOFTHSM_V2_OSSLAES_H
-
-#include <openssl/evp.h>
-#include <string>
 #include "config.h"
-#include "OSSLEVPSymmetricAlgorithm.h"
+#include "ByteString.h"
+#include "Serialisable.h"
+#include "DESKey.h"
 
-class OSSLAES : public OSSLEVPSymmetricAlgorithm
+// Set the key
+bool DESKey::setKeyBits(const ByteString& keybits)
 {
-public:
-	// Destructor
-	virtual ~OSSLAES() { }
+	if (bitLen > 0)
+	{
+		// Check if the correct input data is supplied
+		size_t expectedLen = 0;
 
-protected:
-	// Return the right EVP cipher for the operation
-	virtual const EVP_CIPHER* getCipher() const;
+		switch(bitLen)
+		{
+			case 56:
+				expectedLen = 8;
+				break;
+			case 112:
+				expectedLen = 16;
+				break;
+			case 168:
+				expectedLen = 24;
+				break;
+		};
 
-	// Return the block size
-	virtual size_t getBlockSize() const;
-};
+		// Check the length
+		if (keybits.size() != expectedLen)
+		{
+			return false;
+		}
+	}	
 
-#endif // !_SOFTHSM_V2_OSSLAES_H
+	keyData = keybits;
+
+	return true;
+}
 

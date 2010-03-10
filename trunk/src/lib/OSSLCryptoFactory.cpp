@@ -36,6 +36,7 @@
 #include "OSSLCryptoFactory.h"
 #include "OSSLRNG.h"
 #include "OSSLAES.h"
+#include "OSSLDES.h"
 
 #include <algorithm>
 #include <string.h>
@@ -72,6 +73,10 @@ SymmetricAlgorithm* OSSLCryptoFactory::getSymmetricAlgorithm(std::string algorit
 	if (!lcAlgo.compare("aes"))
 	{
 		return new OSSLAES();
+	}
+	else if (!lcAlgo.compare("des") || !lcAlgo.compare("3des"))
+	{
+		return new OSSLDES();
 	}
 	else 
 	{

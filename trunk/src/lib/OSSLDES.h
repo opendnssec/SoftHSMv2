@@ -27,24 +27,24 @@
  */
 
 /*****************************************************************************
- OSSLAES.h
+ OSSLDES.h
 
  OpenSSL AES implementation
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_OSSLAES_H
-#define _SOFTHSM_V2_OSSLAES_H
+#ifndef _SOFTHSM_V2_OSSLDES_H
+#define _SOFTHSM_V2_OSSLDES_H
 
 #include <openssl/evp.h>
 #include <string>
 #include "config.h"
 #include "OSSLEVPSymmetricAlgorithm.h"
 
-class OSSLAES : public OSSLEVPSymmetricAlgorithm
+class OSSLDES : public OSSLEVPSymmetricAlgorithm
 {
 public:
 	// Destructor
-	virtual ~OSSLAES() { }
+	virtual ~OSSLDES() { }
 
 protected:
 	// Return the right EVP cipher for the operation
@@ -54,5 +54,5 @@ protected:
 	virtual size_t getBlockSize() const;
 };
 
-#endif // !_SOFTHSM_V2_OSSLAES_H
+#endif // !_SOFTHSM_V2_OSSLDES_H
 
