@@ -27,66 +27,17 @@
  */
 
 /*****************************************************************************
- RNGTests.cpp
+ OSSLMD5.h
 
- Contains test cases to test the RNG class
+ OpenSSL MD5 implementation
  *****************************************************************************/
 
-#include <stdlib.h>
-#include <cppunit/extensions/HelperMacros.h>
-#include "RNGTests.h"
-#include "CryptoFactory.h"
-#include "RNG.h"
-#include "ent.h"
-#include <stdio.h>
+#include "config.h"
+#include "OSSLMD5.h"
+#include <openssl/evp.h>
 
-CPPUNIT_TEST_SUITE_REGISTRATION(RNGTests);
-
-void RNGTests::setUp()
+const EVP_MD* OSSLMD5::getEVPHash() const
 {
-	rng = NULL;
-
-	rng = CryptoFactory::i()->getRNG();
-
-	// Check the RNG
-	CPPUNIT_ASSERT(rng != NULL);
-}
-
-void RNGTests::tearDown()
-{
-	if (rng != NULL)
-	{
-		delete rng;
-	}
-
-	fflush(stdout);
-}
-
-void RNGTests::testSimpleComparison()
-{
-	ByteString a,b;
-
-	CPPUNIT_ASSERT(rng->generateRandom(a, 256));
-	CPPUNIT_ASSERT(rng->generateRandom(b, 256));
-	CPPUNIT_ASSERT(a.size() == 256);
-	CPPUNIT_ASSERT(b.size() == 256);
-	CPPUNIT_ASSERT(a != b);
-}
-
-void RNGTests::testEnt()
-{
-	ByteString a;
-	double entropy, chiProbability, arithMean, montePi, serialCorrelation;
-
-	// Generate 10MB of random data
-	CPPUNIT_ASSERT(rng->generateRandom(a, 10*1024*1024));
-
-	// Perform entropy tests
-	doEnt(a.byte_str(), a.size(), &entropy, &chiProbability, &arithMean, &montePi, &serialCorrelation);
-
-	// Check entropy
-	CPPUNIT_ASSERT(entropy >= 7.999);
-	CPPUNIT_ASSERT((arithMean >= 127.4) && (arithMean <= 127.6));
-	CPPUNIT_ASSERT(serialCorrelation <= 0.001);
+	return EVP_md5();
 }
 

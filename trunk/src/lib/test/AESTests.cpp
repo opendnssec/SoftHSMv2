@@ -57,6 +57,8 @@ void AESTests::tearDown()
 	{
 		delete aes;
 	}
+
+	fflush(stdout);
 }
 
 void AESTests::testCBC()

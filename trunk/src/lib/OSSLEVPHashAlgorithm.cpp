@@ -27,66 +27,76 @@
  */
 
 /*****************************************************************************
- RNGTests.cpp
+ OSSLEVPHashAlgorithm.cpp
 
- Contains test cases to test the RNG class
+ Base class for OpenSSL hash algorithm classes
  *****************************************************************************/
 
-#include <stdlib.h>
-#include <cppunit/extensions/HelperMacros.h>
-#include "RNGTests.h"
-#include "CryptoFactory.h"
-#include "RNG.h"
-#include "ent.h"
-#include <stdio.h>
+#include "config.h"
+#include "OSSLEVPHashAlgorithm.h"
 
-CPPUNIT_TEST_SUITE_REGISTRATION(RNGTests);
-
-void RNGTests::setUp()
+// Hashing functions
+bool OSSLEVPHashAlgorithm::hashInit()
 {
-	rng = NULL;
-
-	rng = CryptoFactory::i()->getRNG();
-
-	// Check the RNG
-	CPPUNIT_ASSERT(rng != NULL);
-}
-
-void RNGTests::tearDown()
-{
-	if (rng != NULL)
+	if (!HashAlgorithm::hashInit())
 	{
-		delete rng;
+		return false;
 	}
 
-	fflush(stdout);
+	// Initialise EVP digesting
+	if (!EVP_DigestInit(&curCTX, getEVPHash()))
+	{
+		ERROR_MSG("EVP_DigestInit failed");
+
+		ByteString dummy;
+		HashAlgorithm::hashFinal(dummy);
+
+		return false;
+	}
+
+	return true;
 }
 
-void RNGTests::testSimpleComparison()
+bool OSSLEVPHashAlgorithm::hashUpdate(const ByteString& data)
 {
-	ByteString a,b;
+	if (!HashAlgorithm::hashUpdate(data))
+	{
+		return false;
+	}
 
-	CPPUNIT_ASSERT(rng->generateRandom(a, 256));
-	CPPUNIT_ASSERT(rng->generateRandom(b, 256));
-	CPPUNIT_ASSERT(a.size() == 256);
-	CPPUNIT_ASSERT(b.size() == 256);
-	CPPUNIT_ASSERT(a != b);
+	// Continue digesting
+	if (!EVP_DigestUpdate(&curCTX, (unsigned char*) data.const_byte_str(), data.size()))
+	{
+		ERROR_MSG("EVP_DigestUpdate failed");
+
+		ByteString dummy;
+		HashAlgorithm::hashFinal(dummy);
+
+		return false;
+	}
+
+	return true;
 }
 
-void RNGTests::testEnt()
+bool OSSLEVPHashAlgorithm::hashFinal(ByteString& hashedData)
 {
-	ByteString a;
-	double entropy, chiProbability, arithMean, montePi, serialCorrelation;
+	if (!HashAlgorithm::hashFinal(hashedData))
+	{
+		return false;
+	}
 
-	// Generate 10MB of random data
-	CPPUNIT_ASSERT(rng->generateRandom(a, 10*1024*1024));
+	hashedData.resize(EVP_MD_size(getEVPHash()));
+	unsigned int outLen = hashedData.size();
 
-	// Perform entropy tests
-	doEnt(a.byte_str(), a.size(), &entropy, &chiProbability, &arithMean, &montePi, &serialCorrelation);
+	if (!EVP_DigestFinal(&curCTX, &hashedData[0], &outLen))
+	{
+		ERROR_MSG("EVP_DigestFinal failed");
 
-	// Check entropy
-	CPPUNIT_ASSERT(entropy >= 7.999);
-	CPPUNIT_ASSERT((arithMean >= 127.4) && (arithMean <= 127.6));
-	CPPUNIT_ASSERT(serialCorrelation <= 0.001);
+		return false;
+	}
+
+	hashedData.resize(outLen);
+
+	return true;
 }
 

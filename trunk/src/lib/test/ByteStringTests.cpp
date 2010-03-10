@@ -33,6 +33,7 @@
  *****************************************************************************/
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <cppunit/extensions/HelperMacros.h>
 #include <string>
 #include "ByteStringTests.h"
@@ -46,6 +47,7 @@ void ByteStringTests::setUp()
 
 void ByteStringTests::tearDown()
 {
+	fflush(stdout);
 }
 
 void ByteStringTests::testIntegrity()

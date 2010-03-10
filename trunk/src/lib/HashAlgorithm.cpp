@@ -27,66 +27,52 @@
  */
 
 /*****************************************************************************
- RNGTests.cpp
+ HashAlgorithm.cpp
 
- Contains test cases to test the RNG class
+ Base class for hash algorithm classes
  *****************************************************************************/
 
-#include <stdlib.h>
-#include <cppunit/extensions/HelperMacros.h>
-#include "RNGTests.h"
-#include "CryptoFactory.h"
-#include "RNG.h"
-#include "ent.h"
-#include <stdio.h>
+#include "config.h"
+#include "HashAlgorithm.h"
 
-CPPUNIT_TEST_SUITE_REGISTRATION(RNGTests);
-
-void RNGTests::setUp()
+// Base constructor
+HashAlgorithm::HashAlgorithm()
 {
-	rng = NULL;
-
-	rng = CryptoFactory::i()->getRNG();
-
-	// Check the RNG
-	CPPUNIT_ASSERT(rng != NULL);
+	currentOperation = NONE;
 }
 
-void RNGTests::tearDown()
+// Hashing functions
+bool HashAlgorithm::hashInit()
 {
-	if (rng != NULL)
+	if (currentOperation != NONE)
 	{
-		delete rng;
+		return false;
 	}
 
-	fflush(stdout);
+	currentOperation = HASHING;
+
+	return true;
 }
 
-void RNGTests::testSimpleComparison()
+bool HashAlgorithm::hashUpdate(const ByteString& data)
 {
-	ByteString a,b;
+	if (currentOperation != HASHING)
+	{
+		return false;
+	}
 
-	CPPUNIT_ASSERT(rng->generateRandom(a, 256));
-	CPPUNIT_ASSERT(rng->generateRandom(b, 256));
-	CPPUNIT_ASSERT(a.size() == 256);
-	CPPUNIT_ASSERT(b.size() == 256);
-	CPPUNIT_ASSERT(a != b);
+	return true;
 }
 
-void RNGTests::testEnt()
+bool HashAlgorithm::hashFinal(ByteString& hashedData)
 {
-	ByteString a;
-	double entropy, chiProbability, arithMean, montePi, serialCorrelation;
+	if (currentOperation != HASHING)
+	{
+		return false;
+	}
 
-	// Generate 10MB of random data
-	CPPUNIT_ASSERT(rng->generateRandom(a, 10*1024*1024));
-
-	// Perform entropy tests
-	doEnt(a.byte_str(), a.size(), &entropy, &chiProbability, &arithMean, &montePi, &serialCorrelation);
-
-	// Check entropy
-	CPPUNIT_ASSERT(entropy >= 7.999);
-	CPPUNIT_ASSERT((arithMean >= 127.4) && (arithMean <= 127.6));
-	CPPUNIT_ASSERT(serialCorrelation <= 0.001);
+	currentOperation = NONE;
+	
+	return true;
 }
 

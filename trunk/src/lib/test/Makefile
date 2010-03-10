@@ -21,6 +21,7 @@ cryptotest.cpp \
 AESTests.cpp \
 ByteStringTests.cpp \
 DESTests.cpp \
+HashTests.cpp \
 RNGTests.cpp \
 chisq.c \
 ent.c \
@@ -30,6 +31,7 @@ CRYPTOTESTHEADERS=$(CRYPTOHEADERS) \
 AESTests.h \
 ByteStringTests.h \
 DESTests.h \
+HashTests.h \
 RNGTests.h \
 ent.h \
 iso8859.h \

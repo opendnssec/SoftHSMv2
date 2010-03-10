@@ -57,6 +57,8 @@ void DESTests::tearDown()
 	{
 		delete des;
 	}
+
+	fflush(stdout);
 }
 
 void DESTests::testCBC()

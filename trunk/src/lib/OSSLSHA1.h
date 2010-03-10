@@ -27,66 +27,23 @@
  */
 
 /*****************************************************************************
- RNGTests.cpp
+ OSSLSHA1.h
 
- Contains test cases to test the RNG class
+ OpenSSL SHA1 implementation
  *****************************************************************************/
 
-#include <stdlib.h>
-#include <cppunit/extensions/HelperMacros.h>
-#include "RNGTests.h"
-#include "CryptoFactory.h"
-#include "RNG.h"
-#include "ent.h"
-#include <stdio.h>
+#ifndef _SOFTHSM_V2_OSSLSHA1_H
+#define _SOFTHSM_V2_OSSLSHA1_H
 
-CPPUNIT_TEST_SUITE_REGISTRATION(RNGTests);
+#include "config.h"
+#include "OSSLEVPHashAlgorithm.h"
+#include <openssl/evp.h>
 
-void RNGTests::setUp()
+class OSSLSHA1 : public OSSLEVPHashAlgorithm
 {
-	rng = NULL;
+protected:
+	virtual const EVP_MD* getEVPHash() const;
+};
 
-	rng = CryptoFactory::i()->getRNG();
-
-	// Check the RNG
-	CPPUNIT_ASSERT(rng != NULL);
-}
-
-void RNGTests::tearDown()
-{
-	if (rng != NULL)
-	{
-		delete rng;
-	}
-
-	fflush(stdout);
-}
-
-void RNGTests::testSimpleComparison()
-{
-	ByteString a,b;
-
-	CPPUNIT_ASSERT(rng->generateRandom(a, 256));
-	CPPUNIT_ASSERT(rng->generateRandom(b, 256));
-	CPPUNIT_ASSERT(a.size() == 256);
-	CPPUNIT_ASSERT(b.size() == 256);
-	CPPUNIT_ASSERT(a != b);
-}
-
-void RNGTests::testEnt()
-{
-	ByteString a;
-	double entropy, chiProbability, arithMean, montePi, serialCorrelation;
-
-	// Generate 10MB of random data
-	CPPUNIT_ASSERT(rng->generateRandom(a, 10*1024*1024));
-
-	// Perform entropy tests
-	doEnt(a.byte_str(), a.size(), &entropy, &chiProbability, &arithMean, &montePi, &serialCorrelation);
-
-	// Check entropy
-	CPPUNIT_ASSERT(entropy >= 7.999);
-	CPPUNIT_ASSERT((arithMean >= 127.4) && (arithMean <= 127.6));
-	CPPUNIT_ASSERT(serialCorrelation <= 0.001);
-}
+#endif // !_SOFTHSM_V2_OSSLSHA1_H
 

@@ -36,23 +36,30 @@
 #define _SOFTHSM_V2_HASHALGORITHM_H
 
 #include "config.h"
-#include "HashAlgorithm.h"
+#include "ByteString.h"
 
 class HashAlgorithm
 {
 public:
 	// Base constructors
-	HashAlgorithm() { }
+	HashAlgorithm();
 
 	// Destructor
 	virtual ~HashAlgorithm() { }
 
 	// Hashing functions
-	virtual bool hashInit() = 0;
-	virtual bool hashUpdate(const ByteString& data) = 0;
-	virtual bool hashFinal(ByteString& hashedData) = 0;
+	virtual bool hashInit();
+	virtual bool hashUpdate(const ByteString& data);
+	virtual bool hashFinal(ByteString& hashedData);
 
-private:
+protected:
+	// The current operation
+	enum
+	{
+		NONE,
+		HASHING
+	}
+	currentOperation;
 };
 
 #endif // !_SOFTHSM_V2_HASHALGORITHM_H

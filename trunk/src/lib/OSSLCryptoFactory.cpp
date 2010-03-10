@@ -37,6 +37,10 @@
 #include "OSSLRNG.h"
 #include "OSSLAES.h"
 #include "OSSLDES.h"
+#include "OSSLMD5.h"
+#include "OSSLSHA1.h"
+#include "OSSLSHA256.h"
+#include "OSSLSHA512.h"
 
 #include <algorithm>
 #include <string.h>
@@ -105,7 +109,33 @@ AsymmetricAlgorithm* OSSLCryptoFactory::getAsymmetricAlgorithm(std::string algor
 // Create a concrete instance of a hash algorithm
 HashAlgorithm* OSSLCryptoFactory::getHashAlgorithm(std::string algorithm)
 {
-	// TODO: add algorithm implementations
+	std::string lcAlgo;
+	lcAlgo.resize(algorithm.size());
+	std::transform(algorithm.begin(), algorithm.end(), lcAlgo.begin(), tolower);
+
+	if (!lcAlgo.compare("md5"))
+	{
+		return new OSSLMD5();
+	}
+	else if (!lcAlgo.compare("sha1"))
+	{
+		return new OSSLSHA1();
+	}
+	else if (!lcAlgo.compare("sha256"))
+	{
+		return new OSSLSHA256();
+	}
+	else if (!lcAlgo.compare("sha512"))
+	{
+		return new OSSLSHA512();
+	}
+	else
+	{
+		// No algorithm implementation is available
+		ERROR_MSG("Unknown algorithm '%s'", algorithm.c_str());
+
+		return NULL;
+	}
 
 	// No algorithm implementation is available
 	return NULL;
@@ -114,12 +144,20 @@ HashAlgorithm* OSSLCryptoFactory::getHashAlgorithm(std::string algorithm)
 // Create a concrete instance of an RNG
 RNG* OSSLCryptoFactory::getRNG(std::string name /* = "default" */)
 {
-	if (name == "default")
+	std::string lcAlgo;
+	lcAlgo.resize(name.size());
+	std::transform(name.begin(), name.end(), lcAlgo.begin(), tolower);
+
+	if (!lcAlgo.compare("default"))
 	{
 		return new OSSLRNG();
 	}
+	else
+	{
+		// No algorithm implementation is available
+		ERROR_MSG("Unknown algorithm '%s'", name.c_str());
 
-	// No algorithm implementation is available
-	return NULL;
+		return NULL;
+	}
 }
 
