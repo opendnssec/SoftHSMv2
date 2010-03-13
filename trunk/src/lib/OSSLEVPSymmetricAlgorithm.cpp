@@ -36,6 +36,22 @@
 
 #include "config.h"
 #include "OSSLEVPSymmetricAlgorithm.h"
+#include "salloc.h"
+
+// Constructor
+OSSLEVPSymmetricAlgorithm::OSSLEVPSymmetricAlgorithm()
+{
+	pCurCTX = NULL;
+}
+
+// Destructor
+OSSLEVPSymmetricAlgorithm::~OSSLEVPSymmetricAlgorithm()
+{
+	if (pCurCTX != NULL)
+	{
+		sfree(pCurCTX);
+	}
+}
 
 // Encryption functions
 bool OSSLEVPSymmetricAlgorithm::encryptInit(const SymmetricKey* key, const std::string mode /* = "cbc" */, const ByteString& IV /* = ByteString()*/)
@@ -53,6 +69,8 @@ bool OSSLEVPSymmetricAlgorithm::encryptInit(const SymmetricKey* key, const std::
 
 		ByteString dummy;
 		SymmetricAlgorithm::encryptFinal(dummy);
+
+		return false;
 	}
 
 	ByteString iv;
@@ -79,14 +97,27 @@ bool OSSLEVPSymmetricAlgorithm::encryptInit(const SymmetricKey* key, const std::
 		return false;
 	}
 
-	// Wipe the current context
-	memset(&curCTX, 0, sizeof(curCTX));
+	// Allocate the EVP context
+	pCurCTX = (EVP_CIPHER_CTX*) salloc(sizeof(EVP_CIPHER_CTX));
 
-	int rv = EVP_EncryptInit(&curCTX, cipher, (unsigned char*) currentKey->getKeyBits().const_byte_str(), iv.byte_str());
+	if (pCurCTX == NULL)
+	{
+		ERROR_MSG("Failed to allocate space for EVP_CIPHER_CTX");
+
+		ByteString dummy;
+		SymmetricAlgorithm::encryptFinal(dummy);
+
+		return false;
+	}
+
+	int rv = EVP_EncryptInit(pCurCTX, cipher, (unsigned char*) currentKey->getKeyBits().const_byte_str(), iv.byte_str());
 
 	if (!rv)
 	{
 		ERROR_MSG("Failed to initialise EVP encrypt operation");
+
+		sfree(pCurCTX);
+		pCurCTX = NULL;
 
 		ByteString dummy;
 		SymmetricAlgorithm::encryptFinal(dummy);
@@ -101,6 +132,12 @@ bool OSSLEVPSymmetricAlgorithm::encryptUpdate(const ByteString& data, ByteString
 {
 	if (!SymmetricAlgorithm::encryptUpdate(data, encryptedData))
 	{
+		if (pCurCTX != NULL)
+		{
+			sfree(pCurCTX);
+			pCurCTX = NULL;
+		}
+
 		return false;
 	}
 
@@ -108,9 +145,12 @@ bool OSSLEVPSymmetricAlgorithm::encryptUpdate(const ByteString& data, ByteString
 	encryptedData.resize(data.size() + getBlockSize() - 1);
 
 	int outLen = encryptedData.size();
-	if (!EVP_EncryptUpdate(&curCTX, &encryptedData[0], &outLen, (unsigned char*) data.const_byte_str(), data.size()))
+	if (!EVP_EncryptUpdate(pCurCTX, &encryptedData[0], &outLen, (unsigned char*) data.const_byte_str(), data.size()))
 	{
 		ERROR_MSG("EVP_EncryptUpdate failed");
+
+		sfree(pCurCTX);
+		pCurCTX = NULL;
 
 		ByteString dummy;
 		SymmetricAlgorithm::encryptFinal(dummy);
@@ -128,6 +168,12 @@ bool OSSLEVPSymmetricAlgorithm::encryptFinal(ByteString& encryptedData)
 {
 	if (!SymmetricAlgorithm::encryptFinal(encryptedData))
 	{
+		if (pCurCTX != NULL)
+		{
+			sfree(pCurCTX);
+			pCurCTX = NULL;
+		}
+
 		return false;
 	}
 
@@ -136,15 +182,21 @@ bool OSSLEVPSymmetricAlgorithm::encryptFinal(ByteString& encryptedData)
 
 	int outLen = encryptedData.size();
 
-	if (!EVP_EncryptFinal(&curCTX, &encryptedData[0], &outLen))
+	if (!EVP_EncryptFinal(pCurCTX, &encryptedData[0], &outLen))
 	{
 		ERROR_MSG("EVP_EncryptFinal failed");
+
+		sfree(pCurCTX);
+		pCurCTX = NULL;
 
 		return false;
 	}
 
 	// Resize the output block
 	encryptedData.resize(outLen);
+
+	sfree(pCurCTX);
+	pCurCTX = NULL;
 
 	return true;
 }
@@ -165,6 +217,8 @@ bool OSSLEVPSymmetricAlgorithm::decryptInit(const SymmetricKey* key, const std::
 
 		ByteString dummy;
 		SymmetricAlgorithm::encryptFinal(dummy);
+
+		return false;
 	}
 
 	ByteString iv;
@@ -191,14 +245,27 @@ bool OSSLEVPSymmetricAlgorithm::decryptInit(const SymmetricKey* key, const std::
 		return false;
 	}
 
-	// Wipe the current context
-	memset(&curCTX, 0, sizeof(curCTX));
+	// Allocate the EVP context
+	pCurCTX = (EVP_CIPHER_CTX*) salloc(sizeof(EVP_CIPHER_CTX));
 
-	int rv = EVP_DecryptInit(&curCTX, cipher, (unsigned char*) currentKey->getKeyBits().const_byte_str(), iv.byte_str());
+	if (pCurCTX == NULL)
+	{
+		ERROR_MSG("Failed to allocate space for EVP_CIPHER_CTX");
+
+		ByteString dummy;
+		SymmetricAlgorithm::encryptFinal(dummy);
+
+		return false;
+	}
+
+	int rv = EVP_DecryptInit(pCurCTX, cipher, (unsigned char*) currentKey->getKeyBits().const_byte_str(), iv.byte_str());
 
 	if (!rv)
 	{
 		ERROR_MSG("Failed to initialise EVP decrypt operation");
+
+		sfree(pCurCTX);
+		pCurCTX = NULL;
 
 		ByteString dummy;
 		SymmetricAlgorithm::encryptFinal(dummy);
@@ -213,6 +280,12 @@ bool OSSLEVPSymmetricAlgorithm::decryptUpdate(const ByteString& encryptedData, B
 {
 	if (!SymmetricAlgorithm::decryptUpdate(encryptedData, data))
 	{
+		if (pCurCTX != NULL)
+		{
+			sfree(pCurCTX);
+			pCurCTX = NULL;
+		}
+
 		return false;
 	}
 
@@ -223,9 +296,12 @@ bool OSSLEVPSymmetricAlgorithm::decryptUpdate(const ByteString& encryptedData, B
 
 	ERROR_MSG("Decrypting %d bytes into buffer of %d bytes", encryptedData.size(), data.size());
 
-	if (!EVP_DecryptUpdate(&curCTX, &data[0], &outLen, (unsigned char*) encryptedData.const_byte_str(), encryptedData.size()))
+	if (!EVP_DecryptUpdate(pCurCTX, &data[0], &outLen, (unsigned char*) encryptedData.const_byte_str(), encryptedData.size()))
 	{
 		ERROR_MSG("EVP_DecryptUpdate failed");
+
+		sfree(pCurCTX);
+		pCurCTX = NULL;
 
 		ByteString dummy;
 		SymmetricAlgorithm::decryptFinal(dummy);
@@ -245,6 +321,12 @@ bool OSSLEVPSymmetricAlgorithm::decryptFinal(ByteString& data)
 {
 	if (!SymmetricAlgorithm::decryptFinal(data))
 	{
+		if (pCurCTX != NULL)
+		{
+			sfree(pCurCTX);
+			pCurCTX = NULL;
+		}
+
 		return false;
 	}
 
@@ -254,15 +336,21 @@ bool OSSLEVPSymmetricAlgorithm::decryptFinal(ByteString& data)
 	int outLen = data.size();
 	int rv;
 
-	if (!(rv = EVP_DecryptFinal(&curCTX, &data[0], &outLen)))
+	if (!(rv = EVP_DecryptFinal(pCurCTX, &data[0], &outLen)))
 	{
 		ERROR_MSG("EVP_DecryptFinal failed (0x%08X)", rv);
+
+		sfree(pCurCTX);
+		pCurCTX = NULL;
 
 		return false;
 	}
 
 	// Resize the output block
 	data.resize(outLen);
+
+	sfree(pCurCTX);
+	pCurCTX = NULL;
 
 	return true;
 }

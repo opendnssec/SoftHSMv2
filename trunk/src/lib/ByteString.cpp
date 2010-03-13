@@ -39,9 +39,8 @@
 #include "ByteString.h"
 
 // Constructors
-ByteString::ByteString(size_t initialSize /* = 0 */)
+ByteString::ByteString()
 {
-	byteString.resize(initialSize);
 }
 
 ByteString::ByteString(const unsigned char* bytes, const size_t bytesLen)
@@ -70,6 +69,33 @@ ByteString::ByteString(const char* hexString)
 
 		this->operator+=(byteVal);
 	}
+}
+
+ByteString::ByteString(const unsigned long longValue)
+{
+	unsigned long setValue = longValue;
+
+	// Convert the value to a big-endian byte string; N.B.: this code assumes that unsigned long
+	// values are stored as a 64-bit value, which is a safe assumption on modern systems. It will
+	// also properly handle a 32-bit value and will simply store 4 zeroes at the front of the
+	// string. If at some point in time we get 128-bit architectures, the top 8 bytes of the value
+	// will be discarded... (but hey, 640K is enough for everybody, right?)
+	//
+	// The reason for coding it this way is that implementations of SoftHSM will maintain
+	// binary compatibility between eachothers background storage (i.e. a 32-bit SoftHSM version can
+	// read the storage of a 64-bit version and vice versa under the assumption that the stored
+	// values never exceed 32-bits, which is likely since these values are only used to encode
+	// byte string lengths)
+	unsigned char byteStrIn[8];
+	
+	for (size_t i = 0; i < 8; i++)
+	{
+		byteStrIn[7-i] = (unsigned char) (setValue & 0xFF);
+		setValue >>= 8;
+	}
+
+	byteString.resize(8);
+	memcpy(&byteString[0], byteStrIn, 8);
 }
 
 ByteString::ByteString(const ByteString& in)
@@ -168,6 +194,59 @@ std::string ByteString::hex_str() const
 
 		rv += hex;
 	}
+
+	return rv;
+}
+
+// Return the long value
+const unsigned long ByteString::long_val() const
+{
+	// Check the length
+	if (byteString.size() < 8)
+	{
+		DEBUG_MSG("Cannot retrieve an unsigned long value from a %d byte string", byteString.size());
+
+		return 0;
+	}
+
+	// Convert the first 8 bytes of the string to an unsigned long value
+	unsigned long rv = 0;
+
+	for (size_t i = 0; i < 8; i++)
+	{
+		rv <<= 8;
+		rv += byteString[i];
+	}
+
+	return rv;
+}
+
+// Cut of the first part of the string and convert it to a long value
+unsigned long ByteString::firstLong()
+{
+	unsigned long rv = long_val();
+
+	split(8);
+
+	return rv;
+}
+
+// Split of the specified part of the string as a separate byte string
+ByteString ByteString::split(size_t len)
+{
+	ByteString rv = substr(0, len);
+
+	size_t newSize = (byteString.size() > len) ? (byteString.size() - len) : 0;
+
+	if (newSize > 0)
+	{
+		for (size_t i = 0; i < newSize; i++)
+		{
+			byteString[i] = byteString[i + len];
+		}
+	}
+
+	byteString.resize(newSize);
 
 	return rv;
 }

@@ -5,6 +5,7 @@
 LDFLAGS+=-lcrypto
 
 CRYPTOSOURCES=\
+AsymmetricAlgorithm.cpp \
 BotanCryptoFactory.cpp \
 ByteString.cpp \
 CryptoFactory.cpp \
@@ -17,13 +18,15 @@ OSSLEVPHashAlgorithm.cpp \
 OSSLEVPSymmetricAlgorithm.cpp \
 OSSLMD5.cpp \
 OSSLRNG.cpp \
+OSSLRSA.cpp \
 OSSLSHA1.cpp \
 OSSLSHA256.cpp \
 OSSLSHA512.cpp \
 SecureMemoryRegistry.cpp \
 SymmetricAlgorithm.cpp \
 SymmetricKey.cpp \
-log.cpp
+log.cpp \
+salloc.cpp
 CRYPTOHEADERS=\
 AsymmetricAlgorithm.h \
 AsymmetricKeyPair.h \
@@ -40,6 +43,7 @@ OSSLEVPHashAlgorithm.h \
 OSSLEVPSymmetricAlgorithm.h \
 OSSLMD5.h \
 OSSLRNG.h \
+OSSLRSA.h \
 OSSLSHA1.h \
 OSSLSHA256.h \
 OSSLSHA512.h \
@@ -51,6 +55,7 @@ SecureMemoryRegistry.h \
 Serialisable.h \
 SymmetricAlgorithm.h \
 SymmetricKey.h \
-log.h
+log.h \
+salloc.h
 CRYPTOOBJECTS1=$(CRYPTOSOURCES:.cpp=.o)
 CRYPTOOBJECTS=$(CRYPTOOBJECTS1:.c=.o)

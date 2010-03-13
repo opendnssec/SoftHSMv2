@@ -3,10 +3,10 @@
 # $Id$
 
 CC=gcc
-CFLAGS=-g -Wall `cppunit-config --cflags` -DWITH_OPENSSL -I..
+CFLAGS=-g -Wall `cppunit-config --cflags` -DWITH_OPENSSL -I.. -DSENSITIVE_NON_PAGED
 
 CPP=g++
-CPPFLAGS=-g -Wall `cppunit-config --cflags` -DWITH_OPENSSL -I..
+CPPFLAGS=-g -Wall `cppunit-config --cflags` -DWITH_OPENSSL -I.. -DSENSITIVE_NON_PAGED
 
 LDFLAGS=`cppunit-config --libs` -L..
 

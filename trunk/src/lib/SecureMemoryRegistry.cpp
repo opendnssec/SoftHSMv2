@@ -69,11 +69,15 @@ void SecureMemoryRegistry::add(void* pointer, size_t blocksize)
 }
 
 // Unregister a block of memory
-void SecureMemoryRegistry::remove(void* pointer)
+size_t SecureMemoryRegistry::remove(void* pointer)
 {
 	DEBUG_MSG("Unregistered block of %d bytes at 0x%x", registry[pointer], pointer);
 
+	size_t rv = registry[pointer];
+
 	registry.erase(pointer);
+
+	return rv;
 }
 
 // Wipe all registered blocks of memory

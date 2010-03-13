@@ -209,3 +209,62 @@ void ByteStringTests::testToHexStr()
 	CPPUNIT_ASSERT(s2.compare("DEADC0FFEE") == 0);
 }
 
+void ByteStringTests::testLongValues()
+{
+	unsigned long ul1 = 0x00112233;
+	unsigned long ul2 = 0x10203040;
+	unsigned long ul3 = 0xF0E0D0C0;
+
+	ByteString b1(ul1);
+	ByteString b2(ul2);
+	ByteString b3(ul3);
+
+	CPPUNIT_ASSERT(b1 == ByteString("0000000000112233"));
+	CPPUNIT_ASSERT(b2 == ByteString("0000000010203040"));
+	CPPUNIT_ASSERT(b3 == ByteString("00000000F0E0D0C0"));
+
+	CPPUNIT_ASSERT(b1.long_val() == ul1);
+	CPPUNIT_ASSERT(b2.long_val() == ul2);
+	CPPUNIT_ASSERT(b3.long_val() == ul3);
+
+	ByteString concat = b1 + b2 + b3;
+
+	CPPUNIT_ASSERT(concat == ByteString("0000000000112233000000001020304000000000F0E0D0C0"));
+
+	unsigned long ulr1 = concat.firstLong();
+
+	CPPUNIT_ASSERT(ulr1 == ul1);
+	CPPUNIT_ASSERT(concat == ByteString("000000001020304000000000F0E0D0C0"));
+
+	unsigned long ulr2 = concat.firstLong();
+
+	CPPUNIT_ASSERT(ulr2 == ul2);
+	CPPUNIT_ASSERT(concat == ByteString("00000000F0E0D0C0"));
+
+	unsigned long ulr3 = concat.firstLong();
+
+	CPPUNIT_ASSERT(ulr3 == ul3);
+	CPPUNIT_ASSERT(concat.size() == 0);
+
+	ByteString b4("ABCDEF");
+
+	CPPUNIT_ASSERT(b4.long_val() == 0);
+	CPPUNIT_ASSERT(b4.firstLong() == 0);
+	CPPUNIT_ASSERT(b4.size() == 0);
+}
+
+void ByteStringTests::testSplitting()
+{
+	ByteString b("AABBCCDDEEFF112233445566");
+	
+	ByteString b1 = b.split(6);
+
+	CPPUNIT_ASSERT(b == ByteString("112233445566"));
+	CPPUNIT_ASSERT(b1 == ByteString("AABBCCDDEEFF"));
+
+	ByteString b2 = b1.split(8);
+
+	CPPUNIT_ASSERT(b2 == ByteString("AABBCCDDEEFF"));
+	CPPUNIT_ASSERT(b1.size() == 0);
+}
+

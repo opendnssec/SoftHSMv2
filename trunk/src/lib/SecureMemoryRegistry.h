@@ -47,7 +47,7 @@ public:
 
 	void add(void* pointer, size_t blocksize);
 
-	void remove(void* pointer);
+	size_t remove(void* pointer);
 
 	void wipe();
 

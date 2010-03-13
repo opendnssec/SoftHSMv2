@@ -27,71 +27,50 @@
  */
 
 /*****************************************************************************
- AsymmetricAlgorithm.h
+ OSSLRSA.h
 
- Base class for asymmetric algorithm classes
+ OpenSSL RSA asymmetric algorithm implementation
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_ASYMMETRICALGORITHM_H
-#define _SOFTHSM_V2_ASYMMETRICALGORITHM_H
+#ifndef _SOFTHSM_V2_OSSLRSA_H
+#define _SOFTHSM_V2_OSSLRSA_H
 
 #include "config.h"
-#include <string>
-#include "AsymmetricKeyPair.h"
-#include "PublicKey.h"
-#include "PrivateKey.h"
-#include "RNG.h"
+#include "AsymmetricAlgorithm.h"
+#include <openssl/rsa.h>
 
-class AsymmetricAlgorithm
+class OSSLRSA : public AsymmetricAlgorithm
 {
 public:
 	// Base constructors
-	AsymmetricAlgorithm();
+	OSSLRSA() : AsymmetricAlgorithm() { }
 
 	// Destructor
-	virtual ~AsymmetricAlgorithm() { }
+	virtual ~OSSLRSA() { }
 
 	// Signing functions
-	virtual bool sign(PrivateKey* privateKey, const ByteString& dataToSign, ByteString& signature, const std::string mechanism);
 	virtual bool signInit(PrivateKey* privateKey, const std::string mechanism);
 	virtual bool signUpdate(const ByteString& dataToSign);
 	virtual bool signFinal(ByteString& signature);
 
 	// Verification functions
-	virtual bool verify(PublicKey* publicKey, const ByteString& originalData, const ByteString& signature, const std::string mechanism);
 	virtual bool verifyInit(PublicKey* publicKey, const std::string mechanism);
 	virtual bool verifyUpdate(const ByteString& originalData);
 	virtual bool verifyFinal(const ByteString& signature);
 
 	// Encryption functions
-	virtual bool encrypt(PublicKey* publicKey, const ByteString& data, ByteString& encryptedData, const std::string padding) = 0;
+	virtual bool encrypt(PublicKey* publicKey, const ByteString& data, ByteString& encryptedData, const std::string padding);
 
 	// Decryption functions
-	virtual bool decrypt(PrivateKey* privateKey, const ByteString& encryptedData, ByteString& data, const std::string padding) = 0;
+	virtual bool decrypt(PrivateKey* privateKey, const ByteString& encryptedData, ByteString& data, const std::string padding);
 
 	// Key factory
-	virtual bool generateKeyPair(AsymmetricKeyPair& keyPair, size_t keySize, RNG* rng = NULL) = 0;
-	virtual bool blankKeyPair(AsymmetricKeyPair& keyPair) = 0;
-	virtual bool reconstructKeyPair(AsymmetricKeyPair& keyPair, ByteString& serialisedData) = 0;
-	virtual bool reconstructPublicKey(PublicKey& publicKey, ByteString& serialisedData) = 0;
-	virtual bool reconstructPrivateKey(PrivateKey& privateKey, ByteString& serialisedData) = 0;
-
-protected:
-	PublicKey* currentPublicKey;
-	PrivateKey* currentPrivateKey;
-
-	std::string currentMechanism;
-	std::string currentPadding;
-
-private:
-	enum
-	{
-		NONE,
-		SIGN,
-		VERIFY
-	}
-	currentOperation;
+	virtual bool generateKeyPair(AsymmetricKeyPair& keyPair, size_t keySize, RNG* rng = NULL);
+	virtual bool blankKeyPair(AsymmetricKeyPair& keyPair);
+	virtual bool reconstructKeyPair(AsymmetricKeyPair& keyPair, ByteString& serialisedData);
+	virtual bool reconstructPublicKey(PublicKey& publicKey, ByteString& serialisedData);
+	virtual bool reconstructPrivateKey(PrivateKey& privateKey, ByteString& serialisedData);
 };
 
-#endif // !_SOFTHSM_V2_ASYMMETRICALGORITHM_H
+#endif // !_SOFTHSM_V2_OSSLRSA_H
 

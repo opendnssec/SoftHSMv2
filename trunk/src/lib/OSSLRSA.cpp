@@ -27,50 +27,82 @@
  */
 
 /*****************************************************************************
- OSSLEVPSymmetricAlgorithm.h
+ OSSLRSA.cpp
 
- OpenSSL AES implementation
+ OpenSSL RSA asymmetric algorithm implementation
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_OSSLEVPSYMMETRICALGORITHM_H
-#define _SOFTHSM_V2_OSSLEVPSYMMETRICALGORITHM_H
-
-#include <openssl/evp.h>
-#include <string>
 #include "config.h"
-#include "SymmetricKey.h"
-#include "SymmetricAlgorithm.h"
-
-class OSSLEVPSymmetricAlgorithm : public SymmetricAlgorithm
+#include "log.h"
+#include "OSSLRSA.h"
+	
+// Signing functions
+bool OSSLRSA::signInit(PrivateKey* privateKey, const std::string mechanism)
 {
-public:
-	// Constructor
-	OSSLEVPSymmetricAlgorithm();
+	return true;
+}
 
-	// Destructor
-	virtual ~OSSLEVPSymmetricAlgorithm();
+bool OSSLRSA::signUpdate(const ByteString& dataToSign)
+{
+	return true;
+}
 
-	// Encryption functions
-	virtual bool encryptInit(const SymmetricKey* key, const std::string mode = "cbc", const ByteString& IV = ByteString());
-	virtual bool encryptUpdate(const ByteString& data, ByteString& encryptedData);
-	virtual bool encryptFinal(ByteString& encryptedData);
+bool OSSLRSA::signFinal(ByteString& signature)
+{
+	return true;
+}
 
-	// Decryption functions
-	virtual bool decryptInit(const SymmetricKey* key, const std::string mode = "cbc", const ByteString& IV = ByteString());
-	virtual bool decryptUpdate(const ByteString& encryptedData, ByteString& data);
-	virtual bool decryptFinal(ByteString& data);
+// Verification functions
+bool OSSLRSA::verifyInit(PublicKey* publicKey, const std::string mechanism)
+{
+	return true;
+}
 
-protected:
-	// Return the right EVP cipher for the operation
-	virtual const EVP_CIPHER* getCipher() const = 0;
+bool OSSLRSA::verifyUpdate(const ByteString& originalData)
+{
+	return true;
+}
 
-	// Return the block size
-	virtual size_t getBlockSize() const = 0;
+bool OSSLRSA::verifyFinal(const ByteString& signature)
+{
+	return true;
+}
 
-private:
-	// The current EVP context
-	EVP_CIPHER_CTX* pCurCTX;
-};
+// Encryption functions
+bool OSSLRSA::encrypt(PublicKey* publicKey, const ByteString& data, ByteString& encryptedData, const std::string padding)
+{
+	return true;
+}
 
-#endif // !_SOFTHSM_V2_OSSLEVPSYMMETRICALGORITHM_H
+// Decryption functions
+bool OSSLRSA::decrypt(PrivateKey* privateKey, const ByteString& encryptedData, ByteString& data, const std::string padding)
+{
+	return true;
+}
+
+// Key factory
+bool OSSLRSA::generateKeyPair(AsymmetricKeyPair& keyPair, size_t keySize, RNG* rng /* = NULL */)
+{
+	return true;
+}
+
+bool OSSLRSA::blankKeyPair(AsymmetricKeyPair& keyPair)
+{
+	return true;
+}
+
+bool OSSLRSA::reconstructKeyPair(AsymmetricKeyPair& keyPair, ByteString& serialisedData)
+{
+	return true;
+}
+
+bool OSSLRSA::reconstructPublicKey(PublicKey& publicKey, ByteString& serialisedData)
+{
+	return true;
+}
+
+bool OSSLRSA::reconstructPrivateKey(PrivateKey& privateKey, ByteString& serialisedData)
+{
+	return true;
+}
 

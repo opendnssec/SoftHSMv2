@@ -46,11 +46,13 @@ class ByteString
 {
 public:
 	// Constructors
-	ByteString(const size_t initialSize = 0);
+	ByteString();
 
 	ByteString(const unsigned char* bytes, const size_t bytesLen);
 
 	ByteString(const char* hexString);
+
+	ByteString(const unsigned long longValue);
 
 	ByteString(const ByteString& in);
 
@@ -75,6 +77,15 @@ public:
 
 	// Return a hexadecimal character representation of the string
 	std::string hex_str() const;
+
+	// Return the long value
+	const unsigned long long_val() const;
+
+	// Cut of the first part of the string and convert it to a long value
+	unsigned long firstLong();
+
+	// Split of the specified part of the string as a separate byte string
+	ByteString split(size_t len);
 
 	// Return the size
 	size_t size() const;
