@@ -6,6 +6,7 @@ LDFLAGS+=-lcrypto
 
 CRYPTOSOURCES=\
 AsymmetricAlgorithm.cpp \
+AsymmetricKeyPair.cpp \
 BotanCryptoFactory.cpp \
 ByteString.cpp \
 CryptoFactory.cpp \

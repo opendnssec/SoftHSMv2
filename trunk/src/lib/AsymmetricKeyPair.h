@@ -53,12 +53,18 @@ public:
 	virtual ~AsymmetricKeyPair() { }
 
 	// Return the public key
-	virtual PublicKey& getPublicKey() const = 0;
+	virtual PublicKey& getPublicKey() = 0;
+	virtual PublicKey& getConstPublicKey() const = 0;
 
 	// Return the private key
-	virtual PrivateKey& getPrivateKey() const = 0;
+	virtual PrivateKey& getPrivateKey() = 0;
+	virtual PrivateKey& getConstPrivateKey() const = 0;
 
-private:
+	// Serialise the contents
+	virtual ByteString serialise() const;
+
+	// Is it of the given type?
+	virtual bool isOfType(const char* type) = 0;
 };
 
 #endif // !_SOFTHSM_V2_ASYMMETRICKEYPAIR_H

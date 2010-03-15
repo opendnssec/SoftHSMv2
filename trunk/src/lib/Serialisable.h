@@ -38,6 +38,8 @@
 #include "config.h"
 #include "ByteString.h"
 
+class ByteString;
+
 class Serialisable
 {
 public:

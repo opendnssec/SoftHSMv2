@@ -37,16 +37,17 @@
 
 #include "config.h"
 #include "AsymmetricAlgorithm.h"
+#include "HashAlgorithm.h"
 #include <openssl/rsa.h>
 
 class OSSLRSA : public AsymmetricAlgorithm
 {
 public:
-	// Base constructors
-	OSSLRSA() : AsymmetricAlgorithm() { }
+	// Constructor
+	OSSLRSA();
 
 	// Destructor
-	virtual ~OSSLRSA() { }
+	virtual ~OSSLRSA();
 
 	// Signing functions
 	virtual bool signInit(PrivateKey* privateKey, const std::string mechanism);
@@ -65,11 +66,15 @@ public:
 	virtual bool decrypt(PrivateKey* privateKey, const ByteString& encryptedData, ByteString& data, const std::string padding);
 
 	// Key factory
-	virtual bool generateKeyPair(AsymmetricKeyPair& keyPair, size_t keySize, RNG* rng = NULL);
+	virtual bool generateKeyPair(AsymmetricKeyPair& keyPair, size_t keySize, void* parameters = NULL, RNG* rng = NULL);
 	virtual bool blankKeyPair(AsymmetricKeyPair& keyPair);
 	virtual bool reconstructKeyPair(AsymmetricKeyPair& keyPair, ByteString& serialisedData);
 	virtual bool reconstructPublicKey(PublicKey& publicKey, ByteString& serialisedData);
 	virtual bool reconstructPrivateKey(PrivateKey& privateKey, ByteString& serialisedData);
+
+private:
+	HashAlgorithm* pCurrentHash;
+	HashAlgorithm* pSecondHash;
 };
 
 #endif // !_SOFTHSM_V2_OSSLRSA_H

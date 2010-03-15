@@ -268,3 +268,42 @@ void ByteStringTests::testSplitting()
 	CPPUNIT_ASSERT(b1.size() == 0);
 }
 
+void ByteStringTests::testSerialising()
+{
+	ByteString b1("AA11AA11AA11AA11AA11AA11AA11");
+	ByteString b2("BB22BB22BB22BB22BB22BB22");
+	ByteString b3("CC33CC33CC33CC33CC33CC33CC33CC33");
+
+	ByteString s1 = b1.serialise();
+
+	CPPUNIT_ASSERT(s1.size() == b1.size() + 8);
+
+	ByteString d1 = ByteString::chainDeserialise(s1);
+
+	CPPUNIT_ASSERT(s1.size() == 0);
+	CPPUNIT_ASSERT(d1 == b1);
+
+	ByteString s2 = b3.serialise() + b2.serialise() + b1.serialise();
+
+	CPPUNIT_ASSERT(s2.size() == b1.size() + b2.size() + b3.size() + (3*8));
+
+	d1 = ByteString::chainDeserialise(s2);
+	
+	CPPUNIT_ASSERT(d1.size() == b3.size());
+	CPPUNIT_ASSERT(s2.size() == b1.size() + b2.size() + (2*8));
+
+	ByteString d2 = ByteString::chainDeserialise(s2);
+
+	CPPUNIT_ASSERT(d2.size() == b2.size());
+	CPPUNIT_ASSERT(s2.size() == b1.size() + 8);
+
+	ByteString d3 = ByteString::chainDeserialise(s2);
+
+	CPPUNIT_ASSERT(d3.size() == b1.size());
+	CPPUNIT_ASSERT(s2.size() == 0);
+
+	CPPUNIT_ASSERT(d1 == b3);
+	CPPUNIT_ASSERT(d2 == b2);
+	CPPUNIT_ASSERT(d3 == b1);
+}
+

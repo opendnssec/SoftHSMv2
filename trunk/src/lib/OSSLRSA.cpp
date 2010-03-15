@@ -35,20 +35,176 @@
 #include "config.h"
 #include "log.h"
 #include "OSSLRSA.h"
+#include "CryptoFactory.h"
+#include <algorithm>
+
+// Constructor
+OSSLRSA::OSSLRSA()
+{
+	pCurrentHash = NULL;
+	pSecondHash = NULL;
+}
+
+// Destructor
+OSSLRSA::~OSSLRSA()
+{
+	if (pCurrentHash != NULL)
+	{
+		delete pCurrentHash;
+	}
+	
+	if (pSecondHash != NULL)
+	{
+		delete pSecondHash;
+	}
+}
 	
 // Signing functions
 bool OSSLRSA::signInit(PrivateKey* privateKey, const std::string mechanism)
 {
+	if (!AsymmetricAlgorithm::signInit(privateKey, mechanism))
+	{
+		return false;
+	}
+
+	std::string lowerMechanism;
+	lowerMechanism.resize(mechanism.size());
+	std::transform(mechanism.begin(), mechanism.end(), lowerMechanism.begin(), tolower);
+
+	if (!lowerMechanism.compare("rsa-md5-pkcs"))
+	{
+		pCurrentHash = CryptoFactory::i()->getHashAlgorithm("md5");
+
+		if (!pCurrentHash->hashInit())
+		{
+			delete pCurrentHash;
+			pCurrentHash = NULL;
+		}
+	}
+	else if (!lowerMechanism.compare("rsa-sha1-pkcs"))
+	{
+		pCurrentHash = CryptoFactory::i()->getHashAlgorithm("sha1");
+
+		if (!pCurrentHash->hashInit())
+		{
+			delete pCurrentHash;
+			pCurrentHash = NULL;
+		}
+	}
+	else if (!lowerMechanism.compare("rsa-sha256-pkcs"))
+	{
+		pCurrentHash = CryptoFactory::i()->getHashAlgorithm("sha256");
+
+		if (!pCurrentHash->hashInit())
+		{
+			delete pCurrentHash;
+			pCurrentHash = NULL;
+		}
+	}
+	else if (!lowerMechanism.compare("rsa-sha512-pkcs"))
+	{
+		pCurrentHash = CryptoFactory::i()->getHashAlgorithm("sha512");
+
+		if (!pCurrentHash->hashInit())
+		{
+			delete pCurrentHash;
+			pCurrentHash = NULL;
+		}
+	}
+	else if (!lowerMechanism.compare("rsa-ssl"))
+	{
+		pCurrentHash = CryptoFactory::i()->getHashAlgorithm("md5");
+		pSecondHash = CryptoFactory::i()->getHashAlgorithm("sha1");
+
+		if (!pCurrentHash->hashInit())
+		{
+			delete pCurrentHash;
+			pCurrentHash = NULL;
+		}
+
+		if (!pSecondHash->hashInit())
+		{
+			delete pCurrentHash;
+			pCurrentHash = NULL;
+			
+			delete pSecondHash;
+			pSecondHash = NULL;
+		}
+	}
+
+	if (pCurrentHash == NULL)
+	{
+		ByteString dummy;
+		AsymmetricAlgorithm::signFinal(dummy);
+
+		return false;
+	}
+
 	return true;
 }
 
 bool OSSLRSA::signUpdate(const ByteString& dataToSign)
 {
+	if (!AsymmetricAlgorithm::signUpdate(dataToSign))
+	{
+		return false;
+	}
+
+	if (!pCurrentHash->hashUpdate(dataToSign))
+	{
+		delete pCurrentHash;
+		pCurrentHash = NULL;
+
+		ByteString dummy;
+		AsymmetricAlgorithm::signFinal(dummy);
+
+		return false;
+	}
+
+	if ((pSecondHash != NULL) && !pSecondHash->hashUpdate(dataToSign))
+	{
+		delete pCurrentHash;
+		pCurrentHash = NULL;
+
+		delete pSecondHash;
+		pSecondHash = NULL;
+
+		ByteString dummy;
+		AsymmetricAlgorithm::signFinal(dummy);
+
+		return false;
+	}
+
 	return true;
 }
 
 bool OSSLRSA::signFinal(ByteString& signature)
 {
+	if (!AsymmetricAlgorithm::signFinal(signature))
+	{
+		return false;
+	}
+
+	ByteString firstHash, secondHash;
+
+	bool bFirstResult = pCurrentHash->hashFinal(firstHash);
+	bool bSecondResult = (pSecondHash != NULL) ? pSecondHash->hashFinal(secondHash) : true;
+
+	delete pCurrentHash;
+	pCurrentHash = NULL;
+
+	if (pSecondHash != NULL)
+	{
+		delete pSecondHash;
+	}
+
+	if (!bFirstResult || !bSecondResult)
+	{
+		return false;
+	}
+
+	
+
 	return true;
 }
 
@@ -81,7 +237,7 @@ bool OSSLRSA::decrypt(PrivateKey* privateKey, const ByteString& encryptedData, B
 }
 
 // Key factory
-bool OSSLRSA::generateKeyPair(AsymmetricKeyPair& keyPair, size_t keySize, RNG* rng /* = NULL */)
+bool OSSLRSA::generateKeyPair(AsymmetricKeyPair& keyPair, size_t keySize, void* parameters /* = NULL */, RNG* rng /* = NULL */)
 {
 	return true;
 }

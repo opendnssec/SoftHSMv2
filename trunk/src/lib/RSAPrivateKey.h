@@ -27,35 +27,58 @@
  */
 
 /*****************************************************************************
- PublicKey.h
+ RSAPrivateKey.h
 
- Base class for public key classes
+ RSA private key class
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_PUBLICKEY_H
-#define _SOFTHSM_V2_PUBLICKEY_H
+#ifndef _SOFTHSM_V2_RSAPRIVATEKEY_H
+#define _SOFTHSM_V2_RSAPRIVATEKEY_H
 
 #include "config.h"
-#include "ByteString.h"
-#include "Serialisable.h"
+#include "PrivateKey.h"
 
-class PublicKey : public Serialisable
+class RSAPrivateKey : public PrivateKey
 {
 public:
-	// Base constructors
-	PublicKey() { }
+	// The type
+	static const char* type = "Abstract RSA private key";
 
-	PublicKey(const PublicKey& in) { }
+	// Check if the key is of the given type
+	virtual bool isOfType(const char* type);
 
-	// Destructor
-	virtual ~PublicKey() { }
+	// Setters for the RSA private key components
+	virtual void setP(const ByteString& p);
+	virtual void setQ(const ByteString& q);
+	virtual void setPQ(const ByteString& pq);
+	virtual void setDP1(const ByteString& dp1);
+	virtual void setDQ1(const ByteString& dq1);
 
-	// Check if it is of the given type
-	virtual bool isOfType(const char* type) = 0;
+	// Setters for the RSA public key components
+	virtual void setN(const ByteString& n);
+	virtual void setE(const ByteString& e);
+
+	// Getters for the RSA private key components
+	virtual const ByteString& getP() const;
+	virtual const ByteString& getQ() const;
+	virtual const ByteString& getPQ() const;
+	virtual const ByteString& getDP1() const;
+	virtual const ByteString& getDQ1() const;
+
+	// Getters for the RSA public key components
+	virtual const ByteString& getN() const;
+	virtual const ByteString& getE() const;
 
 	// Serialisation
-	virtual ByteString serialise() const = 0;
+	virtual ByteString serialise() const;
+
+protected:
+	// Private components
+	ByteString p,q,pq,dp1,dq1;
+
+	// Public components
+	ByteString n,e;
 };
 
-#endif // !_SOFTHSM_V2_PUBLICKEY_H
+#endif // !_SOFTHSM_V2_RSAPRIVATEKEY_H
 

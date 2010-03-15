@@ -38,6 +38,7 @@
 #include "config.h"
 #include "ByteString.h"
 #include "Serialisable.h"
+#include <string>
 
 class PrivateKey : public Serialisable
 {
@@ -45,12 +46,16 @@ public:
 	// Base constructors
 	PrivateKey() { }
 
-	PrivateKey(const PrivateKey& in) { }
+	PrivateKey(const PrivateKey& in);
 
 	// Destructor
 	virtual ~PrivateKey() { }
 
-private:
+	// Check if the private key is of the given type
+	virtual bool isOfType(const char* type) = 0;
+	
+	// Serialisation
+	virtual ByteString serialise() const = 0;
 };
 
 #endif // !_SOFTHSM_V2_PRIVATEKEY_H

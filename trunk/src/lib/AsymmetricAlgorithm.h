@@ -70,7 +70,7 @@ public:
 	virtual bool decrypt(PrivateKey* privateKey, const ByteString& encryptedData, ByteString& data, const std::string padding) = 0;
 
 	// Key factory
-	virtual bool generateKeyPair(AsymmetricKeyPair& keyPair, size_t keySize, RNG* rng = NULL) = 0;
+	virtual bool generateKeyPair(AsymmetricKeyPair& keyPair, size_t keySize, void* parameters = NULL, RNG* rng = NULL) = 0;
 	virtual bool blankKeyPair(AsymmetricKeyPair& keyPair) = 0;
 	virtual bool reconstructKeyPair(AsymmetricKeyPair& keyPair, ByteString& serialisedData) = 0;
 	virtual bool reconstructPublicKey(PublicKey& publicKey, ByteString& serialisedData) = 0;

@@ -304,3 +304,20 @@ ByteString operator^(const ByteString& lhs, const ByteString& rhs)
 	return rv;
 }
 
+// Serialisation/deserialisation
+ByteString ByteString::serialise() const
+{
+	ByteString len((unsigned long) size());
+
+	return len + *this;
+}
+
+/* static */ ByteString ByteString::chainDeserialise(ByteString& serialised)
+{
+	size_t len = (size_t) serialised.firstLong();
+
+	ByteString rv = serialised.split(len);
+
+	return rv;
+}
+

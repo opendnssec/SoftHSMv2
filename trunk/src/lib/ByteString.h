@@ -41,6 +41,7 @@
 #include <limits.h>
 #include "config.h"
 #include "SecureAllocator.h"
+#include "Serialisable.h"
 
 class ByteString
 {
@@ -99,6 +100,11 @@ public:
 	// Comparison
 	bool operator==(const ByteString& compareTo) const;
 	bool operator!=(const ByteString& compareTo) const;
+
+	// Serialisation/deserialisation
+	virtual ByteString serialise() const;
+
+	static ByteString chainDeserialise(ByteString& serialised);
 
 private:
 	std::vector<unsigned char, SecureAllocator<unsigned char> > byteString;
