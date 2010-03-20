@@ -27,60 +27,46 @@
  */
 
 /*****************************************************************************
- RSAPrivateKey.h
+ OSSLRSAPublicKey.h
 
- RSA private key class
+ OpenSSL RSA public key class
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_RSAPRIVATEKEY_H
-#define _SOFTHSM_V2_RSAPRIVATEKEY_H
+#ifndef _SOFTHSM_V2_OSSLRSAPUBLICKEY_H
+#define _SOFTHSM_V2_OSSLRSAPUBLICKEY_H
 
 #include "config.h"
-#include "PrivateKey.h"
+#include "RSAPublicKey.h"
+#include <openssl/rsa.h>
 
-class RSAPrivateKey : public PrivateKey
+class OSSLRSAPublicKey : public RSAPublicKey
 {
 public:
+	// Constructors
+	OSSLRSAPublicKey();
+	
+	OSSLRSAPublicKey(const RSA* inRSA);
+	
+	// Destructor
+	virtual ~OSSLRSAPublicKey();
+
 	// The type
 	static const char* type;
 
 	// Check if the key is of the given type
 	virtual bool isOfType(const char* type);
 
-	// Setters for the RSA private key components
-	virtual void setP(const ByteString& p);
-	virtual void setQ(const ByteString& q);
-	virtual void setPQ(const ByteString& pq);
-	virtual void setDP1(const ByteString& dp1);
-	virtual void setDQ1(const ByteString& dq1);
-	virtual void setD(const ByteString& d);
-
 	// Setters for the RSA public key components
 	virtual void setN(const ByteString& n);
 	virtual void setE(const ByteString& e);
 
-	// Getters for the RSA private key components
-	virtual const ByteString& getP() const;
-	virtual const ByteString& getQ() const;
-	virtual const ByteString& getPQ() const;
-	virtual const ByteString& getDP1() const;
-	virtual const ByteString& getDQ1() const;
-	virtual const ByteString& getD() const;
+	// Retrieve the OpenSSL representation of the key
+	RSA* getOSSLKey();
 
-	// Getters for the RSA public key components
-	virtual const ByteString& getN() const;
-	virtual const ByteString& getE() const;
-
-	// Serialisation
-	virtual ByteString serialise() const;
-
-protected:
-	// Private components
-	ByteString p,q,pq,dp1,dq1,d;
-
-	// Public components
-	ByteString n,e;
+private:
+	// The internal OpenSSL representation
+	RSA* rsa;
 };
 
-#endif // !_SOFTHSM_V2_RSAPRIVATEKEY_H
+#endif // !_SOFTHSM_V2_OSSLRSAPUBLICKEY_H
 

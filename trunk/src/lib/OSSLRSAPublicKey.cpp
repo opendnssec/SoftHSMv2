@@ -27,60 +27,77 @@
  */
 
 /*****************************************************************************
- RSAPrivateKey.h
+ OSSLRSAPublicKey.cpp
 
- RSA private key class
+ OpenSSL RSA private key class
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_RSAPRIVATEKEY_H
-#define _SOFTHSM_V2_RSAPRIVATEKEY_H
-
 #include "config.h"
-#include "PrivateKey.h"
+#include "log.h"
+#include "OSSLRSAPublicKey.h"
+#include "OSSLUtil.h"
+#include <openssl/bn.h>
+#include <string.h>
 
-class RSAPrivateKey : public PrivateKey
+// Constructors
+OSSLRSAPublicKey::OSSLRSAPublicKey()
 {
-public:
-	// The type
-	static const char* type;
+	rsa = RSA_new();
+}
 
-	// Check if the key is of the given type
-	virtual bool isOfType(const char* type);
+OSSLRSAPublicKey::OSSLRSAPublicKey(const RSA* inRSA)
+{
+	OSSLRSAPublicKey::OSSLRSAPublicKey();
 
-	// Setters for the RSA private key components
-	virtual void setP(const ByteString& p);
-	virtual void setQ(const ByteString& q);
-	virtual void setPQ(const ByteString& pq);
-	virtual void setDP1(const ByteString& dp1);
-	virtual void setDQ1(const ByteString& dq1);
-	virtual void setD(const ByteString& d);
+	if (inRSA->n) setN(OSSL::bn2ByteString(inRSA->n));
+	if (inRSA->e) setE(OSSL::bn2ByteString(inRSA->e));
+}
 
-	// Setters for the RSA public key components
-	virtual void setN(const ByteString& n);
-	virtual void setE(const ByteString& e);
+// Destructor
+OSSLRSAPublicKey::~OSSLRSAPublicKey()
+{
+	RSA_free(rsa);
+}
 
-	// Getters for the RSA private key components
-	virtual const ByteString& getP() const;
-	virtual const ByteString& getQ() const;
-	virtual const ByteString& getPQ() const;
-	virtual const ByteString& getDP1() const;
-	virtual const ByteString& getDQ1() const;
-	virtual const ByteString& getD() const;
+// The type
+/*static*/ const char* OSSLRSAPublicKey::type = "OpenSSL RSA Public Key";
 
-	// Getters for the RSA public key components
-	virtual const ByteString& getN() const;
-	virtual const ByteString& getE() const;
+// Check if the key is of the given type
+bool OSSLRSAPublicKey::isOfType(const char* type)
+{
+	return !strcmp(OSSLRSAPublicKey::type, type);
+}
 
-	// Serialisation
-	virtual ByteString serialise() const;
+// Setters for the RSA public key components
+void OSSLRSAPublicKey::setN(const ByteString& n)
+{
+	RSAPublicKey::setN(n);
 
-protected:
-	// Private components
-	ByteString p,q,pq,dp1,dq1,d;
+	if (rsa->n) 
+	{
+		BN_clear_free(rsa->n);
+		rsa->n = NULL;
+	}
 
-	// Public components
-	ByteString n,e;
-};
+	rsa->n = OSSL::byteString2bn(n);
+}
 
-#endif // !_SOFTHSM_V2_RSAPRIVATEKEY_H
+void OSSLRSAPublicKey::setE(const ByteString& e)
+{
+	RSAPublicKey::setE(e);
+
+	if (rsa->e) 
+	{
+		BN_clear_free(rsa->e);
+		rsa->e = NULL;
+	}
+
+	rsa->e = OSSL::byteString2bn(e);
+}
+
+// Retrieve the OpenSSL representation of the key
+RSA* OSSLRSAPublicKey::getOSSLKey()
+{
+	return rsa;
+}
 

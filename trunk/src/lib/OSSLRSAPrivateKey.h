@@ -27,20 +27,29 @@
  */
 
 /*****************************************************************************
- RSAPrivateKey.h
+ OSSLRSAPrivateKey.h
 
- RSA private key class
+ OpenSSL RSA private key class
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_RSAPRIVATEKEY_H
-#define _SOFTHSM_V2_RSAPRIVATEKEY_H
+#ifndef _SOFTHSM_V2_OSSLRSAPRIVATEKEY_H
+#define _SOFTHSM_V2_OSSLRSAPRIVATEKEY_H
 
 #include "config.h"
-#include "PrivateKey.h"
+#include "RSAPrivateKey.h"
+#include <openssl/rsa.h>
 
-class RSAPrivateKey : public PrivateKey
+class OSSLRSAPrivateKey : public RSAPrivateKey
 {
 public:
+	// Constructors
+	OSSLRSAPrivateKey();
+	
+	OSSLRSAPrivateKey(const RSA* inRSA);
+	
+	// Destructor
+	virtual ~OSSLRSAPrivateKey();
+
 	// The type
 	static const char* type;
 
@@ -59,28 +68,13 @@ public:
 	virtual void setN(const ByteString& n);
 	virtual void setE(const ByteString& e);
 
-	// Getters for the RSA private key components
-	virtual const ByteString& getP() const;
-	virtual const ByteString& getQ() const;
-	virtual const ByteString& getPQ() const;
-	virtual const ByteString& getDP1() const;
-	virtual const ByteString& getDQ1() const;
-	virtual const ByteString& getD() const;
+	// Retrieve the OpenSSL representation of the key
+	RSA* getOSSLKey();
 
-	// Getters for the RSA public key components
-	virtual const ByteString& getN() const;
-	virtual const ByteString& getE() const;
-
-	// Serialisation
-	virtual ByteString serialise() const;
-
-protected:
-	// Private components
-	ByteString p,q,pq,dp1,dq1,d;
-
-	// Public components
-	ByteString n,e;
+private:
+	// The internal OpenSSL representation
+	RSA* rsa;
 };
 
-#endif // !_SOFTHSM_V2_RSAPRIVATEKEY_H
+#endif // !_SOFTHSM_V2_OSSLRSAPRIVATEKEY_H
 

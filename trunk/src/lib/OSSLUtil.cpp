@@ -27,60 +27,32 @@
  */
 
 /*****************************************************************************
- RSAPrivateKey.h
+ OSSLUtil.h
 
- RSA private key class
+ OpenSSL convenience functions
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_RSAPRIVATEKEY_H
-#define _SOFTHSM_V2_RSAPRIVATEKEY_H
-
 #include "config.h"
-#include "PrivateKey.h"
+#include "log.h"
+#include "OSSLUtil.h"
 
-class RSAPrivateKey : public PrivateKey
+// Convert an OpenSSL BIGNUM to a ByteString
+ByteString OSSL::bn2ByteString(const BIGNUM* bn)
 {
-public:
-	// The type
-	static const char* type;
+	ByteString rv;
 
-	// Check if the key is of the given type
-	virtual bool isOfType(const char* type);
+	if (bn != NULL)
+	{
+		rv.resize(BN_num_bytes(bn));
+		BN_bn2bin(bn, &rv[0]);
+	}
 
-	// Setters for the RSA private key components
-	virtual void setP(const ByteString& p);
-	virtual void setQ(const ByteString& q);
-	virtual void setPQ(const ByteString& pq);
-	virtual void setDP1(const ByteString& dp1);
-	virtual void setDQ1(const ByteString& dq1);
-	virtual void setD(const ByteString& d);
+	return rv;
+}
 
-	// Setters for the RSA public key components
-	virtual void setN(const ByteString& n);
-	virtual void setE(const ByteString& e);
-
-	// Getters for the RSA private key components
-	virtual const ByteString& getP() const;
-	virtual const ByteString& getQ() const;
-	virtual const ByteString& getPQ() const;
-	virtual const ByteString& getDP1() const;
-	virtual const ByteString& getDQ1() const;
-	virtual const ByteString& getD() const;
-
-	// Getters for the RSA public key components
-	virtual const ByteString& getN() const;
-	virtual const ByteString& getE() const;
-
-	// Serialisation
-	virtual ByteString serialise() const;
-
-protected:
-	// Private components
-	ByteString p,q,pq,dp1,dq1,d;
-
-	// Public components
-	ByteString n,e;
-};
-
-#endif // !_SOFTHSM_V2_RSAPRIVATEKEY_H
+// Convert a ByteString to an OpenSSL BIGNUM
+BIGNUM* OSSL::byteString2bn(const ByteString& byteString)
+{
+	return BN_bin2bn(byteString.const_byte_str(), byteString.size(), NULL);
+}
 
