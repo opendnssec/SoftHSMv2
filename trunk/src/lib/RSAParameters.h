@@ -27,68 +27,28 @@
  */
 
 /*****************************************************************************
- RSAPublicKey.cpp
+ RSAParameters.h
 
- RSA private key class
+ RSA parameters (only used for key generation)
  *****************************************************************************/
 
+#ifndef _SOFTHSM_V2_RSAPARAMETERS_H
+#define _SOFTHSM_V2_RSAPARAMETERS_H
+
 #include "config.h"
-#include "log.h"
-#include "RSAPublicKey.h"
-#include <string.h>
+#include "ByteString.h"
 
-// Set the type
-/*static*/ const char* RSAPublicKey::type = "Abstract RSA public key";
+#define RSA_PARAMETER_MAGIC 0x52534150
 
-// Check if the key is of the given type
-bool RSAPublicKey::isOfType(const char* type)
+typedef struct
 {
-	return !strcmp(this->type, type);
+	int magic;
+	ByteString e;
 }
+RSAParameters;
 
-// Setters for the RSA public key components
-void RSAPublicKey::setN(const ByteString& n)
-{
-	this->n = n;
-}
+void setRSAParameters(RSAParameters& params, const ByteString& e);
+void setRSAParameters(RSAParameters& params, const char* e);
 
-void RSAPublicKey::setE(const ByteString& e)
-{
-	this->e = e;
-}
-
-// Getters for the RSA public key components
-const ByteString& RSAPublicKey::getN() const
-{
-	return n;
-}
-
-const ByteString& RSAPublicKey::getE() const
-{
-	return e;
-}
-
-// Serialisation
-ByteString RSAPublicKey::serialise() const
-{
-	return n.serialise() +
-	       e.serialise();
-}
-
-bool RSAPublicKey::deserialise(ByteString& serialised)
-{
-	ByteString dN = ByteString::chainDeserialise(serialised);
-	ByteString dE = ByteString::chainDeserialise(serialised);
-
-	if ((dN.size() == 0) ||
-	    (dE.size() == 0))
-	{
-		return false;
-	}
-
-	setN(dN);
-	setE(dE);
-
-	return true;
-}
+#endif // !_SOFTHSM_V2_RSAPARAMETERS_H
 

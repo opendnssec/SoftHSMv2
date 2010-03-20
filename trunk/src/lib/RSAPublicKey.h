@@ -57,6 +57,7 @@ public:
 
 	// Serialisation
 	virtual ByteString serialise() const;
+	virtual bool deserialise(ByteString& serialised);
 
 protected:
 	// Public components

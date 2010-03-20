@@ -36,7 +36,11 @@
 #include "log.h"
 #include "OSSLRSA.h"
 #include "CryptoFactory.h"
+#include "RSAParameters.h"
+#include "OSSLRSAKeyPair.h"
 #include <algorithm>
+#include <openssl/rsa.h>
+#include <openssl/err.h>
 
 // Constructor
 OSSLRSA::OSSLRSA()
@@ -237,28 +241,157 @@ bool OSSLRSA::decrypt(PrivateKey* privateKey, const ByteString& encryptedData, B
 }
 
 // Key factory
-bool OSSLRSA::generateKeyPair(AsymmetricKeyPair& keyPair, size_t keySize, void* parameters /* = NULL */, RNG* rng /* = NULL */)
+bool OSSLRSA::generateKeyPair(AsymmetricKeyPair** ppKeyPair, size_t keySize, void* parameters /* = NULL */, RNG* rng /* = NULL */)
 {
+	// Check parameters
+	if ((ppKeyPair == NULL) ||
+	    (keySize < 512) ||
+	    (keySize > 16384) ||
+	    (parameters == NULL))
+	{
+		return false;
+	}
+
+	if (keySize < 1024)
+	{
+		WARNING_MSG("Using an RSA key size < 1024 bits is not recommended");
+	}
+
+	RSAParameters* params = (RSAParameters*) parameters;
+
+	try
+	{
+		if (params->magic != RSA_PARAMETER_MAGIC)
+		{
+			return false;
+		}
+	}
+	catch (...)
+	{
+		return false;
+	}
+
+	// Retrieve the desired public exponent
+	unsigned long e = params->e.long_val();
+
+	// Check the public exponent
+	if ((e == 0) || (e % 2 != 1))
+	{
+		ERROR_MSG("Invalid RSA public exponent %d", e);
+
+		return false;
+	}
+
+	// Generate the key-pair
+	RSA* rsa = RSA_generate_key(keySize, e, NULL, NULL);
+
+	// Check if the key was successfully generated
+	if (rsa == NULL)
+	{
+		ERROR_MSG("RSA key generation failed: %s in %s in %s",
+			  ERR_reason_error_string(ERR_get_error()),
+			  ERR_func_error_string(ERR_get_error()),
+			  ERR_lib_error_string(ERR_get_error()));
+
+		return false;
+	}
+
+	// Create an asymmetric key-pair object to return
+	OSSLRSAKeyPair* kp = new OSSLRSAKeyPair();
+
+	((OSSLRSAPublicKey*) kp->getPublicKey())->setFromOSSL(rsa);
+	((OSSLRSAPrivateKey*) kp->getPrivateKey())->setFromOSSL(rsa);
+
+	*ppKeyPair = kp;
+
+	// Release the key
+	RSA_free(rsa);
+
 	return true;
 }
 
-bool OSSLRSA::blankKeyPair(AsymmetricKeyPair& keyPair)
+bool OSSLRSA::reconstructKeyPair(AsymmetricKeyPair** ppKeyPair, ByteString& serialisedData)
 {
+	// Check input
+	if ((ppKeyPair == NULL) ||
+	    (serialisedData.size() == 0))
+	{
+		return false;
+	}
+
+	ByteString dPub = ByteString::chainDeserialise(serialisedData);
+	ByteString dPriv = ByteString::chainDeserialise(serialisedData);
+
+	OSSLRSAKeyPair* kp = new OSSLRSAKeyPair();
+
+	bool rv = true;
+
+	if (!((RSAPublicKey*) kp->getPublicKey())->deserialise(dPub))
+	{
+		rv = false;
+	}
+
+	if (!((RSAPrivateKey*) kp->getPrivateKey())->deserialise(dPriv))
+	{
+		rv = false;
+	}
+
+	if (!rv)
+	{
+		delete kp;
+
+		return false;
+	}
+
+	*ppKeyPair = kp;
+
 	return true;
 }
 
-bool OSSLRSA::reconstructKeyPair(AsymmetricKeyPair& keyPair, ByteString& serialisedData)
+bool OSSLRSA::reconstructPublicKey(PublicKey** ppPublicKey, ByteString& serialisedData)
 {
+	// Check input
+	if ((ppPublicKey == NULL) ||
+	    (serialisedData.size() == 0))
+	{
+		return false;
+	}
+
+	OSSLRSAPublicKey* pub = new OSSLRSAPublicKey();
+
+	if (!pub->deserialise(serialisedData))
+	{
+		delete pub;
+
+		return false;
+	}
+
+	*ppPublicKey = pub;
+
 	return true;
 }
 
-bool OSSLRSA::reconstructPublicKey(PublicKey& publicKey, ByteString& serialisedData)
+bool OSSLRSA::reconstructPrivateKey(PrivateKey** ppPrivateKey, ByteString& serialisedData)
 {
+	// Check input
+	if ((ppPrivateKey == NULL) ||
+	    (serialisedData.size() == 0))
+	{
+		return false;
+	}
+
+	OSSLRSAPrivateKey* priv = new OSSLRSAPrivateKey();
+
+	if (!priv->deserialise(serialisedData))
+	{
+		delete priv;
+
+		return false;
+	}
+
+	*ppPrivateKey = priv;
+
 	return true;
 }
 
-bool OSSLRSA::reconstructPrivateKey(PrivateKey& privateKey, ByteString& serialisedData)
-{
-	return true;
-}
 

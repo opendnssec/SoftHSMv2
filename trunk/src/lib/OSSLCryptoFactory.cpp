@@ -41,6 +41,7 @@
 #include "OSSLSHA1.h"
 #include "OSSLSHA256.h"
 #include "OSSLSHA512.h"
+#include "OSSLRSA.h"
 
 #include <algorithm>
 #include <string.h>
@@ -98,6 +99,11 @@ AsymmetricAlgorithm* OSSLCryptoFactory::getAsymmetricAlgorithm(std::string algor
 	lcAlgo.resize(algorithm.size());
 	std::transform(algorithm.begin(), algorithm.end(), lcAlgo.begin(), tolower);
 
+	if (!lcAlgo.compare("rsa"))
+	{
+		return new OSSLRSA();
+	}
+	else
 	{
 		// No algorithm implementation is available
 		ERROR_MSG("Unknown algorithm '%s'", algorithm.c_str());

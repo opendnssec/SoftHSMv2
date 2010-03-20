@@ -38,6 +38,6 @@
 
 ByteString AsymmetricKeyPair::serialise() const
 {
-	return getConstPublicKey().serialise().serialise() + getConstPrivateKey().serialise().serialise();
+	return getConstPublicKey()->serialise().serialise() + getConstPrivateKey()->serialise().serialise();
 }
 

@@ -143,3 +143,33 @@ ByteString RSAPrivateKey::serialise() const
 	       e.serialise();
 }
 
+bool RSAPrivateKey::deserialise(ByteString& serialised)
+{
+	ByteString dP = ByteString::chainDeserialise(serialised);
+	ByteString dQ = ByteString::chainDeserialise(serialised);
+	ByteString dPQ = ByteString::chainDeserialise(serialised);
+	ByteString dDP1 = ByteString::chainDeserialise(serialised);
+	ByteString dDQ1 = ByteString::chainDeserialise(serialised);
+	ByteString dD = ByteString::chainDeserialise(serialised);
+	ByteString dN = ByteString::chainDeserialise(serialised);
+	ByteString dE = ByteString::chainDeserialise(serialised);
+
+	if ((dD.size() == 0) ||
+	    (dN.size() == 0) ||
+	    (dE.size() == 0))
+	{
+		return false;
+	}
+
+	setP(dP);
+	setQ(dQ);
+	setPQ(dPQ);
+	setDP1(dDP1);
+	setDQ1(dDQ1);
+	setD(dD);
+	setN(dN);
+	setE(dE);
+
+	return true;
+}
+

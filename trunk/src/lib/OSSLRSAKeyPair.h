@@ -27,68 +27,43 @@
  */
 
 /*****************************************************************************
- RSAPublicKey.cpp
+ OSSLRSAKeyPair.h
 
- RSA private key class
+ OpenSSL RSA key-pair class
  *****************************************************************************/
 
+#ifndef _SOFTHSM_V2_OSSLRSAKEYPAIR_H
+#define _SOFTHSM_V2_OSSLRSAKEYPAIR_H
+
 #include "config.h"
-#include "log.h"
-#include "RSAPublicKey.h"
-#include <string.h>
+#include "AsymmetricKeyPair.h"
+#include "OSSLRSAPublicKey.h"
+#include "OSSLRSAPrivateKey.h"
 
-// Set the type
-/*static*/ const char* RSAPublicKey::type = "Abstract RSA public key";
-
-// Check if the key is of the given type
-bool RSAPublicKey::isOfType(const char* type)
+class OSSLRSAKeyPair : public AsymmetricKeyPair
 {
-	return !strcmp(this->type, type);
-}
+public:
+	// Set the public key
+	void setPublicKey(OSSLRSAPublicKey& publicKey);
 
-// Setters for the RSA public key components
-void RSAPublicKey::setN(const ByteString& n)
-{
-	this->n = n;
-}
+	// Set the private key
+	void setPrivateKey(OSSLRSAPrivateKey& privateKey);
 
-void RSAPublicKey::setE(const ByteString& e)
-{
-	this->e = e;
-}
+	// Return the public key
+	virtual PublicKey* getPublicKey();
+	virtual const PublicKey* getConstPublicKey() const;
 
-// Getters for the RSA public key components
-const ByteString& RSAPublicKey::getN() const
-{
-	return n;
-}
+	// Return the private key
+	virtual PrivateKey* getPrivateKey();
+	virtual const PrivateKey* getConstPrivateKey() const;
 
-const ByteString& RSAPublicKey::getE() const
-{
-	return e;
-}
+private:
+	// The public key
+	OSSLRSAPublicKey pubKey;
 
-// Serialisation
-ByteString RSAPublicKey::serialise() const
-{
-	return n.serialise() +
-	       e.serialise();
-}
+	// The private key
+	OSSLRSAPrivateKey privKey;
+};
 
-bool RSAPublicKey::deserialise(ByteString& serialised)
-{
-	ByteString dN = ByteString::chainDeserialise(serialised);
-	ByteString dE = ByteString::chainDeserialise(serialised);
-
-	if ((dN.size() == 0) ||
-	    (dE.size() == 0))
-	{
-		return false;
-	}
-
-	setN(dN);
-	setE(dE);
-
-	return true;
-}
+#endif // !_SOFTHSM_V2_OSSLRSAKEYPAIR_H
 

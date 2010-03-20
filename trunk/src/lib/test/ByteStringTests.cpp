@@ -248,8 +248,9 @@ void ByteStringTests::testLongValues()
 
 	ByteString b4("ABCDEF");
 
-	CPPUNIT_ASSERT(b4.long_val() == 0);
-	CPPUNIT_ASSERT(b4.firstLong() == 0);
+	CPPUNIT_ASSERT(b4.long_val() == 0xABCDEF);
+	CPPUNIT_ASSERT(b4.size() == 3);
+	CPPUNIT_ASSERT(b4.firstLong() == 0xABCDEF);
 	CPPUNIT_ASSERT(b4.size() == 0);
 }
 

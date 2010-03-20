@@ -49,14 +49,7 @@ OSSLRSAPrivateKey::OSSLRSAPrivateKey(const RSA* inRSA)
 {
 	OSSLRSAPrivateKey::OSSLRSAPrivateKey();
 
-	if (inRSA->p) setP(OSSL::bn2ByteString(inRSA->p));
-	if (inRSA->q) setQ(OSSL::bn2ByteString(inRSA->q));
-	if (inRSA->dmp1) setDP1(OSSL::bn2ByteString(inRSA->dmp1));
-	if (inRSA->dmq1) setDQ1(OSSL::bn2ByteString(inRSA->dmq1));
-	if (inRSA->iqmp) setPQ(OSSL::bn2ByteString(inRSA->iqmp));
-	if (inRSA->d) setD(OSSL::bn2ByteString(inRSA->d));
-	if (inRSA->n) setN(OSSL::bn2ByteString(inRSA->n));
-	if (inRSA->e) setE(OSSL::bn2ByteString(inRSA->e));
+	setFromOSSL(inRSA);
 }
 
 // Destructor
@@ -67,6 +60,19 @@ OSSLRSAPrivateKey::~OSSLRSAPrivateKey()
 
 // The type
 /*static*/ const char* OSSLRSAPrivateKey::type = "OpenSSL RSA Private Key";
+
+// Set from OpenSSL representation
+void OSSLRSAPrivateKey::setFromOSSL(const RSA* rsa)
+{
+	if (rsa->p) { ByteString p = OSSL::bn2ByteString(rsa->p); setP(p); }
+	if (rsa->q) { ByteString q = OSSL::bn2ByteString(rsa->q); setQ(q); }
+	if (rsa->dmp1) { ByteString dp1 = OSSL::bn2ByteString(rsa->dmp1); setDP1(dp1); }
+	if (rsa->dmq1) { ByteString dq1 = OSSL::bn2ByteString(rsa->dmq1); setDQ1(dq1); }
+	if (rsa->iqmp) { ByteString pq = OSSL::bn2ByteString(rsa->iqmp); setPQ(pq); }
+	if (rsa->d) { ByteString d = OSSL::bn2ByteString(rsa->d); setD(d); }
+	if (rsa->n) { ByteString n = OSSL::bn2ByteString(rsa->n); setN(n); }
+	if (rsa->e) { ByteString e = OSSL::bn2ByteString(rsa->e); setE(e); }
+}
 
 // Check if the key is of the given type
 bool OSSLRSAPrivateKey::isOfType(const char* type)

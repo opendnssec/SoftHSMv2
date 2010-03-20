@@ -201,18 +201,10 @@ std::string ByteString::hex_str() const
 // Return the long value
 const unsigned long ByteString::long_val() const
 {
-	// Check the length
-	if (byteString.size() < 8)
-	{
-		DEBUG_MSG("Cannot retrieve an unsigned long value from a %d byte string", byteString.size());
-
-		return 0;
-	}
-
 	// Convert the first 8 bytes of the string to an unsigned long value
 	unsigned long rv = 0;
 
-	for (size_t i = 0; i < 8; i++)
+	for (size_t i = 0; i < std::min(size_t(8), byteString.size()); i++)
 	{
 		rv <<= 8;
 		rv += byteString[i];

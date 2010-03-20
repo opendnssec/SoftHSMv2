@@ -27,68 +27,46 @@
  */
 
 /*****************************************************************************
- RSAPublicKey.cpp
+ OSSLRSAKeyPair.cpp
 
- RSA private key class
+ OpenSSL RSA key-pair class
  *****************************************************************************/
 
 #include "config.h"
 #include "log.h"
-#include "RSAPublicKey.h"
-#include <string.h>
+#include "OSSLRSAKeyPair.h"
 
-// Set the type
-/*static*/ const char* RSAPublicKey::type = "Abstract RSA public key";
-
-// Check if the key is of the given type
-bool RSAPublicKey::isOfType(const char* type)
+// Set the public key
+void OSSLRSAKeyPair::setPublicKey(OSSLRSAPublicKey& publicKey)
 {
-	return !strcmp(this->type, type);
+	pubKey = publicKey;
 }
 
-// Setters for the RSA public key components
-void RSAPublicKey::setN(const ByteString& n)
+// Set the private key
+void OSSLRSAKeyPair::setPrivateKey(OSSLRSAPrivateKey& privateKey)
 {
-	this->n = n;
+	privKey = privateKey;
 }
 
-void RSAPublicKey::setE(const ByteString& e)
+// Return the public key
+PublicKey* OSSLRSAKeyPair::getPublicKey()
 {
-	this->e = e;
+	return &pubKey;
 }
 
-// Getters for the RSA public key components
-const ByteString& RSAPublicKey::getN() const
+const PublicKey* OSSLRSAKeyPair::getConstPublicKey() const
 {
-	return n;
+	return &pubKey;
 }
 
-const ByteString& RSAPublicKey::getE() const
+// Return the private key
+PrivateKey* OSSLRSAKeyPair::getPrivateKey()
 {
-	return e;
+	return &privKey;
 }
 
-// Serialisation
-ByteString RSAPublicKey::serialise() const
+const PrivateKey* OSSLRSAKeyPair::getConstPrivateKey() const
 {
-	return n.serialise() +
-	       e.serialise();
-}
-
-bool RSAPublicKey::deserialise(ByteString& serialised)
-{
-	ByteString dN = ByteString::chainDeserialise(serialised);
-	ByteString dE = ByteString::chainDeserialise(serialised);
-
-	if ((dN.size() == 0) ||
-	    (dE.size() == 0))
-	{
-		return false;
-	}
-
-	setN(dN);
-	setE(dE);
-
-	return true;
+	return &privKey;
 }
 

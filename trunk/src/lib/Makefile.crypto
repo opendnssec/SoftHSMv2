@@ -20,12 +20,14 @@ OSSLEVPSymmetricAlgorithm.cpp \
 OSSLMD5.cpp \
 OSSLRNG.cpp \
 OSSLRSA.cpp \
+OSSLRSAKeyPair.cpp \
 OSSLRSAPrivateKey.cpp \
 OSSLRSAPublicKey.cpp \
 OSSLSHA1.cpp \
 OSSLSHA256.cpp \
 OSSLSHA512.cpp \
 OSSLUtil.cpp \
+RSAParameters.cpp \
 RSAPrivateKey.cpp \
 RSAPublicKey.cpp \
 SecureMemoryRegistry.cpp \
@@ -50,6 +52,7 @@ OSSLEVPSymmetricAlgorithm.h \
 OSSLMD5.h \
 OSSLRNG.h \
 OSSLRSA.h \
+OSSLRSAKeyPair.h \
 OSSLRSAPrivateKey.h \
 OSSLRSAPublicKey.h \
 OSSLSHA1.h \
@@ -59,6 +62,7 @@ OSSLUtil.h \
 PrivateKey.h \
 PublicKey.h \
 RNG.h \
+RSAParameters.h \
 RSAPrivateKey.h \
 RSAPublicKey.h \
 SecureAllocator.h \

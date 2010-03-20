@@ -23,6 +23,7 @@ ByteStringTests.cpp \
 DESTests.cpp \
 HashTests.cpp \
 RNGTests.cpp \
+RSATests.cpp \
 chisq.c \
 ent.c \
 iso8859.c \
@@ -33,6 +34,7 @@ ByteStringTests.h \
 DESTests.h \
 HashTests.h \
 RNGTests.h \
+RSATests.h \
 ent.h \
 iso8859.h \
 randtest.h

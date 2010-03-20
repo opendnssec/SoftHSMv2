@@ -68,6 +68,9 @@ public:
 	virtual void setN(const ByteString& n);
 	virtual void setE(const ByteString& e);
 
+	// Set from OpenSSL representation
+	virtual void setFromOSSL(const RSA* rsa);
+
 	// Retrieve the OpenSSL representation of the key
 	RSA* getOSSLKey();
 

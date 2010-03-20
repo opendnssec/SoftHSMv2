@@ -49,8 +49,7 @@ OSSLRSAPublicKey::OSSLRSAPublicKey(const RSA* inRSA)
 {
 	OSSLRSAPublicKey::OSSLRSAPublicKey();
 
-	if (inRSA->n) setN(OSSL::bn2ByteString(inRSA->n));
-	if (inRSA->e) setE(OSSL::bn2ByteString(inRSA->e));
+	setFromOSSL(inRSA);
 }
 
 // Destructor
@@ -66,6 +65,13 @@ OSSLRSAPublicKey::~OSSLRSAPublicKey()
 bool OSSLRSAPublicKey::isOfType(const char* type)
 {
 	return !strcmp(OSSLRSAPublicKey::type, type);
+}
+
+// Set from OpenSSL representation
+void OSSLRSAPublicKey::setFromOSSL(const RSA* rsa)
+{
+	if (rsa->n) { ByteString n = OSSL::bn2ByteString(rsa->n); setN(n); }
+	if (rsa->e) { ByteString e = OSSL::bn2ByteString(rsa->e); setE(e); }
 }
 
 // Setters for the RSA public key components
