@@ -40,6 +40,7 @@
 #include "OSSLRSAKeyPair.h"
 #include <algorithm>
 #include <openssl/rsa.h>
+#include <openssl/pem.h>
 #include <openssl/err.h>
 
 // Constructor
@@ -68,6 +69,14 @@ bool OSSLRSA::signInit(PrivateKey* privateKey, const std::string mechanism)
 {
 	if (!AsymmetricAlgorithm::signInit(privateKey, mechanism))
 	{
+		return false;
+	}
+
+	// Check if the private key is the right type
+	if (!privateKey->isOfType(OSSLRSAPrivateKey::type))
+	{
+		ERROR_MSG("Invalid key type supplied");
+
 		return false;
 	}
 
@@ -183,7 +192,14 @@ bool OSSLRSA::signUpdate(const ByteString& dataToSign)
 }
 
 bool OSSLRSA::signFinal(ByteString& signature)
-{
+{	
+	// Save necessary state before calling super class signFinal
+	OSSLRSAPrivateKey* pk = (OSSLRSAPrivateKey*) currentPrivateKey;
+
+	std::string lowerMechanism;
+	lowerMechanism.resize(currentMechanism.size());
+	std::transform(currentMechanism.begin(), currentMechanism.end(), lowerMechanism.begin(), tolower);
+
 	if (!AsymmetricAlgorithm::signFinal(signature))
 	{
 		return false;
@@ -200,32 +216,262 @@ bool OSSLRSA::signFinal(ByteString& signature)
 	if (pSecondHash != NULL)
 	{
 		delete pSecondHash;
+
+		pSecondHash = NULL;
 	}
 
 	if (!bFirstResult || !bSecondResult)
 	{
 		return false;
 	}
-
 	
+	ByteString digest = firstHash + secondHash;
 
-	return true;
+	// Resize the data block for the signature to the modulus size of the key
+	signature.resize(pk->getN().size());
+
+	// Determine the signature NID type
+	int type = 0;
+
+	if (!lowerMechanism.compare("rsa-md5-pkcs"))
+	{
+		type = NID_md5;
+	}
+	else if (!lowerMechanism.compare("rsa-sha1-pkcs"))
+	{
+		type = NID_sha1;
+	}
+	else if (!lowerMechanism.compare("rsa-sha256-pkcs"))
+	{
+		type = NID_sha256;
+	}
+	else if (!lowerMechanism.compare("rsa-sha512-pkcs"))
+	{
+		type = NID_sha512;
+	}
+	else if (!lowerMechanism.compare("rsa-ssl"))
+	{
+		type = NID_md5_sha1;
+	}
+
+	// Perform the signature operation
+	unsigned int sigLen = signature.size();
+
+	RSA* rsa = pk->getOSSLKey();
+
+	if (!RSA_blinding_on(rsa, NULL))
+	{
+		ERROR_MSG("Failed to turn blinding on for OpenSSL RSA key");
+	
+		return false;
+	}
+
+	bool rv = (RSA_sign(type, &digest[0], digest.size(), &signature[0], &sigLen, pk->getOSSLKey()) == 1);
+
+	RSA_blinding_off(rsa);
+
+	signature.resize(sigLen);
+
+	return rv;
 }
 
 // Verification functions
 bool OSSLRSA::verifyInit(PublicKey* publicKey, const std::string mechanism)
 {
+	if (!AsymmetricAlgorithm::verifyInit(publicKey, mechanism))
+	{
+		return false;
+	}
+
+	// Check if the private key is the right type
+	if (!publicKey->isOfType(OSSLRSAPublicKey::type))
+	{
+		ERROR_MSG("Invalid key type supplied");
+
+		return false;
+	}
+
+	std::string lowerMechanism;
+	lowerMechanism.resize(mechanism.size());
+	std::transform(mechanism.begin(), mechanism.end(), lowerMechanism.begin(), tolower);
+
+	if (!lowerMechanism.compare("rsa-md5-pkcs"))
+	{
+		pCurrentHash = CryptoFactory::i()->getHashAlgorithm("md5");
+
+		if (!pCurrentHash->hashInit())
+		{
+			delete pCurrentHash;
+			pCurrentHash = NULL;
+		}
+	}
+	else if (!lowerMechanism.compare("rsa-sha1-pkcs"))
+	{
+		pCurrentHash = CryptoFactory::i()->getHashAlgorithm("sha1");
+
+		if (!pCurrentHash->hashInit())
+		{
+			delete pCurrentHash;
+			pCurrentHash = NULL;
+		}
+	}
+	else if (!lowerMechanism.compare("rsa-sha256-pkcs"))
+	{
+		pCurrentHash = CryptoFactory::i()->getHashAlgorithm("sha256");
+
+		if (!pCurrentHash->hashInit())
+		{
+			delete pCurrentHash;
+			pCurrentHash = NULL;
+		}
+	}
+	else if (!lowerMechanism.compare("rsa-sha512-pkcs"))
+	{
+		pCurrentHash = CryptoFactory::i()->getHashAlgorithm("sha512");
+
+		if (!pCurrentHash->hashInit())
+		{
+			delete pCurrentHash;
+			pCurrentHash = NULL;
+		}
+	}
+	else if (!lowerMechanism.compare("rsa-ssl"))
+	{
+		pCurrentHash = CryptoFactory::i()->getHashAlgorithm("md5");
+		pSecondHash = CryptoFactory::i()->getHashAlgorithm("sha1");
+
+		if (!pCurrentHash->hashInit())
+		{
+			delete pCurrentHash;
+			pCurrentHash = NULL;
+		}
+
+		if (!pSecondHash->hashInit())
+		{
+			delete pCurrentHash;
+			pCurrentHash = NULL;
+			
+			delete pSecondHash;
+			pSecondHash = NULL;
+		}
+	}
+
+	if (pCurrentHash == NULL)
+	{
+		ByteString dummy;
+		AsymmetricAlgorithm::verifyFinal(dummy);
+
+		return false;
+	}
+
 	return true;
 }
 
 bool OSSLRSA::verifyUpdate(const ByteString& originalData)
 {
+	if (!AsymmetricAlgorithm::verifyUpdate(originalData))
+	{
+		return false;
+	}
+
+	if (!pCurrentHash->hashUpdate(originalData))
+	{
+		delete pCurrentHash;
+		pCurrentHash = NULL;
+
+		ByteString dummy;
+		AsymmetricAlgorithm::verifyFinal(dummy);
+
+		return false;
+	}
+
+	if ((pSecondHash != NULL) && !pSecondHash->hashUpdate(originalData))
+	{
+		delete pCurrentHash;
+		pCurrentHash = NULL;
+
+		delete pSecondHash;
+		pSecondHash = NULL;
+
+		ByteString dummy;
+		AsymmetricAlgorithm::verifyFinal(dummy);
+
+		return false;
+	}
+
 	return true;
 }
 
 bool OSSLRSA::verifyFinal(const ByteString& signature)
 {
-	return true;
+	// Save necessary state before calling super class verifyFinal
+	OSSLRSAPublicKey* pk = (OSSLRSAPublicKey*) currentPublicKey;
+
+	std::string lowerMechanism;
+	lowerMechanism.resize(currentMechanism.size());
+	std::transform(currentMechanism.begin(), currentMechanism.end(), lowerMechanism.begin(), tolower);
+
+	if (!AsymmetricAlgorithm::verifyFinal(signature))
+	{
+		return false;
+	}
+
+	ByteString firstHash, secondHash;
+
+	bool bFirstResult = pCurrentHash->hashFinal(firstHash);
+	bool bSecondResult = (pSecondHash != NULL) ? pSecondHash->hashFinal(secondHash) : true;
+
+	delete pCurrentHash;
+	pCurrentHash = NULL;
+
+	if (pSecondHash != NULL)
+	{
+		delete pSecondHash;
+
+		pSecondHash = NULL;
+	}
+
+	if (!bFirstResult || !bSecondResult)
+	{
+		return false;
+	}
+	
+	ByteString digest = firstHash + secondHash;
+
+	// Determine the signature NID type
+	int type = 0;
+
+	if (!lowerMechanism.compare("rsa-md5-pkcs"))
+	{
+		type = NID_md5;
+	}
+	else if (!lowerMechanism.compare("rsa-sha1-pkcs"))
+	{
+		type = NID_sha1;
+	}
+	else if (!lowerMechanism.compare("rsa-sha256-pkcs"))
+	{
+		type = NID_sha256;
+	}
+	else if (!lowerMechanism.compare("rsa-sha512-pkcs"))
+	{
+		type = NID_sha512;
+	}
+	else if (!lowerMechanism.compare("rsa-ssl"))
+	{
+		type = NID_md5_sha1;
+	}
+
+	// Perform the verify operation
+	bool rv = (RSA_verify(type, &digest[0], digest.size(), (unsigned char*) signature.const_byte_str(), signature.size(), pk->getOSSLKey()) == 1);
+
+	if (!rv) ERROR_MSG("RSA verify failed (%d, %s in %s in %s)", 
+			    ERR_get_error(),
+		  	    ERR_reason_error_string(ERR_get_error()),
+			    ERR_func_error_string(ERR_get_error()),
+			    ERR_lib_error_string(ERR_get_error()));
+
+	return rv;
 }
 
 // Encryption functions
@@ -394,4 +640,13 @@ bool OSSLRSA::reconstructPrivateKey(PrivateKey** ppPrivateKey, ByteString& seria
 	return true;
 }
 
+PublicKey* OSSLRSA::newPublicKey()
+{
+	return (PublicKey*) new OSSLRSAPublicKey();
+}
+
+PrivateKey* OSSLRSA::newPrivateKey()
+{
+	return (PrivateKey*) new OSSLRSAPrivateKey();
+}
 

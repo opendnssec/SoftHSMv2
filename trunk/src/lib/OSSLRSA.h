@@ -70,6 +70,8 @@ public:
 	virtual bool reconstructKeyPair(AsymmetricKeyPair** ppKeyPair, ByteString& serialisedData);
 	virtual bool reconstructPublicKey(PublicKey** ppPublicKey, ByteString& serialisedData);
 	virtual bool reconstructPrivateKey(PrivateKey** ppPrivateKey, ByteString& serialisedData);
+	virtual PublicKey* newPublicKey();
+	virtual PrivateKey* newPrivateKey();
 
 private:
 	HashAlgorithm* pCurrentHash;

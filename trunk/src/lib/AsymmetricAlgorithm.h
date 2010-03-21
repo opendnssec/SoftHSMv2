@@ -74,6 +74,8 @@ public:
 	virtual bool reconstructKeyPair(AsymmetricKeyPair** ppKeyPair, ByteString& serialisedData) = 0;
 	virtual bool reconstructPublicKey(PublicKey** ppPublicKey, ByteString& serialisedData) = 0;
 	virtual bool reconstructPrivateKey(PrivateKey** ppPrivateKey, ByteString& serialisedData) = 0;
+	virtual PublicKey* newPublicKey() = 0;
+	virtual PrivateKey* newPrivateKey() = 0;
 
 protected:
 	PublicKey* currentPublicKey;

@@ -184,3 +184,203 @@ void RSATests::testSerialisation()
 	delete desPriv;
 }
 
+void RSATests::testSigningVerifying()
+{
+	AsymmetricKeyPair* kp;
+	RSAParameters p;
+
+	// Public exponents to test
+	std::vector<ByteString> exponents;
+	exponents.push_back("010001");
+	exponents.push_back("03");
+	exponents.push_back("0B");
+	exponents.push_back("11");
+
+	// Key sizes to test
+	std::vector<size_t> keySizes;
+	keySizes.push_back(1024);
+	keySizes.push_back(1280);
+	keySizes.push_back(2048);
+	//keySizes.push_back(4096);
+
+	// Mechanisms to test
+	std::vector<const char*> mechanisms;
+	mechanisms.push_back("rsa-md5-pkcs");
+	mechanisms.push_back("rsa-sha1-pkcs");
+	mechanisms.push_back("rsa-sha256-pkcs");
+	mechanisms.push_back("rsa-sha512-pkcs");
+	mechanisms.push_back("rsa-ssl");
+
+	for (std::vector<ByteString>::iterator e = exponents.begin(); e != exponents.end(); e++)
+	{
+		for (std::vector<size_t>::iterator k = keySizes.begin(); k != keySizes.end(); k++)
+		{
+			setRSAParameters(p, *e);
+
+			// Generate key-pair
+			CPPUNIT_ASSERT(rsa->generateKeyPair(&kp, *k, &p));
+	
+			// Generate some data to sign
+			ByteString dataToSign;
+
+			RNG* rng = CryptoFactory::i()->getRNG();
+
+			CPPUNIT_ASSERT(rng->generateRandom(dataToSign, 567));
+
+			for (std::vector<const char*>::iterator m = mechanisms.begin(); m != mechanisms.end(); m++)
+			{
+				ByteString blockSignature, singlePartSignature;
+
+				// Sign the data in blocks
+				CPPUNIT_ASSERT(rsa->signInit(kp->getPrivateKey(), *m));
+				CPPUNIT_ASSERT(rsa->signUpdate(dataToSign.substr(0, 134)));
+				CPPUNIT_ASSERT(rsa->signUpdate(dataToSign.substr(134, 289)));
+				CPPUNIT_ASSERT(rsa->signUpdate(dataToSign.substr(134 + 289)));
+				CPPUNIT_ASSERT(rsa->signFinal(blockSignature));
+
+				// Sign the data in one pass
+				CPPUNIT_ASSERT(rsa->sign(kp->getPrivateKey(), dataToSign, singlePartSignature, *m));
+
+				// If it is not a PSS signature, check if the two signatures match
+				if (strstr(*m, "pss") == NULL)
+				{
+					// Check if the two signatures match
+					CPPUNIT_ASSERT(blockSignature == singlePartSignature);
+				}
+
+				// Now perform multi-pass verification
+				CPPUNIT_ASSERT(rsa->verifyInit(kp->getPublicKey(), *m));
+				CPPUNIT_ASSERT(rsa->verifyUpdate(dataToSign.substr(0, 125)));
+				CPPUNIT_ASSERT(rsa->verifyUpdate(dataToSign.substr(125, 247)));
+				CPPUNIT_ASSERT(rsa->verifyUpdate(dataToSign.substr(125 + 247)));
+				CPPUNIT_ASSERT(rsa->verifyFinal(blockSignature));
+
+				// And single-pass verification
+				CPPUNIT_ASSERT(rsa->verify(kp->getPublicKey(), dataToSign, singlePartSignature, *m));
+			}
+		
+			delete kp;
+		}
+	}
+}
+
+void RSATests::testSignVerifyKnownVector()
+{
+	// These test vectors were taken from the Crypto++ set of test vectors
+	// Crypto++ can be downloaded from www.cryptopp.com
+
+	RSAPublicKey* pubKey1 = (RSAPublicKey*) rsa->newPublicKey();
+	RSAPublicKey* pubKey2 = (RSAPublicKey*) rsa->newPublicKey();
+	RSAPrivateKey* privKey1_1 = (RSAPrivateKey*) rsa->newPrivateKey();
+	RSAPrivateKey* privKey1_2 = (RSAPrivateKey*) rsa->newPrivateKey();
+	RSAPrivateKey* privKey2_1 = (RSAPrivateKey*) rsa->newPrivateKey();
+	RSAPrivateKey* privKey2_2 = (RSAPrivateKey*) rsa->newPrivateKey();
+
+	// Reconstruct public and private key #1
+	ByteString n1	= "0A66791DC6988168DE7AB77419BB7FB0C001C62710270075142942E19A8D8C51D053B3E3782A1DE5DC5AF4EBE99468170114A1DFE67CDC9A9AF55D655620BBAB";
+	ByteString e1	= "010001";
+	ByteString d1	= "0123C5B61BA36EDB1D3679904199A89EA80C09B9122E1400C09ADCF7784676D01D23356A7D44D6BD8BD50E94BFC723FA87D8862B75177691C11D757692DF8881";
+	ByteString p1	= "33D48445C859E52340DE704BCDDA065FBB4058D740BD1D67D29E9C146C11CF61";
+	ByteString q1	= "335E8408866B0FD38DC7002D3F972C67389A65D5D8306566D5C4F2A5AA52628B";
+	ByteString dp11	= "045EC90071525325D3D46DB79695E9AFACC4523964360E02B119BAA366316241";
+	ByteString dq11	= "15EB327360C7B60D12E5E2D16BDCD97981D17FBA6B70DB13B20B436E24EADA59";
+	ByteString pq1	= "2CA6366D72781DFA24D34A9A24CBC2AE927A9958AF426563FF63FB11658A461D";
+
+	pubKey1->setN(n1);
+	pubKey1->setE(e1);
+	privKey1_1->setN(n1);
+	privKey1_1->setE(e1);
+	privKey1_1->setD(d1);
+	privKey1_1->setP(p1);
+	privKey1_1->setQ(q1);
+	privKey1_1->setDP1(dp11);
+	privKey1_1->setDQ1(dq11);
+	privKey1_1->setPQ(pq1);
+
+	// The same key but without CRT factors
+	privKey1_2->setN(n1);
+	privKey1_2->setE(e1);
+	privKey1_2->setD(d1);
+
+	// Reconstruct public and private key #2
+	ByteString n2	= "A885B6F851A8079AB8A281DB0297148511EE0D8C07C0D4AE6D6FED461488E0D41E3FF8F281B06A3240B5007A5C2AB4FB6BE8AF88F119DB998368DDDC9710ABED";
+	ByteString e2	= "010001";
+	ByteString d2	= "2B259D2CA3DF851EE891F6F4678BDDFD9A131C95D3305C63D2723B4A5B9C960F5EC8BB7DCDDBEBD8B6A38767D64AD451E9383E0891E4EE7506100481F2B49323";
+	ByteString p2	= "D7103CD676E39824E2BE50B8E6533FE7CB7484348E283802AD2B8D00C80D19DF";
+	ByteString q2	= "C89996DC169CEB3F227958275968804D4BE9FC4012C3219662F1A438C9950BB3";
+	ByteString dp12	= "5D8EA4C8AF83A70634D5920C3DB66D908AC3AF57A597FD75BC9BBB856181C185";
+	ByteString dq12	= "C598E54DAEC8ABC1E907769A6C2BD01653ED0C9960E1EDB7E186FDA922883A99";
+	ByteString pq2	= "7C6F27B5B51B78AD80FB36E700990CF307866F2943124CBD93D97C137794C104";
+
+	pubKey2->setN(n2);
+	pubKey2->setE(e2);
+	privKey2_1->setN(n2);
+	privKey2_1->setE(e2);
+	privKey2_1->setD(d2);
+	privKey2_1->setP(p2);
+	privKey2_1->setQ(q2);
+	privKey2_1->setDP1(dp12);
+	privKey2_1->setDQ1(dq12);
+	privKey2_1->setPQ(pq2);
+
+	// The same key but without CRT factors
+	privKey2_2->setN(n2);
+	privKey2_2->setE(e2);
+	privKey2_2->setD(d2);
+
+	// Test with key #1
+	const char* testValue1 = "Everyone gets Friday off.";
+
+	ByteString dataToSign1((const unsigned char*) testValue1, strlen(testValue1));
+
+	ByteString expectedSignature1 = "0610761F95FFD1B8F29DA34212947EC2AA0E358866A722F03CC3C41487ADC604A48FF54F5C6BEDB9FB7BD59F82D6E55D8F3174BA361B2214B2D74E8825E04E81";
+	ByteString signature1_1;
+	ByteString signature1_2;
+
+	CPPUNIT_ASSERT(rsa->signInit(privKey1_1, "rsa-sha1-pkcs"));
+	CPPUNIT_ASSERT(rsa->signUpdate(dataToSign1));
+	CPPUNIT_ASSERT(rsa->signFinal(signature1_1));
+
+	CPPUNIT_ASSERT(rsa->signInit(privKey1_2, "rsa-sha1-pkcs"));
+	CPPUNIT_ASSERT(rsa->signUpdate(dataToSign1));
+	CPPUNIT_ASSERT(rsa->signFinal(signature1_2));
+
+	CPPUNIT_ASSERT(signature1_1 == signature1_2);
+	CPPUNIT_ASSERT(signature1_1 == expectedSignature1);
+
+	CPPUNIT_ASSERT(rsa->verifyInit(pubKey1, "rsa-sha1-pkcs"));
+	CPPUNIT_ASSERT(rsa->verifyUpdate(dataToSign1));
+	CPPUNIT_ASSERT(rsa->verifyFinal(expectedSignature1));
+
+	// Test with key #2
+	const char* testValue2 = "test";
+
+	ByteString dataToSign2((const unsigned char*) testValue2, strlen(testValue2));
+
+	ByteString expectedSignature2 = "A7E00CE4391F914D82158D9B732759808E25A1C6383FE87A5199157650D4296CF612E9FF809E686A0AF328238306E79965F6D0138138829D9A1A22764306F6CE";
+	ByteString signature2_1;
+	ByteString signature2_2;
+
+	CPPUNIT_ASSERT(rsa->signInit(privKey2_1, "rsa-sha1-pkcs"));
+	CPPUNIT_ASSERT(rsa->signUpdate(dataToSign2));
+	CPPUNIT_ASSERT(rsa->signFinal(signature2_1));
+
+	CPPUNIT_ASSERT(rsa->signInit(privKey2_2, "rsa-sha1-pkcs"));
+	CPPUNIT_ASSERT(rsa->signUpdate(dataToSign2));
+	CPPUNIT_ASSERT(rsa->signFinal(signature2_2));
+
+	CPPUNIT_ASSERT(signature2_1 == signature2_2);
+	CPPUNIT_ASSERT(signature2_1 == expectedSignature2);
+
+	CPPUNIT_ASSERT(rsa->verifyInit(pubKey2, "rsa-sha1-pkcs"));
+	CPPUNIT_ASSERT(rsa->verifyUpdate(dataToSign2));
+	CPPUNIT_ASSERT(rsa->verifyFinal(expectedSignature2));
+
+	delete pubKey1;
+	delete pubKey2;
+	delete privKey1_1;
+	delete privKey1_2;
+	delete privKey2_1;
+	delete privKey2_2;
+}
+
