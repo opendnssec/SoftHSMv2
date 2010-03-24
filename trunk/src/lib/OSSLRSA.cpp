@@ -477,12 +477,159 @@ bool OSSLRSA::verifyFinal(const ByteString& signature)
 // Encryption functions
 bool OSSLRSA::encrypt(PublicKey* publicKey, const ByteString& data, ByteString& encryptedData, const std::string padding)
 {
+	// Check if the public key is the right type
+	if (!publicKey->isOfType(OSSLRSAPublicKey::type))
+	{
+		ERROR_MSG("Invalid key type supplied");
+
+		return false;
+	}
+
+	std::string lowerPadding;
+	lowerPadding.resize(padding.size());
+	std::transform(padding.begin(), padding.end(), lowerPadding.begin(), tolower);
+
+	// Retrieve the OpenSSL key object
+	RSA* rsa = ((OSSLRSAPublicKey*) publicKey)->getOSSLKey();
+
+	// Check the data and padding algorithm
+	int osslPadding = 0;
+
+	if (!lowerPadding.compare("rsa-pkcs1"))
+	{
+		// The size of the input data cannot be more than the modulus
+		// length of the key - 11
+		if (data.size() > (size_t) (RSA_size(rsa) - 11))
+		{
+			ERROR_MSG("Too much data supplied for RSA PKCS #1 encryption");
+
+			return false;
+		}
+
+		osslPadding = RSA_PKCS1_PADDING;
+	}
+	else if (!lowerPadding.compare("rsa-pkcs1-oaep"))
+	{
+		// The size of the input data cannot be more than the modulus
+		// length of the key - 41
+		if (data.size() > (size_t) (RSA_size(rsa) - 41))
+		{
+			ERROR_MSG("Too much data supplied for RSA OAEP encryption");
+
+			return false;
+		}
+
+		osslPadding = RSA_PKCS1_OAEP_PADDING;
+	}
+	else if (!lowerPadding.compare("rsa-sslv23"))
+	{
+		// FIXME: There is no known length check
+		osslPadding = RSA_SSLV23_PADDING;
+	}
+	else if (!lowerPadding.compare("raw"))
+	{
+		// The size of the input data should be exactly equal to the modulus length
+		if (data.size() != (size_t) RSA_size(rsa))
+		{
+			ERROR_MSG("Incorrect amount of input data supplied for raw RSA encryption");
+
+			return false;
+		}
+
+		osslPadding = RSA_NO_PADDING;
+	}
+	else
+	{
+		ERROR_MSG("Invalid padding mechanism supplied (%s)", padding.c_str());
+
+		return false;
+	}
+
+	// Perform the RSA operation
+	encryptedData.resize(RSA_size(rsa));
+
+	if (RSA_public_encrypt(data.size(), (unsigned char*) data.const_byte_str(), &encryptedData[0], rsa, osslPadding) == -1)
+	{
+		ERROR_MSG("RSA public key encryption failed: %s in %s in %s",
+			   ERR_reason_error_string(ERR_get_error()),
+			   ERR_func_error_string(ERR_get_error()),
+			   ERR_lib_error_string(ERR_get_error()));
+
+		return false;
+	}
+
 	return true;
 }
 
 // Decryption functions
 bool OSSLRSA::decrypt(PrivateKey* privateKey, const ByteString& encryptedData, ByteString& data, const std::string padding)
 {
+	// Check if the private key is the right type
+	if (!privateKey->isOfType(OSSLRSAPrivateKey::type))
+	{
+		ERROR_MSG("Invalid key type supplied");
+
+		return false;
+	}
+
+	// Retrieve the OpenSSL key object
+	RSA* rsa = ((OSSLRSAPrivateKey*) privateKey)->getOSSLKey();
+
+	// Check the input size
+	if (encryptedData.size() != (size_t) RSA_size(rsa))
+	{
+		ERROR_MSG("Invalid amount of input data supplied for RSA decryption");
+
+		return false;
+	}
+
+	std::string lowerPadding;
+	lowerPadding.resize(padding.size());
+	std::transform(padding.begin(), padding.end(), lowerPadding.begin(), tolower);
+
+	// Determine the OpenSSL padding algorithm
+	int osslPadding = 0;
+
+	if (!lowerPadding.compare("rsa-pkcs1"))
+	{
+		osslPadding = RSA_PKCS1_PADDING;
+	}
+	else if (!lowerPadding.compare("rsa-pkcs1-oaep"))
+	{
+		osslPadding = RSA_PKCS1_OAEP_PADDING;
+	}
+	else if (!lowerPadding.compare("rsa-sslv23"))
+	{
+		osslPadding = RSA_SSLV23_PADDING;
+	}
+	else if (!lowerPadding.compare("raw"))
+	{
+		osslPadding = RSA_NO_PADDING;
+	}
+	else
+	{
+		ERROR_MSG("Invalid padding mechanism supplied (%s)", padding.c_str());
+
+		return false;
+	}
+
+	// Perform the RSA operation
+	data.resize(RSA_size(rsa));
+
+	int decSize = RSA_private_decrypt(encryptedData.size(), (unsigned char*) encryptedData.const_byte_str(), &data[0], rsa, osslPadding);
+
+	if (decSize == -1)
+	{
+		ERROR_MSG("RSA private key decryption failed: %s in %s in %s",
+			   ERR_reason_error_string(ERR_get_error()),
+			   ERR_func_error_string(ERR_get_error()),
+			   ERR_lib_error_string(ERR_get_error()));
+
+		return false;
+	}
+
+	data.resize(decSize);
+
 	return true;
 }
 
