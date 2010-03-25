@@ -258,7 +258,8 @@ void RSATests::testSigningVerifying()
 				// And single-pass verification
 				CPPUNIT_ASSERT(rsa->verify(kp->getPublicKey(), dataToSign, singlePartSignature, *m));
 			}
-		
+	
+			delete rng;
 			delete kp;
 		}
 	}
@@ -382,5 +383,88 @@ void RSATests::testSignVerifyKnownVector()
 	delete privKey1_2;
 	delete privKey2_1;
 	delete privKey2_2;
+}
+
+void RSATests::testEncryptDecrypt()
+{
+	AsymmetricKeyPair* kp;
+	RSAParameters p;
+
+	// Public exponents to test
+	std::vector<ByteString> exponents;
+	exponents.push_back("010001");
+	exponents.push_back("03");
+	exponents.push_back("0B");
+	exponents.push_back("11");
+
+	// Key sizes to test
+	std::vector<size_t> keySizes;
+	keySizes.push_back(1024);
+	keySizes.push_back(1280);
+	keySizes.push_back(2048);
+	//keySizes.push_back(4096);
+
+	// Paddings to test
+	std::vector<const char*> paddings;
+	paddings.push_back("rsa-pkcs");
+	paddings.push_back("rsa-pkcs-oaep");
+	paddings.push_back("rsa-raw");
+
+	for (std::vector<ByteString>::iterator e = exponents.begin(); e != exponents.end(); e++)
+	{
+		for (std::vector<size_t>::iterator k = keySizes.begin(); k != keySizes.end(); k++)
+		{
+			setRSAParameters(p, *e);
+
+			// Generate key-pair
+			CPPUNIT_ASSERT(rsa->generateKeyPair(&kp, *k, &p));
+	
+			RNG* rng = CryptoFactory::i()->getRNG();
+
+			for (std::vector<const char*>::iterator pad = paddings.begin(); pad != paddings.end(); pad++)
+			{
+				// Generate some test data to encrypt based on the selected padding
+				ByteString testData;
+
+				if (!strcmp(*pad, "rsa-pkcs"))
+				{
+					CPPUNIT_ASSERT(rng->generateRandom(testData, (*k >> 3) - 12));
+				}
+				else if (!strcmp(*pad, "rsa-pkcs-oaep"))
+				{
+					CPPUNIT_ASSERT(rng->generateRandom(testData, (*k >> 3) - 42));
+				}
+				else if (!strcmp(*pad, "rsa-raw"))
+				{
+					CPPUNIT_ASSERT(rng->generateRandom(testData, *k >> 3));
+					testData[0] &= 0x0F;
+				}
+				else
+				{
+					CPPUNIT_ASSERT(true == false);
+				}
+
+				// Encrypt the data
+				ByteString encryptedData;
+
+				CPPUNIT_ASSERT(rsa->encrypt(kp->getPublicKey(), testData, encryptedData, *pad));
+
+				// The encrypted data length should equal the modulus length
+				CPPUNIT_ASSERT(encryptedData.size() == (*k >> 3));
+				CPPUNIT_ASSERT(encryptedData != testData);
+
+				// Now decrypt the data
+				ByteString decryptedData;
+
+				CPPUNIT_ASSERT(rsa->decrypt(kp->getPrivateKey(), encryptedData, decryptedData, *pad));
+
+				// Check that the data was properly decrypted
+				CPPUNIT_ASSERT(decryptedData == testData);
+			}
+			
+			delete rng;
+			delete kp;
+		}
+	}
 }
 

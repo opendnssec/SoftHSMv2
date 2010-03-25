@@ -1,9 +1,4 @@
-/* $Id$ */
-
 /*
- * Copyright (c) 2010 SURFnet bv
- * All rights reserved.
- *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -465,11 +460,7 @@ bool OSSLRSA::verifyFinal(const ByteString& signature)
 	// Perform the verify operation
 	bool rv = (RSA_verify(type, &digest[0], digest.size(), (unsigned char*) signature.const_byte_str(), signature.size(), pk->getOSSLKey()) == 1);
 
-	if (!rv) ERROR_MSG("RSA verify failed (%d, %s in %s in %s)", 
-			    ERR_get_error(),
-		  	    ERR_reason_error_string(ERR_get_error()),
-			    ERR_func_error_string(ERR_get_error()),
-			    ERR_lib_error_string(ERR_get_error()));
+	if (!rv) ERROR_MSG("RSA verify failed (0x%08X)", ERR_get_error());
 
 	return rv;
 }
@@ -495,7 +486,7 @@ bool OSSLRSA::encrypt(PublicKey* publicKey, const ByteString& data, ByteString& 
 	// Check the data and padding algorithm
 	int osslPadding = 0;
 
-	if (!lowerPadding.compare("rsa-pkcs1"))
+	if (!lowerPadding.compare("rsa-pkcs"))
 	{
 		// The size of the input data cannot be more than the modulus
 		// length of the key - 11
@@ -508,7 +499,7 @@ bool OSSLRSA::encrypt(PublicKey* publicKey, const ByteString& data, ByteString& 
 
 		osslPadding = RSA_PKCS1_PADDING;
 	}
-	else if (!lowerPadding.compare("rsa-pkcs1-oaep"))
+	else if (!lowerPadding.compare("rsa-pkcs-oaep"))
 	{
 		// The size of the input data cannot be more than the modulus
 		// length of the key - 41
@@ -521,12 +512,7 @@ bool OSSLRSA::encrypt(PublicKey* publicKey, const ByteString& data, ByteString& 
 
 		osslPadding = RSA_PKCS1_OAEP_PADDING;
 	}
-	else if (!lowerPadding.compare("rsa-sslv23"))
-	{
-		// FIXME: There is no known length check
-		osslPadding = RSA_SSLV23_PADDING;
-	}
-	else if (!lowerPadding.compare("raw"))
+	else if (!lowerPadding.compare("rsa-raw"))
 	{
 		// The size of the input data should be exactly equal to the modulus length
 		if (data.size() != (size_t) RSA_size(rsa))
@@ -550,10 +536,7 @@ bool OSSLRSA::encrypt(PublicKey* publicKey, const ByteString& data, ByteString& 
 
 	if (RSA_public_encrypt(data.size(), (unsigned char*) data.const_byte_str(), &encryptedData[0], rsa, osslPadding) == -1)
 	{
-		ERROR_MSG("RSA public key encryption failed: %s in %s in %s",
-			   ERR_reason_error_string(ERR_get_error()),
-			   ERR_func_error_string(ERR_get_error()),
-			   ERR_lib_error_string(ERR_get_error()));
+		ERROR_MSG("RSA public key encryption failed (0x%08X)", ERR_get_error());
 
 		return false;
 	}
@@ -590,19 +573,15 @@ bool OSSLRSA::decrypt(PrivateKey* privateKey, const ByteString& encryptedData, B
 	// Determine the OpenSSL padding algorithm
 	int osslPadding = 0;
 
-	if (!lowerPadding.compare("rsa-pkcs1"))
+	if (!lowerPadding.compare("rsa-pkcs"))
 	{
 		osslPadding = RSA_PKCS1_PADDING;
 	}
-	else if (!lowerPadding.compare("rsa-pkcs1-oaep"))
+	else if (!lowerPadding.compare("rsa-pkcs-oaep"))
 	{
 		osslPadding = RSA_PKCS1_OAEP_PADDING;
 	}
-	else if (!lowerPadding.compare("rsa-sslv23"))
-	{
-		osslPadding = RSA_SSLV23_PADDING;
-	}
-	else if (!lowerPadding.compare("raw"))
+	else if (!lowerPadding.compare("rsa-raw"))
 	{
 		osslPadding = RSA_NO_PADDING;
 	}
@@ -615,15 +594,12 @@ bool OSSLRSA::decrypt(PrivateKey* privateKey, const ByteString& encryptedData, B
 
 	// Perform the RSA operation
 	data.resize(RSA_size(rsa));
-
+	
 	int decSize = RSA_private_decrypt(encryptedData.size(), (unsigned char*) encryptedData.const_byte_str(), &data[0], rsa, osslPadding);
 
 	if (decSize == -1)
 	{
-		ERROR_MSG("RSA private key decryption failed: %s in %s in %s",
-			   ERR_reason_error_string(ERR_get_error()),
-			   ERR_func_error_string(ERR_get_error()),
-			   ERR_lib_error_string(ERR_get_error()));
+		ERROR_MSG("RSA private key decryption failed (0x%08X)", ERR_get_error());
 
 		return false;
 	}
@@ -681,10 +657,7 @@ bool OSSLRSA::generateKeyPair(AsymmetricKeyPair** ppKeyPair, size_t keySize, voi
 	// Check if the key was successfully generated
 	if (rsa == NULL)
 	{
-		ERROR_MSG("RSA key generation failed: %s in %s in %s",
-			  ERR_reason_error_string(ERR_get_error()),
-			  ERR_func_error_string(ERR_get_error()),
-			  ERR_lib_error_string(ERR_get_error()));
+		ERROR_MSG("RSA key generation failed (0x%08X)", ERR_get_error());
 
 		return false;
 	}
