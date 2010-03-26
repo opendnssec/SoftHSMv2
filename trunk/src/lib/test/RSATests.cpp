@@ -89,10 +89,11 @@ void RSATests::testKeyGeneration()
 	{
 		for (std::vector<size_t>::iterator k = keySizes.begin(); k != keySizes.end(); k++)
 		{
-			setRSAParameters(p, *e);
+			p.setE(*e);
+			p.setBitLength(*k);	
 		
 			// Generate key-pair
-			CPPUNIT_ASSERT(rsa->generateKeyPair(&kp, *k, &p));
+			CPPUNIT_ASSERT(rsa->generateKeyPair(&kp, &p));
 		
 			RSAPublicKey* pub = (RSAPublicKey*) kp->getPublicKey();
 			RSAPrivateKey* priv = (RSAPrivateKey*) kp->getPrivateKey();
@@ -113,9 +114,10 @@ void RSATests::testSerialisation()
 	AsymmetricKeyPair* kp;
 	RSAParameters p;
 
-	setRSAParameters(p, "010001"); // Exponent F4
+	p.setE("010001");
+	p.setBitLength(1024);	
 
-	CPPUNIT_ASSERT(rsa->generateKeyPair(&kp, 1024, &p));
+	CPPUNIT_ASSERT(rsa->generateKeyPair(&kp, &p));
 	CPPUNIT_ASSERT(kp != NULL);
 
 	// Serialise the key-pair
@@ -215,10 +217,11 @@ void RSATests::testSigningVerifying()
 	{
 		for (std::vector<size_t>::iterator k = keySizes.begin(); k != keySizes.end(); k++)
 		{
-			setRSAParameters(p, *e);
+			p.setE(*e);
+			p.setBitLength(*k);	
 
 			// Generate key-pair
-			CPPUNIT_ASSERT(rsa->generateKeyPair(&kp, *k, &p));
+			CPPUNIT_ASSERT(rsa->generateKeyPair(&kp, &p));
 	
 			// Generate some data to sign
 			ByteString dataToSign;
@@ -414,10 +417,11 @@ void RSATests::testEncryptDecrypt()
 	{
 		for (std::vector<size_t>::iterator k = keySizes.begin(); k != keySizes.end(); k++)
 		{
-			setRSAParameters(p, *e);
+			p.setE(*e);
+			p.setBitLength(*k);	
 
 			// Generate key-pair
-			CPPUNIT_ASSERT(rsa->generateKeyPair(&kp, *k, &p));
+			CPPUNIT_ASSERT(rsa->generateKeyPair(&kp, &p));
 	
 			RNG* rng = CryptoFactory::i()->getRNG();
 

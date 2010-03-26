@@ -27,46 +27,35 @@
  */
 
 /*****************************************************************************
- RSAParameters.h
+ AsymmetricParameters.h
 
- RSA parameters (only used for key generation)
+ Base class for asymmetric parameter classes
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_RSAPARAMETERS_H
-#define _SOFTHSM_V2_RSAPARAMETERS_H
+#ifndef _SOFTHSM_V2_ASYMMETRICPARAMETERS_H
+#define _SOFTHSM_V2_ASYMMETRICPARAMETERS_H
 
 #include "config.h"
 #include "ByteString.h"
-#include "AsymmetricParameters.h"
+#include "Serialisable.h"
 
-class RSAParameters : public AsymmetricParameters
+class AsymmetricParameters : public Serialisable
 {
 public:
-	// The type
-	static const char* type;
+	// Base constructors
+	AsymmetricParameters() { }
 
-	// Set the public exponent
-	void setE(const ByteString& e);
+	AsymmetricParameters(const AsymmetricParameters& in) { }
 
-	// Set the bit length
-	void setBitLength(const size_t bitLen);
+	// Destructor
+	virtual ~AsymmetricParameters() { }
 
-	// Get the public exponent
-	const ByteString& getE() const;
-
-	// Get the bit length
-	size_t getBitLength() const;
-
-	// Are the parameters of the given type?
-	virtual bool areOfType(const char* type);
+	// Check if it is of the given type
+	virtual bool areOfType(const char* type) = 0;
 
 	// Serialisation
-	virtual ByteString serialise() const;
-
-private:
-	ByteString e;
-	size_t bitLen;
+	virtual ByteString serialise() const = 0;
 };
 
-#endif // !_SOFTHSM_V2_RSAPARAMETERS_H
+#endif // !_SOFTHSM_V2_ASYMMETRICPARAMETERS_H
 

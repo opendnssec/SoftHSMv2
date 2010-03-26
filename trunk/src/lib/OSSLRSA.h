@@ -66,12 +66,13 @@ public:
 	virtual bool decrypt(PrivateKey* privateKey, const ByteString& encryptedData, ByteString& data, const std::string padding);
 
 	// Key factory
-	virtual bool generateKeyPair(AsymmetricKeyPair** ppKeyPair, size_t keySize, void* parameters = NULL, RNG* rng = NULL);
+	virtual bool generateKeyPair(AsymmetricKeyPair** ppKeyPair, AsymmetricParameters* parameters, RNG* rng = NULL);
 	virtual bool reconstructKeyPair(AsymmetricKeyPair** ppKeyPair, ByteString& serialisedData);
 	virtual bool reconstructPublicKey(PublicKey** ppPublicKey, ByteString& serialisedData);
 	virtual bool reconstructPrivateKey(PrivateKey** ppPrivateKey, ByteString& serialisedData);
 	virtual PublicKey* newPublicKey();
 	virtual PrivateKey* newPrivateKey();
+	virtual AsymmetricParameters* newParameters();
 
 private:
 	HashAlgorithm* pCurrentHash;

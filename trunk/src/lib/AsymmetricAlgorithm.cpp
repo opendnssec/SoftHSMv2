@@ -134,3 +134,18 @@ bool AsymmetricAlgorithm::verifyFinal(const ByteString& signature)
 	return true;
 }
 
+bool AsymmetricAlgorithm::generateParameters(AsymmetricParameters** ppParams, void* parameters /* = NULL */, RNG* rng /* = NULL*/)
+{
+	return false;
+}
+
+bool AsymmetricAlgorithm::reconstructParameters(AsymmetricParameters** ppParams, ByteString& serialisedData)
+{
+	return false;
+}
+
+AsymmetricParameters* AsymmetricAlgorithm::newParameters()
+{
+	return NULL;
+}
+

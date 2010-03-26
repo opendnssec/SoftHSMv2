@@ -610,38 +610,31 @@ bool OSSLRSA::decrypt(PrivateKey* privateKey, const ByteString& encryptedData, B
 }
 
 // Key factory
-bool OSSLRSA::generateKeyPair(AsymmetricKeyPair** ppKeyPair, size_t keySize, void* parameters /* = NULL */, RNG* rng /* = NULL */)
+bool OSSLRSA::generateKeyPair(AsymmetricKeyPair** ppKeyPair, AsymmetricParameters* parameters, RNG* rng /* = NULL */)
 {
 	// Check parameters
 	if ((ppKeyPair == NULL) ||
-	    (keySize < 512) ||
-	    (keySize > 16384) ||
 	    (parameters == NULL))
 	{
 		return false;
 	}
 
-	if (keySize < 1024)
+	if (!parameters->areOfType(RSAParameters::type))
 	{
-		WARNING_MSG("Using an RSA key size < 1024 bits is not recommended");
+		ERROR_MSG("Invalid parameters supplied for RSA key generation");
+
+		return false;
 	}
 
 	RSAParameters* params = (RSAParameters*) parameters;
 
-	try
+	if (params->getBitLength() < 1024)
 	{
-		if (params->magic != RSA_PARAMETER_MAGIC)
-		{
-			return false;
-		}
-	}
-	catch (...)
-	{
-		return false;
+		WARNING_MSG("Using an RSA key size < 1024 bits is not recommended");
 	}
 
 	// Retrieve the desired public exponent
-	unsigned long e = params->e.long_val();
+	unsigned long e = params->getE().long_val();
 
 	// Check the public exponent
 	if ((e == 0) || (e % 2 != 1))
@@ -652,7 +645,7 @@ bool OSSLRSA::generateKeyPair(AsymmetricKeyPair** ppKeyPair, size_t keySize, voi
 	}
 
 	// Generate the key-pair
-	RSA* rsa = RSA_generate_key(keySize, e, NULL, NULL);
+	RSA* rsa = RSA_generate_key(params->getBitLength(), e, NULL, NULL);
 
 	// Check if the key was successfully generated
 	if (rsa == NULL)
@@ -768,5 +761,10 @@ PublicKey* OSSLRSA::newPublicKey()
 PrivateKey* OSSLRSA::newPrivateKey()
 {
 	return (PrivateKey*) new OSSLRSAPrivateKey();
+}
+	
+AsymmetricParameters* OSSLRSA::newParameters()
+{
+	return (AsymmetricParameters*) new RSAParameters();
 }
 

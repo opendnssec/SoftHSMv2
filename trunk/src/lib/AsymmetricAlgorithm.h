@@ -38,6 +38,7 @@
 #include "config.h"
 #include <string>
 #include "AsymmetricKeyPair.h"
+#include "AsymmetricParameters.h"
 #include "PublicKey.h"
 #include "PrivateKey.h"
 #include "RNG.h"
@@ -70,12 +71,15 @@ public:
 	virtual bool decrypt(PrivateKey* privateKey, const ByteString& encryptedData, ByteString& data, const std::string padding) = 0;
 
 	// Key factory
-	virtual bool generateKeyPair(AsymmetricKeyPair** ppKeyPair, size_t keySize, void* parameters = NULL, RNG* rng = NULL) = 0;
+	virtual bool generateKeyPair(AsymmetricKeyPair** ppKeyPair, AsymmetricParameters* parameters, RNG* rng = NULL) = 0;
+	virtual bool generateParameters(AsymmetricParameters** ppParams, void* parameters = NULL, RNG* rng = NULL);
 	virtual bool reconstructKeyPair(AsymmetricKeyPair** ppKeyPair, ByteString& serialisedData) = 0;
 	virtual bool reconstructPublicKey(PublicKey** ppPublicKey, ByteString& serialisedData) = 0;
 	virtual bool reconstructPrivateKey(PrivateKey** ppPrivateKey, ByteString& serialisedData) = 0;
+	virtual bool reconstructParameters(AsymmetricParameters** ppParams, ByteString& serialisedData);
 	virtual PublicKey* newPublicKey() = 0;
 	virtual PrivateKey* newPrivateKey() = 0;
+	virtual AsymmetricParameters* newParameters();
 
 protected:
 	PublicKey* currentPublicKey;

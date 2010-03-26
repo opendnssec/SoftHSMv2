@@ -11,6 +11,7 @@ BotanCryptoFactory.cpp \
 ByteString.cpp \
 CryptoFactory.cpp \
 DESKey.cpp \
+DSAParameters.cpp \
 HashAlgorithm.cpp \
 OSSLAES.cpp \
 OSSLCryptoFactory.cpp \
@@ -38,11 +39,13 @@ salloc.cpp
 CRYPTOHEADERS=\
 AsymmetricAlgorithm.h \
 AsymmetricKeyPair.h \
+AsymmetricParameters.h \
 AESKey.h \
 BotanCryptoFactory.h \
 ByteString.h \
 CryptoFactory.h \
 DESKey.h \
+DSAParameters.h \
 HashAlgorithm.h \
 OSSLAES.h \
 OSSLCryptoFactory.h \

@@ -27,35 +27,41 @@
  */
 
 /*****************************************************************************
- RSAParameters.h
+ DSAParameters.h
 
- RSA parameters (only used for key generation)
+ DSA parameters (only used for key generation)
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_RSAPARAMETERS_H
-#define _SOFTHSM_V2_RSAPARAMETERS_H
+#ifndef _SOFTHSM_V2_DSAPARAMETERS_H
+#define _SOFTHSM_V2_DSAPARAMETERS_H
 
 #include "config.h"
 #include "ByteString.h"
 #include "AsymmetricParameters.h"
 
-class RSAParameters : public AsymmetricParameters
+class DSAParameters : public AsymmetricParameters
 {
 public:
 	// The type
 	static const char* type;
 
-	// Set the public exponent
-	void setE(const ByteString& e);
+	// Set the public prime p
+	void setP(const ByteString& p);
 
-	// Set the bit length
-	void setBitLength(const size_t bitLen);
+	// Set the public subprime q
+	void setQ(const ByteString& q);
 
-	// Get the public exponent
-	const ByteString& getE() const;
+	// Set the generator g
+	void setG(const ByteString& g);
 
-	// Get the bit length
-	size_t getBitLength() const;
+	// Get the public prime p
+	const ByteString& getP() const;
+
+	// Get the public subprime q
+	const ByteString& getQ() const;
+
+	// Get the generator g
+	const ByteString& getG() const;
 
 	// Are the parameters of the given type?
 	virtual bool areOfType(const char* type);
@@ -64,9 +70,10 @@ public:
 	virtual ByteString serialise() const;
 
 private:
-	ByteString e;
-	size_t bitLen;
+	ByteString p;
+	ByteString q;
+	ByteString g;
 };
 
-#endif // !_SOFTHSM_V2_RSAPARAMETERS_H
+#endif // !_SOFTHSM_V2_DSAPARAMETERS_H
 

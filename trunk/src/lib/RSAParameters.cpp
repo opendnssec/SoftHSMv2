@@ -35,16 +35,44 @@
 #include "config.h"
 #include "log.h"
 #include "RSAParameters.h"
+#include <string.h>
 
-void setRSAParameters(RSAParameters& params, const ByteString& e)
+// The type
+/*static*/ const char* RSAParameters::type = "Generic RSA parameters";
+
+// Set the public exponent
+void RSAParameters::setE(const ByteString& e)
 {
-	params.magic = RSA_PARAMETER_MAGIC;
-	params.e = e;
+	this->e = e;
 }
 
-void setRSAParameters(RSAParameters& params, const char* e)
+// Set the bit length
+void RSAParameters::setBitLength(const size_t bitLen)
 {
-	params.magic = RSA_PARAMETER_MAGIC;
-	params.e = ByteString(e);
+	this->bitLen = bitLen;
+}
+
+// Get the public exponent
+const ByteString& RSAParameters::getE() const
+{
+	return e;
+}
+
+// Get the bit length
+size_t RSAParameters::getBitLength() const
+{
+	return bitLen;
+}
+
+// Are the parameters of the given type?
+bool RSAParameters::areOfType(const char* type)
+{
+	return (strcmp(type, RSAParameters::type) == 0);
+}
+
+// Serialisation
+ByteString RSAParameters::serialise() const
+{
+	return ByteString();
 }
 

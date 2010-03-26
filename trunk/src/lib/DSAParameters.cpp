@@ -27,46 +27,64 @@
  */
 
 /*****************************************************************************
- RSAParameters.h
+ DSAParameters.cpp
 
- RSA parameters (only used for key generation)
+ DSA parameters (only used for key generation)
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_RSAPARAMETERS_H
-#define _SOFTHSM_V2_RSAPARAMETERS_H
-
 #include "config.h"
-#include "ByteString.h"
-#include "AsymmetricParameters.h"
+#include "log.h"
+#include "DSAParameters.h"
+#include <string.h>
 
-class RSAParameters : public AsymmetricParameters
+// The type
+/*static*/ const char* DSAParameters::type = "Generic DSA parameters";
+
+// Set the public prime p
+void DSAParameters::setP(const ByteString& p)
 {
-public:
-	// The type
-	static const char* type;
+	this->p = p;
+}
 
-	// Set the public exponent
-	void setE(const ByteString& e);
+// Set the public subprime q
+void DSAParameters::setQ(const ByteString& q)
+{
+	this->q = q;
+}
 
-	// Set the bit length
-	void setBitLength(const size_t bitLen);
+// Set the generator g
+void DSAParameters::setG(const ByteString& g)
+{
+	this->g = g;
+}
 
-	// Get the public exponent
-	const ByteString& getE() const;
+// Get the public prime p
+const ByteString& DSAParameters::getP() const
+{
+	return p;
+}
 
-	// Get the bit length
-	size_t getBitLength() const;
+// Get the public subprime q
+const ByteString& DSAParameters::getQ() const
+{
+	return q;
+}
 
-	// Are the parameters of the given type?
-	virtual bool areOfType(const char* type);
+// Get the generator g
+const ByteString& DSAParameters::getG() const
+{
+	return g;
+}
 
-	// Serialisation
-	virtual ByteString serialise() const;
+// Are the parameters of the given type?
+bool DSAParameters::areOfType(const char* type)
+{
+	return (strcmp(type, DSAParameters::type) == 0);
+}
 
-private:
-	ByteString e;
-	size_t bitLen;
-};
-
-#endif // !_SOFTHSM_V2_RSAPARAMETERS_H
+// Serialisation
+ByteString DSAParameters::serialise() const
+{
+	return p.serialise() + q.serialise() + g.serialise();
+}
 
