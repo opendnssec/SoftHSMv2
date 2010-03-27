@@ -42,6 +42,7 @@
 #include "OSSLSHA256.h"
 #include "OSSLSHA512.h"
 #include "OSSLRSA.h"
+#include "OSSLDSA.h"
 
 #include <algorithm>
 #include <string.h>
@@ -102,6 +103,10 @@ AsymmetricAlgorithm* OSSLCryptoFactory::getAsymmetricAlgorithm(std::string algor
 	if (!lcAlgo.compare("rsa"))
 	{
 		return new OSSLRSA();
+	}
+	else if (!lcAlgo.compare("dsa"))
+	{
+		return new OSSLDSA();
 	}
 	else
 	{

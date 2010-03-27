@@ -27,54 +27,54 @@
  */
 
 /*****************************************************************************
- DSAParameters.h
+ OSSLDSAPrivateKey.h
 
- DSA parameters (only used for key generation)
+ OpenSSL DSA private key class
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_DSAPARAMETERS_H
-#define _SOFTHSM_V2_DSAPARAMETERS_H
+#ifndef _SOFTHSM_V2_OSSLDSAPRIVATEKEY_H
+#define _SOFTHSM_V2_OSSLDSAPRIVATEKEY_H
 
 #include "config.h"
-#include "ByteString.h"
-#include "AsymmetricParameters.h"
+#include "DSAPrivateKey.h"
+#include <openssl/dsa.h>
 
-class DSAParameters : public AsymmetricParameters
+class OSSLDSAPrivateKey : public DSAPrivateKey
 {
 public:
+	// Constructors
+	OSSLDSAPrivateKey();
+	
+	OSSLDSAPrivateKey(const DSA* inDSA);
+	
+	// Destructor
+	virtual ~OSSLDSAPrivateKey();
+
 	// The type
 	static const char* type;
 
-	// Set the public prime p
-	void setP(const ByteString& p);
+	// Check if the key is of the given type
+	virtual bool isOfType(const char* type);
 
-	// Set the public subprime q
-	void setQ(const ByteString& q);
+	// Setters for the DSA private key components
+	virtual void setX(const ByteString& x);
 
-	// Set the generator g
-	void setG(const ByteString& g);
+	// Setters for the DSA public key components
+	virtual void setP(const ByteString& p);
+	virtual void setQ(const ByteString& q);
+	virtual void setG(const ByteString& g);
+	virtual void setY(const ByteString& y);
 
-	// Get the public prime p
-	const ByteString& getP() const;
+	// Set from OpenSSL representation
+	virtual void setFromOSSL(const DSA* dsa);
 
-	// Get the public subprime q
-	const ByteString& getQ() const;
-
-	// Get the generator g
-	const ByteString& getG() const;
-
-	// Are the parameters of the given type?
-	virtual bool areOfType(const char* type);
-
-	// Serialisation
-	virtual ByteString serialise() const;
-	virtual bool deserialise(ByteString& serialised);
+	// Retrieve the OpenSSL representation of the key
+	DSA* getOSSLKey();
 
 private:
-	ByteString p;
-	ByteString q;
-	ByteString g;
+	// The internal OpenSSL representation
+	DSA* dsa;
 };
 
-#endif // !_SOFTHSM_V2_DSAPARAMETERS_H
+#endif // !_SOFTHSM_V2_OSSLDSAPRIVATEKEY_H
 

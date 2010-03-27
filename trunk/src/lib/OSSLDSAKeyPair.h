@@ -27,54 +27,43 @@
  */
 
 /*****************************************************************************
- DSAParameters.h
+ OSSLDSAKeyPair.h
 
- DSA parameters (only used for key generation)
+ OpenSSL DSA key-pair class
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_DSAPARAMETERS_H
-#define _SOFTHSM_V2_DSAPARAMETERS_H
+#ifndef _SOFTHSM_V2_OSSLDSAKEYPAIR_H
+#define _SOFTHSM_V2_OSSLDSAKEYPAIR_H
 
 #include "config.h"
-#include "ByteString.h"
-#include "AsymmetricParameters.h"
+#include "AsymmetricKeyPair.h"
+#include "OSSLDSAPublicKey.h"
+#include "OSSLDSAPrivateKey.h"
 
-class DSAParameters : public AsymmetricParameters
+class OSSLDSAKeyPair : public AsymmetricKeyPair
 {
 public:
-	// The type
-	static const char* type;
+	// Set the public key
+	void setPublicKey(OSSLDSAPublicKey& publicKey);
 
-	// Set the public prime p
-	void setP(const ByteString& p);
+	// Set the private key
+	void setPrivateKey(OSSLDSAPrivateKey& privateKey);
 
-	// Set the public subprime q
-	void setQ(const ByteString& q);
+	// Return the public key
+	virtual PublicKey* getPublicKey();
+	virtual const PublicKey* getConstPublicKey() const;
 
-	// Set the generator g
-	void setG(const ByteString& g);
-
-	// Get the public prime p
-	const ByteString& getP() const;
-
-	// Get the public subprime q
-	const ByteString& getQ() const;
-
-	// Get the generator g
-	const ByteString& getG() const;
-
-	// Are the parameters of the given type?
-	virtual bool areOfType(const char* type);
-
-	// Serialisation
-	virtual ByteString serialise() const;
-	virtual bool deserialise(ByteString& serialised);
+	// Return the private key
+	virtual PrivateKey* getPrivateKey();
+	virtual const PrivateKey* getConstPrivateKey() const;
 
 private:
-	ByteString p;
-	ByteString q;
-	ByteString g;
+	// The public key
+	OSSLDSAPublicKey pubKey;
+
+	// The private key
+	OSSLDSAPrivateKey privKey;
 };
 
-#endif // !_SOFTHSM_V2_DSAPARAMETERS_H
+#endif // !_SOFTHSM_V2_OSSLDSAKEYPAIR_H
 

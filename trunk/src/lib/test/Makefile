@@ -21,6 +21,7 @@ cryptotest.cpp \
 AESTests.cpp \
 ByteStringTests.cpp \
 DESTests.cpp \
+DSATests.cpp \
 HashTests.cpp \
 RNGTests.cpp \
 RSATests.cpp \
@@ -32,6 +33,7 @@ CRYPTOTESTHEADERS=$(CRYPTOHEADERS) \
 AESTests.h \
 ByteStringTests.h \
 DESTests.h \
+DSATests.h \
 HashTests.h \
 RNGTests.h \
 RSATests.h \

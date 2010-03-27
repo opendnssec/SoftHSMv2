@@ -27,54 +27,46 @@
  */
 
 /*****************************************************************************
- DSAParameters.h
+ DSAPublicKey.h
 
- DSA parameters (only used for key generation)
+ DSA private key class
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_DSAPARAMETERS_H
-#define _SOFTHSM_V2_DSAPARAMETERS_H
+#ifndef _SOFTHSM_V2_DSAPUBLICKEY_H
+#define _SOFTHSM_V2_DSAPUBLICKEY_H
 
 #include "config.h"
-#include "ByteString.h"
-#include "AsymmetricParameters.h"
+#include "PublicKey.h"
 
-class DSAParameters : public AsymmetricParameters
+class DSAPublicKey : public PublicKey
 {
 public:
 	// The type
 	static const char* type;
 
-	// Set the public prime p
-	void setP(const ByteString& p);
+	// Check if the key is of the given type
+	virtual bool isOfType(const char* type);
 
-	// Set the public subprime q
-	void setQ(const ByteString& q);
+	// Setters for the DSA public key components
+	virtual void setP(const ByteString& p);
+	virtual void setQ(const ByteString& q);
+	virtual void setG(const ByteString& g);
+	virtual void setY(const ByteString& y);
 
-	// Set the generator g
-	void setG(const ByteString& g);
-
-	// Get the public prime p
-	const ByteString& getP() const;
-
-	// Get the public subprime q
-	const ByteString& getQ() const;
-
-	// Get the generator g
-	const ByteString& getG() const;
-
-	// Are the parameters of the given type?
-	virtual bool areOfType(const char* type);
+	// Getters for the DSA public key components
+	virtual const ByteString& getP() const;
+	virtual const ByteString& getQ() const;
+	virtual const ByteString& getG() const;
+	virtual const ByteString& getY() const;
 
 	// Serialisation
 	virtual ByteString serialise() const;
 	virtual bool deserialise(ByteString& serialised);
 
-private:
-	ByteString p;
-	ByteString q;
-	ByteString g;
+protected:
+	// Public components
+	ByteString p,q,g,y;
 };
 
-#endif // !_SOFTHSM_V2_DSAPARAMETERS_H
+#endif // !_SOFTHSM_V2_DSAPUBLICKEY_H
 

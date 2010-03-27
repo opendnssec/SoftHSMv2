@@ -27,76 +27,102 @@
  */
 
 /*****************************************************************************
- DSAParameters.cpp
+ DSAPrivateKey.cpp
 
- DSA parameters (only used for key generation)
+ DSA private key class
  *****************************************************************************/
 
 #include "config.h"
 #include "log.h"
-#include "DSAParameters.h"
+#include "DSAPrivateKey.h"
 #include <string.h>
 
-// The type
-/*static*/ const char* DSAParameters::type = "Generic DSA parameters";
+// Set the type
+/*static*/ const char* DSAPrivateKey::type = "Abstract DSA private key";
 
-// Set the public prime p
-void DSAParameters::setP(const ByteString& p)
+// Check if the key is of the given type
+bool DSAPrivateKey::isOfType(const char* type)
+{
+	return !strcmp(this->type, type);
+}
+
+// Setters for the DSA private key components
+void DSAPrivateKey::setX(const ByteString& x)
+{
+	this->x = x;
+}
+
+// Setters for the DSA public key components
+void DSAPrivateKey::setP(const ByteString& p)
 {
 	this->p = p;
 }
 
-// Set the public subprime q
-void DSAParameters::setQ(const ByteString& q)
+void DSAPrivateKey::setQ(const ByteString& q)
 {
 	this->q = q;
 }
 
-// Set the generator g
-void DSAParameters::setG(const ByteString& g)
+void DSAPrivateKey::setG(const ByteString& g)
 {
 	this->g = g;
 }
 
-// Get the public prime p
-const ByteString& DSAParameters::getP() const
+void DSAPrivateKey::setY(const ByteString& y)
+{
+	this->y = y;
+}
+
+// Getters for the DSA private key components
+const ByteString& DSAPrivateKey::getX() const
+{
+	return x;
+}
+
+// Getters for the DSA public key components
+const ByteString& DSAPrivateKey::getP() const
 {
 	return p;
 }
 
-// Get the public subprime q
-const ByteString& DSAParameters::getQ() const
+const ByteString& DSAPrivateKey::getQ() const
 {
 	return q;
 }
 
-// Get the generator g
-const ByteString& DSAParameters::getG() const
+const ByteString& DSAPrivateKey::getG() const
 {
 	return g;
 }
 
-// Are the parameters of the given type?
-bool DSAParameters::areOfType(const char* type)
+const ByteString& DSAPrivateKey::getY() const
 {
-	return (strcmp(type, DSAParameters::type) == 0);
+	return y;
 }
 
 // Serialisation
-ByteString DSAParameters::serialise() const
+ByteString DSAPrivateKey::serialise() const
 {
-	return p.serialise() + q.serialise() + g.serialise();
+	return p.serialise() +
+	       q.serialise() +
+	       g.serialise() +
+	       x.serialise() +
+	       y.serialise();
 }
 
-bool DSAParameters::deserialise(ByteString& serialised)
+bool DSAPrivateKey::deserialise(ByteString& serialised)
 {
 	ByteString dP = ByteString::chainDeserialise(serialised);
 	ByteString dQ = ByteString::chainDeserialise(serialised);
 	ByteString dG = ByteString::chainDeserialise(serialised);
+	ByteString dX = ByteString::chainDeserialise(serialised);
+	ByteString dY = ByteString::chainDeserialise(serialised);
 
 	if ((dP.size() == 0) ||
 	    (dQ.size() == 0) ||
-	    (dG.size() == 0))
+	    (dG.size() == 0) ||
+	    (dX.size() == 0) ||
+	    (dY.size() == 0))
 	{
 		return false;
 	}
@@ -104,6 +130,8 @@ bool DSAParameters::deserialise(ByteString& serialised)
 	setP(dP);
 	setQ(dQ);
 	setG(dG);
+	setX(dX);
+	setY(dY);
 
 	return true;
 }

@@ -27,76 +27,87 @@
  */
 
 /*****************************************************************************
- DSAParameters.cpp
+ DSAPublicKey.cpp
 
- DSA parameters (only used for key generation)
+ DSA private key class
  *****************************************************************************/
 
 #include "config.h"
 #include "log.h"
-#include "DSAParameters.h"
+#include "DSAPublicKey.h"
 #include <string.h>
 
-// The type
-/*static*/ const char* DSAParameters::type = "Generic DSA parameters";
+// Set the type
+/*static*/ const char* DSAPublicKey::type = "Abstract DSA public key";
 
-// Set the public prime p
-void DSAParameters::setP(const ByteString& p)
+// Check if the key is of the given type
+bool DSAPublicKey::isOfType(const char* type)
+{
+	return !strcmp(this->type, type);
+}
+
+// Setters for the DSA public key components
+void DSAPublicKey::setP(const ByteString& p)
 {
 	this->p = p;
 }
 
-// Set the public subprime q
-void DSAParameters::setQ(const ByteString& q)
+void DSAPublicKey::setQ(const ByteString& q)
 {
 	this->q = q;
 }
 
-// Set the generator g
-void DSAParameters::setG(const ByteString& g)
+void DSAPublicKey::setG(const ByteString& g)
 {
 	this->g = g;
 }
 
-// Get the public prime p
-const ByteString& DSAParameters::getP() const
+void DSAPublicKey::setY(const ByteString& y)
+{
+	this->y = y;
+}
+
+// Getters for the DSA public key components
+const ByteString& DSAPublicKey::getP() const
 {
 	return p;
 }
 
-// Get the public subprime q
-const ByteString& DSAParameters::getQ() const
+const ByteString& DSAPublicKey::getQ() const
 {
 	return q;
 }
 
-// Get the generator g
-const ByteString& DSAParameters::getG() const
+const ByteString& DSAPublicKey::getG() const
 {
 	return g;
 }
 
-// Are the parameters of the given type?
-bool DSAParameters::areOfType(const char* type)
+const ByteString& DSAPublicKey::getY() const
 {
-	return (strcmp(type, DSAParameters::type) == 0);
+	return y;
 }
 
 // Serialisation
-ByteString DSAParameters::serialise() const
+ByteString DSAPublicKey::serialise() const
 {
-	return p.serialise() + q.serialise() + g.serialise();
+	return p.serialise() +
+	       q.serialise() +
+	       g.serialise() +
+	       y.serialise();
 }
 
-bool DSAParameters::deserialise(ByteString& serialised)
+bool DSAPublicKey::deserialise(ByteString& serialised)
 {
 	ByteString dP = ByteString::chainDeserialise(serialised);
 	ByteString dQ = ByteString::chainDeserialise(serialised);
 	ByteString dG = ByteString::chainDeserialise(serialised);
+	ByteString dY = ByteString::chainDeserialise(serialised);
 
 	if ((dP.size() == 0) ||
 	    (dQ.size() == 0) ||
-	    (dG.size() == 0))
+	    (dG.size() == 0) ||
+	    (dY.size() == 0))
 	{
 		return false;
 	}
@@ -104,6 +115,7 @@ bool DSAParameters::deserialise(ByteString& serialised)
 	setP(dP);
 	setQ(dQ);
 	setG(dG);
+	setY(dY);
 
 	return true;
 }

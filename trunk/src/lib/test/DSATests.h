@@ -27,54 +27,39 @@
  */
 
 /*****************************************************************************
- DSAParameters.h
+ DSATests.h
 
- DSA parameters (only used for key generation)
+ Contains test cases to test the DSA class
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_DSAPARAMETERS_H
-#define _SOFTHSM_V2_DSAPARAMETERS_H
+#ifndef _SOFTHSM_V2_DSATESTS_H
+#define _SOFTHSM_V2_DSATESTS_H
 
-#include "config.h"
-#include "ByteString.h"
-#include "AsymmetricParameters.h"
+#include <cppunit/extensions/HelperMacros.h>
+#include "AsymmetricAlgorithm.h"
 
-class DSAParameters : public AsymmetricParameters
+class DSATests : public CppUnit::TestFixture
 {
+	CPPUNIT_TEST_SUITE(DSATests);
+	CPPUNIT_TEST(testKeyGeneration);
+	CPPUNIT_TEST(testSerialisation);
+	CPPUNIT_TEST(testSigningVerifying);
+	CPPUNIT_TEST(testSignVerifyKnownVector);
+	CPPUNIT_TEST_SUITE_END();
+
 public:
-	// The type
-	static const char* type;
+	void testKeyGeneration();
+	void testSerialisation();
+	void testSigningVerifying();
+	void testSignVerifyKnownVector();
 
-	// Set the public prime p
-	void setP(const ByteString& p);
-
-	// Set the public subprime q
-	void setQ(const ByteString& q);
-
-	// Set the generator g
-	void setG(const ByteString& g);
-
-	// Get the public prime p
-	const ByteString& getP() const;
-
-	// Get the public subprime q
-	const ByteString& getQ() const;
-
-	// Get the generator g
-	const ByteString& getG() const;
-
-	// Are the parameters of the given type?
-	virtual bool areOfType(const char* type);
-
-	// Serialisation
-	virtual ByteString serialise() const;
-	virtual bool deserialise(ByteString& serialised);
+	void setUp();
+	void tearDown();
 
 private:
-	ByteString p;
-	ByteString q;
-	ByteString g;
+	// DSA instance
+	AsymmetricAlgorithm* dsa;
 };
 
-#endif // !_SOFTHSM_V2_DSAPARAMETERS_H
+#endif // !_SOFTHSM_V2_DSATESTS_H
 
