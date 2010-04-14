@@ -43,6 +43,10 @@
 #include "SecureAllocator.h"
 #include "Serialisable.h"
 
+#ifndef SIZE_T_MAX
+#define SIZE_T_MAX ((size_t) -1)
+#endif // !SIZE_T_MAX
+
 class ByteString
 {
 public:

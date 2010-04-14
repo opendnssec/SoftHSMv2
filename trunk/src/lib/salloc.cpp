@@ -39,6 +39,7 @@
 #ifdef SENSITIVE_NON_PAGED
 #include <sys/mman.h>
 #endif // SENSITIVE_NON_PAGED
+#include <string.h>
 #include "SecureMemoryRegistry.h"
 
 // Allocate memory

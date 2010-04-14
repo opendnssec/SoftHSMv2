@@ -34,6 +34,7 @@
 
 #include <algorithm>
 #include <string>
+#include <stdio.h>
 #include "config.h"
 #include "log.h"
 #include "ByteString.h"

@@ -40,6 +40,7 @@
 
 #include <limits>
 #include <stdlib.h>
+#include <string.h>
 #ifdef SENSITIVE_NON_PAGED
 #include <sys/mman.h>
 #endif // SENSITIVE_NON_PAGED
