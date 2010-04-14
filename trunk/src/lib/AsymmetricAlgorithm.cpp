@@ -149,3 +149,24 @@ AsymmetricParameters* AsymmetricAlgorithm::newParameters()
 	return NULL;
 }
 
+// Key recycling -- override these functions in a derived class if you need to perform specific cleanup
+void AsymmetricAlgorithm::recycleKeyPair(AsymmetricKeyPair* toRecycle)
+{
+	delete toRecycle;
+}
+
+void AsymmetricAlgorithm::recycleParameters(AsymmetricParameters* toRecycle)
+{
+	delete toRecycle;
+}
+
+void AsymmetricAlgorithm::recyclePublicKey(PublicKey* toRecycle)
+{
+	delete toRecycle;
+}
+
+void AsymmetricAlgorithm::recyclePrivateKey(PrivateKey* toRecycle)
+{
+	delete toRecycle;
+}
+

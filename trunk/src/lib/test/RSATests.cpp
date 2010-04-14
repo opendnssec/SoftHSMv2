@@ -60,7 +60,7 @@ void RSATests::tearDown()
 {
 	if (rsa != NULL)
 	{
-		delete rsa;
+		CryptoFactory::i()->recycleAsymmetricAlgorithm(rsa);
 	}
 
 	fflush(stdout);
@@ -103,7 +103,7 @@ void RSATests::testKeyGeneration()
 			CPPUNIT_ASSERT(pub->getE() == *e);
 			CPPUNIT_ASSERT(priv->getE() == *e);
 		
-			delete kp;
+			rsa->recycleKeyPair(kp);
 		}
 	}
 }
@@ -180,10 +180,10 @@ void RSATests::testSerialisation()
 	CPPUNIT_ASSERT(priv->getN() == desPriv->getN());
 	CPPUNIT_ASSERT(priv->getE() == desPriv->getE());
 
-	delete kp;
-	delete dKP;
-	delete desPub;
-	delete desPriv;
+	rsa->recycleKeyPair(kp);
+	rsa->recycleKeyPair(dKP);
+	rsa->recyclePublicKey(desPub);
+	rsa->recyclePrivateKey(desPriv);
 }
 
 void RSATests::testSigningVerifying()
@@ -262,8 +262,8 @@ void RSATests::testSigningVerifying()
 				CPPUNIT_ASSERT(rsa->verify(kp->getPublicKey(), dataToSign, singlePartSignature, *m));
 			}
 	
-			delete rng;
-			delete kp;
+			CryptoFactory::i()->recycleRNG(rng);
+			rsa->recycleKeyPair(kp);
 		}
 	}
 }
@@ -380,12 +380,12 @@ void RSATests::testSignVerifyKnownVector()
 	CPPUNIT_ASSERT(rsa->verifyUpdate(dataToSign2));
 	CPPUNIT_ASSERT(rsa->verifyFinal(expectedSignature2));
 
-	delete pubKey1;
-	delete pubKey2;
-	delete privKey1_1;
-	delete privKey1_2;
-	delete privKey2_1;
-	delete privKey2_2;
+	rsa->recyclePublicKey(pubKey1);
+	rsa->recyclePublicKey(pubKey2);
+	rsa->recyclePrivateKey(privKey1_1);
+	rsa->recyclePrivateKey(privKey1_2);
+	rsa->recyclePrivateKey(privKey2_1);
+	rsa->recyclePrivateKey(privKey2_2);
 }
 
 void RSATests::testEncryptDecrypt()
@@ -466,8 +466,8 @@ void RSATests::testEncryptDecrypt()
 				CPPUNIT_ASSERT(decryptedData == testData);
 			}
 			
-			delete rng;
-			delete kp;
+			CryptoFactory::i()->recycleRNG(rng);
+			rsa->recycleKeyPair(kp);
 		}
 	}
 }

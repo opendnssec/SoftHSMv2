@@ -52,12 +52,12 @@ void HashTests::tearDown()
 {
 	if (hash != NULL)
 	{
-		delete hash;
+		CryptoFactory::i()->recycleHashAlgorithm(hash);
 	}
 
 	if (rng != NULL)
 	{
-		delete rng;
+		CryptoFactory::i()->recycleRNG(rng);
 	}
 
 	fflush(stdout);
@@ -102,8 +102,8 @@ void HashTests::testMD5()
 
 	CPPUNIT_ASSERT(osslHash == shsmHash);
 
-	delete hash;
-	delete rng;
+	CryptoFactory::i()->recycleHashAlgorithm(hash);
+	CryptoFactory::i()->recycleRNG(rng);
 
 	hash = NULL;
 	rng = NULL;
@@ -148,8 +148,8 @@ void HashTests::testSHA1()
 
 	CPPUNIT_ASSERT(osslHash == shsmHash);
 
-	delete hash;
-	delete rng;
+	CryptoFactory::i()->recycleHashAlgorithm(hash);
+	CryptoFactory::i()->recycleRNG(rng);
 
 	hash = NULL;
 	rng = NULL;
@@ -194,8 +194,8 @@ void HashTests::testSHA256()
 
 	CPPUNIT_ASSERT(osslHash == shsmHash);
 
-	delete hash;
-	delete rng;
+	CryptoFactory::i()->recycleHashAlgorithm(hash);
+	CryptoFactory::i()->recycleRNG(rng);
 
 	hash = NULL;
 	rng = NULL;
@@ -240,8 +240,8 @@ void HashTests::testSHA512()
 
 	CPPUNIT_ASSERT(osslHash == shsmHash);
 
-	delete hash;
-	delete rng;
+	CryptoFactory::i()->recycleHashAlgorithm(hash);
+	CryptoFactory::i()->recycleRNG(rng);
 
 	hash = NULL;
 	rng = NULL;

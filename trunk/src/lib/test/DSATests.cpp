@@ -60,7 +60,7 @@ void DSATests::tearDown()
 {
 	if (dsa != NULL)
 	{
-		delete dsa;
+		CryptoFactory::i()->recycleAsymmetricAlgorithm(dsa);
 	}
 
 	fflush(stdout);
@@ -88,8 +88,8 @@ void DSATests::testKeyGeneration()
 		// Generate key-pair
 		CPPUNIT_ASSERT(dsa->generateKeyPair(&kp, p));
 	
-		delete p;
-		delete kp;
+		dsa->recycleParameters(p);
+		dsa->recycleKeyPair(kp);
 	}
 }
 
@@ -148,10 +148,10 @@ void DSATests::testSerialisation()
 	CPPUNIT_ASSERT(pubKey->getG() == dPubKey->getG());
 	CPPUNIT_ASSERT(pubKey->getY() == dPubKey->getY());
 
-	delete p;
-	delete dP;
-	delete kp;
-	delete dKP;
+	dsa->recycleParameters(p);
+	dsa->recycleParameters(dP);
+	dsa->recycleKeyPair(kp);
+	dsa->recycleKeyPair(dKP);
 }
 
 void DSATests::testSigningVerifying()
@@ -217,9 +217,9 @@ void DSATests::testSigningVerifying()
 			CPPUNIT_ASSERT(dsa->verify(kp->getPublicKey(), dataToSign, singlePartSignature, *m));
 		}
 
-		delete rng;
-		delete kp;
-		delete p;
+		CryptoFactory::i()->recycleRNG(rng);
+		dsa->recycleKeyPair(kp);
+		dsa->recycleParameters(p);
 	}
 }
 

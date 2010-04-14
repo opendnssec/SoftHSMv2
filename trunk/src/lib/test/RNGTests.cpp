@@ -56,7 +56,7 @@ void RNGTests::tearDown()
 {
 	if (rng != NULL)
 	{
-		delete rng;
+		CryptoFactory::i()->recycleRNG(rng);
 	}
 
 	fflush(stdout);

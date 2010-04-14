@@ -45,6 +45,9 @@ class Serialisable
 public:
 	// Serialise the data content of a class
 	virtual ByteString serialise() const = 0;
+
+	// Default destructor
+	virtual ~Serialisable() { }
 };
 
 #endif // !_SOFTHSM_V2_SERIALISABLE_H

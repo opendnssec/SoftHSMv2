@@ -55,7 +55,7 @@ void DESTests::tearDown()
 {
 	if (des != NULL)
 	{
-		delete des;
+		CryptoFactory::i()->recycleSymmetricAlgorithm(des);
 	}
 
 	fflush(stdout);

@@ -81,6 +81,12 @@ public:
 	virtual PrivateKey* newPrivateKey() = 0;
 	virtual AsymmetricParameters* newParameters();
 
+	// Key recycling -- override these functions in a derived class if you need to perform specific cleanup
+	virtual void recycleKeyPair(AsymmetricKeyPair* toRecycle);
+	virtual void recycleParameters(AsymmetricParameters* toRecycle);
+	virtual void recyclePublicKey(PublicKey* toRecycle);
+	virtual void recyclePrivateKey(PrivateKey* toRecycle);
+
 protected:
 	PublicKey* currentPublicKey;
 	PrivateKey* currentPrivateKey;

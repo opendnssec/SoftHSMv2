@@ -55,7 +55,7 @@ void AESTests::tearDown()
 {
 	if (aes != NULL)
 	{
-		delete aes;
+		CryptoFactory::i()->recycleSymmetricAlgorithm(aes);
 	}
 
 	fflush(stdout);

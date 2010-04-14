@@ -63,3 +63,31 @@ CryptoFactory* CryptoFactory::i()
 
 #endif
 
+// Recycle a symmetric algorithm instance -- override this function in the derived
+// class if you need to perform specific clean-up
+void CryptoFactory::recycleSymmetricAlgorithm(SymmetricAlgorithm* toRecycle)
+{
+	delete toRecycle;
+}
+	
+// Recycle an asymmetric algorithm instance -- override this function in the derived
+// class if you need to perform specific clean-up
+void CryptoFactory::recycleAsymmetricAlgorithm(AsymmetricAlgorithm* toRecycle)
+{
+	delete toRecycle;
+}
+
+// Recycle a hash algorithm instance -- override this function in the derived
+// class if you need to perform specific clean-up
+void CryptoFactory::recycleHashAlgorithm(HashAlgorithm* toRecycle)
+{
+	delete toRecycle;
+}
+
+// Recycle an RNG instance -- override this function in the derived
+// class if you need to perform specific clean-up
+void CryptoFactory::recycleRNG(RNG* toRecycle)
+{
+	delete toRecycle;
+}
+
