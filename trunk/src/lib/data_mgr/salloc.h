@@ -1,8 +1,7 @@
 /* $Id$ */
 
 /*
- * Copyright (c) 2008-2010 .SE (The Internet Infrastructure Foundation).
- * Copyright (c) 2010      SURFnet bv
+ * Copyright (c) 2010 SURFnet bv
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -28,30 +27,32 @@
  */
 
 /*****************************************************************************
- osmutex.h
+ salloc.h
 
- Contains OS-specific implementations of intraprocess mutex functions. This
- implementation is based on SoftHSM v1
+ Contains an implementation of malloc that allocates memory securely
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_OSMUTEX_H
-#define _SOFTHSM_V2_OSMUTEX_H
+#ifndef _SOFTHSM_V2_SALLOC_H
+#define _SOFTHSM_V2_SALLOC_H
 
+#include <stdlib.h>
 #include "config.h"
-#include "pkcs11.h"
+#include "log.h"
 
 #if defined(__cplusplus)
-extern "C" {
-#endif // __cplusplus
+extern "C"
+{
+#endif
 
-CK_RV OSCreateMutex(CK_VOID_PTR_PTR newMutex);
-CK_RV OSDestroyMutex(CK_VOID_PTR mutex);
-CK_RV OSLockMutex(CK_VOID_PTR mutex);
-CK_RV OSUnlockMutex(CK_VOID_PTR mutex);
+/* Allocate memory */
+void* salloc(size_t len);
 
-#if defined(__cplusplus)
+/* Free memory */
+void sfree(void* ptr);
+
+#if defined (__cplusplus)
 }
 #endif
 
-#endif // !_SOFTHSM_V2_OSMUTEX_H
+#endif /* !_SOFTHSM_V2_SALLOC_H */
 

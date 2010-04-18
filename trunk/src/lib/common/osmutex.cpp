@@ -28,7 +28,7 @@
  */
 
 /*****************************************************************************
- osmutex.c
+ osmutex.cpp
 
  Contains OS-specific implementations of intraprocess mutex functions. This
  implementation is based on SoftHSM v1
@@ -38,7 +38,7 @@
 #include "log.h"
 #include "osmutex.h"
 
-#if defined(POSIX)
+#ifdef HAVE_PTHREAD_H
 
 #include <stdlib.h>
 #include <pthread.h>
@@ -47,7 +47,7 @@ CK_RV OSCreateMutex(CK_VOID_PTR_PTR newMutex)
 {
 	int rv;
 
-	// Allocate memory
+	/* Allocate memory */
 	pthread_mutex_t* pthreadMutex = (pthread_mutex_t*) malloc(sizeof(pthread_mutex_t));
 
 	if (pthreadMutex == NULL)
@@ -57,7 +57,7 @@ CK_RV OSCreateMutex(CK_VOID_PTR_PTR newMutex)
 		return CKR_HOST_MEMORY;
 	}
 
-	// Initialise the mutex
+	/* Initialise the mutex */
 	if ((rv = pthread_mutex_init(pthreadMutex, NULL)) != 0)
 	{
 		free(pthreadMutex);

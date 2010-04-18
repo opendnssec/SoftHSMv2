@@ -87,7 +87,7 @@ CK_RV SoftHSM::C_Initialize(CK_VOID_PTR pInitArgs)
 	// TODO: copy mutex functions
 
 	// (Re)load the configuration
-	Configuration::i()->reload(XMLConfigurationLoader::i());
+	Configuration::i()->reload(XMLConfigLoader::i());
 
 	// Set the state to initialised
 	isInitialised = true;

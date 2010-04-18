@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: log.h 31 2010-03-05 12:51:02Z rb $ */
 
 /*
  * Copyright (c) 2010 SURFnet bv
@@ -27,53 +27,69 @@
  */
 
 /*****************************************************************************
- log.cpp
+ log.h
 
  Implements logging functions. This file is based on the concepts from 
  SoftHSM v1 but extends the logging functions with support for a variable
  argument list as defined in stdarg (3).
  *****************************************************************************/
 
-#include <stdarg.h>
+#ifndef _SOFTHSM_V2_LOG_H
+#define _SOFTHSM_V2_LOG_H
+
 #include <syslog.h>
-#include <stdio.h>
-#include <sstream>
-#include <vector>
 #include "config.h"
-#include "log.h"
 
-void softHSMLog(const int loglevel, const char* functionName, const char* fileName, const int lineNo, const char* format, ...)
-{
-	std::stringstream prepend;
+/* The log levels */
+#define SOFTERROR	1
+#define SOFTWARNING	2
+#define SOFTINFO	3
+#define SOFTDEBUG	4
 
-#ifdef SOFTHSM_LOG_FILE_AND_LINE
-	prepend << fileName << "(" << lineNo << ")";
-#ifndef SOFTHSM_LOG_FUNCTION_NAME
-	prepend << ":";
-#endif // !SOFTHSM_LOG_FUNCTION_NAME
-	prepend << " ";
-#endif // SOFTHSM_LOG_FILE_AND_LINE
+/* Set the default loglevel if none is set */
+#ifndef SOFTLOGLEVEL
+#define SOFTLOGLEVEL	SOFTDEBUG
+#endif /* !SOFTLOGLEVEL */
 
-#ifdef SOFTHSM_LOG_FUNCTION_NAME
-	prepend << functionName << ": ";
-#endif // SOFTHSM_LOG_FUNCTION_NAME
+/* Unset this define if you don't want to log the source file name and line number */
+#define SOFTHSM_LOG_FILE_AND_LINE
 
-	// Print the format to a log message
-	std::vector<char> logMessage;
-	va_list args;
+/* Set this define to log the function name */
+/* #define SOFTHSM_LOG_FUNCTION_NAME */
 
-	logMessage.resize(4096);
+/* Define this symbol (either here or in the build setup) to log to stderr */
+/* #define DEBUG_LOG_STDERR */
 
-	va_start(args, format);
-	vsnprintf(&logMessage[0], 4096, format, args);
-	va_end(args);
+/* Logging errors */
+#if SOFTLOGLEVEL >= SOFTERROR
+#define ERROR_MSG(...) softHSMLog(LOG_ERR, __func__, __FILE__, __LINE__, __VA_ARGS__);
+#else
+#define ERROR_MSG(...)
+#endif
 
-	// And log it
-	syslog(loglevel, "%s%s", prepend.str().c_str(), &logMessage[0]);
+/* Logging warnings */
+#if SOFTLOGLEVEL >= SOFTWARNING
+#define WARNING_MSG(...) softHSMLog(LOG_WARNING, __func__, __FILE__, __LINE__, __VA_ARGS__);
+#else
+#define WARNING_MSG(...)
+#endif
 
-#ifdef DEBUG_LOG_STDERR
-	fprintf(stderr, "%s%s\n", prepend.str().c_str(), &logMessage[0]);
-	fflush(stderr);
-#endif // DEBUG_LOG_STDERR
-}
+/* Logging information */
+#if SOFTLOGLEVEL >= SOFTINFO
+#define INFO_MSG(...) softHSMLog(LOG_INFO, __func__, __FILE__, __LINE__, __VA_ARGS__);
+#else
+#define INFO_MSG(...)
+#endif
+
+/* Logging debug information */
+#if SOFTLOGLEVEL >= SOFTDEBUG
+#define DEBUG_MSG(...) softHSMLog(LOG_DEBUG, __func__, __FILE__, __LINE__, __VA_ARGS__);
+#else
+#define DEBUG_MSG(...)
+#endif
+
+/* Function definitions */
+void softHSMLog(const int loglevel, const char* functionName, const char* fileName, const int lineNo, const char* format, ...);
+
+#endif /* !_SOFTHSM_V2_LOG_H */
 

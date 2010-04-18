@@ -55,13 +55,29 @@ ACX_STRICT
 
 
 # Use OpenSSL or Botan
+AM_CONDITIONAL([WITH_OPENSSL], [test 1 = 1])
+AM_CONDITIONAL([WITH_BOTAN], [test 1 = 0])
+AC_DEFINE_UNQUOTED(
+	[WITH_OPENSSL],
+	[],
+	[Compile with OpenSSL support]
+)
 
 
 # Check for libraries
+
+
 # Check for headers
+AC_CHECK_HEADERS([pthread.h])
 
 
 # Define some variables for the code
+AC_DEFINE_UNQUOTED(
+        [SENSITIVE_NON_PAGED],
+        [],
+        [Non-paged memory for secure storage]
+)
+
 # AC_DEFINE_UNQUOTED(
 # 	[VERSION_MAJOR],
 # 	[SOFTHSM_VERSION_MAJOR],
@@ -74,7 +90,6 @@ ACX_STRICT
 # )
 
 
-
 # Generate the libtool script and install script
 AC_PROG_INSTALL
 AC_PROG_LIBTOOL
@@ -84,6 +99,14 @@ AC_CONFIG_FILES([
 	Makefile
 	src/Makefile
 	src/lib/Makefile
+	src/lib/common/Makefile
+	src/lib/crypto/Makefile
+	src/lib/crypto/test/Makefile
+	src/lib/data_mgr/Makefile
+	src/lib/object_store/Makefile
+	src/lib/session_mgr/Makefile
+	src/lib/slot_mgr/Makefile
+	src/lib/user_mgr/Makefile
 ])
 
 AC_OUTPUT
