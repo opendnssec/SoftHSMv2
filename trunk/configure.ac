@@ -56,6 +56,9 @@ ACX_STRICT
 # What crypto backend to use and if we want to support GOST
 ACX_CRYPTO_BACKEND
 
+# Non-paged memory for secure storage
+ACX_NON_PAGED_MEMORY
+
 # Check for libraries
 
 
@@ -63,12 +66,6 @@ ACX_CRYPTO_BACKEND
 AC_CHECK_HEADERS([pthread.h])
 
 # Define some variables for the code
-AC_DEFINE_UNQUOTED(
-	[SENSITIVE_NON_PAGED],
-	[],
-	[Non-paged memory for secure storage]
-)
-
 # AC_DEFINE_UNQUOTED(
 # 	[VERSION_MAJOR],
 # 	[SOFTHSM_VERSION_MAJOR],
