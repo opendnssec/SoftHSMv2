@@ -3,7 +3,8 @@
 MAINTAINERCLEANFILES = 		$(srcdir)/Makefile.in
 
 AM_CPPFLAGS = 			-I$(srcdir)/../common \
-				-I$(srcdir)/../data_mgr
+				-I$(srcdir)/../data_mgr \
+				@CRYPTO_INCLUDES@
 
 noinst_LTLIBRARIES =		libcrypto.la
 libcrypto_la_SOURCES =		AsymmetricAlgorithm.cpp \
@@ -19,7 +20,7 @@ libcrypto_la_SOURCES =		AsymmetricAlgorithm.cpp \
 				RSAPublicKey.cpp \
 				SymmetricAlgorithm.cpp \
 				SymmetricKey.cpp
-libcrypto_la_LIBADD =		-lcrypto
+libcrypto_la_LIBADD =		@CRYPTO_LIBS@
 
 SUBDIRS =			test
 
@@ -46,11 +47,9 @@ libcrypto_la_SOURCES +=		OSSLAES.cpp \
 				OSSLSHA256.cpp \
 				OSSLSHA512.cpp \
 				OSSLUtil.cpp
-libcrypto_la_LIBADD +=		-lcrypto
 endif
 
 # Compile with support of Botan
 if WITH_BOTAN
 libcrypto_la_SOURCES +=		BotanCryptoFactory.cpp
-libcrypto_la_LIBADD +=		-lbotan
 endif

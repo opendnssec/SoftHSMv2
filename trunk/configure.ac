@@ -53,16 +53,8 @@ AC_PROG_CXX
 ACX_PEDANTIC
 ACX_STRICT
 
-
-# Use OpenSSL or Botan
-AM_CONDITIONAL([WITH_OPENSSL], [test 1 = 1])
-AM_CONDITIONAL([WITH_BOTAN], [test 1 = 0])
-AC_DEFINE_UNQUOTED(
-	[WITH_OPENSSL],
-	[],
-	[Compile with OpenSSL support]
-)
-
+# What crypto backend to use and if we want to support GOST
+ACX_CRYPTO_BACKEND
 
 # Check for libraries
 
@@ -70,12 +62,11 @@ AC_DEFINE_UNQUOTED(
 # Check for headers
 AC_CHECK_HEADERS([pthread.h])
 
-
 # Define some variables for the code
 AC_DEFINE_UNQUOTED(
-        [SENSITIVE_NON_PAGED],
-        [],
-        [Non-paged memory for secure storage]
+	[SENSITIVE_NON_PAGED],
+	[],
+	[Non-paged memory for secure storage]
 )
 
 # AC_DEFINE_UNQUOTED(
@@ -88,7 +79,6 @@ AC_DEFINE_UNQUOTED(
 # 	[SOFTHSM_VERSION_MINOR],
 # 	[SoftHSM minor version number via PKCS#11]
 # )
-
 
 # Generate the libtool script and install script
 AC_PROG_INSTALL
