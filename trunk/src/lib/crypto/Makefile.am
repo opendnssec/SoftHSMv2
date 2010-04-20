@@ -6,8 +6,8 @@ AM_CPPFLAGS = 			-I$(srcdir)/../common \
 				-I$(srcdir)/../data_mgr \
 				@CRYPTO_INCLUDES@
 
-noinst_LTLIBRARIES =		libcrypto.la
-libcrypto_la_SOURCES =		AsymmetricAlgorithm.cpp \
+noinst_LTLIBRARIES =		libsofthsm_crypto.la
+libsofthsm_crypto_la_SOURCES =	AsymmetricAlgorithm.cpp \
 				AsymmetricKeyPair.cpp \
 				CryptoFactory.cpp \
 				DESKey.cpp \
@@ -20,7 +20,7 @@ libcrypto_la_SOURCES =		AsymmetricAlgorithm.cpp \
 				RSAPublicKey.cpp \
 				SymmetricAlgorithm.cpp \
 				SymmetricKey.cpp
-libcrypto_la_LIBADD =		@CRYPTO_LIBS@
+libsofthsm_crypto_la_LIBADD =	@CRYPTO_LIBS@
 
 SUBDIRS =			test
 
@@ -28,7 +28,7 @@ EXTRA_DIST =			$(srcdir)/*.h $(srcdir)/*.cpp
 
 # Compile with support of OpenSSL
 if WITH_OPENSSL
-libcrypto_la_SOURCES +=		OSSLAES.cpp \
+libsofthsm_crypto_la_SOURCES +=	OSSLAES.cpp \
 				OSSLCryptoFactory.cpp \
 				OSSLDES.cpp \
 				OSSLDSA.cpp \
@@ -51,5 +51,5 @@ endif
 
 # Compile with support of Botan
 if WITH_BOTAN
-libcrypto_la_SOURCES +=		BotanCryptoFactory.cpp
+libsofthsm_crypto_la_SOURCES +=	BotanCryptoFactory.cpp
 endif

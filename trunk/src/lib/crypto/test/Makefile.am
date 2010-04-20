@@ -26,13 +26,13 @@ cryptotest_SOURCES =		cryptotest.cpp \
 				ent.c \
 				iso8859.c \
 				randtest.c
-cryptotest_LDADD =		../../common/libcommon.la \
-				../libcrypto.la \
-				../../data_mgr/libdatamgr.la \
-				../../object_store/libobjectstore.la \
-				../../session_mgr/libsessionmgr.la \
-				../../slot_mgr/libslotmgr.la \
-				../../user_mgr/libusermgr.la
+cryptotest_LDADD =		../../common/libsofthsm_common.la \
+				../libsofthsm_crypto.la \
+				../../data_mgr/libsofthsm_datamgr.la \
+				../../object_store/libsofthsm_objectstore.la \
+				../../session_mgr/libsofthsm_sessionmgr.la \
+				../../slot_mgr/libsofthsm_slotmgr.la \
+				../../user_mgr/libsofthsm_usermgr.la
 cryptotest_LDFLAGS = 		-no-install `cppunit-config --libs`
 
 TESTS = 			cryptotest

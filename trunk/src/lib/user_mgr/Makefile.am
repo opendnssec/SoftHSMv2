@@ -6,7 +6,7 @@ AM_CPPFLAGS =			-I$(srcdir)/../cryptoki_compat \
 				-I$(srcdir)/../crypto \
 				-I$(srcdir)/../common
 				
-noinst_LTLIBRARIES =		libusermgr.la
-libusermgr_la_SOURCES =		# No source yet
+noinst_LTLIBRARIES =		libsofthsm_usermgr.la
+libsofthsm_usermgr_la_SOURCES =	# No source yet
 
 EXTRA_DIST =			$(srcdir)/*.h

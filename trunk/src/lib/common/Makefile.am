@@ -6,8 +6,8 @@ AM_CPPFLAGS =                   -I$(srcdir)/../cryptoki_compat \
 				-I$(srcdir)/../crypto \
 				-I$(srcdir)/../data_mgr
 
-noinst_LTLIBRARIES =		libcommon.la
-libcommon_la_SOURCES =		Configuration.cpp \
+noinst_LTLIBRARIES =		libsofthsm_common.la
+libsofthsm_common_la_SOURCES =	Configuration.cpp \
 				fatal.cpp \
 				log.cpp \
 				osmutex.cpp \

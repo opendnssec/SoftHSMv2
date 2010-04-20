@@ -9,13 +9,13 @@ AM_CPPFLAGS = 			-I$(srcdir)/cryptoki_compat \
 lib_LTLIBRARIES =		libsofthsm.la
 libsofthsm_la_SOURCES =		main.cpp \
 				SoftHSM.cpp
-libsofthsm_la_LIBADD =		common/libcommon.la \
-				crypto/libcrypto.la \
-				data_mgr/libdatamgr.la \
-				object_store/libobjectstore.la \
-				session_mgr/libsessionmgr.la \
-				slot_mgr/libslotmgr.la \
-				user_mgr/libusermgr.la
+libsofthsm_la_LIBADD =		common/libsofthsm_common.la \
+				crypto/libsofthsm_crypto.la \
+				data_mgr/libsofthsm_datamgr.la \
+				object_store/libsofthsm_objectstore.la \
+				session_mgr/libsofthsm_sessionmgr.la \
+				slot_mgr/libsofthsm_slotmgr.la \
+				user_mgr/libsofthsm_usermgr.la
 libsofthsm_la_LDFLAGS =		-version-info @VERSION_INFO@ \
 				-avoid-version -module
 

@@ -6,8 +6,8 @@ AM_CPPFLAGS =			-I$(srcdir)/../cryptoki_compat \
 				-I$(srcdir)/../crypto \
 				-I$(srcdir)/../common
 
-noinst_LTLIBRARIES =		libdatamgr.la
-libdatamgr_la_SOURCES =		ByteString.cpp \
+noinst_LTLIBRARIES =		libsofthsm_datamgr.la
+libsofthsm_datamgr_la_SOURCES =	ByteString.cpp \
 				salloc.cpp \
 				SecureMemoryRegistry.cpp
 
