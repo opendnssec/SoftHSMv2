@@ -39,14 +39,14 @@ AC_DEFUN([ACX_CRYPTO_BACKEND],[
 	if test "x${crypto_backend}" = "xopenssl"; then
 		AC_MSG_RESULT(OpenSSL)
 
-		# if test "x${enable_gost}" = "xyes"; then
-		# 	# TODO: Check OpenSSL version >= 1.0.0
-		# else
-		# 	# TODO: Check OpenSSL version >= 0.9.X
-		# fi
+		if test "x${enable_gost}" = "xyes"; then
+			ACX_OPENSSL(1,0,0)
+		else
+			ACX_OPENSSL(0,9,8)
+		fi
 
-		CRYPTO_INCLUDES="-I/usr/local/include"
-		CRYPTO_LIBS="-lcrypto"
+		CRYPTO_INCLUDES=$OPENSSL_INCLUDES
+		CRYPTO_LIBS=$OPENSSL_LIBS
 
 		AC_DEFINE_UNQUOTED(
 			[WITH_OPENSSL],
