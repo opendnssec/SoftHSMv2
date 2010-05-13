@@ -230,6 +230,7 @@ void RSATests::testSigningVerifying()
 
 			CPPUNIT_ASSERT(rng->generateRandom(dataToSign, 567));
 
+			// Test mechanisms that perform internal hashing
 			for (std::vector<const char*>::iterator m = mechanisms.begin(); m != mechanisms.end(); m++)
 			{
 				ByteString blockSignature, singlePartSignature;
@@ -261,6 +262,32 @@ void RSATests::testSigningVerifying()
 				// And single-pass verification
 				CPPUNIT_ASSERT(rsa->verify(kp->getPublicKey(), dataToSign, singlePartSignature, *m));
 			}
+
+			// Test mechanisms that do not perform internal hashing
+
+			// Test PKCS #1 signing
+			CPPUNIT_ASSERT(rng->generateRandom(dataToSign, 35));
+
+			// Sign the data
+			ByteString signature;
+			CPPUNIT_ASSERT(rsa->sign(kp->getPrivateKey(), dataToSign, signature, "rsa-pkcs"));
+
+			// Verify the signature
+			CPPUNIT_ASSERT(rsa->verify(kp->getPublicKey(), dataToSign, signature, "rsa-pkcs"));
+
+			// Test raw RSA signing
+			size_t byteSize = *k >> 3;
+
+			CPPUNIT_ASSERT(rng->generateRandom(dataToSign, byteSize));
+
+			// Strip the topmost bit
+			dataToSign[0] &= 0x7F;
+
+			// Sign the data
+			CPPUNIT_ASSERT(rsa->sign(kp->getPrivateKey(), dataToSign, signature, "rsa"));
+
+			// Verify the signature
+			CPPUNIT_ASSERT(rsa->verify(kp->getPublicKey(), dataToSign, signature, "rsa"));
 	
 			CryptoFactory::i()->recycleRNG(rng);
 			rsa->recycleKeyPair(kp);

@@ -51,7 +51,7 @@ const EVP_CIPHER* OSSLDES::getCipher() const
 	// People shouldn't really be using 56-bit DES keys, generate a warning
 	if (currentKey->getBitLen() == 56)
 	{
-		WARNING_MSG("CAUTION: use of 56-bit DES keys is not recommended!");
+		DEBUG_MSG("CAUTION: use of 56-bit DES keys is not recommended!");
 	}
 
 	// Determine the cipher mode

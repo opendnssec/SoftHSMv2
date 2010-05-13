@@ -60,8 +60,123 @@ OSSLRSA::~OSSLRSA()
 		delete pSecondHash;
 	}
 }
-	
+
 // Signing functions
+bool OSSLRSA::sign(PrivateKey* privateKey, const ByteString& dataToSign, ByteString& signature, const std::string mechanism)
+{
+
+	std::string lowerMechanism;
+	lowerMechanism.resize(mechanism.size());
+	std::transform(mechanism.begin(), mechanism.end(), lowerMechanism.begin(), tolower);
+
+	if (!lowerMechanism.compare("rsa-pkcs"))
+	{
+		// Separate implementation for RSA PKCS #1 signing without hash computation
+
+		// Check if the private key is the right type
+		if (!privateKey->isOfType(OSSLRSAPrivateKey::type))
+		{
+			ERROR_MSG("Invalid key type supplied");
+	
+			return false;
+		}
+
+		// In case of PKCS #1 signing the length of the input data may not exceed 40% of the
+		// modulus size
+		OSSLRSAPrivateKey* osslKey = (OSSLRSAPrivateKey*) privateKey;
+
+		size_t allowedLen = (osslKey->getN().size() * 40) / 100;
+
+		if (dataToSign.size() > allowedLen)
+		{
+			ERROR_MSG("Data to sign exceeds 40% of modulus size for PKCS #1 signature");
+
+			return false;
+		}
+
+		// Perform the signature operation
+		signature.resize(osslKey->getN().size());
+
+		RSA* rsa = osslKey->getOSSLKey();
+
+		if (!RSA_blinding_on(rsa, NULL))
+		{
+			ERROR_MSG("Failed to turn on blinding for OpenSSL RSA key");
+
+			return false;
+		}
+
+		int sigLen = RSA_private_encrypt(dataToSign.size(), (unsigned char*) dataToSign.const_byte_str(), &signature[0], rsa, RSA_PKCS1_PADDING);
+
+		RSA_blinding_off(rsa);
+
+		if (sigLen == -1)
+		{
+			ERROR_MSG("An error occurred while performing a PKCS #1 signature");
+
+			return false;
+		}
+
+		signature.resize(sigLen);
+
+		return true;
+	}
+	else if (!lowerMechanism.compare("rsa"))
+	{
+		// Separate implementation for raw RSA signing
+
+		// Check if the private key is the right type
+		if (!privateKey->isOfType(OSSLRSAPrivateKey::type))
+		{
+			ERROR_MSG("Invalid key type supplied");
+	
+			return false;
+		}
+
+		// In case of raw RSA, the length of the input data must match the length of the modulus
+		OSSLRSAPrivateKey* osslKey = (OSSLRSAPrivateKey*) privateKey;
+
+		if (dataToSign.size() != osslKey->getN().size())
+		{
+			ERROR_MSG("Size of data to sign does not match the modulus size");
+
+			return false;
+		}
+
+		// Perform the signature operation
+		signature.resize(osslKey->getN().size());
+
+		RSA* rsa = osslKey->getOSSLKey();
+
+		if (!RSA_blinding_on(rsa, NULL))
+		{
+			ERROR_MSG("Failed to turn on blinding for OpenSSL RSA key");
+
+			return false;
+		}
+
+		int sigLen = RSA_private_encrypt(dataToSign.size(), (unsigned char*) dataToSign.const_byte_str(), &signature[0], rsa, RSA_NO_PADDING);
+
+		RSA_blinding_off(rsa);
+
+		if (sigLen == -1)
+		{
+			ERROR_MSG("An error occurred while performing a raw RSA signature");
+
+			return false;
+		}
+
+		signature.resize(sigLen);
+
+		return true;
+	}
+	else
+	{
+		// Call default implementation
+		return AsymmetricAlgorithm::sign(privateKey, dataToSign, signature, mechanism);
+	}
+}
+	
 bool OSSLRSA::signInit(PrivateKey* privateKey, const std::string mechanism)
 {
 	if (!AsymmetricAlgorithm::signInit(privateKey, mechanism))
@@ -273,6 +388,91 @@ bool OSSLRSA::signFinal(ByteString& signature)
 }
 
 // Verification functions
+bool OSSLRSA::verify(PublicKey* publicKey, const ByteString& originalData, const ByteString& signature, const std::string mechanism)
+{
+	std::string lowerMechanism;
+	lowerMechanism.resize(mechanism.size());
+	std::transform(mechanism.begin(), mechanism.end(), lowerMechanism.begin(), tolower);
+
+	if (!lowerMechanism.compare("rsa-pkcs"))
+	{
+		// Specific implementation for PKCS #1 only verification; originalData is assumed to contain
+		// a digestInfo structure and verification is performed by comparing originalData to the data
+		// recovered from the signature
+
+		// Check if the public key is the right type
+		if (!publicKey->isOfType(OSSLRSAPublicKey::type))
+		{
+			ERROR_MSG("Invalid key type supplied");
+	
+			return false;
+		}
+
+		// Perform the RSA public key operation
+		OSSLRSAPublicKey* osslKey = (OSSLRSAPublicKey*) publicKey;
+
+		ByteString recoveredData;
+
+		recoveredData.resize(osslKey->getN().size());
+
+		RSA* rsa = osslKey->getOSSLKey();
+
+		int retLen = RSA_public_decrypt(signature.size(), (unsigned char*) signature.const_byte_str(), &recoveredData[0], rsa, RSA_PKCS1_PADDING);
+
+		if (retLen == -1)
+		{
+			ERROR_MSG("Public key operation failed");
+
+			return false;
+		}
+
+		recoveredData.resize(retLen);
+
+		return (originalData == recoveredData);
+	}
+	else if (!lowerMechanism.compare("rsa"))
+	{
+		// Specific implementation for raw RSA verifiction; originalData is assumed to contain the
+		// full input data used to compute the signature and verification is performed by comparing
+		// originalData to the data recovered from the signature
+		
+		// Check if the public key is the right type
+		if (!publicKey->isOfType(OSSLRSAPublicKey::type))
+		{
+			ERROR_MSG("Invalid key type supplied");
+	
+			return false;
+		}
+
+		// Perform the RSA public key operation
+		OSSLRSAPublicKey* osslKey = (OSSLRSAPublicKey*) publicKey;
+
+		ByteString recoveredData;
+
+		recoveredData.resize(osslKey->getN().size());
+
+		RSA* rsa = osslKey->getOSSLKey();
+
+		int retLen = RSA_public_decrypt(signature.size(), (unsigned char*) signature.const_byte_str(), &recoveredData[0], rsa, RSA_NO_PADDING);
+
+		if (retLen == -1)
+		{
+			ERROR_MSG("Public key operation failed");
+
+			return false;
+		}
+
+		recoveredData.resize(retLen);
+
+		return (originalData == recoveredData);
+	}
+	else
+	{
+		// Call the generic function
+		return AsymmetricAlgorithm::verify(publicKey, originalData, signature, mechanism);
+	}
+}
+
 bool OSSLRSA::verifyInit(PublicKey* publicKey, const std::string mechanism)
 {
 	if (!AsymmetricAlgorithm::verifyInit(publicKey, mechanism))
@@ -280,7 +480,7 @@ bool OSSLRSA::verifyInit(PublicKey* publicKey, const std::string mechanism)
 		return false;
 	}
 
-	// Check if the private key is the right type
+	// Check if the public key is the right type
 	if (!publicKey->isOfType(OSSLRSAPublicKey::type))
 	{
 		ERROR_MSG("Invalid key type supplied");
