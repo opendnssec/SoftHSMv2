@@ -90,6 +90,7 @@ AC_CONFIG_FILES([
 	src/lib/crypto/Makefile
 	src/lib/crypto/test/Makefile
 	src/lib/data_mgr/Makefile
+	src/lib/data_mgr/test/Makefile
 	src/lib/object_store/Makefile
 	src/lib/session_mgr/Makefile
 	src/lib/slot_mgr/Makefile

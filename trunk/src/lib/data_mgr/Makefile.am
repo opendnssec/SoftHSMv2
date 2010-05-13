@@ -8,7 +8,10 @@ AM_CPPFLAGS =			-I$(srcdir)/../cryptoki_compat \
 
 noinst_LTLIBRARIES =		libsofthsm_datamgr.la
 libsofthsm_datamgr_la_SOURCES =	ByteString.cpp \
+				RFC4880.cpp \
 				salloc.cpp \
 				SecureMemoryRegistry.cpp
+
+SUBDIRS =			test
 
 EXTRA_DIST =			$(srcdir)/*.h
