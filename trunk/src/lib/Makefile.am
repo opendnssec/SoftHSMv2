@@ -7,6 +7,7 @@ AM_CPPFLAGS = 			-I$(srcdir)/cryptoki_compat \
 				-I$(srcdir)/crypto
 
 lib_LTLIBRARIES =		libsofthsm.la
+
 libsofthsm_la_SOURCES =		main.cpp \
 				SoftHSM.cpp
 libsofthsm_la_LIBADD =		common/libsofthsm_common.la \
@@ -18,6 +19,15 @@ libsofthsm_la_LIBADD =		common/libsofthsm_common.la \
 				user_mgr/libsofthsm_usermgr.la
 libsofthsm_la_LDFLAGS =		-version-info @VERSION_INFO@ \
 				-avoid-version -module
+
+# Create a convenience library from all the other convenience library; this is
+# necessary to resolve circular dependencies when statically linking the test
+# executables
+noinst_LTLIBRARIES =		libsofthsm_convarch.la
+
+libsofthsm_convarch_la_SOURCES =
+
+libsofthsm_convarch_la_LIBADD =	$(libsofthsm_la_LIBADD)
 
 SUBDIRS = 			common \
 				crypto \

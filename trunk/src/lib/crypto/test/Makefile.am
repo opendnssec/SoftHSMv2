@@ -14,6 +14,7 @@ AM_CPPFLAGS = 			-I$(srcdir)/.. \
 				`cppunit-config --cflags`
 
 check_PROGRAMS =		cryptotest
+
 cryptotest_SOURCES =		cryptotest.cpp \
 				AESTests.cpp \
 				ByteStringTests.cpp \
@@ -26,13 +27,9 @@ cryptotest_SOURCES =		cryptotest.cpp \
 				ent.c \
 				iso8859.c \
 				randtest.c
-cryptotest_LDADD =		../../common/libsofthsm_common.la \
-				../libsofthsm_crypto.la \
-				../../data_mgr/libsofthsm_datamgr.la \
-				../../object_store/libsofthsm_objectstore.la \
-				../../session_mgr/libsofthsm_sessionmgr.la \
-				../../slot_mgr/libsofthsm_slotmgr.la \
-				../../user_mgr/libsofthsm_usermgr.la
+
+cryptotest_LDADD =		../../libsofthsm_convarch.la
+
 cryptotest_LDFLAGS = 		-no-install `cppunit-config --libs`
 
 TESTS = 			cryptotest
