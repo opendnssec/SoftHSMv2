@@ -17,7 +17,6 @@ check_PROGRAMS =		cryptotest
 
 cryptotest_SOURCES =		cryptotest.cpp \
 				AESTests.cpp \
-				ByteStringTests.cpp \
 				DESTests.cpp \
 				DSATests.cpp \
 				HashTests.cpp \

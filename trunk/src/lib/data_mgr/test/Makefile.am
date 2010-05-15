@@ -16,6 +16,7 @@ AM_CPPFLAGS = 			-I$(srcdir)/.. \
 check_PROGRAMS =		datamgrtest
 
 datamgrtest_SOURCES =		datamgrtest.cpp \
+				ByteStringTests.cpp \
 				RFC4880Tests.cpp
 
 datamgrtest_LDADD =		../../libsofthsm_convarch.la 
