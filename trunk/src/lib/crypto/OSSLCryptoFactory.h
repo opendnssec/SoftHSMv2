@@ -60,8 +60,12 @@ public:
 	// Create a concrete instance of an RNG
 	virtual RNG* getRNG(std::string name = "default");
 
+	// Recycle an RNG instance -- override this function in the derived
+	// class if you need to perform specific clean-up
+	virtual void recycleRNG(RNG* toRecycle);
+
 	// Destructor
-	virtual ~OSSLCryptoFactory() { }
+	virtual ~OSSLCryptoFactory();
 
 private:
 	// Constructor
@@ -69,6 +73,9 @@ private:
 
 	// The one-and-only instance
 	static OSSLCryptoFactory* instance;
+
+	// The one-and-only RNG instance
+	RNG* rng;
 };
 
 #endif // !_SOFTHSM_V2_OSSLCRYPTOFACTORY_H

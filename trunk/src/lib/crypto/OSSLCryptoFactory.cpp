@@ -56,6 +56,16 @@ OSSLCryptoFactory::OSSLCryptoFactory()
 {
 	// Initialise OpenSSL
 	OpenSSL_add_all_algorithms();
+
+	// Initialise the one-and-only RNG
+	rng = new OSSLRNG();
+}
+
+// Destructor
+OSSLCryptoFactory::~OSSLCryptoFactory()
+{
+	// Destroy the one-and-only RNG
+	delete rng;
 }
 
 // Return the one-and-only instance
@@ -161,7 +171,7 @@ RNG* OSSLCryptoFactory::getRNG(std::string name /* = "default" */)
 
 	if (!lcAlgo.compare("default"))
 	{
-		return new OSSLRNG();
+		return rng;
 	}
 	else
 	{
@@ -170,5 +180,10 @@ RNG* OSSLCryptoFactory::getRNG(std::string name /* = "default" */)
 
 		return NULL;
 	}
+}
+
+void OSSLCryptoFactory::recycleRNG(RNG* toRecycle)
+{
+	// Do nothing; we keep the one-and-only instance
 }
 
