@@ -192,6 +192,41 @@ void ByteStringTests::testXOR()
 	xed = l ^ r;
 
 	CPPUNIT_ASSERT(xed == x);
+
+	ByteString l1(left, 8);
+	ByteString r1(right, 8);
+	
+	l1 ^= r1;
+
+	CPPUNIT_ASSERT(l1 == x);
+
+	l1 ^= l;
+
+	CPPUNIT_ASSERT(l1 == r);
+
+	ByteString l_(left, 7);
+
+	xed = l_ ^ r;
+
+	CPPUNIT_ASSERT((xed.size() == 7) && (xed == x.substr(0, 7)));
+
+	ByteString r_(right, 7);
+
+	xed = l ^ r_;
+	
+	CPPUNIT_ASSERT((xed.size() == 7) && (xed == x.substr(0, 7)));
+
+	ByteString l1_(left, 8);
+
+	l1_ ^= r_;
+
+	CPPUNIT_ASSERT((l1.size() == 8) && (l1_.substr(0, 7) == x.substr(0,7)) && (l1_[7] == l[7]));
+
+	ByteString l1__(left, 7);
+
+	l1__ ^= r;
+
+	CPPUNIT_ASSERT((l1__ == x.substr(0,7)) && (l1__.size() == 7));
 }
 
 void ByteStringTests::testToHexStr()

@@ -125,6 +125,19 @@ ByteString& ByteString::operator+=(const unsigned char byte)
 	return *this;
 }
 
+// XORing
+ByteString& ByteString::operator^=(const ByteString& rhs)
+{
+	size_t xorLen = std::min(this->size(), rhs.size());
+
+	for (size_t i = 0; i < xorLen; i++)
+	{
+		byteString[i] ^= rhs.const_byte_str()[i];
+	}
+
+	return *this;
+}
+
 // Return a substring
 ByteString ByteString::substr(const size_t start, const size_t len /* = SIZE_T_MAX */) const
 {

@@ -29,7 +29,7 @@
 /*****************************************************************************
  RFC4880Tests.cpp
 
- Contains test cases to test the hash implementations
+ Contains test cases to test the RFC4880 implementation
  *****************************************************************************/
 
 #include <stdlib.h>

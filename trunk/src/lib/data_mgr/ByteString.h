@@ -105,6 +105,9 @@ public:
 	bool operator==(const ByteString& compareTo) const;
 	bool operator!=(const ByteString& compareTo) const;
 
+	// XORing
+	ByteString& operator^=(const ByteString& rhs);
+
 	// Serialisation/deserialisation
 	virtual ByteString serialise() const;
 

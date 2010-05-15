@@ -17,7 +17,8 @@ check_PROGRAMS =		datamgrtest
 
 datamgrtest_SOURCES =		datamgrtest.cpp \
 				ByteStringTests.cpp \
-				RFC4880Tests.cpp
+				RFC4880Tests.cpp \
+				SecureDataMgrTests.cpp
 
 datamgrtest_LDADD =		../../libsofthsm_convarch.la 
 
