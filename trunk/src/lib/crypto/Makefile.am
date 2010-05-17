@@ -51,5 +51,6 @@ endif
 
 # Compile with support of Botan
 if WITH_BOTAN
-libsofthsm_crypto_la_SOURCES +=	BotanCryptoFactory.cpp
+libsofthsm_crypto_la_SOURCES +=	BotanCryptoFactory.cpp \
+				BotanRNG.cpp
 endif

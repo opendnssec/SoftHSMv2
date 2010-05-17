@@ -1,7 +1,6 @@
 /* $Id$ */
 
 /*
- * Copyright (c) 2010 SURFnet bv
  * Copyright (c) 2010 .SE (The Internet Infrastructure Foundation)
  * All rights reserved.
  *
@@ -28,49 +27,42 @@
  */
 
 /*****************************************************************************
- BotanCryptoFactory.h
+ BOTANRNG.cpp
 
- This is a Botan based cryptographic algorithm factory
+ Botan random number generator class
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_BOTANCRYPTOFACTORY_H
-#define _SOFTHSM_V2_BOTANCRYPTOFACTORY_H
-
 #include "config.h"
-#include "CryptoFactory.h"
-#include "SymmetricAlgorithm.h"
-#include "AsymmetricAlgorithm.h"
-#include "HashAlgorithm.h"
-#include "RNG.h"
+#include "BotanRNG.h"
 
-class BotanCryptoFactory : public CryptoFactory
+#include <botan/auto_rng.h>
+
+
+// Base constructor
+BotanRNG::BotanRNG()
 {
-public:
-	// Return the one-and-only instance
-	static BotanCryptoFactory* i();
+	rng = new AutoSeeded_RNG();
+}
 
-	// Create a concrete instance of a symmetric algorithm
-	SymmetricAlgorithm* getSymmetricAlgorithm(std::string algorithm);
+// Destructor
+BotanRNG::~BotanRNG()
+{
+	delete rng;
+}
 
-	// Create a concrete instance of an asymmetric algorithm
-	AsymmetricAlgorithm* getAsymmetricAlgorithm(std::string algorithm);
+// Generate random data
+bool BotanRNG::generateRandom(ByteString& data, const size_t len)
+{
+	data.wipe(len);
 
-	// Create a concrete instance of a hash algorithm
-	HashAlgorithm* getHashAlgorithm(std::string algorithm);
+	rng->randomize(&data[0], len);
 
-	// Create a concrete instance of an RNG
-	RNG* getRNG(std::string name = "default");
+	return true;
+}
 
-	// Destructor
-	~BotanCryptoFactory();
-
-private:
-	// Constructor
-	BotanCryptoFactory();
-
-	// The one-and-only instance
-	static BotanCryptoFactory* instance;
-};
-
-#endif // !_SOFTHSM_V2_BOTANCRYPTOFACTORY_H
-
+// Seed the random pool
+void BotanRNG::seed(ByteString& seedData)
+{
+	rng->add_entropy(seedData.byte_str(), seedData.size());
+	rng->reseed(seedData.size());
+}

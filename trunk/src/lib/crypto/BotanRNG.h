@@ -1,7 +1,6 @@
 /* $Id$ */
 
 /*
- * Copyright (c) 2010 SURFnet bv
  * Copyright (c) 2010 .SE (The Internet Infrastructure Foundation)
  * All rights reserved.
  *
@@ -28,49 +27,40 @@
  */
 
 /*****************************************************************************
- BotanCryptoFactory.h
+ BotanRNG.h
 
- This is a Botan based cryptographic algorithm factory
+ Botan random number generator class
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_BOTANCRYPTOFACTORY_H
-#define _SOFTHSM_V2_BOTANCRYPTOFACTORY_H
+#ifndef _SOFTHSM_V2_BOTANRNG_H
+#define _SOFTHSM_V2_BOTANRNG_H
 
 #include "config.h"
-#include "CryptoFactory.h"
-#include "SymmetricAlgorithm.h"
-#include "AsymmetricAlgorithm.h"
-#include "HashAlgorithm.h"
+#include "ByteString.h"
 #include "RNG.h"
 
-class BotanCryptoFactory : public CryptoFactory
+#include "botan/rng.h"
+using namespace Botan;
+
+class BotanRNG : public RNG
 {
 public:
-	// Return the one-and-only instance
-	static BotanCryptoFactory* i();
-
-	// Create a concrete instance of a symmetric algorithm
-	SymmetricAlgorithm* getSymmetricAlgorithm(std::string algorithm);
-
-	// Create a concrete instance of an asymmetric algorithm
-	AsymmetricAlgorithm* getAsymmetricAlgorithm(std::string algorithm);
-
-	// Create a concrete instance of a hash algorithm
-	HashAlgorithm* getHashAlgorithm(std::string algorithm);
-
-	// Create a concrete instance of an RNG
-	RNG* getRNG(std::string name = "default");
+	// Base constructors
+	BotanRNG();
 
 	// Destructor
-	~BotanCryptoFactory();
+	~BotanRNG();
+
+	// Generate random data
+	bool generateRandom(ByteString& data, const size_t len);
+
+	// Seed the random pool
+	void seed(ByteString& seedData);
 
 private:
-	// Constructor
-	BotanCryptoFactory();
-
-	// The one-and-only instance
-	static BotanCryptoFactory* instance;
+	// The RNG
+	RandomNumberGenerator *rng;
 };
 
-#endif // !_SOFTHSM_V2_BOTANCRYPTOFACTORY_H
+#endif // !_SOFTHSM_V2_BOTANRNG_H
 

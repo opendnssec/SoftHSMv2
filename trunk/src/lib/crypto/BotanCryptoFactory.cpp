@@ -35,9 +35,31 @@
 
 #include "config.h"
 #include "BotanCryptoFactory.h"
+#include "BotanRNG.h"
+//#include "BotanMD5.h"
+//#include "BotanSHA1.h"
+//#include "BotanSHA256.h"
+//#include "BotanSHA512.h"
+
+#include <botan/init.h>
+using namespace Botan;
 
 // Initialise the one-and-only instance
 BotanCryptoFactory* BotanCryptoFactory::instance = NULL;
+
+// Constructor
+BotanCryptoFactory::BotanCryptoFactory()
+{
+	// Init the Botan crypto library
+	LibraryInitializer::initialize("thread_safe=true");
+}
+
+// Destructor
+BotanCryptoFactory::~BotanCryptoFactory()
+{
+	// Deinitialize the Botan crypto lib
+	LibraryInitializer::deinitialize();
+}
 
 // Return the one-and-only instance
 BotanCryptoFactory* BotanCryptoFactory::i()
@@ -71,7 +93,34 @@ AsymmetricAlgorithm* BotanCryptoFactory::getAsymmetricAlgorithm(std::string algo
 // Create a concrete instance of a hash algorithm
 HashAlgorithm* BotanCryptoFactory::getHashAlgorithm(std::string algorithm)
 {
-	// TODO: add algorithm implementations
+	std::string lcAlgo;
+	lcAlgo.resize(algorithm.size());
+	std::transform(algorithm.begin(), algorithm.end(), lcAlgo.begin(), tolower);
+
+/*	if (!lcAlgo.compare("md5"))
+	{
+		return new BotanMD5();
+	}
+	else if (!lcAlgo.compare("sha1"))
+	{
+		return new BotanSHA1();
+	}
+	else if (!lcAlgo.compare("sha256"))
+	{
+		return new BotanSHA256();
+	}
+	else if (!lcAlgo.compare("sha512"))
+	{
+		return new BotanSHA512();
+	}
+	else
+	{
+		// No algorithm implementation is available
+		ERROR_MSG("Unknown algorithm '%s'", algorithm.c_str());
+
+		return NULL;
+	}
+*/
 
 	// No algorithm implementation is available
 	return NULL;
@@ -80,9 +129,19 @@ HashAlgorithm* BotanCryptoFactory::getHashAlgorithm(std::string algorithm)
 // Create a concrete instance of an RNG
 RNG* BotanCryptoFactory::getRNG(std::string name /* = "default" */)
 {
-	// TODO: add algorithm implementations
+	std::string lcAlgo;
+	lcAlgo.resize(name.size());
+	std::transform(name.begin(), name.end(), lcAlgo.begin(), tolower);
 
-	// No algorithm implementation is available
-	return NULL;
+	if (!lcAlgo.compare("default"))
+	{
+		return new BotanRNG();
+	}
+	else
+	{
+		// No algorithm implementation is available
+		ERROR_MSG("Unknown algorithm '%s'", name.c_str());
+
+		return NULL;
+	}
 }
-
