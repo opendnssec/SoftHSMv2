@@ -62,6 +62,10 @@ bool BotanHashAlgorithm::hashInit()
 	{
 		hash = getHash();
 	}
+	else
+	{
+		hash->clear();
+	}
 
 	return true;
 }
