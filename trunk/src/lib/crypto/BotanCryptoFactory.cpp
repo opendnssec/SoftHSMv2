@@ -36,10 +36,10 @@
 #include "config.h"
 #include "BotanCryptoFactory.h"
 #include "BotanRNG.h"
-//#include "BotanMD5.h"
-//#include "BotanSHA1.h"
-//#include "BotanSHA256.h"
-//#include "BotanSHA512.h"
+#include "BotanMD5.h"
+#include "BotanSHA1.h"
+#include "BotanSHA256.h"
+#include "BotanSHA512.h"
 
 #include <botan/init.h>
 using namespace Botan;
@@ -97,7 +97,7 @@ HashAlgorithm* BotanCryptoFactory::getHashAlgorithm(std::string algorithm)
 	lcAlgo.resize(algorithm.size());
 	std::transform(algorithm.begin(), algorithm.end(), lcAlgo.begin(), tolower);
 
-/*	if (!lcAlgo.compare("md5"))
+	if (!lcAlgo.compare("md5"))
 	{
 		return new BotanMD5();
 	}
@@ -120,7 +120,6 @@ HashAlgorithm* BotanCryptoFactory::getHashAlgorithm(std::string algorithm)
 
 		return NULL;
 	}
-*/
 
 	// No algorithm implementation is available
 	return NULL;
