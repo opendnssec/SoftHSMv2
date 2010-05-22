@@ -45,17 +45,17 @@ using namespace Botan;
 class BotanRNG : public RNG
 {
 public:
-	// Base constructors
+	// Base constructor
 	BotanRNG();
 
 	// Destructor
-	~BotanRNG();
+	virtual ~BotanRNG();
 
 	// Generate random data
-	bool generateRandom(ByteString& data, const size_t len);
+	virtual bool generateRandom(ByteString& data, const size_t len);
 
 	// Seed the random pool
-	void seed(ByteString& seedData);
+	virtual void seed(ByteString& seedData);
 
 private:
 	// The RNG
