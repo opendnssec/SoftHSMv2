@@ -41,10 +41,8 @@
 class RNG
 {
 public:
-	// Base constructors
+	// Base constructor
 	RNG() { }
-
-	RNG(const RNG& in) { }
 
 	// Destructor
 	virtual ~RNG() { }
