@@ -227,11 +227,11 @@ bool BotanSymmetricAlgorithm::decryptUpdate(const ByteString& encryptedData, Byt
 
 	// Write and read data
 	int outLen = data.size();
-//	cryption->write(encryptedData.const_byte_str(), encryptedData.size());
-//	cryption->read(&data[0], outLen);
+	cryption->write(encryptedData.const_byte_str(), encryptedData.size());
+	int bytesRead = cryption->read(&data[0], outLen);
 	
 	// Resize the output block
-	data.resize(outLen);
+	data.resize(bytesRead);
 
 	return true;
 }
@@ -252,14 +252,14 @@ bool BotanSymmetricAlgorithm::decryptFinal(ByteString& data)
 	// Read data
 	int outLen = data.size();
 	cryption->end_msg();
-	cryption->read(&data[0], outLen);
+	int bytesRead = cryption->read(&data[0], outLen);
 
 	// Clean up
 	delete cryption;
 	cryption = NULL;
 
-//	// Resize the output block
-//	data.resize(outLen);
+	// Resize the output block
+	data.resize(bytesRead);
 
 	return true;
 }
