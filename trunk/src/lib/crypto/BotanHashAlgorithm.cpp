@@ -90,9 +90,11 @@ bool BotanHashAlgorithm::hashFinal(ByteString& hashedData)
 		return false;
 	}
 
+	// Resize
 	hashedData.resize(hash->OUTPUT_LENGTH);
 	unsigned int outLen = hashedData.size();
 
+	// Read the digest 
 	hash->final(&hashedData[0]);
 
 	return true;
