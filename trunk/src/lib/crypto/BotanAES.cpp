@@ -27,41 +27,61 @@
  */
 
 /*****************************************************************************
- BOTANRNG.cpp
+ BotanAES.cpp
 
- Botan random number generator class
+ Botan AES implementation
  *****************************************************************************/
 
 #include "config.h"
-#include "BotanRNG.h"
+#include "BotanAES.h"
+#include <algorithm>
 
-#include <botan/auto_rng.h>
-
-// Base constructor
-BotanRNG::BotanRNG()
+std::string BotanAES::getCipher() const
 {
-	rng = new Botan::AutoSeeded_RNG();
+	// Check currentKey bit length; AES only supports 128, 192 or 256 bit keys
+	if ((currentKey->getBitLen() != 128) && 
+	    (currentKey->getBitLen() != 192) &&
+            (currentKey->getBitLen() != 256))
+	{
+		ERROR_MSG("Invalid AES currentKey length (%d bits)", currentKey->getBitLen());
+
+		return "";
+	}
+
+	// Determine the cipher mode
+	if (!currentCipherMode.compare("cbc"))
+	{
+		switch(currentKey->getBitLen())
+		{
+			case 128:
+				return "AES-128/CBC/PKCS7";
+			case 192:
+				return "AES-192/CBC/PKCS7";
+			case 256:
+				return "AES-256/CBC/PKCS7";
+		};
+	}
+	else if (!currentCipherMode.compare("ecb"))
+	{
+		switch(currentKey->getBitLen())
+		{
+			case 128:
+				return "AES-128/ECB/PKCS7";
+			case 192:
+				return "AES-192/ECB/PKCS7";
+			case 256:
+				return "AES-256/ECB/PKCS7";
+		};
+	}
+
+	ERROR_MSG("Invalid AES cipher mode %s", currentCipherMode.c_str());
+
+	return "";
 }
 
-// Destructor
-BotanRNG::~BotanRNG()
+size_t BotanAES::getBlockSize() const
 {
-	delete rng;
+	// The block size is 128 bits
+	return 128 >> 3;
 }
 
-// Generate random data
-bool BotanRNG::generateRandom(ByteString& data, const size_t len)
-{
-	data.wipe(len);
-
-	rng->randomize(&data[0], len);
-
-	return true;
-}
-
-// Seed the random pool
-void BotanRNG::seed(ByteString& seedData)
-{
-	rng->add_entropy(seedData.byte_str(), seedData.size());
-	rng->reseed(seedData.size());
-}

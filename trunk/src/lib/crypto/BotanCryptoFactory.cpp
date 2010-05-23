@@ -35,6 +35,7 @@
 
 #include "config.h"
 #include "BotanCryptoFactory.h"
+#include "BotanAES.h"
 #include "BotanRNG.h"
 #include "BotanMD5.h"
 #include "BotanSHA1.h"
@@ -42,7 +43,6 @@
 #include "BotanSHA512.h"
 
 #include <botan/init.h>
-using namespace Botan;
 
 // Initialise the one-and-only instance
 BotanCryptoFactory* BotanCryptoFactory::instance = NULL;
@@ -51,14 +51,14 @@ BotanCryptoFactory* BotanCryptoFactory::instance = NULL;
 BotanCryptoFactory::BotanCryptoFactory()
 {
 	// Init the Botan crypto library
-	LibraryInitializer::initialize("thread_safe=true");
+	Botan::LibraryInitializer::initialize("thread_safe=true");
 }
 
 // Destructor
 BotanCryptoFactory::~BotanCryptoFactory()
 {
 	// Deinitialize the Botan crypto lib
-	LibraryInitializer::deinitialize();
+	Botan::LibraryInitializer::deinitialize();
 }
 
 // Return the one-and-only instance
@@ -75,7 +75,25 @@ BotanCryptoFactory* BotanCryptoFactory::i()
 // Create a concrete instance of a symmetric algorithm
 SymmetricAlgorithm* BotanCryptoFactory::getSymmetricAlgorithm(std::string algorithm)
 {
-	// TODO: add algorithm implementations
+        std::string lcAlgo;
+        lcAlgo.resize(algorithm.size());
+        std::transform(algorithm.begin(), algorithm.end(), lcAlgo.begin(), tolower);
+
+        if (!lcAlgo.compare("aes"))
+        {
+                return new BotanAES();
+        }
+/*        else if (!lcAlgo.compare("des") || !lcAlgo.compare("3des"))
+        {
+                return new BotanDES();
+        }*/
+        else
+        {
+                // No algorithm implementation is available
+                ERROR_MSG("Unknown algorithm '%s'", lcAlgo.c_str());
+
+                return NULL;
+        }
 
 	// No algorithm implementation is available
 	return NULL;

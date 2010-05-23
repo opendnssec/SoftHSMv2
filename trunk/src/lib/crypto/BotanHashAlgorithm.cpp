@@ -35,7 +35,6 @@
 #include "config.h"
 #include "BotanHashAlgorithm.h"
 #include <botan/filters.h>
-using namespace Botan;
 
 // Base constructor 
 BotanHashAlgorithm::BotanHashAlgorithm()

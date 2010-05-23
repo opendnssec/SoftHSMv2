@@ -40,7 +40,6 @@
 #include "RNG.h"
 
 #include "botan/rng.h"
-using namespace Botan;
 
 class BotanRNG : public RNG
 {
@@ -59,7 +58,7 @@ public:
 
 private:
 	// The RNG
-	RandomNumberGenerator *rng;
+	Botan::RandomNumberGenerator *rng;
 };
 
 #endif // !_SOFTHSM_V2_BOTANRNG_H

@@ -38,12 +38,11 @@
 #include "config.h"
 #include "BotanHashAlgorithm.h"
 #include <botan/hash.h>
-using namespace Botan;
 
 class BotanSHA256 : public BotanHashAlgorithm
 {
 protected:
-	virtual HashFunction* getHash() const;
+	virtual Botan::HashFunction* getHash() const;
 };
 
 #endif // !_SOFTHSM_V2_BOTANSHA256_H

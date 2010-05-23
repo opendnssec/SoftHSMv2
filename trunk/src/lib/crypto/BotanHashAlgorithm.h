@@ -38,7 +38,6 @@
 #include "config.h"
 #include "HashAlgorithm.h"
 #include <botan/hash.h>
-using namespace Botan;
 
 class BotanHashAlgorithm : public HashAlgorithm
 {
@@ -55,11 +54,11 @@ public:
 	virtual bool hashFinal(ByteString& hashedData);
 
 protected:
-	virtual HashFunction* getHash() const = 0;
+	virtual Botan::HashFunction* getHash() const = 0;
 
 private:
 	// Current hashing context
-	HashFunction *hash;
+	Botan::HashFunction *hash;
 };
 
 #endif // !_SOFTHSM_V2_BOTANHASHALGORITHM_H

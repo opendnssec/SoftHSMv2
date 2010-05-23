@@ -51,11 +51,13 @@ endif
 
 # Compile with support of Botan
 if WITH_BOTAN
-libsofthsm_crypto_la_SOURCES +=	BotanCryptoFactory.cpp \
+libsofthsm_crypto_la_SOURCES +=	BotanAES.cpp \
+				BotanCryptoFactory.cpp \
 				BotanHashAlgorithm.cpp \
 				BotanMD5.cpp \
 				BotanRNG.cpp \
 				BotanSHA1.cpp \
 				BotanSHA256.cpp \
-				BotanSHA512.cpp
+				BotanSHA512.cpp \
+				BotanSymmetricAlgorithm.cpp
 endif

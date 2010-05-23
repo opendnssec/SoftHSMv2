@@ -27,41 +27,31 @@
  */
 
 /*****************************************************************************
- BOTANRNG.cpp
+ BotanAES.h
 
- Botan random number generator class
+ Botan AES implementation
  *****************************************************************************/
 
+#ifndef _SOFTHSM_V2_BOTANAES_H
+#define _SOFTHSM_V2_BOTANAES_H
+
+#include <string>
 #include "config.h"
-#include "BotanRNG.h"
+#include "BotanSymmetricAlgorithm.h"
 
-#include <botan/auto_rng.h>
-
-// Base constructor
-BotanRNG::BotanRNG()
+class BotanAES : public BotanSymmetricAlgorithm
 {
-	rng = new Botan::AutoSeeded_RNG();
-}
+public:
+	// Destructor
+	virtual ~BotanAES() { }
 
-// Destructor
-BotanRNG::~BotanRNG()
-{
-	delete rng;
-}
+protected:
+	// Return the right EVP cipher for the operation
+	virtual std::string getCipher() const;
 
-// Generate random data
-bool BotanRNG::generateRandom(ByteString& data, const size_t len)
-{
-	data.wipe(len);
+	// Return the block size
+	virtual size_t getBlockSize() const;
+};
 
-	rng->randomize(&data[0], len);
+#endif // !_SOFTHSM_V2_BOTANAES_H
 
-	return true;
-}
-
-// Seed the random pool
-void BotanRNG::seed(ByteString& seedData)
-{
-	rng->add_entropy(seedData.byte_str(), seedData.size());
-	rng->reseed(seedData.size());
-}

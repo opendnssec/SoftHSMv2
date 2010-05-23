@@ -35,9 +35,8 @@
 #include "config.h"
 #include "BotanSHA256.h"
 #include <botan/sha2_32.h>
-using namespace Botan;
 
-HashFunction* BotanSHA256::getHash() const
+Botan::HashFunction* BotanSHA256::getHash() const
 {
-	return new SHA_256();
+	return new Botan::SHA_256();
 }

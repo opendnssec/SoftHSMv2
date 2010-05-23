@@ -27,41 +27,51 @@
  */
 
 /*****************************************************************************
- BOTANRNG.cpp
+ BotanSymmetricAlgorithm.h
 
- Botan random number generator class
+ Botan symmetric algorithm implementation
  *****************************************************************************/
 
+#ifndef _SOFTHSM_V2_BOTANSYMMETRICALGORITHM_H
+#define _SOFTHSM_V2_BOTANSYMMETRICALGORITHM_H
+
+#include <string>
 #include "config.h"
-#include "BotanRNG.h"
+#include "SymmetricKey.h"
+#include "SymmetricAlgorithm.h"
 
-#include <botan/auto_rng.h>
+#include <botan/pipe.h>
 
-// Base constructor
-BotanRNG::BotanRNG()
+class BotanSymmetricAlgorithm : public SymmetricAlgorithm
 {
-	rng = new Botan::AutoSeeded_RNG();
-}
+public:
+	// Constructor
+	BotanSymmetricAlgorithm();
 
-// Destructor
-BotanRNG::~BotanRNG()
-{
-	delete rng;
-}
+	// Destructor
+	virtual ~BotanSymmetricAlgorithm();
 
-// Generate random data
-bool BotanRNG::generateRandom(ByteString& data, const size_t len)
-{
-	data.wipe(len);
+	// Encryption functions
+	virtual bool encryptInit(const SymmetricKey* key, const std::string mode = "cbc", const ByteString& IV = ByteString());
+	virtual bool encryptUpdate(const ByteString& data, ByteString& encryptedData);
+	virtual bool encryptFinal(ByteString& encryptedData);
 
-	rng->randomize(&data[0], len);
+	// Decryption functions
+	virtual bool decryptInit(const SymmetricKey* key, const std::string mode = "cbc", const ByteString& IV = ByteString());
+	virtual bool decryptUpdate(const ByteString& encryptedData, ByteString& data);
+	virtual bool decryptFinal(ByteString& data);
 
-	return true;
-}
+protected:
+	// Return the right cipher for the operation
+	virtual std::string getCipher() const = 0;
 
-// Seed the random pool
-void BotanRNG::seed(ByteString& seedData)
-{
-	rng->add_entropy(seedData.byte_str(), seedData.size());
-	rng->reseed(seedData.size());
-}
+	// Return the block size
+	virtual size_t getBlockSize() const = 0;
+
+private:
+	// The current context
+	Botan::Pipe* cryption;
+};
+
+#endif // !_SOFTHSM_V2_BOTANSYMMETRICALGORITHM_H
+

@@ -35,9 +35,8 @@
 #include "config.h"
 #include "BotanMD5.h"
 #include <botan/md5.h>
-using namespace Botan;
 
-HashFunction* BotanMD5::getHash() const
+Botan::HashFunction* BotanMD5::getHash() const
 {
-	return new MD5();
+	return new Botan::MD5();
 }
