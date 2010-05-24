@@ -126,7 +126,7 @@ void AESTests::testCBC()
 
 		for (int j = 0; j < 4; j++)
 		{
-			ByteString plainText(testData[j]);
+			ByteString plainText(testData[j]), shsmPlainText;
 			ByteString cipherText;
 			ByteString shsmCipherText, OB;
 
@@ -154,6 +154,18 @@ void AESTests::testCBC()
 
 			CPPUNIT_ASSERT(shsmCipherText == cipherText);
 
+			// Check that we can get the plain text
+			shsmPlainText.wipe(); 
+			CPPUNIT_ASSERT(aes->decryptInit(&aesKey128, "cbc", IV));
+
+			CPPUNIT_ASSERT(aes->decryptUpdate(shsmCipherText, OB));
+			shsmPlainText += OB;
+
+			CPPUNIT_ASSERT(aes->decryptFinal(OB));
+			shsmPlainText += OB;
+
+			CPPUNIT_ASSERT(shsmPlainText == plainText);
+
 			// Test 192-bit key
 
 			// First, use the OpenSSL command line tool to encrypt the test data
@@ -178,6 +190,18 @@ void AESTests::testCBC()
 
 			CPPUNIT_ASSERT(shsmCipherText == cipherText);
 
+			// Check that we can get the plain text
+			shsmPlainText.wipe(); 
+			CPPUNIT_ASSERT(aes->decryptInit(&aesKey192, "cbc", IV));
+
+			CPPUNIT_ASSERT(aes->decryptUpdate(shsmCipherText, OB));
+			shsmPlainText += OB;
+
+			CPPUNIT_ASSERT(aes->decryptFinal(OB));
+			shsmPlainText += OB;
+
+			CPPUNIT_ASSERT(shsmPlainText == plainText);
+
 			// Test 256-bit key
 
 			// First, use the OpenSSL command line tool to encrypt the test data
@@ -201,6 +225,18 @@ void AESTests::testCBC()
 			shsmCipherText += OB;
 
 			CPPUNIT_ASSERT(shsmCipherText == cipherText);
+
+			// Check that we can get the plain text
+			shsmPlainText.wipe(); 
+			CPPUNIT_ASSERT(aes->decryptInit(&aesKey256, "cbc", IV));
+
+			CPPUNIT_ASSERT(aes->decryptUpdate(shsmCipherText, OB));
+			shsmPlainText += OB;
+
+			CPPUNIT_ASSERT(aes->decryptFinal(OB));
+			shsmPlainText += OB;
+
+			CPPUNIT_ASSERT(shsmPlainText == plainText);
 		}
 	}
 }
@@ -270,7 +306,7 @@ void AESTests::testECB()
 
 		for (int j = 0; j < 4; j++)
 		{
-			ByteString plainText(testData[j]);
+			ByteString plainText(testData[j]), shsmPlainText;
 			ByteString cipherText;
 			ByteString shsmCipherText, OB;
 
@@ -298,6 +334,18 @@ void AESTests::testECB()
 
 			CPPUNIT_ASSERT(shsmCipherText == cipherText);
 
+			// Check that we can get the plain text
+			shsmPlainText.wipe(); 
+			CPPUNIT_ASSERT(aes->decryptInit(&aesKey128, "ecb", IV));
+
+			CPPUNIT_ASSERT(aes->decryptUpdate(shsmCipherText, OB));
+			shsmPlainText += OB;
+
+			CPPUNIT_ASSERT(aes->decryptFinal(OB));
+			shsmPlainText += OB;
+
+			CPPUNIT_ASSERT(shsmPlainText == plainText);
+
 			// Test 192-bit key
 
 			// First, use the OpenSSL command line tool to encrypt the test data
@@ -322,6 +370,18 @@ void AESTests::testECB()
 
 			CPPUNIT_ASSERT(shsmCipherText == cipherText);
 
+			// Check that we can get the plain text
+			shsmPlainText.wipe(); 
+			CPPUNIT_ASSERT(aes->decryptInit(&aesKey192, "ecb", IV));
+
+			CPPUNIT_ASSERT(aes->decryptUpdate(shsmCipherText, OB));
+			shsmPlainText += OB;
+
+			CPPUNIT_ASSERT(aes->decryptFinal(OB));
+			shsmPlainText += OB;
+
+			CPPUNIT_ASSERT(shsmPlainText == plainText);
+
 			// Test 256-bit key
 
 			// First, use the OpenSSL command line tool to encrypt the test data
@@ -345,6 +405,18 @@ void AESTests::testECB()
 			shsmCipherText += OB;
 
 			CPPUNIT_ASSERT(shsmCipherText == cipherText);
+
+			// Check that we can get the plain text
+			shsmPlainText.wipe(); 
+			CPPUNIT_ASSERT(aes->decryptInit(&aesKey256, "ecb", IV));
+
+			CPPUNIT_ASSERT(aes->decryptUpdate(shsmCipherText, OB));
+			shsmPlainText += OB;
+
+			CPPUNIT_ASSERT(aes->decryptFinal(OB));
+			shsmPlainText += OB;
+
+			CPPUNIT_ASSERT(shsmPlainText == plainText);
 		}
 	}
 }

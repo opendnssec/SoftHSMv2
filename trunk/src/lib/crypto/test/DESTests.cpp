@@ -129,7 +129,7 @@ void DESTests::testCBC()
 
 		for (int j = 0; j < 4; j++)
 		{
-			ByteString plainText(testData[j]);
+			ByteString plainText(testData[j]), shsmPlainText;
 			ByteString cipherText;
 			ByteString shsmCipherText, OB;
 
@@ -157,6 +157,18 @@ void DESTests::testCBC()
 
 			CPPUNIT_ASSERT(shsmCipherText == cipherText);
 
+			// Check that we can get the plain text
+			shsmPlainText.wipe();
+			CPPUNIT_ASSERT(des->decryptInit(&desKey56, "cbc", IV));
+
+			CPPUNIT_ASSERT(des->decryptUpdate(shsmCipherText, OB));
+			shsmPlainText += OB;
+
+			CPPUNIT_ASSERT(des->decryptFinal(OB));
+			shsmPlainText += OB;
+
+			CPPUNIT_ASSERT(shsmPlainText == plainText);
+
 			// Test 112-bit key
 
 			// First, use the OpenSSL command line tool to encrypt the test data
@@ -181,6 +193,18 @@ void DESTests::testCBC()
 
 			CPPUNIT_ASSERT(shsmCipherText == cipherText);
 
+			// Check that we can get the plain text
+			shsmPlainText.wipe();
+			CPPUNIT_ASSERT(des->decryptInit(&desKey112, "cbc", IV));
+
+			CPPUNIT_ASSERT(des->decryptUpdate(shsmCipherText, OB));
+			shsmPlainText += OB;
+
+			CPPUNIT_ASSERT(des->decryptFinal(OB));
+			shsmPlainText += OB;
+
+			CPPUNIT_ASSERT(shsmPlainText == plainText);
+
 			// Test 168-bit key
 
 			// First, use the OpenSSL command line tool to encrypt the test data
@@ -204,6 +228,18 @@ void DESTests::testCBC()
 			shsmCipherText += OB;
 
 			CPPUNIT_ASSERT(shsmCipherText == cipherText);
+
+			// Check that we can get the plain text
+			shsmPlainText.wipe();
+			CPPUNIT_ASSERT(des->decryptInit(&desKey168, "cbc", IV));
+
+			CPPUNIT_ASSERT(des->decryptUpdate(shsmCipherText, OB));
+			shsmPlainText += OB;
+
+			CPPUNIT_ASSERT(des->decryptFinal(OB));
+			shsmPlainText += OB;
+
+			CPPUNIT_ASSERT(shsmPlainText == plainText);
 		}
 	}
 }
@@ -276,7 +312,7 @@ void DESTests::testECB()
 
 		for (int j = 0; j < 4; j++)
 		{
-			ByteString plainText(testData[j]);
+			ByteString plainText(testData[j]), shsmPlainText;
 			ByteString cipherText;
 			ByteString shsmCipherText, OB;
 
@@ -304,6 +340,18 @@ void DESTests::testECB()
 
 			CPPUNIT_ASSERT(shsmCipherText == cipherText);
 
+			// Check that we can get the plain text
+			shsmPlainText.wipe();
+			CPPUNIT_ASSERT(des->decryptInit(&desKey56, "ecb", IV));
+
+			CPPUNIT_ASSERT(des->decryptUpdate(shsmCipherText, OB));
+			shsmPlainText += OB;
+
+			CPPUNIT_ASSERT(des->decryptFinal(OB));
+			shsmPlainText += OB;
+
+			CPPUNIT_ASSERT(shsmPlainText == plainText);
+
 			// Test 112-bit key
 
 			// First, use the OpenSSL command line tool to encrypt the test data
@@ -328,6 +376,18 @@ void DESTests::testECB()
 
 			CPPUNIT_ASSERT(shsmCipherText == cipherText);
 
+			// Check that we can get the plain text
+			shsmPlainText.wipe();
+			CPPUNIT_ASSERT(des->decryptInit(&desKey112, "ecb", IV));
+
+			CPPUNIT_ASSERT(des->decryptUpdate(shsmCipherText, OB));
+			shsmPlainText += OB;
+
+			CPPUNIT_ASSERT(des->decryptFinal(OB));
+			shsmPlainText += OB;
+
+			CPPUNIT_ASSERT(shsmPlainText == plainText);
+
 			// Test 168-bit key
 
 			// First, use the OpenSSL command line tool to encrypt the test data
@@ -351,6 +411,18 @@ void DESTests::testECB()
 			shsmCipherText += OB;
 
 			CPPUNIT_ASSERT(shsmCipherText == cipherText);
+
+			// Check that we can get the plain text
+			shsmPlainText.wipe();
+			CPPUNIT_ASSERT(des->decryptInit(&desKey168, "ecb", IV));
+
+			CPPUNIT_ASSERT(des->decryptUpdate(shsmCipherText, OB));
+			shsmPlainText += OB;
+
+			CPPUNIT_ASSERT(des->decryptFinal(OB));
+			shsmPlainText += OB;
+
+			CPPUNIT_ASSERT(shsmPlainText == plainText);
 		}
 	}
 }
@@ -423,7 +495,7 @@ void DESTests::testOFB()
 
 		for (int j = 0; j < 4; j++)
 		{
-			ByteString plainText(testData[j]);
+			ByteString plainText(testData[j]), shsmPlainText;
 			ByteString cipherText;
 			ByteString shsmCipherText, OB;
 
@@ -451,6 +523,18 @@ void DESTests::testOFB()
 
 			CPPUNIT_ASSERT(shsmCipherText == cipherText);
 
+			// Check that we can get the plain text
+			shsmPlainText.wipe();
+			CPPUNIT_ASSERT(des->decryptInit(&desKey56, "ofb", IV));
+
+			CPPUNIT_ASSERT(des->decryptUpdate(shsmCipherText, OB));
+			shsmPlainText += OB;
+
+			CPPUNIT_ASSERT(des->decryptFinal(OB));
+			shsmPlainText += OB;
+
+			CPPUNIT_ASSERT(shsmPlainText == plainText);
+
 			// Test 112-bit key
 
 			// First, use the OpenSSL command line tool to encrypt the test data
@@ -475,6 +559,18 @@ void DESTests::testOFB()
 
 			CPPUNIT_ASSERT(shsmCipherText == cipherText);
 
+			// Check that we can get the plain text
+			shsmPlainText.wipe();
+			CPPUNIT_ASSERT(des->decryptInit(&desKey112, "ofb", IV));
+
+			CPPUNIT_ASSERT(des->decryptUpdate(shsmCipherText, OB));
+			shsmPlainText += OB;
+
+			CPPUNIT_ASSERT(des->decryptFinal(OB));
+			shsmPlainText += OB;
+
+			CPPUNIT_ASSERT(shsmPlainText == plainText);
+
 			// Test 168-bit key
 
 			// First, use the OpenSSL command line tool to encrypt the test data
@@ -498,6 +594,18 @@ void DESTests::testOFB()
 			shsmCipherText += OB;
 
 			CPPUNIT_ASSERT(shsmCipherText == cipherText);
+
+			// Check that we can get the plain text
+			shsmPlainText.wipe();
+			CPPUNIT_ASSERT(des->decryptInit(&desKey168, "ofb", IV));
+
+			CPPUNIT_ASSERT(des->decryptUpdate(shsmCipherText, OB));
+			shsmPlainText += OB;
+
+			CPPUNIT_ASSERT(des->decryptFinal(OB));
+			shsmPlainText += OB;
+
+			CPPUNIT_ASSERT(shsmPlainText == plainText);
 		}
 	}
 }
@@ -570,7 +678,7 @@ void DESTests::testCFB()
 
 		for (int j = 0; j < 4; j++)
 		{
-			ByteString plainText(testData[j]);
+			ByteString plainText(testData[j]), shsmPlainText;
 			ByteString cipherText;
 			ByteString shsmCipherText, OB;
 
@@ -598,6 +706,18 @@ void DESTests::testCFB()
 
 			CPPUNIT_ASSERT(shsmCipherText == cipherText);
 
+			// Check that we can get the plain text
+			shsmPlainText.wipe();
+			CPPUNIT_ASSERT(des->decryptInit(&desKey56, "cfb", IV));
+
+			CPPUNIT_ASSERT(des->decryptUpdate(shsmCipherText, OB));
+			shsmPlainText += OB;
+
+			CPPUNIT_ASSERT(des->decryptFinal(OB));
+			shsmPlainText += OB;
+
+			CPPUNIT_ASSERT(shsmPlainText == plainText);
+
 			// Test 112-bit key
 
 			// First, use the OpenSSL command line tool to encrypt the test data
@@ -622,6 +742,18 @@ void DESTests::testCFB()
 
 			CPPUNIT_ASSERT(shsmCipherText == cipherText);
 
+			// Check that we can get the plain text
+			shsmPlainText.wipe();
+			CPPUNIT_ASSERT(des->decryptInit(&desKey112, "cfb", IV));
+
+			CPPUNIT_ASSERT(des->decryptUpdate(shsmCipherText, OB));
+			shsmPlainText += OB;
+
+			CPPUNIT_ASSERT(des->decryptFinal(OB));
+			shsmPlainText += OB;
+
+			CPPUNIT_ASSERT(shsmPlainText == plainText);
+
 			// Test 168-bit key
 
 			// First, use the OpenSSL command line tool to encrypt the test data
@@ -645,6 +777,18 @@ void DESTests::testCFB()
 			shsmCipherText += OB;
 
 			CPPUNIT_ASSERT(shsmCipherText == cipherText);
+
+			// Check that we can get the plain text
+			shsmPlainText.wipe();
+			CPPUNIT_ASSERT(des->decryptInit(&desKey168, "cfb", IV));
+
+			CPPUNIT_ASSERT(des->decryptUpdate(shsmCipherText, OB));
+			shsmPlainText += OB;
+
+			CPPUNIT_ASSERT(des->decryptFinal(OB));
+			shsmPlainText += OB;
+
+			CPPUNIT_ASSERT(shsmPlainText == plainText);
 		}
 	}
 }
