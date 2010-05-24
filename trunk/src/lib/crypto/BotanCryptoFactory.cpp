@@ -36,6 +36,7 @@
 #include "config.h"
 #include "BotanCryptoFactory.h"
 #include "BotanAES.h"
+#include "BotanDES.h"
 #include "BotanRNG.h"
 #include "BotanMD5.h"
 #include "BotanSHA1.h"
@@ -83,10 +84,10 @@ SymmetricAlgorithm* BotanCryptoFactory::getSymmetricAlgorithm(std::string algori
         {
                 return new BotanAES();
         }
-/*        else if (!lcAlgo.compare("des") || !lcAlgo.compare("3des"))
+        else if (!lcAlgo.compare("des") || !lcAlgo.compare("3des"))
         {
                 return new BotanDES();
-        }*/
+        }
         else
         {
                 // No algorithm implementation is available

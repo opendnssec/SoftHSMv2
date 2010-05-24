@@ -53,6 +53,7 @@ endif
 if WITH_BOTAN
 libsofthsm_crypto_la_SOURCES +=	BotanAES.cpp \
 				BotanCryptoFactory.cpp \
+				BotanDES.cpp \
 				BotanHashAlgorithm.cpp \
 				BotanMD5.cpp \
 				BotanRNG.cpp \
