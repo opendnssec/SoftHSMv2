@@ -117,12 +117,12 @@ bool BotanSymmetricAlgorithm::encryptUpdate(const ByteString& data, ByteString& 
 		return false;
 	}
 
-	// Prepare the output block
-	encryptedData.resize(data.size() + getBlockSize() - 1);
-
-	// Write and read data
-	int outLen = encryptedData.size();
+	// Write data
 	cryption->write(data.const_byte_str(), data.size());
+
+	// Read data
+	int outLen = cryption->remaining();
+	encryptedData.resize(outLen);
 	int bytesRead = cryption->read(&encryptedData[0], outLen);
 
 	// Resize the output block
@@ -141,12 +141,10 @@ bool BotanSymmetricAlgorithm::encryptFinal(ByteString& encryptedData)
 		return false;
 	}
 
-	// Prepare the output block
-	encryptedData.resize(getBlockSize());
-
 	// Read data
-	int outLen = encryptedData.size();
 	cryption->end_msg();
+	int outLen = cryption->remaining();
+	encryptedData.resize(outLen);
 	int bytesRead = cryption->read(&encryptedData[0], outLen);
 
 	// Clean up
@@ -222,12 +220,12 @@ bool BotanSymmetricAlgorithm::decryptUpdate(const ByteString& encryptedData, Byt
 		return false;
 	}
 
-	// Prepare the output block
-	data.resize(encryptedData.size() + getBlockSize() - 1);
-
-	// Write and read data
-	int outLen = data.size();
+	// Write data
 	cryption->write(encryptedData.const_byte_str(), encryptedData.size());
+
+	// Read data
+	int outLen = cryption->remaining();
+	data.resize(outLen);
 	int bytesRead = cryption->read(&data[0], outLen);
 	
 	// Resize the output block
@@ -246,12 +244,10 @@ bool BotanSymmetricAlgorithm::decryptFinal(ByteString& data)
 		return false;
 	}
 
-	// Prepare the output block
-	data.resize(getBlockSize());
-
 	// Read data
-	int outLen = data.size();
 	cryption->end_msg();
+	int outLen = cryption->remaining();
+	data.resize(outLen);
 	int bytesRead = cryption->read(&data[0], outLen);
 
 	// Clean up
