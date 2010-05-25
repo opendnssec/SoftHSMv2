@@ -52,6 +52,7 @@ BotanSymmetricAlgorithm::BotanSymmetricAlgorithm()
 BotanSymmetricAlgorithm::~BotanSymmetricAlgorithm()
 {
 	delete cryption;
+	cryption = NULL;
 }
 
 // Encryption functions
@@ -87,12 +88,10 @@ bool BotanSymmetricAlgorithm::encryptInit(const SymmetricKey* key, const std::st
 
 	// Determine the cipher
 	std::string cipherName = getCipher();
-	Botan::SymmetricKey botanKey = Botan::SymmetricKey(key->getKeyBits().const_byte_str(), key->getKeyBits().size());
-	Botan::InitializationVector botanIV = Botan::InitializationVector(IV.const_byte_str(), IV.size());
 
 	if (cipherName == "")
 	{
-		ERROR_MSG("Failed to initialise encrypt operation");
+		ERROR_MSG("Invalid encryption cipher");
 
 		ByteString dummy;
 		SymmetricAlgorithm::encryptFinal(dummy);
@@ -101,8 +100,25 @@ bool BotanSymmetricAlgorithm::encryptInit(const SymmetricKey* key, const std::st
 	}
 
 	// Allocate the context
-	cryption = new Botan::Pipe(Botan::get_cipher(cipherName, botanKey, botanIV, Botan::ENCRYPTION));
-	cryption->start_msg();
+	try
+	{
+		Botan::SymmetricKey botanKey = Botan::SymmetricKey(key->getKeyBits().const_byte_str(), key->getKeyBits().size());
+		Botan::InitializationVector botanIV = Botan::InitializationVector(IV.const_byte_str(), IV.size());
+		cryption = new Botan::Pipe(Botan::get_cipher(cipherName, botanKey, botanIV, Botan::ENCRYPTION));
+		cryption->start_msg();
+	}
+	catch (...)
+	{
+		ERROR_MSG("Failed to create the encryption token");
+
+		ByteString dummy;
+		SymmetricAlgorithm::encryptFinal(dummy);
+
+		delete cryption;
+		cryption = NULL;
+
+		return false;
+	}
 
 	return true;
 }
@@ -111,19 +127,47 @@ bool BotanSymmetricAlgorithm::encryptUpdate(const ByteString& data, ByteString& 
 {
 	if (!SymmetricAlgorithm::encryptUpdate(data, encryptedData))
 	{
+		return false;
+	}
+
+	// Write data
+	try
+	{
+		cryption->write(data.const_byte_str(), data.size());
+	}
+	catch (...)
+	{
+		ERROR_MSG("Failed to write to the encryption token");
+
+		ByteString dummy;
+		SymmetricAlgorithm::encryptFinal(dummy);
+
 		delete cryption;
 		cryption = NULL;
 
 		return false;
 	}
 
-	// Write data
-	cryption->write(data.const_byte_str(), data.size());
-
 	// Read data
-	int outLen = cryption->remaining();
-	encryptedData.resize(outLen);
-	int bytesRead = cryption->read(&encryptedData[0], outLen);
+	int bytesRead = 0;
+	try
+	{
+		int outLen = cryption->remaining();
+		encryptedData.resize(outLen);
+		bytesRead = cryption->read(&encryptedData[0], outLen);
+	}
+	catch (...)
+	{
+		ERROR_MSG("Failed to encrypt the data");
+
+		ByteString dummy;
+		SymmetricAlgorithm::encryptFinal(dummy);
+
+		delete cryption;
+		cryption = NULL;
+
+		return false;
+	}
 
 	// Resize the output block
 	encryptedData.resize(bytesRead);
@@ -135,17 +179,27 @@ bool BotanSymmetricAlgorithm::encryptFinal(ByteString& encryptedData)
 {
 	if (!SymmetricAlgorithm::encryptFinal(encryptedData))
 	{
+		return false;
+	}
+
+	// Read data
+	int bytesRead = 0;
+	try
+	{
+		cryption->end_msg();
+		int outLen = cryption->remaining();
+		encryptedData.resize(outLen);
+		bytesRead = cryption->read(&encryptedData[0], outLen);
+	}
+	catch (...)
+	{
+		ERROR_MSG("Failed to encrypt the data");
+
 		delete cryption;
 		cryption = NULL;
 
 		return false;
 	}
-
-	// Read data
-	cryption->end_msg();
-	int outLen = cryption->remaining();
-	encryptedData.resize(outLen);
-	int bytesRead = cryption->read(&encryptedData[0], outLen);
 
 	// Clean up
 	delete cryption;
@@ -172,7 +226,7 @@ bool BotanSymmetricAlgorithm::decryptInit(const SymmetricKey* key, const std::st
 		ERROR_MSG("Invalid IV size (%d bytes, expected %d bytes)", IV.size(), getBlockSize());
 
 		ByteString dummy;
-		SymmetricAlgorithm::encryptFinal(dummy);
+		SymmetricAlgorithm::decryptFinal(dummy);
 
 		return false;
 	}
@@ -190,22 +244,37 @@ bool BotanSymmetricAlgorithm::decryptInit(const SymmetricKey* key, const std::st
 
 	// Determine the cipher class
 	std::string cipherName = getCipher();
-	Botan::SymmetricKey botanKey = Botan::SymmetricKey(key->getKeyBits().const_byte_str(), key->getKeyBits().size());
-	Botan::InitializationVector botanIV = Botan::InitializationVector(IV.const_byte_str(), IV.size());
 
 	if (cipherName == "")
 	{
-		ERROR_MSG("Failed to initialise encrypt operation");
+		ERROR_MSG("Invalid decryption cipher");
 
 		ByteString dummy;
-		SymmetricAlgorithm::encryptFinal(dummy);
+		SymmetricAlgorithm::decryptFinal(dummy);
 
 		return false;
 	}
 
 	// Allocate the context
-	cryption = new Botan::Pipe(Botan::get_cipher(cipherName, botanKey, botanIV, Botan::DECRYPTION));
-	cryption->start_msg();
+	try
+	{
+		Botan::SymmetricKey botanKey = Botan::SymmetricKey(key->getKeyBits().const_byte_str(), key->getKeyBits().size());
+		Botan::InitializationVector botanIV = Botan::InitializationVector(IV.const_byte_str(), IV.size());
+		cryption = new Botan::Pipe(Botan::get_cipher(cipherName, botanKey, botanIV, Botan::DECRYPTION));
+		cryption->start_msg();
+	}
+	catch (...)
+	{
+		ERROR_MSG("Failed to create the decryption token");
+
+		ByteString dummy;
+		SymmetricAlgorithm::decryptFinal(dummy);
+
+		delete cryption;
+		cryption = NULL;
+
+		return false;
+	}
 
 	return true;
 }
@@ -214,20 +283,48 @@ bool BotanSymmetricAlgorithm::decryptUpdate(const ByteString& encryptedData, Byt
 {
 	if (!SymmetricAlgorithm::decryptUpdate(encryptedData, data))
 	{
+		return false;
+	}
+
+	// Write data
+	try
+	{
+		cryption->write(encryptedData.const_byte_str(), encryptedData.size());
+	}
+	catch (...)
+	{
+		ERROR_MSG("Failed to write to the decryption token");
+
+		ByteString dummy;
+		SymmetricAlgorithm::decryptFinal(dummy);
+
 		delete cryption;
 		cryption = NULL;
 
 		return false;
 	}
 
-	// Write data
-	cryption->write(encryptedData.const_byte_str(), encryptedData.size());
-
 	// Read data
-	int outLen = cryption->remaining();
-	data.resize(outLen);
-	int bytesRead = cryption->read(&data[0], outLen);
-	
+	int bytesRead = 0;
+	try
+	{
+		int outLen = cryption->remaining();
+		data.resize(outLen);
+		bytesRead = cryption->read(&data[0], outLen);
+	}
+	catch (...)
+	{
+		ERROR_MSG("Failed to decrypt the data");
+
+		ByteString dummy;
+		SymmetricAlgorithm::decryptFinal(dummy);
+
+		delete cryption;
+		cryption = NULL;
+
+		return false;
+	}
+
 	// Resize the output block
 	data.resize(bytesRead);
 
@@ -238,17 +335,27 @@ bool BotanSymmetricAlgorithm::decryptFinal(ByteString& data)
 {
 	if (!SymmetricAlgorithm::decryptFinal(data))
 	{
+		return false;
+	}
+
+	// Read data
+	int bytesRead = 0;
+	try
+	{
+		cryption->end_msg();
+		int outLen = cryption->remaining();
+		data.resize(outLen);
+		bytesRead = cryption->read(&data[0], outLen);
+	}
+	catch (...)
+	{
+		ERROR_MSG("Failed to decrypt the data");
+
 		delete cryption;
 		cryption = NULL;
 
 		return false;
 	}
-
-	// Read data
-	cryption->end_msg();
-	int outLen = cryption->remaining();
-	data.resize(outLen);
-	int bytesRead = cryption->read(&data[0], outLen);
 
 	// Clean up
 	delete cryption;

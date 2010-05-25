@@ -216,7 +216,7 @@ bool OSSLEVPSymmetricAlgorithm::decryptInit(const SymmetricKey* key, const std::
 		ERROR_MSG("Invalid IV size (%d bytes, expected %d bytes)", IV.size(), getBlockSize());
 
 		ByteString dummy;
-		SymmetricAlgorithm::encryptFinal(dummy);
+		SymmetricAlgorithm::decryptFinal(dummy);
 
 		return false;
 	}
@@ -240,7 +240,7 @@ bool OSSLEVPSymmetricAlgorithm::decryptInit(const SymmetricKey* key, const std::
 		ERROR_MSG("Failed to initialise EVP decrypt operation");
 
 		ByteString dummy;
-		SymmetricAlgorithm::encryptFinal(dummy);
+		SymmetricAlgorithm::decryptFinal(dummy);
 
 		return false;
 	}
@@ -253,7 +253,7 @@ bool OSSLEVPSymmetricAlgorithm::decryptInit(const SymmetricKey* key, const std::
 		ERROR_MSG("Failed to allocate space for EVP_CIPHER_CTX");
 
 		ByteString dummy;
-		SymmetricAlgorithm::encryptFinal(dummy);
+		SymmetricAlgorithm::decryptFinal(dummy);
 
 		return false;
 	}
@@ -268,7 +268,7 @@ bool OSSLEVPSymmetricAlgorithm::decryptInit(const SymmetricKey* key, const std::
 		pCurCTX = NULL;
 
 		ByteString dummy;
-		SymmetricAlgorithm::encryptFinal(dummy);
+		SymmetricAlgorithm::decryptFinal(dummy);
 
 		return false;
 	}
