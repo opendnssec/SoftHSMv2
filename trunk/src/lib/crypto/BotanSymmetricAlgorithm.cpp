@@ -127,6 +127,9 @@ bool BotanSymmetricAlgorithm::encryptUpdate(const ByteString& data, ByteString& 
 {
 	if (!SymmetricAlgorithm::encryptUpdate(data, encryptedData))
 	{
+		delete cryption;
+		cryption = NULL;
+
 		return false;
 	}
 
@@ -179,6 +182,9 @@ bool BotanSymmetricAlgorithm::encryptFinal(ByteString& encryptedData)
 {
 	if (!SymmetricAlgorithm::encryptFinal(encryptedData))
 	{
+		delete cryption;
+		cryption = NULL;
+
 		return false;
 	}
 
@@ -283,6 +289,9 @@ bool BotanSymmetricAlgorithm::decryptUpdate(const ByteString& encryptedData, Byt
 {
 	if (!SymmetricAlgorithm::decryptUpdate(encryptedData, data))
 	{
+		delete cryption;
+		cryption = NULL;
+
 		return false;
 	}
 
@@ -335,6 +344,9 @@ bool BotanSymmetricAlgorithm::decryptFinal(ByteString& data)
 {
 	if (!SymmetricAlgorithm::decryptFinal(data))
 	{
+		delete cryption;
+		cryption = NULL;
+
 		return false;
 	}
 
