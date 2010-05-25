@@ -56,14 +56,26 @@ bool BotanHashAlgorithm::hashInit()
 		return false;
 	}
 
-	// Initialise digesting
-	if (hash == NULL)
+	// Initialize digesting
+	try
 	{
-		hash = getHash();
+		if (hash == NULL)
+		{
+			hash = getHash();
+		}
+		else
+		{
+			hash->clear();
+		}
 	}
-	else
+	catch (...)
 	{
-		hash->clear();
+		ERROR_MSG("Failed to initialize the digesting token");
+
+		ByteString dummy;
+		HashAlgorithm::hashFinal(dummy);
+
+		return false;
 	}
 
 	return true;
@@ -77,7 +89,19 @@ bool BotanHashAlgorithm::hashUpdate(const ByteString& data)
 	}
 
 	// Continue digesting
-	hash->update(data.const_byte_str(), data.size());
+	try
+	{
+		hash->update(data.const_byte_str(), data.size());
+	}
+	catch (...)
+	{
+		ERROR_MSG("Failed to buffer data");
+
+		ByteString dummy;
+		HashAlgorithm::hashFinal(dummy);
+
+		return false;
+	}
 
 	return true;
 }
@@ -91,10 +115,18 @@ bool BotanHashAlgorithm::hashFinal(ByteString& hashedData)
 
 	// Resize
 	hashedData.resize(hash->OUTPUT_LENGTH);
-	unsigned int outLen = hashedData.size();
 
-	// Read the digest 
-	hash->final(&hashedData[0]);
+	// Read the digest
+	try
+	{
+		hash->final(&hashedData[0]);
+	}
+	catch (...)
+	{
+		ERROR_MSG("Failed to digest the data");
+
+		return false;
+	}
 
 	return true;
 }
