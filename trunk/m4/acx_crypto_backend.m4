@@ -58,9 +58,9 @@ AC_DEFUN([ACX_CRYPTO_BACKEND],[
 		AC_MSG_RESULT(Botan)
 
 		if test "x${enable_gost}" = "xyes"; then
-			ACX_BOTAN(1,9,6)
+			ACX_BOTAN(1,9,7)
 		else
-			ACX_BOTAN(1,8,6)
+			ACX_BOTAN(1,9,7)
 		fi
 
 		CRYPTO_INCLUDES=$BOTAN_INCLUDES
