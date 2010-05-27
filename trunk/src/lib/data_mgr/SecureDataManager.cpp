@@ -256,6 +256,8 @@ bool SecureDataManager::login(const ByteString& passphrase, const ByteString& en
 		return false;
 	}
 
+	delete pbeKey;
+
 	decryptedKeyData += finalBlock;
 
 	// Check the magic
