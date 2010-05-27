@@ -62,11 +62,11 @@ BotanCryptoFactory::BotanCryptoFactory()
 // Destructor
 BotanCryptoFactory::~BotanCryptoFactory()
 {
-	// Deinitialize the Botan crypto lib
-	Botan::LibraryInitializer::deinitialize();
-
 	// Destroy the one-and-only RNG
 	delete rng;
+
+	// Deinitialize the Botan crypto lib
+	Botan::LibraryInitializer::deinitialize();
 }
 
 // Return the one-and-only instance
