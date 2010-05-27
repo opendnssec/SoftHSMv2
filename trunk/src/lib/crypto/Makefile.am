@@ -57,6 +57,10 @@ libsofthsm_crypto_la_SOURCES +=	BotanAES.cpp \
 				BotanHashAlgorithm.cpp \
 				BotanMD5.cpp \
 				BotanRNG.cpp \
+				BotanRSA.cpp \
+				BotanRSAKeyPair.cpp \
+				BotanRSAPrivateKey.cpp \
+				BotanRSAPublicKey.cpp \
 				BotanSHA1.cpp \
 				BotanSHA256.cpp \
 				BotanSHA512.cpp \

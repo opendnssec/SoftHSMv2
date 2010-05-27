@@ -1,7 +1,6 @@
 /* $Id$ */
 
 /*
- * Copyright (c) 2010 SURFnet bv
  * Copyright (c) 2010 .SE (The Internet Infrastructure Foundation)
  * All rights reserved.
  *
@@ -28,54 +27,43 @@
  */
 
 /*****************************************************************************
- BotanCryptoFactory.h
+ BotanRSAKeyPair.h
 
- This is a Botan based cryptographic algorithm factory
+ Botan RSA key-pair class
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_BOTANCRYPTOFACTORY_H
-#define _SOFTHSM_V2_BOTANCRYPTOFACTORY_H
+#ifndef _SOFTHSM_V2_BOTANRSAKEYPAIR_H
+#define _SOFTHSM_V2_BOTANRSAKEYPAIR_H
 
 #include "config.h"
-#include "CryptoFactory.h"
-#include "SymmetricAlgorithm.h"
-#include "AsymmetricAlgorithm.h"
-#include "HashAlgorithm.h"
-#include "RNG.h"
+#include "AsymmetricKeyPair.h"
+#include "BotanRSAPublicKey.h"
+#include "BotanRSAPrivateKey.h"
 
-class BotanCryptoFactory : public CryptoFactory
+class BotanRSAKeyPair : public AsymmetricKeyPair
 {
 public:
-	// Return the one-and-only instance
-	static BotanCryptoFactory* i();
+	// Set the public key
+	void setPublicKey(BotanRSAPublicKey& publicKey);
 
-	// Create a concrete instance of a symmetric algorithm
-	SymmetricAlgorithm* getSymmetricAlgorithm(std::string algorithm);
+	// Set the private key
+	void setPrivateKey(BotanRSAPrivateKey& privateKey);
 
-	// Create a concrete instance of an asymmetric algorithm
-	AsymmetricAlgorithm* getAsymmetricAlgorithm(std::string algorithm);
+	// Return the public key
+	virtual PublicKey* getPublicKey();
+	virtual const PublicKey* getConstPublicKey() const;
 
-	// Create a concrete instance of a hash algorithm
-	HashAlgorithm* getHashAlgorithm(std::string algorithm);
-
-	// Create a concrete instance of an RNG
-	RNG* getRNG(std::string name = "default");
-
-	// Destructor
-	~BotanCryptoFactory();
-
-	void recycleRNG(RNG* toRecycle);
+	// Return the private key
+	virtual PrivateKey* getPrivateKey();
+	virtual const PrivateKey* getConstPrivateKey() const;
 
 private:
-	// Constructor
-	BotanCryptoFactory();
+	// The public key
+	BotanRSAPublicKey pubKey;
 
-	// The one-and-only instance
-	static BotanCryptoFactory* instance;
-
-	// The one-and-only RNG instance
-	RNG* rng;
+	// The private key
+	BotanRSAPrivateKey privKey;
 };
 
-#endif // !_SOFTHSM_V2_BOTANCRYPTOFACTORY_H
+#endif // !_SOFTHSM_V2_BOTANRSAKEYPAIR_H
 

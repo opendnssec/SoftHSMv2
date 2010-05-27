@@ -56,9 +56,12 @@ public:
 	// Seed the random pool
 	virtual void seed(ByteString& seedData);
 
+	// Get RNG
+	Botan::RandomNumberGenerator* getRNG();
+
 private:
 	// The RNG
-	Botan::RandomNumberGenerator *rng;
+	Botan::RandomNumberGenerator* rng;
 };
 
 #endif // !_SOFTHSM_V2_BOTANRNG_H

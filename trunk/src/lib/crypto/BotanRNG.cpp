@@ -35,18 +35,17 @@
 #include "config.h"
 #include "BotanRNG.h"
 
-#include <botan/auto_rng.h>
+#include <botan/libstate.h>
 
 // Base constructor
 BotanRNG::BotanRNG()
 {
-	rng = new Botan::AutoSeeded_RNG();
+	rng = &Botan::global_state().global_rng();
 }
 
 // Destructor
 BotanRNG::~BotanRNG()
 {
-	delete rng;
 }
 
 // Generate random data
@@ -64,4 +63,10 @@ void BotanRNG::seed(ByteString& seedData)
 {
 	rng->add_entropy(seedData.byte_str(), seedData.size());
 	rng->reseed(seedData.size());
+}
+
+// Get the RNG
+Botan::RandomNumberGenerator* BotanRNG::getRNG()
+{
+	return rng;
 }

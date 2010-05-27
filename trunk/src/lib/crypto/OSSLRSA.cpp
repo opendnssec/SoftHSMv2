@@ -1,6 +1,9 @@
 /* $Id$ */
 
 /*
+ * Copyright (c) 2010 SURFnet bv
+ * All rights reserved.
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -188,6 +191,9 @@ bool OSSLRSA::signInit(PrivateKey* privateKey, const std::string mechanism)
 	if (!privateKey->isOfType(OSSLRSAPrivateKey::type))
 	{
 		ERROR_MSG("Invalid key type supplied");
+
+		ByteString dummy;
+		AsymmetricAlgorithm::signFinal(dummy);
 
 		return false;
 	}
@@ -484,6 +490,9 @@ bool OSSLRSA::verifyInit(PublicKey* publicKey, const std::string mechanism)
 	if (!publicKey->isOfType(OSSLRSAPublicKey::type))
 	{
 		ERROR_MSG("Invalid key type supplied");
+
+		ByteString dummy;
+		AsymmetricAlgorithm::verifyFinal(dummy);
 
 		return false;
 	}

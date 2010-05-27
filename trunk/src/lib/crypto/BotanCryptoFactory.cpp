@@ -37,8 +37,9 @@
 #include "BotanCryptoFactory.h"
 #include "BotanAES.h"
 #include "BotanDES.h"
-#include "BotanRNG.h"
 #include "BotanMD5.h"
+#include "BotanRNG.h"
+#include "BotanRSA.h"
 #include "BotanSHA1.h"
 #include "BotanSHA256.h"
 #include "BotanSHA512.h"
@@ -53,6 +54,9 @@ BotanCryptoFactory::BotanCryptoFactory()
 {
 	// Init the Botan crypto library
 	Botan::LibraryInitializer::initialize("thread_safe=true");
+
+	// Initialise the one-and-only RNG
+	rng = new BotanRNG();
 }
 
 // Destructor
@@ -60,6 +64,9 @@ BotanCryptoFactory::~BotanCryptoFactory()
 {
 	// Deinitialize the Botan crypto lib
 	Botan::LibraryInitializer::deinitialize();
+
+	// Destroy the one-and-only RNG
+	delete rng;
 }
 
 // Return the one-and-only instance
@@ -103,7 +110,25 @@ SymmetricAlgorithm* BotanCryptoFactory::getSymmetricAlgorithm(std::string algori
 // Create a concrete instance of an asymmetric algorithm
 AsymmetricAlgorithm* BotanCryptoFactory::getAsymmetricAlgorithm(std::string algorithm)
 {
-	// TODO: add algorithm implementations
+	std::string lcAlgo;
+	lcAlgo.resize(algorithm.size());
+	std::transform(algorithm.begin(), algorithm.end(), lcAlgo.begin(), tolower);
+
+	if (!lcAlgo.compare("rsa"))
+	{
+		return new BotanRSA();
+	}
+/*	else if (!lcAlgo.compare("dsa"))
+	{
+		return new BotanDSA();
+	}*/
+	else
+	{
+		// No algorithm implementation is available
+		ERROR_MSG("Unknown algorithm '%s'", algorithm.c_str());
+
+		return NULL;
+	}
 
 	// No algorithm implementation is available
 	return NULL;
@@ -153,7 +178,7 @@ RNG* BotanCryptoFactory::getRNG(std::string name /* = "default" */)
 
 	if (!lcAlgo.compare("default"))
 	{
-		return new BotanRNG();
+		return rng;
 	}
 	else
 	{
@@ -162,4 +187,9 @@ RNG* BotanCryptoFactory::getRNG(std::string name /* = "default" */)
 
 		return NULL;
 	}
+}
+
+void BotanCryptoFactory::recycleRNG(RNG* toRecycle)
+{
+	// Do nothing; we keep the one-and-only instance
 }

@@ -1,7 +1,6 @@
 /* $Id$ */
 
 /*
- * Copyright (c) 2010 SURFnet bv
  * Copyright (c) 2010 .SE (The Internet Infrastructure Foundation)
  * All rights reserved.
  *
@@ -28,54 +27,58 @@
  */
 
 /*****************************************************************************
- BotanCryptoFactory.h
+ BotanRSAPrivateKey.h
 
- This is a Botan based cryptographic algorithm factory
+ Botan RSA private key class
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_BOTANCRYPTOFACTORY_H
-#define _SOFTHSM_V2_BOTANCRYPTOFACTORY_H
+#ifndef _SOFTHSM_V2_BOTANRSAPRIVATEKEY_H
+#define _SOFTHSM_V2_BOTANRSAPRIVATEKEY_H
 
 #include "config.h"
-#include "CryptoFactory.h"
-#include "SymmetricAlgorithm.h"
-#include "AsymmetricAlgorithm.h"
-#include "HashAlgorithm.h"
-#include "RNG.h"
+#include "RSAPrivateKey.h"
+#include <botan/rsa.h>
 
-class BotanCryptoFactory : public CryptoFactory
+class BotanRSAPrivateKey : public RSAPrivateKey
 {
 public:
-	// Return the one-and-only instance
-	static BotanCryptoFactory* i();
-
-	// Create a concrete instance of a symmetric algorithm
-	SymmetricAlgorithm* getSymmetricAlgorithm(std::string algorithm);
-
-	// Create a concrete instance of an asymmetric algorithm
-	AsymmetricAlgorithm* getAsymmetricAlgorithm(std::string algorithm);
-
-	// Create a concrete instance of a hash algorithm
-	HashAlgorithm* getHashAlgorithm(std::string algorithm);
-
-	// Create a concrete instance of an RNG
-	RNG* getRNG(std::string name = "default");
-
+	// Constructors
+	BotanRSAPrivateKey();
+	
+	BotanRSAPrivateKey(const Botan::RSA_PrivateKey* inRSA);
+	
 	// Destructor
-	~BotanCryptoFactory();
+	virtual ~BotanRSAPrivateKey();
 
-	void recycleRNG(RNG* toRecycle);
+	// The type
+	static const char* type;
 
+	// Check if the key is of the given type
+	virtual bool isOfType(const char* type);
+
+	// Setters for the RSA private key components
+	virtual void setP(const ByteString& p);
+	virtual void setQ(const ByteString& q);
+	virtual void setPQ(const ByteString& pq);
+	virtual void setDP1(const ByteString& dp1);
+	virtual void setDQ1(const ByteString& dq1);
+	virtual void setD(const ByteString& d);
+
+	// Setters for the RSA public key components
+	virtual void setN(const ByteString& n);
+	virtual void setE(const ByteString& e);
+
+	// Set from Botan representation
+	virtual void setFromBotan(const Botan::RSA_PrivateKey* rsa);
+
+	// Retrieve the Botan representation of the key
+	Botan::RSA_PrivateKey* getBotanKey();
 private:
-	// Constructor
-	BotanCryptoFactory();
+	// The internal Botan representation
+	Botan::RSA_PrivateKey* rsa;
 
-	// The one-and-only instance
-	static BotanCryptoFactory* instance;
-
-	// The one-and-only RNG instance
-	RNG* rng;
+	void createBotanKey();
 };
 
-#endif // !_SOFTHSM_V2_BOTANCRYPTOFACTORY_H
+#endif // !_SOFTHSM_V2_OSSLRSAPRIVATEKEY_H
 

@@ -1,7 +1,6 @@
 /* $Id$ */
 
 /*
- * Copyright (c) 2010 SURFnet bv
  * Copyright (c) 2010 .SE (The Internet Infrastructure Foundation)
  * All rights reserved.
  *
@@ -28,54 +27,46 @@
  */
 
 /*****************************************************************************
- BotanCryptoFactory.h
+ BotanRSAKeyPair.cpp
 
- This is a Botan based cryptographic algorithm factory
+ Botan RSA key-pair class
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_BOTANCRYPTOFACTORY_H
-#define _SOFTHSM_V2_BOTANCRYPTOFACTORY_H
-
 #include "config.h"
-#include "CryptoFactory.h"
-#include "SymmetricAlgorithm.h"
-#include "AsymmetricAlgorithm.h"
-#include "HashAlgorithm.h"
-#include "RNG.h"
+#include "log.h"
+#include "BotanRSAKeyPair.h"
 
-class BotanCryptoFactory : public CryptoFactory
+// Set the public key
+void BotanRSAKeyPair::setPublicKey(BotanRSAPublicKey& publicKey)
 {
-public:
-	// Return the one-and-only instance
-	static BotanCryptoFactory* i();
+	pubKey = publicKey;
+}
 
-	// Create a concrete instance of a symmetric algorithm
-	SymmetricAlgorithm* getSymmetricAlgorithm(std::string algorithm);
+// Set the private key
+void BotanRSAKeyPair::setPrivateKey(BotanRSAPrivateKey& privateKey)
+{
+	privKey = privateKey;
+}
 
-	// Create a concrete instance of an asymmetric algorithm
-	AsymmetricAlgorithm* getAsymmetricAlgorithm(std::string algorithm);
+// Return the public key
+PublicKey* BotanRSAKeyPair::getPublicKey()
+{
+	return &pubKey;
+}
 
-	// Create a concrete instance of a hash algorithm
-	HashAlgorithm* getHashAlgorithm(std::string algorithm);
+const PublicKey* BotanRSAKeyPair::getConstPublicKey() const
+{
+	return &pubKey;
+}
 
-	// Create a concrete instance of an RNG
-	RNG* getRNG(std::string name = "default");
+// Return the private key
+PrivateKey* BotanRSAKeyPair::getPrivateKey()
+{
+	return &privKey;
+}
 
-	// Destructor
-	~BotanCryptoFactory();
-
-	void recycleRNG(RNG* toRecycle);
-
-private:
-	// Constructor
-	BotanCryptoFactory();
-
-	// The one-and-only instance
-	static BotanCryptoFactory* instance;
-
-	// The one-and-only RNG instance
-	RNG* rng;
-};
-
-#endif // !_SOFTHSM_V2_BOTANCRYPTOFACTORY_H
+const PrivateKey* BotanRSAKeyPair::getConstPrivateKey() const
+{
+	return &privKey;
+}
 
