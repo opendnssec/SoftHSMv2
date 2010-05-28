@@ -72,6 +72,9 @@ bool OSSLDSA::signInit(PrivateKey* privateKey, const std::string mechanism)
 	{
 		ERROR_MSG("Invalid key type supplied");
 
+		ByteString dummy;
+		AsymmetricAlgorithm::signFinal(dummy);
+
 		return false;
 	}
 
@@ -89,30 +92,6 @@ bool OSSLDSA::signInit(PrivateKey* privateKey, const std::string mechanism)
 			pCurrentHash = NULL;
 		}
 	}
-#ifdef DSA_SHA256_SUPPORT
-	else if (!lowerMechanism.compare("dsa-sha256"))
-	{
-		pCurrentHash = CryptoFactory::i()->getHashAlgorithm("sha256");
-
-		if (!pCurrentHash->hashInit())
-		{
-			delete pCurrentHash;
-			pCurrentHash = NULL;
-		}
-	}
-#endif // DSA_SHA256_SUPPORT
-#ifdef DSA_SHA512_SUPPORT
-	else if (!lowerMechanism.compare("dsa-sha512"))
-	{
-		pCurrentHash = CryptoFactory::i()->getHashAlgorithm("sha512");
-
-		if (!pCurrentHash->hashInit())
-		{
-			delete pCurrentHash;
-			pCurrentHash = NULL;
-		}
-	}
-#endif // DSA_SHA512_SUPPORT
 
 	if (pCurrentHash == NULL)
 	{
@@ -200,6 +179,9 @@ bool OSSLDSA::verifyInit(PublicKey* publicKey, const std::string mechanism)
 	{
 		ERROR_MSG("Invalid key type supplied");
 
+		ByteString dummy;
+		AsymmetricAlgorithm::verifyFinal(dummy);
+
 		return false;
 	}
 
@@ -217,31 +199,7 @@ bool OSSLDSA::verifyInit(PublicKey* publicKey, const std::string mechanism)
 			pCurrentHash = NULL;
 		}
 	}
-#ifdef DSA_SHA256_SUPPORT
-	else if (!lowerMechanism.compare("dsa-sha256"))
-	{
-		pCurrentHash = CryptoFactory::i()->getHashAlgorithm("sha256");
 
-		if (!pCurrentHash->hashInit())
-		{
-			delete pCurrentHash;
-			pCurrentHash = NULL;
-		}
-	}
-#endif // DSA_SHA256_SUPPORT
-#ifdef DSA_SHA512_SUPPORT
-	else if (!lowerMechanism.compare("dsa-sha512"))
-	{
-		pCurrentHash = CryptoFactory::i()->getHashAlgorithm("sha512");
-
-		if (!pCurrentHash->hashInit())
-		{
-			delete pCurrentHash;
-			pCurrentHash = NULL;
-		}
-	}
-#endif // DSA_SHA512_SUPPORT
-	
 	if (pCurrentHash == NULL)
 	{
 		ByteString dummy;

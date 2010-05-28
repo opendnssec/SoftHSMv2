@@ -194,11 +194,10 @@ Botan::RSA_PrivateKey* BotanRSAPrivateKey::getBotanKey()
 // Create the Botan representation of the key
 void BotanRSAPrivateKey::createBotanKey()
 {
+	// d and n is not needed, they can be calculated
 	if (this->p.size() != 0 &&
 	    this->q.size() != 0 &&
-	    this->e.size() != 0 &&
-	    this->d.size() != 0 &&
-	    this->n.size() != 0)
+	    this->e.size() != 0)
 	{
 		if (rsa)
 		{

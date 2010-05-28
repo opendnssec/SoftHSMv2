@@ -72,10 +72,9 @@ void DSATests::testKeyGeneration()
 
 	// Key sizes to test
 	std::vector<size_t> keySizes;
+	keySizes.push_back(512);
+	keySizes.push_back(768);
 	keySizes.push_back(1024);
-	keySizes.push_back(1280);
-	keySizes.push_back(2048);
-	//keySizes.push_back(3072);
 
 	for (std::vector<size_t>::iterator k = keySizes.begin(); k != keySizes.end(); k++)
 	{
@@ -160,20 +159,13 @@ void DSATests::testSigningVerifying()
 
 	// Key sizes to test
 	std::vector<size_t> keySizes;
+	keySizes.push_back(512);
+	keySizes.push_back(768);
 	keySizes.push_back(1024);
-	keySizes.push_back(1280);
-	keySizes.push_back(2048);
-	//keySizes.push_back(3072);
 
 	// Mechanisms to test
 	std::vector<const char*> mechanisms;
 	mechanisms.push_back("dsa-sha1");
-#ifdef DSA_SHA256_SUPPORT
-	mechanisms.push_back("dsa-sha256");
-#endif // DSA_SHA256_SUPPORT
-#ifdef DSA_SHA512_SUPPORT
-	mechanisms.push_back("dsa-sha512");
-#endif // DSA_SHA512_SUPPORT
 
 	for (std::vector<size_t>::iterator k = keySizes.begin(); k != keySizes.end(); k++)
 	{

@@ -250,9 +250,6 @@ bool BotanRSA::signUpdate(const ByteString& dataToSign)
 
 bool BotanRSA::signFinal(ByteString& signature)
 {
-	// Save necessary state before calling super class signFinal
-	BotanRSAPrivateKey* pk = (BotanRSAPrivateKey*) currentPrivateKey;
-
 	if (!AsymmetricAlgorithm::signFinal(signature))
 	{
 		return false;
@@ -467,14 +464,12 @@ bool BotanRSA::verifyUpdate(const ByteString& originalData)
 
 		return false;
 	}
+
 	return true;
 }
 
 bool BotanRSA::verifyFinal(const ByteString& signature)
 {
-	// Save necessary state before calling super class verifyFinal
-	BotanRSAPublicKey* pk = (BotanRSAPublicKey*) currentPublicKey;
-
 	if (!AsymmetricAlgorithm::verifyFinal(signature))
 	{
 		return false;
