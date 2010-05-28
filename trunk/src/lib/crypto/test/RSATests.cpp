@@ -372,11 +372,13 @@ void RSATests::testSignVerifyKnownVector()
 	CPPUNIT_ASSERT(rsa->signUpdate(dataToSign1));
 	CPPUNIT_ASSERT(rsa->signFinal(signature1_1));
 
+#ifndef WITH_BOTAN
 	CPPUNIT_ASSERT(rsa->signInit(privKey1_2, "rsa-sha1-pkcs"));
 	CPPUNIT_ASSERT(rsa->signUpdate(dataToSign1));
 	CPPUNIT_ASSERT(rsa->signFinal(signature1_2));
 
 	CPPUNIT_ASSERT(signature1_1 == signature1_2);
+#endif
 	CPPUNIT_ASSERT(signature1_1 == expectedSignature1);
 
 	CPPUNIT_ASSERT(rsa->verifyInit(pubKey1, "rsa-sha1-pkcs"));
@@ -396,11 +398,13 @@ void RSATests::testSignVerifyKnownVector()
 	CPPUNIT_ASSERT(rsa->signUpdate(dataToSign2));
 	CPPUNIT_ASSERT(rsa->signFinal(signature2_1));
 
+#ifndef WITH_BOTAN
 	CPPUNIT_ASSERT(rsa->signInit(privKey2_2, "rsa-sha1-pkcs"));
 	CPPUNIT_ASSERT(rsa->signUpdate(dataToSign2));
 	CPPUNIT_ASSERT(rsa->signFinal(signature2_2));
 
 	CPPUNIT_ASSERT(signature2_1 == signature2_2);
+#endif
 	CPPUNIT_ASSERT(signature2_1 == expectedSignature2);
 
 	CPPUNIT_ASSERT(rsa->verifyInit(pubKey2, "rsa-sha1-pkcs"));
