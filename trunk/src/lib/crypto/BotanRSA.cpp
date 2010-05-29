@@ -652,8 +652,19 @@ bool BotanRSA::decrypt(PrivateKey* privateKey, const ByteString& encryptedData, 
 	}
 
 	// Return the result
-	data.resize(decResult.size());
-	memcpy(&data[0], decResult.begin(), decResult.size());
+	if (!eme.compare("Raw"))
+	{
+		// We compensate that Botan removes leading zeros
+		int modSize = pk->getN().size();
+		int decSize = decResult.size();
+		data.resize(modSize);
+		memcpy(&data[0] + modSize - decSize, decResult.begin(), decSize);
+	}
+	else
+	{
+		data.resize(decResult.size());
+		memcpy(&data[0], decResult.begin(), decResult.size());
+	}
 
 	delete decryptor;
 
