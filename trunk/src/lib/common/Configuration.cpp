@@ -48,7 +48,7 @@ Configuration* Configuration::i()
 		instance = new Configuration();
 	}
 	
-	return NULL;
+	return instance;
 }
 
 // Constructor
