@@ -66,6 +66,9 @@ OSSLCryptoFactory::~OSSLCryptoFactory()
 {
 	// Destroy the one-and-only RNG
 	delete rng;
+
+	// Clean up OpenSSL
+	EVP_cleanup();
 }
 
 // Return the one-and-only instance
