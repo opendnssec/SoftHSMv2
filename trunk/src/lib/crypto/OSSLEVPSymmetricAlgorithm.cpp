@@ -116,6 +116,7 @@ bool OSSLEVPSymmetricAlgorithm::encryptInit(const SymmetricKey* key, const std::
 	{
 		ERROR_MSG("Failed to initialise EVP encrypt operation");
 
+		EVP_CIPHER_CTX_cleanup(pCurCTX);
 		sfree(pCurCTX);
 		pCurCTX = NULL;
 
@@ -134,6 +135,7 @@ bool OSSLEVPSymmetricAlgorithm::encryptUpdate(const ByteString& data, ByteString
 	{
 		if (pCurCTX != NULL)
 		{
+			EVP_CIPHER_CTX_cleanup(pCurCTX);
 			sfree(pCurCTX);
 			pCurCTX = NULL;
 		}
@@ -149,6 +151,7 @@ bool OSSLEVPSymmetricAlgorithm::encryptUpdate(const ByteString& data, ByteString
 	{
 		ERROR_MSG("EVP_EncryptUpdate failed");
 
+		EVP_CIPHER_CTX_cleanup(pCurCTX);
 		sfree(pCurCTX);
 		pCurCTX = NULL;
 
@@ -170,6 +173,7 @@ bool OSSLEVPSymmetricAlgorithm::encryptFinal(ByteString& encryptedData)
 	{
 		if (pCurCTX != NULL)
 		{
+			EVP_CIPHER_CTX_cleanup(pCurCTX);
 			sfree(pCurCTX);
 			pCurCTX = NULL;
 		}
@@ -186,6 +190,7 @@ bool OSSLEVPSymmetricAlgorithm::encryptFinal(ByteString& encryptedData)
 	{
 		ERROR_MSG("EVP_EncryptFinal failed");
 
+		EVP_CIPHER_CTX_cleanup(pCurCTX);
 		sfree(pCurCTX);
 		pCurCTX = NULL;
 
@@ -195,6 +200,7 @@ bool OSSLEVPSymmetricAlgorithm::encryptFinal(ByteString& encryptedData)
 	// Resize the output block
 	encryptedData.resize(outLen);
 
+	EVP_CIPHER_CTX_cleanup(pCurCTX);
 	sfree(pCurCTX);
 	pCurCTX = NULL;
 
@@ -264,6 +270,7 @@ bool OSSLEVPSymmetricAlgorithm::decryptInit(const SymmetricKey* key, const std::
 	{
 		ERROR_MSG("Failed to initialise EVP decrypt operation");
 
+		EVP_CIPHER_CTX_cleanup(pCurCTX);
 		sfree(pCurCTX);
 		pCurCTX = NULL;
 
@@ -282,6 +289,7 @@ bool OSSLEVPSymmetricAlgorithm::decryptUpdate(const ByteString& encryptedData, B
 	{
 		if (pCurCTX != NULL)
 		{
+			EVP_CIPHER_CTX_cleanup(pCurCTX);
 			sfree(pCurCTX);
 			pCurCTX = NULL;
 		}
@@ -300,6 +308,7 @@ bool OSSLEVPSymmetricAlgorithm::decryptUpdate(const ByteString& encryptedData, B
 	{
 		ERROR_MSG("EVP_DecryptUpdate failed");
 
+		EVP_CIPHER_CTX_cleanup(pCurCTX);
 		sfree(pCurCTX);
 		pCurCTX = NULL;
 
@@ -323,6 +332,7 @@ bool OSSLEVPSymmetricAlgorithm::decryptFinal(ByteString& data)
 	{
 		if (pCurCTX != NULL)
 		{
+			EVP_CIPHER_CTX_cleanup(pCurCTX);
 			sfree(pCurCTX);
 			pCurCTX = NULL;
 		}
@@ -340,6 +350,7 @@ bool OSSLEVPSymmetricAlgorithm::decryptFinal(ByteString& data)
 	{
 		ERROR_MSG("EVP_DecryptFinal failed (0x%08X)", rv);
 
+		EVP_CIPHER_CTX_cleanup(pCurCTX);
 		sfree(pCurCTX);
 		pCurCTX = NULL;
 
@@ -349,6 +360,7 @@ bool OSSLEVPSymmetricAlgorithm::decryptFinal(ByteString& data)
 	// Resize the output block
 	data.resize(outLen);
 
+	EVP_CIPHER_CTX_cleanup(pCurCTX);
 	sfree(pCurCTX);
 	pCurCTX = NULL;
 
