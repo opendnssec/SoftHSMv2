@@ -40,16 +40,16 @@
 #include "SecureMemoryRegistry.h"
 
 // Initialise the one-and-only instance
-SecureMemoryRegistry* SecureMemoryRegistry::instance = NULL;
+std::auto_ptr<SecureMemoryRegistry> SecureMemoryRegistry::instance;
 
 // Return the one-and-only instance
 SecureMemoryRegistry* SecureMemoryRegistry::i()
 {
-	if (instance == NULL)
+	if (!instance.get())
 	{
-		instance = new SecureMemoryRegistry();
+		instance = std::auto_ptr<SecureMemoryRegistry>(new SecureMemoryRegistry());
 
-		if (instance == NULL)
+		if (!instance.get())
 		{
 			// This is very bad!
 			ERROR_MSG("Fatal: failed to instantiate SecureMemoryRegistry");
@@ -58,7 +58,7 @@ SecureMemoryRegistry* SecureMemoryRegistry::i()
 		}
 	}
 
-	return instance;
+	return instance.get();
 }
 
 // Register a block of memory

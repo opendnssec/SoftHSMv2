@@ -49,7 +49,7 @@
 #include <openssl/ssl.h>
 
 // Initialise the one-and-only instance
-OSSLCryptoFactory* OSSLCryptoFactory::instance = NULL;
+std::auto_ptr<OSSLCryptoFactory> OSSLCryptoFactory::instance;
 
 // Constructor
 OSSLCryptoFactory::OSSLCryptoFactory()
@@ -71,12 +71,12 @@ OSSLCryptoFactory::~OSSLCryptoFactory()
 // Return the one-and-only instance
 OSSLCryptoFactory* OSSLCryptoFactory::i()
 {
-	if (instance == NULL)
+	if (!instance.get())
 	{
-		instance = new OSSLCryptoFactory();
+		instance = std::auto_ptr<OSSLCryptoFactory>(new OSSLCryptoFactory());
 	}
 
-	return instance;
+	return instance.get();
 }
 
 // Create a concrete instance of a symmetric algorithm

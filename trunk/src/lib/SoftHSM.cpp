@@ -45,17 +45,17 @@
  *****************************************************************************/
 
 // Initialise the one-and-only instance
-SoftHSM* SoftHSM::instance = NULL;
+std::auto_ptr<SoftHSM> SoftHSM::instance;
 
 // Return the one-and-only instance
 SoftHSM* SoftHSM::i()
 {
-	if (instance == NULL)
+	if (!instance.get())
 	{
-		instance = new SoftHSM();
+		instance = std::auto_ptr<SoftHSM>(new SoftHSM());
 	}
 
-	return instance;
+	return instance.get();
 }
 
 // Constructor

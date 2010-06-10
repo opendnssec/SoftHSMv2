@@ -48,7 +48,7 @@
 #include <botan/init.h>
 
 // Initialise the one-and-only instance
-BotanCryptoFactory* BotanCryptoFactory::instance = NULL;
+std::auto_ptr<BotanCryptoFactory> BotanCryptoFactory::instance;
 
 // Constructor
 BotanCryptoFactory::BotanCryptoFactory()
@@ -73,12 +73,12 @@ BotanCryptoFactory::~BotanCryptoFactory()
 // Return the one-and-only instance
 BotanCryptoFactory* BotanCryptoFactory::i()
 {
-	if (instance == NULL)
+	if (!instance.get())
 	{
-		instance = new BotanCryptoFactory();
+		instance = std::auto_ptr<BotanCryptoFactory>(new BotanCryptoFactory());
 	}
 
-	return instance;
+	return instance.get();
 }
 
 // Create a concrete instance of a symmetric algorithm

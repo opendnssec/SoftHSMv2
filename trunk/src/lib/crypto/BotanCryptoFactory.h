@@ -42,6 +42,7 @@
 #include "AsymmetricAlgorithm.h"
 #include "HashAlgorithm.h"
 #include "RNG.h"
+#include <memory>
 
 class BotanCryptoFactory : public CryptoFactory
 {
@@ -71,7 +72,7 @@ private:
 	BotanCryptoFactory();
 
 	// The one-and-only instance
-	static BotanCryptoFactory* instance;
+	static std::auto_ptr<BotanCryptoFactory> instance;
 
 	// The one-and-only RNG instance
 	RNG* rng;

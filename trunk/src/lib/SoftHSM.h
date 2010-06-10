@@ -37,6 +37,7 @@
 #include "config.h"
 #include "log.h"
 #include "cryptoki.h"
+#include <memory>
 
 class SoftHSM
 {
@@ -163,7 +164,7 @@ private:
 	SoftHSM();
 
 	// The one-and-only instance
-	static SoftHSM* instance;
+	static std::auto_ptr<SoftHSM> instance;
 
 	// Is the SoftHSM PKCS #11 library initialised?
 	bool isInitialised;

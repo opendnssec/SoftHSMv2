@@ -39,6 +39,7 @@
 
 #include <stdlib.h>
 #include <map>
+#include <memory>
 
 class SecureMemoryRegistry
 {
@@ -54,7 +55,7 @@ public:
 	virtual ~SecureMemoryRegistry() { }
 
 private:
-	static SecureMemoryRegistry* instance;
+	static std::auto_ptr<SecureMemoryRegistry> instance;
 
 	std::map<void*, size_t> registry;
 };

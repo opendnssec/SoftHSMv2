@@ -41,6 +41,7 @@
 #include "AsymmetricAlgorithm.h"
 #include "HashAlgorithm.h"
 #include "RNG.h"
+#include <memory>
 
 class OSSLCryptoFactory : public CryptoFactory
 {
@@ -72,7 +73,7 @@ private:
 	OSSLCryptoFactory();
 
 	// The one-and-only instance
-	static OSSLCryptoFactory* instance;
+	static std::auto_ptr<OSSLCryptoFactory> instance;
 
 	// The one-and-only RNG instance
 	RNG* rng;
