@@ -69,6 +69,7 @@ OSSLCryptoFactory::~OSSLCryptoFactory()
 
 	// Clean up OpenSSL
 	EVP_cleanup();
+	CRYPTO_cleanup_all_ex_data();
 }
 
 // Return the one-and-only instance
