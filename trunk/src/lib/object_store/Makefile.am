@@ -4,6 +4,7 @@ MAINTAINERCLEANFILES = 			$(srcdir)/Makefile.in
 
 AM_CPPFLAGS =				-I$(srcdir)/../cryptoki_compat \
 					-I$(srcdir)/../crypto \
+					-I$(srcdir)/../data_mgr \
 					-I$(srcdir)/../common
 
 noinst_LTLIBRARIES =			libsofthsm_objectstore.la
