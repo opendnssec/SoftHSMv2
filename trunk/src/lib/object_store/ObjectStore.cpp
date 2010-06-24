@@ -49,7 +49,7 @@ ObjectStore::ObjectStore(std::string storePath)
 ObjectStore::~ObjectStore()
 {
 	// Clean up
-	for (std::vector<Object*>::iterator i = objects.begin(); i != objects.end(); i++)
+	for (std::vector<Token*>::iterator i = tokens.begin(); i != tokens.end(); i++)
 	{
 		delete *i;
 	}
@@ -58,18 +58,18 @@ ObjectStore::~ObjectStore()
 // Return the number of tokens that is present
 size_t ObjectStore::getTokenCount()
 {
-	return objects.size();
+	return tokens.size();
 }
 
 // Return a pointer to the n-th token (counting starts at 0)
 Token* ObjectStore::getToken(size_t whichToken)
 {
-	if (whichToken >= objects.size())
+	if (whichToken >= tokens.size())
 	{
 		return NULL;
 	}
 
-	return objects[whichToken];
+	return tokens[whichToken];
 }
 
 // Create a new token

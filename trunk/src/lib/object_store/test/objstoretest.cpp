@@ -1,9 +1,9 @@
-/* $Id$ */
+/* $Id$
 
 /*
  * Copyright (c) 2010 SURFnet bv
  * All rights reserved.
- *
+ * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -12,7 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- *
+ * 
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -27,48 +27,22 @@
  */
 
 /*****************************************************************************
- ObjectStore.h
+ objstoretest.cpp
 
- The object store manages the separate tokens that the SoftHSM supports. Each
- token is organised as a directory containing files that are contain the
- token's objects. The object store is initialised with a root directory from
- which it enumerates the tokens.
+ The main test executor for tests on the object store in SoftHSM v2
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_OBJECTSTORE_H
-#define _SOFTHSM_V2_OBJECTSTORE_H
+#include <cppunit/extensions/TestFactoryRegistry.h>
+#include <cppunit/ui/text/TestRunner.h>
 
-#include "config.h"
-#include "ByteString.h"
-#include "Token.h"
-#include <string>
-#include <vector>
-
-class ObjectStore
+int main(int argc, char* argv[])
 {
-public:
-	// Constructor
-	ObjectStore(std::string storePath);
+	CppUnit::TextUi::TestRunner runner;
+	CppUnit::TestFactoryRegistry &registry = CppUnit::TestFactoryRegistry::getRegistry();
 
-	// Destructor
-	virtual ~ObjectStore();
+	runner.addTest(registry.makeTest());
+	runner.run();
 
-	// Return the number of tokens that is present
-	size_t getTokenCount();
-
-	// Return a pointer to the n-th token (counting starts at 0)
-	Token* getToken(size_t whichToken);
-
-	// Create a new token
-	Token* newToken(const ByteString& soPIN, std::string label);
-
-private:
-	// The tokens
-	std::vector<Token*> tokens;
-
-	// The object store root directory
-	std::string storePath;
-};
-
-#endif // !_SOFTHSM_V2_OBJECTSTORE_H
+	return 0;
+}
 

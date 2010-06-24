@@ -8,6 +8,10 @@ AM_CPPFLAGS =				-I$(srcdir)/../cryptoki_compat \
 					-I$(srcdir)/../common
 
 noinst_LTLIBRARIES =			libsofthsm_objectstore.la
-libsofthsm_objectstore_la_SOURCES =	# No source yet
+libsofthsm_objectstore_la_SOURCES =	ObjectStore.cpp \
+					UUID.cpp \
+					Directory.cpp
+
+SUBDIRS = 				test
 
 EXTRA_DIST =				$(srcdir)/*.h

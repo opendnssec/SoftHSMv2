@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id$
 
 /*
  * Copyright (c) 2010 SURFnet bv
@@ -27,48 +27,37 @@
  */
 
 /*****************************************************************************
- ObjectStore.h
+ UUIDTests.cpp
 
- The object store manages the separate tokens that the SoftHSM supports. Each
- token is organised as a directory containing files that are contain the
- token's objects. The object store is initialised with a root directory from
- which it enumerates the tokens.
+ Contains test cases to test the UUID implementation
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_OBJECTSTORE_H
-#define _SOFTHSM_V2_OBJECTSTORE_H
+#include <stdlib.h>
+#include <string.h>
+#include <cppunit/extensions/HelperMacros.h>
+#include "UUIDTests.h"
+#include "UUID.h"
 
-#include "config.h"
-#include "ByteString.h"
-#include "Token.h"
-#include <string>
-#include <vector>
+CPPUNIT_TEST_SUITE_REGISTRATION(UUIDTests);
 
-class ObjectStore
+void UUIDTests::setUp()
 {
-public:
-	// Constructor
-	ObjectStore(std::string storePath);
+}
 
-	// Destructor
-	virtual ~ObjectStore();
+void UUIDTests::tearDown()
+{
+}
 
-	// Return the number of tokens that is present
-	size_t getTokenCount();
+void UUIDTests::testUUID()
+{
+	std::string uuid1 = UUID::newUUID();
+	std::string uuid2 = UUID::newUUID();
+	std::string uuid3 = UUID::newUUID();
 
-	// Return a pointer to the n-th token (counting starts at 0)
-	Token* getToken(size_t whichToken);
+	CPPUNIT_ASSERT((uuid1.size() == 36) && (uuid2.size() == 36) && (uuid3.size() == 36));
 
-	// Create a new token
-	Token* newToken(const ByteString& soPIN, std::string label);
-
-private:
-	// The tokens
-	std::vector<Token*> tokens;
-
-	// The object store root directory
-	std::string storePath;
-};
-
-#endif // !_SOFTHSM_V2_OBJECTSTORE_H
+	CPPUNIT_ASSERT(uuid1.compare(uuid2));
+	CPPUNIT_ASSERT(uuid1.compare(uuid3));
+	CPPUNIT_ASSERT(uuid2.compare(uuid3));
+}
 

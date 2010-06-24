@@ -39,7 +39,6 @@
 #define _SOFTHSM_V2_TOKEN_H
 
 #include "config.h"
-#include "Token.h"
 #include <string>
 
 class Token

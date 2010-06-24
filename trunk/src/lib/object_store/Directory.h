@@ -27,48 +27,58 @@
  */
 
 /*****************************************************************************
- ObjectStore.h
+ Directory.h
 
- The object store manages the separate tokens that the SoftHSM supports. Each
- token is organised as a directory containing files that are contain the
- token's objects. The object store is initialised with a root directory from
- which it enumerates the tokens.
+ Helper functions for accessing directories.
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_OBJECTSTORE_H
-#define _SOFTHSM_V2_OBJECTSTORE_H
+#ifndef _SOFTHSM_V2_DIRECTORY_H
+#define _SOFTHSM_V2_DIRECTORY_H
 
 #include "config.h"
-#include "ByteString.h"
-#include "Token.h"
 #include <string>
 #include <vector>
 
-class ObjectStore
+class Directory
 {
 public:
 	// Constructor
-	ObjectStore(std::string storePath);
+	Directory(std::string path);
 
 	// Destructor
-	virtual ~ObjectStore();
+	virtual ~Directory() { }
 
-	// Return the number of tokens that is present
-	size_t getTokenCount();
+	// Check if the directory is valid
+	bool isValid();
 
-	// Return a pointer to the n-th token (counting starts at 0)
-	Token* getToken(size_t whichToken);
+	// Return a list of all files in a directory
+	std::vector<std::string> getFiles();
 
-	// Create a new token
-	Token* newToken(const ByteString& soPIN, std::string label);
+	// Return a list of all subdirectories in a directory
+	std::vector<std::string> getSubDirs();
+
+	// Refresh the directory listing
+	bool refresh();
+
+	// Create a new subdirectory
+	bool mkdir(std::string name);
+
+	// Delete a file or subdirectory in the directory
+	bool remove(std::string name);
 
 private:
-	// The tokens
-	std::vector<Token*> tokens;
+	// The directory path
+	std::string path;
 
-	// The object store root directory
-	std::string storePath;
+	// The status
+	bool valid;
+
+	// All files in the directory
+	std::vector<std::string> files;
+
+	// All subdirectories in the directory
+	std::vector<std::string> subDirs;
 };
 
-#endif // !_SOFTHSM_V2_OBJECTSTORE_H
+#endif // !_SOFTHSM_V2_DIRECTORY_H
 

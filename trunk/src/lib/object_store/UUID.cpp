@@ -36,34 +36,37 @@
 
 #include "config.h"
 #include "UUID.h"
+#include "CryptoFactory.h"
+#include "RNG.h"
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string>
-#include <uuid/uuid.h>
 
-// Generate a new GUID string
-std::string UUID::newGUID()
+// Generate a new UUID string
+std::string UUID::newUUID()
 {
-#ifdef HAVE_OSFDCE_UUID
-	uuid_t newUUID;
+	RNG* rng = CryptoFactory::i()->getRNG();
 
-	// Generate a new UUID
-	uuid_generate(newUUID);
+	ByteString uuid;
 
+	if (!rng->generateRandom(uuid, 16))
+	{
+		ERROR_MSG("Fatal, could not generate random UUID");
+
+		throw -1;
+	}
+	
 	// Convert it to a string
 	char uuidStr[37];
 
 	sprintf(uuidStr, "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x",
-		newUUID[0], newUUID[1], newUUID[2], newUUID[3], 
-		newUUID[4], newUUID[5], 
-		newUUID[6], newUUID[7],
-		newUUID[8], newUUID[9],
-		newUUID[10], newUUID[11], newUUID[12], newUUID[13], newUUID[14], newUUID[15]);
+		uuid[0], uuid[1], uuid[2], uuid[3], 
+		uuid[4], uuid[5], 
+		uuid[6], uuid[7],
+		uuid[8], uuid[9],
+		uuid[10], uuid[11], uuid[12], uuid[13], uuid[14], uuid[15]);
 
 	return std::string(uuidStr);
-#else
-	#error "There is no UUID generation code for your platform!"
-#endif
 }
 

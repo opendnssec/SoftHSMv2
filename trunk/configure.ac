@@ -92,6 +92,7 @@ AC_CONFIG_FILES([
 	src/lib/data_mgr/Makefile
 	src/lib/data_mgr/test/Makefile
 	src/lib/object_store/Makefile
+	src/lib/object_store/test/Makefile
 	src/lib/session_mgr/Makefile
 	src/lib/slot_mgr/Makefile
 	src/lib/user_mgr/Makefile

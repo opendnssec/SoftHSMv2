@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id$
 
 /*
  * Copyright (c) 2010 SURFnet bv
@@ -27,48 +27,30 @@
  */
 
 /*****************************************************************************
- ObjectStore.h
+ UUIDTests.h
 
- The object store manages the separate tokens that the SoftHSM supports. Each
- token is organised as a directory containing files that are contain the
- token's objects. The object store is initialised with a root directory from
- which it enumerates the tokens.
+ Contains test cases to test the UUID implementation
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_OBJECTSTORE_H
-#define _SOFTHSM_V2_OBJECTSTORE_H
+#ifndef _SOFTHSM_V2_UUIDTESTS_H
+#define _SOFTHSM_V2_UUIDTESTS_H
 
-#include "config.h"
-#include "ByteString.h"
-#include "Token.h"
-#include <string>
-#include <vector>
+#include <cppunit/extensions/HelperMacros.h>
 
-class ObjectStore
+class UUIDTests : public CppUnit::TestFixture
 {
+	CPPUNIT_TEST_SUITE(UUIDTests);
+	CPPUNIT_TEST(testUUID);
+	CPPUNIT_TEST_SUITE_END();
+
 public:
-	// Constructor
-	ObjectStore(std::string storePath);
+	void testUUID();
 
-	// Destructor
-	virtual ~ObjectStore();
-
-	// Return the number of tokens that is present
-	size_t getTokenCount();
-
-	// Return a pointer to the n-th token (counting starts at 0)
-	Token* getToken(size_t whichToken);
-
-	// Create a new token
-	Token* newToken(const ByteString& soPIN, std::string label);
+	void setUp();
+	void tearDown();
 
 private:
-	// The tokens
-	std::vector<Token*> tokens;
-
-	// The object store root directory
-	std::string storePath;
 };
 
-#endif // !_SOFTHSM_V2_OBJECTSTORE_H
+#endif // !_SOFTHSM_V2_UUIDTESTS_H
 
