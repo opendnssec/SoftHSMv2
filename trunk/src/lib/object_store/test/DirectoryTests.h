@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id$ */
 
 /*
  * Copyright (c) 2010 SURFnet bv

@@ -27,30 +27,26 @@
  */
 
 /*****************************************************************************
- UUIDTests.h
+ OSAttributes.h
 
- Contains test cases to test the UUID implementation
+ Specifies vendor defined attributes for use in internal object store files
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_UUIDTESTS_H
-#define _SOFTHSM_V2_UUIDTESTS_H
+#ifndef _SOFTHSM_V2_OSATTRIBUTES_H
+#define _SOFTHSM_V2_OSATTRIBUTES_H
 
-#include <cppunit/extensions/HelperMacros.h>
+#include "config.h"
+#include "cryptoki.h"
 
-class UUIDTests : public CppUnit::TestFixture
-{
-	CPPUNIT_TEST_SUITE(UUIDTests);
-	CPPUNIT_TEST(testUUID);
-	CPPUNIT_TEST_SUITE_END();
+// Define vendor tag; presumably the one below is reasonably unique
+#define CK_VENDOR_SOFTHSM	CKA_VENDOR_DEFINED + 0x5348 // 'SH'
 
-public:
-	void testUUID();
+// Vendor defined attribute types for the token file
+#define CKA_OS_TOKENLABEL	CKA_VENDOR_SOFTHSM + 1
+#define CKA_OS_TOKENSERIAL	CKA_VENDOR_SOFTHSM + 2
+#define CKA_OS_TOKENFLAGS	CKA_VENDOR_SOFTHSM + 3
+#define CKA_OS_SOPIN		CKA_VENDOR_SOFTHSM + 4
+#define CKA_OS_USERPIN		CKA_VENDOR_SOFTHSM + 5
 
-	void setUp();
-	void tearDown();
-
-private:
-};
-
-#endif // !_SOFTHSM_V2_UUIDTESTS_H
+#endif // !_SOFTHSM_V2_OSATTRIBUTES_H
 

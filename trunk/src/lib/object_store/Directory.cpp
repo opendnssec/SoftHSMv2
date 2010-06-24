@@ -34,6 +34,7 @@
 
 #include "config.h"
 #include "Directory.h"
+#include "OSPathSep.h"
 #include "log.h"
 #include <string>
 #include <vector>
@@ -42,9 +43,6 @@
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-
-// FIXME: find a better way to determine the path separator
-#define OS_PATHSEP "/"
 
 // Constructor
 Directory::Directory(std::string path)
