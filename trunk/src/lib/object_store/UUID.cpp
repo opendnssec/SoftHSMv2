@@ -29,9 +29,7 @@
 /*****************************************************************************
  UUID.cpp
 
- UUID generation helper functions; for now, this just wraps the OSF/DCE's
- UUID generation implementation, but if SoftHSM gets ported to non UNIX/BSD-
- like OSes this may incorporate other implementations
+ UUID generation helper functions
  *****************************************************************************/
 
 #include "config.h"
@@ -56,6 +54,8 @@ std::string UUID::newUUID()
 
 		throw -1;
 	}
+
+	CryptoFactory::i()->recycleRNG(rng);
 	
 	// Convert it to a string
 	char uuidStr[37];

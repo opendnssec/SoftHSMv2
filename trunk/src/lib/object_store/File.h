@@ -70,6 +70,9 @@ public:
 	// Read a string value; warning: not thread safe without locking!
 	bool readString(std::string& value);
 
+	// Read a boolean value; warning: not thread safe without locking!
+	bool readBool(bool& value);
+
 	// Write an unsigned long value; warning: not thread safe without locking!
 	bool writeULong(const unsigned long value);
 
@@ -79,6 +82,9 @@ public:
 	// Write a string value; warning: not thread safe without locking!
 	bool writeString(const std::string& value);
 
+	// Write a boolean value; warning: not thread safe without locking!
+	bool writeBool(const bool value);
+
 	// Rewind the file
 	bool rewind();
 
@@ -87,10 +93,13 @@ public:
 	bool seek(long offset = -1);
 
 	// Lock the file
-	bool lock();
+	bool lock(bool block = true);
 
 	// Unlock the file
 	bool unlock();
+
+	// Flush the buffered stream to background storage
+	bool flush();
 
 private:
 	// The file path
@@ -98,6 +107,7 @@ private:
 
 	// The status
 	bool valid;
+	bool locked;
 
 	// Read, write or both?
 	bool isReadable, isWritable;

@@ -41,12 +41,15 @@
 #include <sys/file.h>
 
 // Constructor
+//
+// N.B.: the create flag only has a function when a file is opened read/write
 File::File(std::string path, bool forRead /* = true */, bool forWrite /* = false */, bool create /* = false */)
 {
 	stream = NULL;
 
 	isReadable = forRead;
 	isWritable = forWrite;
+	locked = false;
 
 	this->path = path;
 
@@ -140,6 +143,24 @@ bool File::readByteString(ByteString& value)
 	return true;
 }
 
+// Read a boolean value; warning: not thread safe without locking!
+bool File::readBool(bool& value)
+{
+	if (!valid) return false;
+
+	// Read the boolean from the file
+	unsigned char boolValue;
+
+	if (fread(&boolValue, 1, 1, stream) != 1)
+	{
+		return false;
+	}
+
+	value = boolValue ? true : false;
+
+	return true;
+}
+
 // Read a string value; warning: not thread safe without locking!
 bool File::readString(std::string& value)
 {
@@ -213,6 +234,22 @@ bool File::writeString(const std::string& value)
 	return true;
 }
 
+// Write a boolean value; warning: not thread safe without locking!
+bool File::writeBool(const bool value)
+{
+	if (!valid) return false;
+
+	unsigned char toWrite = value ? 0xFF : 0x00;
+
+	// Write the value to the file
+	if (fwrite(&toWrite, 1, 1, stream) != 1)
+	{
+		return false;
+	}
+
+	return true;
+}
+
 // Rewind the file
 bool File::rewind()
 {
@@ -238,14 +275,40 @@ bool File::seek(long offset /* = -1 */)
 }
 
 // Lock the file
-bool File::lock()
+bool File::lock(bool block /* = true */)
 {
-	return valid && (valid = !flock(fileno(stream), LOCK_EX));
+	if (locked || !valid) return false;
+
+	if (flock(fileno(stream), block ? LOCK_EX : LOCK_EX | LOCK_NB))
+	{
+		return false;
+	}
+
+	locked = true;
+
+	return true;
 }
 
 // Unlock the file
 bool File::unlock()
 {
-	return valid && (valid = !flock(fileno(stream), LOCK_UN));
+	if (!locked || !valid) return false;
+
+	if (flock(fileno(stream), LOCK_UN))
+	{
+		valid = false;
+
+		return false;
+	}
+
+	locked = false;
+
+	return valid;
+}
+
+// Flush the buffered stream to background storage
+bool File::flush()
+{
+	return valid && !fflush(stream);
 }
 
