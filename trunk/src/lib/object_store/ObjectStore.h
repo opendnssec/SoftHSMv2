@@ -40,7 +40,7 @@
 
 #include "config.h"
 #include "ByteString.h"
-#include "Token.h"
+#include "OSToken.h"
 #include <string>
 #include <vector>
 
@@ -57,14 +57,14 @@ public:
 	size_t getTokenCount();
 
 	// Return a pointer to the n-th token (counting starts at 0)
-	Token* getToken(size_t whichToken);
+	OSToken* getToken(size_t whichToken);
 
 	// Create a new token
-	Token* newToken(const ByteString& soPIN, std::string label);
+	OSToken* newToken(const ByteString& soPIN, std::string label);
 
 private:
 	// The tokens
-	std::vector<Token*> tokens;
+	std::vector<OSToken*> tokens;
 
 	// The object store root directory
 	std::string storePath;

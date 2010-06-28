@@ -27,7 +27,7 @@
  */
 
 /*****************************************************************************
- Token.h
+ OSToken.h
 
  The token class; a token is stored in a directory containing several files.
  Each token has an index file that contains an enumeration of all the CKA_ID
@@ -35,20 +35,20 @@
  file for each object.
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_TOKEN_H
-#define _SOFTHSM_V2_TOKEN_H
+#ifndef _SOFTHSM_V2_OSTOKEN_H
+#define _SOFTHSM_V2_OSTOKEN_H
 
 #include "config.h"
 #include <string>
 
-class Token
+class OSToken
 {
 public:
 	// Constructor
-	Token(std::string tokenPath);
+	OSToken(std::string tokenPath);
 
 	// Destructor
-	virtual ~Token() { }
+	virtual ~OSToken() { }
 
 	// Checks if the token is consistent
 	bool isSane();
@@ -56,5 +56,5 @@ public:
 private:
 };
 
-#endif // !_SOFTHSM_V2_TOKEN_H
+#endif // !_SOFTHSM_V2_OSTOKEN_H
 
