@@ -190,6 +190,75 @@ void FileTests::testWriteRead()
 
 void FileTests::testSeek()
 {
+	ByteString t1 = "112233445566778899";       // 9 long
+	ByteString t2 = "AABBCCDDEEFFAABBCCDDEEFF"; // 12 long
+
+	{
+		// Create the test file
+		File testFile("testdir/testFile", false, true, true);
+
+		CPPUNIT_ASSERT(testFile.isValid());
+
+		// Write the test data to the test file
+		CPPUNIT_ASSERT(testFile.writeByteString(t1) && testFile.writeByteString(t2));
+	}
+
+	// Open the test file for reading
+	File testFile("testdir/testFile");
+
+	CPPUNIT_ASSERT(testFile.isValid());
+
+	// First, read back the test data
+	ByteString tr1, tr2;
+
+	CPPUNIT_ASSERT(testFile.readByteString(tr1) && testFile.readByteString(tr2));
+	CPPUNIT_ASSERT(tr1 == t1);
+	CPPUNIT_ASSERT(tr2 == t2);
+
+	// Seek to the length field of the second byte string
+	CPPUNIT_ASSERT(testFile.seek(8+9));
+
+	// Read back the size as an ulong value
+	unsigned long value;
+
+	CPPUNIT_ASSERT(testFile.readULong(value));
+	CPPUNIT_ASSERT(value == 12);
+
+	// Seek to the start of the first byte string's data
+	CPPUNIT_ASSERT(testFile.seek(8));
+
+	// Read back the ulong value stored there
+	CPPUNIT_ASSERT(testFile.readULong(value));
+
+	if (sizeof(unsigned long) == 4)
+	{
+		// 32-bit system
+		CPPUNIT_ASSERT(value == 0x55667788);
+	}
+	else
+	{
+		// 64-bit system
+		CPPUNIT_ASSERT(value == 0x1122334455667788);
+	}
+
+	// Seek to the start of second byte string
+	CPPUNIT_ASSERT(testFile.seek(8+9));
+	
+	// Read it
+	ByteString trr2;
+
+	CPPUNIT_ASSERT(testFile.readByteString(trr2));
+	CPPUNIT_ASSERT(trr2 == t2);
+
+	// Rewind the file
+	CPPUNIT_ASSERT(testFile.rewind());
+
+	// Read back both byte strings
+	ByteString trrr1, trrr2;
+
+	CPPUNIT_ASSERT(testFile.readByteString(trrr1) && testFile.readByteString(trrr2));
+	CPPUNIT_ASSERT(trrr1 == t1);
+	CPPUNIT_ASSERT(trrr2 == t2);
 }
 
 bool FileTests::exists(std::string name)
