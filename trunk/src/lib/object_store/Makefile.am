@@ -12,7 +12,8 @@ noinst_LTLIBRARIES =			libsofthsm_objectstore.la
 libsofthsm_objectstore_la_SOURCES =	ObjectStore.cpp \
 					UUID.cpp \
 					Directory.cpp \
-					File.cpp
+					File.cpp \
+					OSAttribute.cpp
 
 SUBDIRS = 				test
 
