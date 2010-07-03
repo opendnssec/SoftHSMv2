@@ -70,6 +70,11 @@ File::File(std::string path, bool forRead /* = true */, bool forWrite /* = false
 // Destructor
 File::~File() 
 {
+	if (locked)
+	{
+		unlock();
+	}
+
 	if (stream != NULL)
 	{
 		fclose(stream);

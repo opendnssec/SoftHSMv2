@@ -29,7 +29,7 @@
 /*****************************************************************************
  FileTests.cpp
 
- Contains test cases to test the directory implementation
+ Contains test cases to test the file implementation
  *****************************************************************************/
 
 #include <stdlib.h>

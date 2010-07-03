@@ -27,65 +27,66 @@
  */
 
 /*****************************************************************************
- OSAttribute.h
+ ObjectFile.h
 
- This class represents the object store view on an object's attribute
+ This class represents object files
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_OSATTRIBUTE_H
-#define _SOFTHSM_V2_OSATTRIBUTE_H
+#ifndef _SOFTHSM_V2_OBJECTFILE_H
+#define _SOFTHSM_V2_OBJECTFILE_H
 
 #include "config.h"
+#include "File.h"
 #include "ByteString.h"
+#include "OSAttribute.h"
+#include <string>
+#include <map>
+#include <time.h>
+#include "cryptoki.h"
 
-class OSAttribute
+class ObjectFile
 {
 public:
-	// Copy constructor
-	OSAttribute(const OSAttribute& in);
-
-	// Constructor for a boolean type attribute
-	OSAttribute(const bool value);
-
-	// Constructor for an unsigned long type attribute
-	OSAttribute(const unsigned long value);
-
-	// Constructor for a byte string type attribute
-	OSAttribute(const ByteString& value);
+	// Constructor
+	ObjectFile(std::string path, bool isNew = false);
 
 	// Destructor
-	virtual ~OSAttribute() { }
+	virtual ~ObjectFile();
 
-	// Check the attribute type
-	bool isBooleanAttribute() const;
-	bool isUnsignedLongAttribute() const;
-	bool isByteStringAttribute() const;
+	// Check if the specified attribute exists
+	bool attributeExists(CK_ATTRIBUTE_TYPE type);
 
-	// Retrieve the attribute value
-	const bool getBooleanValue() const;
-	const unsigned long getUnsignedLongValue() const;
-	const ByteString& getByteStringValue() const;
+	// Retrieve the specified attribute
+	OSAttribute* getAttribute(CK_ATTRIBUTE_TYPE type);
 
-	// Set the attribute value
-	void setBooleanValue(const bool value);
-	void setUnsignedLongValue(const unsigned long value);
-	void setByteStringValue(const ByteString& value);
+	// Set the specified attribute
+	bool setAttribute(CK_ATTRIBUTE_TYPE type, const OSAttribute& attribute);
+
+	// The validity state of the object
+	bool isValid();
 
 private:
-	// The attribute type
-	enum
-	{
-		BOOL,
-		ULONG,
-		BYTESTR
-	}
-	attributeType;
+	// Refresh the object if necessary
+	void refresh();
 
-	// The attribute value
-	bool boolValue;
-	unsigned long ulongValue;
-	ByteString byteStrValue;
+	// Write the object to background storage
+	void store();
+
+	// Discard the cached attributes
+	void discardAttributes();
+
+	// The path to the file
+	std::string path;
+
+	// The last modification time of the file
+	time_t lastModification;
+
+	// The object's raw attributes
+	std::map<CK_ATTRIBUTE_TYPE, OSAttribute*> attributes;
+
+	// The object's validity state
+	bool valid;
 };
 
-#endif // !_SOFTHSM_V2_OSATTRIBUTE_H
+#endif // !_SOFTHSM_V2_OBJECTFILE_H
 

@@ -35,6 +35,15 @@
 #include "config.h"
 #include "OSAttribute.h"
 
+// Copy constructor
+OSAttribute::OSAttribute(const OSAttribute& in)
+{
+	this->attributeType = in.attributeType;
+	this->boolValue = in.boolValue;
+	this->ulongValue = in.ulongValue;
+	this->byteStrValue = in.byteStrValue;
+}
+
 // Constructor for a boolean type attribute
 OSAttribute::OSAttribute(const bool value)
 {

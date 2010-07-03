@@ -27,65 +27,40 @@
  */
 
 /*****************************************************************************
- OSAttribute.h
+ ObjectFileTests.h
 
- This class represents the object store view on an object's attribute
+ Contains test cases to test the object file implementation
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_OSATTRIBUTE_H
-#define _SOFTHSM_V2_OSATTRIBUTE_H
+#ifndef _SOFTHSM_V2_OBJECTFILETESTS_H
+#define _SOFTHSM_V2_OBJECTFILETESTS_H
 
-#include "config.h"
-#include "ByteString.h"
+#include <cppunit/extensions/HelperMacros.h>
 
-class OSAttribute
+class ObjectFileTests : public CppUnit::TestFixture
 {
+	CPPUNIT_TEST_SUITE(ObjectFileTests);
+	CPPUNIT_TEST(testBoolAttr);
+	CPPUNIT_TEST(testULongAttr);
+	CPPUNIT_TEST(testByteStrAttr);
+	CPPUNIT_TEST(testMixedAttr);
+	CPPUNIT_TEST(testDoubleAttr);
+	CPPUNIT_TEST(testRefresh);
+	CPPUNIT_TEST(testCorruptFile);
+	CPPUNIT_TEST_SUITE_END();
+
 public:
-	// Copy constructor
-	OSAttribute(const OSAttribute& in);
+	void testBoolAttr();
+	void testULongAttr();
+	void testByteStrAttr();
+	void testMixedAttr();
+	void testDoubleAttr();
+	void testRefresh();
+	void testCorruptFile();
 
-	// Constructor for a boolean type attribute
-	OSAttribute(const bool value);
-
-	// Constructor for an unsigned long type attribute
-	OSAttribute(const unsigned long value);
-
-	// Constructor for a byte string type attribute
-	OSAttribute(const ByteString& value);
-
-	// Destructor
-	virtual ~OSAttribute() { }
-
-	// Check the attribute type
-	bool isBooleanAttribute() const;
-	bool isUnsignedLongAttribute() const;
-	bool isByteStringAttribute() const;
-
-	// Retrieve the attribute value
-	const bool getBooleanValue() const;
-	const unsigned long getUnsignedLongValue() const;
-	const ByteString& getByteStringValue() const;
-
-	// Set the attribute value
-	void setBooleanValue(const bool value);
-	void setUnsignedLongValue(const unsigned long value);
-	void setByteStringValue(const ByteString& value);
-
-private:
-	// The attribute type
-	enum
-	{
-		BOOL,
-		ULONG,
-		BYTESTR
-	}
-	attributeType;
-
-	// The attribute value
-	bool boolValue;
-	unsigned long ulongValue;
-	ByteString byteStrValue;
+	void setUp();
+	void tearDown();
 };
 
-#endif // !_SOFTHSM_V2_OSATTRIBUTE_H
+#endif // !_SOFTHSM_V2_OBJECTFILETESTS_H
 
