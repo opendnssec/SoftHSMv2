@@ -40,7 +40,7 @@
 #include "SecureMemoryRegistry.h"
 
 // Initialise the one-and-only instance
-std::auto_ptr<SecureMemoryRegistry> SecureMemoryRegistry::instance;
+std::auto_ptr<SecureMemoryRegistry> SecureMemoryRegistry::instance(NULL);
 
 // Return the one-and-only instance
 SecureMemoryRegistry* SecureMemoryRegistry::i()
