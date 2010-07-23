@@ -45,7 +45,7 @@
  *****************************************************************************/
 
 // Initialise the one-and-only instance
-std::auto_ptr<SoftHSM> SoftHSM::instance;
+std::auto_ptr<SoftHSM> SoftHSM::instance(NULL);
 
 // Return the one-and-only instance
 SoftHSM* SoftHSM::i()
