@@ -49,7 +49,7 @@
 #include <openssl/ssl.h>
 
 // Initialise the one-and-only instance
-std::auto_ptr<OSSLCryptoFactory> OSSLCryptoFactory::instance;
+std::auto_ptr<OSSLCryptoFactory> OSSLCryptoFactory::instance(NULL); 
 
 // Constructor
 OSSLCryptoFactory::OSSLCryptoFactory()

@@ -48,7 +48,7 @@
 #include <botan/init.h>
 
 // Initialise the one-and-only instance
-std::auto_ptr<BotanCryptoFactory> BotanCryptoFactory::instance;
+std::auto_ptr<BotanCryptoFactory> BotanCryptoFactory::instance(NULL);
 
 // Constructor
 BotanCryptoFactory::BotanCryptoFactory()
