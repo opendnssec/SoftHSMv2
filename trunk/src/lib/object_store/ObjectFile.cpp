@@ -46,25 +46,33 @@
 // Constructor
 ObjectFile::ObjectFile(std::string path, bool isNew /* = false */)
 {
-	valid = true;
 	this->path = path;
-	lastModification = 0;
+	ipcSignal = IPCSignal::create(path);
+	valid = (ipcSignal != NULL);
+
+	if (!valid) return;
 
 	if (!isNew)
 	{
-		refresh();
+		refresh(true);
 	}
 	else
 	{
 		// Create an empty object file
 		store();
 	}
+
 }
 
 // Destructor
 ObjectFile::~ObjectFile()
 {
 	discardAttributes();
+
+	if (ipcSignal != NULL)
+	{
+		delete ipcSignal;
+	}
 }
 
 // Check if the specified attribute exists
@@ -116,30 +124,13 @@ bool ObjectFile::isValid()
 }
 
 // Refresh the object if necessary
-void ObjectFile::refresh()
+void ObjectFile::refresh(bool isFirstTime /* = false */)
 {
-	// Retrieve the time the file was last changed
-	struct stat fileState;
-
-	if (::stat(path.c_str(), &fileState))
+	// Check the IPC signal
+	if (!isFirstTime && !ipcSignal->wasTriggered())
 	{
-		DEBUG_MSG("Failed to stat %s", path.c_str());
-
-		valid = false;
-
 		return;
 	}
-
-	if (fileState.st_mtime <= lastModification)
-	{
-		// The file is unchanged, so there is no need to update it
-		return;
-	}
-
-	// Save the current modification timestamp of the file
-	lastModification = fileState.st_mtime;
-
-	DEBUG_MSG("Object file %s has changed at timestamp %u", path.c_str(), (unsigned long) lastModification);
 
 	File objectFile(path);
 
@@ -354,6 +345,9 @@ void ObjectFile::store()
 
 	objectFile.unlock();
 
+	// Trigger the IPC signal
+	ipcSignal->trigger();
+
 	valid = true;
 }
 
@@ -368,6 +362,9 @@ void ObjectFile::discardAttributes()
 		}
 
 		delete i->second;
+		i->second = NULL;
 	}
+
+	attributes.clear();
 }
 

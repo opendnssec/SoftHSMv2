@@ -13,6 +13,8 @@ libsofthsm_common_la_SOURCES =	Configuration.cpp \
 				log.cpp \
 				osmutex.cpp \
 				XMLConfigLoader.cpp \
-				MutexFactory.cpp
+				MutexFactory.cpp \
+				Semaphore.cpp \
+				IPCSignal.cpp
 
 EXTRA_DIST =			$(srcdir)/*.h

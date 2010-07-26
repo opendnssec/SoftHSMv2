@@ -27,68 +27,49 @@
  */
 
 /*****************************************************************************
- ObjectFile.h
+ IPCSignal.h
 
- This class represents object files
+ This class implements rudimentary IPC signalling based on POSIX semaphores.
+
+ N.B.: Because of the way this code works, SoftHSM v2 is not suitable for use
+       in environments where it is both long lived as well as has a high
+       object change ratio (either separately is not a problem). This is
+       caused by the fact that the counter on a POSIX semaphore has a limit
+       of INT_MAX.
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_OBJECTFILE_H
-#define _SOFTHSM_V2_OBJECTFILE_H
+#ifndef _SOFTHSM_V2_IPCSIGNAL_H
+#define _SOFTHSM_V2_IPCSIGNAL_H
 
 #include "config.h"
-#include "File.h"
-#include "ByteString.h"
-#include "OSAttribute.h"
-#include "IPCSignal.h"
+#include "Semaphore.h"
 #include <string>
-#include <map>
-#include <time.h>
-#include "cryptoki.h"
 
-class ObjectFile
+class IPCSignal
 {
 public:
-	// Constructor
-	ObjectFile(std::string path, bool isNew = false);
+	// Factory
+	static IPCSignal* create(const std::string name);
 
 	// Destructor
-	virtual ~ObjectFile();
+	virtual ~IPCSignal();
 
-	// Check if the specified attribute exists
-	bool attributeExists(CK_ATTRIBUTE_TYPE type);
+	// Update the signal
+	void trigger();
 
-	// Retrieve the specified attribute
-	OSAttribute* getAttribute(CK_ATTRIBUTE_TYPE type);
-
-	// Set the specified attribute
-	bool setAttribute(CK_ATTRIBUTE_TYPE type, const OSAttribute& attribute);
-
-	// The validity state of the object
-	bool isValid();
+	// Has the signal been triggered?
+	bool wasTriggered();
 
 private:
-	// Refresh the object if necessary
-	void refresh(bool isFirstTime = false);
+	// Constructor
+	IPCSignal(Semaphore* semaphore);
 
-	// Write the object to background storage
-	void store();
-
-	// Discard the cached attributes
-	void discardAttributes();
-
-	// The path to the file
-	std::string path;
-
-	// The IPC object that is used to signal changes in the object file
-	// to other SoftHSM instances
-	IPCSignal* ipcSignal;
-
-	// The object's raw attributes
-	std::map<CK_ATTRIBUTE_TYPE, OSAttribute*> attributes;
-
-	// The object's validity state
-	bool valid;
+	// The semaphore
+	Semaphore* semaphore;
+	
+	// The current semaphore value
+	int currentValue;
 };
 
-#endif // !_SOFTHSM_V2_OBJECTFILE_H
+#endif // !_SOFTHSM_V2_IPCSIGNAL_H
 

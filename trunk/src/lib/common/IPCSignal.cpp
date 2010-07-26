@@ -27,68 +27,76 @@
  */
 
 /*****************************************************************************
- ObjectFile.h
+ IPCSignal.cpp
 
- This class represents object files
+ This class implements rudimentary IPC signalling based on POSIX semaphores.
+
+ N.B.: Because of the way this code works, SoftHSM v2 is not suitable for use
+       in environments where it is both long lived as well as has a high
+       object change ratio (either separately is not a problem). This is
+       caused by the fact that the counter on a POSIX semaphore has a limit
+       of INT_MAX.
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_OBJECTFILE_H
-#define _SOFTHSM_V2_OBJECTFILE_H
-
 #include "config.h"
-#include "File.h"
-#include "ByteString.h"
-#include "OSAttribute.h"
+#include "log.h"
 #include "IPCSignal.h"
-#include <string>
-#include <map>
-#include <time.h>
-#include "cryptoki.h"
 
-class ObjectFile
+// Factory
+IPCSignal* IPCSignal::create(const std::string name)
 {
-public:
-	// Constructor
-	ObjectFile(std::string path, bool isNew = false);
+	Semaphore* semaphore = Semaphore::create(0, name);
 
-	// Destructor
-	virtual ~ObjectFile();
+	if (semaphore == NULL)
+	{
+		ERROR_MSG("Failed to create a named semaphore (%s)", name.c_str());
+			
+		return NULL;
+	}
 
-	// Check if the specified attribute exists
-	bool attributeExists(CK_ATTRIBUTE_TYPE type);
+	return new IPCSignal(semaphore);
+}
 
-	// Retrieve the specified attribute
-	OSAttribute* getAttribute(CK_ATTRIBUTE_TYPE type);
+// Destructor
+IPCSignal::~IPCSignal()
+{
+	delete semaphore;
+}
 
-	// Set the specified attribute
-	bool setAttribute(CK_ATTRIBUTE_TYPE type, const OSAttribute& attribute);
+// Update the signal
+void IPCSignal::trigger()
+{
+	if (!semaphore->inc())
+	{
+		if (semaphore->getValue() > 0)
+		{
+			// Decrement by 10; this is to prevent listeners from missing
+			// the changed in case of a saturated semaphore. This is not 
+			// ideal, however
+			for (int i = 0; i < 10; i++) semaphore->dec();
+		}
+	}
+}
 
-	// The validity state of the object
-	bool isValid();
+// Has the signal been triggered?
+bool IPCSignal::wasTriggered()
+{
+	int value = semaphore->getValue();
 
-private:
-	// Refresh the object if necessary
-	void refresh(bool isFirstTime = false);
+	if (value != currentValue)
+	{
+		currentValue = value;
 
-	// Write the object to background storage
-	void store();
+		return true;
+	}
 
-	// Discard the cached attributes
-	void discardAttributes();
+	return false;
+}
 
-	// The path to the file
-	std::string path;
-
-	// The IPC object that is used to signal changes in the object file
-	// to other SoftHSM instances
-	IPCSignal* ipcSignal;
-
-	// The object's raw attributes
-	std::map<CK_ATTRIBUTE_TYPE, OSAttribute*> attributes;
-
-	// The object's validity state
-	bool valid;
-};
-
-#endif // !_SOFTHSM_V2_OBJECTFILE_H
+// Constructor
+IPCSignal::IPCSignal(Semaphore* semaphore)
+{
+	this->semaphore = semaphore;
+	currentValue = semaphore->getValue();
+}
 

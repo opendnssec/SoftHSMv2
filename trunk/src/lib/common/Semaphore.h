@@ -27,68 +27,46 @@
  */
 
 /*****************************************************************************
- ObjectFile.h
+ Semaphore.h
 
- This class represents object files
+ This class implements an object version of POSIX semaphores
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_OBJECTFILE_H
-#define _SOFTHSM_V2_OBJECTFILE_H
+#ifndef _SOFTHSM_V2_SEMAPHORE_H
+#define _SOFTHSM_V2_SEMAPHORE_H
 
 #include "config.h"
-#include "File.h"
-#include "ByteString.h"
-#include "OSAttribute.h"
-#include "IPCSignal.h"
+#include <semaphore.h>
 #include <string>
-#include <map>
-#include <time.h>
-#include "cryptoki.h"
 
-class ObjectFile
+class Semaphore
 {
 public:
-	// Constructor
-	ObjectFile(std::string path, bool isNew = false);
+	// Factory
+	static Semaphore* create(int initialValue, const std::string name = "");
 
 	// Destructor
-	virtual ~ObjectFile();
+	virtual ~Semaphore();
 
-	// Check if the specified attribute exists
-	bool attributeExists(CK_ATTRIBUTE_TYPE type);
+	// Increment (unlock) the semaphore
+	bool inc();
 
-	// Retrieve the specified attribute
-	OSAttribute* getAttribute(CK_ATTRIBUTE_TYPE type);
+	// Decrement (lock) the semaphore
+	bool dec(bool wait = false);
 
-	// Set the specified attribute
-	bool setAttribute(CK_ATTRIBUTE_TYPE type, const OSAttribute& attribute);
-
-	// The validity state of the object
-	bool isValid();
+	// Retrieve the value of the semaphore
+	int getValue();
 
 private:
-	// Refresh the object if necessary
-	void refresh(bool isFirstTime = false);
+	// Constructor
+	Semaphore(sem_t* semaphore, std::string name);
 
-	// Write the object to background storage
-	void store();
+	// The actual POSIX semaphore
+	sem_t* semaphore;
 
-	// Discard the cached attributes
-	void discardAttributes();
-
-	// The path to the file
-	std::string path;
-
-	// The IPC object that is used to signal changes in the object file
-	// to other SoftHSM instances
-	IPCSignal* ipcSignal;
-
-	// The object's raw attributes
-	std::map<CK_ATTRIBUTE_TYPE, OSAttribute*> attributes;
-
-	// The object's validity state
-	bool valid;
+	// The name of the semaphore (needed to destroy it)
+	std::string name;
 };
 
-#endif // !_SOFTHSM_V2_OBJECTFILE_H
+#endif // !_SOFTHSM_V2_SEMAPHORE_H
 

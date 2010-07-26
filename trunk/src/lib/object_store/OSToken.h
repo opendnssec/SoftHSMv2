@@ -30,16 +30,22 @@
  OSToken.h
 
  The token class; a token is stored in a directory containing several files.
- Each token has an index file that contains an enumeration of all the CKA_ID
- and CKA_LABEL attributes of each object. Furthermore, it contains a separate
- file for each object.
+ Each object is stored in a separate file and a token object is present that
+ has the token specific attributes
  *****************************************************************************/
 
 #ifndef _SOFTHSM_V2_OSTOKEN_H
 #define _SOFTHSM_V2_OSTOKEN_H
 
 #include "config.h"
+#include "OSAttribute.h"
+#include "ObjectFile.h"
+#include "File.h"
+#include "Directory.h"
+#include "UUID.h"
 #include <string>
+#include <vector>
+#include <map>
 
 class OSToken
 {
@@ -48,12 +54,26 @@ public:
 	OSToken(std::string tokenPath);
 
 	// Destructor
-	virtual ~OSToken() { }
+	virtual ~OSToken();
 
 	// Checks if the token is consistent
-	bool isSane();
+	bool isValid();
 
 private:
+	// Index the token
+
+	// Is the token consistent and valid?
+	bool valid;
+
+	// The objects of the token
+	std::vector<ObjectFile*> objects;
+
+	// The token object
+	ObjectFile* tokenObject;
+
+	// The token index
+	std::map<ByteString, ObjectFile*> map_by_id;
+	std::map<ByteString, ObjectFile*> map_by_label;
 };
 
 #endif // !_SOFTHSM_V2_OSTOKEN_H
