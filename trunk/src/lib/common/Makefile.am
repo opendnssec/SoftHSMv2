@@ -4,13 +4,15 @@ MAINTAINERCLEANFILES = 		$(srcdir)/Makefile.in
 
 AM_CPPFLAGS =                   -I$(srcdir)/../cryptoki_compat \
 				-I$(srcdir)/../crypto \
-				-I$(srcdir)/../data_mgr
+				-I$(srcdir)/../data_mgr \
+				-I$(srcdir)/..
 
 noinst_LTLIBRARIES =		libsofthsm_common.la
 libsofthsm_common_la_SOURCES =	Configuration.cpp \
 				fatal.cpp \
 				log.cpp \
 				osmutex.cpp \
-				XMLConfigLoader.cpp
+				XMLConfigLoader.cpp \
+				MutexFactory.cpp
 
 EXTRA_DIST =			$(srcdir)/*.h
