@@ -376,9 +376,121 @@ void ObjectFileTests::testDoubleAttr()
 
 void ObjectFileTests::testRefresh()
 {
+	ByteString value3 = "BDEBDBEDBBDBEBDEBE792759537328";
+	ByteString value3a = "466487346943785684957634";
+
+	// Create the test object
+	{
+		ObjectFile testObject("testdir/testobject", true);
+
+		CPPUNIT_ASSERT(testObject.isValid());
+
+		bool value1 = true;
+		unsigned long value2 = 0x87654321;
+
+		OSAttribute attr1(value1);
+		OSAttribute attr2(value2);
+		OSAttribute attr3(value3);
+
+		CPPUNIT_ASSERT(testObject.setAttribute(CKA_TOKEN, attr1));
+		CPPUNIT_ASSERT(testObject.setAttribute(CKA_PRIME_BITS, attr2));
+		CPPUNIT_ASSERT(testObject.setAttribute(CKA_VALUE_BITS, attr3));
+	}
+
+	// Now read back the object
+	{
+		ObjectFile testObject("testdir/testobject");
+
+		CPPUNIT_ASSERT(testObject.isValid());
+
+		CPPUNIT_ASSERT(testObject.attributeExists(CKA_TOKEN));
+		CPPUNIT_ASSERT(testObject.attributeExists(CKA_PRIME_BITS));
+		CPPUNIT_ASSERT(testObject.attributeExists(CKA_VALUE_BITS));
+		CPPUNIT_ASSERT(!testObject.attributeExists(CKA_ID));
+
+		CPPUNIT_ASSERT(testObject.getAttribute(CKA_TOKEN)->isBooleanAttribute());
+		CPPUNIT_ASSERT(testObject.getAttribute(CKA_PRIME_BITS)->isUnsignedLongAttribute());
+		CPPUNIT_ASSERT(testObject.getAttribute(CKA_VALUE_BITS)->isByteStringAttribute());
+
+		CPPUNIT_ASSERT(testObject.getAttribute(CKA_TOKEN)->getBooleanValue() == true);
+		CPPUNIT_ASSERT(testObject.getAttribute(CKA_PRIME_BITS)->getUnsignedLongValue() == 0x87654321);
+		CPPUNIT_ASSERT(testObject.getAttribute(CKA_VALUE_BITS)->getByteStringValue() == value3);
+
+		bool value1 = false;
+		unsigned long value2 = 0x76767676;
+
+		OSAttribute attr1(value1);
+		OSAttribute attr2(value2);
+		OSAttribute attr3(value3a);
+
+		// Change the attributes
+		CPPUNIT_ASSERT(testObject.isValid());
+
+		CPPUNIT_ASSERT(testObject.setAttribute(CKA_TOKEN, attr1));
+		CPPUNIT_ASSERT(testObject.setAttribute(CKA_PRIME_BITS, attr2));
+		CPPUNIT_ASSERT(testObject.setAttribute(CKA_VALUE_BITS, attr3));
+
+		// Check the attributes
+		CPPUNIT_ASSERT(testObject.getAttribute(CKA_TOKEN)->isBooleanAttribute());
+		CPPUNIT_ASSERT(testObject.getAttribute(CKA_PRIME_BITS)->isUnsignedLongAttribute());
+		CPPUNIT_ASSERT(testObject.getAttribute(CKA_VALUE_BITS)->isByteStringAttribute());
+
+		CPPUNIT_ASSERT(testObject.getAttribute(CKA_TOKEN)->getBooleanValue() == value1);
+		CPPUNIT_ASSERT(testObject.getAttribute(CKA_PRIME_BITS)->getUnsignedLongValue() == value2);
+		CPPUNIT_ASSERT(testObject.getAttribute(CKA_VALUE_BITS)->getByteStringValue() == value3a);
+
+		// Open the object a second time
+		ObjectFile testObject2("testdir/testobject");
+
+		// Check the attributes on the second instance
+		CPPUNIT_ASSERT(testObject2.getAttribute(CKA_TOKEN)->isBooleanAttribute());
+		CPPUNIT_ASSERT(testObject2.getAttribute(CKA_PRIME_BITS)->isUnsignedLongAttribute());
+		CPPUNIT_ASSERT(testObject2.getAttribute(CKA_VALUE_BITS)->isByteStringAttribute());
+
+		CPPUNIT_ASSERT(testObject2.getAttribute(CKA_TOKEN)->getBooleanValue() == value1);
+		CPPUNIT_ASSERT(testObject2.getAttribute(CKA_PRIME_BITS)->getUnsignedLongValue() == value2);
+		CPPUNIT_ASSERT(testObject2.getAttribute(CKA_VALUE_BITS)->getByteStringValue() == value3a);
+
+		// Add an attribute on the second object
+		ByteString id = "0102010201020102010201020102010201020102";
+
+		OSAttribute attr4(id);
+
+		CPPUNIT_ASSERT(testObject.setAttribute(CKA_ID, attr4));
+		
+		// Check the attribute
+		CPPUNIT_ASSERT(testObject2.attributeExists(CKA_ID));
+		CPPUNIT_ASSERT(testObject2.getAttribute(CKA_ID)->isByteStringAttribute());
+		CPPUNIT_ASSERT(testObject2.getAttribute(CKA_ID)->getByteStringValue() == id);
+
+		// Now check that the first instance also knows about it
+		CPPUNIT_ASSERT(testObject.attributeExists(CKA_ID));
+		CPPUNIT_ASSERT(testObject.getAttribute(CKA_ID)->isByteStringAttribute());
+		CPPUNIT_ASSERT(testObject.getAttribute(CKA_ID)->getByteStringValue() == id);
+
+		// Now change another attribute
+		unsigned long value2a = 0x89898989;
+
+		OSAttribute attr2a(value2a);
+
+		CPPUNIT_ASSERT(testObject.setAttribute(CKA_PRIME_BITS, attr2a));
+
+		// Check the attribute
+		CPPUNIT_ASSERT(testObject.getAttribute(CKA_PRIME_BITS)->isUnsignedLongAttribute());
+		CPPUNIT_ASSERT(testObject.getAttribute(CKA_PRIME_BITS)->getUnsignedLongValue() == value2a);
+
+		// Now check that the second instance also knows about the change
+		CPPUNIT_ASSERT(testObject2.getAttribute(CKA_PRIME_BITS)->isUnsignedLongAttribute());
+		CPPUNIT_ASSERT(testObject2.getAttribute(CKA_PRIME_BITS)->getUnsignedLongValue() == value2a);
+	}
 }
 
 void ObjectFileTests::testCorruptFile()
 {
+	CPPUNIT_ASSERT(system("dd if=/dev/urandom of=testdir/testobject bs=13 count=24") != -1);
+
+	ObjectFile testObject("testdir/testobject");
+
+	CPPUNIT_ASSERT(!testObject.isValid());
 }
 

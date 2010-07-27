@@ -240,6 +240,8 @@ void ObjectFile::refresh(bool isFirstTime /* = false */)
 		{
 			DEBUG_MSG("Corrupt object file %s with unknown attribute of type %d", path.c_str(), osAttrType);
 
+			valid = false;
+
 			return;
 		}
 	}

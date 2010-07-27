@@ -74,6 +74,13 @@ void IPCSignal::trigger()
 			// the changed in case of a saturated semaphore. This is not 
 			// ideal, however
 			for (int i = 0; i < 10; i++) semaphore->dec();
+
+			currentValue -= 10;
+		}
+		else
+		{
+			// Make sure this instance isn't triggered by its own action
+			currentValue++;
 		}
 	}
 }
