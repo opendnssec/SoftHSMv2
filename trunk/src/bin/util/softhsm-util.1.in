@@ -1,4 +1,4 @@
-.TH SOFTHSM 1 "29 July 2010" "SoftHSM"
+.TH SOFTHSM-UTIL 1 "29 July 2010" "SoftHSM"
 .\" $Id$
 .SH NAME
 softhsm-util \- support tool for libsofthsm
