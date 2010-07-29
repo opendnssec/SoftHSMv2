@@ -60,10 +60,13 @@ ACX_CRYPTO_BACKEND
 ACX_NON_PAGED_MEMORY
 
 # Check for libraries
-
+ACX_DLOPEN
 
 # Check for headers
 AC_CHECK_HEADERS([pthread.h])
+
+# Set full directory paths
+full_libdir=`eval eval eval eval eval echo "${libdir}" | sed "s#NONE#${prefix}#" | sed "s#NONE#${ac_default_prefix}#"`
 
 # Define some variables for the code
 # AC_DEFINE_UNQUOTED(
@@ -76,6 +79,21 @@ AC_CHECK_HEADERS([pthread.h])
 # 	[SOFTHSM_VERSION_MINOR],
 # 	[SoftHSM minor version number via PKCS#11]
 # )
+AC_DEFINE_UNQUOTED(
+	[MAX_PIN_LEN],
+	[255],
+	[Maximum PIN length]
+)
+AC_DEFINE_UNQUOTED(
+	[MIN_PIN_LEN],
+	[4],
+	[Minimum PIN length]
+)
+AC_DEFINE_UNQUOTED(
+	[DEFAULT_PKCS11_LIB],
+	["$full_libdir/libsofthsm.so"],
+	[The default PKCS#11 library]
+)
 
 # Generate the libtool script and install script
 AC_PROG_INSTALL
@@ -96,6 +114,9 @@ AC_CONFIG_FILES([
 	src/lib/session_mgr/Makefile
 	src/lib/slot_mgr/Makefile
 	src/lib/user_mgr/Makefile
+	src/bin/Makefile
+	src/bin/util/Makefile
+	src/bin/util/softhsm-util.1
 ])
 
 AC_OUTPUT

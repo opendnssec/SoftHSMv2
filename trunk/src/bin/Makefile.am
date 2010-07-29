@@ -2,4 +2,4 @@
 
 MAINTAINERCLEANFILES = $(srcdir)/Makefile.in
 
-SUBDIRS = bin lib
+SUBDIRS = util
