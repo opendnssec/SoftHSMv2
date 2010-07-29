@@ -268,6 +268,11 @@ int crypto_save_rsa
 // Convert the OpenSSL key to binary
 rsa_key_material_t* crypto_malloc_rsa(RSA *rsa)
 {
+	if (!rsa)
+	{
+		return NULL;
+	}
+
 	rsa_key_material_t *keyMat = (rsa_key_material_t *)malloc(sizeof(rsa_key_material_t));
 	if (!keyMat)
 	{
@@ -420,6 +425,11 @@ int crypto_save_dsa
 // Convert the OpenSSL key to binary
 dsa_key_material_t* crypto_malloc_dsa(DSA *dsa)
 {
+	if (!dsa)
+	{
+		return NULL;
+	}
+
 	dsa_key_material_t *keyMat = (dsa_key_material_t *)malloc(sizeof(dsa_key_material_t));
 	if (!keyMat)
 	{
