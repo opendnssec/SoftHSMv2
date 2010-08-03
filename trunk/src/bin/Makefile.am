@@ -2,4 +2,4 @@
 
 MAINTAINERCLEANFILES = $(srcdir)/Makefile.in
 
-SUBDIRS = util
+SUBDIRS = keyconv util
