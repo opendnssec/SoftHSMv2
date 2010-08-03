@@ -267,6 +267,8 @@ int to_pkcs8(char *in_path, char *out_path, char *file_pin)
 		return error;
 	}
 
+	crypto_init();
+
 	// Save the the key to the disk
 	switch (algorithm)
 	{
@@ -295,6 +297,7 @@ int to_pkcs8(char *in_path, char *out_path, char *file_pin)
 			break;
 	}
 
+	crypto_final();
 	free_key_material(pkey);
 
 	return error;
@@ -304,6 +307,11 @@ int to_pkcs8(char *in_path, char *out_path, char *file_pin)
 void free_key_material(key_material_t *pkey)
 {
 	int i;
+
+	if (!pkey)
+	{
+		return;
+	}
 
 	for (i = 0; i < TAG_MAX; i++)
 	{

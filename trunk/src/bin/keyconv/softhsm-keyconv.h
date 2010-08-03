@@ -50,6 +50,8 @@ int to_pkcs8(char *in_path, char *out_path, char *file_pin);
 int save_rsa_pkcs8(char *out_path, char *file_pin, key_material_t *pkey);
 int save_dsa_pkcs8(char *out_path, char *file_pin, key_material_t *pkey);
 void free_key_material(key_material_t *pkey);
+void crypto_init();
+void crypto_final();
 
 // base64.c prototypes
 

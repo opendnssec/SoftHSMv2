@@ -40,15 +40,29 @@
 #include <iostream>
 #include <fstream>
 
+#include <botan/init.h>
 #include <botan/auto_rng.h>
 #include <botan/pkcs8.h>
 #include <botan/rsa.h>
 #include <botan/dsa.h>
 #include <botan/bigint.h>
 
+// Init Botan
+void crypto_init()
+{
+	Botan::LibraryInitializer::initialize();
+}
+
+// Final Botan
+void crypto_final()
+{
+	Botan::LibraryInitializer::deinitialize();
+}
+
 // Save the RSA key as a PKCS#8 file
 int save_rsa_pkcs8(char *out_path, char *file_pin, key_material_t *pkey)
 {
+
 	Botan::Private_Key *priv_key = NULL;
 	Botan::AutoSeeded_RNG *rng;
 	Botan::BigInt bigE, bigP, bigQ, bigN, bigD;

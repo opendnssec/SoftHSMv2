@@ -47,6 +47,19 @@
 #include <openssl/dsa.h>
 #include <openssl/rsa.h>
 
+// Init OpenSSL
+void crypto_init()
+{
+	OpenSSL_add_all_algorithms();
+}
+
+// Final OpenSSL
+void crypto_final()
+{
+	EVP_cleanup();
+	CRYPTO_cleanup_all_ex_data();
+}
+
 // Save the RSA key as a PKCS#8 file
 int save_rsa_pkcs8(char *out_path, char *file_pin, key_material_t *pkey)
 {
@@ -74,8 +87,6 @@ int save_rsa_pkcs8(char *out_path, char *file_pin, key_material_t *pkey)
 		return 1;
 	}
 
-	OpenSSL_add_all_algorithms();
-
 	rsa = RSA_new();
 	rsa->p =    BN_bin2bn((unsigned char*)pkey[TAG_PRIME1].big,  pkey[TAG_PRIME1].size, NULL);
 	rsa->q =    BN_bin2bn((unsigned char*)pkey[TAG_PRIME2].big,  pkey[TAG_PRIME2].size, NULL);
@@ -94,8 +105,6 @@ int save_rsa_pkcs8(char *out_path, char *file_pin, key_material_t *pkey)
 		fprintf(stderr, "ERROR: Could not convert RSA key to EVP_PKEY.\n");
 		RSA_free(rsa);
 		EVP_PKEY_free(ossl_pkey);
-		EVP_cleanup();
-		CRYPTO_cleanup_all_ex_data();
 		return 1;
 	}
 	RSA_free(rsa);
@@ -105,8 +114,6 @@ int save_rsa_pkcs8(char *out_path, char *file_pin, key_material_t *pkey)
 	{
 		fprintf(stderr, "ERROR: Could not convert EVP_PKEY to PKCS#8.\n");
 		EVP_PKEY_free(ossl_pkey);
-		EVP_cleanup();
-		CRYPTO_cleanup_all_ex_data();
 		return 1;
 	}
 	EVP_PKEY_free(ossl_pkey);
@@ -116,8 +123,6 @@ int save_rsa_pkcs8(char *out_path, char *file_pin, key_material_t *pkey)
 	{
 		fprintf(stderr, "ERROR: Could not open the output file.\n");
 		PKCS8_PRIV_KEY_INFO_free(p8inf);
-		EVP_cleanup();
-		CRYPTO_cleanup_all_ex_data();
 		return 1;
 	}
 
@@ -147,8 +152,6 @@ int save_rsa_pkcs8(char *out_path, char *file_pin, key_material_t *pkey)
 
 	PKCS8_PRIV_KEY_INFO_free(p8inf);
 	BIO_free_all(out);
-	EVP_cleanup();
-	CRYPTO_cleanup_all_ex_data();
 
 	return result;
 }
@@ -177,8 +180,6 @@ int save_dsa_pkcs8(char *out_path, char *file_pin, key_material_t *pkey)
 		return 1;
 	}
 
-	OpenSSL_add_all_algorithms();
-
 	dsa = DSA_new();
 	dsa->p =        BN_bin2bn((unsigned char*)pkey[TAG_PRIME].big,    pkey[TAG_PRIME].size, NULL);
 	dsa->q =        BN_bin2bn((unsigned char*)pkey[TAG_SUBPRIME].big, pkey[TAG_SUBPRIME].size, NULL);
@@ -193,8 +194,6 @@ int save_dsa_pkcs8(char *out_path, char *file_pin, key_material_t *pkey)
 		fprintf(stderr, "ERROR: Could not convert DSA key to EVP_PKEY.\n");
 		DSA_free(dsa);
 		EVP_PKEY_free(ossl_pkey);
-		EVP_cleanup();
-		CRYPTO_cleanup_all_ex_data();
 		return 1;
 	}
 	DSA_free(dsa);
@@ -204,8 +203,6 @@ int save_dsa_pkcs8(char *out_path, char *file_pin, key_material_t *pkey)
 	{
 		fprintf(stderr, "ERROR: Could not convert EVP_PKEY to PKCS#8.\n");
 		EVP_PKEY_free(ossl_pkey);
-		EVP_cleanup();
-		CRYPTO_cleanup_all_ex_data();
 		return 1;
 	}
 	EVP_PKEY_free(ossl_pkey);
@@ -215,8 +212,6 @@ int save_dsa_pkcs8(char *out_path, char *file_pin, key_material_t *pkey)
 	{
 		fprintf(stderr, "ERROR: Could not open the output file.\n");
 		PKCS8_PRIV_KEY_INFO_free(p8inf);
-		EVP_cleanup();
-		CRYPTO_cleanup_all_ex_data();
 		return 1;
 	}
 
@@ -246,8 +241,6 @@ int save_dsa_pkcs8(char *out_path, char *file_pin, key_material_t *pkey)
 
 	PKCS8_PRIV_KEY_INFO_free(p8inf);
 	BIO_free_all(out);
-	EVP_cleanup();
-	CRYPTO_cleanup_all_ex_data();
 
 	return result;
 }
