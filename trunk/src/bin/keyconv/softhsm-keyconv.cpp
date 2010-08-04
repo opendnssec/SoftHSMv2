@@ -205,7 +205,7 @@ int to_pkcs8(char *in_path, char *out_path, char *file_pin)
 					error = 1;
 					break;
 				}
-				if (m > FILE_MAJOR_VERSION || n > FILE_MINOR_VERSION)
+				if (m > FILE_MAJOR_VERSION || (m == FILE_MAJOR_VERSION && n > FILE_MINOR_VERSION))
 				{
 					fprintf(stderr, "ERROR: Cannot parse this version of file format, "
 							"v%i.%i.\n", m, n);
