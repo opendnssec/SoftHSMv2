@@ -46,6 +46,20 @@
 #include <openssl/err.h>
 #include <openssl/pkcs12.h>
 
+// Init OpenSSL
+void crypto_init()
+{
+	// We do not need to do this one
+	// OpenSSL_add_all_algorithms();
+}
+  
+// Final OpenSSL
+void crypto_final()
+{
+	// EVP_cleanup();
+	CRYPTO_cleanup_all_ex_data();
+}
+
 // Import a key pair from given path
 int crypto_import_key_pair
 (
@@ -58,13 +72,9 @@ int crypto_import_key_pair
 	int noPublicKey
 )
 {
-	OpenSSL_add_all_algorithms();
-
 	EVP_PKEY *pkey = crypto_read_file(filePath, filePIN);
 	if (!pkey)
 	{
-		EVP_cleanup();
-		CRYPTO_cleanup_all_ex_data();
 		return 1;
 	}
 
@@ -82,8 +92,6 @@ int crypto_import_key_pair
 		default:
 			fprintf(stderr, "ERROR: Cannot handle this algorithm.\n");
 			EVP_PKEY_free(pkey);
-			EVP_cleanup();
-			CRYPTO_cleanup_all_ex_data();
 			return 1;
 			break;
 	}
@@ -107,8 +115,6 @@ int crypto_import_key_pair
 		result = 1;
 	}
 
-	EVP_cleanup();
-	CRYPTO_cleanup_all_ex_data();
 	return result;
 }
 

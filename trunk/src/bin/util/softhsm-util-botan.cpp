@@ -41,9 +41,41 @@
 #include <iostream>
 #include <fstream>
 
+#include <botan/init.h>
 #include <botan/auto_rng.h>
 #include <botan/pkcs8.h>
 #include <botan/bigint.h>
+
+bool was_initialized = false;
+
+// Init Botan
+void crypto_init()
+{
+	// The PKCS#11 library might be using Botan
+	// Check if it has already initialized Botan
+	Botan::Library_State* state = Botan::swap_global_state(0);
+	// now put it back
+	Botan::swap_global_state(state);
+
+	if (state)
+	{
+		was_initialized = true;
+	}
+
+	if (was_initialized == false)
+	{
+		Botan::LibraryInitializer::initialize("thread_safe=true");
+	}
+}
+  
+// Final Botan
+void crypto_final()
+{
+	if (was_initialized == false)
+	{
+		Botan::LibraryInitializer::deinitialize();
+	}
+}
 
 // Import a key pair from given path
 int crypto_import_key_pair

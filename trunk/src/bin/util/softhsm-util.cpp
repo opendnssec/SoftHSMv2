@@ -692,7 +692,9 @@ int importKeyPair
 		return 1;
 	}
 
+	crypto_init();
 	int result = crypto_import_key_pair(hSession, filePath, filePIN, label, objID, objIDLen, noPublicKey);
+	crypto_final();
 
 	free(objID);
 

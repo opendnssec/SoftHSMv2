@@ -49,6 +49,8 @@ int crypto_import_key_pair(CK_SESSION_HANDLE hSession, char *filePath, char *fil
 // Support functions
 
 void getPW(char *pin, char *newPIN, CK_ULONG userType);
+void crypto_init();
+void crypto_final();
 
 /// Hex
 char* hexStrToBin(char *objectID, int idLength, int *newLen);
