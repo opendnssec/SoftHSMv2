@@ -53,11 +53,35 @@ AC_PROG_CXX
 ACX_PEDANTIC
 ACX_STRICT
 
-# What crypto backend to use and if we want to support GOST
+# What crypto backend to use and if we want to have support GOST
 ACX_CRYPTO_BACKEND
 
 # Non-paged memory for secure storage
 ACX_NON_PAGED_MEMORY
+
+# If the user want to have the migration tool
+# Requires SQLite3
+AC_ARG_WITH(migrate,
+	AC_HELP_STRING([--with-migrate],
+		[Build the migration tool. Requires SQLite3.]
+	),
+	[build_migrate="${withval}"],
+	[build_migrate="no"]
+)
+AC_MSG_CHECKING(if building with softhsm-migrate)
+if test "x${build_migrate}" = "xyes"; then
+	AC_MSG_RESULT(yes)
+	ACX_SQLITE3
+	YIELD_LIB=
+	# Solaris has sched_yield in librt, not in libpthread or libc.
+	# Solaris 2.5.1, 2.6 has sched_yield in libposix4, not librt.
+	AC_CHECK_LIB(rt, sched_yield, [YIELD_LIB=-lrt],
+		[AC_CHECK_LIB(posix4, sched_yield, [YIELD_LIB=-lposix4])])
+	AC_SUBST([YIELD_LIB])
+else
+	AC_MSG_RESULT(no)
+fi
+AM_CONDITIONAL([BUILD_MIGRATE], [test "x${build_migrate}" = "xyes"])
 
 # Check for libraries
 ACX_DLOPEN
@@ -116,6 +140,7 @@ AC_CONFIG_FILES([
 	src/lib/user_mgr/Makefile
 	src/bin/Makefile
 	src/bin/keyconv/Makefile
+	src/bin/migrate/Makefile
 	src/bin/util/Makefile
 	src/bin/util/softhsm-util.1
 ])
