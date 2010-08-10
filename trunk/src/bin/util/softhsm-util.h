@@ -48,7 +48,6 @@ int crypto_import_key_pair(CK_SESSION_HANDLE hSession, char *filePath, char *fil
 
 // Support functions
 
-void getPW(char *pin, char *newPIN, CK_ULONG userType);
 void crypto_init();
 void crypto_final();
 
@@ -56,8 +55,7 @@ void crypto_final();
 char* hexStrToBin(char *objectID, int idLength, int *newLen);
 int hexdigit_to_int(char ch);
 
-/// Config
-CK_C_GetFunctionList loadLibrary(char *module);
+/// Library
 static void *moduleHandle;
 extern CK_FUNCTION_LIST_PTR p11;
 

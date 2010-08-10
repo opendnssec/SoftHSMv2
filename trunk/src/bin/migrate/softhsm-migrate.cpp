@@ -35,6 +35,8 @@
 
 #include <config.h>
 #include "softhsm-migrate.h"
+#include "getpw.h"
+#include "library.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -44,9 +46,6 @@
 #include <iostream>
 #include <fstream>
 #include <sched.h>
-#if defined(HAVE_DLOPEN)
-#include <dlfcn.h>
-#endif
 
 // Display the usage
 void usage()
@@ -148,7 +147,7 @@ int main(int argc, char *argv[])
 	}
 
 	// Get a pointer to the function list for PKCS#11 library
-	CK_C_GetFunctionList pGetFunctionList = loadLibrary(module);
+	CK_C_GetFunctionList pGetFunctionList = loadLibrary(module, &moduleHandle);
 	if (pGetFunctionList == NULL)
 	{
 		fprintf(stderr, "ERROR: Could not load the library.\n");
@@ -171,74 +170,9 @@ int main(int argc, char *argv[])
 
 	// Finalize the library
 	p11->C_Finalize(NULL_PTR);
-	if (moduleHandle)
-	{
-#if defined(HAVE_LOADLIBRARY)
-		// no idea
-#elif defined(HAVE_DLOPEN)
-		dlclose(moduleHandle);
-#endif
-	}
+	unloadLibrary(moduleHandle);
 
 	return result;
-}
-
-// Load the PKCS#11 library
-CK_C_GetFunctionList loadLibrary(char *module)
-{
-	CK_C_GetFunctionList pGetFunctionList = NULL;
-
-#if defined(HAVE_LOADLIBRARY)
-	// Load PKCS #11 library
-	if (module)
-	{
-		HINSTANCE hDLL = LoadLibrary(_T(module));
-	}
-	else
-	{
-		HINSTANCE hDLL = LoadLibrary(_T(DEFAULT_PKCS11_LIB));
-	}
-
-	if (hDLL == NULL)
-	{
-		// Failed to load the PKCS #11 library
-		return NULL;
-	}
-
-	// Retrieve the entry point for C_GetFunctionList
-	pGetFunctionList = (CK_C_GetFunctionList) GetProcAddress(hDLL, _T("C_GetFunctionList"));
-            
-#elif defined(HAVE_DLOPEN)
-	// Load PKCS #11 library
-	void* pDynLib;
-	if (module)
-	{
-		pDynLib = dlopen(module, RTLD_NOW | RTLD_LOCAL);
-	}
-	else
-	{
-		pDynLib = dlopen(DEFAULT_PKCS11_LIB, RTLD_NOW | RTLD_LOCAL);
-	}
-
-	if (pDynLib == NULL)
-	{
-		// Failed to load the PKCS #11 library
-		return NULL;
-	}
-
-	// Retrieve the entry point for C_GetFunctionList
-	pGetFunctionList = (CK_C_GetFunctionList) dlsym(pDynLib, "C_GetFunctionList");
-
-	// Store the handle so we can dlclose it later
-	moduleHandle = pDynLib;
-
-#else
-	fprintf(stderr, "ERROR: Not compiled with library support.\n");
-
-	return NULL;
-#endif
-
-	return pGetFunctionList;
 }
 
 // Migrate the database
@@ -336,93 +270,6 @@ void finalStatements()
 	if (select_an_attribute_sql) sqlite3_finalize(select_an_attribute_sql);
 	if (select_object_ids_sql) sqlite3_finalize(select_object_ids_sql);
 	if (count_object_id_sql) sqlite3_finalize(count_object_id_sql);
-}
-
-// Get a password from the user
-void getPW(char *pin, char *newPIN, CK_ULONG userType)
-{
-	// Keep a copy of the PIN because getpass/getpassphrase 
-	// will overwrite the previous PIN.
-	char password[MAX_PIN_LEN+1];
-
-	int length = 0;
-
-	if (pin)
-	{
-		length = strlen(pin);
-	}
-
-	while (length < MIN_PIN_LEN || length > MAX_PIN_LEN)
-	{
-		if (userType == CKU_SO)
-		{
-			printf("*** SO PIN (%i-%i characters) ***\n",
-				MIN_PIN_LEN, MAX_PIN_LEN); 
-		}
-		else
-		{
-			printf("*** User PIN (%i-%i characters) ***\n",
-				MIN_PIN_LEN, MAX_PIN_LEN); 
-		}
-
-#ifdef HAVE_GETPASSPHRASE
-		if (userType == CKU_SO)
-		{
-			pin = getpassphrase("Please enter SO PIN: ");
-		}
-		else
-		{
-			pin = getpassphrase("Please enter user PIN: ");
-		}
-#else
-		if (userType == CKU_SO)
-		{
-			pin = getpass("Please enter SO PIN: ");
-		}
-		else
-		{
-			pin = getpass("Please enter user PIN: ");
-		}
-#endif
-
-		length = strlen(pin);
-		if (length < MIN_PIN_LEN || length > MAX_PIN_LEN)
-		{
-			fprintf(stderr, "ERROR: The length of the PIN is out of range.\n");
-			length = 0;
-			continue;
-		}
-		strcpy(password, pin);
-
-#ifdef HAVE_GETPASSPHRASE
-		if (userType == CKU_SO)
-		{
-			pin = getpassphrase("Please reenter SO PIN: ");
-		}
-		else
-		{
-			pin = getpassphrase("Please reenter user PIN: ");
-		}
-#else
-		if (userType == CKU_SO)
-		{
-			pin = getpass("Please reenter SO PIN: ");
-		}
-		else
-		{
-			pin = getpass("Please reenter user PIN: ");
-		}
-#endif
-
-		if (strcmp(password, pin))
-		{
-			fprintf(stderr, "ERROR: The entered PINs are not equal.\n");
-			length = 0;
-			continue;
-		}
-	}
-
-	strcpy(newPIN, pin);
 }
 
 // Open a connection to a valid SoftHSM v1 database

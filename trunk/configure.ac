@@ -139,6 +139,7 @@ AC_CONFIG_FILES([
 	src/lib/slot_mgr/Makefile
 	src/lib/user_mgr/Makefile
 	src/bin/Makefile
+	src/bin/common/Makefile
 	src/bin/keyconv/Makefile
 	src/bin/migrate/Makefile
 	src/bin/util/Makefile

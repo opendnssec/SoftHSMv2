@@ -2,7 +2,7 @@
 
 MAINTAINERCLEANFILES = $(srcdir)/Makefile.in
 
-SUBDIRS = keyconv util
+SUBDIRS = common keyconv util
 
 if BUILD_MIGRATE
 SUBDIRS += migrate
