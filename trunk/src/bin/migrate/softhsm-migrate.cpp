@@ -534,7 +534,7 @@ CK_OBJECT_HANDLE* getObjects(sqlite3 *db, CK_ULONG *objectCount)
 
 	if (retSQL != SQLITE_ROW)
 	{
-		fprintf(stderr, "ERROR: Could not find the number of objects in the database\n");
+		fprintf(stderr, "ERROR: Could not count the number of objects in the database\n");
 		sqlite3_reset(count_object_id_sql);
 		return NULL;
 	}
@@ -542,6 +542,12 @@ CK_OBJECT_HANDLE* getObjects(sqlite3 *db, CK_ULONG *objectCount)
 	// Get the number of objects
 	objectsInDB = sqlite3_column_int(count_object_id_sql, 0);
 	sqlite3_reset(count_object_id_sql);
+
+	if (!objectsInDB)
+	{
+		fprintf(stderr, "ERROR: There are not objects in the database\n");
+		return NULL;
+	}
 
 	// Create the object-reference buffer
 	objectRefs = (CK_OBJECT_HANDLE *)malloc(objectsInDB * sizeof(CK_OBJECT_HANDLE));
