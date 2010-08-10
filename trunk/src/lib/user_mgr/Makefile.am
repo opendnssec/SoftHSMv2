@@ -9,4 +9,4 @@ AM_CPPFLAGS =			-I$(srcdir)/../cryptoki_compat \
 noinst_LTLIBRARIES =		libsofthsm_usermgr.la
 libsofthsm_usermgr_la_SOURCES =	# No source yet
 
-EXTRA_DIST =			$(srcdir)/*.h
+# EXTRA_DIST =			$(srcdir)/*.h
