@@ -5,7 +5,7 @@ MAINTAINERCLEANFILES =	$(srcdir)/Makefile.in
 AM_CPPFLAGS = 		-I$(srcdir)/../../lib/cryptoki_compat \
 			@CRYPTO_INCLUDES@
 
-man_MANS =		softhsm-util.1
+dist_man_MANS =		softhsm-util.1
 
 bin_PROGRAMS =		softhsm-util
 
@@ -23,5 +23,4 @@ softhsm_util_SOURCES +=	softhsm-util-botan.cpp
 endif
 
 EXTRA_DIST =		$(srcdir)/*.h \
-			$(srcdir)/*.cpp \
-			$(srcdir)/softhsm-util.1.in
+			$(srcdir)/*.cpp

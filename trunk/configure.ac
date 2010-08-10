@@ -142,7 +142,6 @@ AC_CONFIG_FILES([
 	src/bin/keyconv/Makefile
 	src/bin/migrate/Makefile
 	src/bin/util/Makefile
-	src/bin/util/softhsm-util.1
 ])
 
 AC_OUTPUT

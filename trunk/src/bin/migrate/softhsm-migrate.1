@@ -8,9 +8,9 @@ softhsm-migrate \- SoftHSM v1 migration tool
 .I path
 .B \-\-slot
 .I number
-.B \-\-pin
+.RB [ \-\-pin
 .I PIN
-.RB [ \-\-no\-public\-key ]
+.B \-\-no\-public\-key]
 .SH DESCRIPTION
 .B softhsm-migration
 is a tool that can migrate SoftHSM v1 databases to PKCS#11.
@@ -53,11 +53,9 @@ A token database can be migrated with the following command:
 softhsm-migrate \-\-db /home/user/token.db \-\-slot 1
 .fi
 .RE
-.SH AUTHOR
-.LP
+.SH AUTHORS
 Written by Rickard Bellgrim and Roland van Rijswijk.
 .LP
 .SH "SEE ALSO"
 .IR softhsm-keyconv (1),
-.IR softhsm-util (1),
-.IR softhsm.conf (5)
+.IR softhsm-util (1)

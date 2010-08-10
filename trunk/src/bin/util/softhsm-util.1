@@ -25,9 +25,9 @@ softhsm-util \- support tool for libsofthsm
 .I number
 \\
 .ti +0.7i
-.B \-\-pin
+.RB [ \-\-pin
 .I PIN
-.RB [ \-\-no\-public\-key ]
+.B \-\-no\-public\-key]
 .B \-\-label
 .I text
 .B \-\-id
@@ -198,23 +198,9 @@ softhsm-util \-\-import key1.pem \-\-slot 1 \-\-label "My key" \\
 if the key file is encrypted.)
 .RE
 .LP
-.LP
-.SH ENVIRONMENT
-.TP
-SOFTHSM_CONF
-When defined, the value
-will be used
-as path to the configuration file.
-.SH FILES
-.TP
-.I @default_softhsm_conf@
-This configuration file handles the slots and the tokens.
-See softhsm.conf(5) for more information.
-.LP
-.SH AUTHOR
-.LP
+.SH AUTHORS
 Written by Rickard Bellgrim and Roland van Rijswijk.
 .LP
 .SH "SEE ALSO"
 .IR softhsm-keyconv (1),
-.IR softhsm.conf (5)
+.IR softhsm-migrate (1)
