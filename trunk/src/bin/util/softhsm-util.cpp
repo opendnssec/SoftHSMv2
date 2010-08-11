@@ -204,7 +204,7 @@ int main(int argc, char *argv[])
 	}
 
 	// No action given, display the usage.
-	if (action == 0)
+	if (!action)
 	{
 		usage();
 	}
@@ -212,7 +212,7 @@ int main(int argc, char *argv[])
 	{
 		// Get a pointer to the function list for PKCS#11 library
 		CK_C_GetFunctionList pGetFunctionList = loadLibrary(module, &moduleHandle);
-		if (pGetFunctionList == NULL)
+		if (!pGetFunctionList)
 		{
 			fprintf(stderr, "ERROR: Could not load the library.\n");
 			exit(1);
