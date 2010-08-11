@@ -19,7 +19,8 @@ objstoretest_SOURCES =		objstoretest.cpp \
 				DirectoryTests.cpp \
 				UUIDTests.cpp \
 				FileTests.cpp \
-				ObjectFileTests.cpp
+				ObjectFileTests.cpp \
+				OSTokenTests.cpp
 
 objstoretest_LDADD =		../../libsofthsm_convarch.la 
 

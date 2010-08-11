@@ -60,6 +60,8 @@ OSToken::OSToken(const std::string tokenPath)
 	this->tokenPath = tokenPath;
 	valid = (sync != NULL) && (tokenMutex != NULL) && tokenDir->isValid() && tokenObject->isValid();
 
+	DEBUG_MSG("Opened token %s", tokenPath.c_str());
+
 	index(true);
 }
 
@@ -112,6 +114,8 @@ OSToken::OSToken(const std::string tokenPath)
 		return NULL;
 	}
 
+	DEBUG_MSG("Created new token %s", tokenDir.c_str());
+
 	return new OSToken(basePath + "/" + tokenDir);
 }
 
@@ -138,7 +142,18 @@ bool OSToken::setSOPIN(const ByteString& soPINBlob)
 {
 	OSAttribute soPIN(soPINBlob);
 
-	tokenObject->setAttribute(CKA_OS_SOPIN, soPIN);
+	CK_ULONG flags;
+
+	if (tokenObject->setAttribute(CKA_OS_SOPIN, soPIN) &&
+	    getTokenFlags(flags))
+	{
+		flags = flags & !CKF_SO_PIN_LOCKED;
+		flags = flags & !CKF_SO_PIN_TO_BE_CHANGED;
+
+		return setTokenFlags(flags);
+	}
+
+	return false;
 }
 
 // Get the SO PIN
@@ -184,6 +199,50 @@ bool OSToken::getUserPIN(ByteString& userPINBlob)
 	if (userPIN != NULL)
 	{
 		userPINBlob = userPIN->getByteStringValue();
+
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+
+// Retrieve the token label
+bool OSToken::getTokenLabel(ByteString& label)
+{
+	if (!tokenObject->isValid())
+	{
+		return false;
+	}
+
+	OSAttribute* tokenLabel = tokenObject->getAttribute(CKA_OS_TOKENLABEL);
+
+	if (tokenLabel != NULL)
+	{
+		label = tokenLabel->getByteStringValue();
+
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+
+// Retrieve the token serial
+bool OSToken::getTokenSerial(ByteString& serial)
+{
+	if (!tokenObject->isValid())
+	{
+		return false;
+	}
+
+	OSAttribute* tokenSerial = tokenObject->getAttribute(CKA_OS_TOKENSERIAL);
+
+	if (tokenSerial != NULL)
+	{
+		serial = tokenSerial->getByteStringValue();
 
 		return true;
 	}
@@ -241,6 +300,71 @@ std::set<ObjectFile*> OSToken::getObjects()
 	return objects;
 }
 
+// Create a new object
+ObjectFile* OSToken::createObject()
+{
+	// Generate a name for the object
+	std::string objectPath = tokenPath + "/" + UUID::newUUID() + ".object";
+
+	// Create the new object file
+	ObjectFile* newObject = new ObjectFile(objectPath, true);
+
+	if (!newObject->isValid())
+	{
+		ERROR_MSG("Failed to create new object %s", objectPath.c_str());
+
+		delete newObject;
+
+		return NULL;
+	}
+
+	// Now add it to the set of objects
+	MutexLocker lock(tokenMutex);
+
+	objects.insert(newObject);
+	allObjects.insert(newObject);
+	currentFiles.insert(newObject->getFilename());
+
+	DEBUG_MSG("(0x%08X) Created new object %s (0x%08X)", this, objectPath.c_str(), newObject);
+
+	sync->trigger();
+
+	return newObject;
+}
+
+// Delete an object
+bool OSToken::deleteObject(ObjectFile* object)
+{
+	if (objects.find(object) == objects.end())
+	{
+		ERROR_MSG("Cannot delete non-existent object 0x%08X", object);
+
+		return false;
+	}
+
+	MutexLocker lock(tokenMutex);
+
+	// Retrieve the filename of the object
+	std::string objectFilename = object->getFilename();
+
+	// Attempt to delete the file
+	if (!tokenDir->remove(objectFilename))
+	{
+		ERROR_MSG("Failed to delete object file %s", objectFilename.c_str());
+
+		return false;
+	}
+
+	objects.erase(object);
+	allObjects.erase(object);
+
+	DEBUG_MSG("Deleted object %s", objectFilename.c_str());
+
+	sync->trigger();
+
+	return true;
+}
+
 // Checks if the token is consistent
 bool OSToken::isValid()
 {
@@ -264,6 +388,8 @@ bool OSToken::index(bool isFirstTime /* = false */)
 		return false;
 	}
 
+	DEBUG_MSG("Token %s has changed", tokenPath.c_str());
+
 	// Retrieve the directory listing
 	std::vector<std::string> tokenFiles = tokenDir->getFiles();
 
@@ -275,6 +401,10 @@ bool OSToken::index(bool isFirstTime /* = false */)
 		if ((i->size() > 7) && (!(i->substr(i->size() - 7).compare(".object"))))
 		{
 			newSet.insert(*i);
+		}
+		else
+		{
+			DEBUG_MSG("Ignored file %s", i->c_str());
 		}
 	}
 
@@ -307,6 +437,11 @@ bool OSToken::index(bool isFirstTime /* = false */)
 		addedFiles = newSet;
 	}
 
+	currentFiles = newSet;
+
+	DEBUG_MSG("%d objects were added and %d objects were removed", addedFiles.size(), removedFiles.size());
+	DEBUG_MSG("Current directory set contains %d objects", currentFiles.size());
+
 	// Now update the set of objects
 	MutexLocker lock(tokenMutex);
 
@@ -317,6 +452,8 @@ bool OSToken::index(bool isFirstTime /* = false */)
 		ObjectFile* newObject = new ObjectFile(tokenPath + "/" + *i);
 		newObject->linkToken(this);
 
+		DEBUG_MSG("(0x%08X) New object %s (0x%08X) added", this, newObject->getFilename().c_str(), newObject);
+
 		objects.insert(newObject);
 		allObjects.insert(newObject);
 	}
@@ -326,15 +463,24 @@ bool OSToken::index(bool isFirstTime /* = false */)
 
 	for (std::set<ObjectFile*>::iterator i = objects.begin(); i != objects.end(); i++)
 	{
+		DEBUG_MSG("Processing %s (0x%08X)", (*i)->getFilename().c_str(), *i);
+
 		if (removedFiles.find((*i)->getFilename()) == removedFiles.end())
 		{
+			DEBUG_MSG("Adding object %s", (*i)->getFilename().c_str());
 			// This object gets to stay in the set
 			newObjects.insert(*i);
+		}
+		else
+		{
+			(*i)->invalidate();
 		}
 	}
 
 	// Set the new objects
 	objects = newObjects;
+
+	DEBUG_MSG("The token now contains %d objects", objects.size());
 
 	return true;
 }

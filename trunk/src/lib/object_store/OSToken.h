@@ -80,8 +80,20 @@ public:
 	// Set the token flags
 	bool setTokenFlags(const CK_ULONG flags);
 
+	// Retrieve the token label
+	bool getTokenLabel(ByteString& label);
+
+	// Retrieve the token serial
+	bool getTokenSerial(ByteString& serial);
+
 	// Retrieve objects
 	std::set<ObjectFile*> getObjects();
+
+	// Create a new object
+	ObjectFile* createObject();
+
+	// Delete an object
+	bool deleteObject(ObjectFile* object);
 
 	// Destructor
 	virtual ~OSToken();

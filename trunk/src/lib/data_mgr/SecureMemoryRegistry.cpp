@@ -66,13 +66,13 @@ void SecureMemoryRegistry::add(void* pointer, size_t blocksize)
 {
 	registry[pointer] = blocksize;
 
-	DEBUG_MSG("Registered block of %d bytes at 0x%x", blocksize, pointer);
+	//DEBUG_MSG("Registered block of %d bytes at 0x%x", blocksize, pointer);
 }
 
 // Unregister a block of memory
 size_t SecureMemoryRegistry::remove(void* pointer)
 {
-	DEBUG_MSG("Unregistered block of %d bytes at 0x%x", registry[pointer], pointer);
+	//DEBUG_MSG("Unregistered block of %d bytes at 0x%x", registry[pointer], pointer);
 
 	size_t rv = registry[pointer];
 

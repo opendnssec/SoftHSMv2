@@ -49,17 +49,22 @@ ObjectFile::ObjectFile(std::string path, bool isNew /* = false */)
 {
 	this->path = path;
 	ipcSignal = IPCSignal::create(path);
-	valid = (ipcSignal != NULL);
+	objectMutex = MutexFactory::i()->getMutex();
+	valid = (ipcSignal != NULL) && (objectMutex != NULL);
 	token = NULL;
 
 	if (!valid) return;
 
 	if (!isNew)
 	{
+		DEBUG_MSG("Opened existing object %s", path.c_str());
+
 		refresh(true);
 	}
 	else
 	{
+		DEBUG_MSG("Created new object %s", path.c_str());
+
 		// Create an empty object file
 		store();
 	}
@@ -75,12 +80,19 @@ ObjectFile::~ObjectFile()
 	{
 		delete ipcSignal;
 	}
+
+	if (objectMutex != NULL)
+	{
+		delete objectMutex;
+	}
 }
 
 // Check if the specified attribute exists
 bool ObjectFile::attributeExists(CK_ATTRIBUTE_TYPE type)
 {
 	refresh();
+
+	MutexLocker lock(objectMutex);
 
 	return valid && (attributes[type] != NULL);
 }
@@ -89,6 +101,8 @@ bool ObjectFile::attributeExists(CK_ATTRIBUTE_TYPE type)
 OSAttribute* ObjectFile::getAttribute(CK_ATTRIBUTE_TYPE type)
 {
 	refresh();
+
+	MutexLocker lock(objectMutex);
 
 	return attributes[type];
 }
@@ -105,14 +119,18 @@ bool ObjectFile::setAttribute(CK_ATTRIBUTE_TYPE type, const OSAttribute& attribu
 		return false;
 	}
 
-	if (attributes[type] != NULL)
 	{
-		delete attributes[type];
+		MutexLocker lock(objectMutex);
 
-		attributes[type] = NULL;
+		if (attributes[type] != NULL)
+		{
+			delete attributes[type];
+
+			attributes[type] = NULL;
+		}
+
+		attributes[type] = new OSAttribute(attribute);
 	}
-
-	attributes[type] = new OSAttribute(attribute);
 
 	store();
 
@@ -160,10 +178,14 @@ void ObjectFile::refresh(bool isFirstTime /* = false */)
 		return;
 	}
 
+	DEBUG_MSG("Object %s has changed", path.c_str());
+
 	// Discard the existing set of attributes
 	discardAttributes();
 
 	objectFile.lock();
+
+	MutexLocker lock(objectMutex);
 
 	// Read back the attributes
 	do
@@ -294,6 +316,8 @@ void ObjectFile::store()
 
 	objectFile.lock();
 
+	MutexLocker lock(objectMutex);
+
 	for (std::map<CK_ATTRIBUTE_TYPE, OSAttribute*>::iterator i = attributes.begin(); i != attributes.end(); i++)
 	{
 		if (i->second == NULL)
@@ -375,6 +399,8 @@ void ObjectFile::store()
 // Discard the cached attributes
 void ObjectFile::discardAttributes()
 {
+	MutexLocker lock(objectMutex);
+
 	std::map<CK_ATTRIBUTE_TYPE, OSAttribute*> cleanUp = attributes;
 	attributes.clear();
 
@@ -394,7 +420,8 @@ void ObjectFile::discardAttributes()
 // Returns the file name of the object
 std::string ObjectFile::getFilename() const
 {
-	if (path.find_last_of("/") != std::string::npos)
+	if ((path.find_last_of("/") != std::string::npos) &&
+	    (path.find_last_of("/") < path.size()))
 	{
 		return path.substr(path.find_last_of("/") + 1);
 	}

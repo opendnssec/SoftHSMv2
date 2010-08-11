@@ -40,6 +40,7 @@
 #include "ByteString.h"
 #include "OSAttribute.h"
 #include "IPCSignal.h"
+#include "MutexFactory.h"
 #include <string>
 #include <map>
 #include <time.h>
@@ -105,6 +106,9 @@ private:
 
 	// The token this object is associated with
 	OSToken* token;
+
+	// Mutex object for thread-safeness
+	Mutex* objectMutex;
 };
 
 #endif // !_SOFTHSM_V2_OBJECTFILE_H

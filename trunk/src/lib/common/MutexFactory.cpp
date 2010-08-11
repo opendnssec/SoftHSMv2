@@ -81,13 +81,13 @@ MutexLocker::MutexLocker(Mutex* mutex)
 {
 	this->mutex = mutex;
 
-	this->mutex->lock();
+	if (this->mutex != NULL) this->mutex->lock();
 }
 
 // Destructor
 MutexLocker::~MutexLocker()
 {
-	this->mutex->unlock();
+	if (this->mutex != NULL) this->mutex->unlock();
 }
 
 /*****************************************************************************
