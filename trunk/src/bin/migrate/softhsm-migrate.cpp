@@ -621,7 +621,7 @@ int dbRSAPub2session(sqlite3 *db, CK_OBJECT_HANDLE objectID, CK_SESSION_HANDLE h
 	rv = p11->C_CreateObject(hSession, pubTemplate, 17, &hKey);
 	if (rv != CKR_OK)
 	{
-		fprintf(stderr, "ERROR %lu: Could not save the public key in the token. "
+		fprintf(stderr, "ERROR %X: Could not save the public key in the token. "
 				"Skipping object %i\n", rv, objectID);
 		result = 1;
 	}
@@ -686,7 +686,7 @@ int dbRSAPriv2session(sqlite3 *db, CK_OBJECT_HANDLE objectID, CK_SESSION_HANDLE 
 	rv = p11->C_CreateObject(hSession, privTemplate, 23, &hKey);
 	if (rv != CKR_OK)
 	{
-		fprintf(stderr, "ERROR %lu: Could not save the private key in the token. "
+		fprintf(stderr, "ERROR %X: Could not save the private key in the token. "
 				"Skipping object %i\n", rv, objectID);
 		result = 1;
 	}
