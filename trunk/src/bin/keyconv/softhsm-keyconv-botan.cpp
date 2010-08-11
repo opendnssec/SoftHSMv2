@@ -62,7 +62,7 @@ void crypto_final()
 // Save the RSA key as a PKCS#8 file
 int save_rsa_pkcs8(char *out_path, char *file_pin, key_material_t *pkey)
 {
-
+	int result = 0;
 	Botan::Private_Key *priv_key = NULL;
 	Botan::AutoSeeded_RNG *rng;
 	Botan::BigInt bigE, bigP, bigQ, bigN, bigD;
@@ -127,18 +127,20 @@ int save_rsa_pkcs8(char *out_path, char *file_pin, key_material_t *pkey)
 	{
 		fprintf(stderr, "%s\n", e.what());
 		fprintf(stderr, "ERROR: Could not write to file.\n");
+		result = 1;
 	}
 
 	delete rng;
 	delete priv_key;
 	priv_file.close();
 
-	return 0;
+	return result;
 }
 
 // Save the DSA key as a PKCS#8 file
 int save_dsa_pkcs8(char *out_path, char *file_pin, key_material_t *pkey)
 {
+	int result = 0;
 	Botan::Private_Key *priv_key = NULL;
 	Botan::AutoSeeded_RNG *rng;
 	Botan::BigInt bigDP, bigDQ, bigDG, bigDX;
@@ -201,11 +203,12 @@ int save_dsa_pkcs8(char *out_path, char *file_pin, key_material_t *pkey)
 	{
 		fprintf(stderr, "%s\n", e.what());
 		fprintf(stderr, "ERROR: Could not write to file.\n");
+		result = 1;
 	}
 
 	delete rng;
 	delete priv_key;
 	priv_file.close();
 
-	return 0;
+	return result;
 }
