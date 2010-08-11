@@ -40,18 +40,48 @@
 #include "config.h"
 #include "OSAttribute.h"
 #include "ObjectFile.h"
-#include "File.h"
 #include "Directory.h"
 #include "UUID.h"
+#include "IPCSignal.h"
+#include "MutexFactory.h"
+#include "cryptoki.h"
 #include <string>
-#include <vector>
+#include <set>
 #include <map>
+#include <list>
 
 class OSToken
 {
 public:
 	// Constructor
-	OSToken(std::string tokenPath);
+	OSToken(const std::string tokenPath);
+
+	// Create a new token
+	static OSToken* createToken(const std::string basePath, const std::string tokenDir, const ByteString& label, const ByteString& serial);
+
+	// Constructor for new tokens
+	OSToken(const std::string tokenPath, const ByteString& label, const ByteString& serialNumber);
+
+	// Set the SO PIN
+	bool setSOPIN(const ByteString& soPINBlob);
+
+	// Get the SO PIN
+	bool getSOPIN(ByteString& soPINBlob);
+
+	// Set the user PIN
+	bool setUserPIN(ByteString userPINBlob);
+
+	// Get the user PIN
+	bool getUserPIN(ByteString& userPINBlob);
+
+	// Get the token flags
+	bool getTokenFlags(CK_ULONG& flags);
+
+	// Set the token flags
+	bool setTokenFlags(const CK_ULONG flags);
+
+	// Retrieve objects
+	std::set<ObjectFile*> getObjects();
 
 	// Destructor
 	virtual ~OSToken();
@@ -60,20 +90,44 @@ public:
 	bool isValid();
 
 private:
+	// ObjectFile instances can call the index() function
+	friend class ObjectFile;
+
 	// Index the token
+	bool index(bool isFirstTime = false);
 
 	// Is the token consistent and valid?
 	bool valid;
 
-	// The objects of the token
-	std::vector<ObjectFile*> objects;
+	// The token path
+	std::string tokenPath;
+
+	// The current objects of the token
+	std::set<ObjectFile*> objects;
+
+	// All the objects ever associated with this token
+	//
+	// This set is kept to be able to clean up when the token
+	// instance is discarded; in case the contents of a token
+	// change, some objects may disappear but we cannot simply
+	// delete them since they may still be referenced from an
+	// object outside of this class.
+	std::set<ObjectFile*> allObjects;
+
+	// The current list of files
+	std::set<std::string> currentFiles;
 
 	// The token object
 	ObjectFile* tokenObject;
 
-	// The token index
-	std::map<ByteString, ObjectFile*> map_by_id;
-	std::map<ByteString, ObjectFile*> map_by_label;
+	// Inter-process synchronisation
+	IPCSignal* sync;
+
+	// The directory object for this token
+	Directory* tokenDir;
+
+	// For thread safeness
+	Mutex* tokenMutex;
 };
 
 #endif // !_SOFTHSM_V2_OSTOKEN_H

@@ -39,7 +39,7 @@
 #include "cryptoki.h"
 
 // Define vendor tag; presumably the one below is reasonably unique
-#define CK_VENDOR_SOFTHSM	CKA_VENDOR_DEFINED + 0x5348 // 'SH'
+#define CKA_VENDOR_SOFTHSM	CKA_VENDOR_DEFINED + 0x5348 // 'SH'
 
 // Vendor defined attribute types for the token file
 #define CKA_OS_TOKENLABEL	CKA_VENDOR_SOFTHSM + 1

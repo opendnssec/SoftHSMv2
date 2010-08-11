@@ -34,6 +34,7 @@
 
 #include "config.h"
 #include "ObjectFile.h"
+#include "OSToken.h"
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -49,6 +50,7 @@ ObjectFile::ObjectFile(std::string path, bool isNew /* = false */)
 	this->path = path;
 	ipcSignal = IPCSignal::create(path);
 	valid = (ipcSignal != NULL);
+	token = NULL;
 
 	if (!valid) return;
 
@@ -123,11 +125,28 @@ bool ObjectFile::isValid()
 	return valid;
 }
 
+// Invalidate the object file externally; this method is normally
+// only called by the OSToken class in case an object file has
+// been deleted.
+void ObjectFile::invalidate()
+{
+	valid = false;
+
+	discardAttributes();
+}
+
 // Refresh the object if necessary
 void ObjectFile::refresh(bool isFirstTime /* = false */)
 {
+	// Refresh the associated token if set
+	if (token != NULL)
+	{
+		// This may cause this instance to become invalid
+		token->index();
+	}
+
 	// Check the IPC signal
-	if (!isFirstTime && !ipcSignal->wasTriggered())
+	if (!isFirstTime && (!valid || !ipcSignal->wasTriggered()))
 	{
 		return;
 	}
@@ -356,7 +375,10 @@ void ObjectFile::store()
 // Discard the cached attributes
 void ObjectFile::discardAttributes()
 {
-	for (std::map<CK_ATTRIBUTE_TYPE, OSAttribute*>::iterator i = attributes.begin(); i != attributes.end(); i++)
+	std::map<CK_ATTRIBUTE_TYPE, OSAttribute*> cleanUp = attributes;
+	attributes.clear();
+
+	for (std::map<CK_ATTRIBUTE_TYPE, OSAttribute*>::iterator i = cleanUp.begin(); i != cleanUp.end(); i++)
 	{
 		if (i->second == NULL)
 		{
@@ -366,7 +388,25 @@ void ObjectFile::discardAttributes()
 		delete i->second;
 		i->second = NULL;
 	}
+}
 
-	attributes.clear();
+
+// Returns the file name of the object
+std::string ObjectFile::getFilename() const
+{
+	if (path.find_last_of("/") != std::string::npos)
+	{
+		return path.substr(path.find_last_of("/") + 1);
+	}
+	else
+	{
+		return path;
+	}
+}
+
+// Link this object file instance with the specified token
+void ObjectFile::linkToken(OSToken* token)
+{
+	this->token = token;
 }
 

@@ -45,11 +45,14 @@
 #include <time.h>
 #include "cryptoki.h"
 
+// OSToken forward declaration
+class OSToken;
+
 class ObjectFile
 {
 public:
 	// Constructor
-	ObjectFile(std::string path, bool isNew = false);
+	ObjectFile(const std::string path, bool isNew = false);
 
 	// Destructor
 	virtual ~ObjectFile();
@@ -65,6 +68,17 @@ public:
 
 	// The validity state of the object
 	bool isValid();
+
+	// Invalidate the object file externally; this method is normally
+	// only called by the OSToken class in case an object file has
+	// been deleted.
+	void invalidate();
+
+	// Returns the file name of the object
+	std::string getFilename() const;
+
+	// Link this object file instance with the specified token
+	void linkToken(OSToken* token);
 
 private:
 	// Refresh the object if necessary
@@ -88,6 +102,9 @@ private:
 
 	// The object's validity state
 	bool valid;
+
+	// The token this object is associated with
+	OSToken* token;
 };
 
 #endif // !_SOFTHSM_V2_OBJECTFILE_H
