@@ -69,6 +69,9 @@ void SecureDataManager::initObject()
 
 	// Set the magic
 	magic = ByteString("524A52"); // RJR
+
+	// Get a mutex
+	dataMgrMutex = MutexFactory::i()->getMutex();
 }
 
 // Constructs a new SecureDataManager for a blank token; actual
@@ -79,13 +82,13 @@ SecureDataManager::SecureDataManager()
 }
 
 // Constructs a SecureDataManager using the specified key blob
-SecureDataManager::SecureDataManager(ByteString& keyBlob)
+SecureDataManager::SecureDataManager(const ByteString& soPINBlob, const ByteString& userPINBlob)
 {
 	initObject();
 
 	// De-serialise the key blob
-	soEncryptedKey = ByteString::chainDeserialise(keyBlob);
-	userEncryptedKey = ByteString::chainDeserialise(keyBlob);
+	soEncryptedKey = soPINBlob;
+	userEncryptedKey = userPINBlob;
 }
 
 // Destructor
@@ -99,6 +102,8 @@ SecureDataManager::~SecureDataManager()
 
 	// Clean up the mask
 	delete mask;
+
+	if (dataMgrMutex != NULL) delete dataMgrMutex;
 }
 
 // Generic function for creating an encrypted version of the key from the specified passphrase
@@ -144,17 +149,21 @@ bool SecureDataManager::pbeEncryptKey(const ByteString& passphrase, ByteString& 
 	// Then, add the key itself
 	ByteString key;
 
-	unmask(key);
-
-	bool rv = aes->encryptUpdate(key, block);
-
-	remask(key);
-
-	if (!rv) 
 	{
-		delete pbeKey;
+		MutexLocker lock(dataMgrMutex);
+
+		unmask(key);
+
+		bool rv = aes->encryptUpdate(key, block);
+
+		remask(key);
+	
+		if (!rv) 
+		{
+			delete pbeKey;
 		
-		return false;
+			return false;
+		}
 	}
 
 	encryptedKey += block;
@@ -275,6 +284,7 @@ bool SecureDataManager::login(const ByteString& passphrase, const ByteString& en
 	// And mask the key
 	decryptedKeyData.wipe();
 
+	MutexLocker lock(dataMgrMutex);
 	remask(key);
 
 	return true;
@@ -295,6 +305,8 @@ bool SecureDataManager::loginUser(const ByteString& userPIN)
 // Log out
 void SecureDataManager::logout()
 {
+	MutexLocker lock(dataMgrMutex);
+
 	// Clear the logged in state
 	soLoggedIn = userLoggedIn = false;
 
@@ -314,11 +326,15 @@ bool SecureDataManager::decrypt(const ByteString& encrypted, ByteString& plainte
 	AESKey theKey(256);
 	ByteString unmaskedKey;
 
-	unmask(unmaskedKey);
+	{
+		MutexLocker lock(dataMgrMutex);
 
-	theKey.setKeyBits(unmaskedKey);
+		unmask(unmaskedKey);
 
-	remask(unmaskedKey);
+		theKey.setKeyBits(unmaskedKey);
+
+		remask(unmaskedKey);
+	}
 
 	ByteString finalBlock;
 
@@ -346,11 +362,15 @@ bool SecureDataManager::encrypt(const ByteString& plaintext, ByteString& encrypt
 	AESKey theKey(256);
 	ByteString unmaskedKey;
 
-	unmask(unmaskedKey);
+	{
+		MutexLocker lock(dataMgrMutex);
 
-	theKey.setKeyBits(unmaskedKey);
+		unmask(unmaskedKey);
 
-	remask(unmaskedKey);
+		theKey.setKeyBits(unmaskedKey);
+
+		remask(unmaskedKey);
+	}
 
 	ByteString finalBlock;
 
@@ -366,10 +386,16 @@ bool SecureDataManager::encrypt(const ByteString& plaintext, ByteString& encrypt
 	return true;
 }
 
-// Returns the key blob for writing out to the token
-ByteString SecureDataManager::getKeyBlob()
+// Returns the key blob for the SO PIN
+ByteString SecureDataManager::getSOPINBlob()
 {
-	return soEncryptedKey.serialise() + userEncryptedKey.serialise();
+	return soEncryptedKey;
+}
+
+// Returns the key blob for the user PIN
+ByteString SecureDataManager::getUserPINBlob()
+{
+	return userEncryptedKey;
 }
 
 // Unmask the key

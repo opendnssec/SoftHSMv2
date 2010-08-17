@@ -50,6 +50,7 @@
 #include "AESKey.h"
 #include "RNG.h"
 #include "SymmetricAlgorithm.h"
+#include "MutexFactory.h"
 
 class SecureDataManager
 {
@@ -60,8 +61,8 @@ public:
 	// initialisation is done by setting the SO PIN
 	SecureDataManager();
 
-	// Constructs a SecureDataManager using the specified key blob
-	SecureDataManager(ByteString& keyBlob);
+	// Constructs a SecureDataManager using the specified SO PIN and user PIN
+	SecureDataManager(const ByteString& soPINBlob, const ByteString& userPINBlob);
 
 	// Destructor
 	virtual ~SecureDataManager();
@@ -89,8 +90,11 @@ public:
 	// Encrypt the supplied data
 	bool encrypt(const ByteString& plaintext, ByteString& encrypted);
 
-	// Returns the key blob for writing out to the token
-	ByteString getKeyBlob();
+	// Returns the key blob for the SO PIN
+	ByteString getSOPINBlob();
+
+	// Returns the key blob for the user PIN
+	ByteString getUserPINBlob();
 
 private:
 	// Initialise the object
@@ -134,6 +138,9 @@ private:
 
 	// AES instance
 	SymmetricAlgorithm* aes;
+
+	// Mutex
+	Mutex* dataMgrMutex;
 };
 
 #endif // !_SOFTHSM_V2_SECUREDATAMANAGER_H

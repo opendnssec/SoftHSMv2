@@ -69,7 +69,8 @@ void SecureDataMgrTests::testSecureDataManager()
 	CPPUNIT_ASSERT(!s1.loginUser(userPIN));
 	CPPUNIT_ASSERT(!s1.encrypt(plaintext, encrypted));
 	CPPUNIT_ASSERT(!s1.decrypt(encrypted, plaintext));
-	CPPUNIT_ASSERT(s1.getKeyBlob().size() == 16);
+	CPPUNIT_ASSERT(s1.getSOPINBlob().size() == 0);
+	CPPUNIT_ASSERT(s1.getUserPINBlob().size() == 0);
 
 	// Now set the SO PIN
 	CPPUNIT_ASSERT(s1.setSOPIN(soPIN));
@@ -108,14 +109,16 @@ void SecureDataMgrTests::testSecureDataManager()
 	CPPUNIT_ASSERT(!s1.encrypt(plaintext, encrypted));
 	CPPUNIT_ASSERT(!s1.decrypt(encrypted, plaintext));
 
-	// Export the key blob
-	ByteString keyBlob = s1.getKeyBlob();
+	// Export the key blobs
+	ByteString soPINBlob = s1.getSOPINBlob();
+	ByteString userPINBlob = s1.getUserPINBlob();
 
-	// Create a new instance with the exported key blob
-	SecureDataManager s2(keyBlob);
+	// Create a new instance with the exported key blobs
+	SecureDataManager s2(soPINBlob, userPINBlob);
 
 	// Check that the key blobs match
-	CPPUNIT_ASSERT(s1.getKeyBlob() == s2.getKeyBlob());
+	CPPUNIT_ASSERT(s1.getSOPINBlob() == s2.getSOPINBlob());
+	CPPUNIT_ASSERT(s1.getUserPINBlob() == s2.getUserPINBlob());
 
 	// Check that it is not possible to set the SO PIN
 	CPPUNIT_ASSERT(!s2.setSOPIN(soPIN));
@@ -149,8 +152,8 @@ void SecureDataMgrTests::testSecureDataManager()
 	CPPUNIT_ASSERT(!s2.encrypt(plaintext, encrypted));
 	CPPUNIT_ASSERT(!s2.decrypt(encrypted, plaintext));
 
-	// Check that the key blob differs
-	CPPUNIT_ASSERT(s1.getKeyBlob() != s2.getKeyBlob());
+	// Check that the key blobs differ
+	CPPUNIT_ASSERT(s1.getSOPINBlob() != s2.getSOPINBlob());
 
 	// Check that it is possible to log in with the new SO PIN
 	CPPUNIT_ASSERT(s2.loginSO(newSOPIN));
