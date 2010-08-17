@@ -38,11 +38,44 @@
 #include "config.h"
 #include "log.h"
 #include "ObjectStore.h"
+#include "Directory.h"
+#include "OSToken.h"
+#include "UUID.h"
 
 // Constructor
 ObjectStore::ObjectStore(std::string storePath)
 {
 	this->storePath = storePath;
+
+	// Find all tokens in the specified path
+	Directory storeDir(storePath);
+
+	if (!storeDir.isValid())
+	{
+		ERROR_MSG("Failed to enumerate object store in %s", storePath.c_str());
+
+		return;
+	}
+
+	// Assume that all subdirectories are tokens
+	std::vector<std::string> dirs = storeDir.getSubDirs();
+
+	for (std::vector<std::string>::iterator i = dirs.begin(); i != dirs.end(); i++)
+	{
+		// Create a token instance
+		OSToken* token = new OSToken(storePath + "/" + *i);
+
+		if (!token->isValid())
+		{
+			ERROR_MSG("Failed to open token %s", i->c_str());
+
+			delete token;
+
+			continue;
+		}
+
+		tokens.push_back(token);
+	}
 }
 
 // Destructor
@@ -73,9 +106,23 @@ OSToken* ObjectStore::getToken(size_t whichToken)
 }
 
 // Create a new token
-OSToken* ObjectStore::newToken(const ByteString& soPIN, std::string label)
+OSToken* ObjectStore::newToken(const ByteString& label)
 {
-	// TODO
-	return NULL;
+	// Generate a UUID for the token
+	std::string tokenUUID = UUID::newUUID();
+
+	// Convert the UUID to a serial number
+	std::string serialNumber = tokenUUID.substr(19, 4) + tokenUUID.substr(24);
+	ByteString serial((const unsigned char*) serialNumber.c_str(), serialNumber.size());
+
+	// Create the token
+	OSToken* newToken = OSToken::createToken(storePath, tokenUUID, label, serial);
+
+	if (newToken != NULL)
+	{
+		tokens.push_back(newToken);
+	}
+
+	return newToken;
 }
 

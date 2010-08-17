@@ -27,48 +27,32 @@
  */
 
 /*****************************************************************************
- ObjectStore.h
+ ObjectStoreTests.h
 
- The object store manages the separate tokens that the SoftHSM supports. Each
- token is organised as a directory containing files that are contain the
- token's objects. The object store is initialised with a root directory from
- which it enumerates the tokens.
+ Contains test cases to test the object store implementation
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_OBJECTSTORE_H
-#define _SOFTHSM_V2_OBJECTSTORE_H
+#ifndef _SOFTHSM_V2_OBJECTSTORETESTS_H
+#define _SOFTHSM_V2_OBJECTSTORETESTS_H
 
-#include "config.h"
-#include "ByteString.h"
-#include "OSToken.h"
-#include <string>
-#include <vector>
+#include <cppunit/extensions/HelperMacros.h>
 
-class ObjectStore
+class ObjectStoreTests : public CppUnit::TestFixture
 {
+	CPPUNIT_TEST_SUITE(ObjectStoreTests);
+	CPPUNIT_TEST(testEmptyStore);
+	CPPUNIT_TEST(testNewTokens);
+	CPPUNIT_TEST(testExistingTokens);
+	CPPUNIT_TEST_SUITE_END();
+
 public:
-	// Constructor
-	ObjectStore(std::string storePath);
+	void testEmptyStore();
+	void testNewTokens();
+	void testExistingTokens();
 
-	// Destructor
-	virtual ~ObjectStore();
-
-	// Return the number of tokens that is present
-	size_t getTokenCount();
-
-	// Return a pointer to the n-th token (counting starts at 0)
-	OSToken* getToken(size_t whichToken);
-
-	// Create a new token
-	OSToken* newToken(const ByteString& label);
-
-private:
-	// The tokens
-	std::vector<OSToken*> tokens;
-
-	// The object store root directory
-	std::string storePath;
+	void setUp();
+	void tearDown();
 };
 
-#endif // !_SOFTHSM_V2_OBJECTSTORE_H
+#endif // !_SOFTHSM_V2_OBJECTSTORETESTS_H
 
