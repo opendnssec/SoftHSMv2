@@ -10,6 +10,10 @@ AM_CPPFLAGS =			-I$(srcdir)/../cryptoki_compat \
 				-I$(srcdir)/..
 
 noinst_LTLIBRARIES =		libsofthsm_slotmgr.la
-libsofthsm_slotmgr_la_SOURCES =	# No source yet
+libsofthsm_slotmgr_la_SOURCES =	SlotManager.cpp \
+				Slot.cpp \
+				Token.cpp
+
+SUBDIRS =			test
 
 # EXTRA_DIST =			$(srcdir)/*.h

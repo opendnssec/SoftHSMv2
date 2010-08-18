@@ -1,4 +1,4 @@
-/* $Id$ */ 
+/* $Id$ */
 
 /*
  * Copyright (c) 2010 SURFnet bv
@@ -27,97 +27,48 @@
  */
 
 /*****************************************************************************
- HandleFactory.h
+ Token.h
 
- This is a template class for handling handles ;-)
+ This class represents a single PKCS #11 token
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_HANDLEFACTORY_H
-#define _SOFTHSM_V2_HANDLEFACTORY_H
+#ifndef _SOFTHSM_V2_TOKEN_H
+#define _SOFTHSM_V2_TOKEN_H
 
 #include "config.h"
-#include "log.h"
-#include "MutexFactory.h"
-#include <map>
-#include <queue>
+#include "ByteString.h"
+#include "ObjectStore.h"
+#include "OSToken.h"
+#include "SecureDataManager.h"
+#include "cryptoki.h"
+#include <string>
+#include <vector>
 
-template <class hType, class oType> class HandleFactory
+class Token
 {
 public:
 	// Constructor
-	HandleFactory() 
-	{
-		nextFree = (hType) 1;
-		handleMutex = MutexFactory::i()->getMutex();
-	}
+	Token(OSToken* token);
 
 	// Destructor
-	virtual ~HandleFactory() 
-	{
-		MutexFactory::i()->recycleMutex(handleMutex);
-	}
+	virtual ~Token();
+	
+	// Create a new token
+	static Token* createToken(ObjectStore* objectStore, CK_UTF8CHAR_PTR soPIN, CK_ULONG pinLen, CK_UTF8CHAR_PTR label);
 
-	// Get a new handle for the specified object
-	hType getHandle(oType object)
-	{
-		MutexLocker lock(handleMutex);
-
-		hType handle;
-
-		if (!recycledHandles.empty())
-		{
-			handle = recycledHandles.front();
-			recycledHandles.pop();
-		}
-		else
-		{
-			handle = nextFree++;
-		}
-
-		handleMap[handle] = object;
-
-		return handle;
-	}
-
-	// Check whether the specified handle is valid
-	bool isValid(hType handle)
-	{
-		MutexLocker lock(handleMutex);
-
-		return (handleMap.find(handle) != handleMap.end());
-	}
-
-	// Return the object for the specified handle
-	oType getObjectByHandle(hType handle)
-	{
-		MutexLocker lock(handleMutex);
-
-		return handleMap[handle];
-	}
-
-	// Discard the specified handle
-	void deleteHandle(hType handle)
-	{
-		MutexLocker lock(handleMutex);
-
-		handleMap.erase(handle);
-
-		recycledHandles.push(handle);
-	}
+	// Is the token valid?
+	bool isValid();
 
 private:
-	// The handle map
-	std::map<hType, oType> handleMap;
+	// Token validity
+	bool valid;
 
-	// The set of recycled handles
-	std::queue<hType> recycledHandles;
+	// A reference to the object store token
+	OSToken* token;
 
-	// The next free handle
-	hType nextFree;
-
-	// Cross-thread synchronisation
-	Mutex* handleMutex;
+	// The secure data manager for this token
+	SecureDataManager* sdm;
 };
 
-#endif // !_SOFTHSM_V2_HANDLEFACTORY_H
+#endif // !_SOFTHSM_V2_TOKEN_H
 

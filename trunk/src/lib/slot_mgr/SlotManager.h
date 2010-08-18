@@ -1,4 +1,4 @@
-/* $Id$ */ 
+/* $Id$ */
 
 /*
  * Copyright (c) 2010 SURFnet bv
@@ -27,97 +27,40 @@
  */
 
 /*****************************************************************************
- HandleFactory.h
+ SlotManager.h
 
- This is a template class for handling handles ;-)
+ The slot manager is a class that forms part of the PKCS #11 core. It manages
+ all the slots that SoftHSM is aware of. To make it possible to add new
+ tokens, SoftHSM always has one slot available that contains an uninitialised
+ token. Users can choose to initialise this token to create a new token.
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_HANDLEFACTORY_H
-#define _SOFTHSM_V2_HANDLEFACTORY_H
+#ifndef _SOFTHSM_V2_SLOTMANAGER_H
+#define _SOFTHSM_V2_SLOTMANAGER_H
 
 #include "config.h"
-#include "log.h"
-#include "MutexFactory.h"
-#include <map>
-#include <queue>
+#include "ByteString.h"
+#include "ObjectStore.h"
+#include "Slot.h"
+#include <string>
+#include <vector>
 
-template <class hType, class oType> class HandleFactory
+class SlotManager
 {
 public:
 	// Constructor
-	HandleFactory() 
-	{
-		nextFree = (hType) 1;
-		handleMutex = MutexFactory::i()->getMutex();
-	}
+	SlotManager(ObjectStore* objectStore);
 
 	// Destructor
-	virtual ~HandleFactory() 
-	{
-		MutexFactory::i()->recycleMutex(handleMutex);
-	}
+	virtual ~SlotManager();
 
-	// Get a new handle for the specified object
-	hType getHandle(oType object)
-	{
-		MutexLocker lock(handleMutex);
-
-		hType handle;
-
-		if (!recycledHandles.empty())
-		{
-			handle = recycledHandles.front();
-			recycledHandles.pop();
-		}
-		else
-		{
-			handle = nextFree++;
-		}
-
-		handleMap[handle] = object;
-
-		return handle;
-	}
-
-	// Check whether the specified handle is valid
-	bool isValid(hType handle)
-	{
-		MutexLocker lock(handleMutex);
-
-		return (handleMap.find(handle) != handleMap.end());
-	}
-
-	// Return the object for the specified handle
-	oType getObjectByHandle(hType handle)
-	{
-		MutexLocker lock(handleMutex);
-
-		return handleMap[handle];
-	}
-
-	// Discard the specified handle
-	void deleteHandle(hType handle)
-	{
-		MutexLocker lock(handleMutex);
-
-		handleMap.erase(handle);
-
-		recycledHandles.push(handle);
-	}
+	// Get the slots
+	std::vector<Slot*> getSlots();
 
 private:
-	// The handle map
-	std::map<hType, oType> handleMap;
-
-	// The set of recycled handles
-	std::queue<hType> recycledHandles;
-
-	// The next free handle
-	hType nextFree;
-
-	// Cross-thread synchronisation
-	Mutex* handleMutex;
+	// The slots
+	std::vector<Slot*> slots;
 };
 
-#endif // !_SOFTHSM_V2_HANDLEFACTORY_H
+#endif // !_SOFTHSM_V2_SLOTMANAGER_H
 
