@@ -103,7 +103,7 @@ SecureDataManager::~SecureDataManager()
 	// Clean up the mask
 	delete mask;
 
-	if (dataMgrMutex != NULL) delete dataMgrMutex;
+	MutexFactory::i()->recycleMutex(dataMgrMutex);
 }
 
 // Generic function for creating an encrypted version of the key from the specified passphrase

@@ -81,10 +81,7 @@ ObjectFile::~ObjectFile()
 		delete ipcSignal;
 	}
 
-	if (objectMutex != NULL)
-	{
-		delete objectMutex;
-	}
+	MutexFactory::i()->recycleMutex(objectMutex);
 }
 
 // Check if the specified attribute exists

@@ -131,7 +131,7 @@ Mutex* MutexFactory::getMutex()
 // Recycle a mutex instance
 void MutexFactory::recycleMutex(Mutex* mutex)
 {
-	delete mutex;
+	if (mutex != NULL) delete mutex;
 }
 
 // Set the function pointers

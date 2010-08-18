@@ -133,7 +133,7 @@ OSToken::~OSToken()
 
 	delete tokenDir;
 	if (sync != NULL) delete sync;
-	if (tokenMutex != NULL) delete tokenMutex;
+	MutexFactory::i()->recycleMutex(tokenMutex);
 	delete tokenObject;
 }
 
