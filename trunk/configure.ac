@@ -93,16 +93,16 @@ AC_CHECK_HEADERS([pthread.h])
 full_libdir=`eval eval eval eval eval echo "${libdir}" | sed "s#NONE#${prefix}#" | sed "s#NONE#${ac_default_prefix}#"`
 
 # Define some variables for the code
-# AC_DEFINE_UNQUOTED(
-# 	[VERSION_MAJOR],
-# 	[SOFTHSM_VERSION_MAJOR],
-# 	[SoftHSM major version number via PKCS#11]
-# )
-# AC_DEFINE_UNQUOTED(
-# 	[VERSION_MINOR],
-# 	[SOFTHSM_VERSION_MINOR],
-# 	[SoftHSM minor version number via PKCS#11]
-# )
+AC_DEFINE_UNQUOTED(
+	[VERSION_MAJOR],
+	[SOFTHSM_VERSION_MAJOR],
+	[SoftHSM major version number via PKCS#11]
+)
+AC_DEFINE_UNQUOTED(
+	[VERSION_MINOR],
+	[SOFTHSM_VERSION_MINOR],
+	[SoftHSM minor version number via PKCS#11]
+)
 AC_DEFINE_UNQUOTED(
 	[MAX_PIN_LEN],
 	[255],

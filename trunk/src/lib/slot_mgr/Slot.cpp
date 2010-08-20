@@ -108,10 +108,10 @@ CK_RV Slot::getSlotInfo(CK_SLOT_INFO_PTR info)
 
 	info->flags = (token != NULL) ? CKF_TOKEN_PRESENT : 0;
 
-	info->hardwareVersion.major = 2;
-	info->hardwareVersion.minor = 0;
-	info->firmwareVersion.major = 2;
-	info->firmwareVersion.minor = 0;
+	info->hardwareVersion.major = VERSION_MAJOR;
+	info->hardwareVersion.minor = VERSION_MINOR;
+	info->firmwareVersion.major = VERSION_MAJOR;
+	info->firmwareVersion.minor = VERSION_MINOR;
 
 	return CKR_OK;
 }
