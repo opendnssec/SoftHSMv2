@@ -164,42 +164,73 @@ CK_RV SoftHSM::C_Initialize(CK_VOID_PTR pInitArgs)
 // PKCS #11 finalisation function
 CK_RV SoftHSM::C_Finalize(CK_VOID_PTR pReserved) 
 {
+	// Must be set to NULL_PTR in this version of PKCS#11
+	if (pReserved) return CKR_ARGUMENTS_BAD;
+
+	// TODO: What should we finalize?
+
 	return CKR_FUNCTION_NOT_SUPPORTED;
 }
 
 // Return information about the PKCS #11 module
 CK_RV SoftHSM::C_GetInfo(CK_INFO_PTR pInfo) 
 {
-	return CKR_FUNCTION_NOT_SUPPORTED;
+	if (!pInfo) return CKR_ARGUMENTS_BAD;
+
+	pInfo->cryptokiVersion.major = CRYPTOKI_VERSION_MAJOR;
+	pInfo->cryptokiVersion.minor = CRYPTOKI_VERSION_MINOR;
+	memset(pInfo->manufacturerID, ' ', 32);
+	memcpy(pInfo->manufacturerID, "SoftHSM", 7);
+	pInfo->flags = 0;
+	memset(pInfo->libraryDescription, ' ', 32);
+	memcpy(pInfo->libraryDescription, "Implementation of PKCS11", 24);
+	pInfo->libraryVersion.major = VERSION_MAJOR;
+	pInfo->libraryVersion.minor = VERSION_MINOR;
+
+	return CKR_OK;
 }
 
 // Return a list of available slots
 CK_RV SoftHSM::C_GetSlotList(CK_BBOOL tokenPresent, CK_SLOT_ID_PTR pSlotList, CK_ULONG_PTR pulCount) 
 {
+	if (!pulCount) return CKR_ARGUMENTS_BAD;
+
 	return CKR_FUNCTION_NOT_SUPPORTED;
 }
 
 // Return information about a slot
 CK_RV SoftHSM::C_GetSlotInfo(CK_SLOT_ID slotID, CK_SLOT_INFO_PTR pInfo) 
 {
+	// We probably can remove this check, since it
+	// is handled in the Slot class
+	if (!pInfo) return CKR_ARGUMENTS_BAD;
+
 	return CKR_FUNCTION_NOT_SUPPORTED;
 }
 
 // Return information about a token in a slot
 CK_RV SoftHSM::C_GetTokenInfo(CK_SLOT_ID slotID, CK_TOKEN_INFO_PTR pInfo) 
 {
+	// We probably can remove this check, since it
+	// is handled in the Token class
+	if (!pInfo) return CKR_ARGUMENTS_BAD;
+
 	return CKR_FUNCTION_NOT_SUPPORTED;
 }
 
 // Return the list of supported mechanisms for a given slot
 CK_RV SoftHSM::C_GetMechanismList(CK_SLOT_ID slotID, CK_MECHANISM_TYPE_PTR pMechanismList, CK_ULONG_PTR pulCount) 
 {
+	if (!pulCount) return CKR_ARGUMENTS_BAD;
+
 	return CKR_FUNCTION_NOT_SUPPORTED;
 }
 
 // Return more information about a mechanism for a given slot
 CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_MECHANISM_INFO_PTR pInfo) 
 {
+	if (!pInfo) return CKR_ARGUMENTS_BAD;
+
 	return CKR_FUNCTION_NOT_SUPPORTED;
 }
 

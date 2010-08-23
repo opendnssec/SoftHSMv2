@@ -48,7 +48,7 @@
 static CK_FUNCTION_LIST functionList = 
 {
 	// Version information
-	{ 2, 20 },
+	{ CRYPTOKI_VERSION_MAJOR, CRYPTOKI_VERSION_MINOR },
 	// Function pointers
 	C_Initialize,
 	C_Finalize,
