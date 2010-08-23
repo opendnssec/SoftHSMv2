@@ -35,6 +35,7 @@
 #include "config.h"
 #include "ObjectFile.h"
 #include "OSToken.h"
+#include "OSPathSep.h"
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -201,6 +202,8 @@ void ObjectFile::refresh(bool isFirstTime /* = false */)
 
 			valid = false;
 
+			objectFile.unlock();
+
 			return;
 		}
 			
@@ -330,6 +333,8 @@ void ObjectFile::store()
 
 			valid = false;
 
+			objectFile.unlock();
+
 			return;
 		}
 
@@ -343,6 +348,8 @@ void ObjectFile::store()
 				DEBUG_MSG("Failed to write attribute to object %s", path.c_str());
 
 				valid = false;
+
+				objectFile.unlock();
 
 				return;
 			}
@@ -358,6 +365,8 @@ void ObjectFile::store()
 
 				valid = false;
 
+				objectFile.unlock();
+
 				return;
 			}
 		}
@@ -372,6 +381,8 @@ void ObjectFile::store()
 
 				valid = false;
 
+				objectFile.unlock();
+
 				return;
 			}
 		}
@@ -380,6 +391,8 @@ void ObjectFile::store()
 			DEBUG_MSG("Unknown attribute type for object %s", path.c_str());
 
 			valid = false;
+
+			objectFile.unlock();
 
 			return;
 		}
@@ -417,10 +430,10 @@ void ObjectFile::discardAttributes()
 // Returns the file name of the object
 std::string ObjectFile::getFilename() const
 {
-	if ((path.find_last_of("/") != std::string::npos) &&
-	    (path.find_last_of("/") < path.size()))
+	if ((path.find_last_of(OS_PATHSEP) != std::string::npos) &&
+	    (path.find_last_of(OS_PATHSEP) < path.size()))
 	{
-		return path.substr(path.find_last_of("/") + 1);
+		return path.substr(path.find_last_of(OS_PATHSEP) + 1);
 	}
 	else
 	{

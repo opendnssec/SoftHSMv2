@@ -44,6 +44,7 @@
 #include "IPCSignal.h"
 #include "cryptoki.h"
 #include "OSToken.h"
+#include "OSPathSep.h"
 #include <vector>
 #include <string>
 #include <set>
@@ -54,7 +55,7 @@
 OSToken::OSToken(const std::string tokenPath)
 {
 	tokenDir = new Directory(tokenPath);
-	tokenObject = new ObjectFile(tokenPath + "/tokenObject");
+	tokenObject = new ObjectFile(tokenPath + OS_PATHSEP + "tokenObject");
 	sync = IPCSignal::create(tokenPath);
 	tokenMutex = MutexFactory::i()->getMutex();
 	this->tokenPath = tokenPath;
@@ -82,7 +83,7 @@ OSToken::OSToken(const std::string tokenPath)
 	}
 
 	// Create the token object
-	ObjectFile tokenObject(basePath + "/" + tokenDir + "/tokenObject", true);
+	ObjectFile tokenObject(basePath + OS_PATHSEP + tokenDir + OS_PATHSEP + "tokenObject", true);
 
 	if (!tokenObject.isValid())
 	{
@@ -108,7 +109,7 @@ OSToken::OSToken(const std::string tokenPath)
 	    !tokenObject.setAttribute(CKA_OS_TOKENSERIAL, tokenSerial) ||
 	    !tokenObject.setAttribute(CKA_OS_TOKENFLAGS, tokenFlags))
 	{
-		baseDir.remove(tokenDir + "/tokenObject");
+		baseDir.remove(tokenDir + OS_PATHSEP + "tokenObject");
 		baseDir.remove(tokenDir);
 
 		return NULL;
@@ -116,7 +117,7 @@ OSToken::OSToken(const std::string tokenPath)
 
 	DEBUG_MSG("Created new token %s", tokenDir.c_str());
 
-	return new OSToken(basePath + "/" + tokenDir);
+	return new OSToken(basePath + OS_PATHSEP + tokenDir);
 }
 
 // Destructor
@@ -304,7 +305,7 @@ std::set<ObjectFile*> OSToken::getObjects()
 ObjectFile* OSToken::createObject()
 {
 	// Generate a name for the object
-	std::string objectPath = tokenPath + "/" + UUID::newUUID() + ".object";
+	std::string objectPath = tokenPath + OS_PATHSEP + UUID::newUUID() + ".object";
 
 	// Create the new object file
 	ObjectFile* newObject = new ObjectFile(objectPath, true);
@@ -449,7 +450,7 @@ bool OSToken::index(bool isFirstTime /* = false */)
 	for (std::set<std::string>::iterator i = addedFiles.begin(); i != addedFiles.end(); i++)
 	{
 		// Create a new token object for the added file
-		ObjectFile* newObject = new ObjectFile(tokenPath + "/" + *i);
+		ObjectFile* newObject = new ObjectFile(tokenPath + OS_PATHSEP + *i);
 		newObject->linkToken(this);
 
 		DEBUG_MSG("(0x%08X) New object %s (0x%08X) added", this, newObject->getFilename().c_str(), newObject);
