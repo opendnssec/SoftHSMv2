@@ -220,6 +220,7 @@ void FileTests::testSeek()
 
 	// Read back the size as an ulong value
 	unsigned long value;
+	unsigned long expectedValue = (unsigned long)0x1122334455667788ULL;
 
 	CPPUNIT_ASSERT(testFile.readULong(value));
 	CPPUNIT_ASSERT(value == 12);
@@ -230,16 +231,7 @@ void FileTests::testSeek()
 	// Read back the ulong value stored there
 	CPPUNIT_ASSERT(testFile.readULong(value));
 
-	if (sizeof(unsigned long) == 4)
-	{
-		// 32-bit system
-		CPPUNIT_ASSERT(value == 0x55667788);
-	}
-	else
-	{
-		// 64-bit system
-		CPPUNIT_ASSERT(value == 0x1122334455667788);
-	}
+	CPPUNIT_ASSERT(value == expectedValue);
 
 	// Seek to the start of second byte string
 	CPPUNIT_ASSERT(testFile.seek(8+9));
