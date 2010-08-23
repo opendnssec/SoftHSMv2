@@ -72,12 +72,7 @@ AC_MSG_CHECKING(if building with softhsm-migrate)
 if test "x${build_migrate}" = "xyes"; then
 	AC_MSG_RESULT(yes)
 	ACX_SQLITE3
-	YIELD_LIB=
-	# Solaris has sched_yield in librt, not in libpthread or libc.
-	# Solaris 2.5.1, 2.6 has sched_yield in libposix4, not librt.
-	AC_CHECK_LIB(rt, sched_yield, [YIELD_LIB=-lrt],
-		[AC_CHECK_LIB(posix4, sched_yield, [YIELD_LIB=-lposix4])])
-	AC_SUBST([YIELD_LIB])
+	ACX_YIELD
 else
 	AC_MSG_RESULT(no)
 fi
@@ -85,6 +80,7 @@ AM_CONDITIONAL([BUILD_MIGRATE], [test "x${build_migrate}" = "xyes"])
 
 # Check for libraries
 ACX_DLOPEN
+ACX_SEMAPHORE
 
 # Check for headers
 AC_CHECK_HEADERS([pthread.h])

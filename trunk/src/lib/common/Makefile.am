@@ -16,5 +16,6 @@ libsofthsm_common_la_SOURCES =	Configuration.cpp \
 				MutexFactory.cpp \
 				Semaphore.cpp \
 				IPCSignal.cpp
+libsofthsm_common_la_LIBADD =	@SEMAPHORE_LIB@
 
 EXTRA_DIST =			$(srcdir)/*.h
