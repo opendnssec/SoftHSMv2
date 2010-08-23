@@ -34,6 +34,8 @@
 #include "ByteString.h"
 #include "SecureDataManager.h"
 
+#include <sys/time.h>
+
 // Constructor
 Token::Token(OSToken* token)
 {
@@ -91,3 +93,75 @@ bool Token::isValid()
 	return new Token(token);
 }
 
+// Retrieve token information for the token
+CK_RV Token::getTokenInfo(CK_TOKEN_INFO_PTR info)
+{
+	if (info == NULL)
+	{
+		return CKR_ARGUMENTS_BAD;
+	}
+
+	// Token specific information
+
+	if (!token->getTokenFlags(info->flags))
+	{
+		DEBUG_MSG("Could not get the token flags");
+		return CKR_GENERAL_ERROR;
+	}
+
+	ByteString label, serial;
+
+	memset(info->label, ' ', 32);
+	memset(info->serialNumber, ' ', 16);
+
+	if (token->getTokenLabel(label))
+	{
+		strncpy((char*) info->label, (char*) label.byte_str(), label.size());
+	}
+
+	if (token->getTokenLabel(serial))
+	{
+		strncpy((char*) info->serialNumber, (char*) serial.byte_str(), serial.size());
+	}
+
+	// Some more text about the token
+
+	char mfgID[33];
+	char model[17];
+
+	snprintf(mfgID, 33, "SoftHSM project");
+	snprintf(model, 17, "SoftHSM v2");
+
+	memset(info->manufacturerID, ' ', 32);
+	memset(info->model, ' ', 16);
+	strncpy((char*) info->manufacturerID, mfgID, strlen(mfgID));
+	strncpy((char*) info->model, model, strlen(model));
+
+	// Information shared by all tokens
+
+	// TODO: Can we set these?
+	info->ulMaxSessionCount = CK_UNAVAILABLE_INFORMATION;
+	info->ulSessionCount = CK_UNAVAILABLE_INFORMATION;
+	info->ulMaxRwSessionCount = CK_UNAVAILABLE_INFORMATION;
+	info->ulRwSessionCount = CK_UNAVAILABLE_INFORMATION;
+
+	info->ulMaxPinLen = MAX_PIN_LEN;
+	info->ulMinPinLen = MIN_PIN_LEN;
+	info->ulTotalPublicMemory = CK_UNAVAILABLE_INFORMATION;
+	info->ulFreePublicMemory = CK_UNAVAILABLE_INFORMATION;
+	info->ulTotalPrivateMemory = CK_UNAVAILABLE_INFORMATION;
+	info->ulFreePrivateMemory = CK_UNAVAILABLE_INFORMATION;
+	info->hardwareVersion.major = VERSION_MAJOR;
+	info->hardwareVersion.minor = VERSION_MINOR;
+	info->firmwareVersion.major = VERSION_MAJOR;
+	info->firmwareVersion.minor = VERSION_MINOR;
+
+	// Current time
+	time_t rawtime;
+	time(&rawtime);
+	char dateTime[17];
+	strftime(dateTime, 17, "%Y%m%d%H%M%S00", gmtime(&rawtime));
+	memcpy(info->utcTime, dateTime, 16);
+
+        return CKR_OK;
+}

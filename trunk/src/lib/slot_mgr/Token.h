@@ -59,6 +59,9 @@ public:
 	// Is the token valid?
 	bool isValid();
 
+	// Retrieve token information for the token
+	CK_RV getTokenInfo(CK_TOKEN_INFO_PTR info);
+
 private:
 	// Token validity
 	bool valid;
