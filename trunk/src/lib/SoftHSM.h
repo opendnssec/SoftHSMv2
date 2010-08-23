@@ -153,12 +153,6 @@ public:
 	CK_RV C_CancelFunction(CK_SESSION_HANDLE hSession);
 	CK_RV C_WaitForSlotEvent(CK_FLAGS flags, CK_SLOT_ID_PTR pSlot, CK_VOID_PTR pReserved);
 
-	// Mutex functions
-	CK_RV createMutex(CK_VOID_PTR_PTR newMutex);
-	CK_RV destroyMutex(CK_VOID_PTR mutex);
-	CK_RV lockMutex(CK_VOID_PTR mutex);
-	CK_RV unlockMutex(CK_VOID_PTR mutex);
-
 private:
 	// Constructor
 	SoftHSM();
@@ -168,11 +162,5 @@ private:
 
 	// Is the SoftHSM PKCS #11 library initialised?
 	bool isInitialised;
-
-	// Pointers to the mutex functions
-	CK_CREATEMUTEX externalCreateMutex;
-	CK_DESTROYMUTEX externalDestroyMutex;
-	CK_LOCKMUTEX externalLockMutex;
-	CK_UNLOCKMUTEX externalUnlockMutex;
 };
 

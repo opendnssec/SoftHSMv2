@@ -98,6 +98,10 @@ public:
 	void setLockMutex(CK_LOCKMUTEX lockMutex);
 	void setUnlockMutex(CK_UNLOCKMUTEX unlockMutex);
 
+	// Enable/disable mutex handling
+	void enable();
+	void disable();
+
 private:
 	// Constructor
 	MutexFactory();
@@ -118,6 +122,9 @@ private:
 	CK_DESTROYMUTEX destroyMutex;
 	CK_LOCKMUTEX lockMutex;
 	CK_UNLOCKMUTEX unlockMutex;
+
+	// Can we do mutex handling?
+	bool enabled;
 };
 
 #endif // !_SOFTHSM_V2_MUTEXFACTORY_H

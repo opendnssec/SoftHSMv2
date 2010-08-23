@@ -104,6 +104,8 @@ MutexFactory::MutexFactory()
 	destroyMutex = OSDestroyMutex;
 	lockMutex = OSLockMutex;
 	unlockMutex = OSUnlockMutex;
+
+	enabled = true;
 }
 
 // Destructor
@@ -155,23 +157,41 @@ void MutexFactory::setUnlockMutex(CK_UNLOCKMUTEX unlockMutex)
 	this->unlockMutex = unlockMutex;
 }
 
+void MutexFactory::enable()
+{
+	enabled = true;
+}
+
+void MutexFactory::disable()
+{
+	enabled = false;
+}
+
 CK_RV MutexFactory::CreateMutex(CK_VOID_PTR_PTR newMutex)
 {
+	if (!enabled) return CKR_OK;
+
 	return (this->createMutex)(newMutex);
 }
 
 CK_RV MutexFactory::DestroyMutex(CK_VOID_PTR mutex)
 {
+	if (!enabled) return CKR_OK;
+
 	return (this->destroyMutex)(mutex);
 }
 
 CK_RV MutexFactory::LockMutex(CK_VOID_PTR mutex)
 {
+	if (!enabled) return CKR_OK;
+
 	return (this->lockMutex)(mutex);
 }
 
 CK_RV MutexFactory::UnlockMutex(CK_VOID_PTR mutex)
 {
+	if (!enabled) return CKR_OK;
+
 	return (this->unlockMutex)(mutex);
 }
 

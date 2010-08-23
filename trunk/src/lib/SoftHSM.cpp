@@ -36,6 +36,7 @@
 #include "log.h"
 #include "Configuration.h"
 #include "XMLConfigLoader.h"
+#include "MutexFactory.h"
 #include "cryptoki.h"
 #include "SoftHSM.h"
 #include "osmutex.h"
@@ -62,12 +63,6 @@ SoftHSM* SoftHSM::i()
 SoftHSM::SoftHSM()
 {
 	isInitialised = false;
-
-	// Reset mutex functions
-	externalCreateMutex = NULL_PTR;
-	externalDestroyMutex = NULL_PTR;
-	externalLockMutex = NULL_PTR;
-	externalUnlockMutex = NULL_PTR;
 }
 
 /*****************************************************************************
@@ -77,14 +72,85 @@ SoftHSM::SoftHSM()
 // PKCS #11 initialisation function
 CK_RV SoftHSM::C_Initialize(CK_VOID_PTR pInitArgs) 
 {
+	CK_C_INITIALIZE_ARGS_PTR args;
+
 	// Check if PKCS #11 is already initialised
 	if (isInitialised)
 	{
 		return CKR_CRYPTOKI_ALREADY_INITIALIZED;
 	}
 
-	// TODO: check args
-	// TODO: copy mutex functions
+	// Do we have any arguments?
+	if (pInitArgs)
+	{
+		args = (CK_C_INITIALIZE_ARGS_PTR)pInitArgs;
+
+		// Must be set to NULL_PTR in this version of PKCS#11
+		if (args->pReserved)
+		{
+			DEBUG_MSG("pReserved must be set to NULL_PTR");
+			return CKR_ARGUMENTS_BAD;
+		}
+
+		// Can we spawn our own threads?
+		// if (args->flags & CKF_LIBRARY_CANT_CREATE_OS_THREADS)
+		// {
+		//	DEBUG_MSG("Cannot create threads if CKF_LIBRARY_CANT_CREATE_OS_THREADS is set");
+		//	return CKR_NEED_TO_CREATE_THREADS;
+		// }
+
+		// Are we not supplied with mutex functions?
+		if
+		(
+			!args->CreateMutex &&
+			!args->DestroyMutex &&
+			!args->LockMutex &&
+			!args->UnlockMutex
+		)
+		{
+			// Can we use our own mutex functions?
+			if (args->flags & CKF_OS_LOCKING_OK)
+			{
+				// Use our own mutex functions.
+				// Do not need to set them because
+				// the MutexFactory uses them by default.
+			}
+			else
+			{
+				// The external application is not using threading
+				MutexFactory::i()->disable();
+			}
+		}
+		else
+		{
+			// We must have all mutex functions
+			if
+			(
+				!args->CreateMutex ||
+				!args->DestroyMutex ||
+				!args->LockMutex ||
+				!args->UnlockMutex
+			)
+			{
+				DEBUG_MSG("Not all mutex functions are supplied");
+				return CKR_ARGUMENTS_BAD;
+			}
+
+			// We could use our own mutex functions if the flag is set,
+			// but we use the external functions in both cases.
+
+			// Load the external mutex functions
+			MutexFactory::i()->setCreateMutex(args->CreateMutex);
+			MutexFactory::i()->setDestroyMutex(args->DestroyMutex);
+			MutexFactory::i()->setLockMutex(args->LockMutex);
+			MutexFactory::i()->setUnlockMutex(args->UnlockMutex);
+		}
+	}
+	else
+	{
+		// No concurrent access by multiple threads
+		MutexFactory::i()->disable();
+	}
 
 	// (Re)load the configuration
 	Configuration::i()->reload(XMLConfigLoader::i());
@@ -526,53 +592,3 @@ CK_RV SoftHSM::C_WaitForSlotEvent(CK_FLAGS flags, CK_SLOT_ID_PTR pSlot, CK_VOID_
 {
 	return CKR_FUNCTION_NOT_SUPPORTED;
 }
-
-// Mutex functions
-CK_RV SoftHSM::createMutex(CK_VOID_PTR_PTR newMutex)
-{
-	if (externalCreateMutex != NULL_PTR)
-	{
-		return externalCreateMutex(newMutex);
-	}
-	else
-	{
-		return OSCreateMutex(newMutex);
-	}
-}
-
-CK_RV SoftHSM::destroyMutex(CK_VOID_PTR mutex)
-{
-	if (externalDestroyMutex != NULL_PTR)
-	{
-		return externalDestroyMutex(mutex);
-	}
-	else
-	{
-		return OSDestroyMutex(mutex);
-	}
-}
-
-CK_RV SoftHSM::lockMutex(CK_VOID_PTR mutex)
-{
-	if (externalLockMutex != NULL_PTR)
-	{
-		return externalLockMutex(mutex);
-	}
-	else
-	{
-		return OSLockMutex(mutex);
-	}
-}
-
-CK_RV SoftHSM::unlockMutex(CK_VOID_PTR mutex)
-{
-	if (externalUnlockMutex != NULL_PTR)
-	{
-		return externalUnlockMutex(mutex);
-	}
-	else
-	{
-		return OSUnlockMutex(mutex);
-	}
-}
-
