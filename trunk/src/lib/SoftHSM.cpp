@@ -255,11 +255,6 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 			pInfo->ulMaxKeySize = 4096;
 			pInfo->flags = CKF_SIGN | CKF_VERIFY | CKF_ENCRYPT | CKF_DECRYPT;
 			break;
-		// case CKM_RSA_PKCS_OAEP:
-		//	pInfo->ulMinKeySize = 512;
-		//	pInfo->ulMaxKeySize = 4096;
-		//	pInfo->flags = CKF_ENCRYPT | CKF_DECRYPT;
-		//	break;
 		case CKM_MD5_RSA_PKCS:
 		case CKM_SHA1_RSA_PKCS:
 		case CKM_SHA256_RSA_PKCS:
@@ -289,16 +284,29 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 			pInfo->ulMinKeySize = 128;
 			pInfo->ulMaxKeySize = 256;
 			pInfo->flags = CKF_ENCRYPT | CKF_DECRYPT;
+			break;
 		case CKM_DSA_PARAMETER_GEN:
+			pInfo->ulMinKeySize = 512;
+			pInfo->ulMaxKeySize = 1024;
+			pInfo->flags = CKF_GENERATE;
+			break;
 		case CKM_DSA_KEY_PAIR_GEN:
+			pInfo->ulMinKeySize = 512;
+			pInfo->ulMaxKeySize = 1024;
+			pInfo->flags = CKF_GENERATE_KEY_PAIR;
+			break;
 		case CKM_DSA_SHA1:
+			pInfo->ulMinKeySize = 512;
+			pInfo->ulMaxKeySize = 1024;
+			pInfo->flags = CKF_SIGN | CKF_VERIFY;
+			break;
 		default:
 			DEBUG_MSG("The selected mechanism is not supported");
 			return CKR_MECHANISM_INVALID;
 			break;
 	}
 
-	return CKR_FUNCTION_NOT_SUPPORTED;
+	return CKR_OK;
 }
 
 // Initialise the token in the specified slot
