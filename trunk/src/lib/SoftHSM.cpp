@@ -177,6 +177,7 @@ CK_RV SoftHSM::C_Finalize(CK_VOID_PTR pReserved)
 // Return information about the PKCS #11 module
 CK_RV SoftHSM::C_GetInfo(CK_INFO_PTR pInfo) 
 {
+	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
 	if (!pInfo) return CKR_ARGUMENTS_BAD;
 
 	pInfo->cryptokiVersion.major = CRYPTOKI_VERSION_MAJOR;
@@ -195,6 +196,7 @@ CK_RV SoftHSM::C_GetInfo(CK_INFO_PTR pInfo)
 // Return a list of available slots
 CK_RV SoftHSM::C_GetSlotList(CK_BBOOL tokenPresent, CK_SLOT_ID_PTR pSlotList, CK_ULONG_PTR pulCount) 
 {
+	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
 	if (!pulCount) return CKR_ARGUMENTS_BAD;
 
 	return CKR_FUNCTION_NOT_SUPPORTED;
@@ -203,8 +205,7 @@ CK_RV SoftHSM::C_GetSlotList(CK_BBOOL tokenPresent, CK_SLOT_ID_PTR pSlotList, CK
 // Return information about a slot
 CK_RV SoftHSM::C_GetSlotInfo(CK_SLOT_ID slotID, CK_SLOT_INFO_PTR pInfo) 
 {
-	// We probably can remove this check, since it
-	// is handled in the Slot class
+	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
 	if (!pInfo) return CKR_ARGUMENTS_BAD;
 
 	return CKR_FUNCTION_NOT_SUPPORTED;
@@ -213,8 +214,7 @@ CK_RV SoftHSM::C_GetSlotInfo(CK_SLOT_ID slotID, CK_SLOT_INFO_PTR pInfo)
 // Return information about a token in a slot
 CK_RV SoftHSM::C_GetTokenInfo(CK_SLOT_ID slotID, CK_TOKEN_INFO_PTR pInfo) 
 {
-	// We probably can remove this check, since it
-	// is handled in the Token class
+	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
 	if (!pInfo) return CKR_ARGUMENTS_BAD;
 
 	return CKR_FUNCTION_NOT_SUPPORTED;
@@ -223,6 +223,7 @@ CK_RV SoftHSM::C_GetTokenInfo(CK_SLOT_ID slotID, CK_TOKEN_INFO_PTR pInfo)
 // Return the list of supported mechanisms for a given slot
 CK_RV SoftHSM::C_GetMechanismList(CK_SLOT_ID slotID, CK_MECHANISM_TYPE_PTR pMechanismList, CK_ULONG_PTR pulCount) 
 {
+	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
 	if (!pulCount) return CKR_ARGUMENTS_BAD;
 
 	return CKR_FUNCTION_NOT_SUPPORTED;
@@ -312,42 +313,67 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 // Initialise the token in the specified slot
 CK_RV SoftHSM::C_InitToken(CK_SLOT_ID slotID, CK_UTF8CHAR_PTR pPin, CK_ULONG ulPinLen, CK_UTF8CHAR_PTR pLabel) 
 {
+	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
+	if (!pPin) return CKR_ARGUMENTS_BAD;
+	if (!pLabel) return CKR_ARGUMENTS_BAD;
+	if (ulPinLen < MIN_PIN_LEN || ulPinLen > MAX_PIN_LEN) return CKR_PIN_INCORRECT;
+
 	return CKR_FUNCTION_NOT_SUPPORTED;
 }
 
 // Initialise the user PIN
 CK_RV SoftHSM::C_InitPIN(CK_SESSION_HANDLE hSession, CK_UTF8CHAR_PTR pPin, CK_ULONG ulPinLen) 
 {
+	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
+	if (!pPin) return CKR_ARGUMENTS_BAD;
+	if (ulPinLen < MIN_PIN_LEN || ulPinLen > MAX_PIN_LEN) return CKR_PIN_LEN_RANGE;
+
 	return CKR_FUNCTION_NOT_SUPPORTED;
 }
 
 // Change the PIN
 CK_RV SoftHSM::C_SetPIN(CK_SESSION_HANDLE hSession, CK_UTF8CHAR_PTR pOldPin, CK_ULONG ulOldLen, CK_UTF8CHAR_PTR pNewPin, CK_ULONG ulNewLen) 
 {
+	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
+	if (!pOldPin) return CKR_ARGUMENTS_BAD;
+	if (!pNewPin) return CKR_ARGUMENTS_BAD;
+	if (ulOldLen < MIN_PIN_LEN || ulOldLen > MAX_PIN_LEN) return CKR_PIN_LEN_RANGE;
+	if (ulNewLen < MIN_PIN_LEN || ulNewLen > MAX_PIN_LEN) return CKR_PIN_LEN_RANGE;
+
 	return CKR_FUNCTION_NOT_SUPPORTED;
 }
 
 // Open a new session to the specified slot
 CK_RV SoftHSM::C_OpenSession(CK_SLOT_ID slotID, CK_FLAGS flags, CK_VOID_PTR pApplication, CK_NOTIFY Notify, CK_SESSION_HANDLE_PTR phSession) 
 {
+	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
+	if (!phSession) return CKR_ARGUMENTS_BAD;
+
 	return CKR_FUNCTION_NOT_SUPPORTED;
 }
 
 // Close the given session
 CK_RV SoftHSM::C_CloseSession(CK_SESSION_HANDLE hSession) 
 {
+	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
+
 	return CKR_FUNCTION_NOT_SUPPORTED;
 }
 
 // Close all open sessions
 CK_RV SoftHSM::C_CloseAllSessions(CK_SLOT_ID slotID) 
 {
+	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
+
 	return CKR_FUNCTION_NOT_SUPPORTED;
 }
 
 // Retrieve information about the specified session
 CK_RV SoftHSM::C_GetSessionInfo(CK_SESSION_HANDLE hSession, CK_SESSION_INFO_PTR pInfo) 
 {
+	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
+	if (!pInfo) return CKR_ARGUMENTS_BAD;
+
 	return CKR_FUNCTION_NOT_SUPPORTED;
 }
 
@@ -366,12 +392,18 @@ CK_RV SoftHSM::C_SetOperationState(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pOper
 // Login on the token in the specified session
 CK_RV SoftHSM::C_Login(CK_SESSION_HANDLE hSession, CK_USER_TYPE userType, CK_UTF8CHAR_PTR pPin, CK_ULONG ulPinLen) 
 {
+	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
+	if (!pPin) return CKR_ARGUMENTS_BAD;
+	if (ulPinLen < MIN_PIN_LEN || ulPinLen > MAX_PIN_LEN) return CKR_PIN_LEN_RANGE;
+
 	return CKR_FUNCTION_NOT_SUPPORTED;
 }
 
 // Log out of the token in the specified session
 CK_RV SoftHSM::C_Logout(CK_SESSION_HANDLE hSession) 
 {
+	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
+
 	return CKR_FUNCTION_NOT_SUPPORTED;
 }
 
