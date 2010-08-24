@@ -231,7 +231,43 @@ CK_RV SoftHSM::C_GetMechanismList(CK_SLOT_ID slotID, CK_MECHANISM_TYPE_PTR pMech
 // Return more information about a mechanism for a given slot
 CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_MECHANISM_INFO_PTR pInfo) 
 {
+	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
 	if (!pInfo) return CKR_ARGUMENTS_BAD;
+
+	// TODO: Lockup the slotID.
+
+	switch (type)
+	{
+		case CKM_RSA_PKCS_KEY_PAIR_GEN:
+		case CKM_RSA_PKCS:
+		case CKM_RSA_X_509:
+		case CKM_MD5:
+		case CKM_SHA_1:
+		case CKM_SHA256:
+		case CKM_SHA512:
+		case CKM_MD5_RSA_PKCS:
+		case CKM_SHA1_RSA_PKCS:
+		case CKM_SHA256_RSA_PKCS:
+		case CKM_SHA384_RSA_PKCS:
+		case CKM_SHA512_RSA_PKCS:
+		case CKM_DSA_PARAMETER_GEN:
+		case CKM_DSA_KEY_PAIR_GEN:
+		case CKM_DSA_SHA1:
+		case CKM_DES_KEY_GEN:
+		case CKM_DES_ECB:
+		case CKM_DES_CBC:
+		case CKM_DES2_KEY_GEN:
+		case CKM_DES3_KEY_GEN:
+		case CKM_DES3_ECB:
+		case CKM_DES3_CBC:
+		case CKM_AES_KEY_GEN:
+		case CKM_AES_ECB:
+		case CKM_AES_CBC:
+		default:
+			DEBUG_MSG("The selected mechanism is not supported");
+			return CKR_MECHANISM_INVALID;
+			break;
+	}
 
 	return CKR_FUNCTION_NOT_SUPPORTED;
 }
