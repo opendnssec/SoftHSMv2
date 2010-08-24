@@ -164,6 +164,8 @@ CK_RV SoftHSM::C_Initialize(CK_VOID_PTR pInitArgs)
 // PKCS #11 finalisation function
 CK_RV SoftHSM::C_Finalize(CK_VOID_PTR pReserved) 
 {
+	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
+
 	// Must be set to NULL_PTR in this version of PKCS#11
 	if (pReserved) return CKR_ARGUMENTS_BAD;
 
