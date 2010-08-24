@@ -238,31 +238,60 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 
 	switch (type)
 	{
-		case CKM_RSA_PKCS_KEY_PAIR_GEN:
-		case CKM_RSA_PKCS:
-		case CKM_RSA_X_509:
 		case CKM_MD5:
 		case CKM_SHA_1:
 		case CKM_SHA256:
 		case CKM_SHA512:
+			pInfo->flags = CKF_DIGEST;
+			break;
+		case CKM_RSA_PKCS_KEY_PAIR_GEN:
+			pInfo->ulMinKeySize = 512;
+			pInfo->ulMaxKeySize = 4096;
+			pInfo->flags = CKF_GENERATE_KEY_PAIR;
+			break;
+		case CKM_RSA_PKCS:
+		case CKM_RSA_X_509:
+			pInfo->ulMinKeySize = 512;
+			pInfo->ulMaxKeySize = 4096;
+			pInfo->flags = CKF_SIGN | CKF_VERIFY | CKF_ENCRYPT | CKF_DECRYPT;
+			break;
+		// case CKM_RSA_PKCS_OAEP:
+		//	pInfo->ulMinKeySize = 512;
+		//	pInfo->ulMaxKeySize = 4096;
+		//	pInfo->flags = CKF_ENCRYPT | CKF_DECRYPT;
+		//	break;
 		case CKM_MD5_RSA_PKCS:
 		case CKM_SHA1_RSA_PKCS:
 		case CKM_SHA256_RSA_PKCS:
-		case CKM_SHA384_RSA_PKCS:
 		case CKM_SHA512_RSA_PKCS:
+			pInfo->ulMinKeySize = 512;
+			pInfo->ulMaxKeySize = 4096;
+			pInfo->flags = CKF_SIGN | CKF_VERIFY;
+			break;
+		case CKM_DES_KEY_GEN:
+		case CKM_DES2_KEY_GEN:
+		case CKM_DES3_KEY_GEN:
+			pInfo->flags = CKF_GENERATE;
+			break;
+		case CKM_DES_ECB:
+		case CKM_DES_CBC:
+		case CKM_DES3_ECB:
+		case CKM_DES3_CBC:
+			pInfo->flags = CKF_ENCRYPT | CKF_DECRYPT;
+			break;
+		case CKM_AES_KEY_GEN:
+			pInfo->ulMinKeySize = 128;
+			pInfo->ulMaxKeySize = 256;
+			pInfo->flags = CKF_GENERATE;
+			break;
+		case CKM_AES_ECB:
+		case CKM_AES_CBC:
+			pInfo->ulMinKeySize = 128;
+			pInfo->ulMaxKeySize = 256;
+			pInfo->flags = CKF_ENCRYPT | CKF_DECRYPT;
 		case CKM_DSA_PARAMETER_GEN:
 		case CKM_DSA_KEY_PAIR_GEN:
 		case CKM_DSA_SHA1:
-		case CKM_DES_KEY_GEN:
-		case CKM_DES_ECB:
-		case CKM_DES_CBC:
-		case CKM_DES2_KEY_GEN:
-		case CKM_DES3_KEY_GEN:
-		case CKM_DES3_ECB:
-		case CKM_DES3_CBC:
-		case CKM_AES_KEY_GEN:
-		case CKM_AES_ECB:
-		case CKM_AES_CBC:
 		default:
 			DEBUG_MSG("The selected mechanism is not supported");
 			return CKR_MECHANISM_INVALID;
