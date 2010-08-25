@@ -68,20 +68,14 @@ SlotManager::~SlotManager()
 // Get the slot list
 CK_RV SlotManager::getSlotList(CK_BBOOL tokenPresent, CK_SLOT_ID_PTR pSlotList, CK_ULONG_PTR pulCount)
 {
-	CK_SLOT_INFO slotInfo;
-	CK_ULONG size = 0, vectorSize = slots.size();
+	CK_ULONG size = 0;
 
 	if (!pulCount) return CKR_ARGUMENTS_BAD;
 
 	// Calculate the size of the list
-	for (int i = 0; i < vectorSize; i++)
+	for (std::vector<Slot*>::iterator i = slots.begin(); i != slots.end(); i++)
 	{
-		if (slots[i]->getSlotInfo(&slotInfo) != CKR_OK)
-		{
-			continue;
-		}
-
-		if (tokenPresent == CK_FALSE || (slotInfo.flags & CKF_TOKEN_PRESENT) == CKF_TOKEN_PRESENT)
+		if (tokenPresent == CK_FALSE || (*i)->isTokenPresent())
 		{
 			size++;
 		}
@@ -105,16 +99,11 @@ CK_RV SlotManager::getSlotList(CK_BBOOL tokenPresent, CK_SLOT_ID_PTR pSlotList, 
 
 	size = 0;
 
-	for (int i = 0; i < vectorSize; i++)
+	for (std::vector<Slot*>::iterator i = slots.begin(); i != slots.end(); i++)
 	{
-		if (slots[i]->getSlotInfo(&slotInfo) != CKR_OK)
+		if (tokenPresent == CK_FALSE || (*i)->isTokenPresent())
 		{
-			continue;
-		}
-
-		if (tokenPresent == CK_FALSE || (slotInfo.flags & CKF_TOKEN_PRESENT) == CKF_TOKEN_PRESENT)
-		{
-			pSlotList[size++] = (CK_ULONG)slots[i]->getSlotID();
+			pSlotList[size++] = (CK_ULONG)(*i)->getSlotID();
 		}
 	}
 
@@ -132,13 +121,11 @@ std::vector<Slot*> SlotManager::getSlots()
 // Get one slot
 Slot* SlotManager::getSlot(CK_SLOT_ID slotID)
 {
-	int vectorSize = slots.size();
-
-	for (int i = 0; i < vectorSize; i++)
+	for (std::vector<Slot*>::iterator i = slots.begin(); i != slots.end(); i++)
 	{
-		if (slots[i]->getSlotID() == slotID)
+		if ((*i)->getSlotID() == slotID)
 		{
-			return slots[i];
+			return *i;
 		}
 	}
 

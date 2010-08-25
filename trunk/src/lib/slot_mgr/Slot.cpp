@@ -106,7 +106,7 @@ CK_RV Slot::getSlotInfo(CK_SLOT_INFO_PTR info)
 	strncpy((char*) info->slotDescription, description, strlen(description));
 	strncpy((char*) info->manufacturerID, mfgID, strlen(mfgID));
 
-	info->flags = (token != NULL) ? CKF_TOKEN_PRESENT : 0;
+	info->flags = isTokenPresent() ? CKF_TOKEN_PRESENT : 0;
 
 	info->hardwareVersion.major = VERSION_MAJOR;
 	info->hardwareVersion.minor = VERSION_MINOR;
@@ -120,4 +120,17 @@ CK_RV Slot::getSlotInfo(CK_SLOT_INFO_PTR info)
 size_t Slot::getSlotID()
 {
 	return slotID;
+}
+
+// Is a token present?
+bool Slot::isTokenPresent()
+{
+	if (token)
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
 }

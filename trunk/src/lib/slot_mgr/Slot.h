@@ -65,6 +65,9 @@ public:
 	// Get the slot ID
 	size_t getSlotID();
 
+	// Is a token present?
+	bool isTokenPresent();
+
 private:
 	// A reference to the object store
 	ObjectStore* objectStore;
