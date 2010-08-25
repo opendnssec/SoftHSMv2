@@ -365,11 +365,14 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 CK_RV SoftHSM::C_InitToken(CK_SLOT_ID slotID, CK_UTF8CHAR_PTR pPin, CK_ULONG ulPinLen, CK_UTF8CHAR_PTR pLabel) 
 {
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
-	if (!pPin) return CKR_ARGUMENTS_BAD;
-	if (!pLabel) return CKR_ARGUMENTS_BAD;
-	if (ulPinLen < MIN_PIN_LEN || ulPinLen > MAX_PIN_LEN) return CKR_PIN_INCORRECT;
 
-	return CKR_FUNCTION_NOT_SUPPORTED;
+	Slot *slot = slotManager->getSlot(slotID);
+	if (!slot)
+	{
+		return CKR_SLOT_ID_INVALID;
+	}
+
+	return slot->initToken(pPin, ulPinLen, pLabel);
 }
 
 // Initialise the user PIN

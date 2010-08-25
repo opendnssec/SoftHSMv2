@@ -51,7 +51,7 @@ Slot::Slot(ObjectStore* objectStore, size_t slotID, OSToken* token /* = NULL */)
 	}
 	else
 	{
-		this->token = NULL;
+		this->token = new Token();
 	}
 }
 
@@ -70,21 +70,9 @@ Token* Slot::getToken()
 // Initialise the token in the slot
 CK_RV Slot::initToken(CK_UTF8CHAR_PTR soPIN, CK_ULONG pinLen, CK_UTF8CHAR_PTR label)
 {
-	if (token != NULL)
-	{
-		ERROR_MSG("Cannot reinitialise token");
+	if (!token) return CKR_TOKEN_NOT_PRESENT;
 
-		return CKR_TOKEN_WRITE_PROTECTED;
-	}
-
-	token = Token::createToken(objectStore, soPIN, pinLen, label);
-
-	if (token == NULL)
-	{
-		return CKR_DEVICE_ERROR;
-	}
-
-	return CKR_OK;
+	return token->createToken(objectStore, soPIN, pinLen, label);
 }
 
 // Retrieve slot information for the slot

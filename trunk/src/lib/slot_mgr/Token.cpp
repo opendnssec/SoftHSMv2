@@ -37,6 +37,14 @@
 #include <sys/time.h>
 
 // Constructor
+Token::Token()
+{
+	token = NULL;
+	sdm = NULL;
+	valid = false;
+}
+
+// Constructor
 Token::Token(OSToken* token)
 {
 	this->token = token;
@@ -61,8 +69,20 @@ bool Token::isValid()
 }
 
 // Create a new token
-/*static*/ Token* Token::createToken(ObjectStore* objectStore, CK_UTF8CHAR_PTR soPIN, CK_ULONG pinLen, CK_UTF8CHAR_PTR label)
+CK_RV Token::createToken(ObjectStore* objectStore, CK_UTF8CHAR_PTR soPIN, CK_ULONG pinLen, CK_UTF8CHAR_PTR label)
 {
+	if (!objectStore) return CKR_GENERAL_ERROR;
+	if (!soPIN) return CKR_ARGUMENTS_BAD;
+	if (!label) return CKR_ARGUMENTS_BAD;
+	if (pinLen < MIN_PIN_LEN || pinLen > MAX_PIN_LEN) return CKR_PIN_INCORRECT;
+
+	if (token)
+	{
+		ERROR_MSG("Cannot reinitialise token");
+
+		return CKR_TOKEN_WRITE_PROTECTED;
+	}
+
 	// Generate the SO PIN blob
 	ByteString soPINByteStr((const unsigned char*) soPIN, pinLen);
 
@@ -70,61 +90,81 @@ bool Token::isValid()
 
 	if (!soPINBlobGen.setSOPIN(soPINByteStr))
 	{
-		return NULL;
+		return CKR_GENERAL_ERROR;
 	}
 
 	// Convert the label
 	ByteString labelByteStr((const unsigned char*) label, 32);
 
 	// Create the token
-	OSToken* token = objectStore->newToken(labelByteStr);
+	OSToken* newToken = objectStore->newToken(labelByteStr);
 
-	if (token == NULL)
+	if (!newToken)
 	{
-		return NULL;
+		return CKR_GENERAL_ERROR;
 	}
 
 	// Set the SO PIN on the token
-	if (!token->setSOPIN(soPINBlobGen.getSOPINBlob()))
+	if (!newToken->setSOPIN(soPINBlobGen.getSOPINBlob()))
 	{
-		return NULL;
+		// TODO: Clean up newToken?
+
+		return CKR_GENERAL_ERROR;
 	}
 
-	return new Token(token);
+	token = newToken;
+	
+	ByteString soPINBlob, userPINBlob;
+
+	valid = token->getSOPIN(soPINBlob) && token->getUserPIN(userPINBlob);
+
+	sdm = new SecureDataManager(soPINBlob, userPINBlob);
+
+	return CKR_OK;
 }
 
 // Retrieve token information for the token
 CK_RV Token::getTokenInfo(CK_TOKEN_INFO_PTR info)
 {
+	ByteString label, serial;
+
 	if (info == NULL)
 	{
 		return CKR_ARGUMENTS_BAD;
 	}
 
-	// Token specific information
-
-	if (!token->getTokenFlags(info->flags))
-	{
-		DEBUG_MSG("Could not get the token flags");
-		return CKR_GENERAL_ERROR;
-	}
-
-	ByteString label, serial;
-
 	memset(info->label, ' ', 32);
 	memset(info->serialNumber, ' ', 16);
 
-	if (token->getTokenLabel(label))
+	// Token specific information
+	if (token)
 	{
-		strncpy((char*) info->label, (char*) label.byte_str(), label.size());
+		if (!token->getTokenFlags(info->flags))
+		{
+			ERROR_MSG("Could not get the token flags");
+			return CKR_GENERAL_ERROR;
+		}
+
+		if (token->getTokenLabel(label))
+		{
+			strncpy((char*) info->label, (char*) label.byte_str(), label.size());
+		}
+
+		if (token->getTokenSerial(serial))
+		{
+			strncpy((char*) info->serialNumber, (char*) serial.byte_str(), serial.size());
+		}
+	}
+	else
+	{
+		info->flags =	CKF_RNG |
+				CKF_LOGIN_REQUIRED |
+				CKF_RESTORE_KEY_NOT_NEEDED |
+				CKF_SO_PIN_LOCKED |
+				CKF_SO_PIN_TO_BE_CHANGED;
 	}
 
-	if (token->getTokenLabel(serial))
-	{
-		strncpy((char*) info->serialNumber, (char*) serial.byte_str(), serial.size());
-	}
-
-	// Some more text about the token
+	// Information shared by all tokens
 
 	char mfgID[33];
 	char model[17];
@@ -136,8 +176,6 @@ CK_RV Token::getTokenInfo(CK_TOKEN_INFO_PTR info)
 	memset(info->model, ' ', 16);
 	strncpy((char*) info->manufacturerID, mfgID, strlen(mfgID));
 	strncpy((char*) info->model, model, strlen(model));
-
-	// Information shared by all tokens
 
 	// TODO: Can we set these?
 	info->ulSessionCount = CK_UNAVAILABLE_INFORMATION;

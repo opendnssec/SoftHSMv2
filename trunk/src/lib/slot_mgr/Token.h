@@ -48,13 +48,14 @@ class Token
 {
 public:
 	// Constructor
+	Token();
 	Token(OSToken* token);
 
 	// Destructor
 	virtual ~Token();
 	
 	// Create a new token
-	static Token* createToken(ObjectStore* objectStore, CK_UTF8CHAR_PTR soPIN, CK_ULONG pinLen, CK_UTF8CHAR_PTR label);
+	CK_RV createToken(ObjectStore* objectStore, CK_UTF8CHAR_PTR soPIN, CK_ULONG pinLen, CK_UTF8CHAR_PTR label);
 
 	// Is the token valid?
 	bool isValid();
