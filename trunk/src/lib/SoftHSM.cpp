@@ -251,9 +251,20 @@ CK_RV SoftHSM::C_GetSlotInfo(CK_SLOT_ID slotID, CK_SLOT_INFO_PTR pInfo)
 CK_RV SoftHSM::C_GetTokenInfo(CK_SLOT_ID slotID, CK_TOKEN_INFO_PTR pInfo) 
 {
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
-	if (!pInfo) return CKR_ARGUMENTS_BAD;
 
-	return CKR_FUNCTION_NOT_SUPPORTED;
+	Slot *slot = slotManager->getSlot(slotID);
+	if (!slot)
+	{
+		return CKR_SLOT_ID_INVALID;
+	}
+
+	Token *token = slot->getToken();
+	if (!token)
+	{
+		return CKR_TOKEN_NOT_PRESENT;
+	}
+
+	return token->getTokenInfo(pInfo);
 }
 
 // Return the list of supported mechanisms for a given slot
