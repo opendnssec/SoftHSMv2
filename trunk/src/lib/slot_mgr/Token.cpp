@@ -140,11 +140,11 @@ CK_RV Token::getTokenInfo(CK_TOKEN_INFO_PTR info)
 	// Information shared by all tokens
 
 	// TODO: Can we set these?
-	info->ulMaxSessionCount = CK_UNAVAILABLE_INFORMATION;
 	info->ulSessionCount = CK_UNAVAILABLE_INFORMATION;
-	info->ulMaxRwSessionCount = CK_UNAVAILABLE_INFORMATION;
 	info->ulRwSessionCount = CK_UNAVAILABLE_INFORMATION;
 
+	info->ulMaxRwSessionCount = CK_EFFECTIVELY_INFINITE;
+	info->ulMaxSessionCount = CK_EFFECTIVELY_INFINITE;
 	info->ulMaxPinLen = MAX_PIN_LEN;
 	info->ulMinPinLen = MIN_PIN_LEN;
 	info->ulTotalPublicMemory = CK_UNAVAILABLE_INFORMATION;
