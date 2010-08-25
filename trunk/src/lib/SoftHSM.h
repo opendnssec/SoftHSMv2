@@ -37,6 +37,8 @@
 #include "config.h"
 #include "log.h"
 #include "cryptoki.h"
+#include "ObjectStore.h"
+#include "SlotManager.h"
 #include <memory>
 
 class SoftHSM
@@ -46,7 +48,7 @@ public:
 	static SoftHSM* i();
 
 	// Destructor
-	virtual ~SoftHSM() { }
+	virtual ~SoftHSM();
 
 	// PKCS #11 functions
 	CK_RV C_Initialize(CK_VOID_PTR pInitArgs);
@@ -162,5 +164,8 @@ private:
 
 	// Is the SoftHSM PKCS #11 library initialised?
 	bool isInitialised;
+
+	ObjectStore *objectStore; 
+	SlotManager *slotManager;
 };
 

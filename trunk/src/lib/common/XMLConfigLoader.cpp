@@ -58,5 +58,7 @@ XMLConfigLoader::XMLConfigLoader()
 bool XMLConfigLoader::loadConfiguration()
 {
 	// TODO: implement this
+
+	return true;
 }
 

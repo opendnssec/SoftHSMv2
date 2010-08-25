@@ -46,6 +46,7 @@
 ObjectStore::ObjectStore(std::string storePath)
 {
 	this->storePath = storePath;
+	valid = false;
 
 	// Find all tokens in the specified path
 	Directory storeDir(storePath);
@@ -76,6 +77,8 @@ ObjectStore::ObjectStore(std::string storePath)
 
 		tokens.push_back(token);
 	}
+
+	valid = true;
 }
 
 // Destructor
@@ -86,6 +89,12 @@ ObjectStore::~ObjectStore()
 	{
 		delete *i;
 	}
+}
+
+// Check if the object store is valid
+bool ObjectStore::isValid()
+{
+	return valid;
 }
 
 // Return the number of tokens that is present

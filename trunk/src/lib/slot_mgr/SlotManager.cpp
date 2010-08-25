@@ -65,9 +65,82 @@ SlotManager::~SlotManager()
 	}
 }
 
+// Get the slot list
+CK_RV SlotManager::getSlotList(CK_BBOOL tokenPresent, CK_SLOT_ID_PTR pSlotList, CK_ULONG_PTR pulCount)
+{
+	CK_SLOT_INFO slotInfo;
+	CK_ULONG size = 0, vectorSize = slots.size();
+
+	if (!pulCount) return CKR_ARGUMENTS_BAD;
+
+	// Calculate the size of the list
+	for (int i = 0; i < vectorSize; i++)
+	{
+		if (slots[i]->getSlotInfo(&slotInfo) != CKR_OK)
+		{
+			continue;
+		}
+
+		if (tokenPresent == CK_FALSE || (slotInfo.flags & CKF_TOKEN_PRESENT) == CKF_TOKEN_PRESENT)
+		{
+			size++;
+		}
+	}
+
+	// The user wants the size of the list
+	if (!pSlotList)
+	{
+		*pulCount = size;
+
+		return CKR_OK;
+	}
+
+	// Is the given buffer too small?
+	if (*pulCount < size)
+	{
+		*pulCount = size;
+
+		return CKR_BUFFER_TOO_SMALL;
+	}
+
+	size = 0;
+
+	for (int i = 0; i < vectorSize; i++)
+	{
+		if (slots[i]->getSlotInfo(&slotInfo) != CKR_OK)
+		{
+			continue;
+		}
+
+		if (tokenPresent == CK_FALSE || (slotInfo.flags & CKF_TOKEN_PRESENT) == CKF_TOKEN_PRESENT)
+		{
+			pSlotList[size++] = (CK_ULONG)slots[i]->getSlotID();
+		}
+	}
+
+	*pulCount = size;
+
+	return CKR_OK;
+}
+
 // Get the slots
 std::vector<Slot*> SlotManager::getSlots()
 {
 	return slots;
 }
 
+// Get one slot
+Slot* SlotManager::getSlot(CK_SLOT_ID slotID)
+{
+	int vectorSize = slots.size();
+
+	for (int i = 0; i < vectorSize; i++)
+	{
+		if (slots[i]->getSlotID() == slotID)
+		{
+			return slots[i];
+		}
+	}
+
+	return NULL;
+}

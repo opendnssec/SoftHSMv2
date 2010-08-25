@@ -62,12 +62,18 @@ public:
 	// Create a new token
 	OSToken* newToken(const ByteString& label);
 
+	// Check if the object store is valid
+	bool isValid();
+
 private:
 	// The tokens
 	std::vector<OSToken*> tokens;
 
 	// The object store root directory
 	std::string storePath;
+
+	// The status
+	bool valid;
 };
 
 #endif // !_SOFTHSM_V2_OBJECTSTORE_H

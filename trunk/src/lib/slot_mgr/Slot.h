@@ -62,6 +62,9 @@ public:
 	// Retrieve slot information for the slot
 	CK_RV getSlotInfo(CK_SLOT_INFO_PTR info);
 
+	// Get the slot ID
+	size_t getSlotID();
+
 private:
 	// A reference to the object store
 	ObjectStore* objectStore;

@@ -116,3 +116,8 @@ CK_RV Slot::getSlotInfo(CK_SLOT_INFO_PTR info)
 	return CKR_OK;
 }
 
+// Get the slot ID
+size_t Slot::getSlotID()
+{
+	return slotID;
+}

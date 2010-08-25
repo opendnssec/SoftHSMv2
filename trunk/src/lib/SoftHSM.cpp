@@ -63,6 +63,15 @@ SoftHSM* SoftHSM::i()
 SoftHSM::SoftHSM()
 {
 	isInitialised = false;
+	objectStore = NULL;
+	slotManager = NULL;
+}
+
+// Destructor
+SoftHSM::~SoftHSM()
+{
+	if (slotManager) delete slotManager;
+	if (objectStore) delete objectStore;
 }
 
 /*****************************************************************************
@@ -112,8 +121,11 @@ CK_RV SoftHSM::C_Initialize(CK_VOID_PTR pInitArgs)
 			if (args->flags & CKF_OS_LOCKING_OK)
 			{
 				// Use our own mutex functions.
-				// Do not need to set them because
-				// the MutexFactory uses them by default.
+				MutexFactory::i()->setCreateMutex(OSCreateMutex);
+				MutexFactory::i()->setDestroyMutex(OSDestroyMutex);
+				MutexFactory::i()->setLockMutex(OSLockMutex);
+				MutexFactory::i()->setUnlockMutex(OSUnlockMutex);
+				MutexFactory::i()->enable();
 			}
 			else
 			{
@@ -144,6 +156,7 @@ CK_RV SoftHSM::C_Initialize(CK_VOID_PTR pInitArgs)
 			MutexFactory::i()->setDestroyMutex(args->DestroyMutex);
 			MutexFactory::i()->setLockMutex(args->LockMutex);
 			MutexFactory::i()->setUnlockMutex(args->UnlockMutex);
+			MutexFactory::i()->enable();
 		}
 	}
 	else
@@ -154,6 +167,20 @@ CK_RV SoftHSM::C_Initialize(CK_VOID_PTR pInitArgs)
 
 	// (Re)load the configuration
 	Configuration::i()->reload(XMLConfigLoader::i());
+
+	// Load the object store
+	// TODO: Move the path into the configuration
+	objectStore = new ObjectStore("./testdir");
+	if (!objectStore->isValid())
+	{
+		ERROR_MSG("Could not load the object store");
+		delete objectStore;
+		objectStore = NULL;
+		return CKR_GENERAL_ERROR;
+	}
+
+	// Load the slot manager
+	slotManager = new SlotManager(objectStore);
 
 	// Set the state to initialised
 	isInitialised = true;
@@ -169,9 +196,14 @@ CK_RV SoftHSM::C_Finalize(CK_VOID_PTR pReserved)
 	// Must be set to NULL_PTR in this version of PKCS#11
 	if (pReserved) return CKR_ARGUMENTS_BAD;
 
+	if (slotManager) delete slotManager;
+	slotManager = NULL;
+	if (objectStore) delete objectStore;
+	objectStore = NULL;
+
 	// TODO: What should we finalize?
 
-	return CKR_FUNCTION_NOT_SUPPORTED;
+	return CKR_OK;
 }
 
 // Return information about the PKCS #11 module
@@ -197,18 +229,22 @@ CK_RV SoftHSM::C_GetInfo(CK_INFO_PTR pInfo)
 CK_RV SoftHSM::C_GetSlotList(CK_BBOOL tokenPresent, CK_SLOT_ID_PTR pSlotList, CK_ULONG_PTR pulCount) 
 {
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
-	if (!pulCount) return CKR_ARGUMENTS_BAD;
 
-	return CKR_FUNCTION_NOT_SUPPORTED;
+	return slotManager->getSlotList(tokenPresent, pSlotList, pulCount);
 }
 
 // Return information about a slot
 CK_RV SoftHSM::C_GetSlotInfo(CK_SLOT_ID slotID, CK_SLOT_INFO_PTR pInfo) 
 {
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
-	if (!pInfo) return CKR_ARGUMENTS_BAD;
 
-	return CKR_FUNCTION_NOT_SUPPORTED;
+	Slot *slot = slotManager->getSlot(slotID);
+	if (!slot)
+	{
+		return CKR_SLOT_ID_INVALID;
+	}
+
+	return slot->getSlotInfo(pInfo);
 }
 
 // Return information about a token in a slot
@@ -235,7 +271,11 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
 	if (!pInfo) return CKR_ARGUMENTS_BAD;
 
-	// TODO: Lockup the slotID.
+	Slot *slot = slotManager->getSlot(slotID);
+	if (!slot)
+	{
+		return CKR_SLOT_ID_INVALID;
+	}
 
 	switch (type)
 	{
