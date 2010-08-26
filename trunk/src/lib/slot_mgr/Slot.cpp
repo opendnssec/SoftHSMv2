@@ -94,7 +94,7 @@ CK_RV Slot::getSlotInfo(CK_SLOT_INFO_PTR info)
 	strncpy((char*) info->slotDescription, description, strlen(description));
 	strncpy((char*) info->manufacturerID, mfgID, strlen(mfgID));
 
-	info->flags = isTokenPresent() ? CKF_TOKEN_PRESENT : 0;
+	info->flags = CKF_REMOVABLE_DEVICE | isTokenPresent() ? CKF_TOKEN_PRESENT : 0;
 
 	info->hardwareVersion.major = VERSION_MAJOR;
 	info->hardwareVersion.minor = VERSION_MINOR;
