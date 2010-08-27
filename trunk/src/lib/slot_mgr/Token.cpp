@@ -76,11 +76,17 @@ CK_RV Token::createToken(ObjectStore* objectStore, CK_UTF8CHAR_PTR soPIN, CK_ULO
 	if (!label) return CKR_ARGUMENTS_BAD;
 	if (pinLen < MIN_PIN_LEN || pinLen > MAX_PIN_LEN) return CKR_PIN_INCORRECT;
 
-	if (token)
+	if (token != NULL)
 	{
-		ERROR_MSG("Cannot reinitialise token");
+		// The token is already initialised. Destroy it first.
+		if (!objectStore->destroyToken(token))
+		{
+			ERROR_MSG("Failed to destroy existing token");
 
-		return CKR_TOKEN_WRITE_PROTECTED;
+			return CKR_DEVICE_ERROR;
+		}
+
+		token = NULL;
 	}
 
 	// Generate the SO PIN blob
@@ -101,15 +107,20 @@ CK_RV Token::createToken(ObjectStore* objectStore, CK_UTF8CHAR_PTR soPIN, CK_ULO
 
 	if (!newToken)
 	{
-		return CKR_GENERAL_ERROR;
+		return CKR_DEVICE_ERROR;
 	}
 
 	// Set the SO PIN on the token
 	if (!newToken->setSOPIN(soPINBlobGen.getSOPINBlob()))
 	{
-		// TODO: Clean up newToken?
+		ERROR_MSG("Failed to set SO PIN on new token");
 
-		return CKR_GENERAL_ERROR;
+		if (!objectStore->destroyToken(newToken))
+		{
+			ERROR_MSG("Failed to destroy incomplete token");
+		}
+
+		return CKR_DEVICE_ERROR;
 	}
 
 	token = newToken;
@@ -165,7 +176,6 @@ CK_RV Token::getTokenInfo(CK_TOKEN_INFO_PTR info)
 	}
 
 	// Information shared by all tokens
-
 	char mfgID[33];
 	char model[17];
 

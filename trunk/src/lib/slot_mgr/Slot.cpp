@@ -70,7 +70,7 @@ Token* Slot::getToken()
 // Initialise the token in the slot
 CK_RV Slot::initToken(CK_UTF8CHAR_PTR soPIN, CK_ULONG pinLen, CK_UTF8CHAR_PTR label)
 {
-	if (!token) return CKR_TOKEN_NOT_PRESENT;
+	if (token == NULL) return CKR_TOKEN_NOT_PRESENT;
 
 	return token->createToken(objectStore, soPIN, pinLen, label);
 }

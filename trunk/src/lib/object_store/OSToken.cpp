@@ -151,8 +151,8 @@ bool OSToken::setSOPIN(const ByteString& soPINBlob)
 	if (tokenObject->setAttribute(CKA_OS_SOPIN, soPIN) &&
 	    getTokenFlags(flags))
 	{
-		flags = flags & !CKF_SO_PIN_LOCKED;
-		flags = flags & !CKF_SO_PIN_TO_BE_CHANGED;
+		flags &= ~CKF_SO_PIN_LOCKED;
+		flags &= ~CKF_SO_PIN_TO_BE_CHANGED;
 
 		return setTokenFlags(flags);
 	}

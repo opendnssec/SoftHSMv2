@@ -70,19 +70,20 @@ CK_RV SlotManager::getSlotList(CK_BBOOL tokenPresent, CK_SLOT_ID_PTR pSlotList, 
 {
 	CK_ULONG size = 0;
 
-	if (!pulCount) return CKR_ARGUMENTS_BAD;
+	if (pulCount == NULL) return CKR_ARGUMENTS_BAD;
 
 	// Calculate the size of the list
 	for (std::vector<Slot*>::iterator i = slots.begin(); i != slots.end(); i++)
 	{
-		if (tokenPresent == CK_FALSE || (*i)->isTokenPresent())
+		if (((tokenPresent == CK_FALSE) && !(*i)->isTokenPresent()) ||
+		    ((tokenPresent == CK_TRUE) && (*i)->isTokenPresent()))
 		{
 			size++;
 		}
 	}
 
 	// The user wants the size of the list
-	if (!pSlotList)
+	if (pSlotList == NULL)
 	{
 		*pulCount = size;
 
@@ -101,7 +102,8 @@ CK_RV SlotManager::getSlotList(CK_BBOOL tokenPresent, CK_SLOT_ID_PTR pSlotList, 
 
 	for (std::vector<Slot*>::iterator i = slots.begin(); i != slots.end(); i++)
 	{
-		if (tokenPresent == CK_FALSE || (*i)->isTokenPresent())
+		if (((tokenPresent == CK_FALSE) && !(*i)->isTokenPresent()) ||
+		    ((tokenPresent == CK_TRUE) && (*i)->isTokenPresent()))
 		{
 			pSlotList[size++] = (CK_ULONG)(*i)->getSlotID();
 		}
