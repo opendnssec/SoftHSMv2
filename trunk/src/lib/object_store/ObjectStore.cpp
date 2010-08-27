@@ -41,12 +41,16 @@
 #include "Directory.h"
 #include "OSToken.h"
 #include "UUID.h"
+#include <stdio.h>
 
 // Constructor
 ObjectStore::ObjectStore(std::string storePath)
 {
 	this->storePath = storePath;
 	valid = false;
+	storeMutex = MutexFactory::i()->getMutex();
+
+	MutexLocker lock(storeMutex);
 
 	// Find all tokens in the specified path
 	Directory storeDir(storePath);
@@ -76,6 +80,7 @@ ObjectStore::ObjectStore(std::string storePath)
 		}
 
 		tokens.push_back(token);
+		allTokens.push_back(token);
 	}
 
 	valid = true;
@@ -84,11 +89,19 @@ ObjectStore::ObjectStore(std::string storePath)
 // Destructor
 ObjectStore::~ObjectStore()
 {
-	// Clean up
-	for (std::vector<OSToken*>::iterator i = tokens.begin(); i != tokens.end(); i++)
 	{
-		delete *i;
+		MutexLocker lock(storeMutex);
+
+		// Clean up
+		tokens.clear();
+
+		for (std::vector<OSToken*>::iterator i = allTokens.begin(); i != allTokens.end(); i++)
+		{
+			delete *i;
+		}
 	}
+
+	MutexFactory::i()->recycleMutex(storeMutex);
 }
 
 // Check if the object store is valid
@@ -100,12 +113,16 @@ bool ObjectStore::isValid()
 // Return the number of tokens that is present
 size_t ObjectStore::getTokenCount()
 {
+	MutexLocker lock(storeMutex);
+
 	return tokens.size();
 }
 
 // Return a pointer to the n-th token (counting starts at 0)
 OSToken* ObjectStore::getToken(size_t whichToken)
 {
+	MutexLocker lock(storeMutex);
+
 	if (whichToken >= tokens.size())
 	{
 		return NULL;
@@ -117,6 +134,8 @@ OSToken* ObjectStore::getToken(size_t whichToken)
 // Create a new token
 OSToken* ObjectStore::newToken(const ByteString& label)
 {
+	MutexLocker lock(storeMutex);
+
 	// Generate a UUID for the token
 	std::string tokenUUID = UUID::newUUID();
 
@@ -130,8 +149,39 @@ OSToken* ObjectStore::newToken(const ByteString& label)
 	if (newToken != NULL)
 	{
 		tokens.push_back(newToken);
+		allTokens.push_back(newToken);
 	}
 
 	return newToken;
+}
+
+// Destroy a token
+bool ObjectStore::destroyToken(OSToken* token)
+{
+	MutexLocker lock(storeMutex);
+
+	// Find the token
+	for (std::vector<OSToken*>::iterator i = tokens.begin(); i != tokens.end(); i++)
+	{
+		if (*i == token)
+		{
+			// Found the token, now destroy the token
+			if (!token->clearToken())
+			{
+				ERROR_MSG("Failed to clear token instance");
+
+				return false;
+			}
+
+			// And remove it from the vector
+			tokens.erase(i);
+
+			return true;
+		}
+	}
+
+	ERROR_MSG("Could not find the token instance to destroy");
+
+	return false;
 }
 

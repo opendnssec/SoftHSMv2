@@ -50,6 +50,7 @@
 #include <set>
 #include <map>
 #include <list>
+#include <stdio.h>
 
 // Constructor
 OSToken::OSToken(const std::string tokenPath)
@@ -141,6 +142,8 @@ OSToken::~OSToken()
 // Set the SO PIN
 bool OSToken::setSOPIN(const ByteString& soPINBlob)
 {
+	if (!valid) return false;
+
 	OSAttribute soPIN(soPINBlob);
 
 	CK_ULONG flags;
@@ -160,7 +163,7 @@ bool OSToken::setSOPIN(const ByteString& soPINBlob)
 // Get the SO PIN
 bool OSToken::getSOPIN(ByteString& soPINBlob)
 {
-	if (!tokenObject->isValid())
+	if (!valid || !tokenObject->isValid())
 	{
 		return false;
 	}
@@ -182,6 +185,8 @@ bool OSToken::getSOPIN(ByteString& soPINBlob)
 // Set the user PIN
 bool OSToken::setUserPIN(ByteString userPINBlob)
 {
+	if (!valid) return false;
+
 	OSAttribute userPIN(userPINBlob);
 
 	return tokenObject->setAttribute(CKA_OS_USERPIN, userPIN);
@@ -190,7 +195,7 @@ bool OSToken::setUserPIN(ByteString userPINBlob)
 // Get the user PIN
 bool OSToken::getUserPIN(ByteString& userPINBlob)
 {
-	if (!tokenObject->isValid())
+	if (!valid || !tokenObject->isValid())
 	{
 		return false;
 	}
@@ -212,7 +217,7 @@ bool OSToken::getUserPIN(ByteString& userPINBlob)
 // Retrieve the token label
 bool OSToken::getTokenLabel(ByteString& label)
 {
-	if (!tokenObject->isValid())
+	if (!valid || !tokenObject->isValid())
 	{
 		return false;
 	}
@@ -234,7 +239,7 @@ bool OSToken::getTokenLabel(ByteString& label)
 // Retrieve the token serial
 bool OSToken::getTokenSerial(ByteString& serial)
 {
-	if (!tokenObject->isValid())
+	if (!valid || !tokenObject->isValid())
 	{
 		return false;
 	}
@@ -256,7 +261,7 @@ bool OSToken::getTokenSerial(ByteString& serial)
 // Get the token flags
 bool OSToken::getTokenFlags(CK_ULONG& flags)
 {
-	if (!tokenObject->isValid())
+	if (!valid || !tokenObject->isValid())
 	{
 		return false;
 	}
@@ -284,6 +289,8 @@ bool OSToken::getTokenFlags(CK_ULONG& flags)
 // Set the token flags
 bool OSToken::setTokenFlags(const CK_ULONG flags)
 {
+	if (!valid) return false;
+
 	OSAttribute tokenFlags(flags);
 
 	return tokenObject->setAttribute(CKA_OS_TOKENFLAGS, tokenFlags);
@@ -304,6 +311,8 @@ std::set<ObjectFile*> OSToken::getObjects()
 // Create a new object
 ObjectFile* OSToken::createObject()
 {
+	if (!valid) return NULL;
+
 	// Generate a name for the object
 	std::string objectPath = tokenPath + OS_PATHSEP + UUID::newUUID() + ".object";
 
@@ -336,6 +345,8 @@ ObjectFile* OSToken::createObject()
 // Delete an object
 bool OSToken::deleteObject(ObjectFile* object)
 {
+	if (!valid) return false;
+
 	if (objects.find(object) == objects.end())
 	{
 		ERROR_MSG("Cannot delete non-existent object 0x%08X", object);
@@ -370,6 +381,54 @@ bool OSToken::deleteObject(ObjectFile* object)
 bool OSToken::isValid()
 {
 	return valid;
+}
+
+// Invalidate the token (for instance if it is deleted)
+void OSToken::invalidate()
+{
+	valid = false;
+}
+
+// Delete the token
+bool OSToken::clearToken()
+{
+	MutexLocker lock(tokenMutex);
+
+	// Invalidate the token
+	invalidate();
+
+	// First, clear out all objects
+	objects.clear();
+	
+	// Now, delete all files in the token directory
+	if (!tokenDir->refresh())
+	{
+		return false;
+	}
+
+	std::vector<std::string> tokenFiles = tokenDir->getFiles();
+
+	for (std::vector<std::string>::iterator i = tokenFiles.begin(); i != tokenFiles.end(); i++)
+	{
+		if (!tokenDir->remove(*i))
+		{
+			ERROR_MSG("Failed to remove %s from token directory %s", i->c_str(), tokenPath.c_str());
+
+			return false;
+		}
+	}
+
+	// Now remove the token directory
+	if (remove(tokenPath.c_str()))
+	{
+		ERROR_MSG("Failed to remove the token directory %s", tokenPath.c_str());
+
+		return false;
+	}
+
+	DEBUG_MSG("Token instance %s was succesfully cleared", tokenPath.c_str());
+
+	return true;
 }
 
 // Index the token

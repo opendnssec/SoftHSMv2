@@ -44,6 +44,7 @@ class OSTokenTests : public CppUnit::TestFixture
 	CPPUNIT_TEST(testExistingToken);
 	CPPUNIT_TEST(testNonExistentToken);
 	CPPUNIT_TEST(testCreateDeleteObjects);
+	CPPUNIT_TEST(testClearToken);
 	CPPUNIT_TEST_SUITE_END();
 
 public:
@@ -51,6 +52,7 @@ public:
 	void testExistingToken();
 	void testNonExistentToken();
 	void testCreateDeleteObjects();
+	void testClearToken();
 
 	void setUp();
 	void tearDown();

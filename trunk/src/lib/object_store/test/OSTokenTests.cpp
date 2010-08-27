@@ -386,3 +386,59 @@ void OSTokenTests::testCreateDeleteObjects()
 	delete testToken;
 }
 
+void OSTokenTests::testClearToken()
+{
+	// Create a new token
+	ByteString label = "40414243"; // ABCD
+	ByteString serial = "0102030405060708";
+
+	OSToken* newToken = OSToken::createToken("./testdir", "newToken", label, serial);
+
+	CPPUNIT_ASSERT(newToken != NULL);
+
+	// Check the flags
+	CK_ULONG flags;
+	CPPUNIT_ASSERT(newToken->getTokenFlags(flags));
+	CPPUNIT_ASSERT(flags == CKF_RNG | CKF_LOGIN_REQUIRED | CKF_RESTORE_KEY_NOT_NEEDED | CKF_TOKEN_INITIALIZED | CKF_SO_PIN_LOCKED | CKF_SO_PIN_TO_BE_CHANGED);
+
+	// Set the SO PIN
+	ByteString soPIN = "3132333435363738"; // 12345678
+	
+	CPPUNIT_ASSERT(newToken->setSOPIN(soPIN));
+
+	// Set the user PIN
+	ByteString userPIN = "31323334"; // 1234
+
+	CPPUNIT_ASSERT(newToken->setUserPIN(userPIN));
+
+	CPPUNIT_ASSERT(newToken->getTokenFlags(flags));
+	CPPUNIT_ASSERT(flags == CKF_RNG | CKF_LOGIN_REQUIRED | CKF_RESTORE_KEY_NOT_NEEDED | CKF_TOKEN_INITIALIZED | CKF_USER_PIN_INITIALIZED);
+
+	delete newToken;
+
+	// Now reopen the newly created token
+	OSToken reopenedToken("./testdir/newToken");
+
+	CPPUNIT_ASSERT(reopenedToken.isValid());
+
+	// Retrieve the flags, user PIN and so PIN
+	ByteString retrievedSOPIN, retrievedUserPIN;
+	
+	CPPUNIT_ASSERT(reopenedToken.getSOPIN(retrievedSOPIN));
+	CPPUNIT_ASSERT(reopenedToken.getUserPIN(retrievedUserPIN));
+	CPPUNIT_ASSERT(reopenedToken.getTokenFlags(flags));
+
+	CPPUNIT_ASSERT(retrievedSOPIN == soPIN);
+	CPPUNIT_ASSERT(retrievedUserPIN == userPIN);
+	CPPUNIT_ASSERT(flags == CKF_RNG | CKF_LOGIN_REQUIRED | CKF_RESTORE_KEY_NOT_NEEDED | CKF_TOKEN_INITIALIZED | CKF_USER_PIN_INITIALIZED);
+
+	// Now clear the token
+	CPPUNIT_ASSERT(reopenedToken.clearToken());
+	CPPUNIT_ASSERT(!reopenedToken.isValid());
+
+	// Try to open it once more
+	OSToken clearedToken("./testdir/newToken");
+
+	CPPUNIT_ASSERT(!clearedToken.isValid());
+}
+

@@ -41,6 +41,7 @@
 #include "config.h"
 #include "ByteString.h"
 #include "OSToken.h"
+#include "MutexFactory.h"
 #include <string>
 #include <vector>
 
@@ -61,6 +62,9 @@ public:
 
 	// Create a new token
 	OSToken* newToken(const ByteString& label);
+	
+	// Destroy a token
+	bool destroyToken(OSToken* token);
 
 	// Check if the object store is valid
 	bool isValid();
@@ -69,11 +73,17 @@ private:
 	// The tokens
 	std::vector<OSToken*> tokens;
 
+	// All tokens
+	std::vector<OSToken*> allTokens;
+
 	// The object store root directory
 	std::string storePath;
 
 	// The status
 	bool valid;
+
+	// Object store synchronisation
+	Mutex* storeMutex;
 };
 
 #endif // !_SOFTHSM_V2_OBJECTSTORE_H

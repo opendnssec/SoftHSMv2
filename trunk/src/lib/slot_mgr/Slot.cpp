@@ -113,12 +113,5 @@ size_t Slot::getSlotID()
 // Is a token present?
 bool Slot::isTokenPresent()
 {
-	if (token)
-	{
-		return true;
-	}
-	else
-	{
-		return false;
-	}
+	return (token != NULL);
 }

@@ -163,3 +163,88 @@ void ObjectStoreTests::testExistingTokens()
 	CPPUNIT_ASSERT(retrieveSerial1 != retrieveSerial2);
 }
 
+void ObjectStoreTests::testDeleteToken()
+{
+	// Create some tokens
+	ByteString label1 = "DEADC0FFEE";
+	ByteString label2 = "DEADBEEF";
+	ByteString serial1 = "0011001100110011";
+	ByteString serial2 = "2233223322332233";
+
+	OSToken* token1 = OSToken::createToken("./testdir", "token1", label1, serial1);
+	OSToken* token2 = OSToken::createToken("./testdir", "token2", label2, serial2);
+
+	CPPUNIT_ASSERT((token1 != NULL) && (token2 != NULL));
+
+	delete token1;
+	delete token2;
+
+	// Now associate a store with the test directory
+	ObjectStore store("./testdir");
+
+	CPPUNIT_ASSERT(store.getTokenCount() == 2);
+
+	// Retrieve both tokens and check that both are present
+	OSToken* retrieveToken1 = store.getToken(0);
+	OSToken* retrieveToken2 = store.getToken(1);
+
+	ByteString retrieveLabel1, retrieveLabel2, retrieveSerial1, retrieveSerial2;
+
+	CPPUNIT_ASSERT(retrieveToken1 != NULL);
+	CPPUNIT_ASSERT(retrieveToken2 != NULL);
+
+	CPPUNIT_ASSERT(retrieveToken1->getTokenLabel(retrieveLabel1));
+	CPPUNIT_ASSERT(retrieveToken2->getTokenLabel(retrieveLabel2));
+	CPPUNIT_ASSERT(retrieveToken1->getTokenSerial(retrieveSerial1));
+	CPPUNIT_ASSERT(retrieveToken2->getTokenSerial(retrieveSerial2));
+
+	CPPUNIT_ASSERT((retrieveLabel1 == label1) || (retrieveLabel1 == label2));
+	CPPUNIT_ASSERT((retrieveLabel2 == label1) || (retrieveLabel2 == label2));
+	CPPUNIT_ASSERT(retrieveLabel1 != retrieveLabel2);
+	CPPUNIT_ASSERT((retrieveSerial1 == serial1) || (retrieveSerial1 == serial2));
+	CPPUNIT_ASSERT((retrieveSerial2 == serial1) || (retrieveSerial2 == serial2));
+	CPPUNIT_ASSERT(retrieveSerial1 != retrieveSerial2);
+
+	// Now, delete token #1
+	CPPUNIT_ASSERT(store.destroyToken(retrieveToken1));
+
+	CPPUNIT_ASSERT(store.getTokenCount() == 1);
+
+	OSToken* retrieveToken_ = store.getToken(0);
+
+	ByteString retrieveLabel_,retrieveSerial_;
+
+	CPPUNIT_ASSERT(retrieveToken_->getTokenLabel(retrieveLabel_));
+	CPPUNIT_ASSERT(retrieveToken_->getTokenSerial(retrieveSerial_));
+
+	CPPUNIT_ASSERT(((retrieveLabel_ == label1) && (retrieveSerial_ == serial1)) ||
+	               ((retrieveLabel_ == label2) && (retrieveSerial_ == serial2)));
+
+	// Now add a new token
+	ByteString label3 = "DEADC0FFEEBEEF";
+
+	// Create a new token
+	OSToken* tokenNew = store.newToken(label3);
+
+	CPPUNIT_ASSERT(tokenNew != NULL);
+
+	CPPUNIT_ASSERT(store.getTokenCount() == 2);
+
+	// Retrieve both tokens and check that both are present
+	OSToken* retrieveToken1_ = store.getToken(0);
+	OSToken* retrieveToken2_ = store.getToken(1);
+
+	CPPUNIT_ASSERT(retrieveToken1_ != NULL);
+	CPPUNIT_ASSERT(retrieveToken2_ != NULL);
+
+	CPPUNIT_ASSERT(retrieveToken1_->getTokenLabel(retrieveLabel1));
+	CPPUNIT_ASSERT(retrieveToken2_->getTokenLabel(retrieveLabel2));
+	CPPUNIT_ASSERT(retrieveToken1_->getTokenSerial(retrieveSerial1));
+	CPPUNIT_ASSERT(retrieveToken2_->getTokenSerial(retrieveSerial2));
+
+	CPPUNIT_ASSERT((retrieveLabel1 == label3) || (retrieveLabel2 == label3));
+	CPPUNIT_ASSERT(((retrieveLabel1 == label1) && (retrieveLabel2 != label2)) ||
+	               ((retrieveLabel1 == label2) && (retrieveLabel2 != label1)));
+	CPPUNIT_ASSERT(retrieveLabel1 != retrieveLabel2);
+}
+

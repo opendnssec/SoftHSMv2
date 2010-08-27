@@ -101,6 +101,12 @@ public:
 	// Checks if the token is consistent
 	bool isValid();
 
+	// Invalidate the token (for instance if it is deleted)
+	void invalidate();
+
+	// Delete the token
+	bool clearToken();
+
 private:
 	// ObjectFile instances can call the index() function
 	friend class ObjectFile;

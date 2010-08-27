@@ -43,12 +43,14 @@ class ObjectStoreTests : public CppUnit::TestFixture
 	CPPUNIT_TEST(testEmptyStore);
 	CPPUNIT_TEST(testNewTokens);
 	CPPUNIT_TEST(testExistingTokens);
+	CPPUNIT_TEST(testDeleteToken);
 	CPPUNIT_TEST_SUITE_END();
 
 public:
 	void testEmptyStore();
 	void testNewTokens();
 	void testExistingTokens();
+	void testDeleteToken();
 
 	void setUp();
 	void tearDown();
