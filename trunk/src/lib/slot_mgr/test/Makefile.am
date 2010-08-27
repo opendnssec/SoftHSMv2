@@ -15,7 +15,8 @@ AM_CPPFLAGS = 			-I$(srcdir)/.. \
 
 check_PROGRAMS =		slotmgrtest
 
-slotmgrtest_SOURCES =		slotmgrtest.cpp 
+slotmgrtest_SOURCES =		slotmgrtest.cpp \
+				SlotManagerTests.cpp
 
 slotmgrtest_LDADD =		../../libsofthsm_convarch.la 
 
