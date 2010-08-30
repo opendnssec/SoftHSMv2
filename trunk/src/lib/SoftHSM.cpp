@@ -70,8 +70,8 @@ SoftHSM::SoftHSM()
 // Destructor
 SoftHSM::~SoftHSM()
 {
-	if (slotManager) delete slotManager;
-	if (objectStore) delete objectStore;
+	if (slotManager != NULL) delete slotManager;
+	if (objectStore != NULL) delete objectStore;
 }
 
 /*****************************************************************************
@@ -90,12 +90,12 @@ CK_RV SoftHSM::C_Initialize(CK_VOID_PTR pInitArgs)
 	}
 
 	// Do we have any arguments?
-	if (pInitArgs)
+	if (pInitArgs != NULL_PTR)
 	{
 		args = (CK_C_INITIALIZE_ARGS_PTR)pInitArgs;
 
 		// Must be set to NULL_PTR in this version of PKCS#11
-		if (args->pReserved)
+		if (args->pReserved != NULL_PTR)
 		{
 			DEBUG_MSG("pReserved must be set to NULL_PTR");
 			return CKR_ARGUMENTS_BAD;
@@ -111,10 +111,10 @@ CK_RV SoftHSM::C_Initialize(CK_VOID_PTR pInitArgs)
 		// Are we not supplied with mutex functions?
 		if
 		(
-			!args->CreateMutex &&
-			!args->DestroyMutex &&
-			!args->LockMutex &&
-			!args->UnlockMutex
+			args->CreateMutex == NULL_PTR &&
+			args->DestroyMutex == NULL_PTR &&
+			args->LockMutex == NULL_PTR &&
+			args->UnlockMutex == NULL_PTR
 		)
 		{
 			// Can we use our own mutex functions?
@@ -138,10 +138,10 @@ CK_RV SoftHSM::C_Initialize(CK_VOID_PTR pInitArgs)
 			// We must have all mutex functions
 			if
 			(
-				!args->CreateMutex ||
-				!args->DestroyMutex ||
-				!args->LockMutex ||
-				!args->UnlockMutex
+				args->CreateMutex == NULL_PTR ||
+				args->DestroyMutex == NULL_PTR ||
+				args->LockMutex == NULL_PTR ||
+				args->UnlockMutex == NULL_PTR
 			)
 			{
 				DEBUG_MSG("Not all mutex functions are supplied");
@@ -194,11 +194,11 @@ CK_RV SoftHSM::C_Finalize(CK_VOID_PTR pReserved)
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
 
 	// Must be set to NULL_PTR in this version of PKCS#11
-	if (pReserved) return CKR_ARGUMENTS_BAD;
+	if (pReserved != NULL_PTR) return CKR_ARGUMENTS_BAD;
 
-	if (slotManager) delete slotManager;
+	if (slotManager != NULL) delete slotManager;
 	slotManager = NULL;
-	if (objectStore) delete objectStore;
+	if (objectStore != NULL) delete objectStore;
 	objectStore = NULL;
 
 	// TODO: What should we finalize?
@@ -210,7 +210,7 @@ CK_RV SoftHSM::C_Finalize(CK_VOID_PTR pReserved)
 CK_RV SoftHSM::C_GetInfo(CK_INFO_PTR pInfo) 
 {
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
-	if (!pInfo) return CKR_ARGUMENTS_BAD;
+	if (pInfo == NULL_PTR) return CKR_ARGUMENTS_BAD;
 
 	pInfo->cryptokiVersion.major = CRYPTOKI_VERSION_MAJOR;
 	pInfo->cryptokiVersion.minor = CRYPTOKI_VERSION_MINOR;
@@ -239,7 +239,7 @@ CK_RV SoftHSM::C_GetSlotInfo(CK_SLOT_ID slotID, CK_SLOT_INFO_PTR pInfo)
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
 
 	Slot *slot = slotManager->getSlot(slotID);
-	if (!slot)
+	if (slot == NULL)
 	{
 		return CKR_SLOT_ID_INVALID;
 	}
@@ -253,13 +253,13 @@ CK_RV SoftHSM::C_GetTokenInfo(CK_SLOT_ID slotID, CK_TOKEN_INFO_PTR pInfo)
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
 
 	Slot *slot = slotManager->getSlot(slotID);
-	if (!slot)
+	if (slot == NULL)
 	{
 		return CKR_SLOT_ID_INVALID;
 	}
 
 	Token *token = slot->getToken();
-	if (!token)
+	if (token == NULL)
 	{
 		return CKR_TOKEN_NOT_PRESENT;
 	}
@@ -271,7 +271,7 @@ CK_RV SoftHSM::C_GetTokenInfo(CK_SLOT_ID slotID, CK_TOKEN_INFO_PTR pInfo)
 CK_RV SoftHSM::C_GetMechanismList(CK_SLOT_ID slotID, CK_MECHANISM_TYPE_PTR pMechanismList, CK_ULONG_PTR pulCount) 
 {
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
-	if (!pulCount) return CKR_ARGUMENTS_BAD;
+	if (pulCount == NULL_PTR) return CKR_ARGUMENTS_BAD;
 
 	return CKR_FUNCTION_NOT_SUPPORTED;
 }
@@ -280,10 +280,10 @@ CK_RV SoftHSM::C_GetMechanismList(CK_SLOT_ID slotID, CK_MECHANISM_TYPE_PTR pMech
 CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_MECHANISM_INFO_PTR pInfo) 
 {
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
-	if (!pInfo) return CKR_ARGUMENTS_BAD;
+	if (pInfo == NULL_PTR) return CKR_ARGUMENTS_BAD;
 
 	Slot *slot = slotManager->getSlot(slotID);
-	if (!slot)
+	if (slot == NULL)
 	{
 		return CKR_SLOT_ID_INVALID;
 	}
@@ -367,7 +367,7 @@ CK_RV SoftHSM::C_InitToken(CK_SLOT_ID slotID, CK_UTF8CHAR_PTR pPin, CK_ULONG ulP
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
 
 	Slot *slot = slotManager->getSlot(slotID);
-	if (!slot)
+	if (slot == NULL)
 	{
 		return CKR_SLOT_ID_INVALID;
 	}
@@ -379,7 +379,7 @@ CK_RV SoftHSM::C_InitToken(CK_SLOT_ID slotID, CK_UTF8CHAR_PTR pPin, CK_ULONG ulP
 CK_RV SoftHSM::C_InitPIN(CK_SESSION_HANDLE hSession, CK_UTF8CHAR_PTR pPin, CK_ULONG ulPinLen) 
 {
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
-	if (!pPin) return CKR_ARGUMENTS_BAD;
+	if (pPin == NULL_PTR) return CKR_ARGUMENTS_BAD;
 	if (ulPinLen < MIN_PIN_LEN || ulPinLen > MAX_PIN_LEN) return CKR_PIN_LEN_RANGE;
 
 	return CKR_FUNCTION_NOT_SUPPORTED;
@@ -389,8 +389,8 @@ CK_RV SoftHSM::C_InitPIN(CK_SESSION_HANDLE hSession, CK_UTF8CHAR_PTR pPin, CK_UL
 CK_RV SoftHSM::C_SetPIN(CK_SESSION_HANDLE hSession, CK_UTF8CHAR_PTR pOldPin, CK_ULONG ulOldLen, CK_UTF8CHAR_PTR pNewPin, CK_ULONG ulNewLen) 
 {
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
-	if (!pOldPin) return CKR_ARGUMENTS_BAD;
-	if (!pNewPin) return CKR_ARGUMENTS_BAD;
+	if (pOldPin == NULL_PTR) return CKR_ARGUMENTS_BAD;
+	if (pNewPin == NULL_PTR) return CKR_ARGUMENTS_BAD;
 	if (ulOldLen < MIN_PIN_LEN || ulOldLen > MAX_PIN_LEN) return CKR_PIN_LEN_RANGE;
 	if (ulNewLen < MIN_PIN_LEN || ulNewLen > MAX_PIN_LEN) return CKR_PIN_LEN_RANGE;
 
@@ -401,7 +401,7 @@ CK_RV SoftHSM::C_SetPIN(CK_SESSION_HANDLE hSession, CK_UTF8CHAR_PTR pOldPin, CK_
 CK_RV SoftHSM::C_OpenSession(CK_SLOT_ID slotID, CK_FLAGS flags, CK_VOID_PTR pApplication, CK_NOTIFY Notify, CK_SESSION_HANDLE_PTR phSession) 
 {
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
-	if (!phSession) return CKR_ARGUMENTS_BAD;
+	if (phSession == NULL_PTR) return CKR_ARGUMENTS_BAD;
 
 	return CKR_FUNCTION_NOT_SUPPORTED;
 }
@@ -426,7 +426,7 @@ CK_RV SoftHSM::C_CloseAllSessions(CK_SLOT_ID slotID)
 CK_RV SoftHSM::C_GetSessionInfo(CK_SESSION_HANDLE hSession, CK_SESSION_INFO_PTR pInfo) 
 {
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
-	if (!pInfo) return CKR_ARGUMENTS_BAD;
+	if (pInfo == NULL_PTR) return CKR_ARGUMENTS_BAD;
 
 	return CKR_FUNCTION_NOT_SUPPORTED;
 }
@@ -447,7 +447,7 @@ CK_RV SoftHSM::C_SetOperationState(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pOper
 CK_RV SoftHSM::C_Login(CK_SESSION_HANDLE hSession, CK_USER_TYPE userType, CK_UTF8CHAR_PTR pPin, CK_ULONG ulPinLen) 
 {
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
-	if (!pPin) return CKR_ARGUMENTS_BAD;
+	if (pPin == NULL_PTR) return CKR_ARGUMENTS_BAD;
 	if (ulPinLen < MIN_PIN_LEN || ulPinLen > MAX_PIN_LEN) return CKR_PIN_LEN_RANGE;
 
 	return CKR_FUNCTION_NOT_SUPPORTED;
