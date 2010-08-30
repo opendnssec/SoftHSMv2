@@ -78,7 +78,7 @@ void SlotManagerTests::testNoExistingTokens()
 	CK_ULONG ulCount = 10;
 
 	CPPUNIT_ASSERT(slotManager.getSlotList(CK_FALSE, testList, &ulCount) == CKR_OK);
-	CPPUNIT_ASSERT(ulCount == 0);
+	CPPUNIT_ASSERT(ulCount == 1);
 
 	ulCount = 10;
 
@@ -124,7 +124,7 @@ void SlotManagerTests::testExistingTokens()
 	CK_ULONG ulCount = 10;
 
 	CPPUNIT_ASSERT(slotManager.getSlotList(CK_FALSE, testList, &ulCount) == CKR_OK);
-	CPPUNIT_ASSERT(ulCount == 0);
+	CPPUNIT_ASSERT(ulCount == 3);
 
 	ulCount = 10;
 
@@ -192,7 +192,7 @@ void SlotManagerTests::testInitialiseTokenInLastSlot()
 		CK_ULONG ulCount = 10;
 	
 		CPPUNIT_ASSERT(slotManager.getSlotList(CK_FALSE, testList, &ulCount) == CKR_OK);
-		CPPUNIT_ASSERT(ulCount == 0);
+		CPPUNIT_ASSERT(ulCount == 1);
 	
 		ulCount = 10;
 	
@@ -244,7 +244,7 @@ void SlotManagerTests::testInitialiseTokenInLastSlot()
 	CK_ULONG ulCount = 10;
 
 	CPPUNIT_ASSERT(slotManager.getSlotList(CK_FALSE, testList, &ulCount) == CKR_OK);
-	CPPUNIT_ASSERT(ulCount == 0);
+	CPPUNIT_ASSERT(ulCount == 2);
 
 	ulCount = 10;
 
@@ -305,7 +305,7 @@ void SlotManagerTests::testReinitialiseExistingToken()
 	CK_ULONG ulCount = 10;
 
 	CPPUNIT_ASSERT(slotManager.getSlotList(CK_FALSE, testList, &ulCount) == CKR_OK);
-	CPPUNIT_ASSERT(ulCount == 0);
+	CPPUNIT_ASSERT(ulCount == 3);
 
 	ulCount = 10;
 
