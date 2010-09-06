@@ -203,6 +203,8 @@ CK_RV SoftHSM::C_Finalize(CK_VOID_PTR pReserved)
 
 	// TODO: What should we finalize?
 
+	isInitialised = false;
+
 	return CKR_OK;
 }
 
