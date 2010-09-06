@@ -38,6 +38,7 @@ SUBDIRS = 			common \
 				object_store \
 				session_mgr \
 				slot_mgr \
+				test \
 				user_mgr
 
 EXTRA_DIST =			$(srcdir)/*.h \
