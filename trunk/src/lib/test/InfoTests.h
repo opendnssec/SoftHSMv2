@@ -43,11 +43,13 @@ class InfoTests : public CppUnit::TestFixture
 	CPPUNIT_TEST_SUITE(InfoTests);
 	CPPUNIT_TEST(testGetInfo);
 	CPPUNIT_TEST(testGetFunctionList);
+	CPPUNIT_TEST(testGetSlotList);
 	CPPUNIT_TEST_SUITE_END();
 
 public:
 	void testGetInfo();
 	void testGetFunctionList();
+	void testGetSlotList();
 
 	void setUp();
 	void tearDown();
