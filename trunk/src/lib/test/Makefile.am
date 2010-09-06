@@ -8,7 +8,8 @@ AM_CPPFLAGS = 			-I$(srcdir)/.. \
 
 check_PROGRAMS =		p11test
 
-p11test_SOURCES =		p11test.cpp
+p11test_SOURCES =		p11test.cpp \
+				InitTests.cpp
 
 p11test_LDADD =			../libsofthsm.la 
 
