@@ -38,6 +38,7 @@
 #include "config.h"
 #include <string>
 #include <map>
+#include <memory>
 
 class ConfigLoader
 {
@@ -82,7 +83,7 @@ public:
 private:
 	Configuration();
 
-	static Configuration* instance;
+	static std::auto_ptr<Configuration> instance;
 
 	std::map<std::string, std::string> stringConfiguration;
 	std::map<std::string, int> integerConfiguration;

@@ -36,6 +36,7 @@
 #ifndef _SOFTHSM_V2_XMLCONFIGLOADER_H
 #define _SOFTHSM_V2_XMLCONFIGLOADER_H
 
+#include <memory>
 #include "config.h"
 #include "Configuration.h"
 
@@ -51,7 +52,7 @@ public:
 private:
 	XMLConfigLoader();
 
-	static XMLConfigLoader* instance;
+	static std::auto_ptr<XMLConfigLoader> instance;
 };
 
 #endif // !_SOFTHSM_V2_XMLCONFIGLOADER_H

@@ -36,17 +36,17 @@
 #include "XMLConfigLoader.h"
 
 // Initialise the one-and-only instance
-XMLConfigLoader* XMLConfigLoader::instance = NULL;
+std::auto_ptr<XMLConfigLoader> XMLConfigLoader::instance(NULL);
 
 // Return the one-and-only instance
 XMLConfigLoader* XMLConfigLoader::i()
 {
-	if (instance == NULL)
+	if (instance.get() == NULL)
 	{
-		instance = new XMLConfigLoader();
+		instance = std::auto_ptr<XMLConfigLoader>(new XMLConfigLoader());
 	}
 
-	return instance;
+	return instance.get();
 }
 
 // Constructor

@@ -38,17 +38,17 @@
 #include "log.h"
 
 // Initialise the one-and-only instance
-Configuration* Configuration::instance = NULL;
+std::auto_ptr<Configuration> Configuration::instance(NULL);
 
 // Return the one-and-only instance
 Configuration* Configuration::i()
 {
-	if (instance == NULL)
+	if (instance.get() == NULL)
 	{
-		instance = new Configuration();
+		instance = std::auto_ptr<Configuration>(new Configuration());
 	}
-	
-	return instance;
+
+	return instance.get();
 }
 
 // Constructor
