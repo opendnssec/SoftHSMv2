@@ -37,6 +37,7 @@
 #include <cppunit/extensions/HelperMacros.h>
 #include "InitTests.h"
 #include "cryptoki.h"
+#include "osmutex.h"
 
 CPPUNIT_TEST_SUITE_REGISTRATION(InitTests);
 
@@ -163,7 +164,65 @@ void InitTests::testInit4()
 	CPPUNIT_ASSERT(rv == CKR_OK);
 }
 
-// TODO: More tests where we provide the mutex functions
+void InitTests::testInit5()
+{
+	CK_C_INITIALIZE_ARGS InitArgs;
+	CK_RV rv;
+
+	InitArgs.CreateMutex = OSCreateMutex;
+	InitArgs.DestroyMutex = OSDestroyMutex;
+	InitArgs.LockMutex = OSLockMutex;
+	InitArgs.UnlockMutex = NULL_PTR;
+	InitArgs.flags = 0;
+	InitArgs.pReserved = NULL_PTR;
+
+	// Just make sure that we finalize any previous failed tests
+	C_Finalize(NULL_PTR);
+
+	rv = C_Initialize((CK_VOID_PTR)&InitArgs);
+	CPPUNIT_ASSERT(rv == CKR_ARGUMENTS_BAD);
+
+	InitArgs.UnlockMutex = OSUnlockMutex;
+	rv = C_Initialize((CK_VOID_PTR)&InitArgs);
+	// If rv == CKR_CANT_LOCK then we cannot use multiple threads
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	rv = C_Initialize((CK_VOID_PTR)&InitArgs);
+	CPPUNIT_ASSERT(rv == CKR_CRYPTOKI_ALREADY_INITIALIZED);
+
+	rv = C_Finalize(NULL_PTR);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+}
+
+void InitTests::testInit6()
+{
+	CK_C_INITIALIZE_ARGS InitArgs;
+	CK_RV rv;
+
+	InitArgs.CreateMutex = OSCreateMutex;
+	InitArgs.DestroyMutex = OSDestroyMutex;
+	InitArgs.LockMutex = OSLockMutex;
+	InitArgs.UnlockMutex = NULL_PTR;
+	InitArgs.flags = CKF_OS_LOCKING_OK;
+	InitArgs.pReserved = NULL_PTR;
+
+	// Just make sure that we finalize any previous failed tests
+	C_Finalize(NULL_PTR);
+
+	rv = C_Initialize((CK_VOID_PTR)&InitArgs);
+	CPPUNIT_ASSERT(rv == CKR_ARGUMENTS_BAD);
+
+	InitArgs.UnlockMutex = OSUnlockMutex;
+	rv = C_Initialize((CK_VOID_PTR)&InitArgs);
+	// If rv == CKR_CANT_LOCK then we cannot use multiple threads
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	rv = C_Initialize((CK_VOID_PTR)&InitArgs);
+	CPPUNIT_ASSERT(rv == CKR_CRYPTOKI_ALREADY_INITIALIZED);
+
+	rv = C_Finalize(NULL_PTR);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+}
 
 void InitTests::testFinal()
 {

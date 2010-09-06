@@ -44,6 +44,8 @@ class InitTests : public CppUnit::TestFixture
 	CPPUNIT_TEST(testInit2);
 	CPPUNIT_TEST(testInit3);
 	CPPUNIT_TEST(testInit4);
+	CPPUNIT_TEST(testInit5);
+	CPPUNIT_TEST(testInit6);
 	CPPUNIT_TEST(testFinal);
 	CPPUNIT_TEST_SUITE_END();
 
@@ -52,6 +54,8 @@ public:
 	void testInit2();
 	void testInit3();
 	void testInit4();
+	void testInit5();
+	void testInit6();
 	void testFinal();
 
 	void setUp();
