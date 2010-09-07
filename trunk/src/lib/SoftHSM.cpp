@@ -272,10 +272,67 @@ CK_RV SoftHSM::C_GetTokenInfo(CK_SLOT_ID slotID, CK_TOKEN_INFO_PTR pInfo)
 // Return the list of supported mechanisms for a given slot
 CK_RV SoftHSM::C_GetMechanismList(CK_SLOT_ID slotID, CK_MECHANISM_TYPE_PTR pMechanismList, CK_ULONG_PTR pulCount) 
 {
+	// A list with the supported mechanisms
+	CK_ULONG nrSupportedMechanisms = 24;
+	CK_MECHANISM_TYPE supportedMechanisms[] =
+	{
+		CKM_MD5,
+		CKM_SHA_1,
+		CKM_SHA256,
+		CKM_SHA512,
+		CKM_RSA_PKCS_KEY_PAIR_GEN,
+		CKM_RSA_PKCS,
+		CKM_RSA_X_509,
+		CKM_MD5_RSA_PKCS,
+		CKM_SHA1_RSA_PKCS,
+		CKM_SHA256_RSA_PKCS,
+		CKM_SHA512_RSA_PKCS,
+		CKM_DES_KEY_GEN,
+		CKM_DES2_KEY_GEN,
+		CKM_DES3_KEY_GEN,
+		CKM_DES_ECB,
+		CKM_DES_CBC,
+		CKM_DES3_ECB,
+		CKM_DES3_CBC,
+		CKM_AES_KEY_GEN,
+		CKM_AES_ECB,
+		CKM_AES_CBC,
+		CKM_DSA_PARAMETER_GEN,
+		CKM_DSA_KEY_PAIR_GEN,
+		CKM_DSA_SHA1
+	};
+
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
 	if (pulCount == NULL_PTR) return CKR_ARGUMENTS_BAD;
 
-	return CKR_FUNCTION_NOT_SUPPORTED;
+	Slot *slot = slotManager->getSlot(slotID);
+	if (slot == NULL)
+	{
+		return CKR_SLOT_ID_INVALID;
+	}
+
+	if (pMechanismList == NULL_PTR)
+	{
+		*pulCount = nrSupportedMechanisms;
+
+		return CKR_OK;
+	}
+
+	if (*pulCount < nrSupportedMechanisms)
+	{
+		*pulCount = nrSupportedMechanisms;
+
+		return CKR_BUFFER_TOO_SMALL;
+	}
+
+	*pulCount = nrSupportedMechanisms;
+
+	for (int i = 0; i < nrSupportedMechanisms; i ++)
+	{
+		pMechanismList[i] = supportedMechanisms[i];
+	}
+
+	return CKR_OK;
 }
 
 // Return more information about a mechanism for a given slot

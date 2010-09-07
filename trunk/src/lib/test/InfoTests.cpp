@@ -200,3 +200,86 @@ void InfoTests::testGetTokenInfo()
 
 	C_Finalize(NULL_PTR);
 }
+
+void InfoTests::testGetMechanismList()
+{
+	CK_RV rv;
+	CK_ULONG ulMechCount = 0;
+	CK_MECHANISM_TYPE_PTR pMechanismList;
+
+	// Just make sure that we finalize any previous failed tests
+	C_Finalize(NULL_PTR);
+
+	rv = C_GetMechanismList(slotWithNoInitToken, NULL_PTR, &ulMechCount);
+	CPPUNIT_ASSERT(rv == CKR_CRYPTOKI_NOT_INITIALIZED);
+
+	rv = C_Initialize(NULL_PTR);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	rv = C_GetMechanismList(slotWithNoInitToken, NULL_PTR, NULL_PTR);
+	CPPUNIT_ASSERT(rv == CKR_ARGUMENTS_BAD);
+
+	rv = C_GetMechanismList(slotInvalid, NULL_PTR, &ulMechCount);
+	CPPUNIT_ASSERT(rv == CKR_SLOT_ID_INVALID);
+
+	// Get the size of the buffer
+	rv = C_GetMechanismList(slotWithNoInitToken, NULL_PTR, &ulMechCount);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	pMechanismList = (CK_MECHANISM_TYPE_PTR)malloc(ulMechCount * sizeof(CK_MECHANISM_TYPE_PTR));
+
+	// Check if we have a too small buffer
+	ulMechCount = 0;
+	rv = C_GetMechanismList(slotWithNoInitToken, pMechanismList, &ulMechCount);
+	CPPUNIT_ASSERT(rv == CKR_BUFFER_TOO_SMALL);
+
+	// Get the mechanism list
+	rv = C_GetMechanismList(slotWithNoInitToken, pMechanismList, &ulMechCount);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	free(pMechanismList);
+
+	C_Finalize(NULL_PTR);
+}
+
+void InfoTests::testGetMechanismInfo()
+{
+	CK_RV rv;
+	CK_MECHANISM_INFO info;
+	CK_ULONG ulMechCount = 0;
+	CK_MECHANISM_TYPE_PTR pMechanismList;
+
+	// Just make sure that we finalize any previous failed tests
+	C_Finalize(NULL_PTR);
+
+	rv = C_GetMechanismInfo(slotWithNoInitToken, CKM_RSA_PKCS, &info);
+	CPPUNIT_ASSERT(rv == CKR_CRYPTOKI_NOT_INITIALIZED);
+
+	rv = C_Initialize(NULL_PTR);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Get the mechanism list
+	rv = C_GetMechanismList(slotWithNoInitToken, NULL_PTR, &ulMechCount);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	CPPUNIT_ASSERT(ulMechCount != 0);
+	pMechanismList = (CK_MECHANISM_TYPE_PTR)malloc(ulMechCount * sizeof(CK_MECHANISM_TYPE_PTR));
+	rv = C_GetMechanismList(slotWithNoInitToken, pMechanismList, &ulMechCount);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	rv = C_GetMechanismInfo(slotWithNoInitToken, pMechanismList[0], NULL_PTR);
+	CPPUNIT_ASSERT(rv == CKR_ARGUMENTS_BAD);
+
+	rv = C_GetMechanismInfo(slotInvalid, pMechanismList[0], &info);
+	CPPUNIT_ASSERT(rv == CKR_SLOT_ID_INVALID);
+
+	rv = C_GetMechanismInfo(slotWithNoInitToken, CKM_VENDOR_DEFINED, &info);
+	CPPUNIT_ASSERT(rv == CKR_MECHANISM_INVALID);
+
+	for (int i = 0; i < ulMechCount; i++)
+	{
+		rv = C_GetMechanismInfo(slotWithNoInitToken, pMechanismList[i], &info);
+		CPPUNIT_ASSERT(rv == CKR_OK);
+	}
+
+	free(pMechanismList);
+
+	C_Finalize(NULL_PTR);
+}
