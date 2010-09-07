@@ -69,25 +69,14 @@ void InfoTests::testGetInfo()
 	// Just make sure that we finalize any previous failed tests
 	C_Finalize(NULL_PTR);
 
+	rv = C_GetInfo(&ckInfo);
+	CPPUNIT_ASSERT(rv == CKR_CRYPTOKI_NOT_INITIALIZED);
+
+	rv = C_Initialize(NULL_PTR);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
 	rv = C_GetInfo(NULL_PTR);
-	CPPUNIT_ASSERT(rv == CKR_CRYPTOKI_NOT_INITIALIZED || rv == CKR_ARGUMENTS_BAD);
-
-	if (rv == CKR_CRYPTOKI_NOT_INITIALIZED)
-	{
-		rv = C_Initialize(NULL_PTR);
-		CPPUNIT_ASSERT(rv == CKR_OK);
-
-		rv = C_GetInfo(NULL_PTR);
-		CPPUNIT_ASSERT(rv == CKR_ARGUMENTS_BAD);
-	}
-	else
-	{
-		rv = C_GetInfo(&ckInfo);
-		CPPUNIT_ASSERT(rv == CKR_CRYPTOKI_NOT_INITIALIZED);
-
-		rv = C_Initialize(NULL_PTR);
-		CPPUNIT_ASSERT(rv == CKR_OK);
-	}
+	CPPUNIT_ASSERT(rv == CKR_ARGUMENTS_BAD);
 
 	rv = C_GetInfo(&ckInfo);
 	CPPUNIT_ASSERT(rv == CKR_OK);
@@ -116,26 +105,14 @@ void InfoTests::testGetSlotList()
 	// Just make sure that we finalize any previous failed tests
 	C_Finalize(NULL_PTR);
 
+	rv = C_GetSlotList(CK_FALSE, NULL_PTR, &ulSlotCount);
+	CPPUNIT_ASSERT(rv == CKR_CRYPTOKI_NOT_INITIALIZED);
+
+	rv = C_Initialize(NULL_PTR);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
 	rv = C_GetSlotList(CK_FALSE, NULL_PTR, NULL_PTR);
-	CPPUNIT_ASSERT(rv == CKR_CRYPTOKI_NOT_INITIALIZED || rv == CKR_ARGUMENTS_BAD);
-
-	if (rv == CKR_CRYPTOKI_NOT_INITIALIZED)
-	{
-		rv = C_Initialize(NULL_PTR);
-		CPPUNIT_ASSERT(rv == CKR_OK);
-
-		rv = C_GetSlotList(CK_FALSE, NULL_PTR, NULL_PTR);
-		CPPUNIT_ASSERT(rv == CKR_ARGUMENTS_BAD);
-
-	}
-	else
-	{
-		rv = C_GetSlotList(CK_FALSE, NULL_PTR, &ulSlotCount);
-		CPPUNIT_ASSERT(rv == CKR_CRYPTOKI_NOT_INITIALIZED);
-
-		rv = C_Initialize(NULL_PTR);
-		CPPUNIT_ASSERT(rv == CKR_OK);
-	}
+	CPPUNIT_ASSERT(rv == CKR_ARGUMENTS_BAD);
 
 	// Get the size of the buffer
 	rv = C_GetSlotList(CK_FALSE, NULL_PTR, &ulSlotCount);
@@ -178,30 +155,48 @@ void InfoTests::testGetSlotInfo()
 	// Just make sure that we finalize any previous failed tests
 	C_Finalize(NULL_PTR);
 
-	rv = C_GetSlotInfo(slotInvalid, NULL_PTR);
-	CPPUNIT_ASSERT(rv == CKR_CRYPTOKI_NOT_INITIALIZED || rv == CKR_ARGUMENTS_BAD);
+	rv = C_GetSlotInfo(slotWithNoInitToken, &slotInfo);
+	CPPUNIT_ASSERT(rv == CKR_CRYPTOKI_NOT_INITIALIZED);
 
-	if (rv == CKR_CRYPTOKI_NOT_INITIALIZED)
-	{
-		rv = C_Initialize(NULL_PTR);
-		CPPUNIT_ASSERT(rv == CKR_OK);
+	rv = C_Initialize(NULL_PTR);
+	CPPUNIT_ASSERT(rv == CKR_OK);
 
-		rv = C_GetSlotInfo(slotWithNoInitToken, NULL_PTR);
-		CPPUNIT_ASSERT(rv == CKR_ARGUMENTS_BAD);
-	}
-	else
-	{
-		rv = C_GetSlotInfo(slotWithNoInitToken, &slotInfo);
-		CPPUNIT_ASSERT(rv == CKR_CRYPTOKI_NOT_INITIALIZED);
-
-		rv = C_Initialize(NULL_PTR);
-		CPPUNIT_ASSERT(rv == CKR_OK);
-	}
+	rv = C_GetSlotInfo(slotWithNoInitToken, NULL_PTR);
+	CPPUNIT_ASSERT(rv == CKR_ARGUMENTS_BAD);
 
 	rv = C_GetSlotInfo(slotInvalid, &slotInfo);
 	CPPUNIT_ASSERT(rv == CKR_SLOT_ID_INVALID);
+
 	rv = C_GetSlotInfo(slotWithNoInitToken, &slotInfo);
 	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	C_Finalize(NULL_PTR);
+}
+
+void InfoTests::testGetTokenInfo()
+{
+	CK_RV rv;
+	CK_TOKEN_INFO tokenInfo;
+
+	// Just make sure that we finalize any previous failed tests
+	C_Finalize(NULL_PTR);
+
+	rv = C_GetTokenInfo(slotWithNoInitToken, &tokenInfo);
+	CPPUNIT_ASSERT(rv == CKR_CRYPTOKI_NOT_INITIALIZED);
+
+	rv = C_Initialize(NULL_PTR);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	rv = C_GetTokenInfo(slotWithNoInitToken, NULL_PTR);
+	CPPUNIT_ASSERT(rv == CKR_ARGUMENTS_BAD);
+
+	rv = C_GetTokenInfo(slotInvalid, &tokenInfo);
+	CPPUNIT_ASSERT(rv == CKR_SLOT_ID_INVALID);
+
+	rv = C_GetTokenInfo(slotWithNoInitToken, &tokenInfo);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	CPPUNIT_ASSERT((tokenInfo.flags & CKF_TOKEN_INITIALIZED) == 0);
 
 	C_Finalize(NULL_PTR);
 }
