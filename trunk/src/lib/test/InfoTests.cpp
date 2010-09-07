@@ -37,7 +37,6 @@
 #include <string.h>
 #include <cppunit/extensions/HelperMacros.h>
 #include "InfoTests.h"
-#include "cryptoki.h"
 
 CPPUNIT_TEST_SUITE_REGISTRATION(InfoTests);
 
@@ -48,6 +47,9 @@ void InfoTests::setUp()
 {
 	// FIXME: this only works on *NIX/BSD, not on other platforms
 	CPPUNIT_ASSERT(!system("mkdir testdir"));
+
+	slotInvalid = 9999;
+	slotWithNoInitToken = 0;
 }
 
 void InfoTests::tearDown()
@@ -111,6 +113,9 @@ void InfoTests::testGetSlotList()
 	CK_ULONG ulSlotCount = 0;
 	CK_SLOT_ID_PTR pSlotList;
 
+	// Just make sure that we finalize any previous failed tests
+	C_Finalize(NULL_PTR);
+
 	rv = C_GetSlotList(CK_FALSE, NULL_PTR, NULL_PTR);
 	CPPUNIT_ASSERT(rv == CKR_CRYPTOKI_NOT_INITIALIZED || rv == CKR_ARGUMENTS_BAD);
 
@@ -161,6 +166,42 @@ void InfoTests::testGetSlotList()
 	rv = C_GetSlotList(CK_TRUE, pSlotList, &ulSlotCount);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 	free(pSlotList);
+
+	C_Finalize(NULL_PTR);
+}
+
+void InfoTests::testGetSlotInfo()
+{
+	CK_RV rv;
+	CK_SLOT_INFO slotInfo;
+
+	// Just make sure that we finalize any previous failed tests
+	C_Finalize(NULL_PTR);
+
+	rv = C_GetSlotInfo(slotInvalid, NULL_PTR);
+	CPPUNIT_ASSERT(rv == CKR_CRYPTOKI_NOT_INITIALIZED || rv == CKR_ARGUMENTS_BAD);
+
+	if (rv == CKR_CRYPTOKI_NOT_INITIALIZED)
+	{
+		rv = C_Initialize(NULL_PTR);
+		CPPUNIT_ASSERT(rv == CKR_OK);
+
+		rv = C_GetSlotInfo(slotWithNoInitToken, NULL_PTR);
+		CPPUNIT_ASSERT(rv == CKR_ARGUMENTS_BAD);
+	}
+	else
+	{
+		rv = C_GetSlotInfo(slotWithNoInitToken, &slotInfo);
+		CPPUNIT_ASSERT(rv == CKR_CRYPTOKI_NOT_INITIALIZED);
+
+		rv = C_Initialize(NULL_PTR);
+		CPPUNIT_ASSERT(rv == CKR_OK);
+	}
+
+	rv = C_GetSlotInfo(slotInvalid, &slotInfo);
+	CPPUNIT_ASSERT(rv == CKR_SLOT_ID_INVALID);
+	rv = C_GetSlotInfo(slotWithNoInitToken, &slotInfo);
+	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	C_Finalize(NULL_PTR);
 }

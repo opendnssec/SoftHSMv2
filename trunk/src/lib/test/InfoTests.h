@@ -37,6 +37,7 @@
 #define _SOFTHSM_V2_INFOTESTS_H
 
 #include <cppunit/extensions/HelperMacros.h>
+#include "cryptoki.h"
 
 class InfoTests : public CppUnit::TestFixture
 {
@@ -44,15 +45,21 @@ class InfoTests : public CppUnit::TestFixture
 	CPPUNIT_TEST(testGetInfo);
 	CPPUNIT_TEST(testGetFunctionList);
 	CPPUNIT_TEST(testGetSlotList);
+	CPPUNIT_TEST(testGetSlotInfo);
 	CPPUNIT_TEST_SUITE_END();
 
 public:
 	void testGetInfo();
 	void testGetFunctionList();
 	void testGetSlotList();
+	void testGetSlotInfo();
 
 	void setUp();
 	void tearDown();
+
+private:
+	CK_ULONG slotInvalid;
+	CK_ULONG slotWithNoInitToken;
 };
 
 #endif // !_SOFTHSM_V2_INFOTESTS_H
