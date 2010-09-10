@@ -66,6 +66,8 @@ public:
 
 	// Key factory
 	virtual bool generateKeyPair(AsymmetricKeyPair** ppKeyPair, AsymmetricParameters* parameters, RNG* rng = NULL);
+	virtual unsigned long getMinKeySize();
+	virtual unsigned long getMaxKeySize();
 	virtual bool generateParameters(AsymmetricParameters** ppParams, void* parameters = NULL, RNG* rng = NULL);
 	virtual bool reconstructKeyPair(AsymmetricKeyPair** ppKeyPair, ByteString& serialisedData);
 	virtual bool reconstructPublicKey(PublicKey** ppPublicKey, ByteString& serialisedData);

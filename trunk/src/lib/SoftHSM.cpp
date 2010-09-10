@@ -2,6 +2,7 @@
 
 /*
  * Copyright (c) 2010 SURFnet bv
+ * Copyright (c) 2010 .SE (The Internet Infrastructure Foundation)
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -37,6 +38,8 @@
 #include "Configuration.h"
 #include "XMLConfigLoader.h"
 #include "MutexFactory.h"
+#include "CryptoFactory.h"
+#include "AsymmetricAlgorithm.h"
 #include "cryptoki.h"
 #include "SoftHSM.h"
 #include "osmutex.h"
@@ -338,6 +341,9 @@ CK_RV SoftHSM::C_GetMechanismList(CK_SLOT_ID slotID, CK_MECHANISM_TYPE_PTR pMech
 // Return more information about a mechanism for a given slot
 CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_MECHANISM_INFO_PTR pInfo) 
 {
+	unsigned long rsaMinSize, rsaMaxSize;
+	unsigned long dsaMinSize, dsaMaxSize;
+
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
 	if (pInfo == NULL_PTR) return CKR_ARGUMENTS_BAD;
 
@@ -346,6 +352,41 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 	{
 		return CKR_SLOT_ID_INVALID;
 	}
+
+	AsymmetricAlgorithm* rsa = CryptoFactory::i()->getAsymmetricAlgorithm("RSA");
+	if (rsa != NULL)
+	{
+		rsaMinSize = rsa->getMinKeySize();
+		rsaMaxSize = rsa->getMaxKeySize();
+	}
+	else
+	{
+		return CKR_GENERAL_ERROR;
+	}
+	CryptoFactory::i()->recycleAsymmetricAlgorithm(rsa);
+
+	AsymmetricAlgorithm* dsa = CryptoFactory::i()->getAsymmetricAlgorithm("DSA");
+	if (dsa != NULL)
+	{
+		dsaMinSize = dsa->getMinKeySize();
+		// Limitation in PKCS#11
+		if (dsaMinSize < 512)
+		{
+			dsaMinSize = 512;
+		}
+
+		dsaMaxSize = dsa->getMaxKeySize();
+		// Limitation in PKCS#11
+		if (dsaMaxSize > 1024)
+		{
+			dsaMaxSize = 1024;
+		}
+	}
+	else
+	{
+		return CKR_GENERAL_ERROR;
+	}
+	CryptoFactory::i()->recycleAsymmetricAlgorithm(dsa);
 
 	switch (type)
 	{
@@ -356,22 +397,22 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 			pInfo->flags = CKF_DIGEST;
 			break;
 		case CKM_RSA_PKCS_KEY_PAIR_GEN:
-			pInfo->ulMinKeySize = 512;
-			pInfo->ulMaxKeySize = 4096;
+			pInfo->ulMinKeySize = rsaMinSize;
+			pInfo->ulMaxKeySize = rsaMaxSize;
 			pInfo->flags = CKF_GENERATE_KEY_PAIR;
 			break;
 		case CKM_RSA_PKCS:
 		case CKM_RSA_X_509:
-			pInfo->ulMinKeySize = 512;
-			pInfo->ulMaxKeySize = 4096;
+			pInfo->ulMinKeySize = rsaMinSize;
+			pInfo->ulMaxKeySize = rsaMaxSize;
 			pInfo->flags = CKF_SIGN | CKF_VERIFY | CKF_ENCRYPT | CKF_DECRYPT;
 			break;
 		case CKM_MD5_RSA_PKCS:
 		case CKM_SHA1_RSA_PKCS:
 		case CKM_SHA256_RSA_PKCS:
 		case CKM_SHA512_RSA_PKCS:
-			pInfo->ulMinKeySize = 512;
-			pInfo->ulMaxKeySize = 4096;
+			pInfo->ulMinKeySize = rsaMinSize;
+			pInfo->ulMaxKeySize = rsaMaxSize;
 			pInfo->flags = CKF_SIGN | CKF_VERIFY;
 			break;
 		case CKM_DES_KEY_GEN:
@@ -397,18 +438,18 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 			pInfo->flags = CKF_ENCRYPT | CKF_DECRYPT;
 			break;
 		case CKM_DSA_PARAMETER_GEN:
-			pInfo->ulMinKeySize = 512;
-			pInfo->ulMaxKeySize = 1024;
+			pInfo->ulMinKeySize = dsaMinSize;
+			pInfo->ulMaxKeySize = dsaMaxSize;
 			pInfo->flags = CKF_GENERATE;
 			break;
 		case CKM_DSA_KEY_PAIR_GEN:
-			pInfo->ulMinKeySize = 512;
-			pInfo->ulMaxKeySize = 1024;
+			pInfo->ulMinKeySize = dsaMinSize;
+			pInfo->ulMaxKeySize = dsaMaxSize;
 			pInfo->flags = CKF_GENERATE_KEY_PAIR;
 			break;
 		case CKM_DSA_SHA1:
-			pInfo->ulMinKeySize = 512;
-			pInfo->ulMaxKeySize = 1024;
+			pInfo->ulMinKeySize = dsaMinSize;
+			pInfo->ulMaxKeySize = dsaMaxSize;
 			pInfo->flags = CKF_SIGN | CKF_VERIFY;
 			break;
 		default:

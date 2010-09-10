@@ -690,6 +690,13 @@ bool BotanRSA::generateKeyPair(AsymmetricKeyPair** ppKeyPair, AsymmetricParamete
 
 	RSAParameters* params = (RSAParameters*) parameters;
 
+	if (params->getBitLength() < getMinKeySize() || params->getBitLength() > getMaxKeySize())
+	{
+		ERROR_MSG("This RSA key size is not supported");
+
+		return false;
+	}
+
 	if (params->getBitLength() < 1024)
 	{
 		WARNING_MSG("Using an RSA key size < 1024 bits is not recommended");
@@ -734,6 +741,16 @@ bool BotanRSA::generateKeyPair(AsymmetricKeyPair** ppKeyPair, AsymmetricParamete
 	delete rsa;
 
 	return true;
+}
+
+unsigned long BotanRSA::getMinKeySize()
+{
+	return 512;
+}
+
+unsigned long BotanRSA::getMaxKeySize()
+{
+	return 4096;
 }
 
 bool BotanRSA::reconstructKeyPair(AsymmetricKeyPair** ppKeyPair, ByteString& serialisedData)

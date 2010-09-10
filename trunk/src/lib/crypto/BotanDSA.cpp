@@ -380,6 +380,16 @@ bool BotanDSA::generateKeyPair(AsymmetricKeyPair** ppKeyPair, AsymmetricParamete
 	return true;
 }
 
+unsigned long BotanDSA::getMinKeySize()
+{
+	return 512;
+}
+
+unsigned long BotanDSA::getMaxKeySize()
+{
+	return 1024;
+}
+
 bool BotanDSA::generateParameters(AsymmetricParameters** ppParams, void* parameters /* = NULL */, RNG* rng /* = NULL*/)
 {
 	if ((ppParams == NULL) || (parameters == NULL))
@@ -388,6 +398,13 @@ bool BotanDSA::generateParameters(AsymmetricParameters** ppParams, void* paramet
 	}
 
 	size_t bitLen = (size_t) parameters;
+
+	if (bitLen < getMinKeySize() || bitLen > getMaxKeySize())
+	{
+		ERROR_MSG("This DSA key size is not supported"); 
+
+		return false;
+	}
 
 	Botan::DL_Group* group = NULL;
 	try

@@ -839,6 +839,13 @@ bool OSSLRSA::generateKeyPair(AsymmetricKeyPair** ppKeyPair, AsymmetricParameter
 
 	RSAParameters* params = (RSAParameters*) parameters;
 
+	if (params->getBitLength() < getMinKeySize() || params->getBitLength() > getMaxKeySize())
+	{
+		ERROR_MSG("This RSA key size is not supported"); 
+
+		return false;
+	}
+
 	if (params->getBitLength() < 1024)
 	{
 		WARNING_MSG("Using an RSA key size < 1024 bits is not recommended");
@@ -878,6 +885,16 @@ bool OSSLRSA::generateKeyPair(AsymmetricKeyPair** ppKeyPair, AsymmetricParameter
 	RSA_free(rsa);
 
 	return true;
+}
+
+unsigned long OSSLRSA::getMinKeySize() 
+{ 
+	return 512;
+}
+
+unsigned long OSSLRSA::getMaxKeySize() 
+{ 
+	return OPENSSL_RSA_MAX_MODULUS_BITS;
 }
 
 bool OSSLRSA::reconstructKeyPair(AsymmetricKeyPair** ppKeyPair, ByteString& serialisedData)

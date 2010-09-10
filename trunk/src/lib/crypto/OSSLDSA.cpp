@@ -338,6 +338,16 @@ bool OSSLDSA::generateKeyPair(AsymmetricKeyPair** ppKeyPair, AsymmetricParameter
 	return true;
 }
 
+unsigned long OSSLDSA::getMinKeySize()
+{
+	return 512;
+}
+
+unsigned long OSSLDSA::getMaxKeySize()
+{
+	return OPENSSL_DSA_MAX_MODULUS_BITS;
+}
+
 bool OSSLDSA::generateParameters(AsymmetricParameters** ppParams, void* parameters /* = NULL */, RNG* rng /* = NULL*/)
 {
 	if ((ppParams == NULL) || (parameters == NULL))
@@ -346,6 +356,13 @@ bool OSSLDSA::generateParameters(AsymmetricParameters** ppParams, void* paramete
 	}
 
 	size_t bitLen = (size_t) parameters;
+
+	if (bitLen < getMinKeySize() || bitLen > getMaxKeySize())
+	{
+		ERROR_MSG("This DSA key size is not supported");
+
+		return false;
+	}
 
 	DSA* dsa = DSA_generate_parameters(bitLen, NULL, 0, NULL, NULL, NULL, NULL);
 
