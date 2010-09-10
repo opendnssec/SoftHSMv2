@@ -27,35 +27,34 @@
  */
 
 /*****************************************************************************
- XMLConfigLoader.h
+ SimpleConfigLoader.h
 
- Loads the configuration from the XML configuration file. This is currently a
- stub class that still needs to be implemented
+ Loads the configuration from the configuration file.
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_XMLCONFIGLOADER_H
-#define _SOFTHSM_V2_XMLCONFIGLOADER_H
+#ifndef _SOFTHSM_V2_SIMPLECONFIGLOADER_H
+#define _SOFTHSM_V2_SIMPLECONFIGLOADER_H
 
 #include <memory>
 #include "config.h"
 #include "Configuration.h"
 
-class XMLConfigLoader : public ConfigLoader
+class SimpleConfigLoader : public ConfigLoader
 {
 public:
-	static XMLConfigLoader* i();
+	static SimpleConfigLoader* i();
 
-	virtual ~XMLConfigLoader() { }
+	virtual ~SimpleConfigLoader() { }
 
 	virtual bool loadConfiguration(std::map<std::string, std::string> *stringConfiguration,
 					std::map<std::string, int> *integerConfiguration,
 					std::map<std::string, bool> *booleanConfiguration);
 
 private:
-	XMLConfigLoader();
+	SimpleConfigLoader();
 
-	static std::auto_ptr<XMLConfigLoader> instance;
+	static std::auto_ptr<SimpleConfigLoader> instance;
 };
 
-#endif // !_SOFTHSM_V2_XMLCONFIGLOADER_H
+#endif // !_SOFTHSM_V2_SIMPLECONFIGLOADER_H
 

@@ -27,35 +27,34 @@
  */
 
 /*****************************************************************************
- XMLConfigLoader.cpp
+ SimpleConfigLoader.cpp
 
- Loads the configuration from the XML configuration file. This is currently a
- stub class that still needs to be implemented
+ Loads the configuration from the configuration file.
  *****************************************************************************/
 
-#include "XMLConfigLoader.h"
+#include "SimpleConfigLoader.h"
 
 // Initialise the one-and-only instance
-std::auto_ptr<XMLConfigLoader> XMLConfigLoader::instance(NULL);
+std::auto_ptr<SimpleConfigLoader> SimpleConfigLoader::instance(NULL);
 
 // Return the one-and-only instance
-XMLConfigLoader* XMLConfigLoader::i()
+SimpleConfigLoader* SimpleConfigLoader::i()
 {
 	if (instance.get() == NULL)
 	{
-		instance = std::auto_ptr<XMLConfigLoader>(new XMLConfigLoader());
+		instance = std::auto_ptr<SimpleConfigLoader>(new SimpleConfigLoader());
 	}
 
 	return instance.get();
 }
 
 // Constructor
-XMLConfigLoader::XMLConfigLoader()
+SimpleConfigLoader::SimpleConfigLoader()
 {
 }
 
 // Load the configuration
-bool XMLConfigLoader::loadConfiguration
+bool SimpleConfigLoader::loadConfiguration
 (
 	std::map<std::string, std::string> *stringConfiguration,
 	std::map<std::string, int> *integerConfiguration,
@@ -73,6 +72,7 @@ bool XMLConfigLoader::loadConfiguration
 	}
 
 	// TODO: implement this
+	stringConfiguration->insert(std::pair<std::string, std::string>("directories.tokendir", "./testdir"));
 
 	return true;
 }

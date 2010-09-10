@@ -36,7 +36,7 @@
 #include "config.h"
 #include "log.h"
 #include "Configuration.h"
-#include "XMLConfigLoader.h"
+#include "SimpleConfigLoader.h"
 #include "MutexFactory.h"
 #include "CryptoFactory.h"
 #include "AsymmetricAlgorithm.h"
@@ -169,14 +169,13 @@ CK_RV SoftHSM::C_Initialize(CK_VOID_PTR pInitArgs)
 	}
 
 	// (Re)load the configuration
-	if (!Configuration::i()->reload(XMLConfigLoader::i()))
+	if (!Configuration::i()->reload(SimpleConfigLoader::i()))
 	{
 		return CKR_GENERAL_ERROR;
 	}
 
 	// Load the object store
-	// TODO: Move the path into the configuration
-	objectStore = new ObjectStore("./testdir");
+	objectStore = new ObjectStore(Configuration::i()->getString("directories.tokendir"));
 	if (!objectStore->isValid())
 	{
 		ERROR_MSG("Could not load the object store");

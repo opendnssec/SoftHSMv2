@@ -12,7 +12,7 @@ libsofthsm_common_la_SOURCES =	Configuration.cpp \
 				fatal.cpp \
 				log.cpp \
 				osmutex.cpp \
-				XMLConfigLoader.cpp \
+				SimpleConfigLoader.cpp \
 				MutexFactory.cpp \
 				Semaphore.cpp \
 				IPCSignal.cpp
