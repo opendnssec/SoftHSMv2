@@ -115,28 +115,34 @@ void Configuration::setBool(std::string key, bool value)
 }
 
 // Reload the configuration
-void Configuration::reload()
+bool Configuration::reload()
 {
-	if (configLoader != NULL)
+	if (configLoader == NULL)
 	{
-		// Discard the current configuration
-		stringConfiguration.clear();
-		integerConfiguration.clear();
-		booleanConfiguration.clear();
-
-		// Reload the configuration
-		if (!configLoader->loadConfiguration())
-		{
-			WARNING_MSG("Failed to load the SoftHSM configuration");
-		}
+		return false;
 	}
+
+	// Discard the current configuration
+	stringConfiguration.clear();
+	integerConfiguration.clear();
+	booleanConfiguration.clear();
+
+	// Reload the configuration
+	if (!configLoader->loadConfiguration(&stringConfiguration, &integerConfiguration, &booleanConfiguration))
+	{
+		ERROR_MSG("Failed to load the SoftHSM configuration");
+
+		return false;
+	}
+
+	return true;
 }
 
 // Reload the configuration using the specified configuration loader
-void Configuration::reload(ConfigLoader* configLoader)
+bool Configuration::reload(ConfigLoader* configLoader)
 {
 	this->configLoader = configLoader;
 
-	reload();
+	return reload();
 }
 

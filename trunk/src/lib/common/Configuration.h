@@ -46,7 +46,9 @@ public:
 	virtual ~ConfigLoader() { }
 
 	// Trigger loading of the configuration
-	virtual bool loadConfiguration() = 0;
+	virtual bool loadConfiguration(std::map<std::string, std::string> *stringConfiguration,
+					std::map<std::string, int> *integerConfiguration,
+					std::map<std::string, bool> *booleanConfiguration) = 0;
 };
 
 class Configuration
@@ -75,10 +77,10 @@ public:
 	void setBool(std::string key, bool value);
 
 	// Reload the configuration
-	void reload();
+	bool reload();
 
 	// Reload the configuration using the specified configuration loader
-	void reload(ConfigLoader* configLoader);
+	bool reload(ConfigLoader* configLoader);
 
 private:
 	Configuration();

@@ -55,8 +55,23 @@ XMLConfigLoader::XMLConfigLoader()
 }
 
 // Load the configuration
-bool XMLConfigLoader::loadConfiguration()
+bool XMLConfigLoader::loadConfiguration
+(
+	std::map<std::string, std::string> *stringConfiguration,
+	std::map<std::string, int> *integerConfiguration,
+	std::map<std::string, bool> *booleanConfiguration
+)
 {
+	if
+	(
+		stringConfiguration == NULL ||
+		integerConfiguration == NULL ||
+		booleanConfiguration == NULL
+	)
+	{
+		return false;
+	}
+
 	// TODO: implement this
 
 	return true;

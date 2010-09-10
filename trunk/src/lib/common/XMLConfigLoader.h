@@ -47,7 +47,9 @@ public:
 
 	virtual ~XMLConfigLoader() { }
 
-	virtual bool loadConfiguration();
+	virtual bool loadConfiguration(std::map<std::string, std::string> *stringConfiguration,
+					std::map<std::string, int> *integerConfiguration,
+					std::map<std::string, bool> *booleanConfiguration);
 
 private:
 	XMLConfigLoader();

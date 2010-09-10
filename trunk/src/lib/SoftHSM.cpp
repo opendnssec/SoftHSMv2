@@ -169,7 +169,10 @@ CK_RV SoftHSM::C_Initialize(CK_VOID_PTR pInitArgs)
 	}
 
 	// (Re)load the configuration
-	Configuration::i()->reload(XMLConfigLoader::i());
+	if (!Configuration::i()->reload(XMLConfigLoader::i()))
+	{
+		return CKR_GENERAL_ERROR;
+	}
 
 	// Load the object store
 	// TODO: Move the path into the configuration
