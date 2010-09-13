@@ -40,6 +40,12 @@
 // Initialise the one-and-only instance
 std::auto_ptr<Configuration> Configuration::instance(NULL);
 
+// Add all valid configurations
+const struct config Configuration::valid_config[] = {
+	{ "directories.tokendir",	CONFIG_TYPE_STRING },
+	{ "",				CONFIG_TYPE_UNSUPPORTED }
+};
+
 // Return the one-and-only instance
 Configuration* Configuration::i()
 {
@@ -55,6 +61,20 @@ Configuration* Configuration::i()
 Configuration::Configuration()
 {
 	configLoader = NULL;
+}
+
+// Get the type of the configuration value
+int Configuration::getType(std::string key)
+{
+	for (int i = 0; valid_config[i].key.compare("") != 0; i++)
+	{
+		if (valid_config[i].key.compare(key) == 0)
+		{
+			return valid_config[i].type;
+		}
+	}
+
+	return CONFIG_TYPE_UNSUPPORTED;
 }
 
 // Retrieve a string based configuration value
@@ -128,7 +148,7 @@ bool Configuration::reload()
 	booleanConfiguration.clear();
 
 	// Reload the configuration
-	if (!configLoader->loadConfiguration(&stringConfiguration, &integerConfiguration, &booleanConfiguration))
+	if (!configLoader->loadConfiguration())
 	{
 		ERROR_MSG("Failed to load the SoftHSM configuration");
 

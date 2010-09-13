@@ -86,7 +86,10 @@ ACX_SEMAPHORE
 AC_CHECK_HEADERS([pthread.h])
 
 # Set full directory paths
+full_sysconfdir=`eval eval eval eval eval echo "${sysconfdir}" | sed "s#NONE#${prefix}#" | sed "s#NONE#${ac_default_prefix}#"`
+full_localstatedir=`eval eval eval eval eval echo "${localstatedir}" | sed "s#NONE#${prefix}#" | sed "s#NONE#${ac_default_prefix}#"`
 full_libdir=`eval eval eval eval eval echo "${libdir}" | sed "s#NONE#${prefix}#" | sed "s#NONE#${ac_default_prefix}#"`
+default_softhsm2_conf="`eval echo ${full_sysconfdir} | sed s,NONE,$ac_default_prefix,g`/softhsm2.conf"
 
 # Define some variables for the code
 AC_DEFINE_UNQUOTED(
@@ -110,10 +113,18 @@ AC_DEFINE_UNQUOTED(
 	[Minimum PIN length]
 )
 AC_DEFINE_UNQUOTED(
+	[DEFAULT_SOFTHSM2_CONF],
+	["$default_softhsm2_conf"],
+	[The default location of softhsm2.conf]
+)
+AC_DEFINE_UNQUOTED(
 	[DEFAULT_PKCS11_LIB],
 	["$full_libdir/libsofthsm.so"],
 	[The default PKCS#11 library]
 )
+
+softhsmtokendir=${full_localstatedir}/softhsm/tokens/
+AC_SUBST([softhsmtokendir])
 
 # Generate the libtool script and install script
 AC_PROG_INSTALL
@@ -125,6 +136,7 @@ AC_CONFIG_FILES([
 	src/Makefile
 	src/lib/Makefile
 	src/lib/common/Makefile
+	src/lib/common/softhsm2.conf
 	src/lib/crypto/Makefile
 	src/lib/crypto/test/Makefile
 	src/lib/data_mgr/Makefile
@@ -135,6 +147,7 @@ AC_CONFIG_FILES([
 	src/lib/slot_mgr/Makefile
 	src/lib/slot_mgr/test/Makefile
 	src/lib/test/Makefile
+	src/lib/test/softhsm2.conf
 	src/lib/user_mgr/Makefile
 	src/bin/Makefile
 	src/bin/common/Makefile

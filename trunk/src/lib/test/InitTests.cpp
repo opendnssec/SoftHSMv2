@@ -41,22 +41,15 @@
 
 CPPUNIT_TEST_SUITE_REGISTRATION(InitTests);
 
-// FIXME: all pathnames in this file are *NIX/BSD specific
-// FIXME: Should use the real path to the object store
-
 void InitTests::setUp()
 {
-	// FIXME: this only works on *NIX/BSD, not on other platforms
-	CPPUNIT_ASSERT(!system("mkdir testdir"));
+	setenv("SOFTHSM2_CONF", "./softhsm2.conf", 1);
 }
 
 void InitTests::tearDown()
 {
 	// Just make sure that we finalize any previous failed tests
 	C_Finalize(NULL_PTR);
-
-	// FIXME: this only works on *NIX/BSD, not on other platforms
-	CPPUNIT_ASSERT(!system("rm -rf testdir"));
 }
 
 void InitTests::testInit1()

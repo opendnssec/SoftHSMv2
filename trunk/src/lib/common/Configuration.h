@@ -40,15 +40,27 @@
 #include <map>
 #include <memory>
 
+enum
+{
+	CONFIG_TYPE_UNSUPPORTED,
+	CONFIG_TYPE_STRING,
+	CONFIG_TYPE_INT,
+	CONFIG_TYPE_BOOL
+};
+
+struct config
+{
+	std::string key;
+	int type;
+};
+
 class ConfigLoader
 {
 public:
 	virtual ~ConfigLoader() { }
 
 	// Trigger loading of the configuration
-	virtual bool loadConfiguration(std::map<std::string, std::string> *stringConfiguration,
-					std::map<std::string, int> *integerConfiguration,
-					std::map<std::string, bool> *booleanConfiguration) = 0;
+	virtual bool loadConfiguration() = 0;
 };
 
 class Configuration
@@ -57,6 +69,9 @@ public:
 	static Configuration* i();
 
 	virtual ~Configuration() { }
+
+	// Get the type of the configuration value
+	int getType(std::string key);
 
 	// Retrieve a string based configuration value
 	std::string getString(std::string key, std::string ifEmpty = std::string(""));
@@ -92,6 +107,8 @@ private:
 	std::map<std::string, bool> booleanConfiguration;
 
 	ConfigLoader* configLoader;
+
+	static const struct config valid_config[];
 };
 
 #endif // !_SOFTHSM_V2_CONFIGURATION_H

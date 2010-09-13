@@ -19,3 +19,12 @@ libsofthsm_common_la_SOURCES =	Configuration.cpp \
 libsofthsm_common_la_LIBADD =	@SEMAPHORE_LIB@
 
 EXTRA_DIST =			$(srcdir)/*.h
+
+install-data-hook:
+	test -d ${DESTDIR}${sysconfdir} || \
+		${INSTALL} -d ${DESTDIR}${sysconfdir}
+	test -f ${DESTDIR}${sysconfdir}/softhsm2.conf || \
+		${INSTALL_DATA} ${top_builddir}/softhsm2.conf ${DESTDIR}${sysconfdir}
+	${INSTALL_DATA} ${top_builddir}/softhsm2.conf ${DESTDIR}${sysconfdir}/softhsm2.conf.sample
+	test -d ${DESTDIR}${softhsmtokendir} || \
+		${INSTALL} -d -m 700 ${DESTDIR}${softhsmtokendir}

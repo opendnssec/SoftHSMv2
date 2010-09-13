@@ -46,12 +46,13 @@ public:
 
 	virtual ~SimpleConfigLoader() { }
 
-	virtual bool loadConfiguration(std::map<std::string, std::string> *stringConfiguration,
-					std::map<std::string, int> *integerConfiguration,
-					std::map<std::string, bool> *booleanConfiguration);
+	virtual bool loadConfiguration();
 
 private:
 	SimpleConfigLoader();
+	const char* getConfigPath();
+	char* trimString(char *text);
+	bool string2bool(std::string stringValue, bool *boolValue);
 
 	static std::auto_ptr<SimpleConfigLoader> instance;
 };
