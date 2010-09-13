@@ -90,6 +90,7 @@ full_sysconfdir=`eval eval eval eval eval echo "${sysconfdir}" | sed "s#NONE#${p
 full_localstatedir=`eval eval eval eval eval echo "${localstatedir}" | sed "s#NONE#${prefix}#" | sed "s#NONE#${ac_default_prefix}#"`
 full_libdir=`eval eval eval eval eval echo "${libdir}" | sed "s#NONE#${prefix}#" | sed "s#NONE#${ac_default_prefix}#"`
 default_softhsm2_conf="`eval echo ${full_sysconfdir} | sed s,NONE,$ac_default_prefix,g`/softhsm2.conf"
+softhsmtokendir=${full_localstatedir}/softhsm/tokens/
 
 # Define some variables for the code
 AC_DEFINE_UNQUOTED(
@@ -118,12 +119,16 @@ AC_DEFINE_UNQUOTED(
 	[The default location of softhsm2.conf]
 )
 AC_DEFINE_UNQUOTED(
+	[DEFAULT_TOKENDIR],
+	["$softhsmtokendir"],
+	[The default location of the token directory]
+)
+AC_DEFINE_UNQUOTED(
 	[DEFAULT_PKCS11_LIB],
 	["$full_libdir/libsofthsm.so"],
 	[The default PKCS#11 library]
 )
 
-softhsmtokendir=${full_localstatedir}/softhsm/tokens/
 AC_SUBST([softhsmtokendir])
 
 # Generate the libtool script and install script

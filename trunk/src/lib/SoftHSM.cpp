@@ -175,7 +175,7 @@ CK_RV SoftHSM::C_Initialize(CK_VOID_PTR pInitArgs)
 	}
 
 	// Load the object store
-	objectStore = new ObjectStore(Configuration::i()->getString("directories.tokendir"));
+	objectStore = new ObjectStore(Configuration::i()->getString("directories.tokendir", DEFAULT_TOKENDIR));
 	if (!objectStore->isValid())
 	{
 		ERROR_MSG("Could not load the object store");
