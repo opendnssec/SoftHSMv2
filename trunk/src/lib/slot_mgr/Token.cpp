@@ -59,7 +59,7 @@ Token::Token(OSToken* token)
 // Destructor
 Token::~Token()
 {
-	delete sdm;
+	if (sdm != NULL) delete sdm;
 }
 
 // Check if the token is still valid
@@ -71,13 +71,22 @@ bool Token::isValid()
 // Create a new token
 CK_RV Token::createToken(ObjectStore* objectStore, CK_UTF8CHAR_PTR soPIN, CK_ULONG pinLen, CK_UTF8CHAR_PTR label)
 {
-	if (!objectStore) return CKR_GENERAL_ERROR;
-	if (!soPIN) return CKR_ARGUMENTS_BAD;
-	if (!label) return CKR_ARGUMENTS_BAD;
+	if (objectStore == NULL) return CKR_GENERAL_ERROR;
+	if (soPIN == NULL_PTR) return CKR_ARGUMENTS_BAD;
+	if (label == NULL_PTR) return CKR_ARGUMENTS_BAD;
 	if (pinLen < MIN_PIN_LEN || pinLen > MAX_PIN_LEN) return CKR_PIN_INCORRECT;
 
 	if (token != NULL)
 	{
+		ByteString oldSOPIN(soPIN, pinLen);
+
+		if (sdm->getSOPINBlob().size() > 0 && !sdm->loginSO(oldSOPIN))
+		{
+			ERROR_MSG("Incorrect SO PIN");
+
+			return CKR_PIN_INCORRECT;
+		}
+
 		// The token is already initialised. Destroy it first.
 		if (!objectStore->destroyToken(token))
 		{
@@ -105,7 +114,7 @@ CK_RV Token::createToken(ObjectStore* objectStore, CK_UTF8CHAR_PTR soPIN, CK_ULO
 	// Create the token
 	OSToken* newToken = objectStore->newToken(labelByteStr);
 
-	if (!newToken)
+	if (newToken == NULL)
 	{
 		return CKR_DEVICE_ERROR;
 	}
@@ -129,6 +138,7 @@ CK_RV Token::createToken(ObjectStore* objectStore, CK_UTF8CHAR_PTR soPIN, CK_ULO
 
 	valid = token->getSOPIN(soPINBlob) && token->getUserPIN(userPINBlob);
 
+	if (sdm != NULL) delete sdm;
 	sdm = new SecureDataManager(soPINBlob, userPINBlob);
 
 	return CKR_OK;
