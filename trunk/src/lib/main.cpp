@@ -305,11 +305,11 @@ CK_RV C_SetPIN(CK_SESSION_HANDLE hSession, CK_UTF8CHAR_PTR pOldPin, CK_ULONG ulO
 }
 
 // Open a new session to the specified slot
-CK_RV C_OpenSession(CK_SLOT_ID slotID, CK_FLAGS flags, CK_VOID_PTR pApplication, CK_NOTIFY Notify, CK_SESSION_HANDLE_PTR phSession)
+CK_RV C_OpenSession(CK_SLOT_ID slotID, CK_FLAGS flags, CK_VOID_PTR pApplication, CK_NOTIFY notify, CK_SESSION_HANDLE_PTR phSession)
 {
 	try
 	{
-		return SoftHSM::i()->C_OpenSession(slotID, flags, pApplication, Notify, phSession);
+		return SoftHSM::i()->C_OpenSession(slotID, flags, pApplication, notify, phSession);
 	}
 	catch (...)
 	{

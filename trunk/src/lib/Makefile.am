@@ -6,6 +6,7 @@ AM_CPPFLAGS = 			-I$(srcdir)/cryptoki_compat \
 				-I$(srcdir)/common \
 				-I$(srcdir)/object_store \
 				-I$(srcdir)/slot_mgr \
+				-I$(srcdir)/session_mgr \
 				-I$(srcdir)/data_mgr \
 				-I$(srcdir)/crypto
 

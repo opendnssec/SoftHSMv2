@@ -43,6 +43,7 @@
 #include "cryptoki.h"
 #include "SoftHSM.h"
 #include "osmutex.h"
+#include "SessionManager.h"
 
 /*****************************************************************************
  Implementation of SoftHSM class specific functions
@@ -503,12 +504,13 @@ CK_RV SoftHSM::C_SetPIN(CK_SESSION_HANDLE hSession, CK_UTF8CHAR_PTR pOldPin, CK_
 }
 
 // Open a new session to the specified slot
-CK_RV SoftHSM::C_OpenSession(CK_SLOT_ID slotID, CK_FLAGS flags, CK_VOID_PTR pApplication, CK_NOTIFY Notify, CK_SESSION_HANDLE_PTR phSession) 
+CK_RV SoftHSM::C_OpenSession(CK_SLOT_ID slotID, CK_FLAGS flags, CK_VOID_PTR pApplication, CK_NOTIFY notify, CK_SESSION_HANDLE_PTR phSession) 
 {
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
-	if (phSession == NULL_PTR) return CKR_ARGUMENTS_BAD;
 
-	return CKR_FUNCTION_NOT_SUPPORTED;
+	Slot *slot = slotManager->getSlot(slotID);
+
+	return SessionManager::i()->openSession(slot, flags, pApplication, notify, phSession);
 }
 
 // Close the given session
@@ -516,7 +518,7 @@ CK_RV SoftHSM::C_CloseSession(CK_SESSION_HANDLE hSession)
 {
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
 
-	return CKR_FUNCTION_NOT_SUPPORTED;
+	return SessionManager::i()->closeSession(hSession);
 }
 
 // Close all open sessions
@@ -524,16 +526,17 @@ CK_RV SoftHSM::C_CloseAllSessions(CK_SLOT_ID slotID)
 {
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
 
-	return CKR_FUNCTION_NOT_SUPPORTED;
+	Slot *slot = slotManager->getSlot(slotID);
+
+	return SessionManager::i()->closeAllSessions(slot);
 }
 
 // Retrieve information about the specified session
 CK_RV SoftHSM::C_GetSessionInfo(CK_SESSION_HANDLE hSession, CK_SESSION_INFO_PTR pInfo) 
 {
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
-	if (pInfo == NULL_PTR) return CKR_ARGUMENTS_BAD;
 
-	return CKR_FUNCTION_NOT_SUPPORTED;
+	return SessionManager::i()->getSessionInfo(hSession, pInfo);
 }
 
 // Determine the state of a running operation in a session
