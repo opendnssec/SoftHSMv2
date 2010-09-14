@@ -27,42 +27,68 @@
  */
 
 /*****************************************************************************
- InfoTests.h
+ TokenTests.cpp
 
- Contains test cases to C_GetInfo, C_GetFunctionList, C_GetSlotList, 
- C_GetSlotInfo, C_GetTokenInfo, C_GetMechanismList, and C_GetMechanismInfo
+ Contains test cases to C_InitToken
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_INFOTESTS_H
-#define _SOFTHSM_V2_INFOTESTS_H
-
+#include <stdlib.h>
+#include <string.h>
 #include <cppunit/extensions/HelperMacros.h>
-#include "cryptoki.h"
+#include "TokenTests.h"
+#include "testconfig.h"
 
-class InfoTests : public CppUnit::TestFixture
+CPPUNIT_TEST_SUITE_REGISTRATION(TokenTests);
+
+void TokenTests::setUp()
 {
-	CPPUNIT_TEST_SUITE(InfoTests);
-	CPPUNIT_TEST(testGetInfo);
-	CPPUNIT_TEST(testGetFunctionList);
-	CPPUNIT_TEST(testGetSlotList);
-	CPPUNIT_TEST(testGetSlotInfo);
-	CPPUNIT_TEST(testGetTokenInfo);
-	CPPUNIT_TEST(testGetMechanismList);
-	CPPUNIT_TEST(testGetMechanismInfo);
-	CPPUNIT_TEST_SUITE_END();
+	setenv("SOFTHSM2_CONF", "./softhsm2.conf", 1);
+}
 
-public:
-	void testGetInfo();
-	void testGetFunctionList();
-	void testGetSlotList();
-	void testGetSlotInfo();
-	void testGetTokenInfo();
-	void testGetMechanismList();
-	void testGetMechanismInfo();
+void TokenTests::tearDown()
+{
+	// Just make sure that we finalize any previous failed tests
+	C_Finalize(NULL_PTR);
+}
 
-	void setUp();
-	void tearDown();
-};
+void TokenTests::testInitToken()
+{
+	CK_RV rv;
+	CK_UTF8CHAR pin[] = SLOT_0_SO_PIN;
+	CK_ULONG pinLength = sizeof(pin);
+	CK_UTF8CHAR label[32];
 
-#endif // !_SOFTHSM_V2_INFOTESTS_H
+	memset(label, ' ', 32);
+	memcpy(label, "token1", strlen("token1"));
 
+	// Just make sure that we finalize any previous failed tests
+	C_Finalize(NULL_PTR);
+
+	rv = C_InitToken(SLOT_INIT_TOKEN, pin, pinLength, label);
+	CPPUNIT_ASSERT(rv == CKR_CRYPTOKI_NOT_INITIALIZED);
+
+	rv = C_Initialize(NULL_PTR);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	rv = C_InitToken(SLOT_INIT_TOKEN, NULL_PTR, pinLength, label);
+	CPPUNIT_ASSERT(rv == CKR_ARGUMENTS_BAD);
+
+	rv = C_InitToken(SLOT_INVALID, pin, pinLength, label);
+	CPPUNIT_ASSERT(rv == CKR_SLOT_ID_INVALID);
+
+	// Initialize
+	rv = C_InitToken(SLOT_INIT_TOKEN, pin, pinLength, label);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Initialize with wrong password
+	rv = C_InitToken(SLOT_INIT_TOKEN, pin, pinLength - 1, label);
+	CPPUNIT_ASSERT(rv == CKR_PIN_INCORRECT);
+
+	// TODO: CKR_SESSION_EXISTS
+
+	// Re-initialize
+	rv = C_InitToken(SLOT_INIT_TOKEN, pin, pinLength, label);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	C_Finalize(NULL_PTR);
+}

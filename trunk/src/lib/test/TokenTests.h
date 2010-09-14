@@ -27,42 +27,29 @@
  */
 
 /*****************************************************************************
- InfoTests.h
+ TokenTests.h
 
- Contains test cases to C_GetInfo, C_GetFunctionList, C_GetSlotList, 
- C_GetSlotInfo, C_GetTokenInfo, C_GetMechanismList, and C_GetMechanismInfo
+ Contains test cases to C_InitToken
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_INFOTESTS_H
-#define _SOFTHSM_V2_INFOTESTS_H
+#ifndef _SOFTHSM_V2_TOKENTESTS_H
+#define _SOFTHSM_V2_TOKENTESTS_H
 
 #include <cppunit/extensions/HelperMacros.h>
 #include "cryptoki.h"
 
-class InfoTests : public CppUnit::TestFixture
+class TokenTests : public CppUnit::TestFixture
 {
-	CPPUNIT_TEST_SUITE(InfoTests);
-	CPPUNIT_TEST(testGetInfo);
-	CPPUNIT_TEST(testGetFunctionList);
-	CPPUNIT_TEST(testGetSlotList);
-	CPPUNIT_TEST(testGetSlotInfo);
-	CPPUNIT_TEST(testGetTokenInfo);
-	CPPUNIT_TEST(testGetMechanismList);
-	CPPUNIT_TEST(testGetMechanismInfo);
+	CPPUNIT_TEST_SUITE(TokenTests);
+	CPPUNIT_TEST(testInitToken);
 	CPPUNIT_TEST_SUITE_END();
 
 public:
-	void testGetInfo();
-	void testGetFunctionList();
-	void testGetSlotList();
-	void testGetSlotInfo();
-	void testGetTokenInfo();
-	void testGetMechanismList();
-	void testGetMechanismInfo();
+	void testInitToken();
 
 	void setUp();
 	void tearDown();
 };
 
-#endif // !_SOFTHSM_V2_INFOTESTS_H
+#endif // !_SOFTHSM_V2_TOKENTESTS_H
 

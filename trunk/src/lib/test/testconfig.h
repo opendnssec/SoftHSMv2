@@ -27,42 +27,21 @@
  */
 
 /*****************************************************************************
- InfoTests.h
+ testconfig.h
 
- Contains test cases to C_GetInfo, C_GetFunctionList, C_GetSlotList, 
- C_GetSlotInfo, C_GetTokenInfo, C_GetMechanismList, and C_GetMechanismInfo
+ Contains parameters for the test cases
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_INFOTESTS_H
-#define _SOFTHSM_V2_INFOTESTS_H
+#ifndef _SOFTHSM_V2_TESTCONFIG_H
+#define _SOFTHSM_V2_TESTCONFIG_H
 
-#include <cppunit/extensions/HelperMacros.h>
-#include "cryptoki.h"
+// Slots
+#define SLOT_INVALID 9999
+#define SLOT_INIT_TOKEN 0
+#define SLOT_NO_INIT_TOKEN 1
 
-class InfoTests : public CppUnit::TestFixture
-{
-	CPPUNIT_TEST_SUITE(InfoTests);
-	CPPUNIT_TEST(testGetInfo);
-	CPPUNIT_TEST(testGetFunctionList);
-	CPPUNIT_TEST(testGetSlotList);
-	CPPUNIT_TEST(testGetSlotInfo);
-	CPPUNIT_TEST(testGetTokenInfo);
-	CPPUNIT_TEST(testGetMechanismList);
-	CPPUNIT_TEST(testGetMechanismInfo);
-	CPPUNIT_TEST_SUITE_END();
+// PIN
+#define SLOT_0_SO_PIN "12345678"
 
-public:
-	void testGetInfo();
-	void testGetFunctionList();
-	void testGetSlotList();
-	void testGetSlotInfo();
-	void testGetTokenInfo();
-	void testGetMechanismList();
-	void testGetMechanismInfo();
-
-	void setUp();
-	void tearDown();
-};
-
-#endif // !_SOFTHSM_V2_INFOTESTS_H
+#endif // !_SOFTHSM_V2_TESTCONFIG_H
 
