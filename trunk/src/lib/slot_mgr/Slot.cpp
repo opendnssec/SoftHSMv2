@@ -70,8 +70,6 @@ Token* Slot::getToken()
 // Initialise the token in the slot
 CK_RV Slot::initToken(CK_UTF8CHAR_PTR soPIN, CK_ULONG pinLen, CK_UTF8CHAR_PTR label)
 {
-	if (token == NULL) return CKR_TOKEN_NOT_PRESENT;
-
 	return token->createToken(objectStore, soPIN, pinLen, label);
 }
 
@@ -94,7 +92,7 @@ CK_RV Slot::getSlotInfo(CK_SLOT_INFO_PTR info)
 	strncpy((char*) info->slotDescription, description, strlen(description));
 	strncpy((char*) info->manufacturerID, mfgID, strlen(mfgID));
 
-	info->flags = CKF_REMOVABLE_DEVICE | isTokenPresent() ? CKF_TOKEN_PRESENT : 0;
+	info->flags = CKF_TOKEN_PRESENT;
 
 	info->hardwareVersion.major = VERSION_MAJOR;
 	info->hardwareVersion.minor = VERSION_MINOR;
@@ -113,5 +111,5 @@ size_t Slot::getSlotID()
 // Is a token present?
 bool Slot::isTokenPresent()
 {
-	return (token != NULL);
+	return true;
 }
