@@ -83,6 +83,7 @@ CK_RV SessionManager::openSession
 	CK_SESSION_HANDLE_PTR phSession
 )
 {
+	if (phSession == NULL_PTR) return CKR_ARGUMENTS_BAD;
 	if (slot == NULL) return CKR_SLOT_ID_INVALID;
 
 	// Lock access to the vector
@@ -95,20 +96,22 @@ CK_RV SessionManager::openSession
 	Session *session = new Session();
 
 	// First fill any empty spot in the list
-	for (std::vector<Session*>::iterator i = sessions.begin(); i != sessions.end(); i++)
+	for (int i = 0; i < sessions.size(); i++)
 	{
-		if (*i != NULL)
+		if (sessions[i] != NULL)
 		{
 			continue;
 		}
 
-		*i = session;
+		sessions[i] = session;
+		*phSession = i + 1;
 
 		return CKR_OK;
 	}
 
 	// Or add it to the end
 	sessions.push_back(session);
+	*phSession = sessions.size();
 
 	return CKR_OK;
 }
