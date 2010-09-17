@@ -138,15 +138,33 @@ CK_RV SessionManager::closeSession(CK_SESSION_HANDLE hSession)
 	if (sessions.size() <= hSession) return CKR_SESSION_HANDLE_INVALID;
 
 	// Check if it is a closed session
-	if (sessions[hSession-1] == NULL) return CKR_SESSION_HANDLE_INVALID;
+	unsigned long sessionID = hSession-1;
+	if (sessions[sessionID] == NULL) return CKR_SESSION_HANDLE_INVALID;
 
 	// Check if this is the last session on the token
-	// TODO: Logout if this is the last session on the token
-	// TODO: Remove session objects
+	bool lastSession = true;
+	CK_ULONG slotID = sessions[sessionID]->getSlot()->getSlotID();
+	for (int i = 0; i < sessions.size(); i++)
+	{
+		if (sessions[i] == NULL) continue;
+
+		if (sessions[i]->getSlot()->getSlotID() == slotID && i != sessionID)
+		{
+			lastSession = false;
+			break;
+		}
+	}
+
+	// Logout if this is the last session on the token
+	if (lastSession)
+	{
+		sessions[sessionID]->getSlot()->getToken()->logout();
+	}
 
 	// Close the session
-	delete sessions[hSession-1];
-	sessions[hSession-1] = NULL;
+	// TODO: Remove session objects
+	delete sessions[sessionID];
+	sessions[sessionID] = NULL;
 
 	return CKR_OK;
 }
