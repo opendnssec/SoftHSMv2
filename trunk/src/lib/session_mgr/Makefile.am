@@ -14,4 +14,6 @@ noinst_LTLIBRARIES =			libsofthsm_sessionmgr.la
 libsofthsm_sessionmgr_la_SOURCES =	SessionManager.cpp \
 					Session.cpp
 
+SUBDIRS =				test
+
 EXTRA_DIST =				$(srcdir)/*.h
