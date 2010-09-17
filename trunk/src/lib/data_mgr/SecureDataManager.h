@@ -77,9 +77,11 @@ public:
 
 	// Log in using the SO PIN
 	bool loginSO(const ByteString& soPIN);
+	bool isSOLoggedIn();
 
 	// Log in using the user PIN
 	bool loginUser(const ByteString& userPIN);
+	bool isUserLoggedIn();
 
 	// Log out
 	void logout();

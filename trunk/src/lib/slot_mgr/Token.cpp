@@ -68,6 +68,30 @@ bool Token::isValid()
 	return (valid && token->isValid());
 }
 
+// Check if the token is initialized
+bool Token::isInitialized()
+{
+	if (token == NULL) return false;
+
+	return true;
+}
+
+// Check if SO is logged in
+bool Token::isSOLoggedIn()
+{
+	if (sdm == NULL) return false;
+
+	return sdm->isSOLoggedIn();
+}
+
+// Check if user is logged in
+bool Token::isUserLoggedIn()
+{
+	if (sdm == NULL) return false;
+
+	return sdm->isUserLoggedIn();
+}
+
 // Create a new token
 CK_RV Token::createToken(ObjectStore* objectStore, CK_UTF8CHAR_PTR soPIN, CK_ULONG pinLen, CK_UTF8CHAR_PTR label)
 {

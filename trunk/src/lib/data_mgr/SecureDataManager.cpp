@@ -415,3 +415,15 @@ void SecureDataManager::remask(ByteString& key)
 	maskedKey = key;
 }
 
+// Check if the SO is logged in
+bool SecureDataManager::isSOLoggedIn()
+{
+	return soLoggedIn;
+}
+
+// Check if the user is logged in
+bool SecureDataManager::isUserLoggedIn()
+{
+	return userLoggedIn;
+}
+

@@ -35,18 +35,27 @@
 #ifndef _SOFTHSM_V2_SESSION_H
 #define _SOFTHSM_V2_SESSION_H
 
+#include "Slot.h"
 #include "cryptoki.h"
 
 class Session
 {
 public:
-	// Constructor
-	Session();
+	Session(Slot *slot, bool rwSession, CK_VOID_PTR pApplication, CK_NOTIFY notify);
 
 	// Destructor
 	virtual ~Session();
 
 	CK_RV getSessionInfo(CK_SESSION_INFO_PTR pInfo);
+
+private:
+	// Constructor
+	Session();
+
+	Slot *slot;
+	bool rwSession;
+	CK_VOID_PTR pApplication;
+	CK_NOTIFY notify;
 };
 
 #endif // !_SOFTHSM_V2_SESSION_H

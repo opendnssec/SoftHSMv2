@@ -60,6 +60,13 @@ public:
 	// Is the token valid?
 	bool isValid();
 
+	// Is the token initialized?
+	bool isInitialized();
+
+	// Is SO or user logged in?
+	bool isSOLoggedIn();
+	bool isUserLoggedIn();
+
 	// Retrieve token information for the token
 	CK_RV getTokenInfo(CK_TOKEN_INFO_PTR info);
 

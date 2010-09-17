@@ -35,6 +35,15 @@
 #include "Session.h"
 
 // Constructor
+Session::Session(Slot *slot, bool rwSession, CK_VOID_PTR pApplication, CK_NOTIFY notify)
+{
+	this->slot = slot;
+	this->rwSession = rwSession;
+	this->pApplication = pApplication;
+	this->notify = notify;
+}
+
+// Constructor
 Session::Session()
 {
 }

@@ -85,15 +85,25 @@ CK_RV SessionManager::openSession
 {
 	if (phSession == NULL_PTR) return CKR_ARGUMENTS_BAD;
 	if (slot == NULL) return CKR_SLOT_ID_INVALID;
+	if ((flags & CKF_SERIAL_SESSION) == 0) return CKR_SESSION_PARALLEL_NOT_SUPPORTED;
 
 	// Lock access to the vector
 	MutexLocker lock(sessionsMutex);
 
-	// TODO: A lot of checks
+	// Get the token
+	Token *token = slot->getToken();
+	if (token == NULL) return CKR_TOKEN_NOT_PRESENT;
+	if (!token->isInitialized()) return CKR_TOKEN_NOT_RECOGNIZED;
+
+	// Can not open a Read-Only session when in SO mode
+	if ((flags & CKF_RW_SESSION) == 0 && token->isSOLoggedIn()) return CKR_SESSION_READ_WRITE_SO_EXISTS;
+
+	// TODO: Do we want to check for maximum number of sessions?
+	// return CKR_SESSION_COUNT
 
 	// Create the session
-	// TODO: Save more information in the session
-	Session *session = new Session();
+	bool rwSession = ((flags & CKF_RW_SESSION) == CKF_RW_SESSION) ? true : false;
+	Session *session = new Session(slot, rwSession, pApplication, notify);
 
 	// First fill any empty spot in the list
 	for (int i = 0; i < sessions.size(); i++)
@@ -119,10 +129,7 @@ CK_RV SessionManager::openSession
 // Close a session
 CK_RV SessionManager::closeSession(CK_SESSION_HANDLE hSession)
 {
-	if (hSession == CK_INVALID_HANDLE)
-	{
-		return CKR_SESSION_HANDLE_INVALID;
-	}
+	if (hSession == CK_INVALID_HANDLE) return CKR_SESSION_HANDLE_INVALID;
 
 	// Lock access to the vector
 	MutexLocker lock(sessionsMutex);
