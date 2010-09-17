@@ -10,12 +10,14 @@ AM_CPPFLAGS = 			-I$(srcdir)/.. \
 				-I$(srcdir)/../../data_mgr \
 				-I$(srcdir)/../../session_mgr \
 				-I$(srcdir)/../../slot_mgr \
+				-I$(srcdir)/../../object_store \
 				-I$(srcdir)/../../user_mgr \
 				`cppunit-config --cflags`
 
 check_PROGRAMS =		sessionmgrtest
 
-sessionmgrtest_SOURCES =	sessionmgrtest.cpp
+sessionmgrtest_SOURCES =	sessionmgrtest.cpp \
+				SessionManagerTests.cpp
 
 sessionmgrtest_LDADD =		../../libsofthsm_convarch.la 
 
