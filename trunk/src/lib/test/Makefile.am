@@ -12,6 +12,7 @@ check_PROGRAMS =		p11test
 p11test_SOURCES =		p11test.cpp \
 				InitTests.cpp \
 				InfoTests.cpp \
+				SessionTests.cpp \
 				TokenTests.cpp \
 				../common/osmutex.cpp
 

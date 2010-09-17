@@ -34,6 +34,7 @@
 
 #include "config.h"
 #include "log.h"
+#include "SessionManager.h"
 #include "SlotManager.h"
 #include "Token.h"
 #include <stdio.h>

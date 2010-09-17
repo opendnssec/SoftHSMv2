@@ -52,6 +52,7 @@ Session::Session()
 // Destructor
 Session::~Session()
 {
+	// TODO: Remember to remove any session objects
 }
 
 // Get session info

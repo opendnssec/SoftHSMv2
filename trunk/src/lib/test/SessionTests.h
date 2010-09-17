@@ -3,7 +3,7 @@
 /*
  * Copyright (c) 2010 .SE (The Internet Infrastructure Foundation)
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -12,7 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -27,41 +27,30 @@
  */
 
 /*****************************************************************************
- SessionManager.h
+ SessionTests.h
 
- Keeps track of the sessions within SoftHSM
+ Contains test cases to C_OpenSession, C_CloseSession, C_CloseAllSessions, and
+ C_GetSessionInfo
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_SESSIONMANAGER_H
-#define _SOFTHSM_V2_SESSIONMANAGER_H
+#ifndef _SOFTHSM_V2_SESSIONTESTS_H
+#define _SOFTHSM_V2_SESSIONTESTS_H
 
-#include "Slot.h"
-#include "Session.h"
-#include "MutexFactory.h"
-#include "config.h"
+#include <cppunit/extensions/HelperMacros.h>
 #include "cryptoki.h"
-#include <memory>
-#include <vector>
 
-class SessionManager
+class SessionTests : public CppUnit::TestFixture
 {
+	CPPUNIT_TEST_SUITE(SessionTests);
+	CPPUNIT_TEST(testOpenSession);
+	CPPUNIT_TEST_SUITE_END();
+
 public:
-	SessionManager();
+	void testOpenSession();
 
-	virtual ~SessionManager();
-
-	CK_RV openSession(Slot *slot, CK_FLAGS flags, CK_VOID_PTR pApplication, CK_NOTIFY Notify, CK_SESSION_HANDLE_PTR phSession);
-	CK_RV closeSession(CK_SESSION_HANDLE hSession);
-	CK_RV closeAllSessions(Slot *slot);
-	CK_RV getSessionInfo(CK_SESSION_HANDLE hSession, CK_SESSION_INFO_PTR pInfo);
-	Session* getSession(CK_SESSION_HANDLE hSession);
-	bool haveSession(size_t slotID);
-
-private:
-	// The sessions
-	std::vector<Session*> sessions;
-	Mutex* sessionsMutex;
+	void setUp();
+	void tearDown();
 };
 
-#endif // !_SOFTHSM_V2_SESSIONMANAGER_H
+#endif // !_SOFTHSM_V2_SESSIONTESTS_H
 

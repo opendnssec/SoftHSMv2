@@ -39,20 +39,6 @@
 #include "SessionManager.h"
 #include "log.h"
 
-// Initialise the one-and-only instance
-std::auto_ptr<SessionManager> SessionManager::instance(NULL);
-
-// Return the one-and-only instance
-SessionManager* SessionManager::i()
-{
-	if (instance.get() == NULL)
-	{
-		instance = std::auto_ptr<SessionManager>(new SessionManager());
-	}
-
-	return instance.get();
-}
-
 // Constructor
 SessionManager::SessionManager()
 {
@@ -162,7 +148,6 @@ CK_RV SessionManager::closeSession(CK_SESSION_HANDLE hSession)
 	}
 
 	// Close the session
-	// TODO: Remove session objects
 	delete sessions[sessionID];
 	sessions[sessionID] = NULL;
 
@@ -185,7 +170,6 @@ CK_RV SessionManager::closeAllSessions(Slot *slot)
 
 		if ((*i)->getSlot()->getSlotID() == slotID)
 		{
-			// TODO: Remove session objects
 			delete *i;
 			*i = NULL;
 		}
@@ -220,4 +204,22 @@ Session* SessionManager::getSession(CK_SESSION_HANDLE hSession)
 	if (sessions.size() <= hSession) return NULL;
 
 	return sessions[hSession - 1];
+}
+
+bool SessionManager::haveSession(size_t slotID)
+{
+	// Lock access to the vector
+	MutexLocker lock(sessionsMutex);
+
+	for (std::vector<Session*>::iterator i = sessions.begin(); i != sessions.end(); i++)
+	{
+		if (*i == NULL) continue;
+
+		if ((*i)->getSlot()->getSlotID() == slotID)
+		{
+			return true;
+		}
+	}
+
+	return false;
 }

@@ -38,6 +38,7 @@
 #include "log.h"
 #include "cryptoki.h"
 #include "ObjectStore.h"
+#include "SessionManager.h"
 #include "SlotManager.h"
 #include <memory>
 
@@ -167,5 +168,6 @@ private:
 
 	ObjectStore *objectStore; 
 	SlotManager *slotManager;
+	SessionManager *sessionManager;
 };
 

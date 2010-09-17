@@ -69,11 +69,13 @@ SoftHSM::SoftHSM()
 	isInitialised = false;
 	objectStore = NULL;
 	slotManager = NULL;
+	sessionManager = NULL;
 }
 
 // Destructor
 SoftHSM::~SoftHSM()
 {
+	if (sessionManager != NULL) delete sessionManager;
 	if (slotManager != NULL) delete slotManager;
 	if (objectStore != NULL) delete objectStore;
 }
@@ -188,6 +190,9 @@ CK_RV SoftHSM::C_Initialize(CK_VOID_PTR pInitArgs)
 	// Load the slot manager
 	slotManager = new SlotManager(objectStore);
 
+	// Load the session manager
+	sessionManager = new SessionManager();
+
 	// Set the state to initialised
 	isInitialised = true;
 
@@ -202,6 +207,8 @@ CK_RV SoftHSM::C_Finalize(CK_VOID_PTR pReserved)
 	// Must be set to NULL_PTR in this version of PKCS#11
 	if (pReserved != NULL_PTR) return CKR_ARGUMENTS_BAD;
 
+	if (sessionManager != NULL) delete sessionManager;
+	sessionManager = NULL;
 	if (slotManager != NULL) delete slotManager;
 	slotManager = NULL;
 	if (objectStore != NULL) delete objectStore;
@@ -475,8 +482,11 @@ CK_RV SoftHSM::C_InitToken(CK_SLOT_ID slotID, CK_UTF8CHAR_PTR pPin, CK_ULONG ulP
 		return CKR_SLOT_ID_INVALID;
 	}
 
-	// TODO: Check if any session is open with this token.
-	// return CKR_SESSION_EXISTS;
+	// Check if any session is open with this token.
+        if (sessionManager->haveSession(slotID))
+        {
+                return CKR_SESSION_EXISTS;
+        }
 
 	return slot->initToken(pPin, ulPinLen, pLabel);
 }
@@ -510,7 +520,7 @@ CK_RV SoftHSM::C_OpenSession(CK_SLOT_ID slotID, CK_FLAGS flags, CK_VOID_PTR pApp
 
 	Slot *slot = slotManager->getSlot(slotID);
 
-	return SessionManager::i()->openSession(slot, flags, pApplication, notify, phSession);
+	return sessionManager->openSession(slot, flags, pApplication, notify, phSession);
 }
 
 // Close the given session
@@ -518,7 +528,7 @@ CK_RV SoftHSM::C_CloseSession(CK_SESSION_HANDLE hSession)
 {
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
 
-	return SessionManager::i()->closeSession(hSession);
+	return sessionManager->closeSession(hSession);
 }
 
 // Close all open sessions
@@ -528,7 +538,7 @@ CK_RV SoftHSM::C_CloseAllSessions(CK_SLOT_ID slotID)
 
 	Slot *slot = slotManager->getSlot(slotID);
 
-	return SessionManager::i()->closeAllSessions(slot);
+	return sessionManager->closeAllSessions(slot);
 }
 
 // Retrieve information about the specified session
@@ -536,7 +546,7 @@ CK_RV SoftHSM::C_GetSessionInfo(CK_SESSION_HANDLE hSession, CK_SESSION_INFO_PTR 
 {
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
 
-	return SessionManager::i()->getSessionInfo(hSession, pInfo);
+	return sessionManager->getSessionInfo(hSession, pInfo);
 }
 
 // Determine the state of a running operation in a session
