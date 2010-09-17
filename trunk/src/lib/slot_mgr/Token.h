@@ -67,6 +67,9 @@ public:
 	bool isSOLoggedIn();
 	bool isUserLoggedIn();
 
+	// Logout any user on this token;
+	void logout();
+
 	// Retrieve token information for the token
 	CK_RV getTokenInfo(CK_TOKEN_INFO_PTR info);
 

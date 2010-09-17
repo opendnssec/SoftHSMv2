@@ -35,10 +35,11 @@
 #include "Session.h"
 
 // Constructor
-Session::Session(Slot *slot, bool rwSession, CK_VOID_PTR pApplication, CK_NOTIFY notify)
+Session::Session(Slot *slot, bool isReadWrite, CK_VOID_PTR pApplication, CK_NOTIFY notify)
 {
 	this->slot = slot;
-	this->rwSession = rwSession;
+	this->token = slot->getToken();
+	this->isReadWrite = isReadWrite;
 	this->pApplication = pApplication;
 	this->notify = notify;
 }
@@ -54,15 +55,61 @@ Session::~Session()
 }
 
 // Get session info
-CK_RV Session::getSessionInfo(CK_SESSION_INFO_PTR pInfo)
+CK_RV Session::getInfo(CK_SESSION_INFO_PTR pInfo)
 {
 	if (pInfo == NULL_PTR) return CKR_ARGUMENTS_BAD;
 
-	// TODO: Set the information
-	// pInfo->slotID = 
-	// pInfo->state =
-	// pInfo->flags =
-	// pInfo->ulDeviceError =
+	pInfo->slotID = slot->getSlotID();
 
-	return CKR_FUNCTION_NOT_SUPPORTED;
+	pInfo->state = getState();
+	pInfo->flags = CKF_SERIAL_SESSION;
+	if (isRW())
+	{
+		pInfo->flags |= CKF_RW_SESSION;
+	}
+	pInfo->ulDeviceError = 0;
+
+	return CKR_OK;
+}
+
+// Is a read and write session
+bool Session::isRW()
+{
+	return isReadWrite;
+}
+
+// Get session state
+CK_STATE Session::getState()
+{
+	if (token->isSOLoggedIn())
+	{
+		return CKS_RW_SO_FUNCTIONS;
+	}
+
+	if (token->isUserLoggedIn())
+	{
+		if (isRW())
+		{
+			return CKS_RW_USER_FUNCTIONS;
+		}
+		else
+		{
+			return CKS_RO_USER_FUNCTIONS;
+		}
+	}
+
+	if (isRW())
+	{
+		return CKS_RW_PUBLIC_SESSION;
+	}
+	else
+	{
+		return CKS_RO_PUBLIC_SESSION;
+	}
+}
+
+// Return the slot that the session is connected to
+Slot* Session::getSlot()
+{
+	return slot;
 }

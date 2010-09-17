@@ -140,6 +140,7 @@ CK_RV SessionManager::closeSession(CK_SESSION_HANDLE hSession)
 	// Check if it is a closed session
 	if (sessions[hSession-1] == NULL) return CKR_SESSION_HANDLE_INVALID;
 
+	// Check if this is the last session on the token
 	// TODO: Logout if this is the last session on the token
 	// TODO: Remove session objects
 
@@ -158,11 +159,24 @@ CK_RV SessionManager::closeAllSessions(Slot *slot)
 	// Lock access to the vector
 	MutexLocker lock(sessionsMutex);
 
-	// TODO: Close all sessions on this slot
-	// TODO: Remove session objects
-	// TODO: Logout from the token
+	// Close all sessions on this slot
+	CK_ULONG slotID = slot->getSlotID();
+	for (std::vector<Session*>::iterator i = sessions.begin(); i != sessions.end(); i++)
+	{
+		if (*i == NULL) continue;
 
-	return CKR_FUNCTION_NOT_SUPPORTED;
+		if ((*i)->getSlot()->getSlotID() == slotID)
+		{
+			// TODO: Remove session objects
+			delete *i;
+			*i = NULL;
+		}
+	}
+
+	// Logout from the token
+	slot->getToken()->logout();
+
+	return CKR_OK;
 }
 
 // Get session info
@@ -172,7 +186,7 @@ CK_RV SessionManager::getSessionInfo(CK_SESSION_HANDLE hSession, CK_SESSION_INFO
 	Session *session = getSession(hSession);
 	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
 
-	return session->getSessionInfo(pInfo);
+	return session->getInfo(pInfo);
 }
 
 // Get the session

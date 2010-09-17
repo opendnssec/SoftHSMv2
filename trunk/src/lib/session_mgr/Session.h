@@ -36,24 +36,29 @@
 #define _SOFTHSM_V2_SESSION_H
 
 #include "Slot.h"
+#include "Token.h"
 #include "cryptoki.h"
 
 class Session
 {
 public:
-	Session(Slot *slot, bool rwSession, CK_VOID_PTR pApplication, CK_NOTIFY notify);
+	Session(Slot *slot, bool isReadWrite, CK_VOID_PTR pApplication, CK_NOTIFY notify);
 
 	// Destructor
 	virtual ~Session();
 
-	CK_RV getSessionInfo(CK_SESSION_INFO_PTR pInfo);
+	CK_RV getInfo(CK_SESSION_INFO_PTR pInfo);
+	bool isRW();
+	CK_STATE getState();
+	Slot* getSlot();
 
 private:
 	// Constructor
 	Session();
 
 	Slot *slot;
-	bool rwSession;
+	Token *token;
+	bool isReadWrite;
 	CK_VOID_PTR pApplication;
 	CK_NOTIFY notify;
 };

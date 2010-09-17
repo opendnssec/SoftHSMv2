@@ -92,6 +92,14 @@ bool Token::isUserLoggedIn()
 	return sdm->isUserLoggedIn();
 }
 
+// Logout any user on this token;
+void Token::logout()
+{
+	if (sdm == NULL) return;
+
+	sdm->logout();
+}
+
 // Create a new token
 CK_RV Token::createToken(ObjectStore* objectStore, CK_UTF8CHAR_PTR soPIN, CK_ULONG pinLen, CK_UTF8CHAR_PTR label)
 {
