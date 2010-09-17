@@ -92,4 +92,7 @@ void SessionTests::testOpenSession()
 
 	rv = C_OpenSession(SLOT_INIT_TOKEN, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSession);
 	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	rv = C_CloseSession(hSession);
+	CPPUNIT_ASSERT(rv == CKR_OK);
 }

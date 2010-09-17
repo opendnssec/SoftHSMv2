@@ -121,10 +121,10 @@ CK_RV SessionManager::closeSession(CK_SESSION_HANDLE hSession)
 	MutexLocker lock(sessionsMutex);
 
 	// Check if we are out of range
-	if (sessions.size() <= hSession) return CKR_SESSION_HANDLE_INVALID;
+	if (hSession > sessions.size()) return CKR_SESSION_HANDLE_INVALID;
 
 	// Check if it is a closed session
-	unsigned long sessionID = hSession-1;
+	unsigned long sessionID = hSession - 1;
 	if (sessions[sessionID] == NULL) return CKR_SESSION_HANDLE_INVALID;
 
 	// Check if this is the last session on the token
