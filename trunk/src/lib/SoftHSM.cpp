@@ -404,6 +404,9 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 		case CKM_SHA_1:
 		case CKM_SHA256:
 		case CKM_SHA512:
+			// Key size is not in use
+			pInfo->ulMinKeySize = 0;
+			pInfo->ulMaxKeySize = 0;
 			pInfo->flags = CKF_DIGEST;
 			break;
 		case CKM_RSA_PKCS_KEY_PAIR_GEN:
@@ -428,12 +431,18 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 		case CKM_DES_KEY_GEN:
 		case CKM_DES2_KEY_GEN:
 		case CKM_DES3_KEY_GEN:
+			// Key size is not in use
+			pInfo->ulMinKeySize = 0;
+			pInfo->ulMaxKeySize = 0;
 			pInfo->flags = CKF_GENERATE;
 			break;
 		case CKM_DES_ECB:
 		case CKM_DES_CBC:
 		case CKM_DES3_ECB:
 		case CKM_DES3_CBC:
+			// Key size is not in use
+			pInfo->ulMinKeySize = 0;
+			pInfo->ulMaxKeySize = 0;
 			pInfo->flags = CKF_ENCRYPT | CKF_DECRYPT;
 			break;
 		case CKM_AES_KEY_GEN:
