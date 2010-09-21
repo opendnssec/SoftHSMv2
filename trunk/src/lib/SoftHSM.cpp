@@ -446,14 +446,14 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 			pInfo->flags = CKF_ENCRYPT | CKF_DECRYPT;
 			break;
 		case CKM_AES_KEY_GEN:
-			pInfo->ulMinKeySize = 128;
-			pInfo->ulMaxKeySize = 256;
+			pInfo->ulMinKeySize = 16;
+			pInfo->ulMaxKeySize = 32;
 			pInfo->flags = CKF_GENERATE;
 			break;
 		case CKM_AES_ECB:
 		case CKM_AES_CBC:
-			pInfo->ulMinKeySize = 128;
-			pInfo->ulMaxKeySize = 256;
+			pInfo->ulMinKeySize = 16;
+			pInfo->ulMaxKeySize = 32;
 			pInfo->flags = CKF_ENCRYPT | CKF_DECRYPT;
 			break;
 		case CKM_DSA_PARAMETER_GEN:
