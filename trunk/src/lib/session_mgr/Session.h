@@ -51,6 +51,7 @@ public:
 	bool isRW();
 	CK_STATE getState();
 	Slot* getSlot();
+	Token* getToken();
 
 private:
 	// Constructor

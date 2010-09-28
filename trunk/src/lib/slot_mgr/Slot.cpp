@@ -69,9 +69,9 @@ Token* Slot::getToken()
 }
 
 // Initialise the token in the slot
-CK_RV Slot::initToken(CK_UTF8CHAR_PTR soPIN, CK_ULONG pinLen, CK_UTF8CHAR_PTR label)
+CK_RV Slot::initToken(ByteString& soPIN, CK_UTF8CHAR_PTR label)
 {
-	return token->createToken(objectStore, soPIN, pinLen, label);
+	return token->createToken(objectStore, soPIN, label);
 }
 
 // Retrieve slot information for the slot

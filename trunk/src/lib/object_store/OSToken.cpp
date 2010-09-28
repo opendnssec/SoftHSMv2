@@ -151,6 +151,8 @@ bool OSToken::setSOPIN(const ByteString& soPINBlob)
 	if (tokenObject->setAttribute(CKA_OS_SOPIN, soPIN) &&
 	    getTokenFlags(flags))
 	{
+		flags &= ~CKF_SO_PIN_COUNT_LOW;
+		flags &= ~CKF_SO_PIN_FINAL_TRY;
 		flags &= ~CKF_SO_PIN_LOCKED;
 		flags &= ~CKF_SO_PIN_TO_BE_CHANGED;
 
@@ -189,7 +191,21 @@ bool OSToken::setUserPIN(ByteString userPINBlob)
 
 	OSAttribute userPIN(userPINBlob);
 
-	return tokenObject->setAttribute(CKA_OS_USERPIN, userPIN);
+	CK_ULONG flags;
+
+	if (tokenObject->setAttribute(CKA_OS_USERPIN, userPIN) &&
+	    getTokenFlags(flags))
+	{
+		flags |= CKF_USER_PIN_INITIALIZED;
+		flags &= ~CKF_USER_PIN_COUNT_LOW;
+		flags &= ~CKF_USER_PIN_FINAL_TRY;
+		flags &= ~CKF_USER_PIN_LOCKED;
+		flags &= ~CKF_USER_PIN_TO_BE_CHANGED;
+
+		return setTokenFlags(flags);
+	}
+
+	return false;
 }
 
 // Get the user PIN

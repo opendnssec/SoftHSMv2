@@ -227,3 +227,20 @@ bool SessionManager::haveSession(size_t slotID)
 
 	return false;
 }
+
+bool SessionManager::haveROSession(size_t slotID)
+{
+	// Lock access to the vector
+	MutexLocker lock(sessionsMutex);
+
+	for (std::vector<Session*>::iterator i = sessions.begin(); i != sessions.end(); i++)
+	{
+		if (*i == NULL) continue;
+
+		if ((*i)->getSlot()->getSlotID() != slotID) continue;
+
+		if ((*i)->isRW() == false) return true;
+	}
+
+	return false;
+}

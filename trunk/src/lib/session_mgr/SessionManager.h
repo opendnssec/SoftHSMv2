@@ -56,6 +56,7 @@ public:
 	CK_RV getSessionInfo(CK_SESSION_HANDLE hSession, CK_SESSION_INFO_PTR pInfo);
 	Session* getSession(CK_SESSION_HANDLE hSession);
 	bool haveSession(size_t slotID);
+	bool haveROSession(size_t slotID);
 
 private:
 	// The sessions

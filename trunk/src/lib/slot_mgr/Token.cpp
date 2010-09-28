@@ -92,6 +92,37 @@ bool Token::isUserLoggedIn()
 	return sdm->isUserLoggedIn();
 }
 
+// Login SO
+CK_RV Token::loginSO(ByteString& pin)
+{
+	if (sdm == NULL) return CKR_GENERAL_ERROR;
+
+	// User cannot be logged in
+	if (isUserLoggedIn()) return CKR_USER_ANOTHER_ALREADY_LOGGED_IN;
+
+	// SO cannot be logged in
+	if (isSOLoggedIn()) return CKR_USER_ALREADY_LOGGED_IN;
+
+	return sdm->loginSO(pin) ? CKR_OK : CKR_PIN_INCORRECT;
+}
+
+// Login user
+CK_RV Token::loginUser(ByteString& pin)
+{
+	if (sdm == NULL) return CKR_GENERAL_ERROR;
+
+	// SO cannot be logged in
+	if (isSOLoggedIn()) return CKR_USER_ANOTHER_ALREADY_LOGGED_IN;
+
+	// User cannot be logged in
+	if (isUserLoggedIn()) return CKR_USER_ALREADY_LOGGED_IN;
+
+	// The user PIN has to be initialized;
+	if (sdm->getUserPINBlob().size() == 0) return CKR_USER_PIN_NOT_INITIALIZED;
+
+	return sdm->loginUser(pin) ? CKR_OK : CKR_PIN_INCORRECT;
+}
+
 // Logout any user on this token;
 void Token::logout()
 {
@@ -100,19 +131,75 @@ void Token::logout()
 	sdm->logout();
 }
 
+// Change SO PIN
+CK_RV Token::setSOPIN(ByteString& oldPIN, ByteString& newPIN)
+{
+	if (sdm == NULL) return CKR_GENERAL_ERROR;
+
+	// Verify oldPIN
+	SecureDataManager *verifier = new SecureDataManager(sdm->getSOPINBlob(), sdm->getUserPINBlob());
+	bool result = verifier->loginSO(oldPIN);
+	delete verifier;
+	if (result == false) return CKR_PIN_INCORRECT;
+
+	if (sdm->setSOPIN(newPIN) == false) return CKR_GENERAL_ERROR;
+
+	// Save PIN to token file
+	if (token->setSOPIN(sdm->getSOPINBlob()) == false) return CKR_GENERAL_ERROR;
+
+	ByteString soPINBlob, userPINBlob;
+	valid = token->getSOPIN(soPINBlob) && token->getUserPIN(userPINBlob);
+
+	return CKR_OK;
+}
+
+// Change the user PIN
+CK_RV Token::setUserPIN(ByteString& oldPIN, ByteString& newPIN)
+{
+	if (sdm == NULL) return CKR_GENERAL_ERROR;
+
+	// Verify oldPIN
+	SecureDataManager *verifier = new SecureDataManager(sdm->getSOPINBlob(), sdm->getUserPINBlob());
+	bool result = verifier->loginUser(oldPIN);
+	delete verifier;
+	if (result == false) return CKR_PIN_INCORRECT;
+
+	if (sdm->setUserPIN(newPIN) == false) return CKR_GENERAL_ERROR;
+
+	// Save PIN to token file
+	if (token->setUserPIN(sdm->getUserPINBlob()) == false) return CKR_GENERAL_ERROR;
+
+	ByteString soPINBlob, userPINBlob;
+	valid = token->getSOPIN(soPINBlob) && token->getUserPIN(userPINBlob);
+
+	return CKR_OK;
+}
+
+// Init the user PIN
+CK_RV Token::initUserPIN(ByteString& pin)
+{
+	if (sdm == NULL) return CKR_GENERAL_ERROR;
+
+	if (sdm->setUserPIN(pin) == false) return CKR_GENERAL_ERROR;
+
+	// Save PIN to token file
+	if (token->setUserPIN(sdm->getUserPINBlob()) == false) return CKR_GENERAL_ERROR;
+
+	ByteString soPINBlob, userPINBlob;
+	valid = token->getSOPIN(soPINBlob) && token->getUserPIN(userPINBlob);
+
+	return CKR_OK;
+}
+
 // Create a new token
-CK_RV Token::createToken(ObjectStore* objectStore, CK_UTF8CHAR_PTR soPIN, CK_ULONG pinLen, CK_UTF8CHAR_PTR label)
+CK_RV Token::createToken(ObjectStore* objectStore, ByteString& soPIN, CK_UTF8CHAR_PTR label)
 {
 	if (objectStore == NULL) return CKR_GENERAL_ERROR;
-	if (soPIN == NULL_PTR) return CKR_ARGUMENTS_BAD;
 	if (label == NULL_PTR) return CKR_ARGUMENTS_BAD;
-	if (pinLen < MIN_PIN_LEN || pinLen > MAX_PIN_LEN) return CKR_PIN_INCORRECT;
 
 	if (token != NULL)
 	{
-		ByteString oldSOPIN(soPIN, pinLen);
-
-		if (sdm->getSOPINBlob().size() > 0 && !sdm->loginSO(oldSOPIN))
+		if (sdm->getSOPINBlob().size() > 0 && !sdm->loginSO(soPIN))
 		{
 			ERROR_MSG("Incorrect SO PIN");
 
@@ -131,11 +218,9 @@ CK_RV Token::createToken(ObjectStore* objectStore, CK_UTF8CHAR_PTR soPIN, CK_ULO
 	}
 
 	// Generate the SO PIN blob
-	ByteString soPINByteStr((const unsigned char*) soPIN, pinLen);
-
 	SecureDataManager soPINBlobGen;
 
-	if (!soPINBlobGen.setSOPIN(soPINByteStr))
+	if (!soPINBlobGen.setSOPIN(soPIN))
 	{
 		return CKR_GENERAL_ERROR;
 	}

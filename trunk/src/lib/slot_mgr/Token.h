@@ -55,7 +55,7 @@ public:
 	virtual ~Token();
 	
 	// Create a new token
-	CK_RV createToken(ObjectStore* objectStore, CK_UTF8CHAR_PTR soPIN, CK_ULONG pinLen, CK_UTF8CHAR_PTR label);
+	CK_RV createToken(ObjectStore* objectStore, ByteString& soPIN, CK_UTF8CHAR_PTR label);
 
 	// Is the token valid?
 	bool isValid();
@@ -67,8 +67,17 @@ public:
 	bool isSOLoggedIn();
 	bool isUserLoggedIn();
 
+	// Login
+	CK_RV loginSO(ByteString& pin);
+	CK_RV loginUser(ByteString& pin);
+
 	// Logout any user on this token;
 	void logout();
+
+	// Change PIN
+	CK_RV setSOPIN(ByteString& oldPIN, ByteString& newPIN);
+	CK_RV setUserPIN(ByteString& oldPIN, ByteString& newPIN);
+	CK_RV initUserPIN(ByteString& pin);
 
 	// Retrieve token information for the token
 	CK_RV getTokenInfo(CK_TOKEN_INFO_PTR info);

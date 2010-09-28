@@ -55,7 +55,7 @@ void TokenTests::testInitToken()
 {
 	CK_RV rv;
 	CK_UTF8CHAR pin[] = SLOT_0_SO_PIN;
-	CK_ULONG pinLength = sizeof(pin);
+	CK_ULONG pinLength = sizeof(pin) - 1;
 	CK_UTF8CHAR label[32];
 
 	memset(label, ' ', 32);

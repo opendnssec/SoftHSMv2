@@ -229,6 +229,14 @@ bool SecureDataManager::setUserPIN(const ByteString& userPIN)
 		return false;
 	}
 
+	// Check the new PIN
+	if (userPIN.size() == 0)
+	{
+		DEBUG_MSG("Zero length PIN specified");
+
+		return false;
+	}
+
 	return pbeEncryptKey(userPIN, userEncryptedKey);
 }
 
@@ -256,6 +264,7 @@ bool SecureDataManager::login(const ByteString& passphrase, const ByteString& en
 	ByteString decryptedKeyData;
 	ByteString finalBlock;
 
+	// NOTE: The login will fail here if incorrect passphrase is supplied
 	if (!aes->decryptInit(pbeKey, "cbc") ||
 	    !aes->decryptUpdate(encryptedKeyData, decryptedKeyData) ||
 	    !aes->decryptFinal(finalBlock))

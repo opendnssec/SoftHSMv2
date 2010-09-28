@@ -114,3 +114,9 @@ Slot* Session::getSlot()
 {
 	return slot;
 }
+
+// Return the token that the session is connected to
+Token* Session::getToken()
+{
+	return token;
+}

@@ -57,7 +57,7 @@ public:
 	Token* getToken();
 
 	// Initialise the token in the slot
-	CK_RV initToken(CK_UTF8CHAR_PTR soPIN, CK_ULONG pinLen, CK_UTF8CHAR_PTR label);
+	CK_RV initToken(ByteString& pin, CK_UTF8CHAR_PTR label);
 
 	// Retrieve slot information for the slot
 	CK_RV getSlotInfo(CK_SLOT_INFO_PTR info);
