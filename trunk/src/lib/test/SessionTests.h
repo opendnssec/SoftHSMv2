@@ -43,10 +43,16 @@ class SessionTests : public CppUnit::TestFixture
 {
 	CPPUNIT_TEST_SUITE(SessionTests);
 	CPPUNIT_TEST(testOpenSession);
+	CPPUNIT_TEST(testCloseSession);
+	CPPUNIT_TEST(testCloseAllSessions);
+	CPPUNIT_TEST(testGetSessionInfo);
 	CPPUNIT_TEST_SUITE_END();
 
 public:
 	void testOpenSession();
+	void testCloseSession();
+	void testCloseAllSessions();
+	void testGetSessionInfo();
 
 	void setUp();
 	void tearDown();

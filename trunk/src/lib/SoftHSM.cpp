@@ -492,10 +492,10 @@ CK_RV SoftHSM::C_InitToken(CK_SLOT_ID slotID, CK_UTF8CHAR_PTR pPin, CK_ULONG ulP
 	}
 
 	// Check if any session is open with this token.
-        if (sessionManager->haveSession(slotID))
-        {
-                return CKR_SESSION_EXISTS;
-        }
+	if (sessionManager->haveSession(slotID))
+	{
+		return CKR_SESSION_EXISTS;
+	}
 
 	return slot->initToken(pPin, ulPinLen, pLabel);
 }

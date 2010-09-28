@@ -162,6 +162,10 @@ CK_RV SessionManager::closeAllSessions(Slot *slot)
 	// Lock access to the vector
 	MutexLocker lock(sessionsMutex);
 
+	// Get the token
+	Token *token = slot->getToken();
+	if (token == NULL) return CKR_TOKEN_NOT_PRESENT;
+
 	// Close all sessions on this slot
 	CK_ULONG slotID = slot->getSlotID();
 	for (std::vector<Session*>::iterator i = sessions.begin(); i != sessions.end(); i++)
@@ -176,7 +180,7 @@ CK_RV SessionManager::closeAllSessions(Slot *slot)
 	}
 
 	// Logout from the token
-	slot->getToken()->logout();
+	token->logout();
 
 	return CKR_OK;
 }
@@ -201,7 +205,7 @@ Session* SessionManager::getSession(CK_SESSION_HANDLE hSession)
 	if (hSession == CK_INVALID_HANDLE) return NULL;
 
 	// Check if we are out of range
-	if (sessions.size() <= hSession) return NULL;
+	if (hSession > sessions.size()) return NULL;
 
 	return sessions[hSession - 1];
 }
