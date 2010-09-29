@@ -118,6 +118,8 @@ void UserTests::testLogin()
 	CPPUNIT_ASSERT(rv == CKR_OK);
 	rv = C_OpenSession(SLOT_INIT_TOKEN, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSession[0]);
 	CPPUNIT_ASSERT(rv == CKR_OK);
+	rv = C_Login(hSession[0], CKU_USER, pin, pinLength);
+	CPPUNIT_ASSERT(rv == CKR_USER_PIN_NOT_INITIALIZED);
 	rv = C_Login(hSession[0], CKU_SO, sopin, sopinLength);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 	rv = C_InitPIN(hSession[0], pin, pinLength);
