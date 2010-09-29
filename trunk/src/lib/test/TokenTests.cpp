@@ -57,6 +57,7 @@ void TokenTests::testInitToken()
 	CK_UTF8CHAR pin[] = SLOT_0_SO1_PIN;
 	CK_ULONG pinLength = sizeof(pin) - 1;
 	CK_UTF8CHAR label[32];
+	CK_SESSION_HANDLE hSession;
 
 	memset(label, ' ', 32);
 	memcpy(label, "token1", strlen("token1"));
@@ -84,7 +85,14 @@ void TokenTests::testInitToken()
 	rv = C_InitToken(SLOT_INIT_TOKEN, pin, pinLength - 1, label);
 	CPPUNIT_ASSERT(rv == CKR_PIN_INCORRECT);
 
-	// TODO: CKR_SESSION_EXISTS
+	rv = C_OpenSession(SLOT_INIT_TOKEN, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSession);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	rv = C_InitToken(SLOT_INIT_TOKEN, pin, pinLength, label);
+	CPPUNIT_ASSERT(rv == CKR_SESSION_EXISTS);
+
+	rv = C_CloseSession(hSession);
+	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// Re-initialize
 	rv = C_InitToken(SLOT_INIT_TOKEN, pin, pinLength, label);
