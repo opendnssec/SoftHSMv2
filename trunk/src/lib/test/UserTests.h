@@ -27,68 +27,35 @@
  */
 
 /*****************************************************************************
- TokenTests.cpp
+ UserTests.h
 
- Contains test cases to C_InitToken
+ Contains test cases to C_InitPIN, C_SetPIN, C_Login, and C_Logout
  *****************************************************************************/
 
-#include <stdlib.h>
-#include <string.h>
+#ifndef _SOFTHSM_V2_USERTESTS_H
+#define _SOFTHSM_V2_USERTESTS_H
+
 #include <cppunit/extensions/HelperMacros.h>
-#include "TokenTests.h"
-#include "testconfig.h"
+#include "cryptoki.h"
 
-CPPUNIT_TEST_SUITE_REGISTRATION(TokenTests);
-
-void TokenTests::setUp()
+class UserTests : public CppUnit::TestFixture
 {
-	setenv("SOFTHSM2_CONF", "./softhsm2.conf", 1);
-}
+	CPPUNIT_TEST_SUITE(UserTests);
+	CPPUNIT_TEST(testInitPIN);
+	CPPUNIT_TEST(testLogin);
+	CPPUNIT_TEST(testLogout);
+	CPPUNIT_TEST(testSetPIN);
+	CPPUNIT_TEST_SUITE_END();
 
-void TokenTests::tearDown()
-{
-	// Just make sure that we finalize any previous failed tests
-	C_Finalize(NULL_PTR);
-}
+public:
+	void testInitPIN();
+	void testLogin();
+	void testLogout();
+	void testSetPIN();
 
-void TokenTests::testInitToken()
-{
-	CK_RV rv;
-	CK_UTF8CHAR pin[] = SLOT_0_SO1_PIN;
-	CK_ULONG pinLength = sizeof(pin) - 1;
-	CK_UTF8CHAR label[32];
+	void setUp();
+	void tearDown();
+};
 
-	memset(label, ' ', 32);
-	memcpy(label, "token1", strlen("token1"));
+#endif // !_SOFTHSM_V2_USERTESTS_H
 
-	// Just make sure that we finalize any previous failed tests
-	C_Finalize(NULL_PTR);
-
-	rv = C_InitToken(SLOT_INIT_TOKEN, pin, pinLength, label);
-	CPPUNIT_ASSERT(rv == CKR_CRYPTOKI_NOT_INITIALIZED);
-
-	rv = C_Initialize(NULL_PTR);
-	CPPUNIT_ASSERT(rv == CKR_OK);
-
-	rv = C_InitToken(SLOT_INIT_TOKEN, NULL_PTR, pinLength, label);
-	CPPUNIT_ASSERT(rv == CKR_ARGUMENTS_BAD);
-
-	rv = C_InitToken(SLOT_INVALID, pin, pinLength, label);
-	CPPUNIT_ASSERT(rv == CKR_SLOT_ID_INVALID);
-
-	// Initialize
-	rv = C_InitToken(SLOT_INIT_TOKEN, pin, pinLength, label);
-	CPPUNIT_ASSERT(rv == CKR_OK);
-
-	// Initialize with wrong password
-	rv = C_InitToken(SLOT_INIT_TOKEN, pin, pinLength - 1, label);
-	CPPUNIT_ASSERT(rv == CKR_PIN_INCORRECT);
-
-	// TODO: CKR_SESSION_EXISTS
-
-	// Re-initialize
-	rv = C_InitToken(SLOT_INIT_TOKEN, pin, pinLength, label);
-	CPPUNIT_ASSERT(rv == CKR_OK);
-
-	C_Finalize(NULL_PTR);
-}

@@ -14,6 +14,7 @@ p11test_SOURCES =		p11test.cpp \
 				InfoTests.cpp \
 				SessionTests.cpp \
 				TokenTests.cpp \
+				UserTests.cpp \
 				../common/osmutex.cpp
 
 p11test_LDADD =			../libsofthsm.la 

@@ -45,7 +45,7 @@ void SessionTests::setUp()
 {
 	setenv("SOFTHSM2_CONF", "./softhsm2.conf", 1);
 
-	CK_UTF8CHAR pin[] = SLOT_0_SO_PIN;
+	CK_UTF8CHAR pin[] = SLOT_0_SO1_PIN;
 	CK_ULONG pinLength = sizeof(pin) - 1;
 	CK_UTF8CHAR label[32];
 	memset(label, ' ', 32);
