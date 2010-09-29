@@ -557,10 +557,6 @@ CK_RV SoftHSM::C_SetPIN(CK_SESSION_HANDLE hSession, CK_UTF8CHAR_PTR pOldPin, CK_
 	switch (session->getState())
 	{
 		case CKS_RW_PUBLIC_SESSION:
-			if (token->loginUser(oldPIN) != CKR_OK) return CKR_PIN_INCORRECT;
-			rv = token->setUserPIN(oldPIN, newPIN);
-			token->logout();
-			break;
 		case CKS_RW_USER_FUNCTIONS:
 			rv = token->setUserPIN(oldPIN, newPIN);
 			break;

@@ -91,6 +91,8 @@ private:
 
 	// The secure data manager for this token
 	SecureDataManager* sdm;
+
+	Mutex* tokenMutex;
 };
 
 #endif // !_SOFTHSM_V2_TOKEN_H

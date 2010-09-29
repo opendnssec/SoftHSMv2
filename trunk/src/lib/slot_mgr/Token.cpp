@@ -39,6 +39,8 @@
 // Constructor
 Token::Token()
 {
+	tokenMutex = MutexFactory::i()->getMutex();
+
 	token = NULL;
 	sdm = NULL;
 	valid = false;
@@ -47,6 +49,8 @@ Token::Token()
 // Constructor
 Token::Token(OSToken* token)
 {
+	tokenMutex = MutexFactory::i()->getMutex();
+
 	this->token = token;
 	
 	ByteString soPINBlob, userPINBlob;
@@ -60,11 +64,16 @@ Token::Token(OSToken* token)
 Token::~Token()
 {
 	if (sdm != NULL) delete sdm;
+
+	MutexFactory::i()->recycleMutex(tokenMutex);
 }
 
 // Check if the token is still valid
 bool Token::isValid()
 {
+	// Lock access to the token
+	MutexLocker lock(tokenMutex);
+
 	return (valid && token->isValid());
 }
 
@@ -79,6 +88,9 @@ bool Token::isInitialized()
 // Check if SO is logged in
 bool Token::isSOLoggedIn()
 {
+	// Lock access to the token
+	MutexLocker lock(tokenMutex);
+
 	if (sdm == NULL) return false;
 
 	return sdm->isSOLoggedIn();
@@ -87,6 +99,9 @@ bool Token::isSOLoggedIn()
 // Check if user is logged in
 bool Token::isUserLoggedIn()
 {
+	// Lock access to the token
+	MutexLocker lock(tokenMutex);
+
 	if (sdm == NULL) return false;
 
 	return sdm->isUserLoggedIn();
@@ -95,13 +110,16 @@ bool Token::isUserLoggedIn()
 // Login SO
 CK_RV Token::loginSO(ByteString& pin)
 {
+	// Lock access to the token
+	MutexLocker lock(tokenMutex);
+
 	if (sdm == NULL) return CKR_GENERAL_ERROR;
 
 	// User cannot be logged in
-	if (isUserLoggedIn()) return CKR_USER_ANOTHER_ALREADY_LOGGED_IN;
+	if (sdm->isUserLoggedIn()) return CKR_USER_ANOTHER_ALREADY_LOGGED_IN;
 
 	// SO cannot be logged in
-	if (isSOLoggedIn()) return CKR_USER_ALREADY_LOGGED_IN;
+	if (sdm->isSOLoggedIn()) return CKR_USER_ALREADY_LOGGED_IN;
 
 	return sdm->loginSO(pin) ? CKR_OK : CKR_PIN_INCORRECT;
 }
@@ -109,13 +127,16 @@ CK_RV Token::loginSO(ByteString& pin)
 // Login user
 CK_RV Token::loginUser(ByteString& pin)
 {
+	// Lock access to the token
+	MutexLocker lock(tokenMutex);
+
 	if (sdm == NULL) return CKR_GENERAL_ERROR;
 
 	// SO cannot be logged in
-	if (isSOLoggedIn()) return CKR_USER_ANOTHER_ALREADY_LOGGED_IN;
+	if (sdm->isSOLoggedIn()) return CKR_USER_ANOTHER_ALREADY_LOGGED_IN;
 
 	// User cannot be logged in
-	if (isUserLoggedIn()) return CKR_USER_ALREADY_LOGGED_IN;
+	if (sdm->isUserLoggedIn()) return CKR_USER_ALREADY_LOGGED_IN;
 
 	// The user PIN has to be initialized;
 	if (sdm->getUserPINBlob().size() == 0) return CKR_USER_PIN_NOT_INITIALIZED;
@@ -126,6 +147,9 @@ CK_RV Token::loginUser(ByteString& pin)
 // Logout any user on this token;
 void Token::logout()
 {
+	// Lock access to the token
+	MutexLocker lock(tokenMutex);
+
 	if (sdm == NULL) return;
 
 	sdm->logout();
@@ -134,6 +158,9 @@ void Token::logout()
 // Change SO PIN
 CK_RV Token::setSOPIN(ByteString& oldPIN, ByteString& newPIN)
 {
+	// Lock access to the token
+	MutexLocker lock(tokenMutex);
+
 	if (sdm == NULL) return CKR_GENERAL_ERROR;
 
 	// Verify oldPIN
@@ -156,18 +183,42 @@ CK_RV Token::setSOPIN(ByteString& oldPIN, ByteString& newPIN)
 // Change the user PIN
 CK_RV Token::setUserPIN(ByteString& oldPIN, ByteString& newPIN)
 {
+	// Lock access to the token
+	MutexLocker lock(tokenMutex);
+
 	if (sdm == NULL) return CKR_GENERAL_ERROR;
 
-	// Verify oldPIN
-	SecureDataManager *verifier = new SecureDataManager(sdm->getSOPINBlob(), sdm->getUserPINBlob());
-	bool result = verifier->loginUser(oldPIN);
-	delete verifier;
-	if (result == false) return CKR_PIN_INCORRECT;
+	// Check if user should stay logged in
+	bool stayLoggedIn = sdm->isUserLoggedIn();
 
-	if (sdm->setUserPIN(newPIN) == false) return CKR_GENERAL_ERROR;
+	// Verify oldPIN
+	SecureDataManager *newSdm = new SecureDataManager(sdm->getSOPINBlob(), sdm->getUserPINBlob());
+	if (newSdm->loginUser(oldPIN) == false)
+	{
+		delete newSdm;
+		return CKR_PIN_INCORRECT;
+	}
+
+	// Set the new user PIN
+	if (newSdm->setUserPIN(newPIN) == false)
+	{
+		delete newSdm;
+		return CKR_GENERAL_ERROR;
+	}
 
 	// Save PIN to token file
-	if (token->setUserPIN(sdm->getUserPINBlob()) == false) return CKR_GENERAL_ERROR;
+	if (token->setUserPIN(sdm->getUserPINBlob()) == false)
+	{
+		delete newSdm;
+		return CKR_GENERAL_ERROR;
+	}
+
+	// Restore previous login state
+	if (!stayLoggedIn) newSdm->logout();
+
+	// Switch sdm
+	delete sdm;
+	sdm = newSdm;
 
 	ByteString soPINBlob, userPINBlob;
 	valid = token->getSOPIN(soPINBlob) && token->getUserPIN(userPINBlob);
@@ -178,6 +229,9 @@ CK_RV Token::setUserPIN(ByteString& oldPIN, ByteString& newPIN)
 // Init the user PIN
 CK_RV Token::initUserPIN(ByteString& pin)
 {
+	// Lock access to the token
+	MutexLocker lock(tokenMutex);
+
 	if (sdm == NULL) return CKR_GENERAL_ERROR;
 
 	if (sdm->setUserPIN(pin) == false) return CKR_GENERAL_ERROR;
@@ -194,6 +248,9 @@ CK_RV Token::initUserPIN(ByteString& pin)
 // Create a new token
 CK_RV Token::createToken(ObjectStore* objectStore, ByteString& soPIN, CK_UTF8CHAR_PTR label)
 {
+	// Lock access to the token
+	MutexLocker lock(tokenMutex);
+
 	if (objectStore == NULL) return CKR_GENERAL_ERROR;
 	if (label == NULL_PTR) return CKR_ARGUMENTS_BAD;
 
@@ -264,6 +321,9 @@ CK_RV Token::createToken(ObjectStore* objectStore, ByteString& soPIN, CK_UTF8CHA
 // Retrieve token information for the token
 CK_RV Token::getTokenInfo(CK_TOKEN_INFO_PTR info)
 {
+	// Lock access to the token
+	MutexLocker lock(tokenMutex);
+
 	ByteString label, serial;
 
 	if (info == NULL)
