@@ -207,7 +207,7 @@ CK_RV Token::setUserPIN(ByteString& oldPIN, ByteString& newPIN)
 	}
 
 	// Save PIN to token file
-	if (token->setUserPIN(sdm->getUserPINBlob()) == false)
+	if (token->setUserPIN(newSdm->getUserPINBlob()) == false)
 	{
 		delete newSdm;
 		return CKR_GENERAL_ERROR;
