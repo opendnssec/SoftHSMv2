@@ -36,6 +36,11 @@
 #include "BotanSHA1.h"
 #include <botan/sha160.h>
 
+int BotanSHA1::getHashSize()
+{
+	return 20;
+}
+
 Botan::HashFunction* BotanSHA1::getHash() const
 {
 	return new Botan::SHA_160();

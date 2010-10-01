@@ -1,7 +1,7 @@
 /* $Id$ */
 
 /*
- * Copyright (c) 2010 SURFnet bv
+ * Copyright (c) 2010 .SE (The Internet Infrastructure Foundation)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,24 +27,31 @@
  */
 
 /*****************************************************************************
- OSSLSHA256.h
+ DigestTests.h
 
- OpenSSL SHA256 implementation
+ Contains test cases to C_DigestInit, C_Digest, C_DigestUpdate, C_DigestFinal
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_OSSLSHA256_H
-#define _SOFTHSM_V2_OSSLSHA256_H
+#ifndef _SOFTHSM_V2_DIGESTTESTS_H
+#define _SOFTHSM_V2_DIGESTTESTS_H
 
-#include "config.h"
-#include "OSSLEVPHashAlgorithm.h"
-#include <openssl/evp.h>
+#include <cppunit/extensions/HelperMacros.h>
+#include "cryptoki.h"
 
-class OSSLSHA256 : public OSSLEVPHashAlgorithm
+class DigestTests : public CppUnit::TestFixture
 {
-	virtual int getHashSize();
-protected:
-	virtual const EVP_MD* getEVPHash() const;
+	CPPUNIT_TEST_SUITE(DigestTests);
+	CPPUNIT_TEST(testDigestInit);
+	CPPUNIT_TEST(testDigest);
+	CPPUNIT_TEST_SUITE_END();
+
+public:
+	void testDigestInit();
+	void testDigest();
+
+	void setUp();
+	void tearDown();
 };
 
-#endif // !_SOFTHSM_V2_OSSLSHA256_H
+#endif // !_SOFTHSM_V2_DIGESTTESTS_H
 

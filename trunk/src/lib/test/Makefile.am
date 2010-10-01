@@ -10,6 +10,7 @@ AM_CPPFLAGS = 			-I$(srcdir)/.. \
 check_PROGRAMS =		p11test
 
 p11test_SOURCES =		p11test.cpp \
+				DigestTests.cpp \
 				InitTests.cpp \
 				InfoTests.cpp \
 				SessionTests.cpp \

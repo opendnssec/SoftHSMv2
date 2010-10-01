@@ -36,6 +36,11 @@
 #include "OSSLSHA512.h"
 #include <openssl/evp.h>
 
+int OSSLSHA512::getHashSize()
+{
+	return 64;
+}
+
 const EVP_MD* OSSLSHA512::getEVPHash() const
 {
 	return EVP_sha512();

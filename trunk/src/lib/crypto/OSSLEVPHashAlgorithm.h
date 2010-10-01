@@ -50,6 +50,7 @@ public:
 	virtual bool hashUpdate(const ByteString& data);
 	virtual bool hashFinal(ByteString& hashedData);
 
+	virtual int getHashSize() = 0;
 protected:
 	virtual const EVP_MD* getEVPHash() const = 0;
 

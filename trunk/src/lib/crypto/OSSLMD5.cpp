@@ -36,6 +36,11 @@
 #include "OSSLMD5.h"
 #include <openssl/evp.h>
 
+int OSSLMD5::getHashSize()
+{
+	return 16;
+}
+
 const EVP_MD* OSSLMD5::getEVPHash() const
 {
 	return EVP_md5();

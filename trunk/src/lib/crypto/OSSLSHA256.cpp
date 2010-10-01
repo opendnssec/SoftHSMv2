@@ -36,6 +36,11 @@
 #include "OSSLSHA256.h"
 #include <openssl/evp.h>
 
+int OSSLSHA256::getHashSize()
+{
+	return 32;
+}
+
 const EVP_MD* OSSLSHA256::getEVPHash() const
 {
 	return EVP_sha256();

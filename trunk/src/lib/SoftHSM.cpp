@@ -794,19 +794,133 @@ CK_RV SoftHSM::C_DecryptFinal(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pData, CK_
 // Initialise digesting using the specified mechanism in the specified session
 CK_RV SoftHSM::C_DigestInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechanism) 
 {
-	return CKR_FUNCTION_NOT_SUPPORTED;
+	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
+	if (pMechanism == NULL_PTR) return CKR_ARGUMENTS_BAD;
+
+	// Get the session
+	Session *session = sessionManager->getSession(hSession);
+	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
+
+	// TODO: Should we lock the session?
+
+	// Check if we have another operation
+	if (session->getOpType() != SESSION_OP_NONE) return CKR_OPERATION_ACTIVE;
+
+	// Get the mechanism
+	HashAlgorithm *hash = NULL;
+	switch(pMechanism->mechanism) {
+		case CKM_MD5:
+			hash = CryptoFactory::i()->getHashAlgorithm("md5");
+			break;
+		case CKM_SHA_1:
+			hash = CryptoFactory::i()->getHashAlgorithm("sha1");
+			break;
+		case CKM_SHA256:
+			hash = CryptoFactory::i()->getHashAlgorithm("sha256");
+			break;
+		case CKM_SHA512:
+			hash = CryptoFactory::i()->getHashAlgorithm("sha512");
+			break;
+		default:
+			return CKR_MECHANISM_INVALID;
+	}
+	if (hash == NULL) return CKR_MECHANISM_INVALID;
+
+	// Initialize hashing
+	if (hash->hashInit() == false)
+	{
+		CryptoFactory::i()->recycleHashAlgorithm(hash);
+		return CKR_GENERAL_ERROR;
+	}
+
+	session->setOpType(SESSION_OP_DIGEST);
+	session->setDigestOp(hash);
+
+	return CKR_OK;
 }
 
 // Digest the specified data in a one-pass operation and return the resulting digest
 CK_RV SoftHSM::C_Digest(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pData, CK_ULONG ulDataLen, CK_BYTE_PTR pDigest, CK_ULONG_PTR pulDigestLen) 
 {
-	return CKR_FUNCTION_NOT_SUPPORTED;
+	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
+	if (pulDigestLen == NULL_PTR) return CKR_ARGUMENTS_BAD;
+	if (pData == NULL_PTR) return CKR_ARGUMENTS_BAD;
+
+	// Get the session
+	Session *session = sessionManager->getSession(hSession);
+	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
+
+	// TODO: Should we lock the session?
+
+	// Check if we are doing the correct operation
+	if (session->getOpType() != SESSION_OP_DIGEST) return CKR_OPERATION_NOT_INITIALIZED;
+
+	// Return size
+	CK_ULONG size = session->getDigestOp()->getHashSize();
+	if (pDigest == NULL_PTR)
+	{
+		*pulDigestLen = size;
+		return CKR_OK;
+	}
+
+	// Check buffer size
+	if (*pulDigestLen < size)
+	{
+		*pulDigestLen = size;
+		return CKR_BUFFER_TOO_SMALL;
+	}
+
+	// Get the data
+	ByteString data(pData, ulDataLen);
+
+	// Digest the data
+	if (session->getDigestOp()->hashUpdate(data) == false)
+	{
+		session->resetOp();
+		return CKR_GENERAL_ERROR;
+	}
+
+	// Get the digest
+	ByteString digest;
+	if (session->getDigestOp()->hashFinal(data) == false)
+	{
+		session->resetOp();
+		return CKR_GENERAL_ERROR;
+	}
+	memcpy(pDigest, digest.byte_str(), size);
+	*pulDigestLen = size;
+
+	session->resetOp();
+
+	return CKR_OK;
 }
 
 // Update a running digest operation
 CK_RV SoftHSM::C_DigestUpdate(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pPart, CK_ULONG ulPartLen) 
 {
-	return CKR_FUNCTION_NOT_SUPPORTED;
+	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
+	if (pPart == NULL_PTR) return CKR_ARGUMENTS_BAD;
+
+	// Get the session
+	Session *session = sessionManager->getSession(hSession);
+	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
+
+	// TODO: Should we lock the session?
+
+	// Check if we are doing the correct operation
+	if (session->getOpType() != SESSION_OP_DIGEST) return CKR_OPERATION_NOT_INITIALIZED;
+
+	// Get the data
+	ByteString data(pPart, ulPartLen);
+
+	// Digest the data
+	if (session->getDigestOp()->hashUpdate(data) == false)
+	{
+		session->resetOp();
+		return CKR_GENERAL_ERROR;
+	}
+
+	return CKR_OK;
 }
 
 // Update a running digest operation by digesting a secret key with the specified handle
@@ -818,7 +932,46 @@ CK_RV SoftHSM::C_DigestKey(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject)
 // Finalise the digest operation in the specified session and return the digest
 CK_RV SoftHSM::C_DigestFinal(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pDigest, CK_ULONG_PTR pulDigestLen) 
 {
-	return CKR_FUNCTION_NOT_SUPPORTED;
+	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
+	if (pulDigestLen == NULL_PTR) return CKR_ARGUMENTS_BAD;
+
+	// Get the session
+	Session *session = sessionManager->getSession(hSession);
+	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
+
+	// TODO: Should we lock the session?
+
+	// Check if we are doing the correct operation
+	if (session->getOpType() != SESSION_OP_DIGEST) return CKR_OPERATION_NOT_INITIALIZED;
+
+	// Return size
+	CK_ULONG size = session->getDigestOp()->getHashSize();
+	if (pDigest == NULL_PTR)
+	{
+		*pulDigestLen = size;
+		return CKR_OK;
+	}
+
+	// Check buffer size
+	if (*pulDigestLen < size)
+	{
+		*pulDigestLen = size;
+		return CKR_BUFFER_TOO_SMALL;
+	}
+
+	// Get the digest
+	ByteString digest;
+	if (session->getDigestOp()->hashFinal(digest) == false)
+	{
+		session->resetOp();
+		return CKR_GENERAL_ERROR;
+	}
+	memcpy(pDigest, digest.byte_str(), size);
+	*pulDigestLen = size;
+
+	session->resetOp();
+
+	return CKR_OK;
 }
 
 // Initialise a signing operation using the specified key and mechanism

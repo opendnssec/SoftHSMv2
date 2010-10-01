@@ -36,8 +36,21 @@
 #define _SOFTHSM_V2_SESSION_H
 
 #include "Slot.h"
+#include "HashAlgorithm.h"
 #include "Token.h"
 #include "cryptoki.h"
+
+#define SESSION_OP_NONE			0x0
+#define SESSION_OP_FIND			0x1
+#define SESSION_OP_ENCRYPT		0x2
+#define SESSION_OP_DECRYPT		0x3
+#define SESSION_OP_DIGEST		0x4
+#define SESSION_OP_SIGN			0x5
+#define SESSION_OP_VERIFY		0x6
+#define SESSION_OP_DIGEST_ENCRYPT	0x7
+#define SESSION_OP_DECRYPT_DIGEST	0x8
+#define SESSION_OP_SIGN_ENCRYPT		0x9
+#define SESSION_OP_DECRYPT_VERIFY	0x10
 
 class Session
 {
@@ -47,21 +60,44 @@ public:
 	// Destructor
 	virtual ~Session();
 
+	// Slot and token
+	Slot* getSlot();
+	Token* getToken();
+
+	// Session properties
 	CK_RV getInfo(CK_SESSION_INFO_PTR pInfo);
 	bool isRW();
 	CK_STATE getState();
-	Slot* getSlot();
-	Token* getToken();
+
+	// Operations
+	int getOpType();
+	void setOpType(int operation);
+	void resetOp();
+
+	// Digest
+	void setDigestOp(HashAlgorithm *digestOp);
+	HashAlgorithm* getDigestOp();
 
 private:
 	// Constructor
 	Session();
 
+	// Slot and token
 	Slot *slot;
 	Token *token;
-	bool isReadWrite;
+
+	// Application data (not in use)
 	CK_VOID_PTR pApplication;
 	CK_NOTIFY notify;
+
+	// Session properties
+	bool isReadWrite;
+
+	// Operations
+	int operation;
+
+	// Digest
+	HashAlgorithm *digestOp;
 };
 
 #endif // !_SOFTHSM_V2_SESSION_H

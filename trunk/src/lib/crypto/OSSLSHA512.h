@@ -41,6 +41,7 @@
 
 class OSSLSHA512 : public OSSLEVPHashAlgorithm
 {
+	virtual int getHashSize();
 protected:
 	virtual const EVP_MD* getEVPHash() const;
 };

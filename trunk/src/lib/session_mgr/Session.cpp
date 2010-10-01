@@ -32,6 +32,7 @@
  This class represents a single session
  *****************************************************************************/
 
+#include "CryptoFactory.h"
 #include "Session.h"
 
 // Constructor
@@ -42,16 +43,28 @@ Session::Session(Slot *slot, bool isReadWrite, CK_VOID_PTR pApplication, CK_NOTI
 	this->isReadWrite = isReadWrite;
 	this->pApplication = pApplication;
 	this->notify = notify;
+
+	operation = SESSION_OP_NONE;
+	digestOp = NULL;
 }
 
 // Constructor
 Session::Session()
 {
+	slot = NULL;
+	token = NULL;
+	isReadWrite = false;
+	pApplication = NULL;
+	notify = NULL;
+	operation = SESSION_OP_NONE;
+	digestOp = NULL;
 }
 
 // Destructor
 Session::~Session()
 {
+	resetOp();
+
 	// TODO: Remember to remove any session objects
 }
 
@@ -119,4 +132,45 @@ Slot* Session::getSlot()
 Token* Session::getToken()
 {
 	return token;
+}
+
+// Set the operation type
+void Session::setOpType(int operation)
+{
+	this->operation = operation;
+}
+
+// Get the operation type
+int Session::getOpType()
+{
+	return operation;
+}
+
+// Reset the operations
+void Session::resetOp()
+{
+	if (digestOp != NULL)
+	{
+		CryptoFactory::i()->recycleHashAlgorithm(digestOp);
+		digestOp = NULL;
+	}
+
+	operation = SESSION_OP_NONE;
+}
+
+// Set the digesting operator
+void Session::setDigestOp(HashAlgorithm *digestOp)
+{
+	if (this->digestOp != NULL)
+	{
+		CryptoFactory::i()->recycleHashAlgorithm(this->digestOp);
+	}
+
+	this->digestOp = digestOp;
+}
+
+// Get the digesting operator
+HashAlgorithm* Session::getDigestOp()
+{
+	return digestOp;
 }

@@ -36,6 +36,11 @@
 #include "BotanSHA512.h"
 #include <botan/sha2_64.h>
 
+int BotanSHA512::getHashSize()
+{
+	return 64;
+}
+
 Botan::HashFunction* BotanSHA512::getHash() const
 {
 	return new Botan::SHA_512();

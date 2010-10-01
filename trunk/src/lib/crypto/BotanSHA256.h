@@ -41,6 +41,7 @@
 
 class BotanSHA256 : public BotanHashAlgorithm
 {
+	virtual int getHashSize();
 protected:
 	virtual Botan::HashFunction* getHash() const;
 };

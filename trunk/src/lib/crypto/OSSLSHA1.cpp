@@ -36,6 +36,11 @@
 #include "OSSLSHA1.h"
 #include <openssl/evp.h>
 
+int OSSLSHA1::getHashSize()
+{
+	return 20;
+}
+
 const EVP_MD* OSSLSHA1::getEVPHash() const
 {
 	return EVP_sha1();

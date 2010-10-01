@@ -36,6 +36,11 @@
 #include "BotanMD5.h"
 #include <botan/md5.h>
 
+int BotanMD5::getHashSize()
+{
+	return 16;
+}
+
 Botan::HashFunction* BotanMD5::getHash() const
 {
 	return new Botan::MD5();
