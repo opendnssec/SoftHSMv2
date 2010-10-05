@@ -43,11 +43,13 @@ class DigestTests : public CppUnit::TestFixture
 	CPPUNIT_TEST_SUITE(DigestTests);
 	CPPUNIT_TEST(testDigestInit);
 	CPPUNIT_TEST(testDigest);
+	CPPUNIT_TEST(testDigestUpdate);
 	CPPUNIT_TEST_SUITE_END();
 
 public:
 	void testDigestInit();
 	void testDigest();
+	void testDigestUpdate();
 
 	void setUp();
 	void tearDown();

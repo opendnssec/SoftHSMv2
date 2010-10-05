@@ -131,5 +131,63 @@ void DigestTests::testDigest()
 
 	rv = C_DigestInit(hSession, &mechanism);
 	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	rv = C_Digest(hSession, NULL_PTR, sizeof(data)-1, NULL_PTR, &digestLen);
+	CPPUNIT_ASSERT(rv == CKR_ARGUMENTS_BAD);
+
+	rv = C_Digest(hSession, data, sizeof(data)-1, NULL_PTR, NULL_PTR);
+	CPPUNIT_ASSERT(rv == CKR_ARGUMENTS_BAD);
+
+	rv = C_Digest(hSession, data, sizeof(data)-1, NULL_PTR, &digestLen);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	digest = (CK_BYTE_PTR)malloc(digestLen);
+	digestLen = 0;
+
+	rv = C_Digest(hSession, data, sizeof(data)-1, digest, &digestLen);
+	CPPUNIT_ASSERT(rv == CKR_BUFFER_TOO_SMALL);
+
+	rv = C_Digest(hSession, data, sizeof(data)-1, digest, &digestLen);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	free(digest);
+
+	rv = C_Digest(hSession, data, sizeof(data)-1, digest, &digestLen);
+	CPPUNIT_ASSERT(rv == CKR_OPERATION_NOT_INITIALIZED);
 }
 
+void DigestTests::testDigestUpdate()
+{
+	CK_RV rv;
+	CK_SESSION_HANDLE hSession;
+	CK_MECHANISM mechanism = {
+		CKM_SHA512, NULL_PTR, 0
+	};
+	CK_BYTE data[] = {"Text to digest"};
+
+	// Just make sure that we finalize any previous tests
+	C_Finalize(NULL_PTR);
+
+	rv = C_DigestUpdate(hSession, data, sizeof(data)-1);
+	CPPUNIT_ASSERT(rv == CKR_CRYPTOKI_NOT_INITIALIZED);
+
+	rv = C_Initialize(NULL_PTR);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	rv = C_OpenSession(SLOT_INIT_TOKEN, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSession);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	rv = C_DigestUpdate(CK_INVALID_HANDLE, data, sizeof(data)-1);
+	CPPUNIT_ASSERT(rv == CKR_SESSION_HANDLE_INVALID);
+	
+	rv = C_DigestUpdate(hSession, data, sizeof(data)-1);
+	CPPUNIT_ASSERT(rv == CKR_OPERATION_NOT_INITIALIZED);
+
+	rv = C_DigestInit(hSession, &mechanism);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	rv = C_DigestUpdate(hSession, NULL_PTR, sizeof(data)-1);
+	CPPUNIT_ASSERT(rv == CKR_ARGUMENTS_BAD);
+
+	rv = C_DigestUpdate(hSession, data, sizeof(data)-1);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+}

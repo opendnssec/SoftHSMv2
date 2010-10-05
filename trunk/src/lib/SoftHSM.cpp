@@ -882,8 +882,16 @@ CK_RV SoftHSM::C_Digest(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pData, CK_ULONG 
 
 	// Get the digest
 	ByteString digest;
-	if (session->getDigestOp()->hashFinal(data) == false)
+	if (session->getDigestOp()->hashFinal(digest) == false)
 	{
+		session->resetOp();
+		return CKR_GENERAL_ERROR;
+	}
+
+	// Check size
+	if (digest.size() != size)
+	{
+		ERROR_MSG("The size of the digest differ from the size of the mechanism");
 		session->resetOp();
 		return CKR_GENERAL_ERROR;
 	}
@@ -963,6 +971,14 @@ CK_RV SoftHSM::C_DigestFinal(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pDigest, CK
 	ByteString digest;
 	if (session->getDigestOp()->hashFinal(digest) == false)
 	{
+		session->resetOp();
+		return CKR_GENERAL_ERROR;
+	}
+
+	// Check size
+	if (digest.size() != size)
+	{
+		ERROR_MSG("The size of the digest differ from the size of the mechanism");
 		session->resetOp();
 		return CKR_GENERAL_ERROR;
 	}
