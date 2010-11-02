@@ -45,6 +45,9 @@ public:
 	// Base constructors
 	OSSLEVPHashAlgorithm() : HashAlgorithm() { }
 
+	// Destructor
+	~OSSLEVPHashAlgorithm();
+
 	// Hashing functions
 	virtual bool hashInit();
 	virtual bool hashUpdate(const ByteString& data);
