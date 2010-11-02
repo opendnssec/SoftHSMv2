@@ -191,3 +191,97 @@ void DigestTests::testDigestUpdate()
 	rv = C_DigestUpdate(hSession, data, sizeof(data)-1);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 }
+
+void DigestTests::testDigestFinal()
+{
+	CK_RV rv;
+	CK_SESSION_HANDLE hSession;
+	CK_MECHANISM mechanism = {
+		CKM_SHA512, NULL_PTR, 0
+	};
+	CK_BYTE data[] = {"Text to digest"};
+	CK_ULONG digestLen;
+	CK_BYTE_PTR digest;
+
+	// Just make sure that we finalize any previous tests
+	C_Finalize(NULL_PTR);
+
+	rv = C_DigestFinal(hSession, NULL_PTR, &digestLen);
+	CPPUNIT_ASSERT(rv == CKR_CRYPTOKI_NOT_INITIALIZED);
+
+	rv = C_Initialize(NULL_PTR);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	rv = C_OpenSession(SLOT_INIT_TOKEN, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSession);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	rv = C_DigestFinal(CK_INVALID_HANDLE, NULL_PTR, &digestLen);
+	CPPUNIT_ASSERT(rv == CKR_SESSION_HANDLE_INVALID);
+	
+	rv = C_DigestFinal(hSession, NULL_PTR, &digestLen);
+	CPPUNIT_ASSERT(rv == CKR_OPERATION_NOT_INITIALIZED);
+
+	rv = C_DigestInit(hSession, &mechanism);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	rv = C_DigestUpdate(hSession, data, sizeof(data)-1);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	rv = C_DigestFinal(hSession, NULL_PTR, NULL_PTR);
+	CPPUNIT_ASSERT(rv == CKR_ARGUMENTS_BAD);
+
+	rv = C_DigestFinal(hSession, NULL_PTR, &digestLen);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	digest = (CK_BYTE_PTR)malloc(digestLen);
+	digestLen = 0;
+
+	rv = C_DigestFinal(hSession, digest, &digestLen);
+	CPPUNIT_ASSERT(rv == CKR_BUFFER_TOO_SMALL);
+
+	rv = C_DigestFinal(hSession, digest, &digestLen);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	free(digest);
+
+	rv = C_DigestFinal(hSession, NULL_PTR, &digestLen);
+	CPPUNIT_ASSERT(rv == CKR_OPERATION_NOT_INITIALIZED);
+}
+
+void DigestTests::testDigestAll()
+{
+	CK_RV rv;
+	CK_SESSION_HANDLE hSession;
+	CK_MECHANISM mechanisms[] = {
+		{ CKM_MD5, NULL_PTR, 0 },
+		{ CKM_SHA_1, NULL_PTR, 0 },
+		{ CKM_SHA256, NULL_PTR, 0 },
+		{ CKM_SHA512, NULL_PTR, 0 },
+	};
+	CK_ULONG digestLen;
+	CK_BYTE_PTR digest;
+	CK_BYTE data[] = {"Text to digest"};
+
+	// Just make sure that we finalize any previous tests
+	C_Finalize(NULL_PTR);
+
+	rv = C_Initialize(NULL_PTR);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	rv = C_OpenSession(SLOT_INIT_TOKEN, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSession);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	for (int i = 0; i < 4; i++)
+	{
+		rv = C_DigestInit(hSession, &mechanisms[i]);
+		CPPUNIT_ASSERT(rv == CKR_OK);
+
+		rv = C_Digest(hSession, data, sizeof(data)-1, NULL_PTR, &digestLen);
+		CPPUNIT_ASSERT(rv == CKR_OK);
+
+		digest = (CK_BYTE_PTR)malloc(digestLen);
+
+		rv = C_Digest(hSession, data, sizeof(data)-1, digest, &digestLen);
+		CPPUNIT_ASSERT(rv == CKR_OK);
+		free(digest);
+	}
+}
