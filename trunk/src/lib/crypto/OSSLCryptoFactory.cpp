@@ -47,6 +47,7 @@
 #include <algorithm>
 #include <string.h>
 #include <openssl/ssl.h>
+#include <openssl/err.h>
 
 // Initialise the one-and-only instance
 std::auto_ptr<OSSLCryptoFactory> OSSLCryptoFactory::instance(NULL); 
@@ -68,6 +69,7 @@ OSSLCryptoFactory::~OSSLCryptoFactory()
 	delete rng;
 
 	// Clean up OpenSSL
+	ERR_remove_state(0);
 	EVP_cleanup();
 	CRYPTO_cleanup_all_ex_data();
 }
