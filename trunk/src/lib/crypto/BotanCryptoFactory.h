@@ -65,13 +65,11 @@ public:
 	// Create a concrete instance of a hash algorithm
 	HashAlgorithm* getHashAlgorithm(std::string algorithm);
 
-	// Create a concrete instance of an RNG
+	// Get the global RNG (may be an unique RNG per thread)
 	RNG* getRNG(std::string name = "default");
 
 	// Destructor
 	~BotanCryptoFactory();
-
-	void recycleRNG(RNG* toRecycle);
 
 private:
 	// Constructor

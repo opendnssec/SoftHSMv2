@@ -168,7 +168,7 @@ HashAlgorithm* OSSLCryptoFactory::getHashAlgorithm(std::string algorithm)
 	return NULL;
 }
 
-// Create a concrete instance of an RNG
+// Get the global RNG (may be an unique RNG per thread)
 RNG* OSSLCryptoFactory::getRNG(std::string name /* = "default" */)
 {
 	std::string lcAlgo;
@@ -186,10 +186,5 @@ RNG* OSSLCryptoFactory::getRNG(std::string name /* = "default" */)
 
 		return NULL;
 	}
-}
-
-void OSSLCryptoFactory::recycleRNG(RNG* toRecycle)
-{
-	// Do nothing; we keep the one-and-only instance
 }
 

@@ -58,12 +58,8 @@ public:
 	// Create a concrete instance of a hash algorithm
 	virtual HashAlgorithm* getHashAlgorithm(std::string algorithm);
 
-	// Create a concrete instance of an RNG
+	// Get the global RNG (may be an unique RNG per thread)
 	virtual RNG* getRNG(std::string name = "default");
-
-	// Recycle an RNG instance -- override this function in the derived
-	// class if you need to perform specific clean-up
-	virtual void recycleRNG(RNG* toRecycle);
 
 	// Destructor
 	virtual ~OSSLCryptoFactory();

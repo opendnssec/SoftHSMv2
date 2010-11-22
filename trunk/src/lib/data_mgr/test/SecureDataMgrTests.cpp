@@ -48,7 +48,6 @@ void SecureDataMgrTests::setUp()
 
 void SecureDataMgrTests::tearDown()
 {
-	CryptoFactory::i()->recycleRNG(rng);
 }
 
 void SecureDataMgrTests::testSecureDataManager()

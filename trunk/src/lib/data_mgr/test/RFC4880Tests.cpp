@@ -50,7 +50,6 @@ void RFC4880Tests::setUp()
 
 void RFC4880Tests::tearDown()
 {
-	CryptoFactory::i()->recycleRNG(rng);
 }
 
 void RFC4880Tests::testRFC4880()

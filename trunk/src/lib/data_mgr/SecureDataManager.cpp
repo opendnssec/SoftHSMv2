@@ -94,9 +94,6 @@ SecureDataManager::SecureDataManager(const ByteString& soPINBlob, const ByteStri
 // Destructor
 SecureDataManager::~SecureDataManager()
 {
-	// Recycle the RNG instance
-	CryptoFactory::i()->recycleRNG(rng);
-
 	// Recycle the AES instance
 	CryptoFactory::i()->recycleSymmetricAlgorithm(aes);
 

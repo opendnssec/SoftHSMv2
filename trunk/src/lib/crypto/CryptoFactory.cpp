@@ -83,11 +83,3 @@ void CryptoFactory::recycleHashAlgorithm(HashAlgorithm* toRecycle)
 {
 	delete toRecycle;
 }
-
-// Recycle an RNG instance -- override this function in the derived
-// class if you need to perform specific clean-up
-void CryptoFactory::recycleRNG(RNG* toRecycle)
-{
-	delete toRecycle;
-}
-

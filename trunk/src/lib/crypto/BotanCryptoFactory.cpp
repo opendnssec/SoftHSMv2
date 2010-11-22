@@ -179,7 +179,7 @@ HashAlgorithm* BotanCryptoFactory::getHashAlgorithm(std::string algorithm)
 	return NULL;
 }
 
-// Create a concrete instance of an RNG
+// Get the global RNG (may be an unique RNG per thread)
 RNG* BotanCryptoFactory::getRNG(std::string name /* = "default" */)
 {
 	std::string lcAlgo;
@@ -219,9 +219,4 @@ RNG* BotanCryptoFactory::getRNG(std::string name /* = "default" */)
 
 		return NULL;
 	}
-}
-
-void BotanCryptoFactory::recycleRNG(RNG* toRecycle)
-{
-	// Do nothing
 }

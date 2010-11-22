@@ -125,8 +125,6 @@ void FileTests::testWriteRead()
 
 	CPPUNIT_ASSERT(rng->generateRandom(testData1, 187));
 
-	CryptoFactory::i()->recycleRNG(rng);
-
 	// More test data
 	std::string testString = "This is a test of the File class";
 

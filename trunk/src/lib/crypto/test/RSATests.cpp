@@ -289,7 +289,6 @@ void RSATests::testSigningVerifying()
 			// Verify the signature
 			CPPUNIT_ASSERT(rsa->verify(kp->getPublicKey(), dataToSign, signature, "rsa"));
 	
-			CryptoFactory::i()->recycleRNG(rng);
 			rsa->recycleKeyPair(kp);
 		}
 	}
@@ -497,7 +496,6 @@ void RSATests::testEncryptDecrypt()
 				CPPUNIT_ASSERT(decryptedData == testData);
 			}
 			
-			CryptoFactory::i()->recycleRNG(rng);
 			rsa->recycleKeyPair(kp);
 		}
 	}

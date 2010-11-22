@@ -55,8 +55,6 @@ std::string UUID::newUUID()
 		throw -1;
 	}
 
-	CryptoFactory::i()->recycleRNG(rng);
-	
 	// Convert it to a string
 	char uuidStr[37];
 

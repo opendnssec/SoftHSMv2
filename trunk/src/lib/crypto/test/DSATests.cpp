@@ -209,7 +209,6 @@ void DSATests::testSigningVerifying()
 			CPPUNIT_ASSERT(dsa->verify(kp->getPublicKey(), dataToSign, singlePartSignature, *m));
 		}
 
-		CryptoFactory::i()->recycleRNG(rng);
 		dsa->recycleKeyPair(kp);
 		dsa->recycleParameters(p);
 	}
