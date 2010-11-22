@@ -12,7 +12,8 @@ AM_CPPFLAGS = 			-I$(srcdir)/cryptoki_compat \
 
 lib_LTLIBRARIES =		libsofthsm.la
 
-libsofthsm_la_SOURCES =		main.cpp \
+libsofthsm_la_SOURCES =		access.cpp \
+				main.cpp \
 				SoftHSM.cpp
 libsofthsm_la_LIBADD =		common/libsofthsm_common.la \
 				crypto/libsofthsm_crypto.la \

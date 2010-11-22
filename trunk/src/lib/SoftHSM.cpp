@@ -35,6 +35,7 @@
 
 #include "config.h"
 #include "log.h"
+#include "access.h"
 #include "Configuration.h"
 #include "SimpleConfigLoader.h"
 #include "MutexFactory.h"
@@ -1106,6 +1107,58 @@ CK_RV SoftHSM::C_GenerateKeyPair
 	CK_OBJECT_HANDLE_PTR phPrivateKey
 ) 
 {
+	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
+	if (pMechanism == NULL_PTR) return CKR_ARGUMENTS_BAD;
+	if (pPublicKeyTemplate == NULL_PTR) return CKR_ARGUMENTS_BAD;
+	if (pPrivateKeyTemplate == NULL_PTR) return CKR_ARGUMENTS_BAD;
+	if (phPublicKey == NULL_PTR) return CKR_ARGUMENTS_BAD;
+	if (phPrivateKey == NULL_PTR) return CKR_ARGUMENTS_BAD;
+
+	// Get the session
+	Session *session = sessionManager->getSession(hSession);
+	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
+
+	CK_BBOOL isToken = CK_FALSE;
+	CK_BBOOL isPrivate = CK_TRUE;
+
+	// Extract object information
+	for (CK_ULONG i = 0; i < ulPrivateKeyAttributeCount; i++)
+	{
+		switch (pPrivateKeyTemplate[i].type)
+		{
+			case CKA_TOKEN:
+				if (pPrivateKeyTemplate[i].ulValueLen == sizeof(CK_BBOOL))
+				{
+					isToken = *(CK_BBOOL*)pPrivateKeyTemplate[i].pValue;
+				}
+				break;
+			case CKA_PRIVATE:
+				if (pPrivateKeyTemplate[i].ulValueLen == sizeof(CK_BBOOL))
+				{
+					isPrivate = *(CK_BBOOL*)pPrivateKeyTemplate[i].pValue;
+				}
+				break;
+			default:
+				break;
+		}
+	}
+
+	// Check user credentials
+	if (!haveRW(session->getState(), isToken, isPrivate))
+	{
+		INFO_MSG("User is not authorized");
+		return CKR_USER_NOT_LOGGED_IN;
+	}
+
+	switch (pMechanism->mechanism)
+	{
+		case CKM_RSA_PKCS_KEY_PAIR_GEN:
+		case CKM_DSA_KEY_PAIR_GEN:
+		default:
+			return CKR_MECHANISM_INVALID;
+		break;
+	}
+
 	return CKR_FUNCTION_NOT_SUPPORTED;
 }
 
