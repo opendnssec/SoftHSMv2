@@ -302,7 +302,7 @@ bool OSSLEVPSymmetricAlgorithm::decryptUpdate(const ByteString& encryptedData, B
 
 	int outLen = data.size();
 
-	ERROR_MSG("Decrypting %d bytes into buffer of %d bytes", encryptedData.size(), data.size());
+	DEBUG_MSG("Decrypting %d bytes into buffer of %d bytes", encryptedData.size(), data.size());
 
 	if (!EVP_DecryptUpdate(pCurCTX, &data[0], &outLen, (unsigned char*) encryptedData.const_byte_str(), encryptedData.size()))
 	{
@@ -318,7 +318,7 @@ bool OSSLEVPSymmetricAlgorithm::decryptUpdate(const ByteString& encryptedData, B
 		return false;
 	}
 
-	ERROR_MSG("Decrypt returned %d bytes of data", outLen);
+	DEBUG_MSG("Decrypt returned %d bytes of data", outLen);
 
 	// Resize the output block
 	data.resize(outLen);

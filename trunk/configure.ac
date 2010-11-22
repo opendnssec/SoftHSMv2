@@ -59,6 +59,14 @@ ACX_CRYPTO_BACKEND
 # Non-paged memory for secure storage
 ACX_NON_PAGED_MEMORY
 
+# Log level
+AC_ARG_WITH(
+	[loglevel],
+	[AS_HELP_STRING([--with-loglevel=INT],[The log level. 0=No log 1=Error 2=Warning 3=Info 4=Debug (default INT=3)])],
+	[SOFTLOGLEVEL="$withval"],
+	[SOFTLOGLEVEL=3]
+)
+
 # If the user want to have the migration tool
 # Requires SQLite3
 AC_ARG_WITH(migrate,
@@ -102,6 +110,11 @@ AC_DEFINE_UNQUOTED(
 	[VERSION_MINOR],
 	[SOFTHSM_VERSION_MINOR],
 	[SoftHSM minor version number via PKCS#11]
+)
+AC_DEFINE_UNQUOTED(
+	[SOFTLOGLEVEL],
+	[$SOFTLOGLEVEL],
+	[The log level set by the user]
 )
 AC_DEFINE_UNQUOTED(
 	[MAX_PIN_LEN],
