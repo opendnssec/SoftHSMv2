@@ -36,13 +36,19 @@
 #ifndef _SOFTHSM_V2_BOTANCRYPTOFACTORY_H
 #define _SOFTHSM_V2_BOTANCRYPTOFACTORY_H
 
+#ifdef HAVE_PTHREAD_H
+#include <pthread.h>
+#endif
+
 #include "config.h"
 #include "CryptoFactory.h"
 #include "SymmetricAlgorithm.h"
 #include "AsymmetricAlgorithm.h"
 #include "HashAlgorithm.h"
 #include "RNG.h"
+#include "MutexFactory.h"
 #include <memory>
+#include <map>
 
 class BotanCryptoFactory : public CryptoFactory
 {
@@ -74,8 +80,11 @@ private:
 	// The one-and-only instance
 	static std::auto_ptr<BotanCryptoFactory> instance;
 
-	// The one-and-only RNG instance
-	RNG* rng;
+	// Thread specific RNG
+#ifdef HAVE_PTHREAD_H
+	std::map<pthread_t, RNG*> rngs;
+#endif
+        Mutex* rngsMutex;
 };
 
 #endif // !_SOFTHSM_V2_BOTANCRYPTOFACTORY_H

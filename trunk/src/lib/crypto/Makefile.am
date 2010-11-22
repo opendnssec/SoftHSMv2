@@ -3,7 +3,9 @@
 MAINTAINERCLEANFILES = 		$(srcdir)/Makefile.in
 
 AM_CPPFLAGS = 			-I$(srcdir)/../common \
+				-I$(srcdir)/../cryptoki_compat \
 				-I$(srcdir)/../data_mgr \
+				-I$(srcdir)/.. \
 				@CRYPTO_INCLUDES@
 
 noinst_LTLIBRARIES =		libsofthsm_crypto.la

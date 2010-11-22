@@ -56,15 +56,24 @@ BotanCryptoFactory::BotanCryptoFactory()
 	// Init the Botan crypto library
 	Botan::LibraryInitializer::initialize("thread_safe=true");
 
-	// Initialise the one-and-only RNG
-	rng = new BotanRNG();
+	// Create mutex
+	rngsMutex = MutexFactory::i()->getMutex();
 }
 
 // Destructor
 BotanCryptoFactory::~BotanCryptoFactory()
 {
-	// Destroy the one-and-only RNG
-	delete rng;
+	// Delete the RNGs
+#ifdef HAVE_PTHREAD_H
+	std::map<pthread_t,RNG*>::iterator it;
+	for (it=rngs.begin(); it != rngs.end(); it++)
+	{
+		delete (BotanRNG*)it->second;
+	}
+#endif
+
+	// TODO: We cannot do this because the MutexFactory is destroyed before the CryptoFactory
+	// MutexFactory::i()->recycleMutex(rngsMutex);
 
 	// Deinitialize the Botan crypto lib
 	Botan::LibraryInitializer::deinitialize();
@@ -179,7 +188,29 @@ RNG* BotanCryptoFactory::getRNG(std::string name /* = "default" */)
 
 	if (!lcAlgo.compare("default"))
 	{
-		return rng;
+		RNG *threadRNG = NULL;
+
+		// Lock access to the map
+		MutexLocker lock(rngsMutex);
+
+#ifdef HAVE_PTHREAD_H
+		// Get thread ID
+		pthread_t threadID = pthread_self();
+
+		// Find the RNG
+		std::map<pthread_t,RNG*>::iterator findIt;
+		findIt=rngs.find(threadID);
+		if (findIt != rngs.end())
+		{
+			return findIt->second;
+		}
+
+		threadRNG = new BotanRNG();
+		rngs[threadID] = threadRNG;
+#else
+#error "There are no thread-specific data implementations for your operating system yet"
+#endif
+		return threadRNG;
 	}
 	else
 	{
@@ -192,5 +223,5 @@ RNG* BotanCryptoFactory::getRNG(std::string name /* = "default" */)
 
 void BotanCryptoFactory::recycleRNG(RNG* toRecycle)
 {
-	// Do nothing; we keep the one-and-only instance
+	// Do nothing
 }
