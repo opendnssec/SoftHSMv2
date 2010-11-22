@@ -13,6 +13,7 @@ p11test_SOURCES =		p11test.cpp \
 				DigestTests.cpp \
 				InitTests.cpp \
 				InfoTests.cpp \
+				RandomTests.cpp \
 				SessionTests.cpp \
 				TokenTests.cpp \
 				UserTests.cpp \

@@ -40,6 +40,7 @@
 #include "MutexFactory.h"
 #include "CryptoFactory.h"
 #include "AsymmetricAlgorithm.h"
+#include "RNG.h"
 #include "cryptoki.h"
 #include "SoftHSM.h"
 #include "osmutex.h"
@@ -1155,13 +1156,46 @@ CK_RV SoftHSM::C_DeriveKey
 // Seed the random number generator with new data
 CK_RV SoftHSM::C_SeedRandom(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pSeed, CK_ULONG ulSeedLen) 
 {
-	return CKR_FUNCTION_NOT_SUPPORTED;
+	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
+	if (pSeed == NULL_PTR) return CKR_ARGUMENTS_BAD;
+
+	// Get the session
+	Session *session = sessionManager->getSession(hSession);
+	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
+
+	// Get the RNG
+	RNG *rng = CryptoFactory::i()->getRNG();
+	if (rng == NULL) return CKR_GENERAL_ERROR;
+
+	// Seed the RNG
+	ByteString seed(pSeed, ulSeedLen);
+	rng->seed(seed);
+
+	return CKR_OK;
 }
 
 // Generate the specified amount of random data
 CK_RV SoftHSM::C_GenerateRandom(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pRandomData, CK_ULONG ulRandomLen) 
 {
-	return CKR_FUNCTION_NOT_SUPPORTED;
+	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
+	if (pRandomData == NULL_PTR) return CKR_ARGUMENTS_BAD;
+
+	// Get the session
+	Session *session = sessionManager->getSession(hSession);
+	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
+
+	// Get the RNG
+	RNG *rng = CryptoFactory::i()->getRNG();
+	if (rng == NULL) return CKR_GENERAL_ERROR;
+
+	// Generate random data
+	ByteString randomData;
+	if (!rng->generateRandom(randomData, ulRandomLen)) return CKR_GENERAL_ERROR;
+
+	// Return random data
+	memcpy(pRandomData, randomData.byte_str(), ulRandomLen);
+
+	return CKR_OK;
 }
 
 // Legacy function
