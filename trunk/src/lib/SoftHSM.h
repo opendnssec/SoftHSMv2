@@ -169,5 +169,27 @@ private:
 	ObjectStore *objectStore; 
 	SlotManager *slotManager;
 	SessionManager *sessionManager;
+
+	// Key generation
+	CK_RV generateRSA
+	(
+		Session *session,
+		CK_ATTRIBUTE_PTR pPublicKeyTemplate,
+		CK_ULONG ulPublicKeyAttributeCount,
+		CK_ATTRIBUTE_PTR pPrivateKeyTemplate,
+		CK_ULONG ulPrivateKeyAttributeCount,
+		CK_OBJECT_HANDLE_PTR phPublicKey,
+		CK_OBJECT_HANDLE_PTR phPrivateKey
+	);
+	CK_RV generateDSA
+	(
+		Session *session,
+		CK_ATTRIBUTE_PTR pPublicKeyTemplate,
+		CK_ULONG ulPublicKeyAttributeCount,
+		CK_ATTRIBUTE_PTR pPrivateKeyTemplate,
+		CK_ULONG ulPrivateKeyAttributeCount,
+		CK_OBJECT_HANDLE_PTR phPublicKey,
+		CK_OBJECT_HANDLE_PTR phPrivateKey
+	);
 };
 

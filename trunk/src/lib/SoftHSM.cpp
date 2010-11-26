@@ -42,6 +42,9 @@
 #include "CryptoFactory.h"
 #include "AsymmetricAlgorithm.h"
 #include "RNG.h"
+#include "RSAParameters.h"
+#include "RSAPublicKey.h"
+#include "RSAPrivateKey.h"
 #include "cryptoki.h"
 #include "SoftHSM.h"
 #include "osmutex.h"
@@ -1150,16 +1153,25 @@ CK_RV SoftHSM::C_GenerateKeyPair
 		return CKR_USER_NOT_LOGGED_IN;
 	}
 
+	// Generate keys
+	CK_RV rv = CKR_MECHANISM_INVALID;
 	switch (pMechanism->mechanism)
 	{
 		case CKM_RSA_PKCS_KEY_PAIR_GEN:
+			rv = this->generateRSA(session, pPublicKeyTemplate, ulPublicKeyAttributeCount,
+						pPrivateKeyTemplate, ulPrivateKeyAttributeCount,
+						phPublicKey, phPrivateKey);
+			break;
 		case CKM_DSA_KEY_PAIR_GEN:
+			rv = this->generateDSA(session, pPublicKeyTemplate, ulPublicKeyAttributeCount,
+						pPrivateKeyTemplate, ulPrivateKeyAttributeCount,
+						phPublicKey, phPrivateKey);
+			break;
 		default:
-			return CKR_MECHANISM_INVALID;
-		break;
+			break;
 	}
 
-	return CKR_FUNCTION_NOT_SUPPORTED;
+	return rv;
 }
 
 // Wrap the specified key using the specified wrapping key and mechanism
@@ -1267,4 +1279,89 @@ CK_RV SoftHSM::C_CancelFunction(CK_SESSION_HANDLE hSession)
 CK_RV SoftHSM::C_WaitForSlotEvent(CK_FLAGS flags, CK_SLOT_ID_PTR pSlot, CK_VOID_PTR pReserved)
 {
 	return CKR_FUNCTION_NOT_SUPPORTED;
+}
+
+// Generate an RSA key pair
+CK_RV SoftHSM::generateRSA
+(
+	Session *session,
+	CK_ATTRIBUTE_PTR pPublicKeyTemplate,
+	CK_ULONG ulPublicKeyAttributeCount,
+	CK_ATTRIBUTE_PTR pPrivateKeyTemplate,
+	CK_ULONG ulPrivateKeyAttributeCount,
+	CK_OBJECT_HANDLE_PTR phPublicKey,
+	CK_OBJECT_HANDLE_PTR phPrivateKey
+)
+{
+	AsymmetricKeyPair *kp = NULL;
+	RSAParameters p;
+	size_t bitLen = 0;
+	ByteString exponent("010001");
+
+	// Extract desired key information
+	for (CK_ULONG i = 0; i < ulPublicKeyAttributeCount; i++)
+	{
+		switch (pPublicKeyTemplate[i].type)
+		{
+			case CKA_MODULUS_BITS:
+				if (pPublicKeyTemplate[i].ulValueLen != sizeof(CK_ULONG))
+				{
+					INFO_MSG("CKA_MODULUS_BITS does not have the size of CK_ULONG");
+					return CKR_TEMPLATE_INCOMPLETE;
+				}
+				bitLen = *(CK_ULONG*)pPublicKeyTemplate[i].pValue;
+				break;
+			case CKA_PUBLIC_EXPONENT:
+				exponent = ByteString((unsigned char*)pPublicKeyTemplate[i].pValue, pPublicKeyTemplate[i].ulValueLen);
+				break;
+			default:
+				break;
+		}
+	}
+
+	// CKA_MODULUS_BITS must be specified to be able to generate a key pair.
+	if (bitLen == 0) {
+		INFO_MSG("Missing CKA_MODULUS_BITS in pPublicKeyTemplate");
+		return CKR_TEMPLATE_INCOMPLETE;
+	}
+
+	// Set the parameters
+	p.setE(exponent);
+	p.setBitLength(bitLen);
+
+	// Generate key pair
+	AsymmetricAlgorithm* rsa = CryptoFactory::i()->getAsymmetricAlgorithm("RSA");
+	if (rsa == NULL) return CKR_GENERAL_ERROR;
+	if (!rsa->generateKeyPair(&kp, &p))
+	{
+		ERROR_MSG("Could not generate key pair");
+		CryptoFactory::i()->recycleAsymmetricAlgorithm(rsa);
+		return CKR_GENERAL_ERROR;
+	}
+
+	RSAPublicKey *pub = (RSAPublicKey*) kp->getPublicKey();
+	RSAPrivateKey *priv = (RSAPrivateKey*) kp->getPrivateKey();
+
+	// TODO: Save keys 
+
+	// Clean up
+	rsa->recycleKeyPair(kp);
+	CryptoFactory::i()->recycleAsymmetricAlgorithm(rsa);
+
+	return CKR_MECHANISM_INVALID;
+}
+
+// Generate an DSA key pair
+CK_RV SoftHSM::generateDSA
+(
+	Session *session,
+	CK_ATTRIBUTE_PTR pPublicKeyTemplate,
+	CK_ULONG ulPublicKeyAttributeCount,
+	CK_ATTRIBUTE_PTR pPrivateKeyTemplate,
+	CK_ULONG ulPrivateKeyAttributeCount,
+	CK_OBJECT_HANDLE_PTR phPublicKey,
+	CK_OBJECT_HANDLE_PTR phPrivateKey
+)
+{
+	return CKR_MECHANISM_INVALID;
 }
