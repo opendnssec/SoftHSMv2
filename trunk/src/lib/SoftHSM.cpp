@@ -45,6 +45,9 @@
 #include "RSAParameters.h"
 #include "RSAPublicKey.h"
 #include "RSAPrivateKey.h"
+#include "DSAParameters.h"
+#include "DSAPublicKey.h"
+#include "DSAPrivateKey.h"
 #include "cryptoki.h"
 #include "SoftHSM.h"
 #include "osmutex.h"
@@ -1363,5 +1366,60 @@ CK_RV SoftHSM::generateDSA
 	CK_OBJECT_HANDLE_PTR phPrivateKey
 )
 {
+	AsymmetricKeyPair *kp = NULL;
+	DSAParameters p;
+	ByteString prime;
+	ByteString subprime;
+	ByteString generator;
+
+	// Extract desired key information
+	for (CK_ULONG i = 0; i < ulPublicKeyAttributeCount; i++)
+	{
+		switch (pPublicKeyTemplate[i].type)
+		{
+			case CKA_PRIME:
+				prime = ByteString((unsigned char*)pPublicKeyTemplate[i].pValue, pPublicKeyTemplate[i].ulValueLen);
+				break;
+			case CKA_SUBPRIME:
+				subprime = ByteString((unsigned char*)pPublicKeyTemplate[i].pValue, pPublicKeyTemplate[i].ulValueLen);
+				break;
+			case CKA_BASE:
+				generator = ByteString((unsigned char*)pPublicKeyTemplate[i].pValue, pPublicKeyTemplate[i].ulValueLen);
+				break;
+			default:
+				break;
+		}
+	}
+
+	// The parameters must be specified to be able to generate a key pair.
+	if (prime.size() == 0 || subprime.size() == 0 || generator.size() == 0) {
+		INFO_MSG("Missing parameter(s) in pPublicKeyTemplate");
+		return CKR_TEMPLATE_INCOMPLETE;
+	}
+
+	// Set the parameters
+	p.setP(prime);
+	p.setQ(subprime);
+	p.setG(generator);
+
+	// Generate key pair
+	AsymmetricAlgorithm* dsa = CryptoFactory::i()->getAsymmetricAlgorithm("DSA");
+	if (dsa == NULL) return CKR_GENERAL_ERROR;
+	if (!dsa->generateKeyPair(&kp, &p))
+	{
+		ERROR_MSG("Could not generate key pair");
+		CryptoFactory::i()->recycleAsymmetricAlgorithm(dsa);
+		return CKR_GENERAL_ERROR;
+	}
+
+	DSAPublicKey *pub = (DSAPublicKey*) kp->getPublicKey();
+	DSAPrivateKey *priv = (DSAPrivateKey*) kp->getPrivateKey();
+
+	// TODO: Save keys 
+
+	// Clean up
+	dsa->recycleKeyPair(kp);
+	CryptoFactory::i()->recycleAsymmetricAlgorithm(dsa);
+
 	return CKR_MECHANISM_INVALID;
 }
