@@ -1351,7 +1351,7 @@ CK_RV SoftHSM::generateRSA
 	rsa->recycleKeyPair(kp);
 	CryptoFactory::i()->recycleAsymmetricAlgorithm(rsa);
 
-	return CKR_MECHANISM_INVALID;
+	return CKR_FUNCTION_NOT_SUPPORTED;
 }
 
 // Generate an DSA key pair
@@ -1421,5 +1421,5 @@ CK_RV SoftHSM::generateDSA
 	dsa->recycleKeyPair(kp);
 	CryptoFactory::i()->recycleAsymmetricAlgorithm(dsa);
 
-	return CKR_MECHANISM_INVALID;
+	return CKR_FUNCTION_NOT_SUPPORTED;
 }
