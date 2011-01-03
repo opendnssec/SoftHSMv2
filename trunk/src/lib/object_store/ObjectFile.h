@@ -81,6 +81,22 @@ public:
 	// Link this object file instance with the specified token
 	void linkToken(OSToken* token);
 
+	// Start an attribute set transaction; this method is used when - for
+	// example - a key is generated and all its attributes need to be
+	// persisted in one go.
+	//
+	// N.B.: Starting a transaction locks the object!
+	//
+	// Function returns false in case a transaction is already in progress
+	bool startTransaction();
+
+	// Commit an attribute transaction; returns false if no transaction is in progress
+	bool commitTransaction();
+
+	// Abort an attribute transaction; loads back the previous version of the object from disk;
+	// returns false if no transaction was in progress
+	bool abortTransaction();
+
 private:
 	// Refresh the object if necessary
 	void refresh(bool isFirstTime = false);
@@ -109,6 +125,10 @@ private:
 
 	// Mutex object for thread-safeness
 	Mutex* objectMutex;
+
+	// Is the object undergoing an attribute transaction?
+	bool inTransaction;
+	File* transactionLockFile;
 };
 
 #endif // !_SOFTHSM_V2_OBJECTFILE_H

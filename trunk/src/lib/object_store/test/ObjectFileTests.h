@@ -47,6 +47,7 @@ class ObjectFileTests : public CppUnit::TestFixture
 	CPPUNIT_TEST(testDoubleAttr);
 	CPPUNIT_TEST(testRefresh);
 	CPPUNIT_TEST(testCorruptFile);
+	CPPUNIT_TEST(testTransactions);
 	CPPUNIT_TEST_SUITE_END();
 
 public:
@@ -57,6 +58,7 @@ public:
 	void testDoubleAttr();
 	void testRefresh();
 	void testCorruptFile();
+	void testTransactions();
 
 	void setUp();
 	void tearDown();

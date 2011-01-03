@@ -53,6 +53,8 @@ ObjectFile::ObjectFile(std::string path, bool isNew /* = false */)
 	objectMutex = MutexFactory::i()->getMutex();
 	valid = (ipcSignal != NULL) && (objectMutex != NULL);
 	token = NULL;
+	inTransaction = false;
+	transactionLockFile = NULL;
 
 	if (!valid) return;
 
@@ -154,6 +156,12 @@ void ObjectFile::invalidate()
 // Refresh the object if necessary
 void ObjectFile::refresh(bool isFirstTime /* = false */)
 {
+	// Check if we're in the middle of a transaction
+	if (inTransaction)
+	{
+		return;
+	}
+
 	// Refresh the associated token if set
 	if (token != NULL)
 	{
@@ -296,6 +304,12 @@ void ObjectFile::refresh(bool isFirstTime /* = false */)
 // Write the object to background storage
 void ObjectFile::store()
 {
+	// Check if we're in the middle of a transaction
+	if (inTransaction)
+	{
+		return;
+	}
+
 	if (!valid)
 	{
 		DEBUG_MSG("Cannot write back an invalid object %s", path.c_str());
@@ -445,5 +459,101 @@ std::string ObjectFile::getFilename() const
 void ObjectFile::linkToken(OSToken* token)
 {
 	this->token = token;
+}
+
+// Start an attribute set transaction; this method is used when - for
+// example - a key is generated and all its attributes need to be
+// persisted in one go.
+//
+// N.B.: Starting a transaction locks the object!
+bool ObjectFile::startTransaction()
+{
+	MutexLocker lock(objectMutex);
+
+	if (inTransaction)
+	{
+		return false;
+	}
+
+	transactionLockFile = new File(path);
+
+	if (!transactionLockFile->isValid() || !transactionLockFile->lock())
+	{
+		delete transactionLockFile;
+		transactionLockFile = NULL;
+
+		ERROR_MSG("Failed to lock file %s for attribute transaction", path.c_str());
+
+		return false;
+	}
+
+	inTransaction = true;
+
+	return true;
+}
+
+// Commit an attribute transaction
+bool ObjectFile::commitTransaction()
+{
+	{
+		MutexLocker lock(objectMutex);
+
+		if (!inTransaction)
+		{
+			return false;
+		}
+	
+		// Unlock the file; theoretically, this can mean that another instance
+		// of SoftHSM now gets the lock and writes back attributes that will be
+		// overwritten when this transaction is committed. The chances of this
+		// are deemed to be so small that we do nothing to prevent this...
+		if (transactionLockFile == NULL)
+		{
+			ERROR_MSG("Transaction lock file instance invalid!");
+	
+			return false;
+		}
+	
+		transactionLockFile->unlock();
+	
+		delete transactionLockFile;
+		transactionLockFile = NULL;
+		inTransaction = false;
+	}
+
+	store();
+	
+	return true;
+}
+
+// Abort an attribute transaction; loads back the previous version of the object from disk
+bool ObjectFile::abortTransaction()
+{
+	{
+		MutexLocker lock(objectMutex);
+
+		if (!inTransaction)
+		{
+			return false;
+		}
+
+		if (transactionLockFile == NULL)
+		{
+			ERROR_MSG("Transaction lock file instance invalid!");
+
+			return false;
+		}
+
+		transactionLockFile->unlock();
+
+		delete transactionLockFile;
+		transactionLockFile = NULL;
+		inTransaction = false;
+	}
+
+	// Force reload from disk
+	refresh(true);
+
+	return true;
 }
 
