@@ -71,6 +71,10 @@ public:
 	// Abort an attribute transaction; loads back the previous version of the object from disk;
 	// returns false if no transaction was in progress
 	virtual bool abortTransaction() = 0;
+
+	// Is this a session or a token object?
+	virtual bool isSessionObject() = 0;
+	virtual bool isTokenObject() = 0;
 };
 
 #endif // !_SOFTHSM_V2_OSOBJECT_H

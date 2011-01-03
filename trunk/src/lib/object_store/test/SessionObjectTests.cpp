@@ -350,3 +350,16 @@ void SessionObjectTests::testCloseSession()
 	CPPUNIT_ASSERT(!testObject.attributeExists(CKA_VALUE_BITS));
 }
 
+void SessionObjectTests::testObjectType()
+{
+	// Create test object instance
+	SessionObject testObject(1);
+
+	CPPUNIT_ASSERT(testObject.isValid());
+
+	OSObject* testIF = (OSObject*) &testObject;
+
+	CPPUNIT_ASSERT(testIF->isSessionObject());
+	CPPUNIT_ASSERT(!testIF->isTokenObject());
+}
+

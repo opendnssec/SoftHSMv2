@@ -75,6 +75,10 @@ public:
 	virtual bool commitTransaction();
 	virtual bool abortTransaction();
 
+	// Is this a session or a token object
+	inline virtual bool isSessionObject() { return true; }
+	inline virtual bool isTokenObject() { return false; }
+
 private:
 	// Discard the object's attributes
 	void discardAttributes();

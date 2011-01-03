@@ -621,3 +621,16 @@ void ObjectFileTests::testTransactions()
 	CPPUNIT_ASSERT(testObject2.getAttribute(CKA_VALUE_BITS)->getByteStringValue() == value3a);
 }
 
+void ObjectFileTests::testObjectType()
+{
+	// Create test object instance
+	ObjectFile testObject("testdir/testobject", true);
+
+	CPPUNIT_ASSERT(testObject.isValid());
+
+	OSObject* testIF = (OSObject*) &testObject;
+
+	CPPUNIT_ASSERT(!testIF->isSessionObject());
+	CPPUNIT_ASSERT(testIF->isTokenObject());
+}
+

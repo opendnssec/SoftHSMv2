@@ -98,6 +98,10 @@ public:
 	// returns false if no transaction was in progress
 	virtual bool abortTransaction();
 
+	// Is this a session or a token object
+	inline virtual bool isSessionObject() { return false; }
+	inline virtual bool isTokenObject() { return true; }
+
 private:
 	// Refresh the object if necessary
 	void refresh(bool isFirstTime = false);
