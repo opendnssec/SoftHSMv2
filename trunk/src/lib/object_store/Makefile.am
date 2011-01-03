@@ -15,7 +15,8 @@ libsofthsm_objectstore_la_SOURCES =	ObjectStore.cpp \
 					File.cpp \
 					OSAttribute.cpp \
 					OSToken.cpp \
-					ObjectFile.cpp
+					ObjectFile.cpp \
+					SessionObject.cpp
 
 SUBDIRS = 				test
 

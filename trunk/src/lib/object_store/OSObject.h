@@ -27,60 +27,34 @@
  */
 
 /*****************************************************************************
- ObjectFile.h
+ OSObject.h
 
- This class represents object files
+ This file contains the abstract interface for ObjectStore objects. It is
+ implemented by persistent objects in the form of the ObjectFile class and
+ by session objects in the form of the SessionObject class
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_OBJECTFILE_H
-#define _SOFTHSM_V2_OBJECTFILE_H
+#ifndef _SOFTHSM_V2_OSOBJECT_H
+#define _SOFTHSM_V2_OSOBJECT_H
 
 #include "config.h"
-#include "File.h"
-#include "ByteString.h"
 #include "OSAttribute.h"
-#include "IPCSignal.h"
-#include "MutexFactory.h"
-#include <string>
-#include <map>
-#include <time.h>
 #include "cryptoki.h"
-#include "OSObject.h"
 
-// OSToken forward declaration
-class OSToken;
-
-class ObjectFile : public OSObject
+class OSObject
 {
 public:
-	// Constructor
-	ObjectFile(const std::string path, bool isNew = false);
-
-	// Destructor
-	virtual ~ObjectFile();
-
 	// Check if the specified attribute exists
-	virtual bool attributeExists(CK_ATTRIBUTE_TYPE type);
+	virtual bool attributeExists(CK_ATTRIBUTE_TYPE type) = 0;
 
 	// Retrieve the specified attribute
-	virtual OSAttribute* getAttribute(CK_ATTRIBUTE_TYPE type);
+	virtual OSAttribute* getAttribute(CK_ATTRIBUTE_TYPE type) = 0;
 
 	// Set the specified attribute
-	virtual bool setAttribute(CK_ATTRIBUTE_TYPE type, const OSAttribute& attribute);
+	virtual bool setAttribute(CK_ATTRIBUTE_TYPE type, const OSAttribute& attribute) = 0;
 
 	// The validity state of the object
-	virtual bool isValid();
-
-	// Invalidate the object file externally; this method is normally
-	// only called by the OSToken class in case an object file has
-	// been deleted.
-	void invalidate();
-
-	// Returns the file name of the object
-	std::string getFilename() const;
-
-	// Link this object file instance with the specified token
-	void linkToken(OSToken* token);
+	virtual bool isValid() = 0;
 
 	// Start an attribute set transaction; this method is used when - for
 	// example - a key is generated and all its attributes need to be
@@ -89,48 +63,15 @@ public:
 	// N.B.: Starting a transaction locks the object!
 	//
 	// Function returns false in case a transaction is already in progress
-	virtual bool startTransaction();
+	virtual bool startTransaction() = 0;
 
 	// Commit an attribute transaction; returns false if no transaction is in progress
-	virtual bool commitTransaction();
+	virtual bool commitTransaction() = 0;
 
 	// Abort an attribute transaction; loads back the previous version of the object from disk;
 	// returns false if no transaction was in progress
-	virtual bool abortTransaction();
-
-private:
-	// Refresh the object if necessary
-	void refresh(bool isFirstTime = false);
-
-	// Write the object to background storage
-	void store();
-
-	// Discard the cached attributes
-	void discardAttributes();
-
-	// The path to the file
-	std::string path;
-
-	// The IPC object that is used to signal changes in the object file
-	// to other SoftHSM instances
-	IPCSignal* ipcSignal;
-
-	// The object's raw attributes
-	std::map<CK_ATTRIBUTE_TYPE, OSAttribute*> attributes;
-
-	// The object's validity state
-	bool valid;
-
-	// The token this object is associated with
-	OSToken* token;
-
-	// Mutex object for thread-safeness
-	Mutex* objectMutex;
-
-	// Is the object undergoing an attribute transaction?
-	bool inTransaction;
-	File* transactionLockFile;
+	virtual bool abortTransaction() = 0;
 };
 
-#endif // !_SOFTHSM_V2_OBJECTFILE_H
+#endif // !_SOFTHSM_V2_OSOBJECT_H
 

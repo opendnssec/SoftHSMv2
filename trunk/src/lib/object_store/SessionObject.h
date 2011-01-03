@@ -27,37 +27,31 @@
  */
 
 /*****************************************************************************
- ObjectFile.h
+ SessionObject.h
 
- This class represents object files
+ This class implements session objects (i.e. objects that are non-persistent)
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_OBJECTFILE_H
-#define _SOFTHSM_V2_OBJECTFILE_H
+#ifndef _SOFTHSM_V2_SESSIONOBJECT_H
+#define _SOFTHSM_V2_SESSIONOBJECT_H
 
 #include "config.h"
-#include "File.h"
 #include "ByteString.h"
 #include "OSAttribute.h"
-#include "IPCSignal.h"
 #include "MutexFactory.h"
 #include <string>
 #include <map>
-#include <time.h>
 #include "cryptoki.h"
 #include "OSObject.h"
 
-// OSToken forward declaration
-class OSToken;
-
-class ObjectFile : public OSObject
+class SessionObject : public OSObject
 {
 public:
 	// Constructor
-	ObjectFile(const std::string path, bool isNew = false);
+	SessionObject(CK_SESSION_HANDLE hSession);
 
 	// Destructor
-	virtual ~ObjectFile();
+	virtual ~SessionObject();
 
 	// Check if the specified attribute exists
 	virtual bool attributeExists(CK_ATTRIBUTE_TYPE type);
@@ -71,49 +65,19 @@ public:
 	// The validity state of the object
 	virtual bool isValid();
 
-	// Invalidate the object file externally; this method is normally
-	// only called by the OSToken class in case an object file has
-	// been deleted.
-	void invalidate();
+	// Called by the session object store when a session is closed. If it's the
+	// session this object was associated with, the function returns true and the
+	// object is invalidated
+	bool closeSession(CK_SESSION_HANDLE hSession);
 
-	// Returns the file name of the object
-	std::string getFilename() const;
-
-	// Link this object file instance with the specified token
-	void linkToken(OSToken* token);
-
-	// Start an attribute set transaction; this method is used when - for
-	// example - a key is generated and all its attributes need to be
-	// persisted in one go.
-	//
-	// N.B.: Starting a transaction locks the object!
-	//
-	// Function returns false in case a transaction is already in progress
+	// These functions are just stubs for session objects
 	virtual bool startTransaction();
-
-	// Commit an attribute transaction; returns false if no transaction is in progress
 	virtual bool commitTransaction();
-
-	// Abort an attribute transaction; loads back the previous version of the object from disk;
-	// returns false if no transaction was in progress
 	virtual bool abortTransaction();
 
 private:
-	// Refresh the object if necessary
-	void refresh(bool isFirstTime = false);
-
-	// Write the object to background storage
-	void store();
-
-	// Discard the cached attributes
+	// Discard the object's attributes
 	void discardAttributes();
-
-	// The path to the file
-	std::string path;
-
-	// The IPC object that is used to signal changes in the object file
-	// to other SoftHSM instances
-	IPCSignal* ipcSignal;
 
 	// The object's raw attributes
 	std::map<CK_ATTRIBUTE_TYPE, OSAttribute*> attributes;
@@ -121,16 +85,12 @@ private:
 	// The object's validity state
 	bool valid;
 
-	// The token this object is associated with
-	OSToken* token;
-
 	// Mutex object for thread-safeness
 	Mutex* objectMutex;
 
-	// Is the object undergoing an attribute transaction?
-	bool inTransaction;
-	File* transactionLockFile;
+	// The session the object is associated with
+	CK_SESSION_HANDLE hSession;
 };
 
-#endif // !_SOFTHSM_V2_OBJECTFILE_H
+#endif // !_SOFTHSM_V2_SESSIONOBJECT_H
 
