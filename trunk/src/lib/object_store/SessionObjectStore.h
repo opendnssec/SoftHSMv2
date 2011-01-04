@@ -27,55 +27,71 @@
  */
 
 /*****************************************************************************
- OSObject.h
+ SessionObjectStore.h
 
- This file contains the abstract interface for ObjectStore objects. It is
- implemented by persistent objects in the form of the ObjectFile class and
- by session objects in the form of the SessionObject class
+ The token class; a token is stored in a directory containing several files.
+ Each object is stored in a separate file and a token object is present that
+ has the token specific attributes
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_OSOBJECT_H
-#define _SOFTHSM_V2_OSOBJECT_H
+#ifndef _SOFTHSM_V2_SESSIONOBJECTSTORE_H
+#define _SOFTHSM_V2_SESSIONOBJECTSTORE_H
 
 #include "config.h"
 #include "OSAttribute.h"
+#include "SessionObject.h"
+#include "MutexFactory.h"
 #include "cryptoki.h"
+#include <string>
+#include <set>
+#include <map>
+#include <list>
+#include <memory>
 
-class OSObject
+class SessionObjectStore
 {
 public:
-	// Check if the specified attribute exists
-	virtual bool attributeExists(CK_ATTRIBUTE_TYPE type) = 0;
+	// Get the one-and-only instance
+	static SessionObjectStore* i();
 
-	// Retrieve the specified attribute
-	virtual OSAttribute* getAttribute(CK_ATTRIBUTE_TYPE type) = 0;
+	// Retrieve objects
+	std::set<SessionObject*> getObjects();
 
-	// Set the specified attribute
-	virtual bool setAttribute(CK_ATTRIBUTE_TYPE type, const OSAttribute& attribute) = 0;
+	// Create a new object
+	SessionObject* createObject(CK_SESSION_HANDLE hSession);
 
-	// The validity state of the object
-	virtual bool isValid() = 0;
+	// Delete an object
+	bool deleteObject(SessionObject* object);
 
-	// Start an attribute set transaction; this method is used when - for
-	// example - a key is generated and all its attributes need to be
-	// persisted in one go.
-	//
-	// N.B.: Starting a transaction locks the object!
-	//
-	// Function returns false in case a transaction is already in progress
-	virtual bool startTransaction() = 0;
+	// Indicate that a session has been closed; invalidates all objects
+	// associated with this session
+	void sessionClosed(CK_SESSION_HANDLE hSession);
 
-	// Commit an attribute transaction; returns false if no transaction is in progress
-	virtual bool commitTransaction() = 0;
+	// Destructor
+	virtual ~SessionObjectStore();
 
-	// Abort an attribute transaction; loads back the previous version of the object from disk;
-	// returns false if no transaction was in progress
-	virtual bool abortTransaction() = 0;
+	// Clears the store; should be called when all sessions are closed
+	void clearStore();
 
-	// Destroys the object (warning, any pointers to the object are no longer
-	// valid after this call because delete is called!)
-	virtual bool destroyObject() = 0;
+private:
+	// Constructor
+	SessionObjectStore();
+
+	// The one-and-only instance
+	static std::auto_ptr<SessionObjectStore> _instance;
+
+	// The current objects in the store
+	std::set<SessionObject*> objects;
+
+	// All the objects ever kept in the store
+	std::set<SessionObject*> allObjects;
+
+	// The current list of files
+	std::set<std::string> currentFiles;
+
+	// For thread safeness
+	Mutex* storeMutex;
 };
 
-#endif // !_SOFTHSM_V2_OSOBJECT_H
+#endif // !_SOFTHSM_V2_SESSIONOBJECTSTORE_H
 

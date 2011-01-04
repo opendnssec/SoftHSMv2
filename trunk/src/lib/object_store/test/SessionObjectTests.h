@@ -46,7 +46,7 @@ class SessionObjectTests : public CppUnit::TestFixture
 	CPPUNIT_TEST(testMixedAttr);
 	CPPUNIT_TEST(testDoubleAttr);
 	CPPUNIT_TEST(testCloseSession);
-	CPPUNIT_TEST(testObjectType);
+	CPPUNIT_TEST(testDestroyObjectFails);
 	CPPUNIT_TEST_SUITE_END();
 
 public:
@@ -56,7 +56,7 @@ public:
 	void testMixedAttr();
 	void testDoubleAttr();
 	void testCloseSession();
-	void testObjectType();
+	void testDestroyObjectFails();
 
 	void setUp();
 	void tearDown();

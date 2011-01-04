@@ -56,7 +56,7 @@
 OSToken::OSToken(const std::string tokenPath)
 {
 	tokenDir = new Directory(tokenPath);
-	tokenObject = new ObjectFile(tokenPath + OS_PATHSEP + "tokenObject");
+	tokenObject = new ObjectFile(this, tokenPath + OS_PATHSEP + "tokenObject");
 	sync = IPCSignal::create(tokenPath);
 	tokenMutex = MutexFactory::i()->getMutex();
 	this->tokenPath = tokenPath;
@@ -84,7 +84,7 @@ OSToken::OSToken(const std::string tokenPath)
 	}
 
 	// Create the token object
-	ObjectFile tokenObject(basePath + OS_PATHSEP + tokenDir + OS_PATHSEP + "tokenObject", true);
+	ObjectFile tokenObject(NULL, basePath + OS_PATHSEP + tokenDir + OS_PATHSEP + "tokenObject", true);
 
 	if (!tokenObject.isValid())
 	{
@@ -333,7 +333,7 @@ ObjectFile* OSToken::createObject()
 	std::string objectPath = tokenPath + OS_PATHSEP + UUID::newUUID() + ".object";
 
 	// Create the new object file
-	ObjectFile* newObject = new ObjectFile(objectPath, true);
+	ObjectFile* newObject = new ObjectFile(this, objectPath, true);
 
 	if (!newObject->isValid())
 	{
@@ -372,6 +372,9 @@ bool OSToken::deleteObject(ObjectFile* object)
 
 	MutexLocker lock(tokenMutex);
 
+	// Invalidate the object instance
+	object->invalidate();
+
 	// Retrieve the filename of the object
 	std::string objectFilename = object->getFilename();
 
@@ -384,7 +387,6 @@ bool OSToken::deleteObject(ObjectFile* object)
 	}
 
 	objects.erase(object);
-	allObjects.erase(object);
 
 	DEBUG_MSG("Deleted object %s", objectFilename.c_str());
 
@@ -525,8 +527,7 @@ bool OSToken::index(bool isFirstTime /* = false */)
 	for (std::set<std::string>::iterator i = addedFiles.begin(); i != addedFiles.end(); i++)
 	{
 		// Create a new token object for the added file
-		ObjectFile* newObject = new ObjectFile(tokenPath + OS_PATHSEP + *i);
-		newObject->linkToken(this);
+		ObjectFile* newObject = new ObjectFile(this, tokenPath + OS_PATHSEP + *i);
 
 		DEBUG_MSG("(0x%08X) New object %s (0x%08X) added", this, newObject->getFilename().c_str(), newObject);
 

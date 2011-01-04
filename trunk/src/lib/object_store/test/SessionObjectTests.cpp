@@ -54,7 +54,7 @@ void SessionObjectTests::tearDown()
 
 void SessionObjectTests::testBoolAttr()
 {
-	SessionObject testObject(1);
+	SessionObject testObject(NULL, 1);
 
 	CPPUNIT_ASSERT(testObject.isValid());
 
@@ -107,7 +107,7 @@ void SessionObjectTests::testBoolAttr()
 
 void SessionObjectTests::testULongAttr()
 {
-	SessionObject testObject(1);
+	SessionObject testObject(NULL, 1);
 
 	CPPUNIT_ASSERT(testObject.isValid());
 
@@ -166,7 +166,7 @@ void SessionObjectTests::testByteStrAttr()
 	ByteString value4 = "98A7E5D798A7E5D798A7E5D798A7E5D798A7E5D798A7E5D7";
 	ByteString value5 = "ABCDABCDABCDABCDABCDABCDABCDABCD";
 
-	SessionObject testObject(1);
+	SessionObject testObject(NULL, 1);
 
 	CPPUNIT_ASSERT(testObject.isValid());
 
@@ -215,7 +215,7 @@ void SessionObjectTests::testMixedAttr()
 {
 	ByteString value3 = "BDEBDBEDBBDBEBDEBE792759537328";
 
-	SessionObject testObject(1);
+	SessionObject testObject(NULL, 1);
 
 	CPPUNIT_ASSERT(testObject.isValid());
 
@@ -251,7 +251,7 @@ void SessionObjectTests::testDoubleAttr()
 	ByteString value3 = "BDEBDBEDBBDBEBDEBE792759537328";
 	ByteString value3a = "466487346943785684957634";
 
-	SessionObject testObject(1);
+	SessionObject testObject(NULL, 1);
 
 	CPPUNIT_ASSERT(testObject.isValid());
 
@@ -311,7 +311,7 @@ void SessionObjectTests::testCloseSession()
 {
 	ByteString value3 = "BDEBDBEDBBDBEBDEBE792759537328";
 
-	SessionObject testObject(1);
+	SessionObject testObject(NULL, 1);
 
 	CPPUNIT_ASSERT(testObject.isValid());
 
@@ -350,16 +350,15 @@ void SessionObjectTests::testCloseSession()
 	CPPUNIT_ASSERT(!testObject.attributeExists(CKA_VALUE_BITS));
 }
 
-void SessionObjectTests::testObjectType()
+void SessionObjectTests::testDestroyObjectFails()
 {
 	// Create test object instance
-	SessionObject testObject(1);
+	SessionObject testObject(NULL, 1);
 
 	CPPUNIT_ASSERT(testObject.isValid());
 
 	OSObject* testIF = (OSObject*) &testObject;
 
-	CPPUNIT_ASSERT(testIF->isSessionObject());
-	CPPUNIT_ASSERT(!testIF->isTokenObject());
+	CPPUNIT_ASSERT(!testIF->destroyObject());
 }
 

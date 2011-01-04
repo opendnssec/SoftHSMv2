@@ -46,13 +46,13 @@
 #define BYTESTR_ATTR			0x3
 
 // Constructor
-ObjectFile::ObjectFile(std::string path, bool isNew /* = false */)
+ObjectFile::ObjectFile(OSToken* parent, std::string path, bool isNew /* = false */)
 {
 	this->path = path;
 	ipcSignal = IPCSignal::create(path);
 	objectMutex = MutexFactory::i()->getMutex();
 	valid = (ipcSignal != NULL) && (objectMutex != NULL);
-	token = NULL;
+	token = parent;
 	inTransaction = false;
 	transactionLockFile = NULL;
 
@@ -163,7 +163,7 @@ void ObjectFile::refresh(bool isFirstTime /* = false */)
 	}
 
 	// Refresh the associated token if set
-	if (token != NULL)
+	if (!isFirstTime && (token != NULL))
 	{
 		// This may cause this instance to become invalid
 		token->index();
@@ -455,12 +455,6 @@ std::string ObjectFile::getFilename() const
 	}
 }
 
-// Link this object file instance with the specified token
-void ObjectFile::linkToken(OSToken* token)
-{
-	this->token = token;
-}
-
 // Start an attribute set transaction; this method is used when - for
 // example - a key is generated and all its attributes need to be
 // persisted in one go.
@@ -555,5 +549,18 @@ bool ObjectFile::abortTransaction()
 	refresh(true);
 
 	return true;
+}
+
+// Destroy the object; WARNING: pointers to the object become invalid after this call
+bool ObjectFile::destroyObject()
+{
+	if (token == NULL)
+	{
+		ERROR_MSG("Cannot destroy an object that is not associated with a token");
+
+		return false;
+	}
+
+	return token->deleteObject(this);
 }
 

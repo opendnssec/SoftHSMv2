@@ -122,7 +122,7 @@ void OSTokenTests::testExistingToken()
 		CPPUNIT_ASSERT(!system("mkdir testdir/existingToken"));
 
 		// Create the token object
-		ObjectFile tokenObject("./testdir/existingToken/tokenObject", true);
+		ObjectFile tokenObject(NULL, "./testdir/existingToken/tokenObject", true);
 
 		OSAttribute labelAtt(label);
 		CPPUNIT_ASSERT(tokenObject.setAttribute(CKA_OS_TOKENLABEL, labelAtt));
@@ -137,9 +137,9 @@ void OSTokenTests::testExistingToken()
 		CPPUNIT_ASSERT(tokenObject.setAttribute(CKA_OS_TOKENFLAGS, flagsAtt));
 
 		// Create 3 objects
-		ObjectFile obj1("./testdir/existingToken/1.object", true);
-		ObjectFile obj2("./testdir/existingToken/2.object", true);
-		ObjectFile obj3("./testdir/existingToken/3.object", true);
+		ObjectFile obj1(NULL, "./testdir/existingToken/1.object", true);
+		ObjectFile obj2(NULL, "./testdir/existingToken/2.object", true);
+		ObjectFile obj3(NULL, "./testdir/existingToken/3.object", true);
 
 		OSAttribute id1Att(id1);
 		OSAttribute id2Att(id2);

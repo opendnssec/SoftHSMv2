@@ -54,7 +54,7 @@ class ObjectFile : public OSObject
 {
 public:
 	// Constructor
-	ObjectFile(const std::string path, bool isNew = false);
+	ObjectFile(OSToken* parent, const std::string path, bool isNew = false);
 
 	// Destructor
 	virtual ~ObjectFile();
@@ -79,9 +79,6 @@ public:
 	// Returns the file name of the object
 	std::string getFilename() const;
 
-	// Link this object file instance with the specified token
-	void linkToken(OSToken* token);
-
 	// Start an attribute set transaction; this method is used when - for
 	// example - a key is generated and all its attributes need to be
 	// persisted in one go.
@@ -98,9 +95,9 @@ public:
 	// returns false if no transaction was in progress
 	virtual bool abortTransaction();
 
-	// Is this a session or a token object
-	inline virtual bool isSessionObject() { return false; }
-	inline virtual bool isTokenObject() { return true; }
+	// Destroys the object; WARNING: pointers to the object become invalid after this
+	// call!
+	virtual bool destroyObject();
 
 private:
 	// Refresh the object if necessary

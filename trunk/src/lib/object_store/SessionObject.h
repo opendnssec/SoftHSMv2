@@ -44,11 +44,14 @@
 #include "cryptoki.h"
 #include "OSObject.h"
 
+// Forward declaration of the session object store
+class SessionObjectStore;
+
 class SessionObject : public OSObject
 {
 public:
 	// Constructor
-	SessionObject(CK_SESSION_HANDLE hSession);
+	SessionObject(SessionObjectStore* parent, CK_SESSION_HANDLE hSession);
 
 	// Destructor
 	virtual ~SessionObject();
@@ -75,9 +78,12 @@ public:
 	virtual bool commitTransaction();
 	virtual bool abortTransaction();
 
-	// Is this a session or a token object
-	inline virtual bool isSessionObject() { return true; }
-	inline virtual bool isTokenObject() { return false; }
+	// Destroys the object; WARNING: pointers to the object become invalid after this
+	// call!
+	virtual bool destroyObject();
+
+	// Invalidate the object
+	void invalidate();
 
 private:
 	// Discard the object's attributes
@@ -94,6 +100,9 @@ private:
 
 	// The session the object is associated with
 	CK_SESSION_HANDLE hSession;
+
+	// The parent SessionObjectStore
+	SessionObjectStore* parent;
 };
 
 #endif // !_SOFTHSM_V2_SESSIONOBJECT_H

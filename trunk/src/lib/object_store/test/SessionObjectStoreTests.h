@@ -27,44 +27,32 @@
  */
 
 /*****************************************************************************
- ObjectFileTests.h
+ SessionObjectStoreTests.h
 
- Contains test cases to test the object file implementation
+ Contains test cases to test the session object store implementation
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_OBJECTFILETESTS_H
-#define _SOFTHSM_V2_OBJECTFILETESTS_H
+#ifndef _SOFTHSM_V2_SESSIONOBJECTSTORETESTS_H
+#define _SOFTHSM_V2_SESSIONOBJECTSTORETESTS_H
 
 #include <cppunit/extensions/HelperMacros.h>
 
-class ObjectFileTests : public CppUnit::TestFixture
+class SessionObjectStoreTests : public CppUnit::TestFixture
 {
-	CPPUNIT_TEST_SUITE(ObjectFileTests);
-	CPPUNIT_TEST(testBoolAttr);
-	CPPUNIT_TEST(testULongAttr);
-	CPPUNIT_TEST(testByteStrAttr);
-	CPPUNIT_TEST(testMixedAttr);
-	CPPUNIT_TEST(testDoubleAttr);
-	CPPUNIT_TEST(testRefresh);
-	CPPUNIT_TEST(testCorruptFile);
-	CPPUNIT_TEST(testTransactions);
-	CPPUNIT_TEST(testDestroyObjectFails);
+	CPPUNIT_TEST_SUITE(SessionObjectStoreTests);
+	CPPUNIT_TEST(testCreateDeleteObjects);
+	CPPUNIT_TEST(testMultiSession);
+	CPPUNIT_TEST(testWipeStore);
 	CPPUNIT_TEST_SUITE_END();
 
 public:
-	void testBoolAttr();
-	void testULongAttr();
-	void testByteStrAttr();
-	void testMixedAttr();
-	void testDoubleAttr();
-	void testRefresh();
-	void testCorruptFile();
-	void testTransactions();
-	void testDestroyObjectFails();
+	void testCreateDeleteObjects();
+	void testMultiSession();
+	void testWipeStore();
 
 	void setUp();
 	void tearDown();
 };
 
-#endif // !_SOFTHSM_V2_OBJECTFILETESTS_H
+#endif // !_SOFTHSM_V2_SESSIONOBJECTSTORETESTS_H
 

@@ -22,7 +22,8 @@ objstoretest_SOURCES =		objstoretest.cpp \
 				ObjectFileTests.cpp \
 				OSTokenTests.cpp \
 				ObjectStoreTests.cpp \
-				SessionObjectTests.cpp
+				SessionObjectTests.cpp \
+				SessionObjectStoreTests.cpp
 
 objstoretest_LDADD =		../../libsofthsm_convarch.la 
 

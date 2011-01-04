@@ -34,13 +34,15 @@
 
 #include "config.h"
 #include "SessionObject.h"
+#include "SessionObjectStore.h"
 
 // Constructor
-SessionObject::SessionObject(CK_SESSION_HANDLE hSession)
+SessionObject::SessionObject(SessionObjectStore* parent, CK_SESSION_HANDLE hSession)
 {
 	this->hSession = hSession;
 	objectMutex = MutexFactory::i()->getMutex();
 	valid = (objectMutex != NULL);
+	this->parent = parent;
 }
 
 // Destructor
@@ -151,5 +153,24 @@ bool SessionObject::commitTransaction()
 bool SessionObject::abortTransaction()
 {
 	return true;
+}
+
+bool SessionObject::destroyObject()
+{
+	if (parent == NULL)
+	{
+		ERROR_MSG("Cannot destroy object that is not associated with a session object store");
+
+		return false;
+	}
+
+	return parent->deleteObject(this);
+}
+
+// Invalidate the object
+void SessionObject::invalidate()
+{
+	valid = false;
+	discardAttributes();
 }
 
