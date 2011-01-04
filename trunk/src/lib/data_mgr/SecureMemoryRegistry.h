@@ -55,7 +55,7 @@ public:
 	virtual ~SecureMemoryRegistry() { }
 
 private:
-	static std::auto_ptr<SecureMemoryRegistry> instance;
+	static SecureMemoryRegistry* instance;
 
 	std::map<void*, size_t> registry;
 };
