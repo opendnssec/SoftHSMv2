@@ -63,8 +63,9 @@ CK_RV OSObjectControl::saveGeneratedKey(CK_ATTRIBUTE_PTR pKeyTemplate, CK_ULONG 
 	setStorageDefaults();
 	setKeyDefaults();
 	setPublicKeyDefaults();
+	setRsaPublicKeyDefaults();
 
-	// General information
+	// General information that we need to update
 	OSAttribute attrClass((unsigned long)CKO_PUBLIC_KEY);
 	OSAttribute attrKeyType((unsigned long)CKK_RSA);
 	OSAttribute attrMechType((unsigned long)CKM_RSA_PKCS_KEY_PAIR_GEN);
@@ -73,6 +74,8 @@ CK_RV OSObjectControl::saveGeneratedKey(CK_ATTRIBUTE_PTR pKeyTemplate, CK_ULONG 
 	osobject->setAttribute(CKA_KEY_TYPE, attrKeyType);
 	osobject->setAttribute(CKA_KEY_GEN_MECHANISM, attrMechType);
 	osobject->setAttribute(CKA_LOCAL, attrLocal);
+
+	// TODO: Save key
 
 	// Save template
 	for (CK_ULONG i = 0; i < ulKeyAttributeCount; i++)
@@ -84,8 +87,6 @@ CK_RV OSObjectControl::saveGeneratedKey(CK_ATTRIBUTE_PTR pKeyTemplate, CK_ULONG 
 			return rv;
 		}
 	}
-
-	// TODO: Save key
 
 	if (osobject->commitTransaction() == false) return CKR_GENERAL_ERROR;
 
@@ -350,6 +351,31 @@ CK_RV OSObjectControl::saveAttribute(CK_ATTRIBUTE attr)
 				osobject->setAttribute(CKA_ALWAYS_AUTHENTICATE, attrTrue);
 			}
 			break;
+		case CKA_MODULUS:
+		case CKA_PUBLIC_EXPONENT:
+		case CKA_PRIVATE_EXPONENT:
+		case CKA_PRIME_1:
+		case CKA_PRIME_2:
+		case CKA_EXPONENT_1:
+		case CKA_EXPONENT_2:
+		case CKA_COEFFICIENT:
+			if (operationType != CREATE)
+			{
+				return CKR_ATTRIBUTE_READ_ONLY;
+			}
+			osobject->setAttribute(attr.type, ByteString((unsigned char*)attr.pValue, attr.ulValueLen));
+			break;
+		case CKA_MODULUS_BITS:
+			if (operationType != GENERATE)
+			{
+				return CKR_ATTRIBUTE_READ_ONLY;
+			}
+			if (attr.ulValueLen != sizeof(CK_ULONG))
+			{
+				return CKR_ATTRIBUTE_VALUE_INVALID;
+			}
+			osobject->setAttribute(attr.type, *(CK_ULONG*)attr.pValue);
+			break;
 		default:
 			break;
 	}
@@ -362,17 +388,17 @@ void OSObjectControl::setStorageDefaults()
 {
 	if (osobject == NULL) return;
 
-	OSAttribute attrToken(false);
-	OSAttribute attrPrivate(true);
-	OSAttribute attrModifiable(true);
-	ByteString label("");
-	OSAttribute attrLabel(label);
+	OSAttribute attrEmpty(ByteString(""));
+	OSAttribute attrTrue(true);
+	OSAttribute attrFalse(false);
+	OSAttribute attrClass((unsigned long)CKO_VENDOR_DEFINED);
 
-	// CKA_CLASS must be set when creating the object
-	osobject->setAttribute(CKA_TOKEN, attrToken);
-	osobject->setAttribute(CKA_PRIVATE, attrToken);
-	osobject->setAttribute(CKA_MODIFIABLE, attrToken);
-	osobject->setAttribute(CKA_LABEL, attrToken);
+	// CKA_CLASS must be updated when creating the object
+	osobject->setAttribute(CKA_CLASS, attrClass);
+	osobject->setAttribute(CKA_TOKEN, attrFalse);
+	osobject->setAttribute(CKA_PRIVATE, attrTrue);
+	osobject->setAttribute(CKA_MODIFIABLE, attrTrue);
+	osobject->setAttribute(CKA_LABEL, attrEmpty);
 }
 
 // Default data attributes
@@ -380,8 +406,7 @@ void OSObjectControl::setDataDefaults()
 {
 	if (osobject == NULL) return;
 
-	ByteString empty("");
-	OSAttribute attrEmpty(empty);
+	OSAttribute attrEmpty(ByteString(""));
 
 	osobject->setAttribute(CKA_APPLICATION, attrEmpty);
 	osobject->setAttribute(CKA_OBJECT_ID, attrEmpty);
@@ -393,14 +418,15 @@ void OSObjectControl::setCertificateDefaults()
 {
 	if (osobject == NULL) return;
 
-	OSAttribute attrTrusted(false);
-	OSAttribute attrCategory((unsigned long)0);
-	ByteString empty("");
-	OSAttribute attrEmpty(empty);
+	OSAttribute attrEmpty(ByteString(""));
+	OSAttribute attrFalse(false);
+	OSAttribute attrZero((unsigned long)0);
+	OSAttribute attrType((unsigned long)CKC_VENDOR_DEFINED);
 
-	// CKA_CERTIFICATE_TYPE must be set when creating the object
-	osobject->setAttribute(CKA_TRUSTED, attrTrusted);
-	osobject->setAttribute(CKA_CERTIFICATE_CATEGORY, attrCategory);
+	// CKA_CERTIFICATE_TYPE must be updated when creating the object
+	osobject->setAttribute(CKA_CERTIFICATE_TYPE, attrType);
+	osobject->setAttribute(CKA_TRUSTED, attrFalse);
+	osobject->setAttribute(CKA_CERTIFICATE_CATEGORY, attrZero);
 	osobject->setAttribute(CKA_CHECK_VALUE, attrEmpty);
 	osobject->setAttribute(CKA_START_DATE, attrEmpty);
 	osobject->setAttribute(CKA_END_DATE, attrEmpty);
@@ -411,17 +437,21 @@ void OSObjectControl::setKeyDefaults()
 {
 	if (osobject == NULL) return;
 
-	ByteString empty("");
-	OSAttribute attrEmpty(empty);
-	OSAttribute attrDerive(false);
+	OSAttribute attrEmpty(ByteString(""));
+	OSAttribute attrFalse(false);
+	OSAttribute attrType((unsigned long)CKK_VENDOR_DEFINED);
+	OSAttribute attrMech((unsigned long)CK_UNAVAILABLE_INFORMATION);
 
-	// CKA_KEY_TYPE must be set when creating the object
+	// CKA_KEY_TYPE must be updated when creating the object
+	osobject->setAttribute(CKA_KEY_TYPE, attrType);
 	osobject->setAttribute(CKA_ID, attrEmpty);
 	osobject->setAttribute(CKA_START_DATE, attrEmpty);
 	osobject->setAttribute(CKA_END_DATE, attrEmpty);
-	osobject->setAttribute(CKA_DERIVE, attrDerive);
-	// CKA_LOCAL must be set when creating the object
-	// CKA_KEY_GEN_MECHANISM must be set when creating the object
+	osobject->setAttribute(CKA_DERIVE, attrFalse);
+	// CKA_LOCAL must be updated when creating the object
+	osobject->setAttribute(CKA_LOCAL, attrFalse);
+	// CKA_KEY_GEN_MECHANISM must be updated when creating the object
+	osobject->setAttribute(CKA_KEY_GEN_MECHANISM, attrMech);
 	// CKA_ALLOWED_MECHANISMS is not supported
 }
 
@@ -430,8 +460,7 @@ void OSObjectControl::setPublicKeyDefaults()
 {
 	if (osobject == NULL) return;
 
-	ByteString empty("");
-	OSAttribute attrEmpty(empty);
+	OSAttribute attrEmpty(ByteString(""));
 	OSAttribute attrFalse(false);
 	OSAttribute attrTrue(true);
 
@@ -444,13 +473,27 @@ void OSObjectControl::setPublicKeyDefaults()
 	// CKA_WRAP_TEMPLATE is not supported
 }
 
+// Default RSA public key attributes
+void OSObjectControl::setRsaPublicKeyDefaults()
+{
+	if (osobject == NULL) return;
+
+	OSAttribute attrEmpty(ByteString(""));
+	OSAttribute attrZero((unsigned long)0);
+
+	// These attributes are either set by the template or the key
+
+	osobject->setAttribute(CKA_MODULUS, attrEmpty);
+	osobject->setAttribute(CKA_MODULUS_BITS, attrZero);
+	osobject->setAttribute(CKA_PUBLIC_EXPONENT, attrEmpty);
+}
+
 // Default private key attributes
 void OSObjectControl::setPrivateKeyDefaults()
 {
 	if (osobject == NULL) return;
 
-	ByteString empty("");
-	OSAttribute attrEmpty(empty);
+	OSAttribute attrEmpty(ByteString(""));
 	OSAttribute attrFalse(false);
 	OSAttribute attrTrue(true);
 
@@ -468,13 +511,31 @@ void OSObjectControl::setPrivateKeyDefaults()
 	osobject->setAttribute(CKA_ALWAYS_AUTHENTICATE, attrFalse);
 }
 
+// Default RSA private key attributes
+void OSObjectControl::setRsaPrivateKeyDefaults()
+{
+	if (osobject == NULL) return;
+
+	OSAttribute attrEmpty(ByteString(""));
+
+	// These attributes are either set by the template or the key
+
+	osobject->setAttribute(CKA_MODULUS, attrEmpty);
+	osobject->setAttribute(CKA_PUBLIC_EXPONENT, attrEmpty);
+	osobject->setAttribute(CKA_PRIVATE_EXPONENT, attrEmpty);
+	osobject->setAttribute(CKA_PRIME_1, attrEmpty);
+	osobject->setAttribute(CKA_PRIME_2, attrEmpty);
+	osobject->setAttribute(CKA_EXPONENT_1, attrEmpty);
+	osobject->setAttribute(CKA_EXPONENT_2, attrEmpty);
+	osobject->setAttribute(CKA_COEFFICIENT, attrEmpty);
+}
+
 // Default secret key attributes
 void OSObjectControl::setSecretKeyDefaults()
 {
 	if (osobject == NULL) return;
 
-	ByteString empty("");
-	OSAttribute attrEmpty(empty);
+	OSAttribute attrEmpty(ByteString(""));
 	OSAttribute attrFalse(false);
 	OSAttribute attrTrue(true);
 
@@ -498,7 +559,12 @@ void OSObjectControl::setSecretKeyDefaults()
 // Default domain parameter attributes
 void OSObjectControl::setDomainDefaults()
 {
-	// CKA_KEY_TYPE must be set when creating the object
-	// CKA_LOCAL must be set when creating the object
+	OSAttribute attrFalse(false);
+	OSAttribute attrType((unsigned long)CKK_VENDOR_DEFINED);
+
+	// CKA_KEY_TYPE must be updated when creating the object
+	osobject->setAttribute(CKA_KEY_TYPE, attrType);
+	// CKA_LOCAL must be updated when creating the object
+	osobject->setAttribute(CKA_LOCAL, attrFalse);
 }
 

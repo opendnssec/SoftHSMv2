@@ -84,7 +84,9 @@ private:
 	void setCertificateDefaults();
 	void setKeyDefaults();
 	void setPublicKeyDefaults();
+	void setRsaPublicKeyDefaults();
 	void setPrivateKeyDefaults();
+	void setRsaPrivateKeyDefaults();
 	void setSecretKeyDefaults();
 	void setDomainDefaults();
 
