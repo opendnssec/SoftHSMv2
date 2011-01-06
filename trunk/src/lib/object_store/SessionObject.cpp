@@ -106,8 +106,6 @@ bool SessionObject::closeSession(CK_SESSION_HANDLE hSession)
 {
 	if (this->hSession == hSession)
 	{
-		DEBUG_MSG("Session this object belongs to was closed");
-
 		// Save space
 		discardAttributes();
 

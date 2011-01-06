@@ -67,7 +67,7 @@ void SessionObjectStoreTests::testCreateDeleteObjects()
 
 	CPPUNIT_ASSERT(testStore != NULL);
 
-	// Create 3 objects on the token
+	// Create 3 objects in the store
 	SessionObject* obj1 = testStore->createObject(1);
 	CPPUNIT_ASSERT(obj1 != NULL);
 	SessionObject* obj2 = testStore->createObject(1);
@@ -80,7 +80,7 @@ void SessionObjectStoreTests::testCreateDeleteObjects()
 	obj2->setAttribute(CKA_ID, idAtt[1]);
 	obj3->setAttribute(CKA_ID, idAtt[2]);
 
-	// Check that the token contains 3 objects
+	// Check that the store contains 3 objects
 	CPPUNIT_ASSERT(testStore->getObjects().size() == 3);
 
 	// Check that all three objects are distinct and present
@@ -161,10 +161,158 @@ void SessionObjectStoreTests::testCreateDeleteObjects()
 void SessionObjectStoreTests::testMultiSession()
 {
 	// Get access to the store
-	
+	SessionObjectStore* store = SessionObjectStore::i();
+
+	// Check that the store is empty
+	CPPUNIT_ASSERT(store->getObjects().size() == 0);
+
+	// Test IDs
+	ByteString id[5] = { "112233445566", "AABBCCDDEEFF", "ABABABABABAB", "557788991122", "005500550055" };
+	OSAttribute idAtt[5] = { id[0], id[1], id[2], id[3], id[4] };
+
+	// Create 3 objects in the store for three different sessions
+	SessionObject* obj1 = store->createObject(1);
+	CPPUNIT_ASSERT(obj1 != NULL);
+	SessionObject* obj2 = store->createObject(2);
+	CPPUNIT_ASSERT(obj2 != NULL);
+	SessionObject* obj3 = store->createObject(3);
+	CPPUNIT_ASSERT(obj3 != NULL);
+
+	// Now set the IDs of the 3 objects
+	obj1->setAttribute(CKA_ID, idAtt[0]);
+	obj2->setAttribute(CKA_ID, idAtt[1]);
+	obj3->setAttribute(CKA_ID, idAtt[2]);
+
+	// Check that the store contains 3 objects
+	CPPUNIT_ASSERT(store->getObjects().size() == 3);
+
+	// Check that all three objects are distinct and present
+	std::set<SessionObject*> objects = store->getObjects();
+	bool present1[3] = { false, false, false };
+
+	for (std::set<SessionObject*>::iterator i = objects.begin(); i != objects.end(); i++)
+	{
+		ByteString retrievedId;
+
+		CPPUNIT_ASSERT((*i)->isValid());
+		CPPUNIT_ASSERT((*i)->attributeExists(CKA_ID));
+
+		CPPUNIT_ASSERT((*i)->getAttribute(CKA_ID)->isByteStringAttribute());
+
+		for (int j = 0; j < 3; j++)
+		{
+			if ((*i)->getAttribute(CKA_ID)->getByteStringValue() == id[j])
+			{
+				present1[j] = true;
+			}
+		}
+	}
+
+	for (int j = 0; j < 3; j++)
+	{
+		CPPUNIT_ASSERT(present1[j] == true);
+	}
+
+	// Now indicate that the second session has been closed
+	store->sessionClosed(2);
+
+	// Verify that it was indeed removed
+	CPPUNIT_ASSERT(store->getObjects().size() == 2);
+
+	objects = store->getObjects();
+	bool present3[2] = { false, false };
+
+	for (std::set<SessionObject*>::iterator i = objects.begin(); i != objects.end(); i++)
+	{
+		ByteString retrievedId;
+
+		CPPUNIT_ASSERT((*i)->isValid());
+		CPPUNIT_ASSERT((*i)->attributeExists(CKA_ID));
+
+		CPPUNIT_ASSERT((*i)->getAttribute(CKA_ID)->isByteStringAttribute());
+
+		if ((*i)->getAttribute(CKA_ID)->getByteStringValue() == id[0])
+		{
+			present3[0] = true;
+		}
+		if ((*i)->getAttribute(CKA_ID)->getByteStringValue() == id[2])
+		{
+			present3[1] = true;
+		}
+	}
+
+	for (int j = 0; j < 2; j++)
+	{
+		CPPUNIT_ASSERT(present3[j] == true);
+	}
+
+	// Create two more objects for session 7
+	SessionObject* obj4 = store->createObject(7);
+	CPPUNIT_ASSERT(obj4 != NULL);
+	SessionObject* obj5 = store->createObject(7);
+	CPPUNIT_ASSERT(obj5 != NULL);
+
+	CPPUNIT_ASSERT(store->getObjects().size() == 4);
+
+	// Close session 1
+	store->sessionClosed(1);
+
+	CPPUNIT_ASSERT(store->getObjects().size() == 3);
+
+	objects = store->getObjects();
+
+	CPPUNIT_ASSERT(objects.find(obj1) == objects.end());
+	CPPUNIT_ASSERT(objects.find(obj2) == objects.end());
+	CPPUNIT_ASSERT(objects.find(obj3) != objects.end());
+	CPPUNIT_ASSERT(objects.find(obj4) != objects.end());
+	CPPUNIT_ASSERT(objects.find(obj5) != objects.end());
+
+	CPPUNIT_ASSERT(!obj1->isValid());
+	CPPUNIT_ASSERT(!obj2->isValid());
+	CPPUNIT_ASSERT(obj3->isValid());
+	CPPUNIT_ASSERT(obj4->isValid());
+	CPPUNIT_ASSERT(obj5->isValid());
+
+	// Close session 7
+	store->sessionClosed(7);
+
+	CPPUNIT_ASSERT(store->getObjects().size() == 1);
+
+	objects = store->getObjects();
+
+	CPPUNIT_ASSERT(objects.find(obj1) == objects.end());
+	CPPUNIT_ASSERT(objects.find(obj2) == objects.end());
+	CPPUNIT_ASSERT(objects.find(obj3) != objects.end());
+	CPPUNIT_ASSERT(objects.find(obj4) == objects.end());
+	CPPUNIT_ASSERT(objects.find(obj5) == objects.end());
+
+	CPPUNIT_ASSERT(!obj1->isValid());
+	CPPUNIT_ASSERT(!obj2->isValid());
+	CPPUNIT_ASSERT(obj3->isValid());
+	CPPUNIT_ASSERT(!obj4->isValid());
+	CPPUNIT_ASSERT(!obj5->isValid());
 }
 
 void SessionObjectStoreTests::testWipeStore()
 {
+	// Get access to the store
+	SessionObjectStore* store = SessionObjectStore::i();
+
+	// Check that the store is empty
+	CPPUNIT_ASSERT(store->getObjects().size() == 0);
+
+	// Create 3 objects in the store for three different sessions
+	SessionObject* obj1 = store->createObject(1);
+	CPPUNIT_ASSERT(obj1 != NULL);
+	SessionObject* obj2 = store->createObject(2);
+	CPPUNIT_ASSERT(obj2 != NULL);
+	SessionObject* obj3 = store->createObject(3);
+	CPPUNIT_ASSERT(obj3 != NULL);
+
+	// Wipe the store
+	store->clearStore();
+
+	// Check that the store is empty
+	CPPUNIT_ASSERT(store->getObjects().size() == 0);
 }
 
