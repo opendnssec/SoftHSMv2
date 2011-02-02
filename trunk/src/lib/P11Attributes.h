@@ -623,4 +623,76 @@ protected:
 	virtual CK_RV updateAttr(CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op, bool isSO);
 };
 
+/*****************************************
+ * CKA_SENSITIVE
+ *****************************************/
+
+class P11AttrSensitive : public P11Attribute
+{
+public:
+	// Constructor
+	P11AttrSensitive(OSObject *osobject) : P11Attribute(osobject) { type = CKA_SENSITIVE; }
+
+protected:
+	// Set the default value of the attribute
+	virtual bool setDefault();
+
+	// Update the value if allowed
+	virtual CK_RV updateAttr(CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op, bool isSO);
+};
+
+/*****************************************
+ * CKA_EXTRACTABLE
+ *****************************************/
+
+class P11AttrExtractable : public P11Attribute
+{
+public:
+	// Constructor
+	P11AttrExtractable(OSObject *osobject) : P11Attribute(osobject) { type = CKA_EXTRACTABLE; }
+
+protected:
+	// Set the default value of the attribute
+	virtual bool setDefault();
+
+	// Update the value if allowed
+	virtual CK_RV updateAttr(CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op, bool isSO);
+};
+
+/*****************************************
+ * CKA_WRAP_WITH_TRUSTED
+ *****************************************/
+
+class P11AttrWrapWithTrusted : public P11Attribute
+{
+public:
+	// Constructor
+	P11AttrWrapWithTrusted(OSObject *osobject) : P11Attribute(osobject) { type = CKA_WRAP_WITH_TRUSTED; }
+
+protected:
+	// Set the default value of the attribute
+	virtual bool setDefault();
+
+	// Update the value if allowed
+	virtual CK_RV updateAttr(CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op, bool isSO);
+};
+
+/*****************************************
+ * CKA_ALWAYS_AUTHENTICATE
+ *****************************************/
+
+class P11AttrAlwaysAuthenticate : public P11Attribute
+{
+public:
+	// Constructor
+	P11AttrAlwaysAuthenticate(OSObject *osobject) : P11Attribute(osobject) { type = CKA_ALWAYS_AUTHENTICATE; }
+
+protected:
+	// Set the default value of the attribute
+	virtual bool setDefault();
+
+	// Update the value if allowed
+	virtual CK_RV updateAttr(CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op, bool isSO);
+};
+
 #endif // !_SOFTHSM_V2_P11ATTRIBUTES_H

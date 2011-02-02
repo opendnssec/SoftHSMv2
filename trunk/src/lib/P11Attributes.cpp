@@ -1170,7 +1170,7 @@ CK_RV P11AttrKeyGenMechanism::updateAttr(CK_VOID_PTR pValue, CK_ULONG ulValueLen
 // Set default value
 bool P11AttrAlwaysSensitive::setDefault()
 {
-	OSAttribute attr(true);
+	OSAttribute attr(false);
 
 	// We do not check this because it is checked in init()
 	// if (osobject == NULL) return false;
@@ -1206,6 +1206,212 @@ CK_RV P11AttrNeverExtractable::updateAttr(CK_VOID_PTR pValue, CK_ULONG ulValueLe
 }
 
 /*****************************************
+ * CKA_SENSITIVE
+ *****************************************/
+
+// Set default value
+bool P11AttrSensitive::setDefault()
+{
+	// We default to false because we want to handle the secret keys in a corret way
+	OSAttribute attr(false);
+
+	// We do not check this because it is checked in init()
+	// if (osobject == NULL) return false;
+
+	return osobject->setAttribute(type, attr);
+}
+
+// Update the value if allowed
+CK_RV P11AttrSensitive::updateAttr(CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op, bool isSO)
+{
+	OSAttribute attrTrue(true);
+	OSAttribute attrFalse(false);
+
+	// Attribute specific checks
+
+	if (op == OBJECT_OP_SET || op == OBJECT_OP_COPY)
+	{
+		if (osobject->getAttribute(type)->getBooleanValue())
+		{
+			return CKR_ATTRIBUTE_READ_ONLY;
+		}
+	}
+
+	if (ulValueLen != sizeof(CK_BBOOL))
+	{
+		return CKR_ATTRIBUTE_VALUE_INVALID;
+	}
+
+	// Store data
+
+	if (*(CK_BBOOL*)pValue == CK_FALSE)
+	{
+		osobject->setAttribute(type, attrFalse);
+		osobject->setAttribute(CKA_ALWAYS_SENSITIVE, attrFalse);
+	}
+	else
+	{
+		osobject->setAttribute(type, attrTrue);
+
+		// This is so that generated keys get the correct value
+		if (op == OBJECT_OP_GENERATE)
+		{
+			osobject->setAttribute(CKA_ALWAYS_SENSITIVE, attrTrue);
+		}
+	}
+
+	return CKR_OK;
+}
+
+/*****************************************
+ * CKA_EXTRACTABLE
+ *****************************************/
+
+// Set default value
+bool P11AttrExtractable::setDefault()
+{
+	OSAttribute attr(false);
+
+	// We do not check this because it is checked in init()
+	// if (osobject == NULL) return false;
+
+	return osobject->setAttribute(type, attr);
+}
+
+// Update the value if allowed
+CK_RV P11AttrExtractable::updateAttr(CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op, bool isSO)
+{
+	OSAttribute attrTrue(true);
+	OSAttribute attrFalse(false);
+
+	// Attribute specific checks
+
+	if (op == OBJECT_OP_SET || op == OBJECT_OP_COPY)
+	{
+		if (osobject->getAttribute(type)->getBooleanValue() == false)
+		{
+			return CKR_ATTRIBUTE_READ_ONLY;
+		}
+	}
+
+	if (ulValueLen != sizeof(CK_BBOOL))
+	{
+		return CKR_ATTRIBUTE_VALUE_INVALID;
+	}
+
+	// Store data
+
+	if (*(CK_BBOOL*)pValue == CK_FALSE)
+	{
+		osobject->setAttribute(type, attrFalse);
+	}
+	else
+	{
+		osobject->setAttribute(type, attrTrue);
+		osobject->setAttribute(CKA_NEVER_EXTRACTABLE, attrFalse);
+	}
+
+	return CKR_OK;
+}
+
+/*****************************************
+ * CKA_WRAP_WITH_TRUSTED
+ *****************************************/
+
+// Set default value
+bool P11AttrWrapWithTrusted::setDefault()
+{
+	OSAttribute attr(false);
+
+	// We do not check this because it is checked in init()
+	// if (osobject == NULL) return false;
+
+	return osobject->setAttribute(type, attr);
+}
+
+// Update the value if allowed
+CK_RV P11AttrWrapWithTrusted::updateAttr(CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op, bool isSO)
+{
+	OSAttribute attrTrue(true);
+	OSAttribute attrFalse(false);
+
+	// Attribute specific checks
+
+	if (op == OBJECT_OP_SET || op == OBJECT_OP_COPY)
+	{
+		if (osobject->getAttribute(type)->getBooleanValue())
+		{
+			return CKR_ATTRIBUTE_READ_ONLY;
+		}
+	}
+
+	if (ulValueLen != sizeof(CK_BBOOL))
+	{
+		return CKR_ATTRIBUTE_VALUE_INVALID;
+	}
+
+	// Store data
+
+	if (*(CK_BBOOL*)pValue == CK_FALSE)
+	{
+		osobject->setAttribute(type, attrFalse);
+	}
+	else
+	{
+		osobject->setAttribute(type, attrTrue);
+	}
+
+	return CKR_OK;
+}
+
+/*****************************************
+ * CKA_ALWAYS_AUTHENTICATE
+ *****************************************/
+
+// Set default value
+bool P11AttrAlwaysAuthenticate::setDefault()
+{
+	OSAttribute attr(false);
+
+	// We do not check this because it is checked in init()
+	// if (osobject == NULL) return false;
+
+	return osobject->setAttribute(type, attr);
+}
+
+// Update the value if allowed
+CK_RV P11AttrAlwaysAuthenticate::updateAttr(CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op, bool isSO)
+{
+	OSAttribute attrTrue(true);
+	OSAttribute attrFalse(false);
+
+	// Attribute specific checks
+
+	if (ulValueLen != sizeof(CK_BBOOL))
+	{
+		return CKR_ATTRIBUTE_VALUE_INVALID;
+	}
+
+	// Store data
+
+	if (*(CK_BBOOL*)pValue == CK_FALSE)
+	{
+		osobject->setAttribute(type, attrFalse);
+	}
+	else
+	{
+		if (osobject->getAttribute(CKA_PRIVATE)->getBooleanValue() == false)
+		{
+			return CKR_TEMPLATE_INCONSISTENT;
+		}
+
+		osobject->setAttribute(type, attrTrue);
+	}
+
+	return CKR_OK;
+}
+
+/*****************************************
  * Old code that will be migrated
  *****************************************
 
@@ -1216,94 +1422,6 @@ CK_RV P11AttrNeverExtractable::updateAttr(CK_VOID_PTR pValue, CK_ULONG ulValueLe
 	// Check / save the attributes
 	switch (attr.type)
 	{
-		case CKA_SENSITIVE:
-			if (operationType == SET || operationType == COPY)
-			{
-				if (osobject->getAttribute(CKA_SENSITIVE)->getBooleanValue())
-				{
-					return CKR_ATTRIBUTE_READ_ONLY;
-				}
-			}
-			if (attr.ulValueLen != sizeof(CK_BBOOL))
-			{
-				return CKR_ATTRIBUTE_VALUE_INVALID;
-			}
-			if (*(CK_BBOOL*)attr.pValue == CK_FALSE)
-			{
-				osobject->setAttribute(CKA_SENSITIVE, attrFalse);
-				osobject->setAttribute(CKA_ALWAYS_SENSITIVE, attrFalse);
-			}
-			else
-			{
-				osobject->setAttribute(CKA_SENSITIVE, attrTrue);
-				// This is so that secret keys get the correct value
-				if (operationType == GENERATE)
-				{
-					osobject->setAttribute(CKA_ALWAYS_SENSITIVE, attrTrue);
-				}
-			}
-			break;
-		case CKA_EXTRACTABLE:
-			if (operationType == SET || operationType == COPY)
-			{
-				if (osobject->getAttribute(CKA_EXTRACTABLE)->getBooleanValue() == false)
-				{
-					return CKR_ATTRIBUTE_READ_ONLY;
-				}
-			}
-			if (attr.ulValueLen != sizeof(CK_BBOOL))
-			{
-				return CKR_ATTRIBUTE_VALUE_INVALID;
-			}
-			if (*(CK_BBOOL*)attr.pValue == CK_FALSE)
-			{
-				osobject->setAttribute(CKA_EXTRACTABLE, attrFalse);
-			}
-			else
-			{
-				osobject->setAttribute(CKA_EXTRACTABLE, attrTrue);
-				osobject->setAttribute(CKA_NEVER_EXTRACTABLE, attrFalse);
-			}
-			break;
-		case CKA_WRAP_WITH_TRUSTED:
-			if (operationType == SET || operationType == COPY)
-			{
-				if (osobject->getAttribute(CKA_WRAP_WITH_TRUSTED)->getBooleanValue())
-				{
-					return CKR_ATTRIBUTE_READ_ONLY;
-				}
-			}
-			if (attr.ulValueLen != sizeof(CK_BBOOL))
-			{
-				return CKR_ATTRIBUTE_VALUE_INVALID;
-			}
-			if (*(CK_BBOOL*)attr.pValue == CK_FALSE)
-			{
-				osobject->setAttribute(CKA_WRAP_WITH_TRUSTED, attrFalse);
-			}
-			else
-			{
-				osobject->setAttribute(CKA_WRAP_WITH_TRUSTED, attrTrue);
-			}
-			break;
-		case CKA_ALWAYS_AUTHENTICATE:
-			if (attr.ulValueLen != sizeof(CK_BBOOL))
-			{
-				return CKR_ATTRIBUTE_VALUE_INVALID;
-			}
-			if (*(CK_BBOOL*)attr.pValue == CK_FALSE)
-			{
-				osobject->setAttribute(CKA_ALWAYS_AUTHENTICATE, attrFalse);
-			}
-			else
-			{
-				if (osobject->getAttribute(CKA_PRIVATE)->getBooleanValue() == false)
-				{
-					return CKR_TEMPLATE_INCONSISTENT;
-				}
-				osobject->setAttribute(CKA_ALWAYS_AUTHENTICATE, attrTrue);
-			}
-			break;
 		case CKA_MODULUS:
 		case CKA_PUBLIC_EXPONENT:
 		case CKA_PRIVATE_EXPONENT:
