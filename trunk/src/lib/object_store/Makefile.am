@@ -14,7 +14,6 @@ libsofthsm_objectstore_la_SOURCES =	ObjectStore.cpp \
 					Directory.cpp \
 					File.cpp \
 					OSAttribute.cpp \
-					OSObjectControl.cpp \
 					OSToken.cpp \
 					ObjectFile.cpp \
 					SessionObject.cpp \

@@ -27,70 +27,88 @@
  */
 
 /*****************************************************************************
- OSObjectControl.h
+ P11Objects.h
 
- This class can control what is written to the object
+ This class respresent a PKCS#11 object
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_OSOBJECTCONTROL_H
-#define _SOFTHSM_V2_OSOBJECTCONTROL_H
+#ifndef _SOFTHSM_V2_P11OBJECTS_H
+#define _SOFTHSM_V2_P11OBJECTS_H
+
+#include "OSObject.h"
+#include "P11Attributes.h"
 
 #include "cryptoki.h"
-#include "OSObject.h"
-#include "RSAParameters.h"
-#include "RSAPublicKey.h"
-#include "RSAPrivateKey.h"
-#include "DSAParameters.h"
-#include "DSAPublicKey.h"
-#include "DSAPrivateKey.h"
+#include <map>
 
-class OSObjectControl
+class P11Object
 {
 public:
-	// Constructor
-	OSObjectControl(OSObject *osobject, bool isSO);
-
 	// Destructor
-	~OSObjectControl();
+	~P11Object();
 
-	// Save generated key
-	CK_RV saveGeneratedKey(CK_ATTRIBUTE_PTR pKeyTemplate, CK_ULONG ulKeyAttributeCount, RSAPublicKey *rsa);
-	CK_RV saveGeneratedKey(CK_ATTRIBUTE_PTR pKeyTemplate, CK_ULONG ulKeyAttributeCount, RSAPrivateKey *rsa);
-	CK_RV saveGeneratedKey(CK_ATTRIBUTE_PTR pKeyTemplate, CK_ULONG ulKeyAttributeCount, DSAPublicKey *dsa);
-	CK_RV saveGeneratedKey(CK_ATTRIBUTE_PTR pKeyTemplate, CK_ULONG ulKeyAttributeCount, DSAPrivateKey *dsa);
-private:
-	// The operation type
-	enum
-	{
-		NONE,
-		COPY,
-		CREATE,
-		DERIVE,
-		GENERATE,
-		SET,
-		UNWRAP
-	}
-	operationType;
+protected:
+	// Constructor
+	P11Object();
 
 	// The object
 	OSObject *osobject;
 
-	// Login state
-	bool isSO;
+	// The attributes
+	std::map<CK_ATTRIBUTE_TYPE, P11Attribute*> attributes;
 
-	// Default attributes
-	void setStorageDefaults();
-	void setDataDefaults();
-	void setCertificateDefaults();
-	void setKeyDefaults();
-	void setPublicKeyDefaults();
-	void setRsaPublicKeyDefaults();
-	void setPrivateKeyDefaults();
-	void setRsaPrivateKeyDefaults();
-	void setSecretKeyDefaults();
-	void setDomainDefaults();
-
-	CK_RV saveAttribute(CK_ATTRIBUTE attr);
+	// Add attributes
+	bool build();
 };
 
-#endif // !_SOFTHSM_V2_OSOBJECTCONTROL_H
+class P11DataObj : public P11Object
+{
+public:
+	// Constructor
+	P11DataObj();
+
+	// Add attributes
+	bool build();
+};
+
+class P11CertificateObj : public P11Object
+{
+protected:
+	// Constructor
+	P11CertificateObj();
+
+	// Add attributes
+	bool build();
+};
+
+class P11KeyObj : public P11Object
+{
+protected:
+	// Constructor
+	P11KeyObj();
+
+	// Add attributes
+	bool build();
+};
+
+class P11PublicKeyObj : public P11KeyObj
+{
+protected:
+	// Constructor
+	P11PublicKeyObj();
+
+	// Add attributes
+	bool build();
+};
+
+class P11RSAPublicKeyObj : public P11PublicKeyObj
+{
+public:
+	// Constructor
+	P11RSAPublicKeyObj(OSObject *osobject);
+
+	// Add attributes
+	bool build();
+};
+
+#endif // !_SOFTHSM_V2_P11OBJECTS_H

@@ -14,6 +14,8 @@ lib_LTLIBRARIES =		libsofthsm.la
 
 libsofthsm_la_SOURCES =		access.cpp \
 				main.cpp \
+				P11Attributes.cpp \
+				P11Objects.cpp \
 				SoftHSM.cpp
 libsofthsm_la_LIBADD =		common/libsofthsm_common.la \
 				crypto/libsofthsm_crypto.la \

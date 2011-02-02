@@ -27,29 +27,142 @@
  */
 
 /*****************************************************************************
- OSObjectControl.h
+ P11Objects.cpp
 
- This class can control what is written to the object
+ This class respresent a PKCS#11 object
  *****************************************************************************/
 
 #include "config.h"
-#include "OSObjectControl.h"
-#include "OSAttribute.h"
-#include "ByteString.h"
+#include "P11Objects.h"
 #include <stdio.h>
-
-// Constructor
-OSObjectControl::OSObjectControl(OSObject *osobject, bool isSO)
-{
-	this->osobject = osobject;
-	this->isSO = isSO;
-	operationType = NONE;
-}
+#include <stdlib.h>
 
 // Destructor
-OSObjectControl::~OSObjectControl()
+P11Object::~P11Object()
 {
+	std::map<CK_ATTRIBUTE_TYPE, P11Attribute*> cleanUp = attributes;
+	attributes.clear();
+
+	for (std::map<CK_ATTRIBUTE_TYPE, P11Attribute*>::iterator i = cleanUp.begin(); i != cleanUp.end(); i++)
+	{
+		if (i->second == NULL)
+		{
+			continue;
+		}
+
+		delete i->second;
+		i->second = NULL;
+	}
 }
+
+// Add attributes
+bool P11Object::build()
+{
+	// Create attributes
+	P11Attribute *attrClass = new P11AttrClass(osobject);
+	P11Attribute *attrToken = new P11AttrToken(osobject);
+	P11Attribute *attrPrivate = new P11AttrPrivate(osobject);
+	P11Attribute *attrModifiable = new P11AttrModifiable(osobject);
+	P11Attribute *attrLabel = new P11AttrLabel(osobject);
+
+	// Initialize the attributes
+	if
+	(
+		!attrClass->init() ||
+		!attrToken->init() ||
+		!attrPrivate->init() ||
+		!attrModifiable->init() ||
+		!attrLabel->init()
+	)
+	{
+		ERROR_MSG("Could not initialize the attribute");
+		return false;
+	}
+
+	// Add them to the map
+	attributes[attrClass->getType()] = attrClass;
+	attributes[attrToken->getType()] = attrToken;
+	attributes[attrPrivate->getType()] = attrPrivate;
+	attributes[attrModifiable->getType()] = attrModifiable;
+	attributes[attrLabel->getType()] = attrLabel;
+
+	return true;
+}
+
+// Add attributes
+bool P11DataObj::build()
+{
+	// Create parent
+	if (!P11Object::build()) return false;
+
+	// Create attributes
+	P11Attribute *attrApplication = new P11AttrApplication(osobject);
+	P11Attribute *attrObjectID = new P11AttrObjectID(osobject);
+	P11Attribute *attrValue = new P11AttrValue(osobject);
+
+	// Initialize the attributes
+	if
+	(
+		!attrApplication->init() ||
+		!attrObjectID->init() ||
+		!attrValue->init()
+	)
+	{
+		ERROR_MSG("Could not initialize the attribute");
+		return false;
+	}
+
+	// Add them to the map
+	attributes[attrApplication->getType()] = attrApplication;
+	attributes[attrObjectID->getType()] = attrObjectID;
+	attributes[attrValue->getType()] = attrValue;
+
+	return true;
+}
+
+// Add attributes
+bool P11CertificateObj::build()
+{
+	// Create parent
+	if (!P11Object::build()) return false;
+
+	// Create attributes
+	P11Attribute *attrCertificateType = new P11AttrCertificateType(osobject);
+	P11Attribute *attrTrusted = new P11AttrTrusted(osobject);
+	P11Attribute *attrCertificateCategory = new P11AttrCertificateCategory(osobject);
+	P11Attribute *attrCheckValue = new P11AttrCheckValue(osobject);
+	P11Attribute *attrStartDate = new P11AttrStartDate(osobject);
+	P11Attribute *attrEndDate = new P11AttrEndDate(osobject);
+
+	// Initialize the attributes
+	if
+	(
+		!attrCertificateType->init() ||
+		!attrTrusted->init() ||
+		!attrCertificateCategory->init() ||
+		!attrCheckValue->init() ||
+		!attrStartDate->init() ||
+		!attrEndDate->init()
+	)
+	{
+		ERROR_MSG("Could not initialize the attribute");
+		return false;
+	}
+
+	// Add them to the map
+	attributes[attrCertificateType->getType()] = attrCertificateType;
+	attributes[attrTrusted->getType()] = attrTrusted;
+	attributes[attrCertificateCategory->getType()] = attrCertificateCategory;
+	attributes[attrCheckValue->getType()] = attrCheckValue;
+	attributes[attrStartDate->getType()] = attrStartDate;
+	attributes[attrEndDate->getType()] = attrEndDate;
+
+	return true;
+}
+
+/*****************************************
+ * Old code that will be migrated
+ *****************************************
 
 // Save generated key
 CK_RV OSObjectControl::saveGeneratedKey(CK_ATTRIBUTE_PTR pKeyTemplate, CK_ULONG ulKeyAttributeCount, RSAPublicKey *rsa)
@@ -105,281 +218,6 @@ CK_RV OSObjectControl::saveGeneratedKey(CK_ATTRIBUTE_PTR pKeyTemplate, CK_ULONG 
 
 CK_RV OSObjectControl::saveGeneratedKey(CK_ATTRIBUTE_PTR pKeyTemplate, CK_ULONG ulKeyAttributeCount, DSAPrivateKey *dsa)
 {
-	return CKR_OK;
-}
-
-CK_RV OSObjectControl::saveAttribute(CK_ATTRIBUTE attr)
-{
-	// Check pointers
-	if (attr.ulValueLen != 0 && attr.pValue == NULL_PTR)
-	{
-		ERROR_MSG("The attribute is a NULL_PTR but have a non-zero length")
-		return CKR_TEMPLATE_INCONSISTENT;
-	}
-
-	// Can only modify attributes that exist
-	if (osobject->attributeExists(attr.type) == false)
-	{
-		ERROR_MSG("The attribute type is not valid");
-		return CKR_ATTRIBUTE_TYPE_INVALID;
-	}
-
-	// Check if we are allowed to modify the data
-	if (operationType == SET)
-	{
-		if
-		(
-			osobject->attributeExists(CKA_MODIFIABLE) &&
-			osobject->getAttribute(CKA_MODIFIABLE)->getBooleanValue() == false
-		)
-		{
-			ERROR_MSG("The object cannot be modified");
-			return CKR_ATTRIBUTE_READ_ONLY;
-		}
-		if
-		(
-			osobject->getAttribute(CKA_CLASS)->getUnsignedLongValue() == CKO_CERTIFICATE &&
-			osobject->getAttribute(CKA_TRUSTED)->getBooleanValue() == true
-		)
-		{
-			ERROR_MSG("The object cannot be modified");
-			return CKR_ATTRIBUTE_READ_ONLY;
-		}
-	}
-
-	// Some attributes
-	OSAttribute attrTrue(true);
-	OSAttribute attrFalse(false);
-
-	// Check / save the attributes
-	switch (attr.type)
-	{
-		case CKA_CLASS:
-		case CKA_KEY_TYPE:
-		case CKA_CERTIFICATE_TYPE:
-			if (operationType == SET)
-			{
-				return CKR_ATTRIBUTE_READ_ONLY;
-			}
-			if (attr.ulValueLen != sizeof(CK_ULONG))
-			{
-				return CKR_ATTRIBUTE_VALUE_INVALID;
-			}
-			if (osobject->getAttribute(attr.type)->getUnsignedLongValue() != *(CK_ULONG*)attr.pValue)
-			{
-				return CKR_TEMPLATE_INCONSISTENT;
-			}
-			break;
-		case CKA_TOKEN:
-		case CKA_PRIVATE:
-		case CKA_MODIFIABLE:
-			if (operationType != GENERATE && operationType != CREATE && operationType != COPY)
-			{
-				return CKR_ATTRIBUTE_READ_ONLY;
-			}
-			if (attr.ulValueLen != sizeof(CK_BBOOL))
-			{
-				return CKR_ATTRIBUTE_VALUE_INVALID;
-			}
-			if (*(CK_BBOOL*)attr.pValue == CK_FALSE)
-			{
-				osobject->setAttribute(attr.type, attrFalse);
-			}
-			else
-			{
-				osobject->setAttribute(attr.type, attrTrue);
-			}
-			break;
-		case CKA_LABEL:
-		case CKA_APPLICATION:
-		case CKA_OBJECT_ID:
-		case CKA_CHECK_VALUE:
-		case CKA_VALUE:
-		case CKA_SUBJECT:
-			osobject->setAttribute(attr.type, ByteString((unsigned char*)attr.pValue, attr.ulValueLen));
-			break;
-		case CKA_TRUSTED:
-			if (attr.ulValueLen != sizeof(CK_BBOOL))
-			{
-				return CKR_ATTRIBUTE_VALUE_INVALID;
-			}
-			if (*(CK_BBOOL*)attr.pValue == CK_FALSE)
-			{
-				osobject->setAttribute(CKA_TRUSTED, attrFalse);
-			}
-			else
-			{
-				if (isSO == false)
-				{
-					ERROR_MSG("CKA_TRUSTED can only be set to true by the SO");
-					return CKR_ATTRIBUTE_READ_ONLY;
-				}
-				osobject->setAttribute(CKA_TRUSTED, attrTrue);
-			}
-			break;
-		case CKA_CERTIFICATE_CATEGORY:
-			if (operationType == SET)
-			{
-				return CKR_ATTRIBUTE_READ_ONLY;
-			}
-			if (attr.ulValueLen != sizeof(CK_ULONG))
-			{
-				return CKR_ATTRIBUTE_VALUE_INVALID;
-			}
-			osobject->setAttribute(CKA_CERTIFICATE_CATEGORY, *(CK_ULONG*)attr.pValue);
-			break;
-		case CKA_START_DATE:
-		case CKA_END_DATE:
-			if (attr.ulValueLen != sizeof(CK_DATE) && attr.ulValueLen != 0)
-			{
-				return CKR_ATTRIBUTE_VALUE_INVALID;
-			}
-			osobject->setAttribute(attr.type, ByteString((unsigned char*)attr.pValue, attr.ulValueLen));
-			break;
-		case CKA_DERIVE:
-		case CKA_ENCRYPT:
-		case CKA_VERIFY:
-		case CKA_VERIFY_RECOVER:
-		case CKA_WRAP:
-		case CKA_DECRYPT:
-		case CKA_SIGN:
-		case CKA_SIGN_RECOVER:
-		case CKA_UNWRAP:
-			if (attr.ulValueLen != sizeof(CK_BBOOL))
-			{
-				return CKR_ATTRIBUTE_VALUE_INVALID;
-			}
-			if (*(CK_BBOOL*)attr.pValue == CK_FALSE)
-			{
-				osobject->setAttribute(attr.type, attrFalse);
-			}
-			else
-			{
-				osobject->setAttribute(attr.type, attrTrue);
-			}
-			break;
-		case CKA_LOCAL:
-		case CKA_KEY_GEN_MECHANISM:
-		case CKA_ALWAYS_SENSITIVE:
-		case CKA_NEVER_EXTRACTABLE:
-			return CKR_ATTRIBUTE_READ_ONLY;
-		case CKA_SENSITIVE:
-			if (operationType == SET || operationType == COPY)
-			{
-				if (osobject->getAttribute(CKA_SENSITIVE)->getBooleanValue())
-				{
-					return CKR_ATTRIBUTE_READ_ONLY;
-				}
-			}
-			if (attr.ulValueLen != sizeof(CK_BBOOL))
-			{
-				return CKR_ATTRIBUTE_VALUE_INVALID;
-			}
-			if (*(CK_BBOOL*)attr.pValue == CK_FALSE)
-			{
-				osobject->setAttribute(CKA_SENSITIVE, attrFalse);
-				osobject->setAttribute(CKA_ALWAYS_SENSITIVE, attrFalse);
-			}
-			else
-			{
-				osobject->setAttribute(CKA_SENSITIVE, attrTrue);
-				// This is so that secret keys get the correct value
-				if (operationType == GENERATE)
-				{
-					osobject->setAttribute(CKA_ALWAYS_SENSITIVE, attrTrue);
-				}
-			}
-			break;
-		case CKA_EXTRACTABLE:
-			if (operationType == SET || operationType == COPY)
-			{
-				if (osobject->getAttribute(CKA_EXTRACTABLE)->getBooleanValue() == false)
-				{
-					return CKR_ATTRIBUTE_READ_ONLY;
-				}
-			}
-			if (attr.ulValueLen != sizeof(CK_BBOOL))
-			{
-				return CKR_ATTRIBUTE_VALUE_INVALID;
-			}
-			if (*(CK_BBOOL*)attr.pValue == CK_FALSE)
-			{
-				osobject->setAttribute(CKA_EXTRACTABLE, attrFalse);
-			}
-			else
-			{
-				osobject->setAttribute(CKA_EXTRACTABLE, attrTrue);
-				osobject->setAttribute(CKA_NEVER_EXTRACTABLE, attrFalse);
-			}
-			break;
-		case CKA_WRAP_WITH_TRUSTED:
-			if (operationType == SET || operationType == COPY)
-			{
-				if (osobject->getAttribute(CKA_WRAP_WITH_TRUSTED)->getBooleanValue())
-				{
-					return CKR_ATTRIBUTE_READ_ONLY;
-				}
-			}
-			if (attr.ulValueLen != sizeof(CK_BBOOL))
-			{
-				return CKR_ATTRIBUTE_VALUE_INVALID;
-			}
-			if (*(CK_BBOOL*)attr.pValue == CK_FALSE)
-			{
-				osobject->setAttribute(CKA_WRAP_WITH_TRUSTED, attrFalse);
-			}
-			else
-			{
-				osobject->setAttribute(CKA_WRAP_WITH_TRUSTED, attrTrue);
-			}
-			break;
-		case CKA_ALWAYS_AUTHENTICATE:
-			if (attr.ulValueLen != sizeof(CK_BBOOL))
-			{
-				return CKR_ATTRIBUTE_VALUE_INVALID;
-			}
-			if (*(CK_BBOOL*)attr.pValue == CK_FALSE)
-			{
-				osobject->setAttribute(CKA_ALWAYS_AUTHENTICATE, attrFalse);
-			}
-			else
-			{
-				if (osobject->getAttribute(CKA_PRIVATE)->getBooleanValue() == false)
-				{
-					return CKR_TEMPLATE_INCONSISTENT;
-				}
-				osobject->setAttribute(CKA_ALWAYS_AUTHENTICATE, attrTrue);
-			}
-			break;
-		case CKA_MODULUS:
-		case CKA_PUBLIC_EXPONENT:
-		case CKA_PRIVATE_EXPONENT:
-		case CKA_PRIME_1:
-		case CKA_PRIME_2:
-		case CKA_EXPONENT_1:
-		case CKA_EXPONENT_2:
-		case CKA_COEFFICIENT:
-			if (operationType != CREATE)
-			{
-				return CKR_ATTRIBUTE_READ_ONLY;
-			}
-			osobject->setAttribute(attr.type, ByteString((unsigned char*)attr.pValue, attr.ulValueLen));
-			break;
-		case CKA_MODULUS_BITS:
-			if (operationType != GENERATE)
-			{
-				return CKR_ATTRIBUTE_READ_ONLY;
-			}
-			if (attr.ulValueLen != sizeof(CK_ULONG))
-			{
-				return CKR_ATTRIBUTE_VALUE_INVALID;
-			}
-			osobject->setAttribute(attr.type, *(CK_ULONG*)attr.pValue);
-			break;
-		default:
-			break;
-	}
-
 	return CKR_OK;
 }
 
@@ -568,3 +406,4 @@ void OSObjectControl::setDomainDefaults()
 	osobject->setAttribute(CKA_LOCAL, attrFalse);
 }
 
+*/
