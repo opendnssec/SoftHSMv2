@@ -121,4 +121,14 @@ protected:
 	bool build();
 };
 
+class P11RSAPrivateKeyObj : public P11PrivateKeyObj
+{
+public:
+	// Constructor
+	P11RSAPrivateKeyObj(OSObject *osobject);
+
+	// Add attributes
+	bool build();
+};
+
 #endif // !_SOFTHSM_V2_P11OBJECTS_H

@@ -211,7 +211,6 @@ bool P11PublicKeyObj::build()
 	if (!P11KeyObj::build()) return false;
 
 	// Create attributes
-
 	P11Attribute *attrSubject = new P11AttrSubject(osobject);
 	P11Attribute *attrEncrypt = new P11AttrEncrypt(osobject);
 	P11Attribute *attrVerify = new P11AttrVerify(osobject);
@@ -247,13 +246,43 @@ bool P11PublicKeyObj::build()
 }
 
 // Add attributes
+bool P11RSAPublicKeyObj::build()
+{
+	// Create parent
+	if (!P11PublicKeyObj::build()) return false;
+
+	// Create attributes
+	P11Attribute *attrModulus = new P11AttrModulus(osobject);
+	P11Attribute *attrModulusBits = new P11AttrModulusBits(osobject);
+	P11Attribute *attrPublicExponent = new P11AttrPublicExponent(osobject);
+
+	// Initialize the attributes
+	if
+	(
+		!attrModulus->init() ||
+		!attrModulusBits->init() ||
+		!attrPublicExponent->init()
+	)
+	{
+		ERROR_MSG("Could not initialize the attribute");
+		return false;
+	}
+
+	// Add them to the map
+	attributes[attrModulus->getType()] = attrModulus;
+	attributes[attrModulusBits->getType()] = attrModulusBits;
+	attributes[attrPublicExponent->getType()] = attrPublicExponent;
+
+	return true;
+}
+
+// Add attributes
 bool P11PrivateKeyObj::build()
 {
 	// Create parent
 	if (!P11KeyObj::build()) return false;
 
 	// Create attributes
-
 	P11Attribute *attrSubject = new P11AttrSubject(osobject);
 	P11Attribute *attrSensitive = new P11AttrSensitive(osobject);
 	P11Attribute *attrDecrypt = new P11AttrDecrypt(osobject);
@@ -299,6 +328,52 @@ bool P11PrivateKeyObj::build()
 	attributes[attrNeverExtractable->getType()] = attrNeverExtractable;
 	attributes[attrWrapWithTrusted->getType()] = attrWrapWithTrusted;
 	attributes[attrAlwaysAuthenticate->getType()] = attrAlwaysAuthenticate;
+
+	return true;
+}
+
+// Add attributes
+bool P11RSAPrivateKeyObj::build()
+{
+	// Create parent
+	if (!P11PrivateKeyObj::build()) return false;
+
+	// Create attributes
+	P11Attribute *attrModulus = new P11AttrModulus(osobject);
+	P11Attribute *attrPublicExponent = new P11AttrPublicExponent(osobject);
+	P11Attribute *attrPrivateExponent = new P11AttrPrivateExponent(osobject);
+	P11Attribute *attrPrime1 = new P11AttrPrime1(osobject);
+	P11Attribute *attrPrime2 = new P11AttrPrime2(osobject);
+	P11Attribute *attrExponent1 = new P11AttrExponent1(osobject);
+	P11Attribute *attrExponent2 = new P11AttrExponent2(osobject);
+	P11Attribute *attrCoefficient = new P11AttrCoefficient(osobject);
+
+	// Initialize the attributes
+	if
+	(
+		!attrModulus->init() ||
+		!attrPublicExponent->init() ||
+		!attrPrivateExponent->init() ||
+		!attrPrime1->init() ||
+		!attrPrime2->init() ||
+		!attrExponent1->init() ||
+		!attrExponent2->init() ||
+		!attrCoefficient->init()
+	)
+	{
+		ERROR_MSG("Could not initialize the attribute");
+		return false;
+	}
+
+	// Add them to the map
+	attributes[attrModulus->getType()] = attrModulus;
+	attributes[attrPublicExponent->getType()] = attrPublicExponent;
+	attributes[attrPrivateExponent->getType()] = attrPrivateExponent;
+	attributes[attrPrime1->getType()] = attrPrime1;
+	attributes[attrPrime2->getType()] = attrPrime2;
+	attributes[attrExponent1->getType()] = attrExponent1;
+	attributes[attrExponent2->getType()] = attrExponent2;
+	attributes[attrCoefficient->getType()] = attrCoefficient;
 
 	return true;
 }
