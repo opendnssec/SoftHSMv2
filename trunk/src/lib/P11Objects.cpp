@@ -378,6 +378,98 @@ bool P11RSAPrivateKeyObj::build()
 	return true;
 }
 
+// Add attributes
+bool P11SecretKeyObj::build()
+{
+	// Create parent
+	if (!P11KeyObj::build()) return false;
+
+	// Create attributes
+	P11Attribute *attrSensitive = new P11AttrSensitive(osobject);
+	P11Attribute *attrEncrypt = new P11AttrEncrypt(osobject);
+	P11Attribute *attrDecrypt = new P11AttrDecrypt(osobject);
+	P11Attribute *attrSign = new P11AttrSign(osobject);
+	P11Attribute *attrVerify = new P11AttrVerify(osobject);
+	P11Attribute *attrWrap = new P11AttrWrap(osobject);
+	P11Attribute *attrUnwrap = new P11AttrUnwrap(osobject);
+	P11Attribute *attrExtractable = new P11AttrExtractable(osobject);
+	P11Attribute *attrAlwaysSensitive = new P11AttrAlwaysSensitive(osobject);
+	P11Attribute *attrNeverExtractable = new P11AttrNeverExtractable(osobject);
+	P11Attribute *attrCheckValue = new P11AttrCheckValue(osobject);
+	P11Attribute *attrWrapWithTrusted = new P11AttrWrapWithTrusted(osobject);
+	P11Attribute *attrTrusted = new P11AttrTrusted(osobject);
+        // CKA_WRAP_TEMPLATE is not supported
+        // CKA_UNWRAP_TEMPLATE is not supported
+
+	// Initialize the attributes
+	if
+	(
+		!attrSensitive->init() ||
+		!attrEncrypt->init() ||
+		!attrDecrypt->init() ||
+		!attrSign->init() ||
+		!attrVerify->init() ||
+		!attrWrap->init() ||
+		!attrUnwrap->init() ||
+		!attrExtractable->init() ||
+		!attrAlwaysSensitive->init() ||
+		!attrNeverExtractable->init() ||
+		!attrCheckValue->init() ||
+		!attrWrapWithTrusted->init() ||
+		!attrTrusted->init()
+	)
+	{
+		ERROR_MSG("Could not initialize the attribute");
+		return false;
+	}
+
+	// Add them to the map
+	attributes[attrSensitive->getType()] = attrSensitive;
+	attributes[attrEncrypt->getType()] = attrEncrypt;
+	attributes[attrDecrypt->getType()] = attrDecrypt;
+	attributes[attrSign->getType()] = attrSign;
+	attributes[attrVerify->getType()] = attrVerify;
+	attributes[attrWrap->getType()] = attrWrap;
+	attributes[attrUnwrap->getType()] = attrUnwrap;
+	attributes[attrExtractable->getType()] = attrExtractable;
+	attributes[attrAlwaysSensitive->getType()] = attrAlwaysSensitive;
+	attributes[attrNeverExtractable->getType()] = attrNeverExtractable;
+	attributes[attrCheckValue->getType()] = attrCheckValue;
+	attributes[attrWrapWithTrusted->getType()] = attrWrapWithTrusted;
+	attributes[attrTrusted->getType()] = attrTrusted;
+
+	return true;
+}
+
+// Add attributes
+bool P11DomainObj::build()
+{
+	// Create parent
+	if (!P11Object::build()) return false;
+
+	// Create attributes
+
+	P11Attribute *attrKeyType = new P11AttrApplication(osobject);
+	P11Attribute *attrLocal = new P11AttrObjectID(osobject);
+
+	// Initialize the attributes
+	if
+	(
+		!attrKeyType->init() ||
+		!attrLocal->init()
+	)
+	{
+		ERROR_MSG("Could not initialize the attribute");
+		return false;
+	}
+
+	// Add them to the map
+	attributes[attrKeyType->getType()] = attrKeyType;
+	attributes[attrLocal->getType()] = attrLocal;
+
+	return true;
+}
+
 /*****************************************
  * Old code that will be migrated
  *****************************************
@@ -437,191 +529,6 @@ CK_RV OSObjectControl::saveGeneratedKey(CK_ATTRIBUTE_PTR pKeyTemplate, CK_ULONG 
 CK_RV OSObjectControl::saveGeneratedKey(CK_ATTRIBUTE_PTR pKeyTemplate, CK_ULONG ulKeyAttributeCount, DSAPrivateKey *dsa)
 {
 	return CKR_OK;
-}
-
-// Default storage attributes
-void OSObjectControl::setStorageDefaults()
-{
-	if (osobject == NULL) return;
-
-	OSAttribute attrEmpty(ByteString(""));
-	OSAttribute attrTrue(true);
-	OSAttribute attrFalse(false);
-	OSAttribute attrClass((unsigned long)CKO_VENDOR_DEFINED);
-
-	// CKA_CLASS must be updated when creating the object
-	osobject->setAttribute(CKA_CLASS, attrClass);
-	osobject->setAttribute(CKA_TOKEN, attrFalse);
-	osobject->setAttribute(CKA_PRIVATE, attrTrue);
-	osobject->setAttribute(CKA_MODIFIABLE, attrTrue);
-	osobject->setAttribute(CKA_LABEL, attrEmpty);
-}
-
-// Default data attributes
-void OSObjectControl::setDataDefaults()
-{
-	if (osobject == NULL) return;
-
-	OSAttribute attrEmpty(ByteString(""));
-
-	osobject->setAttribute(CKA_APPLICATION, attrEmpty);
-	osobject->setAttribute(CKA_OBJECT_ID, attrEmpty);
-	osobject->setAttribute(CKA_VALUE, attrEmpty);
-}
-
-// Default certificate attributes
-void OSObjectControl::setCertificateDefaults()
-{
-	if (osobject == NULL) return;
-
-	OSAttribute attrEmpty(ByteString(""));
-	OSAttribute attrFalse(false);
-	OSAttribute attrZero((unsigned long)0);
-	OSAttribute attrType((unsigned long)CKC_VENDOR_DEFINED);
-
-	// CKA_CERTIFICATE_TYPE must be updated when creating the object
-	osobject->setAttribute(CKA_CERTIFICATE_TYPE, attrType);
-	osobject->setAttribute(CKA_TRUSTED, attrFalse);
-	osobject->setAttribute(CKA_CERTIFICATE_CATEGORY, attrZero);
-	osobject->setAttribute(CKA_CHECK_VALUE, attrEmpty);
-	osobject->setAttribute(CKA_START_DATE, attrEmpty);
-	osobject->setAttribute(CKA_END_DATE, attrEmpty);
-}
-
-// Default key attributes
-void OSObjectControl::setKeyDefaults()
-{
-	if (osobject == NULL) return;
-
-	OSAttribute attrEmpty(ByteString(""));
-	OSAttribute attrFalse(false);
-	OSAttribute attrType((unsigned long)CKK_VENDOR_DEFINED);
-	OSAttribute attrMech((unsigned long)CK_UNAVAILABLE_INFORMATION);
-
-	// CKA_KEY_TYPE must be updated when creating the object
-	osobject->setAttribute(CKA_KEY_TYPE, attrType);
-	osobject->setAttribute(CKA_ID, attrEmpty);
-	osobject->setAttribute(CKA_START_DATE, attrEmpty);
-	osobject->setAttribute(CKA_END_DATE, attrEmpty);
-	osobject->setAttribute(CKA_DERIVE, attrFalse);
-	// CKA_LOCAL must be updated when creating the object
-	osobject->setAttribute(CKA_LOCAL, attrFalse);
-	// CKA_KEY_GEN_MECHANISM must be updated when creating the object
-	osobject->setAttribute(CKA_KEY_GEN_MECHANISM, attrMech);
-	// CKA_ALLOWED_MECHANISMS is not supported
-}
-
-// Default public key attributes
-void OSObjectControl::setPublicKeyDefaults()
-{
-	if (osobject == NULL) return;
-
-	OSAttribute attrEmpty(ByteString(""));
-	OSAttribute attrFalse(false);
-	OSAttribute attrTrue(true);
-
-	osobject->setAttribute(CKA_SUBJECT, attrEmpty);
-	osobject->setAttribute(CKA_ENCRYPT, attrTrue);
-	osobject->setAttribute(CKA_VERIFY, attrTrue);
-	osobject->setAttribute(CKA_VERIFY_RECOVER, attrTrue);
-	osobject->setAttribute(CKA_WRAP, attrTrue);
-	osobject->setAttribute(CKA_TRUSTED, attrFalse);
-	// CKA_WRAP_TEMPLATE is not supported
-}
-
-// Default RSA public key attributes
-void OSObjectControl::setRsaPublicKeyDefaults()
-{
-	if (osobject == NULL) return;
-
-	OSAttribute attrEmpty(ByteString(""));
-	OSAttribute attrZero((unsigned long)0);
-
-	// These attributes are either set by the template or the key
-
-	osobject->setAttribute(CKA_MODULUS, attrEmpty);
-	osobject->setAttribute(CKA_MODULUS_BITS, attrZero);
-	osobject->setAttribute(CKA_PUBLIC_EXPONENT, attrEmpty);
-}
-
-// Default private key attributes
-void OSObjectControl::setPrivateKeyDefaults()
-{
-	if (osobject == NULL) return;
-
-	OSAttribute attrEmpty(ByteString(""));
-	OSAttribute attrFalse(false);
-	OSAttribute attrTrue(true);
-
-	osobject->setAttribute(CKA_SUBJECT, attrEmpty);
-	osobject->setAttribute(CKA_SENSITIVE, attrTrue);
-	osobject->setAttribute(CKA_DECRYPT, attrTrue);
-	osobject->setAttribute(CKA_SIGN, attrTrue);
-	osobject->setAttribute(CKA_SIGN_RECOVER, attrTrue);
-	osobject->setAttribute(CKA_UNWRAP, attrTrue);
-	osobject->setAttribute(CKA_EXTRACTABLE, attrFalse);
-	osobject->setAttribute(CKA_ALWAYS_SENSITIVE, attrTrue);
-	osobject->setAttribute(CKA_NEVER_EXTRACTABLE, attrTrue);
-	osobject->setAttribute(CKA_WRAP_WITH_TRUSTED, attrFalse);
-	// CKA_UNWRAP_TEMPLATE is not supported
-	osobject->setAttribute(CKA_ALWAYS_AUTHENTICATE, attrFalse);
-}
-
-// Default RSA private key attributes
-void OSObjectControl::setRsaPrivateKeyDefaults()
-{
-	if (osobject == NULL) return;
-
-	OSAttribute attrEmpty(ByteString(""));
-
-	// These attributes are either set by the template or the key
-
-	osobject->setAttribute(CKA_MODULUS, attrEmpty);
-	osobject->setAttribute(CKA_PUBLIC_EXPONENT, attrEmpty);
-	osobject->setAttribute(CKA_PRIVATE_EXPONENT, attrEmpty);
-	osobject->setAttribute(CKA_PRIME_1, attrEmpty);
-	osobject->setAttribute(CKA_PRIME_2, attrEmpty);
-	osobject->setAttribute(CKA_EXPONENT_1, attrEmpty);
-	osobject->setAttribute(CKA_EXPONENT_2, attrEmpty);
-	osobject->setAttribute(CKA_COEFFICIENT, attrEmpty);
-}
-
-// Default secret key attributes
-void OSObjectControl::setSecretKeyDefaults()
-{
-	if (osobject == NULL) return;
-
-	OSAttribute attrEmpty(ByteString(""));
-	OSAttribute attrFalse(false);
-	OSAttribute attrTrue(true);
-
-	osobject->setAttribute(CKA_SENSITIVE, attrFalse);
-	osobject->setAttribute(CKA_ENCRYPT, attrTrue);
-	osobject->setAttribute(CKA_DECRYPT, attrTrue);
-	osobject->setAttribute(CKA_SIGN, attrTrue);
-	osobject->setAttribute(CKA_VERIFY, attrTrue);
-	osobject->setAttribute(CKA_WRAP, attrTrue);
-	osobject->setAttribute(CKA_UNWRAP, attrTrue);
-	osobject->setAttribute(CKA_EXTRACTABLE, attrFalse);
-	osobject->setAttribute(CKA_ALWAYS_SENSITIVE, attrFalse);
-	osobject->setAttribute(CKA_NEVER_EXTRACTABLE, attrTrue);
-	osobject->setAttribute(CKA_CHECK_VALUE, attrEmpty);
-	osobject->setAttribute(CKA_WRAP_WITH_TRUSTED, attrFalse);
-	osobject->setAttribute(CKA_TRUSTED, attrFalse);
-	// CKA_WRAP_TEMPLATE is not supported
-	// CKA_UNWRAP_TEMPLATE is not supported
-}
-
-// Default domain parameter attributes
-void OSObjectControl::setDomainDefaults()
-{
-	OSAttribute attrFalse(false);
-	OSAttribute attrType((unsigned long)CKK_VENDOR_DEFINED);
-
-	// CKA_KEY_TYPE must be updated when creating the object
-	osobject->setAttribute(CKA_KEY_TYPE, attrType);
-	// CKA_LOCAL must be updated when creating the object
-	osobject->setAttribute(CKA_LOCAL, attrFalse);
 }
 
 */
