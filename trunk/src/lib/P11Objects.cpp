@@ -160,6 +160,149 @@ bool P11CertificateObj::build()
 	return true;
 }
 
+// Add attributes
+bool P11KeyObj::build()
+{
+	// Create parent
+	if (!P11Object::build()) return false;
+
+	// Create attributes
+	P11Attribute *attrKeyType = new P11AttrKeyType(osobject);
+	P11Attribute *attrID = new P11AttrID(osobject);
+	P11Attribute *attrStartDate = new P11AttrStartDate(osobject);
+	P11Attribute *attrEndDate = new P11AttrEndDate(osobject);
+	P11Attribute *attrDerive = new P11AttrDerive(osobject);
+	P11Attribute *attrLocal = new P11AttrLocal(osobject);
+	P11Attribute *attrKeyGenMechanism = new P11AttrKeyGenMechanism(osobject);
+	// CKA_ALLOWED_MECHANISMS is not supported
+
+	// Initialize the attributes
+	if
+	(
+		!attrKeyType->init() ||
+		!attrID->init() ||
+		!attrStartDate->init() ||
+		!attrEndDate->init() ||
+		!attrDerive->init() ||
+		!attrLocal->init() ||
+		!attrKeyGenMechanism->init()
+	)
+	{
+		ERROR_MSG("Could not initialize the attribute");
+		return false;
+	}
+
+	// Add them to the map
+	attributes[attrKeyType->getType()] = attrKeyType;
+	attributes[attrID->getType()] = attrID;
+	attributes[attrStartDate->getType()] = attrStartDate;
+	attributes[attrEndDate->getType()] = attrEndDate;
+	attributes[attrDerive->getType()] = attrDerive;
+	attributes[attrLocal->getType()] = attrLocal;
+	attributes[attrKeyGenMechanism->getType()] = attrKeyGenMechanism;
+
+	return true;
+}
+
+// Add attributes
+bool P11PublicKeyObj::build()
+{
+	// Create parent
+	if (!P11KeyObj::build()) return false;
+
+	// Create attributes
+
+	P11Attribute *attrSubject = new P11AttrSubject(osobject);
+	P11Attribute *attrEncrypt = new P11AttrEncrypt(osobject);
+	P11Attribute *attrVerify = new P11AttrVerify(osobject);
+	P11Attribute *attrVerifyRecover = new P11AttrVerifyRecover(osobject);
+	P11Attribute *attrWrap = new P11AttrWrap(osobject);
+	P11Attribute *attrTrusted = new P11AttrTrusted(osobject);
+        // CKA_WRAP_TEMPLATE is not supported
+
+	// Initialize the attributes
+	if
+	(
+		!attrSubject->init() ||
+		!attrEncrypt->init() ||
+		!attrVerify->init() ||
+		!attrVerifyRecover->init() ||
+		!attrWrap->init() ||
+		!attrTrusted->init()
+	)
+	{
+		ERROR_MSG("Could not initialize the attribute");
+		return false;
+	}
+
+	// Add them to the map
+	attributes[attrSubject->getType()] = attrSubject;
+	attributes[attrEncrypt->getType()] = attrEncrypt;
+	attributes[attrVerify->getType()] = attrVerify;
+	attributes[attrVerifyRecover->getType()] = attrVerifyRecover;
+	attributes[attrWrap->getType()] = attrWrap;
+	attributes[attrTrusted->getType()] = attrTrusted;
+
+	return true;
+}
+
+// Add attributes
+bool P11PrivateKeyObj::build()
+{
+	// Create parent
+	if (!P11KeyObj::build()) return false;
+
+	// Create attributes
+
+	P11Attribute *attrSubject = new P11AttrSubject(osobject);
+	P11Attribute *attrSensitive = new P11AttrSensitive(osobject);
+	P11Attribute *attrDecrypt = new P11AttrDecrypt(osobject);
+	P11Attribute *attrSign = new P11AttrSign(osobject);
+	P11Attribute *attrSignRecover = new P11AttrSignRecover(osobject);
+	P11Attribute *attrUnwrap = new P11AttrUnwrap(osobject);
+	P11Attribute *attrExtractable = new P11AttrExtractable(osobject);
+	P11Attribute *attrAlwaysSensitive = new P11AttrAlwaysSensitive(osobject);
+	P11Attribute *attrNeverExtractable = new P11AttrNeverExtractable(osobject);
+	P11Attribute *attrWrapWithTrusted = new P11AttrWrapWithTrusted(osobject);
+        // CKA_UNWRAP_TEMPLATE is not supported
+	P11Attribute *attrAlwaysAuthenticate = new P11AttrAlwaysAuthenticate(osobject);
+
+	// Initialize the attributes
+	if
+	(
+		!attrSubject->init() ||
+		!attrSensitive->init() ||
+		!attrDecrypt->init() ||
+		!attrSign->init() ||
+		!attrSignRecover->init() ||
+		!attrUnwrap->init() ||
+		!attrExtractable->init() ||
+		!attrAlwaysSensitive->init() ||
+		!attrNeverExtractable->init() ||
+		!attrWrapWithTrusted->init() ||
+		!attrAlwaysAuthenticate->init()
+	)
+	{
+		ERROR_MSG("Could not initialize the attribute");
+		return false;
+	}
+
+	// Add them to the map
+	attributes[attrSubject->getType()] = attrSubject;
+	attributes[attrSensitive->getType()] = attrSensitive;
+	attributes[attrDecrypt->getType()] = attrDecrypt;
+	attributes[attrSign->getType()] = attrSign;
+	attributes[attrSignRecover->getType()] = attrSignRecover;
+	attributes[attrUnwrap->getType()] = attrUnwrap;
+	attributes[attrExtractable->getType()] = attrExtractable;
+	attributes[attrAlwaysSensitive->getType()] = attrAlwaysSensitive;
+	attributes[attrNeverExtractable->getType()] = attrNeverExtractable;
+	attributes[attrWrapWithTrusted->getType()] = attrWrapWithTrusted;
+	attributes[attrAlwaysAuthenticate->getType()] = attrAlwaysAuthenticate;
+
+	return true;
+}
+
 /*****************************************
  * Old code that will be migrated
  *****************************************

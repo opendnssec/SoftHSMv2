@@ -111,4 +111,14 @@ public:
 	bool build();
 };
 
+class P11PrivateKeyObj : public P11KeyObj
+{
+protected:
+	// Constructor
+	P11PrivateKeyObj();
+
+	// Add attributes
+	bool build();
+};
+
 #endif // !_SOFTHSM_V2_P11OBJECTS_H
