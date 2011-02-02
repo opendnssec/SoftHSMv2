@@ -695,4 +695,166 @@ protected:
 	virtual CK_RV updateAttr(CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op, bool isSO);
 };
 
+/*****************************************
+ * CKA_MODULUS
+ *****************************************/
+
+class P11AttrModulus : public P11Attribute
+{
+public:
+	// Constructor
+	P11AttrModulus(OSObject *osobject) : P11Attribute(osobject) { type = CKA_MODULUS; }
+
+protected:
+	// Set the default value of the attribute
+	virtual bool setDefault();
+
+	// Update the value if allowed
+	virtual CK_RV updateAttr(CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op, bool isSO);
+};
+
+/*****************************************
+ * CKA_PUBLIC_EXPONENT
+ *****************************************/
+
+class P11AttrPublicExponent : public P11Attribute
+{
+public:
+	// Constructor
+	P11AttrPublicExponent(OSObject *osobject) : P11Attribute(osobject) { type = CKA_PUBLIC_EXPONENT; }
+
+protected:
+	// Set the default value of the attribute
+	virtual bool setDefault();
+
+	// Update the value if allowed
+	virtual CK_RV updateAttr(CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op, bool isSO);
+};
+
+/*****************************************
+ * CKA_PRIVATE_EXPONENT
+ *****************************************/
+
+class P11AttrPrivateExponent : public P11Attribute
+{
+public:
+	// Constructor
+	P11AttrPrivateExponent(OSObject *osobject) : P11Attribute(osobject) { type = CKA_PRIVATE_EXPONENT; }
+
+protected:
+	// Set the default value of the attribute
+	virtual bool setDefault();
+
+	// Update the value if allowed
+	virtual CK_RV updateAttr(CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op, bool isSO);
+};
+
+/*****************************************
+ * CKA_PRIME_1
+ *****************************************/
+
+class P11AttrPrime1 : public P11Attribute
+{
+public:
+	// Constructor
+	P11AttrPrime1(OSObject *osobject) : P11Attribute(osobject) { type = CKA_PRIME_1; }
+
+protected:
+	// Set the default value of the attribute
+	virtual bool setDefault();
+
+	// Update the value if allowed
+	virtual CK_RV updateAttr(CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op, bool isSO);
+};
+
+/*****************************************
+ * CKA_PRIME_2
+ *****************************************/
+
+class P11AttrPrime2 : public P11Attribute
+{
+public:
+	// Constructor
+	P11AttrPrime2(OSObject *osobject) : P11Attribute(osobject) { type = CKA_PRIME_2; }
+
+protected:
+	// Set the default value of the attribute
+	virtual bool setDefault();
+
+	// Update the value if allowed
+	virtual CK_RV updateAttr(CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op, bool isSO);
+};
+
+/*****************************************
+ * CKA_EXPONENT_1
+ *****************************************/
+
+class P11AttrExponent1 : public P11Attribute
+{
+public:
+	// Constructor
+	P11AttrExponent1(OSObject *osobject) : P11Attribute(osobject) { type = CKA_EXPONENT_1; }
+
+protected:
+	// Set the default value of the attribute
+	virtual bool setDefault();
+
+	// Update the value if allowed
+	virtual CK_RV updateAttr(CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op, bool isSO);
+};
+
+/*****************************************
+ * CKA_EXPONENT_2
+ *****************************************/
+
+class P11AttrExponent2 : public P11Attribute
+{
+public:
+	// Constructor
+	P11AttrExponent2(OSObject *osobject) : P11Attribute(osobject) { type = CKA_EXPONENT_2; }
+
+protected:
+	// Set the default value of the attribute
+	virtual bool setDefault();
+
+	// Update the value if allowed
+	virtual CK_RV updateAttr(CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op, bool isSO);
+};
+
+/*****************************************
+ * CKA_COEFFICIENT
+ *****************************************/
+
+class P11AttrCoefficient : public P11Attribute
+{
+public:
+	// Constructor
+	P11AttrCoefficient(OSObject *osobject) : P11Attribute(osobject) { type = CKA_COEFFICIENT; }
+
+protected:
+	// Set the default value of the attribute
+	virtual bool setDefault();
+
+	// Update the value if allowed
+	virtual CK_RV updateAttr(CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op, bool isSO);
+};
+
+/*****************************************
+ * CKA_MODULUS_BITS
+ *****************************************/
+
+class P11AttrModulusBits : public P11Attribute
+{
+public:
+	// Constructor
+	P11AttrModulusBits(OSObject *osobject) : P11Attribute(osobject) { type = CKA_MODULUS_BITS; }
+
+protected:
+	// Set the default value of the attribute
+	virtual bool setDefault();
+
+	// Update the value if allowed
+	virtual CK_RV updateAttr(CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op, bool isSO);
+};
+
 #endif // !_SOFTHSM_V2_P11ATTRIBUTES_H

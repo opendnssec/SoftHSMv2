@@ -1412,47 +1412,301 @@ CK_RV P11AttrAlwaysAuthenticate::updateAttr(CK_VOID_PTR pValue, CK_ULONG ulValue
 }
 
 /*****************************************
- * Old code that will be migrated
- *****************************************
+ * CKA_MODULUS
+ *****************************************/
 
-	// Some attributes
-	OSAttribute attrTrue(true);
-	OSAttribute attrFalse(false);
+// Set default value
+bool P11AttrModulus::setDefault()
+{
+	OSAttribute attr(ByteString(""));
 
-	// Check / save the attributes
-	switch (attr.type)
+	// We do not check this because it is checked in init()
+	// if (osobject == NULL) return false;
+
+	return osobject->setAttribute(type, attr);
+}
+
+// Update the value if allowed
+CK_RV P11AttrModulus::updateAttr(CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op, bool isSO)
+{
+	// Attribute specific checks
+
+	if (op != OBJECT_OP_CREATE)
 	{
-		case CKA_MODULUS:
-		case CKA_PUBLIC_EXPONENT:
-		case CKA_PRIVATE_EXPONENT:
-		case CKA_PRIME_1:
-		case CKA_PRIME_2:
-		case CKA_EXPONENT_1:
-		case CKA_EXPONENT_2:
-		case CKA_COEFFICIENT:
-			if (operationType != CREATE)
-			{
-				return CKR_ATTRIBUTE_READ_ONLY;
-			}
-			osobject->setAttribute(attr.type, ByteString((unsigned char*)attr.pValue, attr.ulValueLen));
-			break;
-		case CKA_MODULUS_BITS:
-			if (operationType != GENERATE)
-			{
-				return CKR_ATTRIBUTE_READ_ONLY;
-			}
-			if (attr.ulValueLen != sizeof(CK_ULONG))
-			{
-				return CKR_ATTRIBUTE_VALUE_INVALID;
-			}
-			osobject->setAttribute(attr.type, *(CK_ULONG*)attr.pValue);
-			break;
-		default:
-			break;
+		return CKR_ATTRIBUTE_READ_ONLY;
 	}
+
+	// Store data
+
+	osobject->setAttribute(type, ByteString((unsigned char*)pValue, ulValueLen));
 
 	return CKR_OK;
 }
+
+/*****************************************
+ * CKA_PUBLIC_EXPONENT
+ *****************************************/
+
+// Set default value
+bool P11AttrPublicExponent::setDefault()
+{
+	OSAttribute attr(ByteString(""));
+
+	// We do not check this because it is checked in init()
+	// if (osobject == NULL) return false;
+
+	return osobject->setAttribute(type, attr);
+}
+
+// Update the value if allowed
+CK_RV P11AttrPublicExponent::updateAttr(CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op, bool isSO)
+{
+	// Attribute specific checks
+
+	if (op != OBJECT_OP_CREATE)
+	{
+		return CKR_ATTRIBUTE_READ_ONLY;
+	}
+
+	// Store data
+
+	osobject->setAttribute(type, ByteString((unsigned char*)pValue, ulValueLen));
+
+	return CKR_OK;
+}
+
+/*****************************************
+ * CKA_PRIVATE_EXPONENT
+ *****************************************/
+
+// Set default value
+bool P11AttrPrivateExponent::setDefault()
+{
+	OSAttribute attr(ByteString(""));
+
+	// We do not check this because it is checked in init()
+	// if (osobject == NULL) return false;
+
+	return osobject->setAttribute(type, attr);
+}
+
+// Update the value if allowed
+CK_RV P11AttrPrivateExponent::updateAttr(CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op, bool isSO)
+{
+	// Attribute specific checks
+
+	if (op != OBJECT_OP_CREATE)
+	{
+		return CKR_ATTRIBUTE_READ_ONLY;
+	}
+
+	// Store data
+
+	osobject->setAttribute(type, ByteString((unsigned char*)pValue, ulValueLen));
+
+	return CKR_OK;
+}
+
+/*****************************************
+ * CKA_PRIME_1
+ *****************************************/
+
+// Set default value
+bool P11AttrPrime1::setDefault()
+{
+	OSAttribute attr(ByteString(""));
+
+	// We do not check this because it is checked in init()
+	// if (osobject == NULL) return false;
+
+	return osobject->setAttribute(type, attr);
+}
+
+// Update the value if allowed
+CK_RV P11AttrPrime1::updateAttr(CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op, bool isSO)
+{
+	// Attribute specific checks
+
+	if (op != OBJECT_OP_CREATE)
+	{
+		return CKR_ATTRIBUTE_READ_ONLY;
+	}
+
+	// Store data
+
+	osobject->setAttribute(type, ByteString((unsigned char*)pValue, ulValueLen));
+
+	return CKR_OK;
+}
+
+/*****************************************
+ * CKA_PRIME_2
+ *****************************************/
+
+// Set default value
+bool P11AttrPrime2::setDefault()
+{
+	OSAttribute attr(ByteString(""));
+
+	// We do not check this because it is checked in init()
+	// if (osobject == NULL) return false;
+
+	return osobject->setAttribute(type, attr);
+}
+
+// Update the value if allowed
+CK_RV P11AttrPrime2::updateAttr(CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op, bool isSO)
+{
+	// Attribute specific checks
+
+	if (op != OBJECT_OP_CREATE)
+	{
+		return CKR_ATTRIBUTE_READ_ONLY;
+	}
+
+	// Store data
+
+	osobject->setAttribute(type, ByteString((unsigned char*)pValue, ulValueLen));
+
+	return CKR_OK;
+}
+
+/*****************************************
+ * CKA_EXPONENT_1
+ *****************************************/
+
+// Set default value
+bool P11AttrExponent1::setDefault()
+{
+	OSAttribute attr(ByteString(""));
+
+	// We do not check this because it is checked in init()
+	// if (osobject == NULL) return false;
+
+	return osobject->setAttribute(type, attr);
+}
+
+// Update the value if allowed
+CK_RV P11AttrExponent1::updateAttr(CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op, bool isSO)
+{
+	// Attribute specific checks
+
+	if (op != OBJECT_OP_CREATE)
+	{
+		return CKR_ATTRIBUTE_READ_ONLY;
+	}
+
+	// Store data
+
+	osobject->setAttribute(type, ByteString((unsigned char*)pValue, ulValueLen));
+
+	return CKR_OK;
+}
+
+/*****************************************
+ * CKA_EXPONENT_2
+ *****************************************/
+
+// Set default value
+bool P11AttrExponent2::setDefault()
+{
+	OSAttribute attr(ByteString(""));
+
+	// We do not check this because it is checked in init()
+	// if (osobject == NULL) return false;
+
+	return osobject->setAttribute(type, attr);
+}
+
+// Update the value if allowed
+CK_RV P11AttrExponent2::updateAttr(CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op, bool isSO)
+{
+	// Attribute specific checks
+
+	if (op != OBJECT_OP_CREATE)
+	{
+		return CKR_ATTRIBUTE_READ_ONLY;
+	}
+
+	// Store data
+
+	osobject->setAttribute(type, ByteString((unsigned char*)pValue, ulValueLen));
+
+	return CKR_OK;
+}
+
+/*****************************************
+ * CKA_COEFFICIENT
+ *****************************************/
+
+// Set default value
+bool P11AttrCoefficient::setDefault()
+{
+	OSAttribute attr(ByteString(""));
+
+	// We do not check this because it is checked in init()
+	// if (osobject == NULL) return false;
+
+	return osobject->setAttribute(type, attr);
+}
+
+// Update the value if allowed
+CK_RV P11AttrCoefficient::updateAttr(CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op, bool isSO)
+{
+	// Attribute specific checks
+
+	if (op != OBJECT_OP_CREATE)
+	{
+		return CKR_ATTRIBUTE_READ_ONLY;
+	}
+
+	// Store data
+
+	osobject->setAttribute(type, ByteString((unsigned char*)pValue, ulValueLen));
+
+	return CKR_OK;
+}
+
+/*****************************************
+ * CKA_MODULUS_BITS
+ *****************************************/
+
+// Set default value
+bool P11AttrModulusBits::setDefault()
+{
+	OSAttribute attr((unsigned long)0);
+
+	// We do not check this because it is checked in init()
+	// if (osobject == NULL) return false;
+
+	return osobject->setAttribute(type, attr);
+}
+
+// Update the value if allowed
+CK_RV P11AttrModulusBits::updateAttr(CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op, bool isSO)
+{
+	// Attribute specific checks
+
+	if (op != OBJECT_OP_GENERATE)
+	{
+		return CKR_ATTRIBUTE_READ_ONLY;
+	}
+
+	if (ulValueLen != sizeof(CK_ULONG))
+	{
+		return CKR_ATTRIBUTE_VALUE_INVALID;
+	}
+
+	// Store data
+
+	osobject->setAttribute(type, *(CK_ULONG*)pValue);
+
+	return CKR_OK;
+}
+
+/*****************************************
+ * Old code that will be migrated
+ *****************************************
 
 // Default storage attributes
 void OSObjectControl::setStorageDefaults()
