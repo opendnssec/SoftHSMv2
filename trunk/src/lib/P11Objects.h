@@ -37,6 +37,7 @@
 
 #include "OSObject.h"
 #include "P11Attributes.h"
+#include "RSAPublicKey.h"
 
 #include "cryptoki.h"
 #include <map>
@@ -49,7 +50,7 @@ public:
 
 protected:
 	// Constructor
-	P11Object();
+	P11Object() { initialized = false; }
 
 	// The object
 	OSObject *osobject;
@@ -58,97 +59,116 @@ protected:
 	std::map<CK_ATTRIBUTE_TYPE, P11Attribute*> attributes;
 
 	// Add attributes
-	bool build();
+	bool init();
+	bool initialized;
+
+	// Save template
+	CK_RV saveTemplate(CK_ATTRIBUTE_PTR pKeyTemplate, CK_ULONG ulKeyAttributeCount, int op, bool isSO);
 };
 
 class P11DataObj : public P11Object
 {
 public:
 	// Constructor
-	P11DataObj();
+	P11DataObj() { initialized = false; }
 
+protected:
 	// Add attributes
-	bool build();
+	bool init();
+	bool initialized;
 };
 
 class P11CertificateObj : public P11Object
 {
 protected:
 	// Constructor
-	P11CertificateObj();
+	P11CertificateObj() { initialized = false; }
 
 	// Add attributes
-	bool build();
+	bool init();
+	bool initialized;
 };
 
 class P11KeyObj : public P11Object
 {
 protected:
 	// Constructor
-	P11KeyObj();
+	P11KeyObj() { initialized = false; }
 
 	// Add attributes
-	bool build();
+	bool init();
+	bool initialized;
 };
 
 class P11PublicKeyObj : public P11KeyObj
 {
 protected:
 	// Constructor
-	P11PublicKeyObj();
+	P11PublicKeyObj() { initialized = false; }
 
 	// Add attributes
-	bool build();
+	bool init();
+	bool initialized;
 };
 
 class P11RSAPublicKeyObj : public P11PublicKeyObj
 {
 public:
 	// Constructor
-	P11RSAPublicKeyObj(OSObject *osobject);
+	P11RSAPublicKeyObj(OSObject *osobject) { initialized = false; }
 
+	// Save generated key
+	CK_RV saveGeneratedKey(CK_ATTRIBUTE_PTR pKeyTemplate, CK_ULONG ulKeyAttributeCount, RSAPublicKey *rsa, bool isSO);
+
+private:
 	// Add attributes
-	bool build();
+	bool init();
+	bool initialized;
 };
 
 class P11PrivateKeyObj : public P11KeyObj
 {
 protected:
 	// Constructor
-	P11PrivateKeyObj();
+	P11PrivateKeyObj() { initialized = false; }
 
 	// Add attributes
-	bool build();
+	bool init();
+	bool initialized;
 };
 
 class P11RSAPrivateKeyObj : public P11PrivateKeyObj
 {
 public:
 	// Constructor
-	P11RSAPrivateKeyObj(OSObject *osobject);
+	P11RSAPrivateKeyObj(OSObject *osobject) { initialized = false; }
 
+private:
 	// Add attributes
-	bool build();
+	bool init();
+	bool initialized;
 };
 
 class P11SecretKeyObj : public P11KeyObj
 {
 protected:
 	// Constructor
-	P11SecretKeyObj();
+	P11SecretKeyObj() { initialized = false; }
 
 	// Add attributes
-	bool build();
+	bool init();
+	bool initialized;
 };
 
 class P11DomainObj : public P11Object
 {
 protected:
 	// Constructor
-	P11DomainObj();
+	P11DomainObj() { initialized = false; }
 
 	// Add attributes
-	bool build();
+	bool init();
+	bool initialized;
 };
 
 #endif // !_SOFTHSM_V2_P11OBJECTS_H

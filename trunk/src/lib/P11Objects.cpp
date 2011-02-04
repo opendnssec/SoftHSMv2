@@ -56,8 +56,10 @@ P11Object::~P11Object()
 }
 
 // Add attributes
-bool P11Object::build()
+bool P11Object::init()
 {
+	if (initialized) return true;
+
 	// Create attributes
 	P11Attribute *attrClass = new P11AttrClass(osobject);
 	P11Attribute *attrToken = new P11AttrToken(osobject);
@@ -86,14 +88,36 @@ bool P11Object::build()
 	attributes[attrModifiable->getType()] = attrModifiable;
 	attributes[attrLabel->getType()] = attrLabel;
 
+	initialized = true;
 	return true;
 }
 
+// Save template
+CK_RV P11Object::saveTemplate(CK_ATTRIBUTE_PTR pKeyTemplate, CK_ULONG ulKeyAttributeCount, int op, bool isSO)
+{
+	CK_RV rv;
+	CK_ULONG i;
+	P11Attribute *attr;
+
+	for (i = 0; i < ulKeyAttributeCount; i++)
+	{
+		attr = attributes[pKeyTemplate[i].type];
+		if (attr == NULL) return CKR_ATTRIBUTE_TYPE_INVALID;
+
+		rv = attr->update(pKeyTemplate[i].pValue, pKeyTemplate[i].ulValueLen, op, isSO);
+		if (rv != CKR_OK) return rv;
+	}
+
+	return CKR_OK;
+}
+
 // Add attributes
-bool P11DataObj::build()
+bool P11DataObj::init()
 {
 	// Create parent
-	if (!P11Object::build()) return false;
+	if (!P11Object::init()) return false;
+
+	if (initialized) return true;
 
 	// Create attributes
 	P11Attribute *attrApplication = new P11AttrApplication(osobject);
@@ -117,14 +141,17 @@ bool P11DataObj::build()
 	attributes[attrObjectID->getType()] = attrObjectID;
 	attributes[attrValue->getType()] = attrValue;
 
+	initialized = true;
 	return true;
 }
 
 // Add attributes
-bool P11CertificateObj::build()
+bool P11CertificateObj::init()
 {
 	// Create parent
-	if (!P11Object::build()) return false;
+	if (!P11Object::init()) return false;
+
+	if (initialized) return true;
 
 	// Create attributes
 	P11Attribute *attrCertificateType = new P11AttrCertificateType(osobject);
@@ -157,14 +184,17 @@ bool P11CertificateObj::build()
 	attributes[attrStartDate->getType()] = attrStartDate;
 	attributes[attrEndDate->getType()] = attrEndDate;
 
+	initialized = true;
 	return true;
 }
 
 // Add attributes
-bool P11KeyObj::build()
+bool P11KeyObj::init()
 {
 	// Create parent
-	if (!P11Object::build()) return false;
+	if (!P11Object::init()) return false;
+
+	if (initialized) return true;
 
 	// Create attributes
 	P11Attribute *attrKeyType = new P11AttrKeyType(osobject);
@@ -201,14 +231,17 @@ bool P11KeyObj::build()
 	attributes[attrLocal->getType()] = attrLocal;
 	attributes[attrKeyGenMechanism->getType()] = attrKeyGenMechanism;
 
+	initialized = true;
 	return true;
 }
 
 // Add attributes
-bool P11PublicKeyObj::build()
+bool P11PublicKeyObj::init()
 {
 	// Create parent
-	if (!P11KeyObj::build()) return false;
+	if (!P11KeyObj::init()) return false;
+
+	if (initialized) return true;
 
 	// Create attributes
 	P11Attribute *attrSubject = new P11AttrSubject(osobject);
@@ -242,14 +275,17 @@ bool P11PublicKeyObj::build()
 	attributes[attrWrap->getType()] = attrWrap;
 	attributes[attrTrusted->getType()] = attrTrusted;
 
+	initialized = true;
 	return true;
 }
 
 // Add attributes
-bool P11RSAPublicKeyObj::build()
+bool P11RSAPublicKeyObj::init()
 {
 	// Create parent
-	if (!P11PublicKeyObj::build()) return false;
+	if (!P11PublicKeyObj::init()) return false;
+
+	if (initialized) return true;
 
 	// Create attributes
 	P11Attribute *attrModulus = new P11AttrModulus(osobject);
@@ -273,14 +309,51 @@ bool P11RSAPublicKeyObj::build()
 	attributes[attrModulusBits->getType()] = attrModulusBits;
 	attributes[attrPublicExponent->getType()] = attrPublicExponent;
 
+	initialized = true;
 	return true;
 }
 
+// Save generated key
+CK_RV P11RSAPublicKeyObj::saveGeneratedKey(CK_ATTRIBUTE_PTR pKeyTemplate, CK_ULONG ulKeyAttributeCount, RSAPublicKey *rsa, bool isSO)
+{
+	if (osobject == NULL) return CKR_GENERAL_ERROR;
+	if (osobject->startTransaction() == false) return CKR_GENERAL_ERROR;
+
+	// Load / create attributes
+	if (init() == false) return CKR_GENERAL_ERROR;
+
+	// General information that we need to update
+	OSAttribute attrClass((unsigned long)CKO_PUBLIC_KEY);
+	OSAttribute attrKeyType((unsigned long)CKK_RSA);
+	OSAttribute attrMechType((unsigned long)CKM_RSA_PKCS_KEY_PAIR_GEN);
+	OSAttribute attrLocal(true);
+	osobject->setAttribute(CKA_CLASS, attrClass);
+	osobject->setAttribute(CKA_KEY_TYPE, attrKeyType);
+	osobject->setAttribute(CKA_KEY_GEN_MECHANISM, attrMechType);
+	osobject->setAttribute(CKA_LOCAL, attrLocal);
+
+	// TODO: Save key
+
+	// Save template
+	CK_RV rv = saveTemplate(pKeyTemplate, ulKeyAttributeCount, OBJECT_OP_GENERATE, isSO);
+	if (rv != CKR_OK)
+	{
+		osobject->abortTransaction();
+		return rv;
+	}
+
+	if (osobject->commitTransaction() == false) return CKR_GENERAL_ERROR;
+
+	return CKR_OK;
+}
+
 // Add attributes
-bool P11PrivateKeyObj::build()
+bool P11PrivateKeyObj::init()
 {
 	// Create parent
-	if (!P11KeyObj::build()) return false;
+	if (!P11KeyObj::init()) return false;
+
+	if (initialized) return true;
 
 	// Create attributes
 	P11Attribute *attrSubject = new P11AttrSubject(osobject);
@@ -329,14 +402,17 @@ bool P11PrivateKeyObj::build()
 	attributes[attrWrapWithTrusted->getType()] = attrWrapWithTrusted;
 	attributes[attrAlwaysAuthenticate->getType()] = attrAlwaysAuthenticate;
 
+	initialized = true;
 	return true;
 }
 
 // Add attributes
-bool P11RSAPrivateKeyObj::build()
+bool P11RSAPrivateKeyObj::init()
 {
 	// Create parent
-	if (!P11PrivateKeyObj::build()) return false;
+	if (!P11PrivateKeyObj::init()) return false;
+
+	if (initialized) return true;
 
 	// Create attributes
 	P11Attribute *attrModulus = new P11AttrModulus(osobject);
@@ -375,14 +451,17 @@ bool P11RSAPrivateKeyObj::build()
 	attributes[attrExponent2->getType()] = attrExponent2;
 	attributes[attrCoefficient->getType()] = attrCoefficient;
 
+	initialized = true;
 	return true;
 }
 
 // Add attributes
-bool P11SecretKeyObj::build()
+bool P11SecretKeyObj::init()
 {
 	// Create parent
-	if (!P11KeyObj::build()) return false;
+	if (!P11KeyObj::init()) return false;
+
+	if (initialized) return true;
 
 	// Create attributes
 	P11Attribute *attrSensitive = new P11AttrSensitive(osobject);
@@ -438,17 +517,19 @@ bool P11SecretKeyObj::build()
 	attributes[attrWrapWithTrusted->getType()] = attrWrapWithTrusted;
 	attributes[attrTrusted->getType()] = attrTrusted;
 
+	initialized = true;
 	return true;
 }
 
 // Add attributes
-bool P11DomainObj::build()
+bool P11DomainObj::init()
 {
 	// Create parent
-	if (!P11Object::build()) return false;
+	if (!P11Object::init()) return false;
+
+	if (initialized) return true;
 
 	// Create attributes
-
 	P11Attribute *attrKeyType = new P11AttrApplication(osobject);
 	P11Attribute *attrLocal = new P11AttrObjectID(osobject);
 
@@ -467,68 +548,6 @@ bool P11DomainObj::build()
 	attributes[attrKeyType->getType()] = attrKeyType;
 	attributes[attrLocal->getType()] = attrLocal;
 
+	initialized = true;
 	return true;
 }
-
-/*****************************************
- * Old code that will be migrated
- *****************************************
-
-// Save generated key
-CK_RV OSObjectControl::saveGeneratedKey(CK_ATTRIBUTE_PTR pKeyTemplate, CK_ULONG ulKeyAttributeCount, RSAPublicKey *rsa)
-{
-	if (osobject == NULL) return CKR_GENERAL_ERROR;
-	if (osobject->startTransaction() == false) return CKR_GENERAL_ERROR;
-
-	operationType = GENERATE;
-
-	// Set default values
-	setStorageDefaults();
-	setKeyDefaults();
-	setPublicKeyDefaults();
-	setRsaPublicKeyDefaults();
-
-	// General information that we need to update
-	OSAttribute attrClass((unsigned long)CKO_PUBLIC_KEY);
-	OSAttribute attrKeyType((unsigned long)CKK_RSA);
-	OSAttribute attrMechType((unsigned long)CKM_RSA_PKCS_KEY_PAIR_GEN);
-	OSAttribute attrLocal(true);
-	osobject->setAttribute(CKA_CLASS, attrClass);
-	osobject->setAttribute(CKA_KEY_TYPE, attrKeyType);
-	osobject->setAttribute(CKA_KEY_GEN_MECHANISM, attrMechType);
-	osobject->setAttribute(CKA_LOCAL, attrLocal);
-
-	// TODO: Save key
-
-	// Save template
-	for (CK_ULONG i = 0; i < ulKeyAttributeCount; i++)
-	{
-		CK_RV rv = saveAttribute(pKeyTemplate[i]);
-		if (rv != CKR_OK)
-		{
-			osobject->abortTransaction();
-			return rv;
-		}
-	}
-
-	if (osobject->commitTransaction() == false) return CKR_GENERAL_ERROR;
-
-	return CKR_OK;
-}
-
-CK_RV OSObjectControl::saveGeneratedKey(CK_ATTRIBUTE_PTR pKeyTemplate, CK_ULONG ulKeyAttributeCount, RSAPrivateKey *rsa)
-{
-	return CKR_OK;
-}
-
-CK_RV OSObjectControl::saveGeneratedKey(CK_ATTRIBUTE_PTR pKeyTemplate, CK_ULONG ulKeyAttributeCount, DSAPublicKey *dsa)
-{
-	return CKR_OK;
-}
-
-CK_RV OSObjectControl::saveGeneratedKey(CK_ATTRIBUTE_PTR pKeyTemplate, CK_ULONG ulKeyAttributeCount, DSAPrivateKey *dsa)
-{
-	return CKR_OK;
-}
-
-*/
