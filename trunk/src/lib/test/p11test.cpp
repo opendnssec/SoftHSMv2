@@ -29,7 +29,7 @@
 /*****************************************************************************
  p11test.cpp
 
- The main test executor for tests on the object store in SoftHSM v2
+ The main test executor for tests on the PKCS#11 interface in SoftHSM v2
  *****************************************************************************/
 
 #include <cppunit/extensions/TestFactoryRegistry.h>
