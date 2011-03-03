@@ -34,6 +34,7 @@
 
 #include "CryptoFactory.h"
 #include "Session.h"
+#include "SessionObjectStore.h"
 
 // Constructor
 Session::Session(Slot *slot, bool isReadWrite, CK_VOID_PTR pApplication, CK_NOTIFY notify)
@@ -41,9 +42,9 @@ Session::Session(Slot *slot, bool isReadWrite, CK_VOID_PTR pApplication, CK_NOTI
 	this->slot = slot;
 	this->token = slot->getToken();
 	this->isReadWrite = isReadWrite;
+	hSession = CK_INVALID_HANDLE;
 	this->pApplication = pApplication;
 	this->notify = notify;
-
 	operation = SESSION_OP_NONE;
 	digestOp = NULL;
 }
@@ -54,6 +55,7 @@ Session::Session()
 	slot = NULL;
 	token = NULL;
 	isReadWrite = false;
+	hSession = CK_INVALID_HANDLE;
 	pApplication = NULL;
 	notify = NULL;
 	operation = SESSION_OP_NONE;
@@ -65,7 +67,8 @@ Session::~Session()
 {
 	resetOp();
 
-	// TODO: Remember to remove any session objects
+	// Remove any session objects
+	SessionObjectStore::i()->sessionClosed(hSession);
 }
 
 // Get session info
@@ -120,6 +123,16 @@ CK_STATE Session::getState()
 	{
 		return CKS_RO_PUBLIC_SESSION;
 	}
+}
+
+void Session::setHandle(CK_SESSION_HANDLE hSession)
+{
+	this->hSession = hSession;
+}
+
+CK_SESSION_HANDLE Session::getHandle()
+{
+	return hSession;
 }
 
 // Return the slot that the session is connected to

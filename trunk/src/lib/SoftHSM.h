@@ -40,6 +40,8 @@
 #include "ObjectStore.h"
 #include "SessionManager.h"
 #include "SlotManager.h"
+#include "RSAPublicKey.h"
+#include "RSAPrivateKey.h"
 #include <memory>
 
 class SoftHSM
@@ -179,7 +181,16 @@ private:
 		CK_ATTRIBUTE_PTR pPrivateKeyTemplate,
 		CK_ULONG ulPrivateKeyAttributeCount,
 		CK_OBJECT_HANDLE_PTR phPublicKey,
-		CK_OBJECT_HANDLE_PTR phPrivateKey
+		CK_OBJECT_HANDLE_PTR phPrivateKey,
+		CK_BBOOL isToken
+	);
+	CK_RV saveGeneratedRSA
+	(
+		Session *session,
+		CK_ATTRIBUTE_PTR pKeyTemplate,
+		CK_ULONG ulKeyAttributeCount,                                   
+		RSAPublicKey *rsa,
+		CK_BBOOL isToken
 	);
 	CK_RV generateDSA
 	(
@@ -189,7 +200,8 @@ private:
 		CK_ATTRIBUTE_PTR pPrivateKeyTemplate,
 		CK_ULONG ulPrivateKeyAttributeCount,
 		CK_OBJECT_HANDLE_PTR phPublicKey,
-		CK_OBJECT_HANDLE_PTR phPrivateKey
+		CK_OBJECT_HANDLE_PTR phPrivateKey,
+		CK_BBOOL isToken
 	);
 };
 

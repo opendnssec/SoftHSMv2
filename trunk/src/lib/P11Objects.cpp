@@ -314,9 +314,9 @@ bool P11RSAPublicKeyObj::init()
 }
 
 // Save generated key
-CK_RV P11RSAPublicKeyObj::saveGeneratedKey(CK_ATTRIBUTE_PTR pKeyTemplate, CK_ULONG ulKeyAttributeCount, RSAPublicKey *rsa, bool isSO)
+CK_RV P11RSAPublicKeyObj::saveGeneratedKey(CK_ATTRIBUTE_PTR pKeyTemplate, CK_ULONG ulKeyAttributeCount, RSAPublicKey *rsa, Token *token)
 {
-	if (osobject == NULL) return CKR_GENERAL_ERROR;
+	if (osobject == NULL || token == NULL) return CKR_GENERAL_ERROR;
 	if (osobject->startTransaction() == false) return CKR_GENERAL_ERROR;
 
 	// Load / create attributes
@@ -332,15 +332,15 @@ CK_RV P11RSAPublicKeyObj::saveGeneratedKey(CK_ATTRIBUTE_PTR pKeyTemplate, CK_ULO
 	osobject->setAttribute(CKA_KEY_GEN_MECHANISM, attrMechType);
 	osobject->setAttribute(CKA_LOCAL, attrLocal);
 
-	// TODO: Save key
-
 	// Save template
-	CK_RV rv = saveTemplate(pKeyTemplate, ulKeyAttributeCount, OBJECT_OP_GENERATE, isSO);
+	CK_RV rv = saveTemplate(pKeyTemplate, ulKeyAttributeCount, OBJECT_OP_GENERATE, token->isSOLoggedIn());
 	if (rv != CKR_OK)
 	{
 		osobject->abortTransaction();
 		return rv;
 	}
+
+	// TODO: Save key
 
 	if (osobject->commitTransaction() == false) return CKR_GENERAL_ERROR;
 

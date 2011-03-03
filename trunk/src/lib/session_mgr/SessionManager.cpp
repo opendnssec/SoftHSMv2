@@ -100,14 +100,16 @@ CK_RV SessionManager::openSession
 		}
 
 		sessions[i] = session;
-		*phSession = i + 1;
+		session->setHandle(i + 1);
+		*phSession = session->getHandle();
 
 		return CKR_OK;
 	}
 
 	// Or add it to the end
 	sessions.push_back(session);
-	*phSession = sessions.size();
+	session->setHandle(sessions.size());
+	*phSession = session->getHandle();
 
 	return CKR_OK;
 }

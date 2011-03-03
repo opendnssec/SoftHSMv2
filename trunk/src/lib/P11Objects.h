@@ -38,7 +38,7 @@
 #include "OSObject.h"
 #include "P11Attributes.h"
 #include "RSAPublicKey.h"
-
+#include "Token.h"
 #include "cryptoki.h"
 #include <map>
 
@@ -118,7 +118,7 @@ public:
 	P11RSAPublicKeyObj(OSObject *osobject) { initialized = false; }
 
 	// Save generated key
-	CK_RV saveGeneratedKey(CK_ATTRIBUTE_PTR pKeyTemplate, CK_ULONG ulKeyAttributeCount, RSAPublicKey *rsa, bool isSO);
+	CK_RV saveGeneratedKey(CK_ATTRIBUTE_PTR pKeyTemplate, CK_ULONG ulKeyAttributeCount, RSAPublicKey *rsa, Token *token);
 
 private:
 	// Add attributes

@@ -68,6 +68,8 @@ public:
 	CK_RV getInfo(CK_SESSION_INFO_PTR pInfo);
 	bool isRW();
 	CK_STATE getState();
+	void setHandle(CK_SESSION_HANDLE hSession);
+	CK_SESSION_HANDLE getHandle();
 
 	// Operations
 	int getOpType();
@@ -92,6 +94,7 @@ private:
 
 	// Session properties
 	bool isReadWrite;
+	CK_SESSION_HANDLE hSession;
 
 	// Operations
 	int operation;

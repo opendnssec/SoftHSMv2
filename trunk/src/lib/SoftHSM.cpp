@@ -43,8 +43,6 @@
 #include "AsymmetricAlgorithm.h"
 #include "RNG.h"
 #include "RSAParameters.h"
-#include "RSAPublicKey.h"
-#include "RSAPrivateKey.h"
 #include "DSAParameters.h"
 #include "DSAPublicKey.h"
 #include "DSAPrivateKey.h"
@@ -52,6 +50,8 @@
 #include "SoftHSM.h"
 #include "osmutex.h"
 #include "SessionManager.h"
+#include "SessionObjectStore.h"
+#include "P11Objects.h"
 
 /*****************************************************************************
  Implementation of SoftHSM class specific functions
@@ -1163,12 +1163,12 @@ CK_RV SoftHSM::C_GenerateKeyPair
 		case CKM_RSA_PKCS_KEY_PAIR_GEN:
 			rv = this->generateRSA(session, pPublicKeyTemplate, ulPublicKeyAttributeCount,
 						pPrivateKeyTemplate, ulPrivateKeyAttributeCount,
-						phPublicKey, phPrivateKey);
+						phPublicKey, phPrivateKey, isToken);
 			break;
 		case CKM_DSA_KEY_PAIR_GEN:
 			rv = this->generateDSA(session, pPublicKeyTemplate, ulPublicKeyAttributeCount,
 						pPrivateKeyTemplate, ulPrivateKeyAttributeCount,
-						phPublicKey, phPrivateKey);
+						phPublicKey, phPrivateKey, isToken);
 			break;
 		default:
 			break;
@@ -1293,7 +1293,8 @@ CK_RV SoftHSM::generateRSA
 	CK_ATTRIBUTE_PTR pPrivateKeyTemplate,
 	CK_ULONG ulPrivateKeyAttributeCount,
 	CK_OBJECT_HANDLE_PTR phPublicKey,
-	CK_OBJECT_HANDLE_PTR phPrivateKey
+	CK_OBJECT_HANDLE_PTR phPrivateKey,
+	CK_BBOOL isToken
 )
 {
 	AsymmetricKeyPair *kp = NULL;
@@ -1345,13 +1346,48 @@ CK_RV SoftHSM::generateRSA
 	RSAPublicKey *pub = (RSAPublicKey*) kp->getPublicKey();
 	RSAPrivateKey *priv = (RSAPrivateKey*) kp->getPrivateKey();
 
-	// TODO: Save keys 
+	// TODO: Save keys
+	CK_RV result = saveGeneratedRSA(session, pPublicKeyTemplate, ulPublicKeyAttributeCount, pub, isToken);
 
 	// Clean up
 	rsa->recycleKeyPair(kp);
 	CryptoFactory::i()->recycleAsymmetricAlgorithm(rsa);
 
 	return CKR_FUNCTION_NOT_SUPPORTED;
+}
+
+// Save the public RSA key
+CK_RV SoftHSM::saveGeneratedRSA
+(
+	Session *session,
+	CK_ATTRIBUTE_PTR pKeyTemplate,
+	CK_ULONG ulKeyAttributeCount,
+	RSAPublicKey *rsa,
+	CK_BBOOL isToken
+)
+{
+	if (session == NULL) return CKR_GENERAL_ERROR;
+
+	CK_RV rv;
+	OSObject *object = NULL;
+
+	if (isToken)
+	{
+		// object = 
+	}
+	else
+	{
+		object = SessionObjectStore::i()->createObject(session->getHandle());
+	}
+	if (object == NULL) return CKR_GENERAL_ERROR;
+
+	P11RSAPublicKeyObj *p11Pub = new P11RSAPublicKeyObj(object);
+	rv = p11Pub->saveGeneratedKey(pKeyTemplate, ulKeyAttributeCount, rsa, session->getToken());
+
+	delete p11Pub;
+	delete object;
+
+	return rv;
 }
 
 // Generate an DSA key pair
@@ -1363,7 +1399,8 @@ CK_RV SoftHSM::generateDSA
 	CK_ATTRIBUTE_PTR pPrivateKeyTemplate,
 	CK_ULONG ulPrivateKeyAttributeCount,
 	CK_OBJECT_HANDLE_PTR phPublicKey,
-	CK_OBJECT_HANDLE_PTR phPrivateKey
+	CK_OBJECT_HANDLE_PTR phPrivateKey,
+	CK_BBOOL isToken
 )
 {
 	AsymmetricKeyPair *kp = NULL;
