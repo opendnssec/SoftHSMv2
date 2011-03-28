@@ -190,7 +190,8 @@ private:
 		CK_ATTRIBUTE_PTR pKeyTemplate,
 		CK_ULONG ulKeyAttributeCount,                                   
 		RSAPublicKey *rsa,
-		CK_BBOOL isToken
+		CK_BBOOL isToken,
+		CK_OBJECT_HANDLE_PTR phKey
 	);
 	CK_RV generateDSA
 	(

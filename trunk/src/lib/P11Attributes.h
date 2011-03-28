@@ -73,10 +73,10 @@ protected:
 	CK_ATTRIBUTE_TYPE type;
 
 	// Set the default value of the attribute
-	virtual bool setDefault();
+	virtual bool setDefault() = 0;
 
 	// Update the value if allowed
-	virtual CK_RV updateAttr(CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op, bool isSO);
+	virtual CK_RV updateAttr(CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op, bool isSO) = 0;
 
 	// Helper functions
 	CK_RV checkPtr(CK_VOID_PTR pValue, CK_ULONG ulValueLen);

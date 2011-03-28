@@ -82,6 +82,9 @@ public:
 	// Retrieve token information for the token
 	CK_RV getTokenInfo(CK_TOKEN_INFO_PTR info);
 
+	// Create object
+	ObjectFile* createObject();
+
 private:
 	// Token validity
 	bool valid;

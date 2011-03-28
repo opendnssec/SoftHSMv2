@@ -1301,6 +1301,8 @@ CK_RV SoftHSM::generateRSA
 	RSAParameters p;
 	size_t bitLen = 0;
 	ByteString exponent("010001");
+	CK_OBJECT_HANDLE hPublicKey = CK_INVALID_HANDLE;
+	CK_OBJECT_HANDLE hPrivateKey = CK_INVALID_HANDLE;
 
 	// Extract desired key information
 	for (CK_ULONG i = 0; i < ulPublicKeyAttributeCount; i++)
@@ -1347,7 +1349,8 @@ CK_RV SoftHSM::generateRSA
 	RSAPrivateKey *priv = (RSAPrivateKey*) kp->getPrivateKey();
 
 	// TODO: Save keys
-	CK_RV result = saveGeneratedRSA(session, pPublicKeyTemplate, ulPublicKeyAttributeCount, pub, isToken);
+	CK_RV result = saveGeneratedRSA(session, pPublicKeyTemplate, ulPublicKeyAttributeCount, pub, isToken, &hPublicKey);
+	// CK_RV result = saveGeneratedRSA(session, pPrivateKeyTemplate, ulPrivateKeyAttributeCount, priv, isToken, &hPrivateKey);
 
 	// Clean up
 	rsa->recycleKeyPair(kp);
@@ -1363,17 +1366,18 @@ CK_RV SoftHSM::saveGeneratedRSA
 	CK_ATTRIBUTE_PTR pKeyTemplate,
 	CK_ULONG ulKeyAttributeCount,
 	RSAPublicKey *rsa,
-	CK_BBOOL isToken
+	CK_BBOOL isToken,
+	CK_OBJECT_HANDLE_PTR phKey
 )
 {
-	if (session == NULL) return CKR_GENERAL_ERROR;
-
 	CK_RV rv;
 	OSObject *object = NULL;
 
+	if (session == NULL || phKey == NULL) return CKR_GENERAL_ERROR;
+
 	if (isToken)
 	{
-		// object = 
+		object = (OSObject*) session->getToken()->createObject();
 	}
 	else
 	{
@@ -1387,7 +1391,11 @@ CK_RV SoftHSM::saveGeneratedRSA
 	delete p11Pub;
 	delete object;
 
-	return rv;
+	if (rv != CKR_OK) return rv;
+
+	// TODO: Set the phKey
+
+	return CKR_OK;
 }
 
 // Generate an DSA key pair

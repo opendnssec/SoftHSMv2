@@ -400,3 +400,9 @@ CK_RV Token::getTokenInfo(CK_TOKEN_INFO_PTR info)
 
         return CKR_OK;
 }
+
+// Create an object
+ObjectFile* Token::createObject()
+{
+	return token->createObject();
+}
