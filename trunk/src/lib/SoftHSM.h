@@ -168,14 +168,14 @@ private:
 	// Is the SoftHSM PKCS #11 library initialised?
 	bool isInitialised;
 
-	ObjectStore *objectStore; 
-	SlotManager *slotManager;
-	SessionManager *sessionManager;
+	ObjectStore* objectStore; 
+	SlotManager* slotManager;
+	SessionManager* sessionManager;
 
 	// Key generation
 	CK_RV generateRSA
 	(
-		Session *session,
+		Session* session,
 		CK_ATTRIBUTE_PTR pPublicKeyTemplate,
 		CK_ULONG ulPublicKeyAttributeCount,
 		CK_ATTRIBUTE_PTR pPrivateKeyTemplate,
@@ -186,16 +186,16 @@ private:
 	);
 	CK_RV saveGeneratedRSA
 	(
-		Session *session,
+		Session* session,
 		CK_ATTRIBUTE_PTR pKeyTemplate,
 		CK_ULONG ulKeyAttributeCount,                                   
-		RSAPublicKey *rsa,
+		RSAPublicKey* rsa,
 		CK_BBOOL isToken,
 		CK_OBJECT_HANDLE_PTR phKey
 	);
 	CK_RV generateDSA
 	(
-		Session *session,
+		Session* session,
 		CK_ATTRIBUTE_PTR pPublicKeyTemplate,
 		CK_ULONG ulPublicKeyAttributeCount,
 		CK_ATTRIBUTE_PTR pPrivateKeyTemplate,

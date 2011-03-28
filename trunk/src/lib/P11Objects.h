@@ -53,7 +53,7 @@ protected:
 	P11Object() { initialized = false; }
 
 	// The object
-	OSObject *osobject;
+	OSObject* osobject;
 
 	// The attributes
 	std::map<CK_ATTRIBUTE_TYPE, P11Attribute*> attributes;
@@ -115,10 +115,10 @@ class P11RSAPublicKeyObj : public P11PublicKeyObj
 {
 public:
 	// Constructor
-	P11RSAPublicKeyObj(OSObject *osobject) { initialized = false; }
+	P11RSAPublicKeyObj(OSObject* osobject) { initialized = false; }
 
 	// Save generated key
-	CK_RV saveGeneratedKey(CK_ATTRIBUTE_PTR pKeyTemplate, CK_ULONG ulKeyAttributeCount, RSAPublicKey *rsa, Token *token);
+	CK_RV saveGeneratedKey(CK_ATTRIBUTE_PTR pKeyTemplate, CK_ULONG ulKeyAttributeCount, RSAPublicKey* rsa, Token* token);
 
 private:
 	// Add attributes
@@ -141,7 +141,7 @@ class P11RSAPrivateKeyObj : public P11PrivateKeyObj
 {
 public:
 	// Constructor
-	P11RSAPrivateKeyObj(OSObject *osobject) { initialized = false; }
+	P11RSAPrivateKeyObj(OSObject* osobject) { initialized = false; }
 
 private:
 	// Add attributes

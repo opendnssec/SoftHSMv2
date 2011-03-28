@@ -39,7 +39,7 @@
 #include <stdlib.h>
 
 // Constructor
-P11Attribute::P11Attribute(OSObject *osobject)
+P11Attribute::P11Attribute(OSObject* osobject)
 {
 	this->osobject = osobject;
 	type = CKA_VENDOR_DEFINED;
@@ -66,9 +66,9 @@ CK_RV P11Attribute::checkPtr(CK_VOID_PTR pValue, CK_ULONG ulValueLen)
 // Check if we are allowed to modify the data
 CK_RV P11Attribute::canModify(int op)
 {
-	OSAttribute *attrModifiable = NULL;
-	OSAttribute *attrClass = NULL;
-	OSAttribute *attrTrusted = NULL;
+	OSAttribute* attrModifiable = NULL;
+	OSAttribute* attrClass = NULL;
+	OSAttribute* attrTrusted = NULL;
 
 	// We only do these checks if we are called by C_SetAttributeValue
 	if (op != OBJECT_OP_SET) return CKR_OK;
@@ -156,7 +156,7 @@ bool P11AttrClass::setDefault()
 // Update the value if allowed
 CK_RV P11AttrClass::updateAttr(CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op, bool isSO)
 {
-	OSAttribute *attr = NULL;
+	OSAttribute* attr = NULL;
 
 	// Attribute specific checks
 
@@ -199,7 +199,7 @@ bool P11AttrKeyType::setDefault()
 // Update the value if allowed
 CK_RV P11AttrKeyType::updateAttr(CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op, bool isSO)
 {
-	OSAttribute *attr = NULL;
+	OSAttribute* attr = NULL;
 
 	// Attribute specific checks
 
@@ -242,7 +242,7 @@ bool P11AttrCertificateType::setDefault()
 // Update the value if allowed
 CK_RV P11AttrCertificateType::updateAttr(CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op, bool isSO)
 {
-	OSAttribute *attr = NULL;
+	OSAttribute* attr = NULL;
 
 	// Attribute specific checks
 

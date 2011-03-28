@@ -64,10 +64,10 @@ public:
 
 protected:
 	// Constructor
-	P11Attribute(OSObject *osobject);
+	P11Attribute(OSObject* osobject);
 
 	// The object
-	OSObject *osobject;
+	OSObject* osobject;
 
 	// The attribute type
 	CK_ATTRIBUTE_TYPE type;
@@ -91,7 +91,7 @@ class P11AttrClass : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrClass(OSObject *osobject) : P11Attribute(osobject) { type = CKA_CLASS; }
+	P11AttrClass(OSObject* osobject) : P11Attribute(osobject) { type = CKA_CLASS; }
 
 protected:
 	// Set the default value of the attribute
@@ -109,7 +109,7 @@ class P11AttrKeyType : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrKeyType(OSObject *osobject) : P11Attribute(osobject) { type = CKA_KEY_TYPE; }
+	P11AttrKeyType(OSObject* osobject) : P11Attribute(osobject) { type = CKA_KEY_TYPE; }
 
 protected:
 	// Set the default value of the attribute
@@ -127,7 +127,7 @@ class P11AttrCertificateType : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrCertificateType(OSObject *osobject) : P11Attribute(osobject) { type = CKA_CERTIFICATE_TYPE; }
+	P11AttrCertificateType(OSObject* osobject) : P11Attribute(osobject) { type = CKA_CERTIFICATE_TYPE; }
 
 protected:
 	// Set the default value of the attribute
@@ -145,7 +145,7 @@ class P11AttrToken : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrToken(OSObject *osobject) : P11Attribute(osobject) { type = CKA_TOKEN; }
+	P11AttrToken(OSObject* osobject) : P11Attribute(osobject) { type = CKA_TOKEN; }
 
 protected:
 	// Set the default value of the attribute
@@ -163,7 +163,7 @@ class P11AttrPrivate : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrPrivate(OSObject *osobject) : P11Attribute(osobject) { type = CKA_PRIVATE; }
+	P11AttrPrivate(OSObject* osobject) : P11Attribute(osobject) { type = CKA_PRIVATE; }
 
 protected:
 	// Set the default value of the attribute
@@ -181,7 +181,7 @@ class P11AttrModifiable : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrModifiable(OSObject *osobject) : P11Attribute(osobject) { type = CKA_MODIFIABLE; }
+	P11AttrModifiable(OSObject* osobject) : P11Attribute(osobject) { type = CKA_MODIFIABLE; }
 
 protected:
 	// Set the default value of the attribute
@@ -199,7 +199,7 @@ class P11AttrLabel : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrLabel(OSObject *osobject) : P11Attribute(osobject) { type = CKA_LABEL; }
+	P11AttrLabel(OSObject* osobject) : P11Attribute(osobject) { type = CKA_LABEL; }
 
 protected:
 	// Set the default value of the attribute
@@ -217,7 +217,7 @@ class P11AttrApplication : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrApplication(OSObject *osobject) : P11Attribute(osobject) { type = CKA_APPLICATION; }
+	P11AttrApplication(OSObject* osobject) : P11Attribute(osobject) { type = CKA_APPLICATION; }
 
 protected:
 	// Set the default value of the attribute
@@ -235,7 +235,7 @@ class P11AttrObjectID : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrObjectID(OSObject *osobject) : P11Attribute(osobject) { type = CKA_OBJECT_ID; }
+	P11AttrObjectID(OSObject* osobject) : P11Attribute(osobject) { type = CKA_OBJECT_ID; }
 
 protected:
 	// Set the default value of the attribute
@@ -253,7 +253,7 @@ class P11AttrCheckValue : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrCheckValue(OSObject *osobject) : P11Attribute(osobject) { type = CKA_CHECK_VALUE; }
+	P11AttrCheckValue(OSObject* osobject) : P11Attribute(osobject) { type = CKA_CHECK_VALUE; }
 
 protected:
 	// Set the default value of the attribute
@@ -271,7 +271,7 @@ class P11AttrID : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrID(OSObject *osobject) : P11Attribute(osobject) { type = CKA_ID; }
+	P11AttrID(OSObject* osobject) : P11Attribute(osobject) { type = CKA_ID; }
 
 protected:
 	// Set the default value of the attribute
@@ -289,7 +289,7 @@ class P11AttrValue : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrValue(OSObject *osobject) : P11Attribute(osobject) { type = CKA_VALUE; }
+	P11AttrValue(OSObject* osobject) : P11Attribute(osobject) { type = CKA_VALUE; }
 
 protected:
 	// Set the default value of the attribute
@@ -307,7 +307,7 @@ class P11AttrSubject : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrSubject(OSObject *osobject) : P11Attribute(osobject) { type = CKA_SUBJECT; }
+	P11AttrSubject(OSObject* osobject) : P11Attribute(osobject) { type = CKA_SUBJECT; }
 
 protected:
 	// Set the default value of the attribute
@@ -325,7 +325,7 @@ class P11AttrTrusted : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrTrusted(OSObject *osobject) : P11Attribute(osobject) { type = CKA_TRUSTED; }
+	P11AttrTrusted(OSObject* osobject) : P11Attribute(osobject) { type = CKA_TRUSTED; }
 
 protected:
 	// Set the default value of the attribute
@@ -343,7 +343,7 @@ class P11AttrCertificateCategory : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrCertificateCategory(OSObject *osobject) : P11Attribute(osobject) { type = CKA_CERTIFICATE_CATEGORY; }
+	P11AttrCertificateCategory(OSObject* osobject) : P11Attribute(osobject) { type = CKA_CERTIFICATE_CATEGORY; }
 
 protected:
 	// Set the default value of the attribute
@@ -361,7 +361,7 @@ class P11AttrStartDate : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrStartDate(OSObject *osobject) : P11Attribute(osobject) { type = CKA_START_DATE; }
+	P11AttrStartDate(OSObject* osobject) : P11Attribute(osobject) { type = CKA_START_DATE; }
 
 protected:
 	// Set the default value of the attribute
@@ -379,7 +379,7 @@ class P11AttrEndDate : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrEndDate(OSObject *osobject) : P11Attribute(osobject) { type = CKA_END_DATE; }
+	P11AttrEndDate(OSObject* osobject) : P11Attribute(osobject) { type = CKA_END_DATE; }
 
 protected:
 	// Set the default value of the attribute
@@ -397,7 +397,7 @@ class P11AttrDerive : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrDerive(OSObject *osobject) : P11Attribute(osobject) { type = CKA_DERIVE; }
+	P11AttrDerive(OSObject* osobject) : P11Attribute(osobject) { type = CKA_DERIVE; }
 
 protected:
 	// Set the default value of the attribute
@@ -415,7 +415,7 @@ class P11AttrEncrypt : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrEncrypt(OSObject *osobject) : P11Attribute(osobject) { type = CKA_ENCRYPT; }
+	P11AttrEncrypt(OSObject* osobject) : P11Attribute(osobject) { type = CKA_ENCRYPT; }
 
 protected:
 	// Set the default value of the attribute
@@ -433,7 +433,7 @@ class P11AttrVerify : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrVerify(OSObject *osobject) : P11Attribute(osobject) { type = CKA_VERIFY; }
+	P11AttrVerify(OSObject* osobject) : P11Attribute(osobject) { type = CKA_VERIFY; }
 
 protected:
 	// Set the default value of the attribute
@@ -451,7 +451,7 @@ class P11AttrVerifyRecover : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrVerifyRecover(OSObject *osobject) : P11Attribute(osobject) { type = CKA_VERIFY_RECOVER; }
+	P11AttrVerifyRecover(OSObject* osobject) : P11Attribute(osobject) { type = CKA_VERIFY_RECOVER; }
 
 protected:
 	// Set the default value of the attribute
@@ -469,7 +469,7 @@ class P11AttrWrap : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrWrap(OSObject *osobject) : P11Attribute(osobject) { type = CKA_WRAP; }
+	P11AttrWrap(OSObject* osobject) : P11Attribute(osobject) { type = CKA_WRAP; }
 
 protected:
 	// Set the default value of the attribute
@@ -487,7 +487,7 @@ class P11AttrDecrypt : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrDecrypt(OSObject *osobject) : P11Attribute(osobject) { type = CKA_DECRYPT; }
+	P11AttrDecrypt(OSObject* osobject) : P11Attribute(osobject) { type = CKA_DECRYPT; }
 
 protected:
 	// Set the default value of the attribute
@@ -505,7 +505,7 @@ class P11AttrSign : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrSign(OSObject *osobject) : P11Attribute(osobject) { type = CKA_SIGN; }
+	P11AttrSign(OSObject* osobject) : P11Attribute(osobject) { type = CKA_SIGN; }
 
 protected:
 	// Set the default value of the attribute
@@ -523,7 +523,7 @@ class P11AttrSignRecover : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrSignRecover(OSObject *osobject) : P11Attribute(osobject) { type = CKA_SIGN_RECOVER; }
+	P11AttrSignRecover(OSObject* osobject) : P11Attribute(osobject) { type = CKA_SIGN_RECOVER; }
 
 protected:
 	// Set the default value of the attribute
@@ -541,7 +541,7 @@ class P11AttrUnwrap : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrUnwrap(OSObject *osobject) : P11Attribute(osobject) { type = CKA_UNWRAP; }
+	P11AttrUnwrap(OSObject* osobject) : P11Attribute(osobject) { type = CKA_UNWRAP; }
 
 protected:
 	// Set the default value of the attribute
@@ -559,7 +559,7 @@ class P11AttrLocal : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrLocal(OSObject *osobject) : P11Attribute(osobject) { type = CKA_LOCAL; }
+	P11AttrLocal(OSObject* osobject) : P11Attribute(osobject) { type = CKA_LOCAL; }
 
 protected:
 	// Set the default value of the attribute
@@ -577,7 +577,7 @@ class P11AttrKeyGenMechanism : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrKeyGenMechanism(OSObject *osobject) : P11Attribute(osobject) { type = CKA_KEY_GEN_MECHANISM; }
+	P11AttrKeyGenMechanism(OSObject* osobject) : P11Attribute(osobject) { type = CKA_KEY_GEN_MECHANISM; }
 
 protected:
 	// Set the default value of the attribute
@@ -595,7 +595,7 @@ class P11AttrAlwaysSensitive : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrAlwaysSensitive(OSObject *osobject) : P11Attribute(osobject) { type = CKA_ALWAYS_SENSITIVE; }
+	P11AttrAlwaysSensitive(OSObject* osobject) : P11Attribute(osobject) { type = CKA_ALWAYS_SENSITIVE; }
 
 protected:
 	// Set the default value of the attribute
@@ -613,7 +613,7 @@ class P11AttrNeverExtractable : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrNeverExtractable(OSObject *osobject) : P11Attribute(osobject) { type = CKA_NEVER_EXTRACTABLE; }
+	P11AttrNeverExtractable(OSObject* osobject) : P11Attribute(osobject) { type = CKA_NEVER_EXTRACTABLE; }
 
 protected:
 	// Set the default value of the attribute
@@ -631,7 +631,7 @@ class P11AttrSensitive : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrSensitive(OSObject *osobject) : P11Attribute(osobject) { type = CKA_SENSITIVE; }
+	P11AttrSensitive(OSObject* osobject) : P11Attribute(osobject) { type = CKA_SENSITIVE; }
 
 protected:
 	// Set the default value of the attribute
@@ -649,7 +649,7 @@ class P11AttrExtractable : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrExtractable(OSObject *osobject) : P11Attribute(osobject) { type = CKA_EXTRACTABLE; }
+	P11AttrExtractable(OSObject* osobject) : P11Attribute(osobject) { type = CKA_EXTRACTABLE; }
 
 protected:
 	// Set the default value of the attribute
@@ -667,7 +667,7 @@ class P11AttrWrapWithTrusted : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrWrapWithTrusted(OSObject *osobject) : P11Attribute(osobject) { type = CKA_WRAP_WITH_TRUSTED; }
+	P11AttrWrapWithTrusted(OSObject* osobject) : P11Attribute(osobject) { type = CKA_WRAP_WITH_TRUSTED; }
 
 protected:
 	// Set the default value of the attribute
@@ -685,7 +685,7 @@ class P11AttrAlwaysAuthenticate : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrAlwaysAuthenticate(OSObject *osobject) : P11Attribute(osobject) { type = CKA_ALWAYS_AUTHENTICATE; }
+	P11AttrAlwaysAuthenticate(OSObject* osobject) : P11Attribute(osobject) { type = CKA_ALWAYS_AUTHENTICATE; }
 
 protected:
 	// Set the default value of the attribute
@@ -703,7 +703,7 @@ class P11AttrModulus : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrModulus(OSObject *osobject) : P11Attribute(osobject) { type = CKA_MODULUS; }
+	P11AttrModulus(OSObject* osobject) : P11Attribute(osobject) { type = CKA_MODULUS; }
 
 protected:
 	// Set the default value of the attribute
@@ -721,7 +721,7 @@ class P11AttrPublicExponent : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrPublicExponent(OSObject *osobject) : P11Attribute(osobject) { type = CKA_PUBLIC_EXPONENT; }
+	P11AttrPublicExponent(OSObject* osobject) : P11Attribute(osobject) { type = CKA_PUBLIC_EXPONENT; }
 
 protected:
 	// Set the default value of the attribute
@@ -739,7 +739,7 @@ class P11AttrPrivateExponent : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrPrivateExponent(OSObject *osobject) : P11Attribute(osobject) { type = CKA_PRIVATE_EXPONENT; }
+	P11AttrPrivateExponent(OSObject* osobject) : P11Attribute(osobject) { type = CKA_PRIVATE_EXPONENT; }
 
 protected:
 	// Set the default value of the attribute
@@ -757,7 +757,7 @@ class P11AttrPrime1 : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrPrime1(OSObject *osobject) : P11Attribute(osobject) { type = CKA_PRIME_1; }
+	P11AttrPrime1(OSObject* osobject) : P11Attribute(osobject) { type = CKA_PRIME_1; }
 
 protected:
 	// Set the default value of the attribute
@@ -775,7 +775,7 @@ class P11AttrPrime2 : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrPrime2(OSObject *osobject) : P11Attribute(osobject) { type = CKA_PRIME_2; }
+	P11AttrPrime2(OSObject* osobject) : P11Attribute(osobject) { type = CKA_PRIME_2; }
 
 protected:
 	// Set the default value of the attribute
@@ -793,7 +793,7 @@ class P11AttrExponent1 : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrExponent1(OSObject *osobject) : P11Attribute(osobject) { type = CKA_EXPONENT_1; }
+	P11AttrExponent1(OSObject* osobject) : P11Attribute(osobject) { type = CKA_EXPONENT_1; }
 
 protected:
 	// Set the default value of the attribute
@@ -811,7 +811,7 @@ class P11AttrExponent2 : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrExponent2(OSObject *osobject) : P11Attribute(osobject) { type = CKA_EXPONENT_2; }
+	P11AttrExponent2(OSObject* osobject) : P11Attribute(osobject) { type = CKA_EXPONENT_2; }
 
 protected:
 	// Set the default value of the attribute
@@ -829,7 +829,7 @@ class P11AttrCoefficient : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrCoefficient(OSObject *osobject) : P11Attribute(osobject) { type = CKA_COEFFICIENT; }
+	P11AttrCoefficient(OSObject* osobject) : P11Attribute(osobject) { type = CKA_COEFFICIENT; }
 
 protected:
 	// Set the default value of the attribute
@@ -847,7 +847,7 @@ class P11AttrModulusBits : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrModulusBits(OSObject *osobject) : P11Attribute(osobject) { type = CKA_MODULUS_BITS; }
+	P11AttrModulusBits(OSObject* osobject) : P11Attribute(osobject) { type = CKA_MODULUS_BITS; }
 
 protected:
 	// Set the default value of the attribute

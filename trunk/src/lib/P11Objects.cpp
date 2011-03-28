@@ -61,11 +61,11 @@ bool P11Object::init()
 	if (initialized) return true;
 
 	// Create attributes
-	P11Attribute *attrClass = new P11AttrClass(osobject);
-	P11Attribute *attrToken = new P11AttrToken(osobject);
-	P11Attribute *attrPrivate = new P11AttrPrivate(osobject);
-	P11Attribute *attrModifiable = new P11AttrModifiable(osobject);
-	P11Attribute *attrLabel = new P11AttrLabel(osobject);
+	P11Attribute* attrClass = new P11AttrClass(osobject);
+	P11Attribute* attrToken = new P11AttrToken(osobject);
+	P11Attribute* attrPrivate = new P11AttrPrivate(osobject);
+	P11Attribute* attrModifiable = new P11AttrModifiable(osobject);
+	P11Attribute* attrLabel = new P11AttrLabel(osobject);
 
 	// Initialize the attributes
 	if
@@ -97,7 +97,7 @@ CK_RV P11Object::saveTemplate(CK_ATTRIBUTE_PTR pKeyTemplate, CK_ULONG ulKeyAttri
 {
 	CK_RV rv;
 	CK_ULONG i;
-	P11Attribute *attr;
+	P11Attribute* attr;
 
 	for (i = 0; i < ulKeyAttributeCount; i++)
 	{
@@ -120,9 +120,9 @@ bool P11DataObj::init()
 	if (initialized) return true;
 
 	// Create attributes
-	P11Attribute *attrApplication = new P11AttrApplication(osobject);
-	P11Attribute *attrObjectID = new P11AttrObjectID(osobject);
-	P11Attribute *attrValue = new P11AttrValue(osobject);
+	P11Attribute* attrApplication = new P11AttrApplication(osobject);
+	P11Attribute* attrObjectID = new P11AttrObjectID(osobject);
+	P11Attribute* attrValue = new P11AttrValue(osobject);
 
 	// Initialize the attributes
 	if
@@ -154,12 +154,12 @@ bool P11CertificateObj::init()
 	if (initialized) return true;
 
 	// Create attributes
-	P11Attribute *attrCertificateType = new P11AttrCertificateType(osobject);
-	P11Attribute *attrTrusted = new P11AttrTrusted(osobject);
-	P11Attribute *attrCertificateCategory = new P11AttrCertificateCategory(osobject);
-	P11Attribute *attrCheckValue = new P11AttrCheckValue(osobject);
-	P11Attribute *attrStartDate = new P11AttrStartDate(osobject);
-	P11Attribute *attrEndDate = new P11AttrEndDate(osobject);
+	P11Attribute* attrCertificateType = new P11AttrCertificateType(osobject);
+	P11Attribute* attrTrusted = new P11AttrTrusted(osobject);
+	P11Attribute* attrCertificateCategory = new P11AttrCertificateCategory(osobject);
+	P11Attribute* attrCheckValue = new P11AttrCheckValue(osobject);
+	P11Attribute* attrStartDate = new P11AttrStartDate(osobject);
+	P11Attribute* attrEndDate = new P11AttrEndDate(osobject);
 
 	// Initialize the attributes
 	if
@@ -197,13 +197,13 @@ bool P11KeyObj::init()
 	if (initialized) return true;
 
 	// Create attributes
-	P11Attribute *attrKeyType = new P11AttrKeyType(osobject);
-	P11Attribute *attrID = new P11AttrID(osobject);
-	P11Attribute *attrStartDate = new P11AttrStartDate(osobject);
-	P11Attribute *attrEndDate = new P11AttrEndDate(osobject);
-	P11Attribute *attrDerive = new P11AttrDerive(osobject);
-	P11Attribute *attrLocal = new P11AttrLocal(osobject);
-	P11Attribute *attrKeyGenMechanism = new P11AttrKeyGenMechanism(osobject);
+	P11Attribute* attrKeyType = new P11AttrKeyType(osobject);
+	P11Attribute* attrID = new P11AttrID(osobject);
+	P11Attribute* attrStartDate = new P11AttrStartDate(osobject);
+	P11Attribute* attrEndDate = new P11AttrEndDate(osobject);
+	P11Attribute* attrDerive = new P11AttrDerive(osobject);
+	P11Attribute* attrLocal = new P11AttrLocal(osobject);
+	P11Attribute* attrKeyGenMechanism = new P11AttrKeyGenMechanism(osobject);
 	// CKA_ALLOWED_MECHANISMS is not supported
 
 	// Initialize the attributes
@@ -244,12 +244,12 @@ bool P11PublicKeyObj::init()
 	if (initialized) return true;
 
 	// Create attributes
-	P11Attribute *attrSubject = new P11AttrSubject(osobject);
-	P11Attribute *attrEncrypt = new P11AttrEncrypt(osobject);
-	P11Attribute *attrVerify = new P11AttrVerify(osobject);
-	P11Attribute *attrVerifyRecover = new P11AttrVerifyRecover(osobject);
-	P11Attribute *attrWrap = new P11AttrWrap(osobject);
-	P11Attribute *attrTrusted = new P11AttrTrusted(osobject);
+	P11Attribute* attrSubject = new P11AttrSubject(osobject);
+	P11Attribute* attrEncrypt = new P11AttrEncrypt(osobject);
+	P11Attribute* attrVerify = new P11AttrVerify(osobject);
+	P11Attribute* attrVerifyRecover = new P11AttrVerifyRecover(osobject);
+	P11Attribute* attrWrap = new P11AttrWrap(osobject);
+	P11Attribute* attrTrusted = new P11AttrTrusted(osobject);
         // CKA_WRAP_TEMPLATE is not supported
 
 	// Initialize the attributes
@@ -288,9 +288,9 @@ bool P11RSAPublicKeyObj::init()
 	if (initialized) return true;
 
 	// Create attributes
-	P11Attribute *attrModulus = new P11AttrModulus(osobject);
-	P11Attribute *attrModulusBits = new P11AttrModulusBits(osobject);
-	P11Attribute *attrPublicExponent = new P11AttrPublicExponent(osobject);
+	P11Attribute* attrModulus = new P11AttrModulus(osobject);
+	P11Attribute* attrModulusBits = new P11AttrModulusBits(osobject);
+	P11Attribute* attrPublicExponent = new P11AttrPublicExponent(osobject);
 
 	// Initialize the attributes
 	if
@@ -314,7 +314,7 @@ bool P11RSAPublicKeyObj::init()
 }
 
 // Save generated key
-CK_RV P11RSAPublicKeyObj::saveGeneratedKey(CK_ATTRIBUTE_PTR pKeyTemplate, CK_ULONG ulKeyAttributeCount, RSAPublicKey *rsa, Token *token)
+CK_RV P11RSAPublicKeyObj::saveGeneratedKey(CK_ATTRIBUTE_PTR pKeyTemplate, CK_ULONG ulKeyAttributeCount, RSAPublicKey* rsa, Token* token)
 {
 	if (osobject == NULL || token == NULL) return CKR_GENERAL_ERROR;
 	if (osobject->startTransaction() == false) return CKR_GENERAL_ERROR;
@@ -356,18 +356,18 @@ bool P11PrivateKeyObj::init()
 	if (initialized) return true;
 
 	// Create attributes
-	P11Attribute *attrSubject = new P11AttrSubject(osobject);
-	P11Attribute *attrSensitive = new P11AttrSensitive(osobject);
-	P11Attribute *attrDecrypt = new P11AttrDecrypt(osobject);
-	P11Attribute *attrSign = new P11AttrSign(osobject);
-	P11Attribute *attrSignRecover = new P11AttrSignRecover(osobject);
-	P11Attribute *attrUnwrap = new P11AttrUnwrap(osobject);
-	P11Attribute *attrExtractable = new P11AttrExtractable(osobject);
-	P11Attribute *attrAlwaysSensitive = new P11AttrAlwaysSensitive(osobject);
-	P11Attribute *attrNeverExtractable = new P11AttrNeverExtractable(osobject);
-	P11Attribute *attrWrapWithTrusted = new P11AttrWrapWithTrusted(osobject);
+	P11Attribute* attrSubject = new P11AttrSubject(osobject);
+	P11Attribute* attrSensitive = new P11AttrSensitive(osobject);
+	P11Attribute* attrDecrypt = new P11AttrDecrypt(osobject);
+	P11Attribute* attrSign = new P11AttrSign(osobject);
+	P11Attribute* attrSignRecover = new P11AttrSignRecover(osobject);
+	P11Attribute* attrUnwrap = new P11AttrUnwrap(osobject);
+	P11Attribute* attrExtractable = new P11AttrExtractable(osobject);
+	P11Attribute* attrAlwaysSensitive = new P11AttrAlwaysSensitive(osobject);
+	P11Attribute* attrNeverExtractable = new P11AttrNeverExtractable(osobject);
+	P11Attribute* attrWrapWithTrusted = new P11AttrWrapWithTrusted(osobject);
         // CKA_UNWRAP_TEMPLATE is not supported
-	P11Attribute *attrAlwaysAuthenticate = new P11AttrAlwaysAuthenticate(osobject);
+	P11Attribute* attrAlwaysAuthenticate = new P11AttrAlwaysAuthenticate(osobject);
 
 	// Initialize the attributes
 	if
@@ -415,14 +415,14 @@ bool P11RSAPrivateKeyObj::init()
 	if (initialized) return true;
 
 	// Create attributes
-	P11Attribute *attrModulus = new P11AttrModulus(osobject);
-	P11Attribute *attrPublicExponent = new P11AttrPublicExponent(osobject);
-	P11Attribute *attrPrivateExponent = new P11AttrPrivateExponent(osobject);
-	P11Attribute *attrPrime1 = new P11AttrPrime1(osobject);
-	P11Attribute *attrPrime2 = new P11AttrPrime2(osobject);
-	P11Attribute *attrExponent1 = new P11AttrExponent1(osobject);
-	P11Attribute *attrExponent2 = new P11AttrExponent2(osobject);
-	P11Attribute *attrCoefficient = new P11AttrCoefficient(osobject);
+	P11Attribute* attrModulus = new P11AttrModulus(osobject);
+	P11Attribute* attrPublicExponent = new P11AttrPublicExponent(osobject);
+	P11Attribute* attrPrivateExponent = new P11AttrPrivateExponent(osobject);
+	P11Attribute* attrPrime1 = new P11AttrPrime1(osobject);
+	P11Attribute* attrPrime2 = new P11AttrPrime2(osobject);
+	P11Attribute* attrExponent1 = new P11AttrExponent1(osobject);
+	P11Attribute* attrExponent2 = new P11AttrExponent2(osobject);
+	P11Attribute* attrCoefficient = new P11AttrCoefficient(osobject);
 
 	// Initialize the attributes
 	if
@@ -464,19 +464,19 @@ bool P11SecretKeyObj::init()
 	if (initialized) return true;
 
 	// Create attributes
-	P11Attribute *attrSensitive = new P11AttrSensitive(osobject);
-	P11Attribute *attrEncrypt = new P11AttrEncrypt(osobject);
-	P11Attribute *attrDecrypt = new P11AttrDecrypt(osobject);
-	P11Attribute *attrSign = new P11AttrSign(osobject);
-	P11Attribute *attrVerify = new P11AttrVerify(osobject);
-	P11Attribute *attrWrap = new P11AttrWrap(osobject);
-	P11Attribute *attrUnwrap = new P11AttrUnwrap(osobject);
-	P11Attribute *attrExtractable = new P11AttrExtractable(osobject);
-	P11Attribute *attrAlwaysSensitive = new P11AttrAlwaysSensitive(osobject);
-	P11Attribute *attrNeverExtractable = new P11AttrNeverExtractable(osobject);
-	P11Attribute *attrCheckValue = new P11AttrCheckValue(osobject);
-	P11Attribute *attrWrapWithTrusted = new P11AttrWrapWithTrusted(osobject);
-	P11Attribute *attrTrusted = new P11AttrTrusted(osobject);
+	P11Attribute* attrSensitive = new P11AttrSensitive(osobject);
+	P11Attribute* attrEncrypt = new P11AttrEncrypt(osobject);
+	P11Attribute* attrDecrypt = new P11AttrDecrypt(osobject);
+	P11Attribute* attrSign = new P11AttrSign(osobject);
+	P11Attribute* attrVerify = new P11AttrVerify(osobject);
+	P11Attribute* attrWrap = new P11AttrWrap(osobject);
+	P11Attribute* attrUnwrap = new P11AttrUnwrap(osobject);
+	P11Attribute* attrExtractable = new P11AttrExtractable(osobject);
+	P11Attribute* attrAlwaysSensitive = new P11AttrAlwaysSensitive(osobject);
+	P11Attribute* attrNeverExtractable = new P11AttrNeverExtractable(osobject);
+	P11Attribute* attrCheckValue = new P11AttrCheckValue(osobject);
+	P11Attribute* attrWrapWithTrusted = new P11AttrWrapWithTrusted(osobject);
+	P11Attribute* attrTrusted = new P11AttrTrusted(osobject);
         // CKA_WRAP_TEMPLATE is not supported
         // CKA_UNWRAP_TEMPLATE is not supported
 
@@ -530,8 +530,8 @@ bool P11DomainObj::init()
 	if (initialized) return true;
 
 	// Create attributes
-	P11Attribute *attrKeyType = new P11AttrApplication(osobject);
-	P11Attribute *attrLocal = new P11AttrObjectID(osobject);
+	P11Attribute* attrKeyType = new P11AttrApplication(osobject);
+	P11Attribute* attrLocal = new P11AttrObjectID(osobject);
 
 	// Initialize the attributes
 	if

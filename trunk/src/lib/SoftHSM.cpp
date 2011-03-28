@@ -261,7 +261,7 @@ CK_RV SoftHSM::C_GetSlotInfo(CK_SLOT_ID slotID, CK_SLOT_INFO_PTR pInfo)
 {
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
 
-	Slot *slot = slotManager->getSlot(slotID);
+	Slot* slot = slotManager->getSlot(slotID);
 	if (slot == NULL)
 	{
 		return CKR_SLOT_ID_INVALID;
@@ -275,13 +275,13 @@ CK_RV SoftHSM::C_GetTokenInfo(CK_SLOT_ID slotID, CK_TOKEN_INFO_PTR pInfo)
 {
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
 
-	Slot *slot = slotManager->getSlot(slotID);
+	Slot* slot = slotManager->getSlot(slotID);
 	if (slot == NULL)
 	{
 		return CKR_SLOT_ID_INVALID;
 	}
 
-	Token *token = slot->getToken();
+	Token* token = slot->getToken();
 	if (token == NULL)
 	{
 		return CKR_TOKEN_NOT_PRESENT;
@@ -326,7 +326,7 @@ CK_RV SoftHSM::C_GetMechanismList(CK_SLOT_ID slotID, CK_MECHANISM_TYPE_PTR pMech
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
 	if (pulCount == NULL_PTR) return CKR_ARGUMENTS_BAD;
 
-	Slot *slot = slotManager->getSlot(slotID);
+	Slot* slot = slotManager->getSlot(slotID);
 	if (slot == NULL)
 	{
 		return CKR_SLOT_ID_INVALID;
@@ -365,7 +365,7 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
 	if (pInfo == NULL_PTR) return CKR_ARGUMENTS_BAD;
 
-	Slot *slot = slotManager->getSlot(slotID);
+	Slot* slot = slotManager->getSlot(slotID);
 	if (slot == NULL)
 	{
 		return CKR_SLOT_ID_INVALID;
@@ -493,7 +493,7 @@ CK_RV SoftHSM::C_InitToken(CK_SLOT_ID slotID, CK_UTF8CHAR_PTR pPin, CK_ULONG ulP
 {
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
 
-	Slot *slot = slotManager->getSlot(slotID);
+	Slot* slot = slotManager->getSlot(slotID);
 	if (slot == NULL)
 	{
 		return CKR_SLOT_ID_INVALID;
@@ -520,14 +520,14 @@ CK_RV SoftHSM::C_InitPIN(CK_SESSION_HANDLE hSession, CK_UTF8CHAR_PTR pPin, CK_UL
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
 
 	// Get the session
-	Session *session = sessionManager->getSession(hSession);
+	Session* session = sessionManager->getSession(hSession);
 	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
 
 	// The SO must be logged in
 	if (session->getState() != CKS_RW_SO_FUNCTIONS) return CKR_USER_NOT_LOGGED_IN;
 
 	// Get the token
-	Token *token = session->getToken();
+	Token* token = session->getToken();
 	if (token == NULL) return CKR_GENERAL_ERROR;
 
 	// Check the PIN
@@ -547,7 +547,7 @@ CK_RV SoftHSM::C_SetPIN(CK_SESSION_HANDLE hSession, CK_UTF8CHAR_PTR pOldPin, CK_
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
 
 	// Get the session
-	Session *session = sessionManager->getSession(hSession);
+	Session* session = sessionManager->getSession(hSession);
 	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
 
 	// Check the new PINs
@@ -559,7 +559,7 @@ CK_RV SoftHSM::C_SetPIN(CK_SESSION_HANDLE hSession, CK_UTF8CHAR_PTR pOldPin, CK_
 	ByteString newPIN(pNewPin, ulNewLen);
 
 	// Get the token
-	Token *token = session->getToken();
+	Token* token = session->getToken();
 	if (token == NULL) return CKR_GENERAL_ERROR;
 
 	switch (session->getState())
@@ -585,7 +585,7 @@ CK_RV SoftHSM::C_OpenSession(CK_SLOT_ID slotID, CK_FLAGS flags, CK_VOID_PTR pApp
 {
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
 
-	Slot *slot = slotManager->getSlot(slotID);
+	Slot* slot = slotManager->getSlot(slotID);
 
 	return sessionManager->openSession(slot, flags, pApplication, notify, phSession);
 }
@@ -603,7 +603,7 @@ CK_RV SoftHSM::C_CloseAllSessions(CK_SLOT_ID slotID)
 {
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
 
-	Slot *slot = slotManager->getSlot(slotID);
+	Slot* slot = slotManager->getSlot(slotID);
 
 	return sessionManager->closeAllSessions(slot);
 }
@@ -640,11 +640,11 @@ CK_RV SoftHSM::C_Login(CK_SESSION_HANDLE hSession, CK_USER_TYPE userType, CK_UTF
 	ByteString pin(pPin, ulPinLen);
 
 	// Get the session
-	Session *session = sessionManager->getSession(hSession);
+	Session* session = sessionManager->getSession(hSession);
 	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
 
 	// Get the token
-	Token *token = session->getToken();
+	Token* token = session->getToken();
 	if (token == NULL) return CKR_GENERAL_ERROR;
 
 	switch (userType)
@@ -679,11 +679,11 @@ CK_RV SoftHSM::C_Logout(CK_SESSION_HANDLE hSession)
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
 
 	// Get the session
-	Session *session = sessionManager->getSession(hSession);
+	Session* session = sessionManager->getSession(hSession);
 	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
 
 	// Get the token
-	Token *token = session->getToken();
+	Token* token = session->getToken();
 	if (token == NULL) return CKR_GENERAL_ERROR;
 
 	// Logout
@@ -806,7 +806,7 @@ CK_RV SoftHSM::C_DigestInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechan
 	if (pMechanism == NULL_PTR) return CKR_ARGUMENTS_BAD;
 
 	// Get the session
-	Session *session = sessionManager->getSession(hSession);
+	Session* session = sessionManager->getSession(hSession);
 	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
 
 	// TODO: Should we lock the session?
@@ -815,7 +815,7 @@ CK_RV SoftHSM::C_DigestInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechan
 	if (session->getOpType() != SESSION_OP_NONE) return CKR_OPERATION_ACTIVE;
 
 	// Get the mechanism
-	HashAlgorithm *hash = NULL;
+	HashAlgorithm* hash = NULL;
 	switch(pMechanism->mechanism) {
 		case CKM_MD5:
 			hash = CryptoFactory::i()->getHashAlgorithm("md5");
@@ -855,7 +855,7 @@ CK_RV SoftHSM::C_Digest(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pData, CK_ULONG 
 	if (pData == NULL_PTR) return CKR_ARGUMENTS_BAD;
 
 	// Get the session
-	Session *session = sessionManager->getSession(hSession);
+	Session* session = sessionManager->getSession(hSession);
 	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
 
 	// TODO: Should we lock the session?
@@ -918,7 +918,7 @@ CK_RV SoftHSM::C_DigestUpdate(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pPart, CK_
 	if (pPart == NULL_PTR) return CKR_ARGUMENTS_BAD;
 
 	// Get the session
-	Session *session = sessionManager->getSession(hSession);
+	Session* session = sessionManager->getSession(hSession);
 	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
 
 	// TODO: Should we lock the session?
@@ -952,7 +952,7 @@ CK_RV SoftHSM::C_DigestFinal(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pDigest, CK
 	if (pulDigestLen == NULL_PTR) return CKR_ARGUMENTS_BAD;
 
 	// Get the session
-	Session *session = sessionManager->getSession(hSession);
+	Session* session = sessionManager->getSession(hSession);
 	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
 
 	// TODO: Should we lock the session?
@@ -1121,7 +1121,7 @@ CK_RV SoftHSM::C_GenerateKeyPair
 	if (phPrivateKey == NULL_PTR) return CKR_ARGUMENTS_BAD;
 
 	// Get the session
-	Session *session = sessionManager->getSession(hSession);
+	Session* session = sessionManager->getSession(hSession);
 	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
 
 	CK_BBOOL isToken = CK_FALSE;
@@ -1228,11 +1228,11 @@ CK_RV SoftHSM::C_SeedRandom(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pSeed, CK_UL
 	if (pSeed == NULL_PTR) return CKR_ARGUMENTS_BAD;
 
 	// Get the session
-	Session *session = sessionManager->getSession(hSession);
+	Session* session = sessionManager->getSession(hSession);
 	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
 
 	// Get the RNG
-	RNG *rng = CryptoFactory::i()->getRNG();
+	RNG* rng = CryptoFactory::i()->getRNG();
 	if (rng == NULL) return CKR_GENERAL_ERROR;
 
 	// Seed the RNG
@@ -1249,11 +1249,11 @@ CK_RV SoftHSM::C_GenerateRandom(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pRandomD
 	if (pRandomData == NULL_PTR) return CKR_ARGUMENTS_BAD;
 
 	// Get the session
-	Session *session = sessionManager->getSession(hSession);
+	Session* session = sessionManager->getSession(hSession);
 	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
 
 	// Get the RNG
-	RNG *rng = CryptoFactory::i()->getRNG();
+	RNG* rng = CryptoFactory::i()->getRNG();
 	if (rng == NULL) return CKR_GENERAL_ERROR;
 
 	// Generate random data
@@ -1287,7 +1287,7 @@ CK_RV SoftHSM::C_WaitForSlotEvent(CK_FLAGS flags, CK_SLOT_ID_PTR pSlot, CK_VOID_
 // Generate an RSA key pair
 CK_RV SoftHSM::generateRSA
 (
-	Session *session,
+	Session* session,
 	CK_ATTRIBUTE_PTR pPublicKeyTemplate,
 	CK_ULONG ulPublicKeyAttributeCount,
 	CK_ATTRIBUTE_PTR pPrivateKeyTemplate,
@@ -1297,7 +1297,7 @@ CK_RV SoftHSM::generateRSA
 	CK_BBOOL isToken
 )
 {
-	AsymmetricKeyPair *kp = NULL;
+	AsymmetricKeyPair* kp = NULL;
 	RSAParameters p;
 	size_t bitLen = 0;
 	ByteString exponent("010001");
@@ -1345,8 +1345,8 @@ CK_RV SoftHSM::generateRSA
 		return CKR_GENERAL_ERROR;
 	}
 
-	RSAPublicKey *pub = (RSAPublicKey*) kp->getPublicKey();
-	RSAPrivateKey *priv = (RSAPrivateKey*) kp->getPrivateKey();
+	RSAPublicKey* pub = (RSAPublicKey*) kp->getPublicKey();
+	RSAPrivateKey* priv = (RSAPrivateKey*) kp->getPrivateKey();
 
 	// TODO: Save keys
 	CK_RV result = saveGeneratedRSA(session, pPublicKeyTemplate, ulPublicKeyAttributeCount, pub, isToken, &hPublicKey);
@@ -1362,16 +1362,16 @@ CK_RV SoftHSM::generateRSA
 // Save the public RSA key
 CK_RV SoftHSM::saveGeneratedRSA
 (
-	Session *session,
+	Session* session,
 	CK_ATTRIBUTE_PTR pKeyTemplate,
 	CK_ULONG ulKeyAttributeCount,
-	RSAPublicKey *rsa,
+	RSAPublicKey* rsa,
 	CK_BBOOL isToken,
 	CK_OBJECT_HANDLE_PTR phKey
 )
 {
 	CK_RV rv;
-	OSObject *object = NULL;
+	OSObject* object = NULL;
 
 	if (session == NULL || phKey == NULL) return CKR_GENERAL_ERROR;
 
@@ -1385,7 +1385,7 @@ CK_RV SoftHSM::saveGeneratedRSA
 	}
 	if (object == NULL) return CKR_GENERAL_ERROR;
 
-	P11RSAPublicKeyObj *p11Pub = new P11RSAPublicKeyObj(object);
+	P11RSAPublicKeyObj* p11Pub = new P11RSAPublicKeyObj(object);
 	rv = p11Pub->saveGeneratedKey(pKeyTemplate, ulKeyAttributeCount, rsa, session->getToken());
 
 	delete p11Pub;
@@ -1401,7 +1401,7 @@ CK_RV SoftHSM::saveGeneratedRSA
 // Generate an DSA key pair
 CK_RV SoftHSM::generateDSA
 (
-	Session *session,
+	Session* session,
 	CK_ATTRIBUTE_PTR pPublicKeyTemplate,
 	CK_ULONG ulPublicKeyAttributeCount,
 	CK_ATTRIBUTE_PTR pPrivateKeyTemplate,
@@ -1411,7 +1411,7 @@ CK_RV SoftHSM::generateDSA
 	CK_BBOOL isToken
 )
 {
-	AsymmetricKeyPair *kp = NULL;
+	AsymmetricKeyPair* kp = NULL;
 	DSAParameters p;
 	ByteString prime;
 	ByteString subprime;
@@ -1457,8 +1457,8 @@ CK_RV SoftHSM::generateDSA
 		return CKR_GENERAL_ERROR;
 	}
 
-	DSAPublicKey *pub = (DSAPublicKey*) kp->getPublicKey();
-	DSAPrivateKey *priv = (DSAPrivateKey*) kp->getPrivateKey();
+	DSAPublicKey* pub = (DSAPublicKey*) kp->getPublicKey();
+	DSAPrivateKey* priv = (DSAPrivateKey*) kp->getPrivateKey();
 
 	// TODO: Save keys 
 
