@@ -82,22 +82,22 @@ void crypto_final()
 int crypto_import_key_pair
 (
 	CK_SESSION_HANDLE hSession,
-	char *filePath,
-	char *filePIN,
-	char *label,
-	char *objID,
+	char* filePath,
+	char* filePIN,
+	char* label,
+	char* objID,
 	int objIDLen,
 	int noPublicKey
 )
 {
-	Botan::Private_Key *pkey = crypto_read_file(filePath, filePIN);
-	if (!pkey)
+	Botan::Private_Key* pkey = crypto_read_file(filePath, filePIN);
+	if (pkey == NULL)
 	{
 		return 1;
 	}
 
-	Botan::RSA_PrivateKey *rsa = NULL;
-	Botan::DSA_PrivateKey *dsa = NULL;
+	Botan::RSA_PrivateKey* rsa = NULL;
+	Botan::DSA_PrivateKey* dsa = NULL;
 
 	if (pkey->algo_name().compare("RSA") == 0)
 	{
@@ -136,15 +136,15 @@ int crypto_import_key_pair
 }
 
 // Read the key from file
-Botan::Private_Key* crypto_read_file(char* filePath, char *filePIN)
+Botan::Private_Key* crypto_read_file(char* filePath, char* filePIN)
 {
 	if (filePath == NULL)
 	{
 		return NULL;
 	}
 
-	Botan::AutoSeeded_RNG *rng = new Botan::AutoSeeded_RNG();
-	Botan::Private_Key *pkey = NULL;
+	Botan::AutoSeeded_RNG* rng = new Botan::AutoSeeded_RNG();
+	Botan::Private_Key* pkey = NULL;
 
 	try
 	{
@@ -174,14 +174,14 @@ Botan::Private_Key* crypto_read_file(char* filePath, char *filePIN)
 int crypto_save_rsa
 (
 	CK_SESSION_HANDLE hSession,
-	char *label,
-	char *objID,
+	char* label,
+	char* objID,
 	int objIDLen,
 	int noPublicKey,
-	Botan::RSA_PrivateKey *rsa
+	Botan::RSA_PrivateKey* rsa
 )
 {
-	rsa_key_material_t *keyMat = crypto_malloc_rsa(rsa);
+	rsa_key_material_t* keyMat = crypto_malloc_rsa(rsa);
 	if (!keyMat)
 	{
 		fprintf(stderr, "ERROR: Could not convert the key material to binary information.\n");
@@ -255,15 +255,15 @@ int crypto_save_rsa
 }
 
 // Convert the Botan key to binary
-rsa_key_material_t* crypto_malloc_rsa(Botan::RSA_PrivateKey *rsa)
+rsa_key_material_t* crypto_malloc_rsa(Botan::RSA_PrivateKey* rsa)
 {
-	if (!rsa)
+	if (rsa == NULL)
 	{
 		return NULL;
 	}
 
-	rsa_key_material_t *keyMat = (rsa_key_material_t *)malloc(sizeof(rsa_key_material_t));
-	if (!keyMat)
+	rsa_key_material_t* keyMat = (rsa_key_material_t*)malloc(sizeof(rsa_key_material_t));
+	if (keyMat == NULL)
 	{
 		return NULL;
 	}
@@ -302,22 +302,22 @@ rsa_key_material_t* crypto_malloc_rsa(Botan::RSA_PrivateKey *rsa)
 		return NULL;
 	}
 
-	rsa->get_e().binary_encode((Botan::byte *)keyMat->bigE);
-	rsa->get_n().binary_encode((Botan::byte *)keyMat->bigN);
-	rsa->get_d().binary_encode((Botan::byte *)keyMat->bigD);
-	rsa->get_p().binary_encode((Botan::byte *)keyMat->bigP);
-	rsa->get_q().binary_encode((Botan::byte *)keyMat->bigQ);
-	rsa->get_d1().binary_encode((Botan::byte *)keyMat->bigDMP1);
-	rsa->get_d2().binary_encode((Botan::byte *)keyMat->bigDMQ1);
-	rsa->get_c().binary_encode((Botan::byte *)keyMat->bigIQMP);
+	rsa->get_e().binary_encode((Botan::byte*)keyMat->bigE);
+	rsa->get_n().binary_encode((Botan::byte*)keyMat->bigN);
+	rsa->get_d().binary_encode((Botan::byte*)keyMat->bigD);
+	rsa->get_p().binary_encode((Botan::byte*)keyMat->bigP);
+	rsa->get_q().binary_encode((Botan::byte*)keyMat->bigQ);
+	rsa->get_d1().binary_encode((Botan::byte*)keyMat->bigDMP1);
+	rsa->get_d2().binary_encode((Botan::byte*)keyMat->bigDMQ1);
+	rsa->get_c().binary_encode((Botan::byte*)keyMat->bigIQMP);
 
 	return keyMat;
 }
 
 // Free the memory of the key
-void crypto_free_rsa(rsa_key_material_t *keyMat)
+void crypto_free_rsa(rsa_key_material_t* keyMat)
 {
-	if (!keyMat) return;
+	if (keyMat == NULL) return;
 	if (keyMat->bigE) free(keyMat->bigE);
 	if (keyMat->bigN) free(keyMat->bigN);
 	if (keyMat->bigD) free(keyMat->bigD);
@@ -333,15 +333,15 @@ void crypto_free_rsa(rsa_key_material_t *keyMat)
 int crypto_save_dsa
 (
 	CK_SESSION_HANDLE hSession,
-	char *label,
-	char *objID,
+	char* label,
+	char* objID,
 	int objIDLen,
 	int noPublicKey,
-	Botan::DSA_PrivateKey *dsa
+	Botan::DSA_PrivateKey* dsa
 )
 {
-	dsa_key_material_t *keyMat = crypto_malloc_dsa(dsa);
-	if (!keyMat)
+	dsa_key_material_t* keyMat = crypto_malloc_dsa(dsa);
+	if (keyMat == NULL)
 	{
 		fprintf(stderr, "ERROR: Could not convert the key material to binary information.\n");
 		return 1;
@@ -412,15 +412,15 @@ int crypto_save_dsa
 }
 
 // Convert the Botan key to binary
-dsa_key_material_t* crypto_malloc_dsa(Botan::DSA_PrivateKey *dsa)
+dsa_key_material_t* crypto_malloc_dsa(Botan::DSA_PrivateKey* dsa)
 {
-	if (!dsa)
+	if (dsa == NULL)
 	{
 		return NULL;
 	}
 
 	dsa_key_material_t *keyMat = (dsa_key_material_t *)malloc(sizeof(dsa_key_material_t));
-	if (!keyMat)
+	if (keyMat == NULL)
 	{
 		return NULL;
 	}
@@ -443,19 +443,19 @@ dsa_key_material_t* crypto_malloc_dsa(Botan::DSA_PrivateKey *dsa)
 		return NULL;
 	}
 
-	dsa->group_p().binary_encode((Botan::byte *)keyMat->bigP);
-	dsa->group_q().binary_encode((Botan::byte *)keyMat->bigQ);
-	dsa->group_g().binary_encode((Botan::byte *)keyMat->bigG);
-	dsa->get_x().binary_encode((Botan::byte *)keyMat->bigX);
-	dsa->get_y().binary_encode((Botan::byte *)keyMat->bigY);
+	dsa->group_p().binary_encode((Botan::byte*)keyMat->bigP);
+	dsa->group_q().binary_encode((Botan::byte*)keyMat->bigQ);
+	dsa->group_g().binary_encode((Botan::byte*)keyMat->bigG);
+	dsa->get_x().binary_encode((Botan::byte*)keyMat->bigX);
+	dsa->get_y().binary_encode((Botan::byte*)keyMat->bigY);
 
 	return keyMat;
 }
 
 // Free the memory of the key
-void crypto_free_dsa(dsa_key_material_t *keyMat)
+void crypto_free_dsa(dsa_key_material_t* keyMat)
 {
-	if (!keyMat) return;
+	if (keyMat == NULL) return;
 	if (keyMat->bigP) free(keyMat->bigP);
 	if (keyMat->bigQ) free(keyMat->bigQ);
 	if (keyMat->bigG) free(keyMat->bigG);

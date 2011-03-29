@@ -61,11 +61,11 @@ void crypto_final()
 }
 
 // Save the RSA key as a PKCS#8 file
-int save_rsa_pkcs8(char *out_path, char *file_pin, key_material_t *pkey)
+int save_rsa_pkcs8(char* out_path, char* file_pin, key_material_t* pkey)
 {
 	int result = 0;
-	Botan::Private_Key *priv_key = NULL;
-	Botan::AutoSeeded_RNG *rng;
+	Botan::Private_Key* priv_key = NULL;
+	Botan::AutoSeeded_RNG* rng = NULL;
 	Botan::BigInt bigE, bigP, bigQ, bigN, bigD;
 
 	// See if the key material was found.
@@ -103,7 +103,7 @@ int save_rsa_pkcs8(char *out_path, char *file_pin, key_material_t *pkey)
 	}
 
 	std::ofstream priv_file(out_path);
-	if (!priv_file)
+	if (priv_file == NULL)
 	{
 		fprintf(stderr, "ERROR: Could not open file for output.\n");
 		delete rng;
@@ -139,11 +139,11 @@ int save_rsa_pkcs8(char *out_path, char *file_pin, key_material_t *pkey)
 }
 
 // Save the DSA key as a PKCS#8 file
-int save_dsa_pkcs8(char *out_path, char *file_pin, key_material_t *pkey)
+int save_dsa_pkcs8(char* out_path, char* file_pin, key_material_t* pkey)
 {
 	int result = 0;
-	Botan::Private_Key *priv_key = NULL;
-	Botan::AutoSeeded_RNG *rng;
+	Botan::Private_Key* priv_key = NULL;
+	Botan::AutoSeeded_RNG* rng = NULL;
 	Botan::BigInt bigDP, bigDQ, bigDG, bigDX;
 
 	// See if the key material was found.
@@ -179,7 +179,7 @@ int save_dsa_pkcs8(char *out_path, char *file_pin, key_material_t *pkey)
 	}
 
 	std::ofstream priv_file(out_path);
-	if (!priv_file)
+	if (priv_file == NULL)
 	{
 		fprintf(stderr, "ERROR: Could not open file for output.\n");
 		delete rng;

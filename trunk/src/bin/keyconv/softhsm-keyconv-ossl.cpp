@@ -62,13 +62,13 @@ void crypto_final()
 }
 
 // Save the RSA key as a PKCS#8 file
-int save_rsa_pkcs8(char *out_path, char *file_pin, key_material_t *pkey)
+int save_rsa_pkcs8(char* out_path, char* file_pin, key_material_t* pkey)
 {
-	RSA *rsa = NULL;
-	EVP_PKEY *ossl_pkey;
-	PKCS8_PRIV_KEY_INFO *p8inf;
-	BIO *out = NULL;
-	X509_SIG *p8;
+	RSA* rsa = NULL;
+	EVP_PKEY* ossl_pkey = NULL;
+	PKCS8_PRIV_KEY_INFO* p8inf = NULL;
+	BIO* out = NULL;
+	X509_SIG* p8 = NULL;
 	int result = 0;
 
 	// See if the key material was found.
@@ -158,13 +158,13 @@ int save_rsa_pkcs8(char *out_path, char *file_pin, key_material_t *pkey)
 }
 
 // Save the DSA key as a PKCS#8 file
-int save_dsa_pkcs8(char *out_path, char *file_pin, key_material_t *pkey)
+int save_dsa_pkcs8(char* out_path, char* file_pin, key_material_t* pkey)
 {
-	DSA *dsa;
-	EVP_PKEY *ossl_pkey;
-	PKCS8_PRIV_KEY_INFO *p8inf;
-	BIO *out = NULL;
-	X509_SIG *p8;
+	DSA* dsa = NULL;
+	EVP_PKEY* ossl_pkey = NULL;
+	PKCS8_PRIV_KEY_INFO* p8inf = NULL;
+	BIO* out = NULL;
+	X509_SIG* p8 = NULL;
 	int result = 0;
 
 	// See if the key material was found.

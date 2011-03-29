@@ -42,29 +42,29 @@
 // Main functions
 
 void usage();
-int migrate(char *dbPath, char *slot, char *userPIN, int noPublicKey);
+int migrate(char* dbPath, char* slot, char* userPIN, int noPublicKey);
 
 // Support functions
 
-sqlite3* openDB(char *dbPath);
-int openP11(char *slot, char *userPIN, CK_SESSION_HANDLE *hSession);
-int db2session(sqlite3 *db, CK_SESSION_HANDLE hSession, int noPublicKey);
-int dbRSAPub2session(sqlite3 *db, CK_OBJECT_HANDLE objectID, CK_SESSION_HANDLE hSession);
-int dbRSAPriv2session(sqlite3 *db, CK_OBJECT_HANDLE objectID, CK_SESSION_HANDLE hSession);
-void freeTemplate(CK_ATTRIBUTE *attTemplate, int size);
+sqlite3* openDB(char* dbPath);
+int openP11(char* slot, char* userPIN, CK_SESSION_HANDLE* hSession);
+int db2session(sqlite3* db, CK_SESSION_HANDLE hSession, int noPublicKey);
+int dbRSAPub2session(sqlite3* db, CK_OBJECT_HANDLE objectID, CK_SESSION_HANDLE hSession);
+int dbRSAPriv2session(sqlite3* db, CK_OBJECT_HANDLE objectID, CK_SESSION_HANDLE hSession);
+void freeTemplate(CK_ATTRIBUTE* attTemplate, int size);
 
 // Database functions
 
-CK_OBJECT_HANDLE* getObjects(sqlite3 *db, CK_ULONG *objectCount);
+CK_OBJECT_HANDLE* getObjects(sqlite3* db, CK_ULONG* objectCount);
 CK_OBJECT_CLASS getObjectClass(CK_OBJECT_HANDLE objectRef);
 CK_KEY_TYPE getKeyType(CK_OBJECT_HANDLE objectRef);
-int getAttribute(CK_OBJECT_HANDLE objectRef, CK_ATTRIBUTE *attTemplate);
-int prepStatements(sqlite3 *db);
+int getAttribute(CK_OBJECT_HANDLE objectRef, CK_ATTRIBUTE* attTemplate);
+int prepStatements(sqlite3* db);
 void finalStatements();
 
 // Library
 
-static void *moduleHandle;
+static void* moduleHandle;
 extern CK_FUNCTION_LIST_PTR p11;
 
 #endif // !_SOFTHSM_V2_SOFTHSM_MIGRATE_H

@@ -118,20 +118,20 @@ static const struct option long_options[] = {
 CK_FUNCTION_LIST_PTR p11;
 
 // The main function
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
 	int option_index = 0;
 	int opt;
 
-	char *inPath = NULL;
-	char *outPath = NULL;
-	char *soPIN = NULL;
-	char *userPIN = NULL;
-	char *filePIN = NULL;
-	char *label = NULL;
-	char *module = NULL;
-	char *objectID = NULL;
-	char *slot = NULL;
+	char* inPath = NULL;
+	char* outPath = NULL;
+	char* soPIN = NULL;
+	char* userPIN = NULL;
+	char* filePIN = NULL;
+	char* label = NULL;
+	char* module = NULL;
+	char* objectID = NULL;
+	char* slot = NULL;
 	int forceExec = 0;
 	int noPublicKey = 0;
 
@@ -260,7 +260,7 @@ int main(int argc, char *argv[])
 }
 
 // Initialize the token
-int initToken(char *slot, char *label, char *soPIN, char *userPIN)
+int initToken(char* slot, char* label, char* soPIN, char* userPIN)
 {
 	char so_pin_copy[MAX_PIN_LEN+1];
 	char user_pin_copy[MAX_PIN_LEN+1];
@@ -454,12 +454,12 @@ int showSlots()
 // Import a key pair from given path
 int importKeyPair
 (
-	char *filePath,
-	char *filePIN,
-	char *slot,
-	char *userPIN,
-	char *label,
-	char *objectID,
+	char* filePath,
+	char* filePIN,
+	char* slot,
+	char* userPIN,
+	char* label,
+	char* objectID,
 	int forceExec,
 	int noPublicKey
 )
@@ -488,7 +488,7 @@ int importKeyPair
 	}
 
 	int objIDLen = 0;
-	char *objID = hexStrToBin(objectID, strlen(objectID), &objIDLen);
+	char* objID = hexStrToBin(objectID, strlen(objectID), &objIDLen);
 	if (objID == NULL)
 	{
 		fprintf(stderr, "Please edit --id <hex> to correct error.\n");
@@ -549,9 +549,9 @@ int importKeyPair
 }
 
 // Convert a char array of hexadecimal characters into a binary representation
-char* hexStrToBin(char *objectID, int idLength, int *newLen)
+char* hexStrToBin(char* objectID, int idLength, int* newLen)
 {
-	char *bytes = NULL;
+	char* bytes = NULL;
 
 	if (idLength % 2 != 0)
 	{
@@ -569,7 +569,7 @@ char* hexStrToBin(char *objectID, int idLength, int *newLen)
 	}
 
 	*newLen = idLength / 2;
-	bytes = (char *) malloc(*newLen);
+	bytes = (char*) malloc(*newLen);
 	if (bytes == NULL)
 	{
 		fprintf(stderr, "ERROR: Could not allocate memory.\n");
@@ -634,7 +634,7 @@ int hexdigit_to_int(char ch)
 }
 
 // Search for an object
-CK_OBJECT_HANDLE searchObject(CK_SESSION_HANDLE hSession, char *objID, int objIDLen)
+CK_OBJECT_HANDLE searchObject(CK_SESSION_HANDLE hSession, char* objID, int objIDLen)
 {
 	if (objID == NULL)
 	{

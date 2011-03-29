@@ -84,14 +84,14 @@ static const struct option long_options[] = {
 	{ NULL,      0, NULL, 0 }
 };
 
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
 	int option_index = 0;
 	int opt, result;
 
-	char *in_path = NULL;
-	char *out_path = NULL;
-	char *file_pin = NULL;
+	char* in_path = NULL;
+	char* out_path = NULL;
+	char* file_pin = NULL;
 
 	while ((opt = getopt_long(argc, argv, "hv", long_options, &option_index)) != -1)
 	{
@@ -127,10 +127,11 @@ int main(int argc, char *argv[])
 }
 
 // Convert from BIND to PKCS#8
-int to_pkcs8(char *in_path, char *out_path, char *file_pin)
+int to_pkcs8(char* in_path, char* out_path, char* file_pin)
 {
-	FILE *file_pointer = NULL;
-	char line[MAX_LINE], data[MAX_LINE], *value_pointer;
+	FILE* file_pointer = NULL;
+	char line[MAX_LINE], data[MAX_LINE];
+	char* value_pointer = NULL;
 	int lineno = 0, m, n, error = 0, found, algorithm = DNS_KEYALG_ERROR, data_length;
 	uint32_t bitfield = 0;
 	key_material_t pkey[TAG_MAX];
@@ -148,7 +149,7 @@ int to_pkcs8(char *in_path, char *out_path, char *file_pin)
 	}
 
 	file_pointer = fopen(in_path, "r");
-	if (!file_pointer)
+	if (file_pointer == NULL)
 	{
 		fprintf(stderr, "ERROR: Could not open input file %.100s for reading.\n", in_path);
 		return 1;
@@ -304,7 +305,7 @@ int to_pkcs8(char *in_path, char *out_path, char *file_pin)
 }
 
 // Free allocated memory
-void free_key_material(key_material_t *pkey)
+void free_key_material(key_material_t* pkey)
 {
 	int i;
 

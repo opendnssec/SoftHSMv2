@@ -90,21 +90,21 @@ static const struct option long_options[] = {
 CK_FUNCTION_LIST_PTR p11;
 
 // Prepared statements
-sqlite3_stmt *select_an_attribute_sql;
-sqlite3_stmt *select_object_ids_sql;
-sqlite3_stmt *count_object_id_sql;
+sqlite3_stmt* select_an_attribute_sql = NULL;
+sqlite3_stmt* select_object_ids_sql = NULL;
+sqlite3_stmt* count_object_id_sql = NULL;
 
 
 // The main function
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
 	int option_index = 0;
 	int opt;
 
-	char *dbPath = NULL;
-	char *userPIN = NULL;
-	char *module = NULL;
-	char *slot = NULL;
+	char* dbPath = NULL;
+	char* userPIN = NULL;
+	char* module = NULL;
+	char* slot = NULL;
 	int noPublicKey = 0;
 
 	int result = 0;
@@ -176,10 +176,10 @@ int main(int argc, char *argv[])
 }
 
 // Migrate the database
-int migrate(char *dbPath, char *slot, char *userPIN, int noPublicKey)
+int migrate(char* dbPath, char* slot, char* userPIN, int noPublicKey)
 {
 	CK_SESSION_HANDLE hSession;
-	sqlite3 *db = NULL;
+	sqlite3* db = NULL;
 	int result;
 
 	if (dbPath == NULL)
@@ -241,7 +241,7 @@ int migrate(char *dbPath, char *slot, char *userPIN, int noPublicKey)
 }
 
 // Prepare the statements
-int prepStatements(sqlite3 *db)
+int prepStatements(sqlite3* db)
 {
 	select_an_attribute_sql = NULL;
 	select_object_ids_sql = NULL;
@@ -273,11 +273,11 @@ void finalStatements()
 }
 
 // Open a connection to a valid SoftHSM v1 database
-sqlite3* openDB(char *dbPath)
+sqlite3* openDB(char* dbPath)
 {
 	int result;
-	sqlite3 *db = NULL;
-	sqlite3_stmt *pragStatem = NULL;
+	sqlite3* db = NULL;
+	sqlite3_stmt* pragStatem = NULL;
 	int dbVersion;
 
 	// Open the database
@@ -347,7 +347,7 @@ sqlite3* openDB(char *dbPath)
 }
 
 // Connect and login to the token
-int openP11(char *slot, char *userPIN, CK_SESSION_HANDLE *hSession)
+int openP11(char* slot, char* userPIN, CK_SESSION_HANDLE* hSession)
 {
 	char user_pin_copy[MAX_PIN_LEN+1];
 	CK_RV rv;
@@ -389,16 +389,16 @@ int openP11(char *slot, char *userPIN, CK_SESSION_HANDLE *hSession)
 }
 
 // Migrate the database to the session
-int db2session(sqlite3 *db, CK_SESSION_HANDLE hSession, int noPublicKey)
+int db2session(sqlite3* db, CK_SESSION_HANDLE hSession, int noPublicKey)
 {
 	CK_ULONG objectCount;
 	int i, result = 0, rv;
-	CK_OBJECT_HANDLE *objects;
+	CK_OBJECT_HANDLE* objects = NULL;
 	CK_OBJECT_CLASS ckClass;
 
 	// Get all objects
 	objects = getObjects(db, &objectCount);
-	if (!objects)
+	if (objects == NULL)
 	{
 		fprintf(stderr, "ERROR: Could not find any objects in the database.\n");
 		return 1;
@@ -475,7 +475,7 @@ CK_KEY_TYPE getKeyType(CK_OBJECT_HANDLE objectRef)
 
 		if (pValue != NULL_PTR && length == sizeof(CK_KEY_TYPE))
 		{
-			retVal = *(CK_KEY_TYPE *)pValue;
+			retVal = *(CK_KEY_TYPE*)pValue;
 		}
 	}
 
@@ -507,7 +507,7 @@ CK_OBJECT_CLASS getObjectClass(CK_OBJECT_HANDLE objectRef)
 
 		if (pValue != NULL_PTR && length == sizeof(CK_OBJECT_CLASS))
 		{
-			retVal = *(CK_OBJECT_CLASS *)pValue;
+			retVal = *(CK_OBJECT_CLASS*)pValue;
 		}
 	}
 
@@ -517,11 +517,11 @@ CK_OBJECT_CLASS getObjectClass(CK_OBJECT_HANDLE objectRef)
 }
 
 // Get all object IDs
-CK_OBJECT_HANDLE* getObjects(sqlite3 *db, CK_ULONG *objectCount)
+CK_OBJECT_HANDLE* getObjects(sqlite3* db, CK_ULONG* objectCount)
 {
 	CK_ULONG objectsInDB;
 	CK_ULONG counter = 0;
-	CK_OBJECT_HANDLE *objectRefs;
+	CK_OBJECT_HANDLE* objectRefs = NULL;
 	int retSQL = 0;
 
 	*objectCount = 0;
@@ -550,8 +550,8 @@ CK_OBJECT_HANDLE* getObjects(sqlite3 *db, CK_ULONG *objectCount)
 	}
 
 	// Create the object-reference buffer
-	objectRefs = (CK_OBJECT_HANDLE *)malloc(objectsInDB * sizeof(CK_OBJECT_HANDLE));
-	if (!objectRefs)
+	objectRefs = (CK_OBJECT_HANDLE*)malloc(objectsInDB * sizeof(CK_OBJECT_HANDLE));
+	if (objectRefs == NULL)
 	{
 		fprintf(stderr, "ERROR: Could not allocate memory\n");
 		return NULL;
@@ -581,7 +581,7 @@ CK_OBJECT_HANDLE* getObjects(sqlite3 *db, CK_ULONG *objectCount)
 }
 
 // Extract the information about the public RSA key and save it in the token
-int dbRSAPub2session(sqlite3 *db, CK_OBJECT_HANDLE objectID, CK_SESSION_HANDLE hSession)
+int dbRSAPub2session(sqlite3* db, CK_OBJECT_HANDLE objectID, CK_SESSION_HANDLE hSession)
 {
 	int result = 0;
 	int i;
@@ -636,7 +636,7 @@ int dbRSAPub2session(sqlite3 *db, CK_OBJECT_HANDLE objectID, CK_SESSION_HANDLE h
 }
 
 // Extract the information about the private RSA key and save it in the token
-int dbRSAPriv2session(sqlite3 *db, CK_OBJECT_HANDLE objectID, CK_SESSION_HANDLE hSession)
+int dbRSAPriv2session(sqlite3* db, CK_OBJECT_HANDLE objectID, CK_SESSION_HANDLE hSession)
 {
 	int result = 0;
 	int i;
@@ -701,7 +701,7 @@ int dbRSAPriv2session(sqlite3 *db, CK_OBJECT_HANDLE objectID, CK_SESSION_HANDLE 
 }
 
 // Get the value of the given attribute
-int getAttribute(CK_OBJECT_HANDLE objectRef, CK_ATTRIBUTE *attTemplate)
+int getAttribute(CK_OBJECT_HANDLE objectRef, CK_ATTRIBUTE* attTemplate)
 {
 	int retSQL = 0;
 	int retVal = 0;
@@ -752,7 +752,7 @@ int getAttribute(CK_OBJECT_HANDLE objectRef, CK_ATTRIBUTE *attTemplate)
 }
 
 // Free allocated memory in the template
-void freeTemplate(CK_ATTRIBUTE *attTemplate, int size)
+void freeTemplate(CK_ATTRIBUTE* attTemplate, int size)
 {
 	int i;
 

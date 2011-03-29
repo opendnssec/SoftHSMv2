@@ -42,7 +42,7 @@
 #endif
 
 // Load the PKCS#11 library
-CK_C_GetFunctionList loadLibrary(char *module, void **moduleHandle)
+CK_C_GetFunctionList loadLibrary(char* module, void** moduleHandle)
 {
 	CK_C_GetFunctionList pGetFunctionList = NULL;
 
@@ -59,7 +59,7 @@ CK_C_GetFunctionList loadLibrary(char *module, void **moduleHandle)
 		HINSTANCE hDLL = LoadLibrary(_T(DEFAULT_PKCS11_LIB));
 	}
 
-	if (!hDLL)
+	if (hDLL == NULL)
 	{
 		// Failed to load the PKCS #11 library
 		return NULL;
@@ -69,7 +69,7 @@ CK_C_GetFunctionList loadLibrary(char *module, void **moduleHandle)
 	pGetFunctionList = (CK_C_GetFunctionList) GetProcAddress(hDLL, _T("C_GetFunctionList"));
             
 #elif defined(HAVE_DLOPEN)
-	void *pDynLib;
+	void* pDynLib = NULL;
 
 	// Load PKCS #11 library
 	if (module)
@@ -81,7 +81,7 @@ CK_C_GetFunctionList loadLibrary(char *module, void **moduleHandle)
 		pDynLib = dlopen(DEFAULT_PKCS11_LIB, RTLD_NOW | RTLD_LOCAL);
 	}
 
-	if (!pDynLib)
+	if (pDynLib == NULL)
 	{
 		// Failed to load the PKCS #11 library
 		return NULL;
@@ -102,7 +102,7 @@ CK_C_GetFunctionList loadLibrary(char *module, void **moduleHandle)
 	return pGetFunctionList;
 }
 
-void unloadLibrary(void *moduleHandle)
+void unloadLibrary(void* moduleHandle)
 {
 	if (moduleHandle)
 	{

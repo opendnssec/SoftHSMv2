@@ -65,22 +65,22 @@ void crypto_final()
 int crypto_import_key_pair
 (
 	CK_SESSION_HANDLE hSession,
-	char *filePath,
-	char *filePIN,
-	char *label,
-	char *objID,
+	char* filePath,
+	char* filePIN,
+	char* label,
+	char* objID,
 	int objIDLen,
 	int noPublicKey
 )
 {
-	EVP_PKEY *pkey = crypto_read_file(filePath, filePIN);
-	if (!pkey)
+	EVP_PKEY* pkey = crypto_read_file(filePath, filePIN);
+	if (pkey == NULL)
 	{
 		return 1;
 	}
 
-	RSA *rsa = NULL;
-	DSA *dsa = NULL;
+	RSA* rsa = NULL;
+	DSA* dsa = NULL;
 
 	switch (EVP_PKEY_type(pkey->type))
 	{
@@ -120,12 +120,12 @@ int crypto_import_key_pair
 }
 
 // Read the key from file
-EVP_PKEY* crypto_read_file(char* filePath, char *filePIN)
+EVP_PKEY* crypto_read_file(char* filePath, char* filePIN)
 {
-	BIO *in = NULL;
-	PKCS8_PRIV_KEY_INFO *p8inf = NULL;
-	EVP_PKEY *pkey = NULL;
-	X509_SIG *p8 = NULL;
+	BIO* in = NULL;
+	PKCS8_PRIV_KEY_INFO* p8inf = NULL;
+	EVP_PKEY* pkey = NULL;
+	X509_SIG* p8 = NULL;
 
 	if (!(in = BIO_new_file(filePath, "rb")))
 	{
@@ -192,14 +192,14 @@ EVP_PKEY* crypto_read_file(char* filePath, char *filePIN)
 int crypto_save_rsa
 (
 	CK_SESSION_HANDLE hSession,
-	char *label,
-	char *objID,
+	char* label,
+	char* objID,
 	int objIDLen,
 	int noPublicKey,
-	RSA *rsa
+	RSA* rsa
 )
 {
-	rsa_key_material_t *keyMat = crypto_malloc_rsa(rsa);
+	rsa_key_material_t* keyMat = crypto_malloc_rsa(rsa);
 	if (!keyMat)
 	{
 		fprintf(stderr, "ERROR: Could not convert the key material to binary information.\n");
@@ -273,15 +273,15 @@ int crypto_save_rsa
 }
 
 // Convert the OpenSSL key to binary
-rsa_key_material_t* crypto_malloc_rsa(RSA *rsa)
+rsa_key_material_t* crypto_malloc_rsa(RSA* rsa)
 {
-	if (!rsa)
+	if (rsa == NULL)
 	{
 		return NULL;
 	}
 
-	rsa_key_material_t *keyMat = (rsa_key_material_t *)malloc(sizeof(rsa_key_material_t));
-	if (!keyMat)
+	rsa_key_material_t* keyMat = (rsa_key_material_t*)malloc(sizeof(rsa_key_material_t));
+	if (keyMat == NULL)
 	{
 		return NULL;
 	}
@@ -333,9 +333,9 @@ rsa_key_material_t* crypto_malloc_rsa(RSA *rsa)
 }
 
 // Free the memory of the key
-void crypto_free_rsa(rsa_key_material_t *keyMat)
+void crypto_free_rsa(rsa_key_material_t* keyMat)
 {
-	if (!keyMat) return;
+	if (keyMat == NULL) return;
 	if (keyMat->bigE) free(keyMat->bigE);
 	if (keyMat->bigN) free(keyMat->bigN);
 	if (keyMat->bigD) free(keyMat->bigD);
@@ -351,15 +351,15 @@ void crypto_free_rsa(rsa_key_material_t *keyMat)
 int crypto_save_dsa
 (
 	CK_SESSION_HANDLE hSession,
-	char *label,
-	char *objID,
+	char* label,
+	char* objID,
 	int objIDLen,
 	int noPublicKey,
-	DSA *dsa
+	DSA* dsa
 )
 {
-	dsa_key_material_t *keyMat = crypto_malloc_dsa(dsa);
-	if (!keyMat)
+	dsa_key_material_t* keyMat = crypto_malloc_dsa(dsa);
+	if (keyMat == NULL)
 	{
 		fprintf(stderr, "ERROR: Could not convert the key material to binary information.\n");
 		return 1;
@@ -430,15 +430,15 @@ int crypto_save_dsa
 }
 
 // Convert the OpenSSL key to binary
-dsa_key_material_t* crypto_malloc_dsa(DSA *dsa)
+dsa_key_material_t* crypto_malloc_dsa(DSA* dsa)
 {
-	if (!dsa)
+	if (dsa == NULL)
 	{
 		return NULL;
 	}
 
-	dsa_key_material_t *keyMat = (dsa_key_material_t *)malloc(sizeof(dsa_key_material_t));
-	if (!keyMat)
+	dsa_key_material_t* keyMat = (dsa_key_material_t*)malloc(sizeof(dsa_key_material_t));
+	if (keyMat == NULL)
 	{
 		return NULL;
 	}
@@ -471,9 +471,9 @@ dsa_key_material_t* crypto_malloc_dsa(DSA *dsa)
 }
 
 // Free the memory of the key
-void crypto_free_dsa(dsa_key_material_t *keyMat)
+void crypto_free_dsa(dsa_key_material_t* keyMat)
 {
-	if (!keyMat) return;
+	if (keyMat == NULL) return;
 	if (keyMat->bigP) free(keyMat->bigP);
 	if (keyMat->bigQ) free(keyMat->bigQ);
 	if (keyMat->bigG) free(keyMat->bigG);

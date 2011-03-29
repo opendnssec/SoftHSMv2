@@ -100,16 +100,16 @@ typedef struct dsa_key_material_t {
 	}
 } dsa_key_material_t;
 
-Botan::Private_Key* crypto_read_file(char* filePath, char *filePIN);
+Botan::Private_Key* crypto_read_file(char* filePath, char* filePIN);
 
 // RSA
-int crypto_save_rsa(CK_SESSION_HANDLE hSession, char *label, char *objID, int objIDLen, int noPublicKey, Botan::RSA_PrivateKey *rsa);
-rsa_key_material_t* crypto_malloc_rsa(Botan::RSA_PrivateKey *rsa);
-void crypto_free_rsa(rsa_key_material_t *keyMat);
+int crypto_save_rsa(CK_SESSION_HANDLE hSession, char* label, char* objID, int objIDLen, int noPublicKey, Botan::RSA_PrivateKey* rsa);
+rsa_key_material_t* crypto_malloc_rsa(Botan::RSA_PrivateKey* rsa);
+void crypto_free_rsa(rsa_key_material_t* keyMat);
 
 // DSA
-int crypto_save_dsa(CK_SESSION_HANDLE hSession, char *label, char *objID, int objIDLen, int noPublicKey, Botan::DSA_PrivateKey *dsa);
-dsa_key_material_t* crypto_malloc_dsa(Botan::DSA_PrivateKey *dsa);
-void crypto_free_dsa(dsa_key_material_t *keyMat);
+int crypto_save_dsa(CK_SESSION_HANDLE hSession, char* label, char* objID, int objIDLen, int noPublicKey, Botan::DSA_PrivateKey* dsa);
+dsa_key_material_t* crypto_malloc_dsa(Botan::DSA_PrivateKey* dsa);
+void crypto_free_dsa(dsa_key_material_t* keyMat);
 
 #endif // !_SOFTHSM_V2_SOFTHSM_UTIL_OSSL_H

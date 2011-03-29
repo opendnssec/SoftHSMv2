@@ -41,7 +41,7 @@
 #include <unistd.h>
 
 // Get a password from the user
-void getPW(char *pin, char *newPIN, CK_ULONG userType)
+void getPW(char* pin, char* newPIN, CK_ULONG userType)
 {
 	// Keep a copy of the PIN because getpass/getpassphrase 
 	// will overwrite the previous PIN.

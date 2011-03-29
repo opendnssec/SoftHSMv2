@@ -33,7 +33,7 @@
 
 typedef struct key_material_t {
 	unsigned long size;
-	void *big;
+	void* big;
 	key_material_t() {
 		size = 0;
 		big = NULL;
@@ -43,13 +43,13 @@ typedef struct key_material_t {
 // Main functions
 
 void usage();
-int to_pkcs8(char *in_path, char *out_path, char *file_pin);
+int to_pkcs8(char* in_path, char* out_path, char* file_pin);
 
 // Support functions
 
-int save_rsa_pkcs8(char *out_path, char *file_pin, key_material_t *pkey);
-int save_dsa_pkcs8(char *out_path, char *file_pin, key_material_t *pkey);
-void free_key_material(key_material_t *pkey);
+int save_rsa_pkcs8(char* out_path, char* file_pin, key_material_t* pkey);
+int save_dsa_pkcs8(char* out_path, char* file_pin, key_material_t* pkey);
+void free_key_material(key_material_t* pkey);
 void crypto_init();
 void crypto_final();
 
@@ -58,8 +58,8 @@ void crypto_final();
 #ifdef __cplusplus
 extern "C" {
 #endif
-int b64_pton(const char *, unsigned char *, size_t);
-int b64_ntop(const unsigned char *, size_t, char *, size_t);
+int b64_pton(const char* , unsigned char*, size_t);
+int b64_ntop(const unsigned char*, size_t, char*, size_t);
 #ifdef __cplusplus
 }
 #endif
@@ -84,7 +84,7 @@ int b64_ntop(const unsigned char *, size_t, char *, size_t);
 #define MAX_LINE 4096
 
 // The text fields supported
-static const char *file_tags[] = {
+static const char* file_tags[] = {
 	"Private-key-format:",
 	"Algorithm:",
 	"Modulus:",
