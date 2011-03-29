@@ -17,4 +17,4 @@ libsofthsm_slotmgr_la_SOURCES =	SlotManager.cpp \
 
 SUBDIRS =			test
 
-# EXTRA_DIST =			$(srcdir)/*.h
+EXTRA_DIST =			$(srcdir)/*.h

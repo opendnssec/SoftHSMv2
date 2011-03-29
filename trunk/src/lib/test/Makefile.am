@@ -25,4 +25,5 @@ p11test_LDFLAGS = 		-no-install `cppunit-config --libs` -pthread -static
 
 TESTS = 			p11test
 
-EXTRA_DIST =			$(srcdir)/*.h
+EXTRA_DIST =			$(srcdir)/*.h \
+				$(srcdir)/tokens

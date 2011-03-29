@@ -23,4 +23,4 @@ slotmgrtest_LDFLAGS = 		-no-install `cppunit-config --libs`
 
 TESTS = 			slotmgrtest
 
-#EXTRA_DIST =			$(srcdir)/*.h
+EXTRA_DIST =			$(srcdir)/*.h
