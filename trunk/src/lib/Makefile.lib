@@ -1,8 +1,0 @@
-# Temporary Makefile that is used until this project has been auto'd by Rickard ;-)
-#
-# $Id$
-
-LIBSOURCES=
-LIBHEADERS=
-LIBOBJECTS1=$(LIBSOURCES:.cpp=.o)
-LIBOBJECTS=$(LIBOBJECTS1:.c=.o)

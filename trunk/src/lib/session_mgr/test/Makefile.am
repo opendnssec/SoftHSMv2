@@ -11,7 +11,6 @@ AM_CPPFLAGS = 			-I$(srcdir)/.. \
 				-I$(srcdir)/../../session_mgr \
 				-I$(srcdir)/../../slot_mgr \
 				-I$(srcdir)/../../object_store \
-				-I$(srcdir)/../../user_mgr \
 				`cppunit-config --cflags`
 
 check_PROGRAMS =		sessionmgrtest

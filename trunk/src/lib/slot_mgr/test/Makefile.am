@@ -10,7 +10,6 @@ AM_CPPFLAGS = 			-I$(srcdir)/.. \
 				-I$(srcdir)/../../object_store \
 				-I$(srcdir)/../../session_mgr \
 				-I$(srcdir)/../../data_mgr \
-				-I$(srcdir)/../../user_mgr \
 				`cppunit-config --cflags`
 
 check_PROGRAMS =		slotmgrtest
