@@ -55,7 +55,7 @@
 class Session
 {
 public:
-	Session(Slot *slot, bool isReadWrite, CK_VOID_PTR pApplication, CK_NOTIFY notify);
+	Session(Slot* slot, bool isReadWrite, CK_VOID_PTR pApplication, CK_NOTIFY notify);
 
 	// Destructor
 	virtual ~Session();
@@ -77,7 +77,7 @@ public:
 	void resetOp();
 
 	// Digest
-	void setDigestOp(HashAlgorithm *digestOp);
+	void setDigestOp(HashAlgorithm* digestOp);
 	HashAlgorithm* getDigestOp();
 
 private:
@@ -85,8 +85,8 @@ private:
 	Session();
 
 	// Slot and token
-	Slot *slot;
-	Token *token;
+	Slot* slot;
+	Token* token;
 
 	// Application data (not in use)
 	CK_VOID_PTR pApplication;
@@ -100,7 +100,7 @@ private:
 	int operation;
 
 	// Digest
-	HashAlgorithm *digestOp;
+	HashAlgorithm* digestOp;
 };
 
 #endif // !_SOFTHSM_V2_SESSION_H

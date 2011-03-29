@@ -164,7 +164,7 @@ CK_RV Token::setSOPIN(ByteString& oldPIN, ByteString& newPIN)
 	if (sdm == NULL) return CKR_GENERAL_ERROR;
 
 	// Verify oldPIN
-	SecureDataManager *verifier = new SecureDataManager(sdm->getSOPINBlob(), sdm->getUserPINBlob());
+	SecureDataManager* verifier = new SecureDataManager(sdm->getSOPINBlob(), sdm->getUserPINBlob());
 	bool result = verifier->loginSO(oldPIN);
 	delete verifier;
 	if (result == false) return CKR_PIN_INCORRECT;
@@ -192,7 +192,7 @@ CK_RV Token::setUserPIN(ByteString& oldPIN, ByteString& newPIN)
 	bool stayLoggedIn = sdm->isUserLoggedIn();
 
 	// Verify oldPIN
-	SecureDataManager *newSdm = new SecureDataManager(sdm->getSOPINBlob(), sdm->getUserPINBlob());
+	SecureDataManager* newSdm = new SecureDataManager(sdm->getSOPINBlob(), sdm->getUserPINBlob());
 	if (newSdm->loginUser(oldPIN) == false)
 	{
 		delete newSdm;

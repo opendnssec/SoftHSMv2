@@ -37,7 +37,7 @@
 #include "SessionObjectStore.h"
 
 // Constructor
-Session::Session(Slot *slot, bool isReadWrite, CK_VOID_PTR pApplication, CK_NOTIFY notify)
+Session::Session(Slot* slot, bool isReadWrite, CK_VOID_PTR pApplication, CK_NOTIFY notify)
 {
 	this->slot = slot;
 	this->token = slot->getToken();
@@ -172,7 +172,7 @@ void Session::resetOp()
 }
 
 // Set the digesting operator
-void Session::setDigestOp(HashAlgorithm *digestOp)
+void Session::setDigestOp(HashAlgorithm* digestOp)
 {
 	if (this->digestOp != NULL)
 	{

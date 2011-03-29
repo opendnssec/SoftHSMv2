@@ -63,9 +63,9 @@ SimpleConfigLoader::SimpleConfigLoader()
 // Load the configuration
 bool SimpleConfigLoader::loadConfiguration()
 {
-	const char *configPath = getConfigPath();
+	const char* configPath = getConfigPath();
 
-	FILE *fp = fopen(configPath,"r");
+	FILE* fp = fopen(configPath,"r");
 
 	if (fp == NULL)
 	{
@@ -86,28 +86,28 @@ bool SimpleConfigLoader::loadConfiguration()
 		fileBuf[strcspn(fileBuf, "#\n\r")] = '\0';
 
 		// Get the first part of the line
-		char *name = strtok(fileBuf, "=");
+		char* name = strtok(fileBuf, "=");
 		if (name == NULL)
 		{
 			continue;
 		}
 
 		// Trim the name
-		char *trimmedName = trimString(name);
+		char* trimmedName = trimString(name);
 		if (trimmedName == NULL)
 		{
 			continue;
 		}
 
 		// Get the second part of the line
-		char *value = strtok(NULL, "=");
+		char* value = strtok(NULL, "=");
 		if(value == NULL) {
 			free(trimmedName);
 			continue;
 		}
 
 		// Trim the value
-		char *trimmedValue = trimString(value);
+		char* trimmedValue = trimString(value);
 		if (trimmedValue == NULL)
 		{
 			free(trimmedName);
@@ -153,7 +153,7 @@ bool SimpleConfigLoader::loadConfiguration()
 }
 
 // Get the boolean value from a string
-bool SimpleConfigLoader::string2bool(std::string stringValue, bool *boolValue)
+bool SimpleConfigLoader::string2bool(std::string stringValue, bool* boolValue)
 {
 	// Convert to lowercase
 	std::transform(stringValue.begin(), stringValue.end(), stringValue.begin(), tolower);
@@ -175,7 +175,7 @@ bool SimpleConfigLoader::string2bool(std::string stringValue, bool *boolValue)
 
 const char* SimpleConfigLoader::getConfigPath()
 {
-	const char *configPath = getenv("SOFTHSM2_CONF");
+	const char* configPath = getenv("SOFTHSM2_CONF");
 
 	if (configPath == NULL) {
 		configPath = DEFAULT_SOFTHSM2_CONF;
@@ -184,7 +184,7 @@ const char* SimpleConfigLoader::getConfigPath()
 	return configPath;
 } 
 
-char* SimpleConfigLoader::trimString(char *text)
+char* SimpleConfigLoader::trimString(char* text)
 {
 	if (text == NULL)
 	{
@@ -213,7 +213,7 @@ char* SimpleConfigLoader::trimString(char *text)
 	}
 
 	// Create the trimmed text
-	char *trimmedText = (char *)malloc(length + 1);
+	char* trimmedText = (char*)malloc(length + 1);
 	if (trimmedText == NULL)
 	{
 		return NULL;

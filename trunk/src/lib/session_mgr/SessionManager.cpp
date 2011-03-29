@@ -62,7 +62,7 @@ SessionManager::~SessionManager()
 // Open a new session
 CK_RV SessionManager::openSession
 (
-	Slot *slot,
+	Slot* slot,
 	CK_FLAGS flags,
 	CK_VOID_PTR pApplication,
 	CK_NOTIFY notify,
@@ -77,7 +77,7 @@ CK_RV SessionManager::openSession
 	MutexLocker lock(sessionsMutex);
 
 	// Get the token
-	Token *token = slot->getToken();
+	Token* token = slot->getToken();
 	if (token == NULL) return CKR_TOKEN_NOT_PRESENT;
 	if (!token->isInitialized()) return CKR_TOKEN_NOT_RECOGNIZED;
 
@@ -89,7 +89,7 @@ CK_RV SessionManager::openSession
 
 	// Create the session
 	bool rwSession = ((flags & CKF_RW_SESSION) == CKF_RW_SESSION) ? true : false;
-	Session *session = new Session(slot, rwSession, pApplication, notify);
+	Session* session = new Session(slot, rwSession, pApplication, notify);
 
 	// First fill any empty spot in the list
 	for (int i = 0; i < sessions.size(); i++)
@@ -157,7 +157,7 @@ CK_RV SessionManager::closeSession(CK_SESSION_HANDLE hSession)
 }
 
 // Close all sessions
-CK_RV SessionManager::closeAllSessions(Slot *slot)
+CK_RV SessionManager::closeAllSessions(Slot* slot)
 {
 	if (slot == NULL) return CKR_SLOT_ID_INVALID;
 
@@ -165,7 +165,7 @@ CK_RV SessionManager::closeAllSessions(Slot *slot)
 	MutexLocker lock(sessionsMutex);
 
 	// Get the token
-	Token *token = slot->getToken();
+	Token* token = slot->getToken();
 	if (token == NULL) return CKR_TOKEN_NOT_PRESENT;
 
 	// Close all sessions on this slot
@@ -191,7 +191,7 @@ CK_RV SessionManager::closeAllSessions(Slot *slot)
 CK_RV SessionManager::getSessionInfo(CK_SESSION_HANDLE hSession, CK_SESSION_INFO_PTR pInfo)
 {
 	// Get the session
-	Session *session = getSession(hSession);
+	Session* session = getSession(hSession);
 	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
 
 	return session->getInfo(pInfo);

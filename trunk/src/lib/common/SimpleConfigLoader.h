@@ -51,8 +51,8 @@ public:
 private:
 	SimpleConfigLoader();
 	const char* getConfigPath();
-	char* trimString(char *text);
-	bool string2bool(std::string stringValue, bool *boolValue);
+	char* trimString(char* text);
+	bool string2bool(std::string stringValue, bool* boolValue);
 
 	static std::auto_ptr<SimpleConfigLoader> instance;
 };
