@@ -54,9 +54,9 @@ void crypto_init()
 {
 	// The PKCS#11 library might be using Botan
 	// Check if it has already initialized Botan
-	Botan::Library_State* state = Botan::swap_global_state(0);
+	Botan::Library_State* state = Botan::Global_State_Management::swap_global_state(0);
 	// now put it back
-	Botan::swap_global_state(state);
+	Botan::Global_State_Management::swap_global_state(state);
 
 	if (state)
 	{

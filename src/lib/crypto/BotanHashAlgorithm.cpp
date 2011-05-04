@@ -114,7 +114,7 @@ bool BotanHashAlgorithm::hashFinal(ByteString& hashedData)
 	}
 
 	// Resize
-	hashedData.resize(hash->OUTPUT_LENGTH);
+	hashedData.resize(hash->output_length());
 
 	// Read the digest
 	try
