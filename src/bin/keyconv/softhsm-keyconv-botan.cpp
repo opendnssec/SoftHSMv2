@@ -82,11 +82,11 @@ int save_rsa_pkcs8(char* out_path, char* file_pin, key_material_t* pkey)
 		return 1;
 	}
 
-	bigE = Botan::BigInt((Botan::byte*)pkey[TAG_PUBEXP].big,  (Botan::u32bit)pkey[TAG_PUBEXP].size);
-	bigP = Botan::BigInt((Botan::byte*)pkey[TAG_PRIME1].big,  (Botan::u32bit)pkey[TAG_PRIME1].size);
-	bigQ = Botan::BigInt((Botan::byte*)pkey[TAG_PRIME2].big,  (Botan::u32bit)pkey[TAG_PRIME2].size);
-	bigN = Botan::BigInt((Botan::byte*)pkey[TAG_MODULUS].big, (Botan::u32bit)pkey[TAG_MODULUS].size);
-	bigD = Botan::BigInt((Botan::byte*)pkey[TAG_PRIVEXP].big, (Botan::u32bit)pkey[TAG_PRIVEXP].size);
+	bigE = Botan::BigInt((Botan::byte*)pkey[TAG_PUBEXP].big,  pkey[TAG_PUBEXP].size);
+	bigP = Botan::BigInt((Botan::byte*)pkey[TAG_PRIME1].big,  pkey[TAG_PRIME1].size);
+	bigQ = Botan::BigInt((Botan::byte*)pkey[TAG_PRIME2].big,  pkey[TAG_PRIME2].size);
+	bigN = Botan::BigInt((Botan::byte*)pkey[TAG_MODULUS].big, pkey[TAG_MODULUS].size);
+	bigD = Botan::BigInt((Botan::byte*)pkey[TAG_PRIVEXP].big, pkey[TAG_PRIVEXP].size);
 
 	rng = new Botan::AutoSeeded_RNG();
 
@@ -159,10 +159,10 @@ int save_dsa_pkcs8(char* out_path, char* file_pin, key_material_t* pkey)
 		return 1;
 	}
 
-	bigDP = Botan::BigInt((Botan::byte*)pkey[TAG_PRIME].big,    (Botan::u32bit)pkey[TAG_PRIME].size);
-	bigDQ = Botan::BigInt((Botan::byte*)pkey[TAG_SUBPRIME].big, (Botan::u32bit)pkey[TAG_SUBPRIME].size);
-	bigDG = Botan::BigInt((Botan::byte*)pkey[TAG_BASE].big,     (Botan::u32bit)pkey[TAG_BASE].size);
-	bigDX = Botan::BigInt((Botan::byte*)pkey[TAG_PRIVVAL].big,  (Botan::u32bit)pkey[TAG_PRIVVAL].size);
+	bigDP = Botan::BigInt((Botan::byte*)pkey[TAG_PRIME].big,    pkey[TAG_PRIME].size);
+	bigDQ = Botan::BigInt((Botan::byte*)pkey[TAG_SUBPRIME].big, pkey[TAG_SUBPRIME].size);
+	bigDG = Botan::BigInt((Botan::byte*)pkey[TAG_BASE].big,     pkey[TAG_BASE].size);
+	bigDX = Botan::BigInt((Botan::byte*)pkey[TAG_PRIVVAL].big,  pkey[TAG_PRIVVAL].size);
 
 	rng = new Botan::AutoSeeded_RNG();
 

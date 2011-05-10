@@ -720,9 +720,7 @@ bool BotanRSA::generateKeyPair(AsymmetricKeyPair** ppKeyPair, AsymmetricParamete
 	Botan::RSA_PrivateKey* rsa = NULL;
 	try {
 		BotanRNG* rng = (BotanRNG*)BotanCryptoFactory::i()->getRNG();
-		rsa = new Botan::RSA_PrivateKey(*rng->getRNG(),
-					(Botan::u32bit)params->getBitLength(),
-					(Botan::u32bit)e);
+		rsa = new Botan::RSA_PrivateKey(*rng->getRNG(),	params->getBitLength(),	e);
 	}
 	catch(...) {
 		ERROR_MSG("RSA key generation failed");
