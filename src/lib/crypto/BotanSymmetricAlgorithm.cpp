@@ -104,7 +104,14 @@ bool BotanSymmetricAlgorithm::encryptInit(const SymmetricKey* key, const std::st
 	{
 		Botan::SymmetricKey botanKey = Botan::SymmetricKey(key->getKeyBits().const_byte_str(), key->getKeyBits().size());
 		Botan::InitializationVector botanIV = Botan::InitializationVector(IV.const_byte_str(), IV.size());
-		cryption = new Botan::Pipe(Botan::get_cipher(cipherName, botanKey, botanIV, Botan::ENCRYPTION));
+		if (mode == "ecb")
+		{
+			cryption = new Botan::Pipe(Botan::get_cipher(cipherName, botanKey, Botan::ENCRYPTION));
+		}
+		else
+		{
+			cryption = new Botan::Pipe(Botan::get_cipher(cipherName, botanKey, botanIV, Botan::ENCRYPTION));
+		}
 		cryption->start_msg();
 	}
 	catch (...)
@@ -266,7 +273,14 @@ bool BotanSymmetricAlgorithm::decryptInit(const SymmetricKey* key, const std::st
 	{
 		Botan::SymmetricKey botanKey = Botan::SymmetricKey(key->getKeyBits().const_byte_str(), key->getKeyBits().size());
 		Botan::InitializationVector botanIV = Botan::InitializationVector(IV.const_byte_str(), IV.size());
-		cryption = new Botan::Pipe(Botan::get_cipher(cipherName, botanKey, botanIV, Botan::DECRYPTION));
+		if (mode == "ecb")
+		{
+			cryption = new Botan::Pipe(Botan::get_cipher(cipherName, botanKey, Botan::DECRYPTION));
+		}
+		else
+		{
+			cryption = new Botan::Pipe(Botan::get_cipher(cipherName, botanKey, botanIV, Botan::DECRYPTION));
+		}
 		cryption->start_msg();
 	}
 	catch (...)
