@@ -11,11 +11,11 @@ AC_DEFUN([ACX_BOTAN],[
 		])
 
 	AC_MSG_CHECKING(what are the Botan includes)
-	BOTAN_INCLUDES="-I$BOTAN_PATH/include"
+	BOTAN_INCLUDES="-I$BOTAN_PATH/include/botan-1.10"
 	AC_MSG_RESULT($BOTAN_INCLUDES)
 
 	AC_MSG_CHECKING(what are the Botan libs)
-	BOTAN_LIBS="-L$BOTAN_PATH/lib -lbotan"
+	BOTAN_LIBS="-L$BOTAN_PATH/lib -lbotan-1.10"
 	AC_MSG_RESULT($BOTAN_LIBS)
 
 	tmp_CPPFLAGS=$CPPFLAGS
