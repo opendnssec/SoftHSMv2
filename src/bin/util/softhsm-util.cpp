@@ -317,7 +317,7 @@ int initToken(char* slot, char* label, char* soPIN, char* userPIN)
 			return 1;
 			break;
 		default:
-			fprintf(stderr, "ERROR %X: Could not initialize the token.\n", rv);
+			fprintf(stderr, "ERROR %X: Could not initialize the token.\n", (unsigned int)rv);
 			return 1;
 			break;
 	}
