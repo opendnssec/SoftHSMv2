@@ -100,6 +100,10 @@ full_libdir=`eval eval eval eval eval echo "${libdir}" | sed "s#NONE#${prefix}#"
 default_softhsm2_conf="`eval echo ${full_sysconfdir} | sed s,NONE,$ac_default_prefix,g`/softhsm2.conf"
 softhsmtokendir=${full_localstatedir}/softhsm/tokens/
 
+# Install the library in a sub-directory
+full_libdir="$full_libdir/softhsm"
+libdir=$full_libdir
+
 # Define some variables for the code
 AC_DEFINE_UNQUOTED(
 	[VERSION_MAJOR],
