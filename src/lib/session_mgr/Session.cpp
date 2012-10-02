@@ -34,7 +34,6 @@
 
 #include "CryptoFactory.h"
 #include "Session.h"
-#include "SessionObjectStore.h"
 
 // Constructor
 Session::Session(Slot* slot, bool isReadWrite, CK_VOID_PTR pApplication, CK_NOTIFY notify)
@@ -46,7 +45,11 @@ Session::Session(Slot* slot, bool isReadWrite, CK_VOID_PTR pApplication, CK_NOTI
 	this->pApplication = pApplication;
 	this->notify = notify;
 	operation = SESSION_OP_NONE;
+	findOp = NULL;
 	digestOp = NULL;
+	asymmetricCryptoOp = NULL;
+	publicKey = NULL;
+	privateKey = NULL;
 }
 
 // Constructor
@@ -59,16 +62,17 @@ Session::Session()
 	pApplication = NULL;
 	notify = NULL;
 	operation = SESSION_OP_NONE;
+	findOp = NULL;
 	digestOp = NULL;
+	asymmetricCryptoOp = NULL;
+	publicKey = NULL;
+	privateKey = NULL;
 }
 
 // Destructor
 Session::~Session()
 {
 	resetOp();
-
-	// Remove any session objects
-	SessionObjectStore::i()->sessionClosed(hSession);
 }
 
 // Get session info
@@ -167,8 +171,47 @@ void Session::resetOp()
 		CryptoFactory::i()->recycleHashAlgorithm(digestOp);
 		digestOp = NULL;
 	}
+	else
+	{
+		if (findOp != NULL)
+		{
+			findOp->recycle();
+			findOp = NULL;
+		}
+		else
+		{
+			if (asymmetricCryptoOp != NULL)
+			{
+				if (publicKey != NULL)
+				{
+					asymmetricCryptoOp->recyclePublicKey(publicKey);
+					publicKey = NULL;
+				}
+				if (privateKey != NULL)
+				{
+					asymmetricCryptoOp->recyclePrivateKey(privateKey);
+					privateKey = NULL;
+				}
+				CryptoFactory::i()->recycleAsymmetricAlgorithm(asymmetricCryptoOp);
+				asymmetricCryptoOp = NULL;
+			}
+		}
+	}
 
 	operation = SESSION_OP_NONE;
+}
+
+void Session::setFindOp(FindOperation *findOp)
+{
+	if (this->findOp != NULL) {
+		delete this->findOp;
+	}
+	this->findOp = findOp;
+}
+
+FindOperation *Session::getFindOp()
+{
+	return findOp;
 }
 
 // Set the digesting operator
@@ -186,4 +229,77 @@ void Session::setDigestOp(HashAlgorithm* digestOp)
 HashAlgorithm* Session::getDigestOp()
 {
 	return digestOp;
+}
+
+void Session::setAsymmetricCryptoOp(AsymmetricAlgorithm *asymmetricCryptoOp)
+{
+	if (this->asymmetricCryptoOp != NULL)
+	{
+		setPublicKey(NULL);
+		setPrivateKey(NULL);
+		CryptoFactory::i()->recycleAsymmetricAlgorithm(asymmetricCryptoOp);
+	}
+
+	this->asymmetricCryptoOp = asymmetricCryptoOp;
+}
+
+AsymmetricAlgorithm *Session::getAsymmetricCryptoOp()
+{
+	return asymmetricCryptoOp;
+}
+
+void Session::setMechanism(const char *mechanism)
+{
+	this->mechanism = mechanism;
+}
+
+const char *Session::getMechanism()
+{
+	return mechanism;
+}
+
+void Session::setIsMultiPartOp(bool isMultiPartOp)
+{
+	this->isMultiPartOp = isMultiPartOp;
+}
+
+bool Session::getIsMultiPartOp()
+{
+	return isMultiPartOp;
+}
+
+void Session::setPublicKey(PublicKey* publicKey)
+{
+	if (asymmetricCryptoOp == NULL)
+		return;
+
+	if (this->publicKey != NULL)
+	{
+		asymmetricCryptoOp->recyclePublicKey(publicKey);
+	}
+
+	this->publicKey = publicKey;
+}
+
+PublicKey* Session::getPublicKey()
+{
+	return publicKey;
+}
+
+void Session::setPrivateKey(PrivateKey* privateKey)
+{
+	if (asymmetricCryptoOp == NULL)
+		return;
+
+	if (this->privateKey != NULL)
+	{
+		asymmetricCryptoOp->recyclePrivateKey(privateKey);
+	}
+
+	this->privateKey = privateKey;
+}
+
+PrivateKey* Session::getPrivateKey()
+{
+	return privateKey;
 }

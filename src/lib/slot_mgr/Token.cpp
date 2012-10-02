@@ -52,7 +52,7 @@ Token::Token(OSToken* token)
 	tokenMutex = MutexFactory::i()->getMutex();
 
 	this->token = token;
-	
+
 	ByteString soPINBlob, userPINBlob;
 
 	valid = token->getSOPIN(soPINBlob) && token->getUserPIN(userPINBlob);
@@ -307,7 +307,7 @@ CK_RV Token::createToken(ObjectStore* objectStore, ByteString& soPIN, CK_UTF8CHA
 	}
 
 	token = newToken;
-	
+
 	ByteString soPINBlob, userPINBlob;
 
 	valid = token->getSOPIN(soPINBlob) && token->getUserPIN(userPINBlob);
@@ -398,11 +398,36 @@ CK_RV Token::getTokenInfo(CK_TOKEN_INFO_PTR info)
 	strftime(dateTime, 17, "%Y%m%d%H%M%S00", gmtime(&rawtime));
 	memcpy(info->utcTime, dateTime, 16);
 
-        return CKR_OK;
+		return CKR_OK;
 }
 
 // Create an object
 ObjectFile* Token::createObject()
 {
 	return token->createObject();
+}
+
+void Token::getObjects(std::set<OSObject *> &objects)
+{
+	token->getObjects(objects);
+}
+
+bool Token::decrypt(const ByteString &encrypted, ByteString &plaintext)
+{
+	// Lock access to the token
+	MutexLocker lock(tokenMutex);
+
+	if (sdm == NULL) return false;
+
+	return sdm->decrypt(encrypted,plaintext);
+}
+
+bool Token::encrypt(const ByteString &plaintext, ByteString &encrypted)
+{
+	// Lock access to the token
+	MutexLocker lock(tokenMutex);
+
+	if (sdm == NULL) return false;
+
+	return sdm->encrypt(plaintext,encrypted);
 }

@@ -47,7 +47,7 @@ OSSLDSAPublicKey::OSSLDSAPublicKey()
 
 OSSLDSAPublicKey::OSSLDSAPublicKey(const DSA* inDSA)
 {
-	OSSLDSAPublicKey::OSSLDSAPublicKey();
+	OSSLDSAPublicKey();
 
 	setFromOSSL(inDSA);
 }

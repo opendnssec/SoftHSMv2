@@ -1,7 +1,7 @@
-/* $Id$ */
+/* $Id: $ */
 
 /*
- * Copyright (c) 2010 SURFnet bv
+ * Copyright (c) 2012 SURFnet bv
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,83 +27,26 @@
  */
 
 /*****************************************************************************
- OSSLRSAPublicKey.cpp
+ Handle.h
 
- OpenSSL RSA private key class
+ This class represents a single handle
  *****************************************************************************/
 
-#include "config.h"
-#include "log.h"
-#include "OSSLRSAPublicKey.h"
-#include "OSSLUtil.h"
-#include <openssl/bn.h>
-#include <string.h>
+#include "Handle.h"
 
-// Constructors
-OSSLRSAPublicKey::OSSLRSAPublicKey()
+// Constructor
+Handle::Handle(CK_HANDLE_KIND _kind, CK_SLOT_ID _slotID, CK_SESSION_HANDLE _hSession)
+    : kind(_kind), slotID(_slotID), hSession(_hSession), object(NULL_PTR), isPrivate(false)
 {
-	rsa = RSA_new();
 }
 
-OSSLRSAPublicKey::OSSLRSAPublicKey(const RSA* inRSA)
+Handle::Handle(CK_HANDLE_KIND _kind, CK_SLOT_ID _slotID)
+    : kind(_kind), slotID(_slotID), hSession(CK_INVALID_HANDLE), object(NULL_PTR), isPrivate(false)
 {
-	OSSLRSAPublicKey();
-
-	setFromOSSL(inRSA);
 }
 
-// Destructor
-OSSLRSAPublicKey::~OSSLRSAPublicKey()
+Handle::Handle()
+    : kind(CKH_INVALID), slotID(0), hSession(CK_INVALID_HANDLE), object(NULL_PTR), isPrivate(false)
 {
-	RSA_free(rsa);
+
 }
-
-// The type
-/*static*/ const char* OSSLRSAPublicKey::type = "OpenSSL RSA Public Key";
-
-// Check if the key is of the given type
-bool OSSLRSAPublicKey::isOfType(const char* type)
-{
-	return !strcmp(OSSLRSAPublicKey::type, type);
-}
-
-// Set from OpenSSL representation
-void OSSLRSAPublicKey::setFromOSSL(const RSA* rsa)
-{
-	if (rsa->n) { ByteString n = OSSL::bn2ByteString(rsa->n); setN(n); }
-	if (rsa->e) { ByteString e = OSSL::bn2ByteString(rsa->e); setE(e); }
-}
-
-// Setters for the RSA public key components
-void OSSLRSAPublicKey::setN(const ByteString& n)
-{
-	RSAPublicKey::setN(n);
-
-	if (rsa->n) 
-	{
-		BN_clear_free(rsa->n);
-		rsa->n = NULL;
-	}
-
-	rsa->n = OSSL::byteString2bn(n);
-}
-
-void OSSLRSAPublicKey::setE(const ByteString& e)
-{
-	RSAPublicKey::setE(e);
-
-	if (rsa->e) 
-	{
-		BN_clear_free(rsa->e);
-		rsa->e = NULL;
-	}
-
-	rsa->e = OSSL::byteString2bn(e);
-}
-
-// Retrieve the OpenSSL representation of the key
-RSA* OSSLRSAPublicKey::getOSSLKey()
-{
-	return rsa;
-}
-

@@ -1,7 +1,7 @@
 /* $Id$ */
 
 /*
- * Copyright (c) 2010 SURFnet bv
+ * Copyright (c) 2012 SURFnet
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,83 +27,34 @@
  */
 
 /*****************************************************************************
- OSSLRSAPublicKey.cpp
+ SignVerifyTests.h
 
- OpenSSL RSA private key class
+ Contains test cases to C_SignInit,C_Sign,C_SignUpdate,C_SignFinal,
+ C_VerifyInit, C_Verify, C_VerifyUpdate, C_VerifyFinal
  *****************************************************************************/
 
-#include "config.h"
-#include "log.h"
-#include "OSSLRSAPublicKey.h"
-#include "OSSLUtil.h"
-#include <openssl/bn.h>
-#include <string.h>
+#ifndef _SOFTHSM_V2_SIGNVERIFYTESTS_H
+#define _SOFTHSM_V2_SIGNVERIFYTESTS_H
 
-// Constructors
-OSSLRSAPublicKey::OSSLRSAPublicKey()
+#include <cppunit/extensions/HelperMacros.h>
+#include "cryptoki.h"
+
+class SignVerifyTests : public CppUnit::TestFixture
 {
-	rsa = RSA_new();
-}
+	CPPUNIT_TEST_SUITE(SignVerifyTests);
+	CPPUNIT_TEST(testRsaSignVerify);
+	CPPUNIT_TEST_SUITE_END();
 
-OSSLRSAPublicKey::OSSLRSAPublicKey(const RSA* inRSA)
-{
-	OSSLRSAPublicKey();
+public:
+	void testRsaSignVerify();
 
-	setFromOSSL(inRSA);
-}
+	void setUp();
+	void tearDown();
 
-// Destructor
-OSSLRSAPublicKey::~OSSLRSAPublicKey()
-{
-	RSA_free(rsa);
-}
+protected:
+	CK_RV generateRsaKeyPair(CK_SESSION_HANDLE hSession, CK_BBOOL bTokenPuk, CK_BBOOL bPrivatePuk, CK_BBOOL bTokenPrk, CK_BBOOL bPrivatePrk, CK_OBJECT_HANDLE &hPuk, CK_OBJECT_HANDLE &hPrk);
+	void rsaPkcsSignVerify(CK_MECHANISM_TYPE mechanismType, CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hPublicKey, CK_OBJECT_HANDLE hPrivateKey);
+	void digestRsaPkcsSignVerify(CK_MECHANISM_TYPE mechanismType, CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hPublicKey, CK_OBJECT_HANDLE hPrivateKey);
+};
 
-// The type
-/*static*/ const char* OSSLRSAPublicKey::type = "OpenSSL RSA Public Key";
-
-// Check if the key is of the given type
-bool OSSLRSAPublicKey::isOfType(const char* type)
-{
-	return !strcmp(OSSLRSAPublicKey::type, type);
-}
-
-// Set from OpenSSL representation
-void OSSLRSAPublicKey::setFromOSSL(const RSA* rsa)
-{
-	if (rsa->n) { ByteString n = OSSL::bn2ByteString(rsa->n); setN(n); }
-	if (rsa->e) { ByteString e = OSSL::bn2ByteString(rsa->e); setE(e); }
-}
-
-// Setters for the RSA public key components
-void OSSLRSAPublicKey::setN(const ByteString& n)
-{
-	RSAPublicKey::setN(n);
-
-	if (rsa->n) 
-	{
-		BN_clear_free(rsa->n);
-		rsa->n = NULL;
-	}
-
-	rsa->n = OSSL::byteString2bn(n);
-}
-
-void OSSLRSAPublicKey::setE(const ByteString& e)
-{
-	RSAPublicKey::setE(e);
-
-	if (rsa->e) 
-	{
-		BN_clear_free(rsa->e);
-		rsa->e = NULL;
-	}
-
-	rsa->e = OSSL::byteString2bn(e);
-}
-
-// Retrieve the OpenSSL representation of the key
-RSA* OSSLRSAPublicKey::getOSSLKey()
-{
-	return rsa;
-}
-
+#endif // !_SOFTHSM_V2_SIGNVERIFYTESTS_H

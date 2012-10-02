@@ -42,6 +42,8 @@ CPPUNIT_TEST_SUITE_REGISTRATION(DigestTests);
 
 void DigestTests::setUp()
 {
+//    printf("\nDigestTests\n");
+
 	setenv("SOFTHSM2_CONF", "./softhsm2.conf", 1);
 
 	CK_UTF8CHAR pin[] = SLOT_0_SO1_PIN;

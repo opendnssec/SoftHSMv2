@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: $ */
 
 /*
  * Copyright (c) 2010 SURFnet bv
@@ -27,83 +27,34 @@
  */
 
 /*****************************************************************************
- OSSLRSAPublicKey.cpp
+ HandleManagerTests.h
 
- OpenSSL RSA private key class
+ Contains test cases to test the handle manager implementation
  *****************************************************************************/
 
-#include "config.h"
-#include "log.h"
-#include "OSSLRSAPublicKey.h"
-#include "OSSLUtil.h"
-#include <openssl/bn.h>
-#include <string.h>
+#ifndef _SOFTHSM_V2_HANDLEMANAGERTESTS_H
+#define _SOFTHSM_V2_HANDLEMANAGERTESTS_H
 
-// Constructors
-OSSLRSAPublicKey::OSSLRSAPublicKey()
+#include <cppunit/extensions/HelperMacros.h>
+#include "RNG.h"
+#include "HandleManager.h"
+
+class HandleManagerTests : public CppUnit::TestFixture
 {
-	rsa = RSA_new();
-}
+	CPPUNIT_TEST_SUITE(HandleManagerTests);
+	CPPUNIT_TEST(testHandleManager);
+	CPPUNIT_TEST_SUITE_END();
 
-OSSLRSAPublicKey::OSSLRSAPublicKey(const RSA* inRSA)
-{
-	OSSLRSAPublicKey();
+public:
+	void testHandleManager();
 
-	setFromOSSL(inRSA);
-}
+	void setUp();
+	void tearDown();
 
-// Destructor
-OSSLRSAPublicKey::~OSSLRSAPublicKey()
-{
-	RSA_free(rsa);
-}
+private:
+	HandleManager *handleManager;
 
-// The type
-/*static*/ const char* OSSLRSAPublicKey::type = "OpenSSL RSA Public Key";
+};
 
-// Check if the key is of the given type
-bool OSSLRSAPublicKey::isOfType(const char* type)
-{
-	return !strcmp(OSSLRSAPublicKey::type, type);
-}
-
-// Set from OpenSSL representation
-void OSSLRSAPublicKey::setFromOSSL(const RSA* rsa)
-{
-	if (rsa->n) { ByteString n = OSSL::bn2ByteString(rsa->n); setN(n); }
-	if (rsa->e) { ByteString e = OSSL::bn2ByteString(rsa->e); setE(e); }
-}
-
-// Setters for the RSA public key components
-void OSSLRSAPublicKey::setN(const ByteString& n)
-{
-	RSAPublicKey::setN(n);
-
-	if (rsa->n) 
-	{
-		BN_clear_free(rsa->n);
-		rsa->n = NULL;
-	}
-
-	rsa->n = OSSL::byteString2bn(n);
-}
-
-void OSSLRSAPublicKey::setE(const ByteString& e)
-{
-	RSAPublicKey::setE(e);
-
-	if (rsa->e) 
-	{
-		BN_clear_free(rsa->e);
-		rsa->e = NULL;
-	}
-
-	rsa->e = OSSL::byteString2bn(e);
-}
-
-// Retrieve the OpenSSL representation of the key
-RSA* OSSLRSAPublicKey::getOSSLKey()
-{
-	return rsa;
-}
+#endif // !_SOFTHSM_V2_HANDLEMANAGERTESTS_H
 

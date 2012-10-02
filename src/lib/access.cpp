@@ -36,86 +36,68 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-// Checks if an action is allowed on a given object type.
+// Checks if a read operation is allowed on a given object type.
 //
-//                                       Type of session
+//                                             Type of session
 //  Type of object          R/O Public | R/W Public | R/O User | R/W User | R/W SO
 //  ------------------------------------------------------------------------------
-//  Public session object       R/W    |     R/W    |    R/W   |    R/W   |   R/W
-//  Private session object             |            |    R/W   |    R/W   |
-//  Public token object         R/O    |     R/W    |    R/O   |    R/W   |   R/W
-//  Private token object               |            |    R/O   |    R/W   |
+//  Public session object       OK     |     OK     |    OK    |    OK    |   OK
+//  Private session object      UNLI   |     UNLI   |    OK    |    OK    |   UNLI
+//  Public token object         OK     |     OK     |    OK    |    OK    |   OK
+//  Private token object        UNLI   |     UNLI   |    OK    |    OK    |   UNLI
+//
+// OK = CKR_OK
+// SRO = CKR_SESSION_READ_ONLY
+// UNLI = CKR_USER_NOT_LOGGED_IN
 
-// Can we do R/O operations?
-bool haveRO(CK_STATE sessionState, CK_BBOOL isTokenObject, CK_BBOOL isPrivateObject)
+// Can we do read operations?
+CK_RV haveRead(CK_STATE sessionState, CK_BBOOL isTokenObject, CK_BBOOL isPrivateObject)
 {
 	switch (sessionState)
 	{
-		case CKS_RW_SO_FUNCTIONS:
-		case CKS_RW_PUBLIC_SESSION:
-		case CKS_RO_PUBLIC_SESSION:
-			if (isPrivateObject == CK_FALSE)
-			{
-				return true;
-			}
-			else
-			{
-				return false;
-			}
-			break;
-		case CKS_RW_USER_FUNCTIONS:
-		case CKS_RO_USER_FUNCTIONS:
-			return true;
-			break;
-		default:
-			break;
-	}
-
-	return false;
+        case CKS_RO_PUBLIC_SESSION:
+        case CKS_RW_PUBLIC_SESSION:
+        case CKS_RW_SO_FUNCTIONS:
+            return isPrivateObject ? CKR_USER_NOT_LOGGED_IN : CKR_OK;
+        case CKS_RO_USER_FUNCTIONS:
+        case CKS_RW_USER_FUNCTIONS:
+            return CKR_OK;
+    }
+    return CKR_GENERAL_ERROR; // internal error, switch should have covered every state
 }
 
-// Can we do R/W operations?
-bool haveRW(CK_STATE sessionState, CK_BBOOL isTokenObject, CK_BBOOL isPrivateObject)
+// Checks if a write operation is allowed on a given object type.
+//
+//                                             Type of session
+//  Type of object          R/O Public | R/W Public | R/O User | R/W User | R/W SO
+//  ------------------------------------------------------------------------------
+//  Public session object       OK     |     OK     |    OK    |    OK    |   OK
+//  Private session object      UNLI   |     UNLI   |    OK    |    OK    |   UNLI
+//  Public token object         SRO    |     OK     |    SRO   |    OK    |   OK
+//  Private token object      SRO/UNLI |     UNLI   |    SRO   |    OK    |   UNLI
+//
+// OK = CKR_OK
+// SRO = CKR_SESSION_READ_ONLY
+// UNLI = CKR_USER_NOT_LOGGED_IN
+// In the situation where both SRO and UNLI may be returned we favor SRO.
+
+// Can we do write operations?
+CK_RV haveWrite(CK_STATE sessionState, CK_BBOOL isTokenObject, CK_BBOOL isPrivateObject)
 {
 	switch (sessionState)
 	{
-		case CKS_RW_SO_FUNCTIONS:
-		case CKS_RW_PUBLIC_SESSION:
-			if (isPrivateObject == CK_FALSE)
-			{
-				return true;
-			}
-			else
-			{
-				return false;
-			}
-			break;
-		case CKS_RW_USER_FUNCTIONS:
-			return true;
-			break;
-		case CKS_RO_USER_FUNCTIONS:
-			if (isTokenObject == CK_FALSE)
-			{
-				return true;
-			}
-			else
-			{
-				return false;
-			}
-			break;
-		case CKS_RO_PUBLIC_SESSION:
-			if (isPrivateObject == CK_FALSE && isTokenObject == CK_FALSE)
-			{
-				return true;
-			}
-			else
-			{
-				return false;
-			}
-			break;
-		default:
-			break;
+        case CKS_RO_PUBLIC_SESSION:
+            if (isTokenObject)
+                return CKR_SESSION_READ_ONLY;
+            else
+                return isPrivateObject ? CKR_USER_NOT_LOGGED_IN : CKR_OK;
+        case CKS_RW_PUBLIC_SESSION:
+        case CKS_RW_SO_FUNCTIONS:
+            return isPrivateObject ? CKR_USER_NOT_LOGGED_IN : CKR_OK;
+        case CKS_RO_USER_FUNCTIONS:
+            return isTokenObject ? CKR_SESSION_READ_ONLY : CKR_OK;
+        case CKS_RW_USER_FUNCTIONS:
+            return CKR_OK;
 	}
-
-	return false;
+    return CKR_GENERAL_ERROR; // internal error, switch should have covered every state
 }

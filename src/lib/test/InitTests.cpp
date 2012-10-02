@@ -43,6 +43,8 @@ CPPUNIT_TEST_SUITE_REGISTRATION(InitTests);
 
 void InitTests::setUp()
 {
+//    printf("\nInitTests\n");
+
 	setenv("SOFTHSM2_CONF", "./softhsm2.conf", 1);
 }
 

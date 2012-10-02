@@ -54,7 +54,7 @@ void SessionObjectTests::tearDown()
 
 void SessionObjectTests::testBoolAttr()
 {
-	SessionObject testObject(NULL, 1);
+    SessionObject testObject(NULL, 1, 1);
 
 	CPPUNIT_ASSERT(testObject.isValid());
 
@@ -107,7 +107,7 @@ void SessionObjectTests::testBoolAttr()
 
 void SessionObjectTests::testULongAttr()
 {
-	SessionObject testObject(NULL, 1);
+    SessionObject testObject(NULL, 1, 1);
 
 	CPPUNIT_ASSERT(testObject.isValid());
 
@@ -166,7 +166,7 @@ void SessionObjectTests::testByteStrAttr()
 	ByteString value4 = "98A7E5D798A7E5D798A7E5D798A7E5D798A7E5D798A7E5D7";
 	ByteString value5 = "ABCDABCDABCDABCDABCDABCDABCDABCD";
 
-	SessionObject testObject(NULL, 1);
+    SessionObject testObject(NULL, 1, 1);
 
 	CPPUNIT_ASSERT(testObject.isValid());
 
@@ -215,7 +215,7 @@ void SessionObjectTests::testMixedAttr()
 {
 	ByteString value3 = "BDEBDBEDBBDBEBDEBE792759537328";
 
-	SessionObject testObject(NULL, 1);
+    SessionObject testObject(NULL, 1, 1);
 
 	CPPUNIT_ASSERT(testObject.isValid());
 
@@ -251,7 +251,7 @@ void SessionObjectTests::testDoubleAttr()
 	ByteString value3 = "BDEBDBEDBBDBEBDEBE792759537328";
 	ByteString value3a = "466487346943785684957634";
 
-	SessionObject testObject(NULL, 1);
+    SessionObject testObject(NULL, 1, 1);
 
 	CPPUNIT_ASSERT(testObject.isValid());
 
@@ -311,7 +311,7 @@ void SessionObjectTests::testCloseSession()
 {
 	ByteString value3 = "BDEBDBEDBBDBEBDEBE792759537328";
 
-	SessionObject testObject(NULL, 1);
+    SessionObject testObject(NULL, 1, 1);
 
 	CPPUNIT_ASSERT(testObject.isValid());
 
@@ -342,7 +342,7 @@ void SessionObjectTests::testCloseSession()
 	CPPUNIT_ASSERT(testObject.getAttribute(CKA_VALUE_BITS)->getByteStringValue() == value3);
 
 	// Now close the session
-	testObject.closeSession(1);
+    testObject.removeOnSessionClose(1);
 
 	CPPUNIT_ASSERT(!testObject.isValid());
 	CPPUNIT_ASSERT(!testObject.attributeExists(CKA_TOKEN));
@@ -353,7 +353,7 @@ void SessionObjectTests::testCloseSession()
 void SessionObjectTests::testDestroyObjectFails()
 {
 	// Create test object instance
-	SessionObject testObject(NULL, 1);
+    SessionObject testObject(NULL, 1, 1);
 
 	CPPUNIT_ASSERT(testObject.isValid());
 

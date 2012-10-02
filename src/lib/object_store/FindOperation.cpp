@@ -1,7 +1,7 @@
-/* $Id$ */
+/* $Id: $ */
 
 /*
- * Copyright (c) 2010 SURFnet bv
+ * Copyright (c) 2012 SURFnet bv
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,83 +27,56 @@
  */
 
 /*****************************************************************************
- OSSLRSAPublicKey.cpp
+ FindOperation.cpp
 
- OpenSSL RSA private key class
+ This class represents the find operation that can be used to collect
+ objects that match the attributes contained in a given template.
  *****************************************************************************/
 
 #include "config.h"
-#include "log.h"
-#include "OSSLRSAPublicKey.h"
-#include "OSSLUtil.h"
-#include <openssl/bn.h>
-#include <string.h>
+#include "FindOperation.h"
 
-// Constructors
-OSSLRSAPublicKey::OSSLRSAPublicKey()
+FindOperation::FindOperation()
 {
-	rsa = RSA_new();
 }
 
-OSSLRSAPublicKey::OSSLRSAPublicKey(const RSA* inRSA)
+FindOperation *FindOperation::create()
 {
-	OSSLRSAPublicKey();
-
-	setFromOSSL(inRSA);
+    return new FindOperation();
 }
 
-// Destructor
-OSSLRSAPublicKey::~OSSLRSAPublicKey()
+void FindOperation::recycle()
 {
-	RSA_free(rsa);
+    delete this;
 }
 
-// The type
-/*static*/ const char* OSSLRSAPublicKey::type = "OpenSSL RSA Public Key";
-
-// Check if the key is of the given type
-bool OSSLRSAPublicKey::isOfType(const char* type)
+void FindOperation::setHandles(const std::set<CK_OBJECT_HANDLE> &handles)
 {
-	return !strcmp(OSSLRSAPublicKey::type, type);
+    _handles = handles;
 }
 
-// Set from OpenSSL representation
-void OSSLRSAPublicKey::setFromOSSL(const RSA* rsa)
+CK_ULONG FindOperation::retrieveHandles(CK_OBJECT_HANDLE_PTR phObject, CK_ULONG ulCount)
 {
-	if (rsa->n) { ByteString n = OSSL::bn2ByteString(rsa->n); setN(n); }
-	if (rsa->e) { ByteString e = OSSL::bn2ByteString(rsa->e); setE(e); }
+    CK_ULONG ulReturn = 0;
+    std::set<CK_OBJECT_HANDLE>::const_iterator it;
+    for (it=_handles.begin(); it != _handles.end(); ++it) {
+        if (ulReturn >= ulCount) break;
+
+        phObject[ulReturn++] = *it;
+    }
+    return ulReturn;
 }
 
-// Setters for the RSA public key components
-void OSSLRSAPublicKey::setN(const ByteString& n)
+CK_ULONG FindOperation::eraseHandles(CK_ULONG ulIndex, CK_ULONG ulCount)
 {
-	RSAPublicKey::setN(n);
+    std::set<CK_OBJECT_HANDLE>::const_iterator it;
+    for (it=_handles.begin(); it != _handles.end() && ulIndex != 0; --ulIndex) {
+        ++it;
+    }
 
-	if (rsa->n) 
-	{
-		BN_clear_free(rsa->n);
-		rsa->n = NULL;
-	}
-
-	rsa->n = OSSL::byteString2bn(n);
+    CK_ULONG ulReturn = 0;
+    for ( ; it != _handles.end() && ulReturn < ulCount; ++ulReturn) {
+        _handles.erase(it++);
+    }
+    return ulReturn;
 }
-
-void OSSLRSAPublicKey::setE(const ByteString& e)
-{
-	RSAPublicKey::setE(e);
-
-	if (rsa->e) 
-	{
-		BN_clear_free(rsa->e);
-		rsa->e = NULL;
-	}
-
-	rsa->e = OSSL::byteString2bn(e);
-}
-
-// Retrieve the OpenSSL representation of the key
-RSA* OSSLRSAPublicKey::getOSSLKey()
-{
-	return rsa;
-}
-

@@ -35,6 +35,7 @@
 #ifndef _SOFTHSM_V2_BYTESTRING_H
 #define _SOFTHSM_V2_BYTESTRING_H
 
+#include <cstddef>
 #include <vector>
 #include <string>
 #include <stdlib.h>

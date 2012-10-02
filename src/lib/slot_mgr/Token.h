@@ -53,7 +53,7 @@ public:
 
 	// Destructor
 	virtual ~Token();
-	
+
 	// Create a new token
 	CK_RV createToken(ObjectStore* objectStore, ByteString& soPIN, CK_UTF8CHAR_PTR label);
 
@@ -84,6 +84,15 @@ public:
 
 	// Create object
 	ObjectFile* createObject();
+
+	// Insert all token objects into the given set.
+	void getObjects(std::set<OSObject *> &objects);
+
+	// Decrypt the supplied data
+	bool decrypt(const ByteString& encrypted, ByteString& plaintext);
+
+	// Encrypt the supplied data
+	bool encrypt(const ByteString& plaintext, ByteString& encrypted);
 
 private:
 	// Token validity

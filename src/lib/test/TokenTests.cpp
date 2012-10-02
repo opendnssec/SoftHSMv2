@@ -42,6 +42,8 @@ CPPUNIT_TEST_SUITE_REGISTRATION(TokenTests);
 
 void TokenTests::setUp()
 {
+//    printf("\nTokenTests\n");
+
 	setenv("SOFTHSM2_CONF", "./softhsm2.conf", 1);
 }
 

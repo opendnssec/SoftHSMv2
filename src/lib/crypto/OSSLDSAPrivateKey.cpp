@@ -47,8 +47,7 @@ OSSLDSAPrivateKey::OSSLDSAPrivateKey()
 
 OSSLDSAPrivateKey::OSSLDSAPrivateKey(const DSA* inDSA)
 {
-	OSSLDSAPrivateKey::OSSLDSAPrivateKey();
-
+	OSSLDSAPrivateKey();
 	setFromOSSL(inDSA);
 }
 

@@ -47,7 +47,7 @@ OSSLRSAPrivateKey::OSSLRSAPrivateKey()
 
 OSSLRSAPrivateKey::OSSLRSAPrivateKey(const RSA* inRSA)
 {
-	OSSLRSAPrivateKey::OSSLRSAPrivateKey();
+	OSSLRSAPrivateKey();
 
 	setFromOSSL(inRSA);
 }

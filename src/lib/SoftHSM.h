@@ -3,7 +3,7 @@
 /*
  * Copyright (c) 2010 SURFnet bv
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -12,7 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -37,11 +37,11 @@
 #include "config.h"
 #include "log.h"
 #include "cryptoki.h"
+#include "SessionObjectStore.h"
 #include "ObjectStore.h"
 #include "SessionManager.h"
 #include "SlotManager.h"
-#include "RSAPublicKey.h"
-#include "RSAPrivateKey.h"
+#include "HandleManager.h"
 #include <memory>
 
 class SoftHSM
@@ -49,6 +49,9 @@ class SoftHSM
 public:
 	// Return the one-and-only instance
 	static SoftHSM* i();
+
+	// This will destroy the one-and-only instance.
+	static void reset();
 
 	// Destructor
 	virtual ~SoftHSM();
@@ -59,7 +62,7 @@ public:
 	CK_RV C_GetInfo(CK_INFO_PTR pInfo);
 	CK_RV C_GetSlotList(CK_BBOOL tokenPresent, CK_SLOT_ID_PTR pSlotList, CK_ULONG_PTR pulCount);
 	CK_RV C_GetSlotInfo(CK_SLOT_ID slotID, CK_SLOT_INFO_PTR pInfo);
-	CK_RV C_GetTokenInfo(CK_SLOT_ID slotID, CK_TOKEN_INFO_PTR pInfo); 
+	CK_RV C_GetTokenInfo(CK_SLOT_ID slotID, CK_TOKEN_INFO_PTR pInfo);
 	CK_RV C_GetMechanismList(CK_SLOT_ID slotID, CK_MECHANISM_TYPE_PTR pMechanismList, CK_ULONG_PTR pulCount);
 	CK_RV C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_MECHANISM_INFO_PTR pInfo);
 	CK_RV C_InitToken(CK_SLOT_ID slotID, CK_UTF8CHAR_PTR pPin, CK_ULONG ulPinLen, CK_UTF8CHAR_PTR pLabel);
@@ -82,11 +85,11 @@ public:
 	CK_RV C_FindObjectsInit(CK_SESSION_HANDLE hSession, CK_ATTRIBUTE_PTR pTemplate, CK_ULONG ulCount);
 	CK_RV C_FindObjects(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE_PTR phObject, CK_ULONG ulMaxObjectCount, CK_ULONG_PTR pulObjectCount);
 	CK_RV C_FindObjectsFinal(CK_SESSION_HANDLE hSession);
-	CK_RV C_EncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechanism, CK_OBJECT_HANDLE hObject);
+	CK_RV C_EncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechanism, CK_OBJECT_HANDLE hKey);
 	CK_RV C_Encrypt(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pData, CK_ULONG ulDataLen, CK_BYTE_PTR pEncryptedData, CK_ULONG_PTR pulEncryptedDataLen);
 	CK_RV C_EncryptUpdate(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pData, CK_ULONG ulDataLen, CK_BYTE_PTR pEncryptedData, CK_ULONG_PTR pulEncryptedDataLen);
 	CK_RV C_EncryptFinal(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pEncryptedData, CK_ULONG_PTR pulEncryptedDataLen);
-	CK_RV C_DecryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechanism, CK_OBJECT_HANDLE hObject);
+	CK_RV C_DecryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechanism, CK_OBJECT_HANDLE hKey);
 	CK_RV C_Decrypt(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pEncryptedData, CK_ULONG ulEncryptedDataLen, CK_BYTE_PTR pData, CK_ULONG_PTR pulDataLen);
 	CK_RV C_DecryptUpdate(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pEncryptedData, CK_ULONG ulEncryptedDataLen, CK_BYTE_PTR pData, CK_ULONG_PTR pDataLen);
 	CK_RV C_DecryptFinal(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pData, CK_ULONG_PTR pDataLen);
@@ -114,42 +117,42 @@ public:
 	CK_RV C_GenerateKey(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechanism, CK_ATTRIBUTE_PTR pTemplate, CK_ULONG ulCount, CK_OBJECT_HANDLE_PTR phKey);
 	CK_RV C_GenerateKeyPair
 	(
-		CK_SESSION_HANDLE hSession, 
-		CK_MECHANISM_PTR pMechanism, 
-		CK_ATTRIBUTE_PTR pPublicKeyTemplate, 
-		CK_ULONG ulPublicKeyAttributeCount, 
-		CK_ATTRIBUTE_PTR pPrivateKeyTemplate, 
+		CK_SESSION_HANDLE hSession,
+		CK_MECHANISM_PTR pMechanism,
+		CK_ATTRIBUTE_PTR pPublicKeyTemplate,
+		CK_ULONG ulPublicKeyAttributeCount,
+		CK_ATTRIBUTE_PTR pPrivateKeyTemplate,
 		CK_ULONG ulPrivateKeyAttributeCount,
-		CK_OBJECT_HANDLE_PTR phPublicKey, 
+		CK_OBJECT_HANDLE_PTR phPublicKey,
 		CK_OBJECT_HANDLE_PTR phPrivateKey
 	);
 	CK_RV C_WrapKey
 	(
 		CK_SESSION_HANDLE hSession,
-		CK_MECHANISM_PTR pMechanism, 
-		CK_OBJECT_HANDLE hWrappingKey, 
-		CK_OBJECT_HANDLE hKey, 
-		CK_BYTE_PTR pWrappedKey, 
+		CK_MECHANISM_PTR pMechanism,
+		CK_OBJECT_HANDLE hWrappingKey,
+		CK_OBJECT_HANDLE hKey,
+		CK_BYTE_PTR pWrappedKey,
 		CK_ULONG_PTR pulWrappedKeyLen
 	);
 	CK_RV C_UnwrapKey
 	(
-		CK_SESSION_HANDLE hSession, 
-		CK_MECHANISM_PTR pMechanism, 
-		CK_OBJECT_HANDLE hUnwrappingKey, 
-		CK_BYTE_PTR pWrappedKey, 
+		CK_SESSION_HANDLE hSession,
+		CK_MECHANISM_PTR pMechanism,
+		CK_OBJECT_HANDLE hUnwrappingKey,
+		CK_BYTE_PTR pWrappedKey,
 		CK_ULONG ulWrappedKeyLen,
-		CK_ATTRIBUTE_PTR pTemplate, 
-		CK_ULONG ulCount, 
+		CK_ATTRIBUTE_PTR pTemplate,
+		CK_ULONG ulCount,
 		CK_OBJECT_HANDLE_PTR hKey
 	);
 	CK_RV C_DeriveKey
 	(
-		CK_SESSION_HANDLE hSession, 
-		CK_MECHANISM_PTR pMechanism, 
-		CK_OBJECT_HANDLE hBaseKey, 
-		CK_ATTRIBUTE_PTR pTemplate, 
-		CK_ULONG ulCount, 
+		CK_SESSION_HANDLE hSession,
+		CK_MECHANISM_PTR pMechanism,
+		CK_OBJECT_HANDLE hBaseKey,
+		CK_ATTRIBUTE_PTR pTemplate,
+		CK_ULONG ulCount,
 		CK_OBJECT_HANDLE_PTR phKey
 	);
 	CK_RV C_SeedRandom(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pSeed, CK_ULONG ulSeedLen);
@@ -168,41 +171,47 @@ private:
 	// Is the SoftHSM PKCS #11 library initialised?
 	bool isInitialised;
 
-	ObjectStore* objectStore; 
+	SessionObjectStore* sessionObjectStore;
+	ObjectStore* objectStore;
 	SlotManager* slotManager;
 	SessionManager* sessionManager;
+	HandleManager* handleManager;
 
 	// Key generation
 	CK_RV generateRSA
-	(
-		Session* session,
+	(CK_SESSION_HANDLE hSession,
 		CK_ATTRIBUTE_PTR pPublicKeyTemplate,
 		CK_ULONG ulPublicKeyAttributeCount,
 		CK_ATTRIBUTE_PTR pPrivateKeyTemplate,
 		CK_ULONG ulPrivateKeyAttributeCount,
 		CK_OBJECT_HANDLE_PTR phPublicKey,
 		CK_OBJECT_HANDLE_PTR phPrivateKey,
-		CK_BBOOL isToken
-	);
-	CK_RV saveGeneratedRSA
-	(
-		Session* session,
-		CK_ATTRIBUTE_PTR pKeyTemplate,
-		CK_ULONG ulKeyAttributeCount,                                   
-		RSAPublicKey* rsa,
-		CK_BBOOL isToken,
-		CK_OBJECT_HANDLE_PTR phKey
+		CK_BBOOL isPublicKeyOnToken,
+		CK_BBOOL isPublicKeyPrivate,
+		CK_BBOOL isPrivateKeyOnToken,
+		CK_BBOOL isPrivateKeyPrivate
 	);
 	CK_RV generateDSA
 	(
-		Session* session,
+		CK_SESSION_HANDLE hSession,
 		CK_ATTRIBUTE_PTR pPublicKeyTemplate,
 		CK_ULONG ulPublicKeyAttributeCount,
 		CK_ATTRIBUTE_PTR pPrivateKeyTemplate,
 		CK_ULONG ulPrivateKeyAttributeCount,
 		CK_OBJECT_HANDLE_PTR phPublicKey,
 		CK_OBJECT_HANDLE_PTR phPrivateKey,
-		CK_BBOOL isToken
+		CK_BBOOL isPublicKeyOnToken,
+		CK_BBOOL isPublicKeyPrivate,
+		CK_BBOOL isPrivateKeyOnToken,
+		CK_BBOOL isPrivateKeyPrivate
+	);
+	CK_RV CreateObject
+	(
+		CK_SESSION_HANDLE hSession,
+		CK_ATTRIBUTE_PTR pTemplate,
+		CK_ULONG ulCount,
+		CK_OBJECT_HANDLE_PTR phObject,
+		int op
 	);
 };
 

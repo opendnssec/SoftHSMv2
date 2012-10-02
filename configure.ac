@@ -169,8 +169,11 @@ AC_CONFIG_FILES([
 	src/lib/session_mgr/test/Makefile
 	src/lib/slot_mgr/Makefile
 	src/lib/slot_mgr/test/Makefile
+	src/lib/handle_mgr/Makefile
+	src/lib/handle_mgr/test/Makefile
 	src/lib/test/Makefile
 	src/lib/test/softhsm2.conf
+	src/lib/test/tokens/dummy
 	src/bin/Makefile
 	src/bin/common/Makefile
 	src/bin/keyconv/Makefile

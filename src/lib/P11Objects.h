@@ -46,11 +46,11 @@ class P11Object
 {
 public:
 	// Destructor
-	~P11Object();
+	virtual ~P11Object();
 
 protected:
 	// Constructor
-	P11Object() { initialized = false; }
+	P11Object();
 
 	// The object
 	OSObject* osobject;
@@ -58,23 +58,35 @@ protected:
 	// The attributes
 	std::map<CK_ATTRIBUTE_TYPE, P11Attribute*> attributes;
 
+public:
 	// Add attributes
-	bool init();
+	virtual bool init(OSObject *osobject);
+
+protected:
 	bool initialized;
 
+public:
+	CK_RV loadTemplate(Token *token, CK_ATTRIBUTE_PTR pTemplate, CK_ULONG ulAttributeCount);
+
 	// Save template
-	CK_RV saveTemplate(CK_ATTRIBUTE_PTR pKeyTemplate, CK_ULONG ulKeyAttributeCount, int op, bool isSO);
+	CK_RV saveTemplate(Token *token, bool isPrivate, CK_ATTRIBUTE_PTR pTemplate, CK_ULONG ulAttributeCount, int op);
+
+protected:
+	bool isPrivate();
+	bool isCopyable();
+	bool isModifiable();
 };
 
 class P11DataObj : public P11Object
 {
 public:
 	// Constructor
-	P11DataObj() { initialized = false; }
+	P11DataObj();
+
+	// Add attributes
+	virtual bool init(OSObject *osobject);
 
 protected:
-	// Add attributes
-	bool init();
 	bool initialized;
 };
 
@@ -82,10 +94,23 @@ class P11CertificateObj : public P11Object
 {
 protected:
 	// Constructor
-	P11CertificateObj() { initialized = false; }
+	P11CertificateObj();
 
 	// Add attributes
-	bool init();
+	virtual bool init(OSObject *osobject);
+	bool initialized;
+};
+
+class P11X509CertificateObj : public P11CertificateObj
+{
+public:
+	// Constructor
+	P11X509CertificateObj();
+
+	// Add attributes
+	virtual bool init(OSObject *osobject);
+
+protected:
 	bool initialized;
 };
 
@@ -93,10 +118,10 @@ class P11KeyObj : public P11Object
 {
 protected:
 	// Constructor
-	P11KeyObj() { initialized = false; }
+	P11KeyObj();
 
 	// Add attributes
-	bool init();
+	virtual bool init(OSObject *osobject);
 	bool initialized;
 };
 
@@ -104,10 +129,10 @@ class P11PublicKeyObj : public P11KeyObj
 {
 protected:
 	// Constructor
-	P11PublicKeyObj() { initialized = false; }
+	P11PublicKeyObj();
 
 	// Add attributes
-	bool init();
+	virtual bool init(OSObject *osobject);
 	bool initialized;
 };
 
@@ -115,14 +140,12 @@ class P11RSAPublicKeyObj : public P11PublicKeyObj
 {
 public:
 	// Constructor
-	P11RSAPublicKeyObj(OSObject* osobject) { initialized = false; }
+	P11RSAPublicKeyObj();
 
-	// Save generated key
-	CK_RV saveGeneratedKey(CK_ATTRIBUTE_PTR pKeyTemplate, CK_ULONG ulKeyAttributeCount, RSAPublicKey* rsa, Token* token);
-
-private:
 	// Add attributes
-	bool init();
+	virtual bool init(OSObject *osobject);
+
+protected:
 	bool initialized;
 };
 
@@ -130,10 +153,10 @@ class P11PrivateKeyObj : public P11KeyObj
 {
 protected:
 	// Constructor
-	P11PrivateKeyObj() { initialized = false; }
+	P11PrivateKeyObj();
 
 	// Add attributes
-	bool init();
+	virtual bool init(OSObject *osobject);
 	bool initialized;
 };
 
@@ -141,11 +164,12 @@ class P11RSAPrivateKeyObj : public P11PrivateKeyObj
 {
 public:
 	// Constructor
-	P11RSAPrivateKeyObj(OSObject* osobject) { initialized = false; }
+	P11RSAPrivateKeyObj();
 
-private:
 	// Add attributes
-	bool init();
+	virtual bool init(OSObject *osobject);
+
+protected:
 	bool initialized;
 };
 
@@ -153,10 +177,10 @@ class P11SecretKeyObj : public P11KeyObj
 {
 protected:
 	// Constructor
-	P11SecretKeyObj() { initialized = false; }
+	P11SecretKeyObj();
 
 	// Add attributes
-	bool init();
+	virtual bool init(OSObject *osobject);
 	bool initialized;
 };
 
@@ -164,10 +188,10 @@ class P11DomainObj : public P11Object
 {
 protected:
 	// Constructor
-	P11DomainObj() { initialized = false; }
+	P11DomainObj();
 
 	// Add attributes
-	bool init();
+	virtual bool init(OSObject *osobject);
 	bool initialized;
 };
 

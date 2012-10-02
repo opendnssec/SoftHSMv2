@@ -43,7 +43,9 @@ CPPUNIT_TEST_SUITE_REGISTRATION(InfoTests);
 
 void InfoTests::setUp()
 {
-	setenv("SOFTHSM2_CONF", "./softhsm2.conf", 1);
+//    printf("\nInfoTests\n");
+
+    setenv("SOFTHSM2_CONF", "./softhsm2.conf", 1);
 
 	CK_UTF8CHAR pin[] = SLOT_0_SO1_PIN;
 	CK_ULONG pinLength = sizeof(pin) - 1;

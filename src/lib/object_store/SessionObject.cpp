@@ -37,9 +37,11 @@
 #include "SessionObjectStore.h"
 
 // Constructor
-SessionObject::SessionObject(SessionObjectStore* parent, CK_SESSION_HANDLE hSession)
+SessionObject::SessionObject(SessionObjectStore* parent, CK_SLOT_ID slotID, CK_SESSION_HANDLE hSession, bool isPrivate)
 {
 	this->hSession = hSession;
+    this->slotID = slotID;
+    this->isPrivate = isPrivate;
 	objectMutex = MutexFactory::i()->getMutex();
 	valid = (objectMutex != NULL);
 	this->parent = parent;
@@ -96,13 +98,18 @@ bool SessionObject::setAttribute(CK_ATTRIBUTE_TYPE type, const OSAttribute& attr
 // The validity state of the object
 bool SessionObject::isValid()
 {
-	return valid;
+    return valid;
+}
+
+bool SessionObject::hasSlotID(CK_SLOT_ID slotID)
+{
+    return this->slotID == slotID;
 }
 
 // Called by the session object store when a session is closed. If it's the
 // session this object was associated with, the function returns true and the
 // object is invalidated
-bool SessionObject::closeSession(CK_SESSION_HANDLE hSession)
+bool SessionObject::removeOnSessionClose(CK_SESSION_HANDLE hSession)
 {
 	if (this->hSession == hSession)
 	{
@@ -115,6 +122,38 @@ bool SessionObject::closeSession(CK_SESSION_HANDLE hSession)
 	}
 
 	return false;
+}
+
+// Called by the session object store when a token is logged out.
+// Remove when this session object is a private object for this token.
+bool SessionObject::removeOnAllSessionsClose(CK_SLOT_ID slotID)
+{
+    if (this->slotID == slotID)
+    {
+        discardAttributes();
+
+        valid = false;
+
+        return true;
+    }
+
+    return false;
+}
+
+// Called by the session object store when a token is logged out.
+// Remove when this session object is a private object for this token.
+bool SessionObject::removeOnTokenLogout(CK_SLOT_ID slotID)
+{
+    if (this->slotID == slotID && this->isPrivate)
+    {
+        discardAttributes();
+
+        valid = false;
+
+        return true;
+    }
+
+    return false;
 }
 
 // Discard the object's attributes

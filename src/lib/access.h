@@ -37,8 +37,8 @@
 
 #include "cryptoki.h"
 
-bool haveRO(CK_STATE sessionState, CK_BBOOL isTokenObject, CK_BBOOL isPrivateObject);
-bool haveRW(CK_STATE sessionState, CK_BBOOL isTokenObject, CK_BBOOL isPrivateObject);
+CK_RV haveRead(CK_STATE sessionState, CK_BBOOL isTokenObject, CK_BBOOL isPrivateObject);
+CK_RV haveWrite(CK_STATE sessionState, CK_BBOOL isTokenObject, CK_BBOOL isPrivateObject);
 
 #endif /* !_SOFTHSM_V2_ACCESS_H */
 

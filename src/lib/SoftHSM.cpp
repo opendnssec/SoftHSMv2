@@ -4,7 +4,7 @@
  * Copyright (c) 2010 SURFnet bv
  * Copyright (c) 2010 .SE (The Internet Infrastructure Foundation)
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -13,7 +13,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -43,6 +43,8 @@
 #include "AsymmetricAlgorithm.h"
 #include "RNG.h"
 #include "RSAParameters.h"
+#include "RSAPublicKey.h"
+#include "RSAPrivateKey.h"
 #include "DSAParameters.h"
 #include "DSAPublicKey.h"
 #include "DSAPrivateKey.h"
@@ -51,7 +53,10 @@
 #include "osmutex.h"
 #include "SessionManager.h"
 #include "SessionObjectStore.h"
+#include "HandleManager.h"
 #include "P11Objects.h"
+
+
 
 /*****************************************************************************
  Implementation of SoftHSM class specific functions
@@ -71,21 +76,31 @@ SoftHSM* SoftHSM::i()
 	return instance.get();
 }
 
+void SoftHSM::reset()
+{
+	if (instance.get())
+		instance.reset();
+}
+
 // Constructor
 SoftHSM::SoftHSM()
 {
 	isInitialised = false;
+	sessionObjectStore = NULL;
 	objectStore = NULL;
 	slotManager = NULL;
 	sessionManager = NULL;
+	handleManager = NULL;
 }
 
 // Destructor
 SoftHSM::~SoftHSM()
 {
+	if (handleManager != NULL) delete handleManager;
 	if (sessionManager != NULL) delete sessionManager;
 	if (slotManager != NULL) delete slotManager;
 	if (objectStore != NULL) delete objectStore;
+	if (sessionObjectStore != NULL) delete sessionObjectStore;
 }
 
 /*****************************************************************************
@@ -93,7 +108,7 @@ SoftHSM::~SoftHSM()
  *****************************************************************************/
 
 // PKCS #11 initialisation function
-CK_RV SoftHSM::C_Initialize(CK_VOID_PTR pInitArgs) 
+CK_RV SoftHSM::C_Initialize(CK_VOID_PTR pInitArgs)
 {
 	CK_C_INITIALIZE_ARGS_PTR args;
 
@@ -185,6 +200,9 @@ CK_RV SoftHSM::C_Initialize(CK_VOID_PTR pInitArgs)
 		return CKR_GENERAL_ERROR;
 	}
 
+	sessionObjectStore = new SessionObjectStore();
+
+
 	// Load the object store
 	objectStore = new ObjectStore(Configuration::i()->getString("directories.tokendir", DEFAULT_TOKENDIR));
 	if (!objectStore->isValid())
@@ -201,6 +219,9 @@ CK_RV SoftHSM::C_Initialize(CK_VOID_PTR pInitArgs)
 	// Load the session manager
 	sessionManager = new SessionManager();
 
+	// Load the handle manager
+	handleManager = new HandleManager();
+
 	// Set the state to initialised
 	isInitialised = true;
 
@@ -208,13 +229,15 @@ CK_RV SoftHSM::C_Initialize(CK_VOID_PTR pInitArgs)
 }
 
 // PKCS #11 finalisation function
-CK_RV SoftHSM::C_Finalize(CK_VOID_PTR pReserved) 
+CK_RV SoftHSM::C_Finalize(CK_VOID_PTR pReserved)
 {
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
 
 	// Must be set to NULL_PTR in this version of PKCS#11
 	if (pReserved != NULL_PTR) return CKR_ARGUMENTS_BAD;
 
+	if (handleManager != NULL) delete handleManager;
+	handleManager = NULL;
 	if (sessionManager != NULL) delete sessionManager;
 	sessionManager = NULL;
 	if (slotManager != NULL) delete slotManager;
@@ -226,11 +249,12 @@ CK_RV SoftHSM::C_Finalize(CK_VOID_PTR pReserved)
 
 	isInitialised = false;
 
+	SoftHSM::reset();
 	return CKR_OK;
 }
 
 // Return information about the PKCS #11 module
-CK_RV SoftHSM::C_GetInfo(CK_INFO_PTR pInfo) 
+CK_RV SoftHSM::C_GetInfo(CK_INFO_PTR pInfo)
 {
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
 	if (pInfo == NULL_PTR) return CKR_ARGUMENTS_BAD;
@@ -249,7 +273,7 @@ CK_RV SoftHSM::C_GetInfo(CK_INFO_PTR pInfo)
 }
 
 // Return a list of available slots
-CK_RV SoftHSM::C_GetSlotList(CK_BBOOL tokenPresent, CK_SLOT_ID_PTR pSlotList, CK_ULONG_PTR pulCount) 
+CK_RV SoftHSM::C_GetSlotList(CK_BBOOL tokenPresent, CK_SLOT_ID_PTR pSlotList, CK_ULONG_PTR pulCount)
 {
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
 
@@ -257,7 +281,7 @@ CK_RV SoftHSM::C_GetSlotList(CK_BBOOL tokenPresent, CK_SLOT_ID_PTR pSlotList, CK
 }
 
 // Return information about a slot
-CK_RV SoftHSM::C_GetSlotInfo(CK_SLOT_ID slotID, CK_SLOT_INFO_PTR pInfo) 
+CK_RV SoftHSM::C_GetSlotInfo(CK_SLOT_ID slotID, CK_SLOT_INFO_PTR pInfo)
 {
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
 
@@ -271,7 +295,7 @@ CK_RV SoftHSM::C_GetSlotInfo(CK_SLOT_ID slotID, CK_SLOT_INFO_PTR pInfo)
 }
 
 // Return information about a token in a slot
-CK_RV SoftHSM::C_GetTokenInfo(CK_SLOT_ID slotID, CK_TOKEN_INFO_PTR pInfo) 
+CK_RV SoftHSM::C_GetTokenInfo(CK_SLOT_ID slotID, CK_TOKEN_INFO_PTR pInfo)
 {
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
 
@@ -291,7 +315,7 @@ CK_RV SoftHSM::C_GetTokenInfo(CK_SLOT_ID slotID, CK_TOKEN_INFO_PTR pInfo)
 }
 
 // Return the list of supported mechanisms for a given slot
-CK_RV SoftHSM::C_GetMechanismList(CK_SLOT_ID slotID, CK_MECHANISM_TYPE_PTR pMechanismList, CK_ULONG_PTR pulCount) 
+CK_RV SoftHSM::C_GetMechanismList(CK_SLOT_ID slotID, CK_MECHANISM_TYPE_PTR pMechanismList, CK_ULONG_PTR pulCount)
 {
 	// A list with the supported mechanisms
 	CK_ULONG nrSupportedMechanisms = 24;
@@ -357,7 +381,7 @@ CK_RV SoftHSM::C_GetMechanismList(CK_SLOT_ID slotID, CK_MECHANISM_TYPE_PTR pMech
 }
 
 // Return more information about a mechanism for a given slot
-CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_MECHANISM_INFO_PTR pInfo) 
+CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_MECHANISM_INFO_PTR pInfo)
 {
 	unsigned long rsaMinSize, rsaMaxSize;
 	unsigned long dsaMinSize, dsaMaxSize;
@@ -489,7 +513,7 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 }
 
 // Initialise the token in the specified slot
-CK_RV SoftHSM::C_InitToken(CK_SLOT_ID slotID, CK_UTF8CHAR_PTR pPin, CK_ULONG ulPinLen, CK_UTF8CHAR_PTR pLabel) 
+CK_RV SoftHSM::C_InitToken(CK_SLOT_ID slotID, CK_UTF8CHAR_PTR pPin, CK_ULONG ulPinLen, CK_UTF8CHAR_PTR pLabel)
 {
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
 
@@ -515,12 +539,12 @@ CK_RV SoftHSM::C_InitToken(CK_SLOT_ID slotID, CK_UTF8CHAR_PTR pPin, CK_ULONG ulP
 }
 
 // Initialise the user PIN
-CK_RV SoftHSM::C_InitPIN(CK_SESSION_HANDLE hSession, CK_UTF8CHAR_PTR pPin, CK_ULONG ulPinLen) 
+CK_RV SoftHSM::C_InitPIN(CK_SESSION_HANDLE hSession, CK_UTF8CHAR_PTR pPin, CK_ULONG ulPinLen)
 {
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
 
 	// Get the session
-	Session* session = sessionManager->getSession(hSession);
+	Session* session = (Session*)handleManager->getSession(hSession);
 	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
 
 	// The SO must be logged in
@@ -540,14 +564,14 @@ CK_RV SoftHSM::C_InitPIN(CK_SESSION_HANDLE hSession, CK_UTF8CHAR_PTR pPin, CK_UL
 }
 
 // Change the PIN
-CK_RV SoftHSM::C_SetPIN(CK_SESSION_HANDLE hSession, CK_UTF8CHAR_PTR pOldPin, CK_ULONG ulOldLen, CK_UTF8CHAR_PTR pNewPin, CK_ULONG ulNewLen) 
+CK_RV SoftHSM::C_SetPIN(CK_SESSION_HANDLE hSession, CK_UTF8CHAR_PTR pOldPin, CK_ULONG ulOldLen, CK_UTF8CHAR_PTR pNewPin, CK_ULONG ulNewLen)
 {
 	CK_RV rv = CKR_OK;
 
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
 
 	// Get the session
-	Session* session = sessionManager->getSession(hSession);
+	Session* session = (Session*)handleManager->getSession(hSession);
 	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
 
 	// Check the new PINs
@@ -581,67 +605,120 @@ CK_RV SoftHSM::C_SetPIN(CK_SESSION_HANDLE hSession, CK_UTF8CHAR_PTR pOldPin, CK_
 }
 
 // Open a new session to the specified slot
-CK_RV SoftHSM::C_OpenSession(CK_SLOT_ID slotID, CK_FLAGS flags, CK_VOID_PTR pApplication, CK_NOTIFY notify, CK_SESSION_HANDLE_PTR phSession) 
+CK_RV SoftHSM::C_OpenSession(CK_SLOT_ID slotID, CK_FLAGS flags, CK_VOID_PTR pApplication, CK_NOTIFY notify, CK_SESSION_HANDLE_PTR phSession)
 {
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
 
 	Slot* slot = slotManager->getSlot(slotID);
 
-	return sessionManager->openSession(slot, flags, pApplication, notify, phSession);
+	CK_RV rv = sessionManager->openSession(slot, flags, pApplication, notify, phSession);
+	if (rv != CKR_OK)
+		return rv;
+
+	// Get a pointer to the session object and store it in the handle manager.
+	Session* session = sessionManager->getSession(*phSession);
+	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
+	*phSession = handleManager->addSession(slotID,session);
+
+	return CKR_OK;
 }
 
 // Close the given session
-CK_RV SoftHSM::C_CloseSession(CK_SESSION_HANDLE hSession) 
+CK_RV SoftHSM::C_CloseSession(CK_SESSION_HANDLE hSession)
 {
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
 
-	return sessionManager->closeSession(hSession);
+	// Get the session
+	Session* session = (Session*)handleManager->getSession(hSession);
+	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
+
+	// Tell the handle manager the session has been closed.
+	handleManager->sessionClosed(hSession);
+
+
+	// Tell the session object store that the session has closed.
+	sessionObjectStore->sessionClosed(hSession);
+
+	// Tell the session manager the session has been closed.
+	return sessionManager->closeSession(session->getHandle());
 }
 
 // Close all open sessions
-CK_RV SoftHSM::C_CloseAllSessions(CK_SLOT_ID slotID) 
+CK_RV SoftHSM::C_CloseAllSessions(CK_SLOT_ID slotID)
 {
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
 
+	// Get the slot
 	Slot* slot = slotManager->getSlot(slotID);
+	if (slot == NULL) return CKR_SLOT_ID_INVALID;
 
+	// Get the token
+	Token* token = slot->getToken();
+	if (token == NULL) return CKR_TOKEN_NOT_PRESENT;
+
+	// Tell the handle manager all sessions were closed for the given slotID.
+	// The handle manager should then remove all session and object handles for this slot.
+	handleManager->allSessionsClosed(slotID);
+
+	// Tell the session object store that all sessions were closed for the given slotID.
+	// The session object store should then remove all session objects for this slot.
+	sessionObjectStore->allSessionsClosed(slotID);
+
+	// Finally tell the session manager tho close all sessions for the given slot.
+	// This will also trigger a logout on the associated token to occur.
 	return sessionManager->closeAllSessions(slot);
 }
 
 // Retrieve information about the specified session
-CK_RV SoftHSM::C_GetSessionInfo(CK_SESSION_HANDLE hSession, CK_SESSION_INFO_PTR pInfo) 
+CK_RV SoftHSM::C_GetSessionInfo(CK_SESSION_HANDLE hSession, CK_SESSION_INFO_PTR pInfo)
 {
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
 
-	return sessionManager->getSessionInfo(hSession, pInfo);
+	// Get the session
+	Session* session = (Session*)handleManager->getSession(hSession);
+	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
+
+	return session->getInfo(pInfo);
 }
 
 // Determine the state of a running operation in a session
-CK_RV SoftHSM::C_GetOperationState(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pOperationState, CK_ULONG_PTR pulOperationStateLen) 
+CK_RV SoftHSM::C_GetOperationState(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pOperationState, CK_ULONG_PTR pulOperationStateLen)
 {
+	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
+
+	// Get the session
+	Session* session = (Session*)handleManager->getSession(hSession);
+	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
+
 	return CKR_FUNCTION_NOT_SUPPORTED;
 }
 
 // Set the operation sate in a session
-CK_RV SoftHSM::C_SetOperationState(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pOperationState, CK_ULONG ulOperationStateLen, CK_OBJECT_HANDLE hEncryptionKey, CK_OBJECT_HANDLE hAuthenticationKey) 
+CK_RV SoftHSM::C_SetOperationState(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pOperationState, CK_ULONG ulOperationStateLen, CK_OBJECT_HANDLE hEncryptionKey, CK_OBJECT_HANDLE hAuthenticationKey)
 {
+	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
+
+	// Get the session
+	Session* session = (Session*)handleManager->getSession(hSession);
+	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
+
 	return CKR_FUNCTION_NOT_SUPPORTED;
 }
 
 // Login on the token in the specified session
-CK_RV SoftHSM::C_Login(CK_SESSION_HANDLE hSession, CK_USER_TYPE userType, CK_UTF8CHAR_PTR pPin, CK_ULONG ulPinLen) 
+CK_RV SoftHSM::C_Login(CK_SESSION_HANDLE hSession, CK_USER_TYPE userType, CK_UTF8CHAR_PTR pPin, CK_ULONG ulPinLen)
 {
 	CK_RV rv = CKR_OK;
 
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
 
+	// Get the session
+	Session* session = (Session*)handleManager->getSession(hSession);
+	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
+
 	// Get the PIN
 	if (pPin == NULL_PTR) return CKR_ARGUMENTS_BAD;
 	ByteString pin(pPin, ulPinLen);
-
-	// Get the session
-	Session* session = sessionManager->getSession(hSession);
-	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
 
 	// Get the token
 	Token* token = session->getToken();
@@ -674,12 +751,12 @@ CK_RV SoftHSM::C_Login(CK_SESSION_HANDLE hSession, CK_USER_TYPE userType, CK_UTF
 }
 
 // Log out of the token in the specified session
-CK_RV SoftHSM::C_Logout(CK_SESSION_HANDLE hSession) 
+CK_RV SoftHSM::C_Logout(CK_SESSION_HANDLE hSession)
 {
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
 
 	// Get the session
-	Session* session = sessionManager->getSession(hSession);
+	Session* session = (Session*)handleManager->getSession(hSession);
 	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
 
 	// Get the token
@@ -689,124 +766,865 @@ CK_RV SoftHSM::C_Logout(CK_SESSION_HANDLE hSession)
 	// Logout
 	token->logout();
 
-	// TODO: Remove private session objects
+	// [PKCS#11 v2.3 p124] When logout is successful...
+	// a. Any of the application's handles to private objects become invalid.
+	// b. Even if a user is later logged back into the token those handles remain invalid.
+	// c. All private session objects from sessions belonging to the application area destroyed.
 
-	// TODO: From PKCS#11: any of the application’s handles to private objects become invalid
-	//	 (even if a user is later logged back into the token, those handles remain invalid)
+	// Have the handle manager remove all handles pointing to private objects for this slot.
+	CK_SLOT_ID slotID = session->getSlot()->getSlotID();
+	handleManager->tokenLoggedOut(slotID);
+	sessionObjectStore->tokenLoggedOut(slotID);
 
 	return CKR_OK;
 }
 
-// Create a new object on the token in the specified session using the given attribute template
-CK_RV SoftHSM::C_CreateObject(CK_SESSION_HANDLE hSession, CK_ATTRIBUTE_PTR pTemplate, CK_ULONG ulCount, CK_OBJECT_HANDLE_PTR phObject) 
+
+CK_RV newP11Object(CK_OBJECT_CLASS objClass, CK_KEY_TYPE keyType, std::auto_ptr< P11Object > &p11object)
 {
-	return CKR_FUNCTION_NOT_SUPPORTED;
+	switch(objClass) {
+		case CKO_DATA:
+			p11object.reset( new P11DataObj);
+			break;
+		case CKO_CERTIFICATE:
+			p11object.reset( new P11X509CertificateObj );
+			break;
+		case CKO_PUBLIC_KEY:
+			if (keyType == CKK_RSA)
+				p11object.reset( new P11RSAPublicKeyObj );
+			else
+				return CKR_ATTRIBUTE_VALUE_INVALID;
+			break;
+		case CKO_PRIVATE_KEY:
+			// we need to know the type too
+			if (keyType == CKK_RSA)
+				p11object.reset( new P11RSAPrivateKeyObj );
+			else
+				return CKR_ATTRIBUTE_VALUE_INVALID;
+			break;
+		case CKO_SECRET_KEY:
+#if 0
+			p11object.reset( new P11SecretKeyObj );
+			break;
+#endif
+		default:
+			return CKR_ATTRIBUTE_VALUE_INVALID; // invalid value for a valid argument
+	}
+	return CKR_OK;
+}
+
+CK_RV extractObjectInformation(CK_ATTRIBUTE_PTR pTemplate, CK_ULONG ulCount,
+							   CK_OBJECT_CLASS &objClass,
+							   CK_KEY_TYPE &keyType,
+							   CK_CERTIFICATE_TYPE &certType,
+							   CK_BBOOL &isToken,
+							   CK_BBOOL &isPrivate)
+{
+	bool bHasClass = false;
+	bool bHasKeyType = false;
+	bool bHasCertType = false;
+
+	// Extract object information
+	for (CK_ULONG i = 0; i < ulCount; ++i)
+	{
+		switch (pTemplate[i].type)
+		{
+			case CKA_CLASS:
+				if (pTemplate[i].ulValueLen == sizeof(CK_OBJECT_CLASS))
+				{
+					objClass = *(CK_OBJECT_CLASS_PTR)pTemplate[i].pValue;
+					bHasClass = true;
+				}
+			case CKA_KEY_TYPE:
+				if (pTemplate[i].ulValueLen == sizeof(CK_KEY_TYPE))
+				{
+					keyType = *(CK_KEY_TYPE*)pTemplate[i].pValue;
+					bHasKeyType = true;
+				}
+				break;
+			case CKA_CERTIFICATE_TYPE:
+				if (pTemplate[i].ulValueLen == sizeof(CK_CERTIFICATE_TYPE))
+				{
+					certType = *(CK_CERTIFICATE_TYPE*)pTemplate[i].pValue;
+					bHasCertType = true;
+				}
+				break;
+			case CKA_TOKEN:
+				if (pTemplate[i].ulValueLen == sizeof(CK_BBOOL))
+				{
+					isToken = *(CK_BBOOL*)pTemplate[i].pValue;
+				}
+				break;
+			case CKA_PRIVATE:
+				if (pTemplate[i].ulValueLen == sizeof(CK_BBOOL))
+				{
+					isPrivate = *(CK_BBOOL*)pTemplate[i].pValue;
+				}
+				break;
+			default:
+				break;
+		}
+	}
+
+	if (!bHasClass)
+	{
+		return CKR_TEMPLATE_INCOMPLETE;
+	}
+
+	bool bKeyTypeRequired = (objClass == CKO_PUBLIC_KEY || objClass == CKO_PRIVATE_KEY || objClass == CKO_SECRET_KEY);
+	if (bKeyTypeRequired && !bHasKeyType)
+	{
+		 return CKR_TEMPLATE_INCOMPLETE;
+	}
+
+	bool bCertTypeRequired = (objClass == CKO_CERTIFICATE);
+	if (bCertTypeRequired && !bHasCertType)
+	{
+		return CKR_TEMPLATE_INCOMPLETE;
+	}
+
+	return CKR_OK;
+}
+
+
+
+CK_RV newP11Object(OSObject *object, std::auto_ptr< P11Object > &p11object)
+{
+	CK_OBJECT_CLASS objClass = object->getAttribute(CKA_CLASS)->getUnsignedLongValue();
+	CK_KEY_TYPE keyType = CKK_RSA;
+	if (object->attributeExists(CKA_KEY_TYPE))
+		keyType = object->getAttribute(keyType)->getUnsignedLongValue();
+	CK_RV rv = newP11Object(objClass,keyType,p11object);
+	if (rv != CKR_OK)
+		return rv;
+	if (!p11object->init(object))
+		return CKR_GENERAL_ERROR; // something went wrong that shouldn't have.
+	return CKR_OK;
+}
+
+// Create a new object on the token in the specified session using the given attribute template
+CK_RV SoftHSM::C_CreateObject(CK_SESSION_HANDLE hSession, CK_ATTRIBUTE_PTR pTemplate, CK_ULONG ulCount, CK_OBJECT_HANDLE_PTR phObject)
+{
+	return this->CreateObject(hSession,pTemplate,ulCount,phObject,OBJECT_OP_CREATE);
 }
 
 // Create a copy of the object with the specified handle
-CK_RV SoftHSM::C_CopyObject(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject, CK_ATTRIBUTE_PTR pTemplate, CK_ULONG ulCount, CK_OBJECT_HANDLE_PTR phNewObject) 
+CK_RV SoftHSM::C_CopyObject(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject, CK_ATTRIBUTE_PTR pTemplate, CK_ULONG ulCount, CK_OBJECT_HANDLE_PTR phNewObject)
 {
+	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
+
+	// Get the session
+	Session* session = (Session*)handleManager->getSession(hSession);
+	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
+
 	return CKR_FUNCTION_NOT_SUPPORTED;
 }
 
 // Destroy the specified object
-CK_RV SoftHSM::C_DestroyObject(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject) 
+CK_RV SoftHSM::C_DestroyObject(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject)
 {
-	return CKR_FUNCTION_NOT_SUPPORTED;
+	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
+
+	// Get the session
+	Session* session = (Session*)handleManager->getSession(hSession);
+	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
+
+	// Get the token
+	Token* token = session->getToken();
+	if (token == NULL_PTR) return CKR_GENERAL_ERROR;
+
+	// Check the object handle.
+	OSObject *object = (OSObject *)handleManager->getObject(hObject);
+	if (object == NULL_PTR) return CKR_OBJECT_HANDLE_INVALID;
+
+	CK_BBOOL isToken = object->getAttribute(CKA_TOKEN)->getBooleanValue();
+	CK_BBOOL isPrivate = object->getAttribute(CKA_PRIVATE)->getBooleanValue();
+
+	// Check user credentials
+	CK_RV rv = haveWrite(session->getState(), isToken, isPrivate);
+	if (rv != CKR_OK)
+	{
+		if (rv == CKR_USER_NOT_LOGGED_IN)
+			INFO_MSG("User is not authorized");
+		if (rv == CKR_SESSION_READ_ONLY)
+			INFO_MSG("Session is read-only");
+
+		return rv;
+	}
+
+	// Tell the handleManager to forget about the object.
+	handleManager->destroyObject(hObject);
+
+	// Destroy the object
+	if (!object->destroyObject())
+		return CKR_FUNCTION_FAILED;
+
+	return CKR_OK;
 }
 
 // Determine the size of the specified object
-CK_RV SoftHSM::C_GetObjectSize(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject, CK_ULONG_PTR pulSize) 
+CK_RV SoftHSM::C_GetObjectSize(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject, CK_ULONG_PTR pulSize)
 {
+	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
+
+	// Get the session
+	Session* session = (Session*)handleManager->getSession(hSession);
+	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
+
 	return CKR_FUNCTION_NOT_SUPPORTED;
 }
 
 // Retrieve the specified attributes for the given object
-CK_RV SoftHSM::C_GetAttributeValue(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject, CK_ATTRIBUTE_PTR pTemplate, CK_ULONG ulCount) 
+CK_RV SoftHSM::C_GetAttributeValue(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject, CK_ATTRIBUTE_PTR pTemplate, CK_ULONG ulCount)
 {
-	return CKR_FUNCTION_NOT_SUPPORTED;
+	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
+
+	if (pTemplate == NULL) return CKR_ARGUMENTS_BAD;
+
+	// Get the session
+	Session* session = (Session*)handleManager->getSession(hSession);
+	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
+
+	// Get the token
+	Token* token = session->getToken();
+	if (token == NULL) return CKR_GENERAL_ERROR;
+
+	// Check the object handle.
+	OSObject *object = (OSObject *)handleManager->getObject(hObject);
+	if (object == NULL_PTR) return CKR_OBJECT_HANDLE_INVALID;
+
+	// Wrap a P11Object around the OSObject so we can access the attributes in the
+	// context of the object in which it is defined.
+	std::auto_ptr< P11Object > p11object;
+	CK_RV rv = newP11Object(object,p11object);
+	if (rv != CKR_OK)
+		return rv;
+
+	// Ask the P11Object to fill the template with attribute values.
+	return p11object->loadTemplate(token, pTemplate,ulCount);
 }
 
 // Change or set the value of the specified attributes on the specified object
-CK_RV SoftHSM::C_SetAttributeValue(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject, CK_ATTRIBUTE_PTR pTemplate, CK_ULONG ulCount) 
+CK_RV SoftHSM::C_SetAttributeValue(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject, CK_ATTRIBUTE_PTR pTemplate, CK_ULONG ulCount)
 {
-	return CKR_FUNCTION_NOT_SUPPORTED;
+	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
+
+	if (pTemplate == NULL) return CKR_ARGUMENTS_BAD;
+
+	// Get the session
+	Session* session = (Session*)handleManager->getSession(hSession);
+	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
+
+	// Get the token
+	Token* token = session->getToken();
+	if (token == NULL) return CKR_GENERAL_ERROR;
+
+	// Check the object handle.
+	OSObject *object = (OSObject *)handleManager->getObject(hObject);
+	if (object == NULL_PTR) return CKR_OBJECT_HANDLE_INVALID;
+
+	CK_BBOOL isToken = object->getAttribute(CKA_TOKEN)->getBooleanValue();
+	CK_BBOOL isPrivate = object->getAttribute(CKA_PRIVATE)->getBooleanValue();
+
+	// Check user credentials
+	CK_RV rv = haveWrite(session->getState(), isToken, isPrivate);
+	if (rv != CKR_OK)
+	{
+		if (rv == CKR_USER_NOT_LOGGED_IN)
+			INFO_MSG("User is not authorized");
+		if (rv == CKR_SESSION_READ_ONLY)
+			INFO_MSG("Session is read-only");
+
+		return rv;
+	}
+
+	// Wrap a P11Object around the OSObject so we can access the attributes in the
+	// context of the object in which it is defined.
+	std::auto_ptr< P11Object > p11object;
+	rv = newP11Object(object,p11object);
+	if (rv != CKR_OK)
+		return rv;
+
+	// Ask the P11Object to save the template with attribute values.
+	return p11object->saveTemplate(token, isPrivate, pTemplate,ulCount,OBJECT_OP_SET);
 }
 
 // Initialise object search in the specified session using the specified attribute template as search parameters
-CK_RV SoftHSM::C_FindObjectsInit(CK_SESSION_HANDLE hSession, CK_ATTRIBUTE_PTR pTemplate, CK_ULONG ulCount) 
+CK_RV SoftHSM::C_FindObjectsInit(CK_SESSION_HANDLE hSession, CK_ATTRIBUTE_PTR pTemplate, CK_ULONG ulCount)
 {
-	return CKR_FUNCTION_NOT_SUPPORTED;
+	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
+
+	// Get the session
+	Session* session = (Session*)handleManager->getSession(hSession);
+	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
+
+	// Get the slot
+	Slot* slot = session->getSlot();
+	if (slot == NULL_PTR) return CKR_GENERAL_ERROR;
+
+	// Determine whether we have a public session or not.
+	bool isPublicSession;
+	switch (session->getState()) {
+		case CKS_RO_USER_FUNCTIONS:
+		case CKS_RW_USER_FUNCTIONS:
+		case CKS_RW_SO_FUNCTIONS:
+			isPublicSession = false;
+			break;
+		default:
+			isPublicSession = true;
+	}
+
+	// Get the token
+	Token* token = session->getToken();
+	if (token == NULL_PTR) return CKR_GENERAL_ERROR;
+
+	// Check if we have another operation
+	if (session->getOpType() != SESSION_OP_NONE) return CKR_OPERATION_ACTIVE;
+
+	session->setOpType(SESSION_OP_FIND);
+	FindOperation *findOp = FindOperation::create();
+
+	// Check if we are out of memory
+	if (findOp == NULL_PTR) return CKR_HOST_MEMORY;
+
+	std::set<OSObject*> allObjects;
+	token->getObjects(allObjects);
+	sessionObjectStore->getObjects(slot->getSlotID(),allObjects);
+
+	std::set<CK_OBJECT_HANDLE> handles;
+	std::set<OSObject*>::iterator it;
+	for (it=allObjects.begin(); it != allObjects.end(); ++it)
+	{
+
+		// Determine if the object has CKA_PRIVATE set to CK_TRUE
+		bool isPrivateObject;
+		OSAttribute *attr = (*it)->getAttribute(CKA_PRIVATE);
+		if (attr == NULL_PTR || !attr->isBooleanAttribute())
+		{
+			// This attribute does not exist or is of an incompatible type
+			return CKR_GENERAL_ERROR;
+		}
+		isPrivateObject = attr->getBooleanValue();
+
+		// If the object is private, and we are in a public session then skip it !
+		if (isPublicSession && isPrivateObject)
+			continue; // skip object
+
+		// Perform the actual attribute matching.
+		bool bAttrMatch = true; // We let an empty template match everything.
+		for (CK_ULONG i=0; i<ulCount; ++i)
+		{
+			bAttrMatch = false;
+
+			OSAttribute *attr = (*it)->getAttribute(pTemplate[i].type);
+			if (attr == NULL_PTR)
+				break;
+
+			if (attr->isBooleanAttribute())
+			{
+				if (sizeof(CK_BBOOL) != pTemplate[i].ulValueLen)
+					break;
+				bool bTemplateValue = (*(CK_BBOOL*)pTemplate[i].pValue == CK_TRUE);
+				if (attr->getBooleanValue() != bTemplateValue)
+					break;
+			}
+			else
+			{
+				if (attr->isUnsignedLongAttribute())
+				{
+					if (sizeof(CK_ULONG) != pTemplate[i].ulValueLen)
+						break;
+					CK_ULONG ulTemplateValue = *(CK_ULONG_PTR)pTemplate[i].pValue;
+					if (attr->getUnsignedLongValue() != ulTemplateValue)
+						break;
+				}
+				else
+				{
+					if (attr->isByteStringAttribute())
+					{
+						ByteString bsAttrValue;
+						if (isPrivateObject)
+						{
+							if (!token->decrypt(attr->getByteStringValue(), bsAttrValue))
+								return CKR_GENERAL_ERROR;
+						}
+						else
+							bsAttrValue = attr->getByteStringValue();
+
+						if (bsAttrValue.size() != pTemplate[i].ulValueLen)
+							break;
+						if (pTemplate[i].ulValueLen != 0)
+						{
+							ByteString bsTemplateValue((const unsigned char*)pTemplate[i].pValue, pTemplate[i].ulValueLen);
+							if (bsAttrValue != bsTemplateValue)
+								break;
+						}
+					}
+					else
+						break;
+				}
+			}
+			// The attribute matched !
+			bAttrMatch = true;
+		}
+
+		if (bAttrMatch)
+		{
+			CK_SLOT_ID slotID = slot->getSlotID();
+			CK_BBOOL isToken = (*it)->getAttribute(CKA_TOKEN)->getBooleanValue();
+			CK_BBOOL isPrivate = (*it)->getAttribute(CKA_PRIVATE)->getBooleanValue();
+			// Create an object handle for every returned object.
+			CK_OBJECT_HANDLE hObject;
+			if (isToken)
+				hObject = handleManager->addTokenObject(slotID,isPrivate,*it);
+			else
+				hObject = handleManager->addSessionObject(slotID,hSession,isPrivate,*it);
+			if (hObject == CK_INVALID_HANDLE)
+				return CKR_GENERAL_ERROR;
+			handles.insert(hObject);
+		}
+	}
+
+	// Storing the object handles for the find will protect the library
+	// whenever a stale object handle is used to access the library.
+	findOp->setHandles(handles);
+
+	session->setFindOp(findOp);
+
+	return CKR_OK;
 }
 
 // Continue the search for objects in the specified session
-CK_RV SoftHSM::C_FindObjects(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE_PTR phObject, CK_ULONG ulMaxObjectCount, CK_ULONG_PTR pulObjectCount) 
+CK_RV SoftHSM::C_FindObjects(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE_PTR phObject, CK_ULONG ulMaxObjectCount, CK_ULONG_PTR pulObjectCount)
 {
-	return CKR_FUNCTION_NOT_SUPPORTED;
+	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
+	if (phObject == NULL_PTR) return CKR_ARGUMENTS_BAD;
+	if (pulObjectCount == NULL_PTR) return CKR_ARGUMENTS_BAD;
+
+	// Get the session
+	Session* session = (Session*)handleManager->getSession(hSession);
+	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
+
+	// Check if we are doing the correct operation
+	if (session->getOpType() != SESSION_OP_FIND) return CKR_OPERATION_NOT_INITIALIZED;
+
+	// return the object handles that have been added to the find operation.
+	FindOperation *findOp = session->getFindOp();
+	if (findOp == NULL) return CKR_GENERAL_ERROR;
+
+	// Ask the find operation to retrieve the object handles
+	*pulObjectCount = findOp->retrieveHandles(phObject,ulMaxObjectCount);
+
+	// Erase the object handles from the find operation.
+	findOp->eraseHandles(0,*pulObjectCount);
+
+	return CKR_OK;
 }
 
 // Finish searching for objects
-CK_RV SoftHSM::C_FindObjectsFinal(CK_SESSION_HANDLE hSession) 
+CK_RV SoftHSM::C_FindObjectsFinal(CK_SESSION_HANDLE hSession)
 {
-	return CKR_FUNCTION_NOT_SUPPORTED;
+	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
+
+	// Get the session
+	Session* session = (Session*)handleManager->getSession(hSession);
+	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
+
+	// Check if we are doing the correct operation
+	if (session->getOpType() != SESSION_OP_FIND) return CKR_OPERATION_NOT_INITIALIZED;
+
+	session->resetOp();
+	return CKR_OK;
 }
 
 // Initialise encryption using the specified object and mechanism
-CK_RV SoftHSM::C_EncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechanism, CK_OBJECT_HANDLE hObject) 
+CK_RV SoftHSM::C_EncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechanism, CK_OBJECT_HANDLE hKey)
 {
-	return CKR_FUNCTION_NOT_SUPPORTED;
+	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
+
+	if (pMechanism == NULL_PTR) return CKR_ARGUMENTS_BAD;
+
+	// Get the session
+	Session* session = (Session*)handleManager->getSession(hSession);
+	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
+
+	// Check if we have another operation
+	if (session->getOpType() != SESSION_OP_NONE) return CKR_OPERATION_ACTIVE;
+
+	// Get the token
+	Token* token = session->getToken();
+	if (token == NULL) return CKR_GENERAL_ERROR;
+
+	// Check the key handle.
+	OSObject *key = (OSObject *)handleManager->getObject(hKey);
+	if (key == NULL_PTR) return CKR_OBJECT_HANDLE_INVALID;
+
+	// Get the asymmetric algorithm matching the mechanism
+	const char *mechanism;
+	switch(pMechanism->mechanism) {
+		case CKM_RSA_PKCS:
+			mechanism = "rsa-pkcs";
+			break;
+		case CKM_RSA_X_509:
+			mechanism = "rsa-raw";
+			break;
+		case CKM_RSA_PKCS_OAEP:
+			mechanism = "rsa-pkcs-oaep";
+			break;
+		default:
+			return CKR_MECHANISM_INVALID;
+	}
+	AsymmetricAlgorithm* asymCrypto = CryptoFactory::i()->getAsymmetricAlgorithm("rsa");
+	if (asymCrypto == NULL) return CKR_MECHANISM_INVALID;
+
+	// Retrieve the private key atrtibutes from the private key object
+	RSAPublicKey* publicKey = (RSAPublicKey*)asymCrypto->newPublicKey();
+	if (publicKey == NULL)
+	{
+		CryptoFactory::i()->recycleAsymmetricAlgorithm(asymCrypto);
+		return CKR_HOST_MEMORY;
+	}
+
+	// Get the CKA_PRIVATE attribute, when the attribute is not present use default false
+	OSAttribute* attr = key->getAttribute(CKA_PRIVATE);
+	bool isKeyPrivate = (attr != NULL && attr->getBooleanValue());
+
+	// RSA Public Key Attributes
+	ByteString modulus;
+	ByteString publicExponent;
+	if (isKeyPrivate)
+	{
+		bool bOK = true;
+		bOK = bOK && token->decrypt(key->getAttribute(CKA_MODULUS)->getByteStringValue(), modulus);
+		bOK = bOK && token->decrypt(key->getAttribute(CKA_PUBLIC_EXPONENT)->getByteStringValue(), publicExponent);
+		if (!bOK)
+			return CKR_GENERAL_ERROR;
+	}
+	else
+	{
+		modulus = key->getAttribute(CKA_MODULUS)->getByteStringValue();
+		publicExponent = key->getAttribute(CKA_PUBLIC_EXPONENT)->getByteStringValue();
+	}
+
+	publicKey->setN(modulus);
+	publicKey->setE(publicExponent);
+
+	session->setOpType(SESSION_OP_ENCRYPT);
+	session->setAsymmetricCryptoOp(asymCrypto);
+	session->setMechanism(mechanism);
+	session->setIsMultiPartOp(false);
+	session->setPublicKey(publicKey);
+
+	return CKR_OK;
 }
 
 // Perform a single operation encryption operation in the specified session
-CK_RV SoftHSM::C_Encrypt(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pData, CK_ULONG ulDataLen, CK_BYTE_PTR pEncryptedData, CK_ULONG_PTR pulEncryptedDataLen) 
+CK_RV SoftHSM::C_Encrypt(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pData, CK_ULONG ulDataLen, CK_BYTE_PTR pEncryptedData, CK_ULONG_PTR pulEncryptedDataLen)
 {
-	return CKR_FUNCTION_NOT_SUPPORTED;
+	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
+
+	if (pData == NULL_PTR) return CKR_ARGUMENTS_BAD;
+	if (pulEncryptedDataLen == NULL_PTR) return CKR_ARGUMENTS_BAD;
+
+	// Get the session
+	Session* session = (Session*)handleManager->getSession(hSession);
+	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
+
+	// TODO: Should we lock the session?
+
+	// Check if we are doing the correct operation
+	if (session->getOpType() != SESSION_OP_ENCRYPT)
+		return CKR_OPERATION_NOT_INITIALIZED;
+
+	AsymmetricAlgorithm* asymCrypto = session->getAsymmetricCryptoOp();
+	const char *mechanism = session->getMechanism();
+	RSAPublicKey* publicKey = (RSAPublicKey*)session->getPublicKey(); // TODO: make more generic to allow DSA
+	if (asymCrypto == NULL || mechanism == NULL || session->getIsMultiPartOp() || publicKey == NULL)
+	{
+		session->resetOp();
+		return CKR_OPERATION_NOT_INITIALIZED;
+	}
+
+	// Size of the encrypted data for RSA determined by the size of the modulus.
+	CK_ULONG size = publicKey->getN().size();
+
+	if (pEncryptedData == NULL_PTR)
+	{
+		*pulEncryptedDataLen = size;
+		return CKR_OK;
+	}
+
+	// Check buffer size
+	if (*pulEncryptedDataLen < size)
+	{
+		*pulEncryptedDataLen = size;
+		return CKR_BUFFER_TOO_SMALL;
+	}
+
+	// Get the data
+	ByteString data;
+	ByteString encryptedData;
+
+	// PKCS #11 Mechanisms v2.30: Cryptoki Draft 7 page 32
+	// We must allow input length <= k and therfore need to prepend the data with zeroes.
+	if (strcmp(mechanism,"rsa-raw") == 0) {
+		data.wipe(size-ulDataLen);
+	}
+
+	data += ByteString(pData, ulDataLen);
+
+	// Encrypt the data
+	if (!asymCrypto->encrypt(publicKey,data,encryptedData,mechanism))
+	{
+		session->resetOp();
+		return CKR_GENERAL_ERROR;
+	}
+
+	// Check size
+	if (encryptedData.size() != size)
+	{
+		ERROR_MSG("The size of the encrypted data differs from the size of the mechanism");
+		session->resetOp();
+		return CKR_GENERAL_ERROR;
+	}
+	memcpy(pEncryptedData, encryptedData.byte_str(), size);
+	*pulEncryptedDataLen = size;
+
+	session->resetOp();
+	return CKR_OK;
 }
 
 // Feed data to the running encryption operation in a session
-CK_RV SoftHSM::C_EncryptUpdate(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pData, CK_ULONG ulDataLen, CK_BYTE_PTR pEncryptedData, CK_ULONG_PTR pulEncryptedDataLen) 
+CK_RV SoftHSM::C_EncryptUpdate(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pData, CK_ULONG ulDataLen, CK_BYTE_PTR pEncryptedData, CK_ULONG_PTR pulEncryptedDataLen)
 {
+	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
+
+	// Get the session
+	Session* session = (Session*)handleManager->getSession(hSession);
+	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
+
 	return CKR_FUNCTION_NOT_SUPPORTED;
 }
 
 // Finalise the encryption operation
-CK_RV SoftHSM::C_EncryptFinal(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pEncryptedData, CK_ULONG_PTR pulEncryptedDataLen) 
+CK_RV SoftHSM::C_EncryptFinal(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pEncryptedData, CK_ULONG_PTR pulEncryptedDataLen)
 {
+	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
+
+	// Get the session
+	Session* session = (Session*)handleManager->getSession(hSession);
+	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
+
 	return CKR_FUNCTION_NOT_SUPPORTED;
 }
 
 // Initialise decryption using the specified object
-CK_RV SoftHSM::C_DecryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechanism, CK_OBJECT_HANDLE hObject) 
+CK_RV SoftHSM::C_DecryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechanism, CK_OBJECT_HANDLE hKey)
 {
-	return CKR_FUNCTION_NOT_SUPPORTED;
+	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
+
+	if (pMechanism == NULL_PTR) return CKR_ARGUMENTS_BAD;
+
+	// Get the session
+	Session* session = (Session*)handleManager->getSession(hSession);
+	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
+
+	// Get the token
+	Token* token = session->getToken();
+	if (token == NULL) return CKR_GENERAL_ERROR;
+
+	// Check if we have another operation
+	if (session->getOpType() != SESSION_OP_NONE) return CKR_OPERATION_ACTIVE;
+
+	// Check the key handle.
+	OSObject *key = (OSObject *)handleManager->getObject(hKey);
+	if (key == NULL_PTR) return CKR_OBJECT_HANDLE_INVALID;
+
+	// Get the asymmetric algorithm matching the mechanism
+	const char *mechanism;
+	switch(pMechanism->mechanism) {
+		case CKM_RSA_PKCS:
+			mechanism = "rsa-pkcs";
+			break;
+		case CKM_RSA_X_509:
+			mechanism = "rsa-raw";
+			break;
+		case CKM_RSA_PKCS_OAEP:
+			mechanism = "rsa-pkcs-oaep";
+			break;
+		default:
+			return CKR_MECHANISM_INVALID;
+	}
+	AsymmetricAlgorithm* asymCrypto = CryptoFactory::i()->getAsymmetricAlgorithm("rsa");
+	if (asymCrypto == NULL) return CKR_MECHANISM_INVALID;
+
+	// Retrieve the sensitive key atrtibutes from the private key object
+	RSAPrivateKey* privateKey = (RSAPrivateKey*)asymCrypto->newPrivateKey();
+	if (privateKey == NULL)
+	{
+		CryptoFactory::i()->recycleAsymmetricAlgorithm(asymCrypto);
+		return CKR_HOST_MEMORY;
+	}
+
+	// Get the CKA_PRIVATE attribute, when the attribute is not present use default false
+	OSAttribute* attr = key->getAttribute(CKA_PRIVATE);
+	bool isKeyPrivate = (attr != NULL && attr->getBooleanValue());
+
+
+	// RSA Private Key Attributes
+	ByteString modulus;
+	ByteString publicExponent;
+	ByteString privateExponent;
+	ByteString prime1;
+	ByteString prime2;
+	ByteString exponent1;
+	ByteString exponent2;
+	ByteString coefficient;
+	if (isKeyPrivate)
+	{
+		bool bOK = true;
+		bOK = bOK && token->decrypt(key->getAttribute(CKA_MODULUS)->getByteStringValue(), modulus);
+		bOK = bOK && token->decrypt(key->getAttribute(CKA_PUBLIC_EXPONENT)->getByteStringValue(), publicExponent);
+		bOK = bOK && token->decrypt(key->getAttribute(CKA_PRIVATE_EXPONENT)->getByteStringValue(), privateExponent);
+		bOK = bOK && token->decrypt(key->getAttribute(CKA_PRIME_1)->getByteStringValue(), prime1);
+		bOK = bOK && token->decrypt(key->getAttribute(CKA_PRIME_2)->getByteStringValue(), prime2);
+		bOK = bOK && token->decrypt(key->getAttribute(CKA_EXPONENT_1)->getByteStringValue(), exponent1);
+		bOK = bOK && token->decrypt(key->getAttribute(CKA_EXPONENT_2)->getByteStringValue(), exponent2);
+		bOK = bOK && token->decrypt(key->getAttribute(CKA_COEFFICIENT)->getByteStringValue(), coefficient);
+		if (!bOK)
+			return CKR_GENERAL_ERROR;
+	}
+	else
+	{
+		modulus = key->getAttribute(CKA_MODULUS)->getByteStringValue();
+		publicExponent = key->getAttribute(CKA_PUBLIC_EXPONENT)->getByteStringValue();
+		privateExponent = key->getAttribute(CKA_PRIVATE_EXPONENT)->getByteStringValue();
+		prime1 = key->getAttribute(CKA_PRIME_1)->getByteStringValue();
+		prime2 = key->getAttribute(CKA_PRIME_2)->getByteStringValue();
+		exponent1 =  key->getAttribute(CKA_EXPONENT_1)->getByteStringValue();
+		exponent2 = key->getAttribute(CKA_EXPONENT_2)->getByteStringValue();
+		coefficient = key->getAttribute(CKA_COEFFICIENT)->getByteStringValue();
+	}
+
+	privateKey->setN(modulus);
+	privateKey->setE(publicExponent);
+	privateKey->setD(privateExponent);
+	privateKey->setP(prime1);
+	privateKey->setQ(prime2);
+	privateKey->setDP1(exponent1);
+	privateKey->setDQ1(exponent2);
+	privateKey->setPQ(coefficient);
+
+	session->setOpType(SESSION_OP_DECRYPT);
+	session->setAsymmetricCryptoOp(asymCrypto);
+	session->setMechanism(mechanism);
+	session->setIsMultiPartOp(false);
+	session->setPrivateKey(privateKey);
+
+	return CKR_OK;
 }
 
 // Perform a single operation decryption in the given session
-CK_RV SoftHSM::C_Decrypt(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pEncryptedData, CK_ULONG ulEncryptedDataLen, CK_BYTE_PTR pData, CK_ULONG_PTR pulDataLen) 
+CK_RV SoftHSM::C_Decrypt(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pEncryptedData, CK_ULONG ulEncryptedDataLen, CK_BYTE_PTR pData, CK_ULONG_PTR pulDataLen)
 {
-	return CKR_FUNCTION_NOT_SUPPORTED;
+	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
+
+	if (pEncryptedData == NULL_PTR) return CKR_ARGUMENTS_BAD;
+	if (pulDataLen == NULL_PTR) return CKR_ARGUMENTS_BAD;
+
+	// Get the session
+	Session* session = (Session*)handleManager->getSession(hSession);
+	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
+
+	// TODO: Should we lock the session?
+
+	// Check if we are doing the correct operation
+	if (session->getOpType() != SESSION_OP_DECRYPT)
+		return CKR_OPERATION_NOT_INITIALIZED;
+
+	AsymmetricAlgorithm* asymCrypto = session->getAsymmetricCryptoOp();
+	const char *mechanism = session->getMechanism();
+	RSAPrivateKey* privateKey = (RSAPrivateKey*)session->getPrivateKey();
+	if (asymCrypto == NULL || mechanism == NULL || session->getIsMultiPartOp() || privateKey == NULL)
+	{
+		session->resetOp();
+		return CKR_OPERATION_NOT_INITIALIZED;
+	}
+
+	// Size of the data for RSA determined by the size of the modulus.
+	CK_ULONG size = privateKey->getN().size();
+	if (pData == NULL_PTR)
+	{
+		*pulDataLen = size;
+		return CKR_OK;
+	}
+
+	// Check buffer size
+	if (*pulDataLen < size)
+	{
+		*pulDataLen = size;
+		return CKR_BUFFER_TOO_SMALL;
+	}
+
+	// Get the data
+	ByteString encryptedData(pEncryptedData, ulEncryptedDataLen);
+	ByteString data;
+
+	// Decrypt the data
+	if (!asymCrypto->decrypt(privateKey,encryptedData,data,mechanism))
+	{
+		session->resetOp();
+		return CKR_GENERAL_ERROR;
+	}
+
+	// Check size
+	if (data.size() > size)
+	{
+		ERROR_MSG("The size of the decrypted data exceeds the size of the mechanism");
+		session->resetOp();
+		return CKR_GENERAL_ERROR;
+	}
+	memcpy(pData, data.byte_str(), data.size());
+	*pulDataLen = data.size();
+
+	session->resetOp();
+	return CKR_OK;
+
 }
 
 // Feed data to the running decryption operation in a session
-CK_RV SoftHSM::C_DecryptUpdate(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pEncryptedData, CK_ULONG ulEncryptedDataLen, CK_BYTE_PTR pData, CK_ULONG_PTR pDataLen) 
+CK_RV SoftHSM::C_DecryptUpdate(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pEncryptedData, CK_ULONG ulEncryptedDataLen, CK_BYTE_PTR pData, CK_ULONG_PTR pDataLen)
 {
+	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
+
+	// Get the session
+	Session* session = (Session*)handleManager->getSession(hSession);
+	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
+
 	return CKR_FUNCTION_NOT_SUPPORTED;
 }
 
 // Finalise the decryption operation
-CK_RV SoftHSM::C_DecryptFinal(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pData, CK_ULONG_PTR pDataLen) 
+CK_RV SoftHSM::C_DecryptFinal(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pData, CK_ULONG_PTR pDataLen)
 {
+	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
+
+	// Get the session
+	Session* session = (Session*)handleManager->getSession(hSession);
+	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
+
 	return CKR_FUNCTION_NOT_SUPPORTED;
 }
 
 // Initialise digesting using the specified mechanism in the specified session
-CK_RV SoftHSM::C_DigestInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechanism) 
+CK_RV SoftHSM::C_DigestInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechanism)
 {
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
+
 	if (pMechanism == NULL_PTR) return CKR_ARGUMENTS_BAD;
 
 	// Get the session
-	Session* session = sessionManager->getSession(hSession);
+	Session* session = (Session*)handleManager->getSession(hSession);
 	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
 
 	// TODO: Should we lock the session?
@@ -848,14 +1666,15 @@ CK_RV SoftHSM::C_DigestInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechan
 }
 
 // Digest the specified data in a one-pass operation and return the resulting digest
-CK_RV SoftHSM::C_Digest(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pData, CK_ULONG ulDataLen, CK_BYTE_PTR pDigest, CK_ULONG_PTR pulDigestLen) 
+CK_RV SoftHSM::C_Digest(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pData, CK_ULONG ulDataLen, CK_BYTE_PTR pDigest, CK_ULONG_PTR pulDigestLen)
 {
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
+
 	if (pulDigestLen == NULL_PTR) return CKR_ARGUMENTS_BAD;
 	if (pData == NULL_PTR) return CKR_ARGUMENTS_BAD;
 
 	// Get the session
-	Session* session = sessionManager->getSession(hSession);
+	Session* session = (Session*)handleManager->getSession(hSession);
 	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
 
 	// TODO: Should we lock the session?
@@ -912,13 +1731,14 @@ CK_RV SoftHSM::C_Digest(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pData, CK_ULONG 
 }
 
 // Update a running digest operation
-CK_RV SoftHSM::C_DigestUpdate(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pPart, CK_ULONG ulPartLen) 
+CK_RV SoftHSM::C_DigestUpdate(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pPart, CK_ULONG ulPartLen)
 {
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
+
 	if (pPart == NULL_PTR) return CKR_ARGUMENTS_BAD;
 
 	// Get the session
-	Session* session = sessionManager->getSession(hSession);
+	Session* session = (Session*)handleManager->getSession(hSession);
 	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
 
 	// TODO: Should we lock the session?
@@ -940,19 +1760,26 @@ CK_RV SoftHSM::C_DigestUpdate(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pPart, CK_
 }
 
 // Update a running digest operation by digesting a secret key with the specified handle
-CK_RV SoftHSM::C_DigestKey(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject) 
+CK_RV SoftHSM::C_DigestKey(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject)
 {
+	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
+
+	// Get the session
+	Session* session = (Session*)handleManager->getSession(hSession);
+	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
+
 	return CKR_FUNCTION_NOT_SUPPORTED;
 }
 
 // Finalise the digest operation in the specified session and return the digest
-CK_RV SoftHSM::C_DigestFinal(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pDigest, CK_ULONG_PTR pulDigestLen) 
+CK_RV SoftHSM::C_DigestFinal(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pDigest, CK_ULONG_PTR pulDigestLen)
 {
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
+
 	if (pulDigestLen == NULL_PTR) return CKR_ARGUMENTS_BAD;
 
 	// Get the session
-	Session* session = sessionManager->getSession(hSession);
+	Session* session = (Session*)handleManager->getSession(hSession);
 	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
 
 	// TODO: Should we lock the session?
@@ -999,121 +1826,691 @@ CK_RV SoftHSM::C_DigestFinal(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pDigest, CK
 }
 
 // Initialise a signing operation using the specified key and mechanism
-CK_RV SoftHSM::C_SignInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechanism, CK_OBJECT_HANDLE hKey) 
+CK_RV SoftHSM::C_SignInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechanism, CK_OBJECT_HANDLE hKey)
 {
-	return CKR_FUNCTION_NOT_SUPPORTED;
+	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
+
+	if (pMechanism == NULL_PTR) return CKR_ARGUMENTS_BAD;
+
+	// Get the session
+	Session* session = (Session*)handleManager->getSession(hSession);
+	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
+
+	// Check if we have another operation
+	if (session->getOpType() != SESSION_OP_NONE) return CKR_OPERATION_ACTIVE;
+
+	// Get the token
+	Token* token = session->getToken();
+	if (token == NULL) return CKR_GENERAL_ERROR;
+
+	// Check the key handle.
+	OSObject *key = (OSObject *)handleManager->getObject(hKey);
+	if (key == NULL_PTR) return CKR_OBJECT_HANDLE_INVALID;
+
+	// Get the asymmetric algorithm matching the mechanism
+	const char *mechanism;
+	bool bIsMultiPartOp;
+	switch(pMechanism->mechanism) {
+		case CKM_RSA_PKCS:
+			mechanism = "rsa-pkcs";
+			bIsMultiPartOp = false;
+			break;
+		case CKM_RSA_X_509:
+			mechanism = "rsa";
+			bIsMultiPartOp = false;
+			break;
+		case CKM_MD5_RSA_PKCS:
+			mechanism = "rsa-md5-pkcs";
+			bIsMultiPartOp = true;
+			break;
+		case CKM_SHA1_RSA_PKCS:
+			mechanism = "rsa-sha1-pkcs";
+			bIsMultiPartOp = true;
+			break;
+		case CKM_SHA256_RSA_PKCS:
+			mechanism = "rsa-sha256-pkcs";
+			bIsMultiPartOp = true;
+			break;
+		case CKM_SHA512_RSA_PKCS:
+			mechanism = "rsa-sha512-pkcs";
+			bIsMultiPartOp = true;
+			break;
+		default:
+			return CKR_MECHANISM_INVALID;
+	}
+	AsymmetricAlgorithm* asymCrypto = CryptoFactory::i()->getAsymmetricAlgorithm("rsa");
+	if (asymCrypto == NULL) return CKR_MECHANISM_INVALID;
+
+	// Retrieve the private key atrtibutes from the private key object
+	RSAPrivateKey* privateKey = (RSAPrivateKey*)asymCrypto->newPrivateKey();
+	if (privateKey == NULL)
+	{
+		CryptoFactory::i()->recycleAsymmetricAlgorithm(asymCrypto);
+		return CKR_HOST_MEMORY;
+	}
+
+	// Get the CKA_PRIVATE attribute, when the attribute is not present use default false
+	OSAttribute* attr = key->getAttribute(CKA_PRIVATE);
+	bool isKeyPrivate = (attr != NULL && attr->getBooleanValue());
+
+
+	// RSA Private Key Attributes
+	ByteString modulus;
+	ByteString publicExponent;
+	ByteString privateExponent;
+	ByteString prime1;
+	ByteString prime2;
+	ByteString exponent1;
+	ByteString exponent2;
+	ByteString coefficient;
+	if (isKeyPrivate)
+	{
+		bool bOK = true;
+		bOK = bOK && token->decrypt(key->getAttribute(CKA_MODULUS)->getByteStringValue(), modulus);
+		bOK = bOK && token->decrypt(key->getAttribute(CKA_PUBLIC_EXPONENT)->getByteStringValue(), publicExponent);
+		bOK = bOK && token->decrypt(key->getAttribute(CKA_PRIVATE_EXPONENT)->getByteStringValue(), privateExponent);
+		bOK = bOK && token->decrypt(key->getAttribute(CKA_PRIME_1)->getByteStringValue(), prime1);
+		bOK = bOK && token->decrypt(key->getAttribute(CKA_PRIME_2)->getByteStringValue(), prime2);
+		bOK = bOK && token->decrypt(key->getAttribute(CKA_EXPONENT_1)->getByteStringValue(), exponent1);
+		bOK = bOK && token->decrypt(key->getAttribute(CKA_EXPONENT_2)->getByteStringValue(), exponent2);
+		bOK = bOK && token->decrypt(key->getAttribute(CKA_COEFFICIENT)->getByteStringValue(), coefficient);
+		if (!bOK)
+			return CKR_GENERAL_ERROR;
+	}
+	else
+	{
+		modulus = key->getAttribute(CKA_MODULUS)->getByteStringValue();
+		publicExponent = key->getAttribute(CKA_PUBLIC_EXPONENT)->getByteStringValue();
+		privateExponent = key->getAttribute(CKA_PRIVATE_EXPONENT)->getByteStringValue();
+		prime1 = key->getAttribute(CKA_PRIME_1)->getByteStringValue();
+		prime2 = key->getAttribute(CKA_PRIME_2)->getByteStringValue();
+		exponent1 =  key->getAttribute(CKA_EXPONENT_1)->getByteStringValue();
+		exponent2 = key->getAttribute(CKA_EXPONENT_2)->getByteStringValue();
+		coefficient = key->getAttribute(CKA_COEFFICIENT)->getByteStringValue();
+	}
+
+	privateKey->setN(modulus);
+	privateKey->setE(publicExponent);
+	privateKey->setD(privateExponent);
+	privateKey->setP(prime1);
+	privateKey->setQ(prime2);
+	privateKey->setDP1(exponent1);
+	privateKey->setDQ1(exponent2);
+	privateKey->setPQ(coefficient);
+
+	// Initialize signing
+	if (bIsMultiPartOp && !asymCrypto->signInit(privateKey,mechanism))
+	{
+		asymCrypto->recyclePrivateKey(privateKey);
+		CryptoFactory::i()->recycleAsymmetricAlgorithm(asymCrypto);
+		return CKR_MECHANISM_INVALID;
+	}
+
+	session->setOpType(SESSION_OP_SIGN);
+	session->setAsymmetricCryptoOp(asymCrypto);
+	session->setMechanism(mechanism);
+	session->setIsMultiPartOp(bIsMultiPartOp);
+	session->setPrivateKey(privateKey);
+
+	return CKR_OK;
 }
 
 // Sign the data in a single pass operation
-CK_RV SoftHSM::C_Sign(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pData, CK_ULONG ulDataLen, CK_BYTE_PTR pSignature, CK_ULONG_PTR pulSignatureLen) 
+CK_RV SoftHSM::C_Sign(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pData, CK_ULONG ulDataLen, CK_BYTE_PTR pSignature, CK_ULONG_PTR pulSignatureLen)
 {
-	return CKR_FUNCTION_NOT_SUPPORTED;
+	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
+
+	if (pData == NULL_PTR) return CKR_ARGUMENTS_BAD;
+	if (pulSignatureLen == NULL_PTR) return CKR_ARGUMENTS_BAD;
+
+	// Get the session
+	Session* session = (Session*)handleManager->getSession(hSession);
+	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
+
+	// TODO: Should we lock the session?
+
+	// Check if we are doing the correct operation
+	if (session->getOpType() != SESSION_OP_SIGN)
+		return CKR_OPERATION_NOT_INITIALIZED;
+
+	AsymmetricAlgorithm* asymCrypto = session->getAsymmetricCryptoOp();
+	const char *mechanism = session->getMechanism();
+	RSAPrivateKey* privateKey = (RSAPrivateKey*)session->getPrivateKey(); 	// TODO: make more generic to allow DSA
+	if (asymCrypto == NULL || mechanism == NULL || session->getIsMultiPartOp() || privateKey == NULL)
+	{
+		session->resetOp();
+		return CKR_OPERATION_NOT_INITIALIZED;
+	}
+
+	// Size of the signature for RSA determined by the size of the modulus.
+	CK_ULONG size = privateKey->getN().size();
+	if (pSignature == NULL_PTR)
+	{
+		*pulSignatureLen = size;
+		return CKR_OK;
+	}
+
+	// Check buffer size
+	if (*pulSignatureLen < size)
+	{
+		*pulSignatureLen = size;
+		return CKR_BUFFER_TOO_SMALL;
+	}
+
+	// Get the data
+	ByteString data;
+
+	// PKCS #11 Mechanisms v2.30: Cryptoki Draft 7 page 32
+	// We must allow input length <= k and therfore need to prepend the data with zeroes.
+	if (strcmp(mechanism,"rsa") == 0) {
+		data.wipe(size-ulDataLen);
+	}
+
+	data += ByteString(pData, ulDataLen);
+	ByteString signature;
+
+	// Sign the data
+	if (!asymCrypto->sign(privateKey,data,signature,mechanism))
+	{
+		session->resetOp();
+		return CKR_GENERAL_ERROR;
+	}
+
+	// Check size
+	if (signature.size() != size)
+	{
+		ERROR_MSG("The size of the signature differs from the size of the mechanism");
+		session->resetOp();
+		return CKR_GENERAL_ERROR;
+	}
+	memcpy(pSignature, signature.byte_str(), size);
+	*pulSignatureLen = size;
+
+	session->resetOp();
+	return CKR_OK;
 }
 
 // Update a running signing operation with additional data
-CK_RV SoftHSM::C_SignUpdate(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pPart, CK_ULONG ulPartLen) 
+CK_RV SoftHSM::C_SignUpdate(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pPart, CK_ULONG ulPartLen)
 {
-	return CKR_FUNCTION_NOT_SUPPORTED;
+	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
+
+	if (pPart == NULL_PTR) return CKR_ARGUMENTS_BAD;
+
+	// Get the session
+	Session* session = (Session*)handleManager->getSession(hSession);
+	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
+
+	// TODO: Should we lock the session?
+
+	// Check if we are doing the correct operation
+	if (session->getOpType() != SESSION_OP_SIGN || !session->getIsMultiPartOp())
+		return CKR_OPERATION_NOT_INITIALIZED;
+
+	AsymmetricAlgorithm* asymCrypto = session->getAsymmetricCryptoOp();
+	if (asymCrypto == NULL)
+	{
+		session->resetOp();
+		return CKR_OPERATION_NOT_INITIALIZED;
+	}
+
+	// Get the part
+	ByteString part(pPart, ulPartLen);
+
+	// Sign the data
+	if (!asymCrypto->signUpdate(part))
+	{
+		session->resetOp();
+		return CKR_GENERAL_ERROR;
+	}
+
+	return CKR_OK;
 }
 
 // Finalise a running signing operation and return the signature
-CK_RV SoftHSM::C_SignFinal(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pSignature, CK_ULONG_PTR pulSignatureLen) 
+CK_RV SoftHSM::C_SignFinal(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pSignature, CK_ULONG_PTR pulSignatureLen)
 {
-	return CKR_FUNCTION_NOT_SUPPORTED;
+	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
+
+	if (pulSignatureLen == NULL_PTR) return CKR_ARGUMENTS_BAD;
+
+	// Get the session
+	Session* session = (Session*)handleManager->getSession(hSession);
+	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
+
+	// TODO: Should we lock the session?
+
+	// Check if we are doing the correct operation
+	if (session->getOpType() != SESSION_OP_SIGN || !session->getIsMultiPartOp())
+		return CKR_OPERATION_NOT_INITIALIZED;
+
+	AsymmetricAlgorithm* asymCrypto = session->getAsymmetricCryptoOp();
+	RSAPrivateKey* privateKey = (RSAPrivateKey*)session->getPrivateKey(); 	// TODO: make more generic to allow DSA
+	if (asymCrypto == NULL || privateKey == NULL)
+	{
+		session->resetOp();
+		return CKR_OPERATION_NOT_INITIALIZED;
+	}
+
+	// Size of the signature for RSA determined by the size of the modulus.
+	CK_ULONG size = privateKey->getN().size();
+	if (pSignature == NULL_PTR)
+	{
+		*pulSignatureLen = size;
+		return CKR_OK;
+	}
+
+	// Check buffer size
+	if (*pulSignatureLen < size)
+	{
+		*pulSignatureLen = size;
+		return CKR_BUFFER_TOO_SMALL;
+	}
+
+	// Get the data
+	ByteString signature;
+
+	// Generate the signature
+	if (!asymCrypto->signFinal(signature))
+	{
+		session->resetOp();
+		return CKR_GENERAL_ERROR;
+	}
+
+	// Check size
+	if (signature.size() != size)
+	{
+		ERROR_MSG("The size of the signature differs from the size of the mechanism");
+		session->resetOp();
+		return CKR_GENERAL_ERROR;
+	}
+	memcpy(pSignature, signature.byte_str(), size);
+	*pulSignatureLen = size;
+
+	session->resetOp();
+	return CKR_OK;
 }
 
 // Initialise a signing operation that allows recovery of the signed data
-CK_RV SoftHSM::C_SignRecoverInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechanism, CK_OBJECT_HANDLE hKey) 
+CK_RV SoftHSM::C_SignRecoverInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechanism, CK_OBJECT_HANDLE hKey)
 {
+	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
+
+	// Get the session
+	Session* session = (Session*)handleManager->getSession(hSession);
+	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
+
+	// Check if we have another operation
+	if (session->getOpType() != SESSION_OP_NONE) return CKR_OPERATION_ACTIVE;
+
 	return CKR_FUNCTION_NOT_SUPPORTED;
 }
 
 // Perform a single part signing operation that allows recovery of the signed data
-CK_RV SoftHSM::C_SignRecover(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pData, CK_ULONG ulDataLen, CK_BYTE_PTR pSignature, CK_ULONG_PTR pulSignatureLen) 
+CK_RV SoftHSM::C_SignRecover(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pData, CK_ULONG ulDataLen, CK_BYTE_PTR pSignature, CK_ULONG_PTR pulSignatureLen)
 {
+	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
+
+	// Get the session
+	Session* session = (Session*)handleManager->getSession(hSession);
+	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
+
 	return CKR_FUNCTION_NOT_SUPPORTED;
 }
 
 // Initialise a verification operation using the specified key and mechanism
-CK_RV SoftHSM::C_VerifyInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechanism, CK_OBJECT_HANDLE hKey) 
+CK_RV SoftHSM::C_VerifyInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechanism, CK_OBJECT_HANDLE hKey)
 {
-	return CKR_FUNCTION_NOT_SUPPORTED;
+	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
+
+	if (pMechanism == NULL_PTR) return CKR_ARGUMENTS_BAD;
+
+	// Get the session
+	Session* session = (Session*)handleManager->getSession(hSession);
+	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
+
+	// Check if we have another operation
+	if (session->getOpType() != SESSION_OP_NONE) return CKR_OPERATION_ACTIVE;
+
+	// Get the token
+	Token* token = session->getToken();
+	if (token == NULL) return CKR_GENERAL_ERROR;
+
+	// Check the key handle.
+	OSObject *key = (OSObject *)handleManager->getObject(hKey);
+	if (key == NULL_PTR) return CKR_OBJECT_HANDLE_INVALID;
+
+	// Get the asymmetric algorithm matching the mechanism
+	const char *mechanism;
+	bool bIsMultiPartOp;
+	switch(pMechanism->mechanism) {
+		case CKM_RSA_PKCS:
+			mechanism = "rsa-pkcs";
+			bIsMultiPartOp = false;
+			break;
+		case CKM_RSA_X_509:
+			mechanism = "rsa";
+			bIsMultiPartOp = false;
+			break;
+		case CKM_MD5_RSA_PKCS:
+			mechanism = "rsa-md5-pkcs";
+			bIsMultiPartOp = true;
+			break;
+		case CKM_SHA1_RSA_PKCS:
+			mechanism = "rsa-sha1-pkcs";
+			bIsMultiPartOp = true;
+			break;
+		case CKM_SHA256_RSA_PKCS:
+			mechanism = "rsa-sha256-pkcs";
+			bIsMultiPartOp = true;
+			break;
+		case CKM_SHA512_RSA_PKCS:
+			mechanism = "rsa-sha512-pkcs";
+			bIsMultiPartOp = true;
+			break;
+		default:
+			return CKR_MECHANISM_INVALID;
+	}
+	AsymmetricAlgorithm* asymCrypto = CryptoFactory::i()->getAsymmetricAlgorithm("rsa");
+	if (asymCrypto == NULL) return CKR_MECHANISM_INVALID;
+
+	// Retrieve the private key atrtibutes from the private key object
+	RSAPublicKey* publicKey = (RSAPublicKey*)asymCrypto->newPublicKey();
+	if (publicKey == NULL)
+	{
+		CryptoFactory::i()->recycleAsymmetricAlgorithm(asymCrypto);
+		return CKR_HOST_MEMORY;
+	}
+
+	// Get the CKA_PRIVATE attribute, when the attribute is not present use default false
+	OSAttribute* attr = key->getAttribute(CKA_PRIVATE);
+	bool isKeyPrivate = (attr != NULL && attr->getBooleanValue());
+
+	// RSA Public Key Attributes
+	ByteString modulus;
+	ByteString publicExponent;
+	if (isKeyPrivate)
+	{
+		bool bOK = true;
+		bOK = bOK && token->decrypt(key->getAttribute(CKA_MODULUS)->getByteStringValue(), modulus);
+		bOK = bOK && token->decrypt(key->getAttribute(CKA_PUBLIC_EXPONENT)->getByteStringValue(), publicExponent);
+		if (!bOK)
+			return CKR_GENERAL_ERROR;
+	}
+	else
+	{
+		modulus = key->getAttribute(CKA_MODULUS)->getByteStringValue();
+		publicExponent = key->getAttribute(CKA_PUBLIC_EXPONENT)->getByteStringValue();
+	}
+
+	publicKey->setN(modulus);
+	publicKey->setE(publicExponent);
+
+	// Initialize signing
+	if (bIsMultiPartOp && !asymCrypto->verifyInit(publicKey,mechanism))
+	{
+		asymCrypto->recyclePublicKey(publicKey);
+		CryptoFactory::i()->recycleAsymmetricAlgorithm(asymCrypto);
+		return CKR_MECHANISM_INVALID;
+	}
+
+	session->setOpType(SESSION_OP_VERIFY);
+	session->setAsymmetricCryptoOp(asymCrypto);
+	session->setMechanism(mechanism);
+	session->setIsMultiPartOp(bIsMultiPartOp);
+	session->setPublicKey(publicKey);
+
+	return CKR_OK;
 }
 
 // Perform a single pass verification operation
-CK_RV SoftHSM::C_Verify(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pData, CK_ULONG ulDataLen, CK_BYTE_PTR pSignature, CK_ULONG ulSignatureLen) 
+CK_RV SoftHSM::C_Verify(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pData, CK_ULONG ulDataLen, CK_BYTE_PTR pSignature, CK_ULONG ulSignatureLen)
 {
-	return CKR_FUNCTION_NOT_SUPPORTED;
+	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
+
+	if (pData == NULL_PTR) return CKR_ARGUMENTS_BAD;
+	if (pSignature == NULL_PTR) return CKR_ARGUMENTS_BAD;
+
+	// Get the session
+	Session* session = (Session*)handleManager->getSession(hSession);
+	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
+
+	// TODO: Should we lock the session?
+
+	// Check if we are doing the correct operation
+	if (session->getOpType() != SESSION_OP_VERIFY)
+		return CKR_OPERATION_NOT_INITIALIZED;
+
+	AsymmetricAlgorithm* asymCrypto = session->getAsymmetricCryptoOp();
+	const char *mechanism = session->getMechanism();
+	RSAPublicKey* publicKey = (RSAPublicKey*)session->getPublicKey(); // TODO: make more generic to allow DSA
+	if (asymCrypto == NULL || mechanism == NULL || session->getIsMultiPartOp() || publicKey == NULL)
+	{
+		session->resetOp();
+		return CKR_OPERATION_NOT_INITIALIZED;
+	}
+
+	// Size of the signature for RSA determined by the size of the modulus.
+	CK_ULONG size = publicKey->getN().size();
+
+	// Check buffer size
+	if (ulSignatureLen != size)
+	{
+		ERROR_MSG("The size of the signature differs from the size of the mechanism");
+		return CKR_SIGNATURE_LEN_RANGE;
+	}
+
+	// Get the data
+	ByteString data;
+
+	// PKCS #11 Mechanisms v2.30: Cryptoki Draft 7 page 32
+	// We must allow input length <= k and therfore need to prepend the data with zeroes.
+	if (strcmp(mechanism,"rsa") == 0) {
+		data.wipe(size-ulDataLen);
+	}
+
+	data += ByteString(pData, ulDataLen);
+	ByteString signature(pSignature, ulSignatureLen);
+
+	// Verify the data
+	if (!asymCrypto->verify(publicKey,data,signature,mechanism))
+	{
+		session->resetOp();
+		return CKR_SIGNATURE_INVALID;
+	}
+
+	session->resetOp();
+	return CKR_OK;
 }
 
 // Update a running verification operation with additional data
-CK_RV SoftHSM::C_VerifyUpdate(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pPart, CK_ULONG ulPartLen) 
+CK_RV SoftHSM::C_VerifyUpdate(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pPart, CK_ULONG ulPartLen)
 {
-	return CKR_FUNCTION_NOT_SUPPORTED;
+	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
+
+	if (pPart == NULL_PTR) return CKR_ARGUMENTS_BAD;
+
+	// Get the session
+	Session* session = (Session*)handleManager->getSession(hSession);
+	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
+
+	// TODO: Should we lock the session?
+
+	// Check if we are doing the correct operation
+	if (session->getOpType() != SESSION_OP_VERIFY || !session->getIsMultiPartOp())
+		return CKR_OPERATION_NOT_INITIALIZED;
+
+	AsymmetricAlgorithm* asymCrypto = session->getAsymmetricCryptoOp();
+	if (asymCrypto == NULL)
+	{
+		session->resetOp();
+		return CKR_OPERATION_NOT_INITIALIZED;
+	}
+
+	// Get the part
+	ByteString part(pPart, ulPartLen);
+
+	// Verify the data
+	if (!asymCrypto->verifyUpdate(part))
+	{
+		// verifyUpdate can't fail for a logical reason, so we assume total breakdown.
+		session->resetOp();
+		return CKR_GENERAL_ERROR;
+	}
+
+	return CKR_OK;
 }
 
 // Finalise the verification operation and check the signature
-CK_RV SoftHSM::C_VerifyFinal(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pSignature, CK_ULONG ulSignatureLen) 
+CK_RV SoftHSM::C_VerifyFinal(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pSignature, CK_ULONG ulSignatureLen)
 {
-	return CKR_FUNCTION_NOT_SUPPORTED;
+	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
+
+	if (pSignature == NULL_PTR) return CKR_ARGUMENTS_BAD;
+
+	// Get the session
+	Session* session = (Session*)handleManager->getSession(hSession);
+	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
+
+	// TODO: Should we lock the session?
+
+	// Check if we are doing the correct operation
+	if (session->getOpType() != SESSION_OP_VERIFY || !session->getIsMultiPartOp())
+		return CKR_OPERATION_NOT_INITIALIZED;
+
+	AsymmetricAlgorithm* asymCrypto = session->getAsymmetricCryptoOp();
+	RSAPublicKey* publicKey = (RSAPublicKey*)session->getPublicKey(); // TODO: make more generic to allow DSA
+	if (asymCrypto == NULL || publicKey == NULL)
+	{
+		session->resetOp();
+		return CKR_OPERATION_NOT_INITIALIZED;
+	}
+
+	// Size of the signature for RSA determined by the size of the modulus.
+	CK_ULONG size = publicKey->getN().size();
+
+	// Check buffer size
+	if (ulSignatureLen != size)
+	{
+		ERROR_MSG("The size of the signature differs from the size of the mechanism");
+		return CKR_SIGNATURE_LEN_RANGE;
+	}
+
+	// Get the data
+	ByteString signature(pSignature, ulSignatureLen);
+
+	// Verify the data
+	if (!asymCrypto->verifyFinal(signature))
+	{
+		session->resetOp();
+		return CKR_SIGNATURE_INVALID;
+	}
+
+	session->resetOp();
+	return CKR_OK;
 }
 
 // Initialise a verification operation the allows recovery of the signed data from the signature
-CK_RV SoftHSM::C_VerifyRecoverInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechanism, CK_OBJECT_HANDLE hKey) 
+CK_RV SoftHSM::C_VerifyRecoverInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechanism, CK_OBJECT_HANDLE hKey)
 {
+	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
+
+	// Get the session
+	Session* session = (Session*)handleManager->getSession(hSession);
+	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
+
+	// Check if we have another operation
+	if (session->getOpType() != SESSION_OP_NONE) return CKR_OPERATION_ACTIVE;
+
 	return CKR_FUNCTION_NOT_SUPPORTED;
 }
 
 // Perform a single part verification operation and recover the signed data
 CK_RV SoftHSM::C_VerifyRecover(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pSignature, CK_ULONG ulSignatureLen, CK_BYTE_PTR pData, CK_ULONG_PTR pulDataLen)
 {
+	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
+
+	// Get the session
+	Session* session = (Session*)handleManager->getSession(hSession);
+	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
+
 	return CKR_FUNCTION_NOT_SUPPORTED;
 }
 
 // Update a running multi-part encryption and digesting operation
-CK_RV SoftHSM::C_DigestEncryptUpdate(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pPart, CK_ULONG ulPartLen, CK_BYTE_PTR pEncryptedPart, CK_ULONG_PTR pulEncryptedPartLen) 
+CK_RV SoftHSM::C_DigestEncryptUpdate(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pPart, CK_ULONG ulPartLen, CK_BYTE_PTR pEncryptedPart, CK_ULONG_PTR pulEncryptedPartLen)
 {
+	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
+
+	// Get the session
+	Session* session = (Session*)handleManager->getSession(hSession);
+	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
+
 	return CKR_FUNCTION_NOT_SUPPORTED;
 }
 
 // Update a running multi-part decryption and digesting operation
 CK_RV SoftHSM::C_DecryptDigestUpdate(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pPart, CK_ULONG ulPartLen, CK_BYTE_PTR pDecryptedPart, CK_ULONG_PTR pulDecryptedPartLen)
-{
+{	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
+
+	// Get the session
+	Session* session = (Session*)handleManager->getSession(hSession);
+	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
+
 	return CKR_FUNCTION_NOT_SUPPORTED;
 }
 
 // Update a running multi-part signing and encryption operation
-CK_RV SoftHSM::C_SignEncryptUpdate(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pPart, CK_ULONG ulPartLen, CK_BYTE_PTR pEncryptedPart, CK_ULONG_PTR pulEncryptedPartLen) 
+CK_RV SoftHSM::C_SignEncryptUpdate(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pPart, CK_ULONG ulPartLen, CK_BYTE_PTR pEncryptedPart, CK_ULONG_PTR pulEncryptedPartLen)
 {
+	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
+
+	// Get the session
+	Session* session = (Session*)handleManager->getSession(hSession);
+	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
+
 	return CKR_FUNCTION_NOT_SUPPORTED;
 }
 
 // Update a running multi-part decryption and verification operation
 CK_RV SoftHSM::C_DecryptVerifyUpdate(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pEncryptedPart, CK_ULONG ulEncryptedPartLen, CK_BYTE_PTR pPart, CK_ULONG_PTR pulPartLen)
 {
+	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
+
+	// Get the session
+	Session* session = (Session*)handleManager->getSession(hSession);
+	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
+
 	return CKR_FUNCTION_NOT_SUPPORTED;
 }
 
 // Generate a secret key using the specified mechanism
-CK_RV SoftHSM::C_GenerateKey(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechanism, CK_ATTRIBUTE_PTR pTemplate, CK_ULONG ulCount, CK_OBJECT_HANDLE_PTR phKey) 
+CK_RV SoftHSM::C_GenerateKey(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechanism, CK_ATTRIBUTE_PTR pTemplate, CK_ULONG ulCount, CK_OBJECT_HANDLE_PTR phKey)
 {
+	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
+
+	// Get the session
+	Session* session = (Session*)handleManager->getSession(hSession);
+	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
+
 	return CKR_FUNCTION_NOT_SUPPORTED;
 }
 
 // Generate a key-pair using the specified mechanism
 CK_RV SoftHSM::C_GenerateKeyPair
 (
-	CK_SESSION_HANDLE hSession, 
-	CK_MECHANISM_PTR pMechanism, 
-	CK_ATTRIBUTE_PTR pPublicKeyTemplate, 
-	CK_ULONG ulPublicKeyAttributeCount, 
-	CK_ATTRIBUTE_PTR pPrivateKeyTemplate, 
+	CK_SESSION_HANDLE hSession,
+	CK_MECHANISM_PTR pMechanism,
+	CK_ATTRIBUTE_PTR pPublicKeyTemplate,
+	CK_ULONG ulPublicKeyAttributeCount,
+	CK_ATTRIBUTE_PTR pPrivateKeyTemplate,
 	CK_ULONG ulPrivateKeyAttributeCount,
-	CK_OBJECT_HANDLE_PTR phPublicKey, 
+	CK_OBJECT_HANDLE_PTR phPublicKey,
 	CK_OBJECT_HANDLE_PTR phPrivateKey
-) 
+)
 {
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
+
 	if (pMechanism == NULL_PTR) return CKR_ARGUMENTS_BAD;
 	if (pPublicKeyTemplate == NULL_PTR) return CKR_ARGUMENTS_BAD;
 	if (pPrivateKeyTemplate == NULL_PTR) return CKR_ARGUMENTS_BAD;
@@ -1121,114 +2518,158 @@ CK_RV SoftHSM::C_GenerateKeyPair
 	if (phPrivateKey == NULL_PTR) return CKR_ARGUMENTS_BAD;
 
 	// Get the session
-	Session* session = sessionManager->getSession(hSession);
+	Session* session = (Session*)handleManager->getSession(hSession);
 	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
 
-	CK_BBOOL isToken = CK_FALSE;
-	CK_BBOOL isPrivate = CK_TRUE;
-
-	// Extract object information
-	for (CK_ULONG i = 0; i < ulPrivateKeyAttributeCount; i++)
-	{
-		switch (pPrivateKeyTemplate[i].type)
-		{
-			case CKA_TOKEN:
-				if (pPrivateKeyTemplate[i].ulValueLen == sizeof(CK_BBOOL))
-				{
-					isToken = *(CK_BBOOL*)pPrivateKeyTemplate[i].pValue;
-				}
-				break;
-			case CKA_PRIVATE:
-				if (pPrivateKeyTemplate[i].ulValueLen == sizeof(CK_BBOOL))
-				{
-					isPrivate = *(CK_BBOOL*)pPrivateKeyTemplate[i].pValue;
-				}
-				break;
-			default:
-				break;
-		}
-	}
-
-	// Check user credentials
-	if (!haveRW(session->getState(), isToken, isPrivate))
-	{
-		INFO_MSG("User is not authorized");
-		return CKR_USER_NOT_LOGGED_IN;
-	}
-
-	// Generate keys
-	CK_RV rv = CKR_MECHANISM_INVALID;
+	// Check the mechanism, only accept RSA and DSA key pair generation.
+	CK_KEY_TYPE keyType;
 	switch (pMechanism->mechanism)
 	{
 		case CKM_RSA_PKCS_KEY_PAIR_GEN:
-			rv = this->generateRSA(session, pPublicKeyTemplate, ulPublicKeyAttributeCount,
-						pPrivateKeyTemplate, ulPrivateKeyAttributeCount,
-						phPublicKey, phPrivateKey, isToken);
+			keyType = CKK_RSA;
 			break;
 		case CKM_DSA_KEY_PAIR_GEN:
-			rv = this->generateDSA(session, pPublicKeyTemplate, ulPublicKeyAttributeCount,
-						pPrivateKeyTemplate, ulPrivateKeyAttributeCount,
-						phPublicKey, phPrivateKey, isToken);
+			keyType = CKK_DSA;
 			break;
 		default:
-			break;
+			return CKR_MECHANISM_INVALID;
+	}
+	CK_CERTIFICATE_TYPE dummy;
+
+	// Extract information from the public key template that is needed to create the object.
+	CK_OBJECT_CLASS publicKeyClass = CKO_PUBLIC_KEY;
+	CK_BBOOL ispublicKeyToken = CK_FALSE;
+	CK_BBOOL ispublicKeyPrivate = CK_TRUE;
+	extractObjectInformation(pPublicKeyTemplate, ulPublicKeyAttributeCount, publicKeyClass, keyType, dummy, ispublicKeyToken, ispublicKeyPrivate);
+
+	// Report errors caused by accidental template mix-ups in the application using this cryptoki lib.
+	if (publicKeyClass != CKO_PUBLIC_KEY)
+		return CKR_TEMPLATE_INCONSISTENT;
+	if (pMechanism->mechanism == CKM_RSA_PKCS_KEY_PAIR_GEN && keyType != CKK_RSA)
+		return CKR_TEMPLATE_INCONSISTENT;
+	if (pMechanism->mechanism == CKM_DSA_KEY_PAIR_GEN && keyType != CKK_DSA)
+		return CKR_TEMPLATE_INCONSISTENT;
+
+	// Extract information from the private key template that is needed to create the object.
+	CK_OBJECT_CLASS privateKeyClass = CKO_PRIVATE_KEY;
+	CK_BBOOL isprivateKeyToken = CK_FALSE;
+	CK_BBOOL isprivateKeyPrivate = CK_TRUE;
+	extractObjectInformation(pPrivateKeyTemplate, ulPrivateKeyAttributeCount, privateKeyClass, keyType, dummy, isprivateKeyToken, isprivateKeyPrivate);
+
+	// Report errors caused by accidental template mix-ups in the application using this cryptoki lib.
+	if (privateKeyClass != CKO_PRIVATE_KEY)
+		return CKR_TEMPLATE_INCONSISTENT;
+	if (pMechanism->mechanism == CKM_RSA_PKCS_KEY_PAIR_GEN && keyType != CKK_RSA)
+		return CKR_TEMPLATE_INCONSISTENT;
+	if (pMechanism->mechanism == CKM_DSA_KEY_PAIR_GEN && keyType != CKK_DSA)
+		return CKR_TEMPLATE_INCONSISTENT;
+
+	// Check user credentials
+	CK_RV rv = haveWrite(session->getState(), ispublicKeyToken || isprivateKeyToken, ispublicKeyPrivate || isprivateKeyPrivate);
+	if (rv != CKR_OK)
+	{
+		if (rv == CKR_USER_NOT_LOGGED_IN)
+			INFO_MSG("User is not authorized");
+		if (rv == CKR_SESSION_READ_ONLY)
+			INFO_MSG("Session is read-only");
+
+		return rv;
 	}
 
-	return rv;
+	// Generate RSA keys
+	if (pMechanism->mechanism == CKM_RSA_PKCS_KEY_PAIR_GEN)
+	{
+			return this->generateRSA(hSession,
+									 pPublicKeyTemplate, ulPublicKeyAttributeCount,
+									 pPrivateKeyTemplate, ulPrivateKeyAttributeCount,
+									 phPublicKey, phPrivateKey,
+									 ispublicKeyToken, ispublicKeyPrivate, isprivateKeyToken, isprivateKeyPrivate);
+	}
+
+	// Generate DSA keys
+	if (pMechanism->mechanism == CKM_DSA_KEY_PAIR_GEN)
+	{
+			return this->generateDSA(hSession,
+									 pPublicKeyTemplate, ulPublicKeyAttributeCount,
+									 pPrivateKeyTemplate, ulPrivateKeyAttributeCount,
+									 phPublicKey, phPrivateKey,
+									 ispublicKeyToken, ispublicKeyPrivate, isprivateKeyToken, isprivateKeyPrivate);
+	}
+
+	return CKR_GENERAL_ERROR;
 }
 
 // Wrap the specified key using the specified wrapping key and mechanism
 CK_RV SoftHSM::C_WrapKey
 (
 	CK_SESSION_HANDLE hSession,
-	CK_MECHANISM_PTR pMechanism, 
-	CK_OBJECT_HANDLE hWrappingKey, 
-	CK_OBJECT_HANDLE hKey, 
-	CK_BYTE_PTR pWrappedKey, 
+	CK_MECHANISM_PTR pMechanism,
+	CK_OBJECT_HANDLE hWrappingKey,
+	CK_OBJECT_HANDLE hKey,
+	CK_BYTE_PTR pWrappedKey,
 	CK_ULONG_PTR pulWrappedKeyLen
-) 
+)
 {
+	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
+
+	// Get the session
+	Session* session = (Session*)handleManager->getSession(hSession);
+	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
+
 	return CKR_FUNCTION_NOT_SUPPORTED;
 }
 
 // Unwrap the specified key using the specified unwrapping key
 CK_RV SoftHSM::C_UnwrapKey
 (
-	CK_SESSION_HANDLE hSession, 
-	CK_MECHANISM_PTR pMechanism, 
-	CK_OBJECT_HANDLE hUnwrappingKey, 
-	CK_BYTE_PTR pWrappedKey, 
+	CK_SESSION_HANDLE hSession,
+	CK_MECHANISM_PTR pMechanism,
+	CK_OBJECT_HANDLE hUnwrappingKey,
+	CK_BYTE_PTR pWrappedKey,
 	CK_ULONG ulWrappedKeyLen,
-	CK_ATTRIBUTE_PTR pTemplate, 
-	CK_ULONG ulCount, 
+	CK_ATTRIBUTE_PTR pTemplate,
+	CK_ULONG ulCount,
 	CK_OBJECT_HANDLE_PTR hKey
-) 
+)
 {
+	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
+
+	// Get the session
+	Session* session = (Session*)handleManager->getSession(hSession);
+	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
+
 	return CKR_FUNCTION_NOT_SUPPORTED;
 }
 
 // Derive a key from the specified base key
 CK_RV SoftHSM::C_DeriveKey
 (
-	CK_SESSION_HANDLE hSession, 
-	CK_MECHANISM_PTR pMechanism, 
-	CK_OBJECT_HANDLE hBaseKey, 
-	CK_ATTRIBUTE_PTR pTemplate, 
-	CK_ULONG ulCount, 
+	CK_SESSION_HANDLE hSession,
+	CK_MECHANISM_PTR pMechanism,
+	CK_OBJECT_HANDLE hBaseKey,
+	CK_ATTRIBUTE_PTR pTemplate,
+	CK_ULONG ulCount,
 	CK_OBJECT_HANDLE_PTR phKey
-) 
+)
 {
+	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
+
+	// Get the session
+	Session* session = (Session*)handleManager->getSession(hSession);
+	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
+
 	return CKR_FUNCTION_NOT_SUPPORTED;
 }
 
 // Seed the random number generator with new data
-CK_RV SoftHSM::C_SeedRandom(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pSeed, CK_ULONG ulSeedLen) 
+CK_RV SoftHSM::C_SeedRandom(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pSeed, CK_ULONG ulSeedLen)
 {
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
+
 	if (pSeed == NULL_PTR) return CKR_ARGUMENTS_BAD;
 
 	// Get the session
-	Session* session = sessionManager->getSession(hSession);
+	Session* session = (Session*)handleManager->getSession(hSession);
 	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
 
 	// Get the RNG
@@ -1243,13 +2684,14 @@ CK_RV SoftHSM::C_SeedRandom(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pSeed, CK_UL
 }
 
 // Generate the specified amount of random data
-CK_RV SoftHSM::C_GenerateRandom(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pRandomData, CK_ULONG ulRandomLen) 
+CK_RV SoftHSM::C_GenerateRandom(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pRandomData, CK_ULONG ulRandomLen)
 {
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
+
 	if (pRandomData == NULL_PTR) return CKR_ARGUMENTS_BAD;
 
 	// Get the session
-	Session* session = sessionManager->getSession(hSession);
+	Session* session = (Session*)handleManager->getSession(hSession);
 	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
 
 	// Get the RNG
@@ -1267,14 +2709,26 @@ CK_RV SoftHSM::C_GenerateRandom(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pRandomD
 }
 
 // Legacy function
-CK_RV SoftHSM::C_GetFunctionStatus(CK_SESSION_HANDLE hSession) 
+CK_RV SoftHSM::C_GetFunctionStatus(CK_SESSION_HANDLE hSession)
 {
+	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
+
+	// Get the session
+	Session* session = (Session*)handleManager->getSession(hSession);
+	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
+
 	return CKR_FUNCTION_NOT_PARALLEL;
 }
 
 // Legacy function
-CK_RV SoftHSM::C_CancelFunction(CK_SESSION_HANDLE hSession) 
+CK_RV SoftHSM::C_CancelFunction(CK_SESSION_HANDLE hSession)
 {
+	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
+
+	// Get the session
+	Session* session = (Session*)handleManager->getSession(hSession);
+	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
+
 	return CKR_FUNCTION_NOT_PARALLEL;
 }
 
@@ -1284,27 +2738,43 @@ CK_RV SoftHSM::C_WaitForSlotEvent(CK_FLAGS flags, CK_SLOT_ID_PTR pSlot, CK_VOID_
 	return CKR_FUNCTION_NOT_SUPPORTED;
 }
 
+static CK_ATTRIBUTE bsAttribute(CK_ATTRIBUTE_TYPE type, const ByteString &value)
+{
+	CK_ATTRIBUTE attr = {type, (CK_VOID_PTR)value.const_byte_str(), value.size() };
+	return attr;
+}
+
 // Generate an RSA key pair
 CK_RV SoftHSM::generateRSA
-(
-	Session* session,
+(CK_SESSION_HANDLE hSession,
 	CK_ATTRIBUTE_PTR pPublicKeyTemplate,
 	CK_ULONG ulPublicKeyAttributeCount,
 	CK_ATTRIBUTE_PTR pPrivateKeyTemplate,
 	CK_ULONG ulPrivateKeyAttributeCount,
 	CK_OBJECT_HANDLE_PTR phPublicKey,
 	CK_OBJECT_HANDLE_PTR phPrivateKey,
-	CK_BBOOL isToken
+	CK_BBOOL isPublicKeyOnToken,
+	CK_BBOOL isPublicKeyPrivate,
+	CK_BBOOL isPrivateKeyOnToken,
+	CK_BBOOL isPrivateKeyPrivate
 )
 {
-	AsymmetricKeyPair* kp = NULL;
-	RSAParameters p;
+	*phPublicKey = CK_INVALID_HANDLE;
+	*phPrivateKey = CK_INVALID_HANDLE;
+
+	// Get the session
+	Session* session = (Session*)handleManager->getSession(hSession);
+	if (session == NULL)
+		return CKR_SESSION_HANDLE_INVALID;
+
+	// Get the token
+	Token* token = session->getToken();
+	if (token == NULL)
+		return CKR_GENERAL_ERROR;
+
+	// Extract desired key information: bitlen and public exponent
 	size_t bitLen = 0;
 	ByteString exponent("010001");
-	CK_OBJECT_HANDLE hPublicKey = CK_INVALID_HANDLE;
-	CK_OBJECT_HANDLE hPrivateKey = CK_INVALID_HANDLE;
-
-	// Extract desired key information
 	for (CK_ULONG i = 0; i < ulPublicKeyAttributeCount; i++)
 	{
 		switch (pPublicKeyTemplate[i].type)
@@ -1332,12 +2802,15 @@ CK_RV SoftHSM::generateRSA
 	}
 
 	// Set the parameters
+	RSAParameters p;
 	p.setE(exponent);
 	p.setBitLength(bitLen);
 
 	// Generate key pair
+	AsymmetricKeyPair* kp = NULL;
 	AsymmetricAlgorithm* rsa = CryptoFactory::i()->getAsymmetricAlgorithm("RSA");
-	if (rsa == NULL) return CKR_GENERAL_ERROR;
+	if (rsa == NULL)
+		return CKR_GENERAL_ERROR;
 	if (!rsa->generateKeyPair(&kp, &p))
 	{
 		ERROR_MSG("Could not generate key pair");
@@ -1348,68 +2821,221 @@ CK_RV SoftHSM::generateRSA
 	RSAPublicKey* pub = (RSAPublicKey*) kp->getPublicKey();
 	RSAPrivateKey* priv = (RSAPrivateKey*) kp->getPrivateKey();
 
-	// TODO: Save keys
-	CK_RV result = saveGeneratedRSA(session, pPublicKeyTemplate, ulPublicKeyAttributeCount, pub, isToken, &hPublicKey);
-	// CK_RV result = saveGeneratedRSA(session, pPrivateKeyTemplate, ulPrivateKeyAttributeCount, priv, isToken, &hPrivateKey);
+	CK_RV rv = CKR_OK;
+
+	// Create a public key using C_CreateObject
+	if (rv == CKR_OK)
+	{
+		const CK_ULONG maxAttribs = 32;
+		CK_OBJECT_CLASS publicKeyClass = CKO_PUBLIC_KEY;
+		CK_KEY_TYPE publicKeyType = CKK_RSA;
+		CK_ATTRIBUTE publicKeyAttribs[maxAttribs] = {
+			{ CKA_CLASS, &publicKeyClass, sizeof(publicKeyClass) },
+			{ CKA_TOKEN, &isPublicKeyOnToken, sizeof(isPublicKeyOnToken) },
+			{ CKA_PRIVATE, &isPublicKeyPrivate, sizeof(isPublicKeyPrivate) },
+			{ CKA_KEY_TYPE, &publicKeyType, sizeof(publicKeyType) },
+		};
+		CK_ULONG publicKeyAttribsCount = 4;
+
+		// Put the generated key material in the attributes
+		publicKeyAttribs[publicKeyAttribsCount++] = bsAttribute(CKA_PUBLIC_EXPONENT, pub->getE());
+
+		// Add the additional
+		if (ulPublicKeyAttributeCount > (maxAttribs - publicKeyAttribsCount))
+			return CKR_TEMPLATE_INCONSISTENT;
+		for (int i=0; i < ulPublicKeyAttributeCount && rv == CKR_OK; ++i)
+		{
+			switch (pPublicKeyTemplate[i].type)
+			{
+				case CKA_CLASS:
+				case CKA_TOKEN:
+				case CKA_PRIVATE:
+				case CKA_KEY_TYPE:
+					continue;
+				default:
+					publicKeyAttribs[publicKeyAttribsCount++] = pPublicKeyTemplate[i];
+			}
+		}
+
+		if (rv == CKR_OK)
+			rv = this->CreateObject(hSession,publicKeyAttribs,publicKeyAttribsCount,phPublicKey,OBJECT_OP_GENERATE);
+
+		// Store the attributes that are being supplied by the key generation to the object
+		if (rv == CKR_OK)
+		{
+			OSObject* osobject = (OSObject*)handleManager->getObject(*phPublicKey);
+			if (osobject->startTransaction()) {
+				bool bOK = true;
+
+				// Common Key Attributes
+				bOK = bOK && osobject->setAttribute(CKA_LOCAL,true);
+				CK_ULONG ulKeyGenMechanism = (CK_ULONG)CKM_RSA_PKCS_KEY_PAIR_GEN;
+				bOK = bOK && osobject->setAttribute(CKA_KEY_GEN_MECHANISM,ulKeyGenMechanism);
+
+				// RSA Public Key Attributes
+				ByteString modulus;
+				if (isPublicKeyPrivate)
+				{
+					token->encrypt(pub->getN(), modulus);
+				}
+				else
+				{
+					modulus = pub->getN();
+				}
+				bOK = bOK && osobject->setAttribute(CKA_MODULUS, modulus);
+
+				if (bOK)
+					bOK = osobject->commitTransaction();
+				else
+					osobject->abortTransaction();
+
+				if (!bOK)
+					rv == CKR_FUNCTION_FAILED;
+			}
+		}
+	}
+
+	// Create a private key using C_CreateObject
+	if (rv == CKR_OK)
+	{
+		const CK_ULONG maxAttribs = 32;
+		CK_OBJECT_CLASS privateKeyClass = CKO_PRIVATE_KEY;
+		CK_KEY_TYPE privateKeyType = CKK_RSA;
+		CK_ATTRIBUTE privateKeyAttribs[maxAttribs] = {
+			{ CKA_CLASS, &privateKeyClass, sizeof(privateKeyClass) },
+			{ CKA_TOKEN, &isPrivateKeyOnToken, sizeof(isPrivateKeyOnToken) },
+			{ CKA_PRIVATE, &isPrivateKeyPrivate, sizeof(isPrivateKeyPrivate) },
+			{ CKA_KEY_TYPE, &privateKeyType, sizeof(privateKeyType) },
+		};
+		CK_ULONG privateKeyAttribsCount = 4;
+		if (ulPrivateKeyAttributeCount > (maxAttribs - privateKeyAttribsCount))
+			return CKR_TEMPLATE_INCONSISTENT;
+		for (int i=0; i < ulPrivateKeyAttributeCount && rv == CKR_OK; ++i)
+		{
+			switch (pPrivateKeyTemplate[i].type)
+			{
+				case CKA_CLASS:
+				case CKA_TOKEN:
+				case CKA_PRIVATE:
+				case CKA_KEY_TYPE:
+					continue;
+				default:
+					privateKeyAttribs[privateKeyAttribsCount++] = pPrivateKeyTemplate[i];
+			}
+		}
+
+		if (rv == CKR_OK)
+			rv = this->CreateObject(hSession,privateKeyAttribs,privateKeyAttribsCount,phPrivateKey,OBJECT_OP_GENERATE);
+
+		// Store the attributes that are being supplied by the key generation to the object
+		if (rv == CKR_OK)
+		{
+			OSObject* osobject = (OSObject*)handleManager->getObject(*phPrivateKey);
+			if (osobject->startTransaction()) {
+				bool bOK = true;
+
+				// Common Key Attributes
+				bOK = bOK && osobject->setAttribute(CKA_LOCAL,true);
+				CK_ULONG ulKeyGenMechanism = (CK_ULONG)CKM_RSA_PKCS_KEY_PAIR_GEN;
+				bOK = bOK && osobject->setAttribute(CKA_KEY_GEN_MECHANISM,ulKeyGenMechanism);
+
+				// Common Private Key Attributes
+				bool bAlwaysSensitive = osobject->getAttribute(CKA_SENSITIVE)->getBooleanValue();
+				bOK = bOK && osobject->setAttribute(CKA_ALWAYS_SENSITIVE,bAlwaysSensitive);
+				bool bNeverExtractable =  osobject->getAttribute(CKA_EXTRACTABLE)->getBooleanValue() == false;
+				bOK = bOK && osobject->setAttribute(CKA_NEVER_EXTRACTABLE, bNeverExtractable);
+
+				// RSA Private Key Attributes
+				ByteString modulus;
+				ByteString publicExponent;
+				ByteString privateExponent;
+				ByteString prime1;
+				ByteString prime2;
+				ByteString exponent1;
+				ByteString exponent2;
+				ByteString coefficient;
+				if (isPrivateKeyPrivate)
+				{
+					token->encrypt(priv->getN(), modulus);
+					token->encrypt(priv->getE(), publicExponent);
+					token->encrypt(priv->getD(), privateExponent);
+					token->encrypt(priv->getP(), prime1);
+					token->encrypt(priv->getQ(), prime2);
+					token->encrypt(priv->getDP1(), exponent1);
+					token->encrypt(priv->getDQ1(), exponent2);
+					token->encrypt(priv->getPQ(), coefficient);
+				}
+				else
+				{
+					modulus = priv->getN();
+					publicExponent = priv->getE();
+					privateExponent = priv->getD();
+					prime1 = priv->getP();
+					prime2 = priv->getQ();
+					exponent1 =  priv->getDP1();
+					exponent2 = priv->getDQ1();
+					coefficient = priv->getPQ();
+				}
+				bOK = bOK && osobject->setAttribute(CKA_MODULUS, modulus);
+				bOK = bOK && osobject->setAttribute(CKA_PUBLIC_EXPONENT, publicExponent);
+				bOK = bOK && osobject->setAttribute(CKA_PRIVATE_EXPONENT, privateExponent);
+				bOK = bOK && osobject->setAttribute(CKA_PRIME_1, prime1);
+				bOK = bOK && osobject->setAttribute(CKA_PRIME_2, prime2);
+				bOK = bOK && osobject->setAttribute(CKA_EXPONENT_1,exponent1);
+				bOK = bOK && osobject->setAttribute(CKA_EXPONENT_2, exponent2);
+				bOK = bOK && osobject->setAttribute(CKA_COEFFICIENT, coefficient);
+
+				if (bOK)
+					bOK = osobject->commitTransaction();
+				else
+					osobject->abortTransaction();
+
+				if (!bOK)
+					rv = CKR_FUNCTION_FAILED;
+			}
+		}
+	}
 
 	// Clean up
 	rsa->recycleKeyPair(kp);
 	CryptoFactory::i()->recycleAsymmetricAlgorithm(rsa);
 
-	return CKR_FUNCTION_NOT_SUPPORTED;
-}
-
-// Save the public RSA key
-CK_RV SoftHSM::saveGeneratedRSA
-(
-	Session* session,
-	CK_ATTRIBUTE_PTR pKeyTemplate,
-	CK_ULONG ulKeyAttributeCount,
-	RSAPublicKey* rsa,
-	CK_BBOOL isToken,
-	CK_OBJECT_HANDLE_PTR phKey
-)
-{
-	CK_RV rv;
-	OSObject* object = NULL;
-
-	if (session == NULL || phKey == NULL) return CKR_GENERAL_ERROR;
-
-	if (isToken)
+	// Remove keys that may have been created already when the function fails.
+	if (rv != CKR_OK)
 	{
-		object = (OSObject*) session->getToken()->createObject();
+		if (*phPrivateKey != CK_INVALID_HANDLE)
+		{
+			OSObject* priv = (OSObject*)handleManager->getObject(*phPrivateKey);
+			handleManager->destroyObject(*phPrivateKey);
+			if (priv) priv->destroyObject();
+			*phPrivateKey = CK_INVALID_HANDLE;
+		}
+
+		if (*phPublicKey != CK_INVALID_HANDLE)
+		{
+			OSObject* pub = (OSObject*)handleManager->getObject(*phPublicKey);
+			handleManager->destroyObject(*phPublicKey);
+			if (pub) pub->destroyObject();
+			*phPublicKey = CK_INVALID_HANDLE;
+		}
 	}
-	else
-	{
-		object = SessionObjectStore::i()->createObject(session->getHandle());
-	}
-	if (object == NULL) return CKR_GENERAL_ERROR;
 
-	P11RSAPublicKeyObj* p11Pub = new P11RSAPublicKeyObj(object);
-	rv = p11Pub->saveGeneratedKey(pKeyTemplate, ulKeyAttributeCount, rsa, session->getToken());
-
-	delete p11Pub;
-	delete object;
-
-	if (rv != CKR_OK) return rv;
-
-	// TODO: Set the phKey
-
-	return CKR_OK;
+	return rv;
 }
 
 // Generate an DSA key pair
 CK_RV SoftHSM::generateDSA
-(
-	Session* session,
+(CK_SESSION_HANDLE hSession,
 	CK_ATTRIBUTE_PTR pPublicKeyTemplate,
 	CK_ULONG ulPublicKeyAttributeCount,
 	CK_ATTRIBUTE_PTR pPrivateKeyTemplate,
 	CK_ULONG ulPrivateKeyAttributeCount,
 	CK_OBJECT_HANDLE_PTR phPublicKey,
 	CK_OBJECT_HANDLE_PTR phPrivateKey,
-	CK_BBOOL isToken
-)
+	CK_BBOOL isPublicKeyOnToken,
+	CK_BBOOL isPublicKeyPrivate,
+	CK_BBOOL isPrivateKeyOnToken,
+	CK_BBOOL isPrivateKeyPrivate)
 {
 	AsymmetricKeyPair* kp = NULL;
 	DSAParameters p;
@@ -1460,7 +3086,7 @@ CK_RV SoftHSM::generateDSA
 	DSAPublicKey* pub = (DSAPublicKey*) kp->getPublicKey();
 	DSAPrivateKey* priv = (DSAPrivateKey*) kp->getPrivateKey();
 
-	// TODO: Save keys 
+	// TODO: Save keys
 
 	// Clean up
 	dsa->recycleKeyPair(kp);
@@ -1468,3 +3094,80 @@ CK_RV SoftHSM::generateDSA
 
 	return CKR_FUNCTION_NOT_SUPPORTED;
 }
+
+CK_RV SoftHSM::CreateObject(CK_SESSION_HANDLE hSession, CK_ATTRIBUTE_PTR pTemplate, CK_ULONG ulCount, CK_OBJECT_HANDLE_PTR phObject, int op)
+{
+	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
+
+	if (pTemplate == NULL_PTR) return CKR_ARGUMENTS_BAD;
+	if (phObject == NULL_PTR) return CKR_ARGUMENTS_BAD;
+
+	// Get the session
+	Session* session = (Session*)handleManager->getSession(hSession);
+	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
+
+	// Get the slot
+	Slot* slot = session->getSlot();
+	if (slot == NULL_PTR) return CKR_GENERAL_ERROR;
+
+	// Get the token
+	Token* token = session->getToken();
+	if (token == NULL_PTR) return CKR_GENERAL_ERROR;
+
+	// Extract information from the template that is needed to create the object.
+	CK_OBJECT_CLASS objClass = CKO_DATA;
+	CK_KEY_TYPE keyType = CKK_RSA;
+	CK_CERTIFICATE_TYPE certType = CKC_X_509;
+	CK_BBOOL isToken = CK_FALSE;
+	CK_BBOOL isPrivate = CK_TRUE;
+	CK_RV rv = extractObjectInformation(pTemplate,ulCount,objClass,keyType,certType, isToken, isPrivate);
+	if (rv != CKR_OK)
+	{
+		ERROR_MSG("Mandatory attribute not present in template");
+		return rv;
+	}
+
+	// Check user credentials
+	rv = haveWrite(session->getState(), isToken, isPrivate);
+	if (rv != CKR_OK)
+	{
+		if (rv == CKR_USER_NOT_LOGGED_IN)
+			INFO_MSG("User is not authorized");
+		if (rv == CKR_SESSION_READ_ONLY)
+			INFO_MSG("Session is read-only");
+
+		return rv;
+	}
+
+	std::auto_ptr< P11Object > p11object;
+	rv = newP11Object(objClass,keyType,p11object);
+	if (rv != CKR_OK)
+		return rv;
+
+	// Create the object in session or on the token
+	OSObject *object = NULL_PTR;
+	if (isToken)
+	{
+		object = (OSObject*) token->createObject();
+	}
+	else
+	{
+		object = sessionObjectStore->createObject(slot->getSlotID(), hSession, isPrivate);
+	}
+	if (object == NULL) return CKR_GENERAL_ERROR;
+
+	p11object->init(object);
+
+	rv = p11object->saveTemplate(token, isPrivate, pTemplate,ulCount,op);
+	if (rv != CKR_OK)
+		return rv;
+
+	if (isToken) {
+		*phObject = handleManager->addTokenObject(slot->getSlotID(), isPrivate, object);
+	} else {
+		*phObject = handleManager->addSessionObject(slot->getSlotID(), hSession, isPrivate, object);
+	}
+
+	return CKR_OK;
+}
+

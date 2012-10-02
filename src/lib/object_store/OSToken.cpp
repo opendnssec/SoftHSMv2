@@ -321,7 +321,18 @@ std::set<ObjectFile*> OSToken::getObjects()
 	// the object list when we return it
 	MutexLocker lock(tokenMutex);
 
-	return objects;
+    return objects;
+}
+
+void OSToken::getObjects(std::set<OSObject*> &objects)
+{
+    index();
+
+    // Make sure that no other thread is in the process of changing
+    // the object list when we return it
+    MutexLocker lock(tokenMutex);
+
+    objects.insert(this->objects.begin(),this->objects.end());
 }
 
 // Create a new object

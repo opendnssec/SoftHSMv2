@@ -8,6 +8,7 @@ AM_CPPFLAGS = 			-I$(srcdir)/cryptoki_compat \
 				-I$(srcdir)/slot_mgr \
 				-I$(srcdir)/session_mgr \
 				-I$(srcdir)/data_mgr \
+				-I$(srcdir)/handle_mgr \
 				-I$(srcdir)/crypto
 
 lib_LTLIBRARIES =		libsofthsm.la
@@ -20,6 +21,7 @@ libsofthsm_la_SOURCES =		access.cpp \
 libsofthsm_la_LIBADD =		common/libsofthsm_common.la \
 				crypto/libsofthsm_crypto.la \
 				data_mgr/libsofthsm_datamgr.la \
+				handle_mgr/libsofthsm_handlemgr.la \
 				object_store/libsofthsm_objectstore.la \
 				session_mgr/libsofthsm_sessionmgr.la \
 				slot_mgr/libsofthsm_slotmgr.la
@@ -41,6 +43,7 @@ SUBDIRS = 			common \
 				object_store \
 				session_mgr \
 				slot_mgr \
+				handle_mgr \
 				test
 
 EXTRA_DIST =			$(srcdir)/*.h \

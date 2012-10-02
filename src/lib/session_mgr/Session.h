@@ -36,7 +36,9 @@
 #define _SOFTHSM_V2_SESSION_H
 
 #include "Slot.h"
+#include "FindOperation.h"
 #include "HashAlgorithm.h"
+#include "AsymmetricAlgorithm.h"
 #include "Token.h"
 #include "cryptoki.h"
 
@@ -76,9 +78,29 @@ public:
 	void setOpType(int operation);
 	void resetOp();
 
+	// Find
+	void setFindOp(FindOperation *findOp);
+	FindOperation *getFindOp();
+
 	// Digest
 	void setDigestOp(HashAlgorithm* digestOp);
 	HashAlgorithm* getDigestOp();
+
+	// Asymetric Crypto
+	void setAsymmetricCryptoOp(AsymmetricAlgorithm* asymmetricCryptoOp);
+	AsymmetricAlgorithm* getAsymmetricCryptoOp();
+
+	void setMechanism(const char *mechanism);
+	const char *getMechanism();
+
+	void setIsMultiPartOp(bool isMultiPartOp);
+	bool getIsMultiPartOp();
+
+	void setPublicKey(PublicKey* publicKey);
+	PublicKey* getPublicKey();
+
+	void setPrivateKey(PrivateKey* privateKey);
+	PrivateKey* getPrivateKey();
 
 private:
 	// Constructor
@@ -99,9 +121,18 @@ private:
 	// Operations
 	int operation;
 
+	// Find
+	FindOperation *findOp;
+
 	// Digest
 	HashAlgorithm* digestOp;
+
+	// Asymetric Crypto
+	AsymmetricAlgorithm* asymmetricCryptoOp;
+	const char * mechanism;
+	bool isMultiPartOp;
+	PublicKey* publicKey;
+	PrivateKey* privateKey;
 };
 
 #endif // !_SOFTHSM_V2_SESSION_H
-

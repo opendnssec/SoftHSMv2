@@ -43,6 +43,8 @@ CPPUNIT_TEST_SUITE_REGISTRATION(SessionTests);
 
 void SessionTests::setUp()
 {
+//    printf("\nSessionTests\n");
+
 	setenv("SOFTHSM2_CONF", "./softhsm2.conf", 1);
 
 	CK_UTF8CHAR pin[] = SLOT_0_SO1_PIN;
@@ -66,40 +68,40 @@ void SessionTests::tearDown()
 
 void SessionTests::testOpenSession()
 {
-	CK_RV rv;
+    CK_RV rv;
 	CK_SESSION_HANDLE hSession;
 
-	// Just make sure that we finalize any previous tests
+    // Just make sure that we finalize any previous tests
 	C_Finalize(NULL_PTR);
 
 	rv = C_OpenSession(SLOT_INIT_TOKEN, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSession);
 	CPPUNIT_ASSERT(rv == CKR_CRYPTOKI_NOT_INITIALIZED);
 
-	rv = C_Initialize(NULL_PTR);
+    rv = C_Initialize(NULL_PTR);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	rv = C_OpenSession(SLOT_INIT_TOKEN, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, NULL_PTR);
+    rv = C_OpenSession(SLOT_INIT_TOKEN, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, NULL_PTR);
 	CPPUNIT_ASSERT(rv == CKR_ARGUMENTS_BAD);
 
-	rv = C_OpenSession(SLOT_INVALID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSession);
+    rv = C_OpenSession(SLOT_INVALID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSession);
 	CPPUNIT_ASSERT(rv == CKR_SLOT_ID_INVALID);
 
-	rv = C_OpenSession(SLOT_NO_INIT_TOKEN, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSession);
+    rv = C_OpenSession(SLOT_NO_INIT_TOKEN, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSession);
 	CPPUNIT_ASSERT(rv == CKR_TOKEN_NOT_RECOGNIZED);
 
-	rv = C_OpenSession(SLOT_INIT_TOKEN, 0, NULL_PTR, NULL_PTR, &hSession);
+    rv = C_OpenSession(SLOT_INIT_TOKEN, 0, NULL_PTR, NULL_PTR, &hSession);
 	CPPUNIT_ASSERT(rv == CKR_SESSION_PARALLEL_NOT_SUPPORTED);
 
-	rv = C_OpenSession(SLOT_INIT_TOKEN, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSession);
+    rv = C_OpenSession(SLOT_INIT_TOKEN, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSession);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	rv = C_CloseSession(hSession);
+    rv = C_CloseSession(hSession);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 }
 
 void SessionTests::testCloseSession()
 {
-	CK_RV rv;
+    CK_RV rv;
 	CK_SESSION_HANDLE hSession;
 
 	// Just make sure that we finalize any previous tests
@@ -163,40 +165,40 @@ void SessionTests::testCloseAllSessions()
 
 void SessionTests::testGetSessionInfo()
 {
-	CK_RV rv;
+    CK_RV rv;
 	CK_SESSION_HANDLE hSession;
 	CK_SESSION_INFO info;
 
 	// Just make sure that we finalize any previous tests
 	C_Finalize(NULL_PTR);
 
-	rv = C_GetSessionInfo(hSession, &info);
+    rv = C_GetSessionInfo(hSession, &info);
 	CPPUNIT_ASSERT(rv == CKR_CRYPTOKI_NOT_INITIALIZED);
 
-	rv = C_Initialize(NULL_PTR);
+    rv = C_Initialize(NULL_PTR);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	rv = C_OpenSession(SLOT_INIT_TOKEN, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSession);
+    rv = C_OpenSession(SLOT_INIT_TOKEN, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSession);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	rv = C_GetSessionInfo(CK_INVALID_HANDLE, &info);
+    rv = C_GetSessionInfo(CK_INVALID_HANDLE, &info);
 	CPPUNIT_ASSERT(rv == CKR_SESSION_HANDLE_INVALID);
 
-	rv = C_GetSessionInfo(hSession + 1, &info);
+    rv = C_GetSessionInfo(hSession + 1, &info);
 	CPPUNIT_ASSERT(rv == CKR_SESSION_HANDLE_INVALID);
 
 	rv = C_GetSessionInfo(hSession, NULL_PTR);
 	CPPUNIT_ASSERT(rv == CKR_ARGUMENTS_BAD);
 
-	rv = C_GetSessionInfo(hSession, &info);
+    rv = C_GetSessionInfo(hSession, &info);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	CPPUNIT_ASSERT(info.state == CKS_RO_PUBLIC_SESSION);
+    CPPUNIT_ASSERT(info.state == CKS_RO_PUBLIC_SESSION);
 	CPPUNIT_ASSERT(info.flags == CKF_SERIAL_SESSION);
 
-	rv = C_CloseSession(hSession);
+    rv = C_CloseSession(hSession);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	rv = C_GetSessionInfo(hSession, &info);
+    rv = C_GetSessionInfo(hSession, &info);
 	CPPUNIT_ASSERT(rv == CKR_SESSION_HANDLE_INVALID);
 }

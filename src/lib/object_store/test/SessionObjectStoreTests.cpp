@@ -35,6 +35,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <cppunit/extensions/HelperMacros.h>
+#include <memory>
 #include "SessionObjectStoreTests.h"
 #include "SessionObjectStore.h"
 #include "SessionObject.h"
@@ -46,8 +47,10 @@ CPPUNIT_TEST_SUITE_REGISTRATION(SessionObjectStoreTests);
 
 void SessionObjectStoreTests::setUp()
 {
+#if HAVE_SOS_SINGLETON
 	// Clear the session object store
 	SessionObjectStore::i()->clearStore();
+#endif
 }
 
 void SessionObjectStoreTests::tearDown()
@@ -63,16 +66,16 @@ void SessionObjectStoreTests::testCreateDeleteObjects()
 	ByteString serial = "1234567890";
 
 	// Get access to the session object store
-	SessionObjectStore* testStore = SessionObjectStore::i();
+    std::auto_ptr<SessionObjectStore> testStore( new SessionObjectStore );
 
-	CPPUNIT_ASSERT(testStore != NULL);
+    CPPUNIT_ASSERT(testStore.get() != NULL);
 
 	// Create 3 objects in the store
-	SessionObject* obj1 = testStore->createObject(1);
+    SessionObject* obj1 = testStore->createObject(1, 1);
 	CPPUNIT_ASSERT(obj1 != NULL);
-	SessionObject* obj2 = testStore->createObject(1);
+    SessionObject* obj2 = testStore->createObject(1, 1);
 	CPPUNIT_ASSERT(obj2 != NULL);
-	SessionObject* obj3 = testStore->createObject(1);
+    SessionObject* obj3 = testStore->createObject(1, 1);
 	CPPUNIT_ASSERT(obj3 != NULL);
 
 	// Now set the IDs of the 3 objects
@@ -161,7 +164,7 @@ void SessionObjectStoreTests::testCreateDeleteObjects()
 void SessionObjectStoreTests::testMultiSession()
 {
 	// Get access to the store
-	SessionObjectStore* store = SessionObjectStore::i();
+    std::auto_ptr<SessionObjectStore> store( new SessionObjectStore );
 
 	// Check that the store is empty
 	CPPUNIT_ASSERT(store->getObjects().size() == 0);
@@ -171,11 +174,11 @@ void SessionObjectStoreTests::testMultiSession()
 	OSAttribute idAtt[5] = { id[0], id[1], id[2], id[3], id[4] };
 
 	// Create 3 objects in the store for three different sessions
-	SessionObject* obj1 = store->createObject(1);
+    SessionObject* obj1 = store->createObject(1, 1);
 	CPPUNIT_ASSERT(obj1 != NULL);
-	SessionObject* obj2 = store->createObject(2);
+    SessionObject* obj2 = store->createObject(1, 2);
 	CPPUNIT_ASSERT(obj2 != NULL);
-	SessionObject* obj3 = store->createObject(3);
+    SessionObject* obj3 = store->createObject(1, 3);
 	CPPUNIT_ASSERT(obj3 != NULL);
 
 	// Now set the IDs of the 3 objects
@@ -247,9 +250,9 @@ void SessionObjectStoreTests::testMultiSession()
 	}
 
 	// Create two more objects for session 7
-	SessionObject* obj4 = store->createObject(7);
+    SessionObject* obj4 = store->createObject(1, 7);
 	CPPUNIT_ASSERT(obj4 != NULL);
-	SessionObject* obj5 = store->createObject(7);
+    SessionObject* obj5 = store->createObject(1, 7);
 	CPPUNIT_ASSERT(obj5 != NULL);
 
 	CPPUNIT_ASSERT(store->getObjects().size() == 4);
@@ -296,17 +299,18 @@ void SessionObjectStoreTests::testMultiSession()
 void SessionObjectStoreTests::testWipeStore()
 {
 	// Get access to the store
-	SessionObjectStore* store = SessionObjectStore::i();
+    std::auto_ptr<SessionObjectStore> store( new SessionObjectStore );
+
 
 	// Check that the store is empty
 	CPPUNIT_ASSERT(store->getObjects().size() == 0);
 
 	// Create 3 objects in the store for three different sessions
-	SessionObject* obj1 = store->createObject(1);
+    SessionObject* obj1 = store->createObject(1, 1);
 	CPPUNIT_ASSERT(obj1 != NULL);
-	SessionObject* obj2 = store->createObject(2);
+    SessionObject* obj2 = store->createObject(1, 2);
 	CPPUNIT_ASSERT(obj2 != NULL);
-	SessionObject* obj3 = store->createObject(3);
+    SessionObject* obj3 = store->createObject(1, 3);
 	CPPUNIT_ASSERT(obj3 != NULL);
 
 	// Wipe the store
