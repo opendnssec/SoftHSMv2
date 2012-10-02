@@ -56,7 +56,131 @@
 #include "HandleManager.h"
 #include "P11Objects.h"
 
+static CK_RV newP11Object(CK_OBJECT_CLASS objClass, CK_KEY_TYPE keyType, std::auto_ptr< P11Object > &p11object)
+{
+	switch(objClass) {
+		case CKO_DATA:
+			p11object.reset( new P11DataObj);
+			break;
+		case CKO_CERTIFICATE:
+			p11object.reset( new P11X509CertificateObj );
+			break;
+		case CKO_PUBLIC_KEY:
+			if (keyType == CKK_RSA)
+				p11object.reset( new P11RSAPublicKeyObj );
+			else
+				return CKR_ATTRIBUTE_VALUE_INVALID;
+			break;
+		case CKO_PRIVATE_KEY:
+			// we need to know the type too
+			if (keyType == CKK_RSA)
+				p11object.reset( new P11RSAPrivateKeyObj );
+			else
+				return CKR_ATTRIBUTE_VALUE_INVALID;
+			break;
+		case CKO_SECRET_KEY:
+#if 0
+			p11object.reset( new P11SecretKeyObj );
+			break;
+#endif
+		default:
+			return CKR_ATTRIBUTE_VALUE_INVALID; // invalid value for a valid argument
+	}
+	return CKR_OK;
+}
 
+static CK_RV extractObjectInformation(CK_ATTRIBUTE_PTR pTemplate, CK_ULONG ulCount,
+									   CK_OBJECT_CLASS &objClass,
+									   CK_KEY_TYPE &keyType,
+									   CK_CERTIFICATE_TYPE &certType,
+									   CK_BBOOL &isToken,
+									   CK_BBOOL &isPrivate)
+{
+	bool bHasClass = false;
+	bool bHasKeyType = false;
+	bool bHasCertType = false;
+
+	// Extract object information
+	for (CK_ULONG i = 0; i < ulCount; ++i)
+	{
+		switch (pTemplate[i].type)
+		{
+			case CKA_CLASS:
+				if (pTemplate[i].ulValueLen == sizeof(CK_OBJECT_CLASS))
+				{
+					objClass = *(CK_OBJECT_CLASS_PTR)pTemplate[i].pValue;
+					bHasClass = true;
+				}
+			case CKA_KEY_TYPE:
+				if (pTemplate[i].ulValueLen == sizeof(CK_KEY_TYPE))
+				{
+					keyType = *(CK_KEY_TYPE*)pTemplate[i].pValue;
+					bHasKeyType = true;
+				}
+				break;
+			case CKA_CERTIFICATE_TYPE:
+				if (pTemplate[i].ulValueLen == sizeof(CK_CERTIFICATE_TYPE))
+				{
+					certType = *(CK_CERTIFICATE_TYPE*)pTemplate[i].pValue;
+					bHasCertType = true;
+				}
+				break;
+			case CKA_TOKEN:
+				if (pTemplate[i].ulValueLen == sizeof(CK_BBOOL))
+				{
+					isToken = *(CK_BBOOL*)pTemplate[i].pValue;
+				}
+				break;
+			case CKA_PRIVATE:
+				if (pTemplate[i].ulValueLen == sizeof(CK_BBOOL))
+				{
+					isPrivate = *(CK_BBOOL*)pTemplate[i].pValue;
+				}
+				break;
+			default:
+				break;
+		}
+	}
+
+	if (!bHasClass)
+	{
+		return CKR_TEMPLATE_INCOMPLETE;
+	}
+
+	bool bKeyTypeRequired = (objClass == CKO_PUBLIC_KEY || objClass == CKO_PRIVATE_KEY || objClass == CKO_SECRET_KEY);
+	if (bKeyTypeRequired && !bHasKeyType)
+	{
+		 return CKR_TEMPLATE_INCOMPLETE;
+	}
+
+	bool bCertTypeRequired = (objClass == CKO_CERTIFICATE);
+	if (bCertTypeRequired && !bHasCertType)
+	{
+		return CKR_TEMPLATE_INCOMPLETE;
+	}
+
+	return CKR_OK;
+}
+
+static CK_RV newP11Object(OSObject *object, std::auto_ptr< P11Object > &p11object)
+{
+	CK_OBJECT_CLASS objClass = object->getAttribute(CKA_CLASS)->getUnsignedLongValue();
+	CK_KEY_TYPE keyType = CKK_RSA;
+	if (object->attributeExists(CKA_KEY_TYPE))
+		keyType = object->getAttribute(keyType)->getUnsignedLongValue();
+	CK_RV rv = newP11Object(objClass,keyType,p11object);
+	if (rv != CKR_OK)
+		return rv;
+	if (!p11object->init(object))
+		return CKR_GENERAL_ERROR; // something went wrong that shouldn't have.
+	return CKR_OK;
+}
+
+static CK_ATTRIBUTE bsAttribute(CK_ATTRIBUTE_TYPE type, const ByteString &value)
+{
+	CK_ATTRIBUTE attr = {type, (CK_VOID_PTR)value.const_byte_str(), value.size() };
+	return attr;
+}
 
 /*****************************************************************************
  Implementation of SoftHSM class specific functions
@@ -330,6 +454,7 @@ CK_RV SoftHSM::C_GetMechanismList(CK_SLOT_ID slotID, CK_MECHANISM_TYPE_PTR pMech
 		CKM_RSA_X_509,
 		CKM_MD5_RSA_PKCS,
 		CKM_SHA1_RSA_PKCS,
+		CKM_RSA_PKCS_OAEP,
 		CKM_SHA256_RSA_PKCS,
 		CKM_SHA512_RSA_PKCS,
 		CKM_DES_KEY_GEN,
@@ -459,6 +584,11 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 			pInfo->ulMinKeySize = rsaMinSize;
 			pInfo->ulMaxKeySize = rsaMaxSize;
 			pInfo->flags = CKF_SIGN | CKF_VERIFY;
+			break;
+		case CKM_RSA_PKCS_OAEP:
+			pInfo->ulMinKeySize = rsaMinSize;
+			pInfo->ulMaxKeySize = rsaMaxSize;
+			pInfo->flags = CKF_ENCRYPT | CKF_DECRYPT;
 			break;
 		case CKM_DES_KEY_GEN:
 		case CKM_DES2_KEY_GEN:
@@ -776,129 +906,6 @@ CK_RV SoftHSM::C_Logout(CK_SESSION_HANDLE hSession)
 	handleManager->tokenLoggedOut(slotID);
 	sessionObjectStore->tokenLoggedOut(slotID);
 
-	return CKR_OK;
-}
-
-
-CK_RV newP11Object(CK_OBJECT_CLASS objClass, CK_KEY_TYPE keyType, std::auto_ptr< P11Object > &p11object)
-{
-	switch(objClass) {
-		case CKO_DATA:
-			p11object.reset( new P11DataObj);
-			break;
-		case CKO_CERTIFICATE:
-			p11object.reset( new P11X509CertificateObj );
-			break;
-		case CKO_PUBLIC_KEY:
-			if (keyType == CKK_RSA)
-				p11object.reset( new P11RSAPublicKeyObj );
-			else
-				return CKR_ATTRIBUTE_VALUE_INVALID;
-			break;
-		case CKO_PRIVATE_KEY:
-			// we need to know the type too
-			if (keyType == CKK_RSA)
-				p11object.reset( new P11RSAPrivateKeyObj );
-			else
-				return CKR_ATTRIBUTE_VALUE_INVALID;
-			break;
-		case CKO_SECRET_KEY:
-#if 0
-			p11object.reset( new P11SecretKeyObj );
-			break;
-#endif
-		default:
-			return CKR_ATTRIBUTE_VALUE_INVALID; // invalid value for a valid argument
-	}
-	return CKR_OK;
-}
-
-CK_RV extractObjectInformation(CK_ATTRIBUTE_PTR pTemplate, CK_ULONG ulCount,
-							   CK_OBJECT_CLASS &objClass,
-							   CK_KEY_TYPE &keyType,
-							   CK_CERTIFICATE_TYPE &certType,
-							   CK_BBOOL &isToken,
-							   CK_BBOOL &isPrivate)
-{
-	bool bHasClass = false;
-	bool bHasKeyType = false;
-	bool bHasCertType = false;
-
-	// Extract object information
-	for (CK_ULONG i = 0; i < ulCount; ++i)
-	{
-		switch (pTemplate[i].type)
-		{
-			case CKA_CLASS:
-				if (pTemplate[i].ulValueLen == sizeof(CK_OBJECT_CLASS))
-				{
-					objClass = *(CK_OBJECT_CLASS_PTR)pTemplate[i].pValue;
-					bHasClass = true;
-				}
-			case CKA_KEY_TYPE:
-				if (pTemplate[i].ulValueLen == sizeof(CK_KEY_TYPE))
-				{
-					keyType = *(CK_KEY_TYPE*)pTemplate[i].pValue;
-					bHasKeyType = true;
-				}
-				break;
-			case CKA_CERTIFICATE_TYPE:
-				if (pTemplate[i].ulValueLen == sizeof(CK_CERTIFICATE_TYPE))
-				{
-					certType = *(CK_CERTIFICATE_TYPE*)pTemplate[i].pValue;
-					bHasCertType = true;
-				}
-				break;
-			case CKA_TOKEN:
-				if (pTemplate[i].ulValueLen == sizeof(CK_BBOOL))
-				{
-					isToken = *(CK_BBOOL*)pTemplate[i].pValue;
-				}
-				break;
-			case CKA_PRIVATE:
-				if (pTemplate[i].ulValueLen == sizeof(CK_BBOOL))
-				{
-					isPrivate = *(CK_BBOOL*)pTemplate[i].pValue;
-				}
-				break;
-			default:
-				break;
-		}
-	}
-
-	if (!bHasClass)
-	{
-		return CKR_TEMPLATE_INCOMPLETE;
-	}
-
-	bool bKeyTypeRequired = (objClass == CKO_PUBLIC_KEY || objClass == CKO_PRIVATE_KEY || objClass == CKO_SECRET_KEY);
-	if (bKeyTypeRequired && !bHasKeyType)
-	{
-		 return CKR_TEMPLATE_INCOMPLETE;
-	}
-
-	bool bCertTypeRequired = (objClass == CKO_CERTIFICATE);
-	if (bCertTypeRequired && !bHasCertType)
-	{
-		return CKR_TEMPLATE_INCOMPLETE;
-	}
-
-	return CKR_OK;
-}
-
-
-
-CK_RV newP11Object(OSObject *object, std::auto_ptr< P11Object > &p11object)
-{
-	CK_OBJECT_CLASS objClass = object->getAttribute(CKA_CLASS)->getUnsignedLongValue();
-	CK_KEY_TYPE keyType = CKK_RSA;
-	if (object->attributeExists(CKA_KEY_TYPE))
-		keyType = object->getAttribute(keyType)->getUnsignedLongValue();
-	CK_RV rv = newP11Object(objClass,keyType,p11object);
-	if (rv != CKR_OK)
-		return rv;
-	if (!p11object->init(object))
-		return CKR_GENERAL_ERROR; // something went wrong that shouldn't have.
 	return CKR_OK;
 }
 
@@ -2736,12 +2743,6 @@ CK_RV SoftHSM::C_CancelFunction(CK_SESSION_HANDLE hSession)
 CK_RV SoftHSM::C_WaitForSlotEvent(CK_FLAGS flags, CK_SLOT_ID_PTR pSlot, CK_VOID_PTR pReserved)
 {
 	return CKR_FUNCTION_NOT_SUPPORTED;
-}
-
-static CK_ATTRIBUTE bsAttribute(CK_ATTRIBUTE_TYPE type, const ByteString &value)
-{
-	CK_ATTRIBUTE attr = {type, (CK_VOID_PTR)value.const_byte_str(), value.size() };
-	return attr;
 }
 
 // Generate an RSA key pair
