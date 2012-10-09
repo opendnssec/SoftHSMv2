@@ -88,11 +88,11 @@ bool OSSLRSA::sign(PrivateKey* privateKey, const ByteString& dataToSign, ByteStr
 		// modulus size
 		OSSLRSAPrivateKey* osslKey = (OSSLRSAPrivateKey*) privateKey;
 
-		size_t allowedLen = (osslKey->getN().size() * 40) / 100;
+		size_t allowedLen = osslKey->getN().size() - 11;
 
 		if (dataToSign.size() > allowedLen)
 		{
-			ERROR_MSG("Data to sign exceeds 40% of modulus size for PKCS #1 signature");
+			ERROR_MSG("Data to sign exceeds maximum for PKCS #1 signature");
 
 			return false;
 		}
