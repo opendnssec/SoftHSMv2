@@ -167,7 +167,7 @@ static CK_RV newP11Object(OSObject *object, std::auto_ptr< P11Object > &p11objec
 	CK_OBJECT_CLASS objClass = object->getAttribute(CKA_CLASS)->getUnsignedLongValue();
 	CK_KEY_TYPE keyType = CKK_RSA;
 	if (object->attributeExists(CKA_KEY_TYPE))
-		keyType = object->getAttribute(keyType)->getUnsignedLongValue();
+		keyType = object->getAttribute(CKA_KEY_TYPE)->getUnsignedLongValue();
 	CK_RV rv = newP11Object(objClass,keyType,p11object);
 	if (rv != CKR_OK)
 		return rv;
