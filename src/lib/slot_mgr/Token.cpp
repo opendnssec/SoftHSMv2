@@ -110,6 +110,8 @@ bool Token::isUserLoggedIn()
 // Login SO
 CK_RV Token::loginSO(ByteString& pin)
 {
+	CK_ULONG flags;
+
 	// Lock access to the token
 	MutexLocker lock(tokenMutex);
 
@@ -121,12 +123,31 @@ CK_RV Token::loginSO(ByteString& pin)
 	// SO cannot be logged in
 	if (sdm->isSOLoggedIn()) return CKR_USER_ALREADY_LOGGED_IN;
 
-	return sdm->loginSO(pin) ? CKR_OK : CKR_PIN_INCORRECT;
+	// Get token flags
+	if (!token->getTokenFlags(flags))
+	{
+		ERROR_MSG("Could not get the token flags");
+		return CKR_GENERAL_ERROR;
+	}
+
+	// Login
+	if (!sdm->loginSO(pin))
+	{
+		flags |= CKF_SO_PIN_COUNT_LOW;
+		token->setTokenFlags(flags);
+		return CKR_PIN_INCORRECT;
+	}
+
+	flags &= ~CKF_SO_PIN_COUNT_LOW;
+	token->setTokenFlags(flags);
+	return CKR_OK;
 }
 
 // Login user
 CK_RV Token::loginUser(ByteString& pin)
 {
+	CK_ULONG flags;
+
 	// Lock access to the token
 	MutexLocker lock(tokenMutex);
 
@@ -141,7 +162,24 @@ CK_RV Token::loginUser(ByteString& pin)
 	// The user PIN has to be initialized;
 	if (sdm->getUserPINBlob().size() == 0) return CKR_USER_PIN_NOT_INITIALIZED;
 
-	return sdm->loginUser(pin) ? CKR_OK : CKR_PIN_INCORRECT;
+	// Get token flags
+	if (!token->getTokenFlags(flags))
+	{
+		ERROR_MSG("Could not get the token flags");
+		return CKR_GENERAL_ERROR;
+	}
+
+	// Login
+	if (!sdm->loginUser(pin))
+	{
+		flags |= CKF_USER_PIN_COUNT_LOW;
+		token->setTokenFlags(flags);
+		return CKR_PIN_INCORRECT;
+	}
+
+	flags &= ~CKF_USER_PIN_COUNT_LOW;
+	token->setTokenFlags(flags);
+	return CKR_OK;
 }
 
 // Logout any user on this token;
@@ -158,16 +196,30 @@ void Token::logout()
 // Change SO PIN
 CK_RV Token::setSOPIN(ByteString& oldPIN, ByteString& newPIN)
 {
+	CK_ULONG flags;
+
 	// Lock access to the token
 	MutexLocker lock(tokenMutex);
 
 	if (sdm == NULL) return CKR_GENERAL_ERROR;
 
+	// Get token flags
+	if (!token->getTokenFlags(flags))
+	{
+		ERROR_MSG("Could not get the token flags");
+		return CKR_GENERAL_ERROR;
+	}
+
 	// Verify oldPIN
 	SecureDataManager* verifier = new SecureDataManager(sdm->getSOPINBlob(), sdm->getUserPINBlob());
 	bool result = verifier->loginSO(oldPIN);
 	delete verifier;
-	if (result == false) return CKR_PIN_INCORRECT;
+	if (result == false)
+	{
+		flags |= CKF_SO_PIN_COUNT_LOW;
+		token->setTokenFlags(flags);
+		return CKR_PIN_INCORRECT;
+	}
 
 	if (sdm->setSOPIN(newPIN) == false) return CKR_GENERAL_ERROR;
 
@@ -177,12 +229,17 @@ CK_RV Token::setSOPIN(ByteString& oldPIN, ByteString& newPIN)
 	ByteString soPINBlob, userPINBlob;
 	valid = token->getSOPIN(soPINBlob) && token->getUserPIN(userPINBlob);
 
+	flags &= ~CKF_SO_PIN_COUNT_LOW;
+	token->setTokenFlags(flags);
+
 	return CKR_OK;
 }
 
 // Change the user PIN
 CK_RV Token::setUserPIN(ByteString& oldPIN, ByteString& newPIN)
 {
+	CK_ULONG flags;
+
 	// Lock access to the token
 	MutexLocker lock(tokenMutex);
 
@@ -191,10 +248,19 @@ CK_RV Token::setUserPIN(ByteString& oldPIN, ByteString& newPIN)
 	// Check if user should stay logged in
 	bool stayLoggedIn = sdm->isUserLoggedIn();
 
+	// Get token flags
+	if (!token->getTokenFlags(flags))
+	{
+		ERROR_MSG("Could not get the token flags");
+		return CKR_GENERAL_ERROR;
+	}
+
 	// Verify oldPIN
 	SecureDataManager* newSdm = new SecureDataManager(sdm->getSOPINBlob(), sdm->getUserPINBlob());
 	if (newSdm->loginUser(oldPIN) == false)
 	{
+		flags |= CKF_USER_PIN_COUNT_LOW;
+		token->setTokenFlags(flags);
 		delete newSdm;
 		return CKR_PIN_INCORRECT;
 	}
@@ -223,6 +289,9 @@ CK_RV Token::setUserPIN(ByteString& oldPIN, ByteString& newPIN)
 	ByteString soPINBlob, userPINBlob;
 	valid = token->getSOPIN(soPINBlob) && token->getUserPIN(userPINBlob);
 
+	flags &= ~CKF_USER_PIN_COUNT_LOW;
+	token->setTokenFlags(flags);
+
 	return CKR_OK;
 }
 
@@ -248,6 +317,8 @@ CK_RV Token::initUserPIN(ByteString& pin)
 // Create a new token
 CK_RV Token::createToken(ObjectStore* objectStore, ByteString& soPIN, CK_UTF8CHAR_PTR label)
 {
+	CK_ULONG flags;
+
 	// Lock access to the token
 	MutexLocker lock(tokenMutex);
 
@@ -256,10 +327,19 @@ CK_RV Token::createToken(ObjectStore* objectStore, ByteString& soPIN, CK_UTF8CHA
 
 	if (token != NULL)
 	{
+		// Get token flags
+		if (!token->getTokenFlags(flags))
+		{
+			ERROR_MSG("Could not get the token flags");
+			return CKR_GENERAL_ERROR;
+		}
+
 		if (sdm->getSOPINBlob().size() > 0 && !sdm->loginSO(soPIN))
 		{
-			ERROR_MSG("Incorrect SO PIN");
+			flags |= CKF_SO_PIN_COUNT_LOW;
+			token->setTokenFlags(flags);
 
+			ERROR_MSG("Incorrect SO PIN");
 			return CKR_PIN_INCORRECT;
 		}
 
@@ -267,7 +347,6 @@ CK_RV Token::createToken(ObjectStore* objectStore, ByteString& soPIN, CK_UTF8CHA
 		if (!objectStore->destroyToken(token))
 		{
 			ERROR_MSG("Failed to destroy existing token");
-
 			return CKR_DEVICE_ERROR;
 		}
 

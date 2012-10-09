@@ -729,8 +729,6 @@ CK_RV SoftHSM::C_SetPIN(CK_SESSION_HANDLE hSession, CK_UTF8CHAR_PTR pOldPin, CK_
 			return CKR_SESSION_READ_ONLY;
 	}
 
-	// TODO: Should we keep track of unsuccessful login attempts?
-
 	return rv;
 }
 
@@ -874,8 +872,6 @@ CK_RV SoftHSM::C_Login(CK_SESSION_HANDLE hSession, CK_USER_TYPE userType, CK_UTF
 		default:
 			return CKR_USER_TYPE_INVALID;
 	}
-
-	// TODO: Should we keep track of unsuccessful login attempts?
 
 	return rv;
 }
