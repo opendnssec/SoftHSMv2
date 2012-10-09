@@ -1266,6 +1266,10 @@ CK_RV SoftHSM::C_EncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMecha
 	OSObject *key = (OSObject *)handleManager->getObject(hKey);
 	if (key == NULL_PTR) return CKR_OBJECT_HANDLE_INVALID;
 
+	// Check if key can be used for encryption
+        if (!key->attributeExists(CKA_ENCRYPT) || key->getAttribute(CKA_ENCRYPT)->getBooleanValue() == false)
+		return CKR_KEY_FUNCTION_NOT_PERMITTED;
+
 	// Get the asymmetric algorithm matching the mechanism
 	const char *mechanism;
 	switch(pMechanism->mechanism) {
@@ -1446,6 +1450,10 @@ CK_RV SoftHSM::C_DecryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMecha
 	// Check the key handle.
 	OSObject *key = (OSObject *)handleManager->getObject(hKey);
 	if (key == NULL_PTR) return CKR_OBJECT_HANDLE_INVALID;
+
+	// Check if key can be used for decryption
+        if (!key->attributeExists(CKA_DECRYPT) || key->getAttribute(CKA_DECRYPT)->getBooleanValue() == false)
+		return CKR_KEY_FUNCTION_NOT_PERMITTED;
 
 	// Get the asymmetric algorithm matching the mechanism
 	const char *mechanism;
@@ -1854,6 +1862,10 @@ CK_RV SoftHSM::C_SignInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechanis
 	OSObject *key = (OSObject *)handleManager->getObject(hKey);
 	if (key == NULL_PTR) return CKR_OBJECT_HANDLE_INVALID;
 
+	// Check if key can be used for signing
+        if (!key->attributeExists(CKA_SIGN) || key->getAttribute(CKA_SIGN)->getBooleanValue() == false)
+		return CKR_KEY_FUNCTION_NOT_PERMITTED;
+
 	// Get the asymmetric algorithm matching the mechanism
 	const char *mechanism;
 	bool bIsMultiPartOp;
@@ -2186,6 +2198,10 @@ CK_RV SoftHSM::C_VerifyInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechan
 	// Check the key handle.
 	OSObject *key = (OSObject *)handleManager->getObject(hKey);
 	if (key == NULL_PTR) return CKR_OBJECT_HANDLE_INVALID;
+
+	// Check if key can be used for verifying
+        if (!key->attributeExists(CKA_VERIFY) || key->getAttribute(CKA_VERIFY)->getBooleanValue() == false)
+		return CKR_KEY_FUNCTION_NOT_PERMITTED;
 
 	// Get the asymmetric algorithm matching the mechanism
 	const char *mechanism;
