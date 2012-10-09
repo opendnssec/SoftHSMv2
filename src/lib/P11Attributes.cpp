@@ -170,7 +170,19 @@ CK_RV P11Attribute::retrieve(Token *token, bool isPrivate, CK_VOID_PTR pValue, C
 			ERROR_MSG("Internal error: attribute has fixed size");
 			return CKR_GENERAL_ERROR;
 		}
-		attrSize = attr->getByteStringValue().size();
+
+		if (isPrivate)
+		{
+			ByteString value;
+			if (!token->decrypt(attr->getByteStringValue(),value))
+			{
+				ERROR_MSG("Internal error: failed to decrypt private attribute value");
+				return CKR_GENERAL_ERROR;
+			}
+			attrSize = value.size();
+		}
+		else
+			attrSize = attr->getByteStringValue().size();
 	}
 
 	// [PKCS#11 v2.3 pg.131 C_GetAttributeValue]
