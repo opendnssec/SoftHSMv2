@@ -49,7 +49,7 @@ bool DSAPrivateKey::isOfType(const char* type)
 // Get the output length
 unsigned long DSAPrivateKey::getOutputLength() const
 {
-	return 40;
+	return getQ().size() * 2;
 }
 
 

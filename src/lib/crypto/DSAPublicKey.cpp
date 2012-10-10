@@ -49,7 +49,7 @@ bool DSAPublicKey::isOfType(const char* type)
 // Get the output length
 unsigned long DSAPublicKey::getOutputLength() const
 {
-	return 40;
+	return getQ().size() * 2;
 }
 
 // Setters for the DSA public key components
