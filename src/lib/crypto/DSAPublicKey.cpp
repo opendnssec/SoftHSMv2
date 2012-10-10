@@ -46,6 +46,12 @@ bool DSAPublicKey::isOfType(const char* type)
 	return !strcmp(this->type, type);
 }
 
+// Get the output length
+unsigned long DSAPublicKey::getOutputLength() const
+{
+	return 40;
+}
+
 // Setters for the DSA public key components
 void DSAPublicKey::setP(const ByteString& p)
 {

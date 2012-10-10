@@ -46,6 +46,13 @@ bool RSAPublicKey::isOfType(const char* type)
 	return !strcmp(this->type, type);
 }
 
+// Get the output length
+unsigned long RSAPublicKey::getOutputLength() const
+{
+	return getN().size();
+}
+
+
 // Setters for the RSA public key components
 void RSAPublicKey::setN(const ByteString& n)
 {

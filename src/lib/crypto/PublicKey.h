@@ -53,6 +53,9 @@ public:
 	// Check if it is of the given type
 	virtual bool isOfType(const char* type) = 0;
 
+	// Get the output length
+	virtual unsigned long getOutputLength() const = 0;
+
 	// Serialisation
 	virtual ByteString serialise() const = 0;
 };

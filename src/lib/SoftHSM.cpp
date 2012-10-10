@@ -1345,15 +1345,15 @@ CK_RV SoftHSM::C_Encrypt(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pData, CK_ULONG
 
 	AsymmetricAlgorithm* asymCrypto = session->getAsymmetricCryptoOp();
 	const char *mechanism = session->getMechanism();
-	RSAPublicKey* publicKey = (RSAPublicKey*)session->getPublicKey(); // TODO: make more generic to allow DSA
+	PublicKey* publicKey = session->getPublicKey();
 	if (asymCrypto == NULL || mechanism == NULL || session->getIsMultiPartOp() || publicKey == NULL)
 	{
 		session->resetOp();
 		return CKR_OPERATION_NOT_INITIALIZED;
 	}
 
-	// Size of the encrypted data for RSA determined by the size of the modulus.
-	CK_ULONG size = publicKey->getN().size();
+	// Size of the encrypted data
+	CK_ULONG size = publicKey->getOutputLength();
 
 	if (pEncryptedData == NULL_PTR)
 	{
@@ -1555,15 +1555,15 @@ CK_RV SoftHSM::C_Decrypt(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pEncryptedData,
 
 	AsymmetricAlgorithm* asymCrypto = session->getAsymmetricCryptoOp();
 	const char *mechanism = session->getMechanism();
-	RSAPrivateKey* privateKey = (RSAPrivateKey*)session->getPrivateKey();
+	PrivateKey* privateKey = session->getPrivateKey();
 	if (asymCrypto == NULL || mechanism == NULL || session->getIsMultiPartOp() || privateKey == NULL)
 	{
 		session->resetOp();
 		return CKR_OPERATION_NOT_INITIALIZED;
 	}
 
-	// Size of the data for RSA determined by the size of the modulus.
-	CK_ULONG size = privateKey->getN().size();
+	// Size of the data
+	CK_ULONG size = privateKey->getOutputLength();
 	if (pData == NULL_PTR)
 	{
 		*pulDataLen = size;
@@ -1990,15 +1990,15 @@ CK_RV SoftHSM::C_Sign(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pData, CK_ULONG ul
 
 	AsymmetricAlgorithm* asymCrypto = session->getAsymmetricCryptoOp();
 	const char *mechanism = session->getMechanism();
-	RSAPrivateKey* privateKey = (RSAPrivateKey*)session->getPrivateKey(); 	// TODO: make more generic to allow DSA
+	PrivateKey* privateKey = session->getPrivateKey();
 	if (asymCrypto == NULL || mechanism == NULL || session->getIsMultiPartOp() || privateKey == NULL)
 	{
 		session->resetOp();
 		return CKR_OPERATION_NOT_INITIALIZED;
 	}
 
-	// Size of the signature for RSA determined by the size of the modulus.
-	CK_ULONG size = privateKey->getN().size();
+	// Size of the signature
+	CK_ULONG size = privateKey->getOutputLength();
 	if (pSignature == NULL_PTR)
 	{
 		*pulSignatureLen = size;
@@ -2100,15 +2100,15 @@ CK_RV SoftHSM::C_SignFinal(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pSignature, C
 		return CKR_OPERATION_NOT_INITIALIZED;
 
 	AsymmetricAlgorithm* asymCrypto = session->getAsymmetricCryptoOp();
-	RSAPrivateKey* privateKey = (RSAPrivateKey*)session->getPrivateKey(); 	// TODO: make more generic to allow DSA
+	PrivateKey* privateKey = session->getPrivateKey();
 	if (asymCrypto == NULL || privateKey == NULL)
 	{
 		session->resetOp();
 		return CKR_OPERATION_NOT_INITIALIZED;
 	}
 
-	// Size of the signature for RSA determined by the size of the modulus.
-	CK_ULONG size = privateKey->getN().size();
+	// Size of the signature
+	CK_ULONG size = privateKey->getOutputLength();
 	if (pSignature == NULL_PTR)
 	{
 		*pulSignatureLen = size;
@@ -2302,15 +2302,15 @@ CK_RV SoftHSM::C_Verify(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pData, CK_ULONG 
 
 	AsymmetricAlgorithm* asymCrypto = session->getAsymmetricCryptoOp();
 	const char *mechanism = session->getMechanism();
-	RSAPublicKey* publicKey = (RSAPublicKey*)session->getPublicKey(); // TODO: make more generic to allow DSA
+	PublicKey* publicKey = session->getPublicKey();
 	if (asymCrypto == NULL || mechanism == NULL || session->getIsMultiPartOp() || publicKey == NULL)
 	{
 		session->resetOp();
 		return CKR_OPERATION_NOT_INITIALIZED;
 	}
 
-	// Size of the signature for RSA determined by the size of the modulus.
-	CK_ULONG size = publicKey->getN().size();
+	// Size of the signature
+	CK_ULONG size = publicKey->getOutputLength();
 
 	// Check buffer size
 	if (ulSignatureLen != size)
@@ -2398,15 +2398,15 @@ CK_RV SoftHSM::C_VerifyFinal(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pSignature,
 		return CKR_OPERATION_NOT_INITIALIZED;
 
 	AsymmetricAlgorithm* asymCrypto = session->getAsymmetricCryptoOp();
-	RSAPublicKey* publicKey = (RSAPublicKey*)session->getPublicKey(); // TODO: make more generic to allow DSA
+	PublicKey* publicKey = session->getPublicKey();
 	if (asymCrypto == NULL || publicKey == NULL)
 	{
 		session->resetOp();
 		return CKR_OPERATION_NOT_INITIALIZED;
 	}
 
-	// Size of the signature for RSA determined by the size of the modulus.
-	CK_ULONG size = publicKey->getN().size();
+	// Size of the signature
+	CK_ULONG size = publicKey->getOutputLength();
 
 	// Check buffer size
 	if (ulSignatureLen != size)

@@ -46,6 +46,13 @@ bool DSAPrivateKey::isOfType(const char* type)
 	return !strcmp(this->type, type);
 }
 
+// Get the output length
+unsigned long DSAPrivateKey::getOutputLength() const
+{
+	return 40;
+}
+
+
 // Setters for the DSA private key components
 void DSAPrivateKey::setX(const ByteString& x)
 {
