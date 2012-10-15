@@ -1279,6 +1279,23 @@ CK_RV SoftHSM::C_EncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMecha
 			isRSA = true;
 			break;
 		case CKM_RSA_PKCS_OAEP:
+			if (pMechanism->pParameter == NULL_PTR ||
+			    pMechanism->ulParameterLen != sizeof(CK_RSA_PKCS_OAEP_PARAMS))
+			{
+				DEBUG_MSG("pParameter must be of type CK_RSA_PKCS_OAEP_PARAMS");
+				return CKR_ARGUMENTS_BAD;
+			}
+			if (CK_RSA_PKCS_OAEP_PARAMS_PTR(pMechanism->pParameter)->hashAlg != CKM_SHA_1)
+			{
+				DEBUG_MSG("hashAlg must be CKM_SHA_1");
+				return CKR_ARGUMENTS_BAD;
+			}
+			if (CK_RSA_PKCS_OAEP_PARAMS_PTR(pMechanism->pParameter)->mgf != CKG_MGF1_SHA1)
+			{
+				DEBUG_MSG("mgf must be CKG_MGF1_SHA1");
+				return CKR_ARGUMENTS_BAD;
+			}
+
 			mechanism = "rsa-pkcs-oaep";
 			isRSA = true;
 			break;
@@ -1458,6 +1475,23 @@ CK_RV SoftHSM::C_DecryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMecha
 			isRSA = true;
 			break;
 		case CKM_RSA_PKCS_OAEP:
+			if (pMechanism->pParameter == NULL_PTR ||
+			    pMechanism->ulParameterLen != sizeof(CK_RSA_PKCS_OAEP_PARAMS))
+			{
+				DEBUG_MSG("pParameter must be of type CK_RSA_PKCS_OAEP_PARAMS");
+				return CKR_ARGUMENTS_BAD;
+			}
+			if (CK_RSA_PKCS_OAEP_PARAMS_PTR(pMechanism->pParameter)->hashAlg != CKM_SHA_1)
+			{
+				DEBUG_MSG("hashAlg must be CKM_SHA_1");
+				return CKR_ARGUMENTS_BAD;
+			}
+			if (CK_RSA_PKCS_OAEP_PARAMS_PTR(pMechanism->pParameter)->mgf != CKG_MGF1_SHA1)
+			{
+				DEBUG_MSG("mgf must be CKG_MGF1_SHA1");
+				return CKR_ARGUMENTS_BAD;
+			}
+
 			mechanism = "rsa-pkcs-oaep";
 			isRSA = true;
 			break;
