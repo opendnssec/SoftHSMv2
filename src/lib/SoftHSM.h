@@ -42,6 +42,9 @@
 #include "SessionManager.h"
 #include "SlotManager.h"
 #include "HandleManager.h"
+#include "RSAPublicKey.h"
+#include "RSAPrivateKey.h"
+
 #include <memory>
 
 class SoftHSM
@@ -213,5 +216,8 @@ private:
 		CK_OBJECT_HANDLE_PTR phObject,
 		int op
 	);
+
+	CK_RV getRSAPrivateKey(RSAPrivateKey* privateKey, Token* token, OSObject* key);
+	CK_RV getRSAPublicKey(RSAPublicKey* publicKey, Token* token, OSObject* key);
 };
 

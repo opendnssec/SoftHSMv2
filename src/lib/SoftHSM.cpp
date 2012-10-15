@@ -1268,53 +1268,49 @@ CK_RV SoftHSM::C_EncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMecha
 
 	// Get the asymmetric algorithm matching the mechanism
 	const char *mechanism;
+	bool isRSA = false;
 	switch(pMechanism->mechanism) {
 		case CKM_RSA_PKCS:
 			mechanism = "rsa-pkcs";
+			isRSA = true;
 			break;
 		case CKM_RSA_X_509:
 			mechanism = "rsa-raw";
+			isRSA = true;
 			break;
 		case CKM_RSA_PKCS_OAEP:
 			mechanism = "rsa-pkcs-oaep";
+			isRSA = true;
 			break;
 		default:
 			return CKR_MECHANISM_INVALID;
 	}
-	AsymmetricAlgorithm* asymCrypto = CryptoFactory::i()->getAsymmetricAlgorithm("rsa");
-	if (asymCrypto == NULL) return CKR_MECHANISM_INVALID;
 
-	// Retrieve the private key atrtibutes from the private key object
-	RSAPublicKey* publicKey = (RSAPublicKey*)asymCrypto->newPublicKey();
-	if (publicKey == NULL)
+	AsymmetricAlgorithm* asymCrypto = NULL;
+	PublicKey* publicKey = NULL;
+	if (isRSA)
 	{
-		CryptoFactory::i()->recycleAsymmetricAlgorithm(asymCrypto);
-		return CKR_HOST_MEMORY;
-	}
+		asymCrypto = CryptoFactory::i()->getAsymmetricAlgorithm("rsa");
+		if (asymCrypto == NULL) return CKR_MECHANISM_INVALID;
 
-	// Get the CKA_PRIVATE attribute, when the attribute is not present use default false
-	OSAttribute* attr = key->getAttribute(CKA_PRIVATE);
-	bool isKeyPrivate = (attr != NULL && attr->getBooleanValue());
+		publicKey = asymCrypto->newPublicKey();
+		if (publicKey == NULL)
+		{
+			CryptoFactory::i()->recycleAsymmetricAlgorithm(asymCrypto);
+			return CKR_HOST_MEMORY;
+		}
 
-	// RSA Public Key Attributes
-	ByteString modulus;
-	ByteString publicExponent;
-	if (isKeyPrivate)
-	{
-		bool bOK = true;
-		bOK = bOK && token->decrypt(key->getAttribute(CKA_MODULUS)->getByteStringValue(), modulus);
-		bOK = bOK && token->decrypt(key->getAttribute(CKA_PUBLIC_EXPONENT)->getByteStringValue(), publicExponent);
-		if (!bOK)
+		if (getRSAPublicKey((RSAPublicKey*)publicKey, token, key) != CKR_OK)
+		{
+			asymCrypto->recyclePublicKey(publicKey);
+			CryptoFactory::i()->recycleAsymmetricAlgorithm(asymCrypto);
 			return CKR_GENERAL_ERROR;
+		}
 	}
 	else
 	{
-		modulus = key->getAttribute(CKA_MODULUS)->getByteStringValue();
-		publicExponent = key->getAttribute(CKA_PUBLIC_EXPONENT)->getByteStringValue();
-	}
-
-	publicKey->setN(modulus);
-	publicKey->setE(publicExponent);
+		return CKR_MECHANISM_INVALID;
+        }
 
 	session->setOpType(SESSION_OP_ENCRYPT);
 	session->setAsymmetricCryptoOp(asymCrypto);
@@ -1453,78 +1449,49 @@ CK_RV SoftHSM::C_DecryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMecha
 
 	// Get the asymmetric algorithm matching the mechanism
 	const char *mechanism;
+	bool isRSA = false;
 	switch(pMechanism->mechanism) {
 		case CKM_RSA_PKCS:
 			mechanism = "rsa-pkcs";
+			isRSA = true;
 			break;
 		case CKM_RSA_X_509:
 			mechanism = "rsa-raw";
+			isRSA = true;
 			break;
 		case CKM_RSA_PKCS_OAEP:
 			mechanism = "rsa-pkcs-oaep";
+			isRSA = true;
 			break;
 		default:
 			return CKR_MECHANISM_INVALID;
 	}
-	AsymmetricAlgorithm* asymCrypto = CryptoFactory::i()->getAsymmetricAlgorithm("rsa");
-	if (asymCrypto == NULL) return CKR_MECHANISM_INVALID;
 
-	// Retrieve the sensitive key atrtibutes from the private key object
-	RSAPrivateKey* privateKey = (RSAPrivateKey*)asymCrypto->newPrivateKey();
-	if (privateKey == NULL)
+	AsymmetricAlgorithm* asymCrypto = NULL;
+	PrivateKey* privateKey = NULL;
+	if (isRSA)
 	{
-		CryptoFactory::i()->recycleAsymmetricAlgorithm(asymCrypto);
-		return CKR_HOST_MEMORY;
-	}
+		asymCrypto = CryptoFactory::i()->getAsymmetricAlgorithm("rsa");
+		if (asymCrypto == NULL) return CKR_MECHANISM_INVALID;
 
-	// Get the CKA_PRIVATE attribute, when the attribute is not present use default false
-	OSAttribute* attr = key->getAttribute(CKA_PRIVATE);
-	bool isKeyPrivate = (attr != NULL && attr->getBooleanValue());
+		privateKey = asymCrypto->newPrivateKey();
+		if (privateKey == NULL)
+		{
+			CryptoFactory::i()->recycleAsymmetricAlgorithm(asymCrypto);
+			return CKR_HOST_MEMORY;
+		}
 
-
-	// RSA Private Key Attributes
-	ByteString modulus;
-	ByteString publicExponent;
-	ByteString privateExponent;
-	ByteString prime1;
-	ByteString prime2;
-	ByteString exponent1;
-	ByteString exponent2;
-	ByteString coefficient;
-	if (isKeyPrivate)
-	{
-		bool bOK = true;
-		bOK = bOK && token->decrypt(key->getAttribute(CKA_MODULUS)->getByteStringValue(), modulus);
-		bOK = bOK && token->decrypt(key->getAttribute(CKA_PUBLIC_EXPONENT)->getByteStringValue(), publicExponent);
-		bOK = bOK && token->decrypt(key->getAttribute(CKA_PRIVATE_EXPONENT)->getByteStringValue(), privateExponent);
-		bOK = bOK && token->decrypt(key->getAttribute(CKA_PRIME_1)->getByteStringValue(), prime1);
-		bOK = bOK && token->decrypt(key->getAttribute(CKA_PRIME_2)->getByteStringValue(), prime2);
-		bOK = bOK && token->decrypt(key->getAttribute(CKA_EXPONENT_1)->getByteStringValue(), exponent1);
-		bOK = bOK && token->decrypt(key->getAttribute(CKA_EXPONENT_2)->getByteStringValue(), exponent2);
-		bOK = bOK && token->decrypt(key->getAttribute(CKA_COEFFICIENT)->getByteStringValue(), coefficient);
-		if (!bOK)
+		if (getRSAPrivateKey((RSAPrivateKey*)privateKey, token, key) != CKR_OK)
+		{
+			asymCrypto->recyclePrivateKey(privateKey);
+			CryptoFactory::i()->recycleAsymmetricAlgorithm(asymCrypto);
 			return CKR_GENERAL_ERROR;
+		}
 	}
 	else
 	{
-		modulus = key->getAttribute(CKA_MODULUS)->getByteStringValue();
-		publicExponent = key->getAttribute(CKA_PUBLIC_EXPONENT)->getByteStringValue();
-		privateExponent = key->getAttribute(CKA_PRIVATE_EXPONENT)->getByteStringValue();
-		prime1 = key->getAttribute(CKA_PRIME_1)->getByteStringValue();
-		prime2 = key->getAttribute(CKA_PRIME_2)->getByteStringValue();
-		exponent1 =  key->getAttribute(CKA_EXPONENT_1)->getByteStringValue();
-		exponent2 = key->getAttribute(CKA_EXPONENT_2)->getByteStringValue();
-		coefficient = key->getAttribute(CKA_COEFFICIENT)->getByteStringValue();
-	}
-
-	privateKey->setN(modulus);
-	privateKey->setE(publicExponent);
-	privateKey->setD(privateExponent);
-	privateKey->setP(prime1);
-	privateKey->setQ(prime2);
-	privateKey->setDP1(exponent1);
-	privateKey->setDQ1(exponent2);
-	privateKey->setPQ(coefficient);
+		return CKR_MECHANISM_INVALID;
+        }
 
 	session->setOpType(SESSION_OP_DECRYPT);
 	session->setAsymmetricCryptoOp(asymCrypto);
@@ -1865,93 +1832,67 @@ CK_RV SoftHSM::C_SignInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechanis
 	// Get the asymmetric algorithm matching the mechanism
 	const char *mechanism;
 	bool bIsMultiPartOp;
+	bool isRSA = false;
 	switch(pMechanism->mechanism) {
 		case CKM_RSA_PKCS:
 			mechanism = "rsa-pkcs";
 			bIsMultiPartOp = false;
+			isRSA = true;
 			break;
 		case CKM_RSA_X_509:
-			mechanism = "rsa";
+			mechanism = "rsa-raw";
 			bIsMultiPartOp = false;
+			isRSA = true;
 			break;
 		case CKM_MD5_RSA_PKCS:
 			mechanism = "rsa-md5-pkcs";
 			bIsMultiPartOp = true;
+			isRSA = true;
 			break;
 		case CKM_SHA1_RSA_PKCS:
 			mechanism = "rsa-sha1-pkcs";
 			bIsMultiPartOp = true;
+			isRSA = true;
 			break;
 		case CKM_SHA256_RSA_PKCS:
 			mechanism = "rsa-sha256-pkcs";
 			bIsMultiPartOp = true;
+			isRSA = true;
 			break;
 		case CKM_SHA512_RSA_PKCS:
 			mechanism = "rsa-sha512-pkcs";
 			bIsMultiPartOp = true;
+			isRSA = true;
 			break;
 		default:
 			return CKR_MECHANISM_INVALID;
 	}
-	AsymmetricAlgorithm* asymCrypto = CryptoFactory::i()->getAsymmetricAlgorithm("rsa");
-	if (asymCrypto == NULL) return CKR_MECHANISM_INVALID;
 
-	// Retrieve the private key atrtibutes from the private key object
-	RSAPrivateKey* privateKey = (RSAPrivateKey*)asymCrypto->newPrivateKey();
-	if (privateKey == NULL)
+	AsymmetricAlgorithm* asymCrypto = NULL;
+	PrivateKey* privateKey = NULL;
+	if (isRSA)
 	{
-		CryptoFactory::i()->recycleAsymmetricAlgorithm(asymCrypto);
-		return CKR_HOST_MEMORY;
-	}
+		asymCrypto = CryptoFactory::i()->getAsymmetricAlgorithm("rsa");
+		if (asymCrypto == NULL) return CKR_MECHANISM_INVALID;
 
-	// Get the CKA_PRIVATE attribute, when the attribute is not present use default false
-	OSAttribute* attr = key->getAttribute(CKA_PRIVATE);
-	bool isKeyPrivate = (attr != NULL && attr->getBooleanValue());
+		privateKey = asymCrypto->newPrivateKey();
+		if (privateKey == NULL)
+		{
+			CryptoFactory::i()->recycleAsymmetricAlgorithm(asymCrypto);
+			return CKR_HOST_MEMORY;
+		}
 
-
-	// RSA Private Key Attributes
-	ByteString modulus;
-	ByteString publicExponent;
-	ByteString privateExponent;
-	ByteString prime1;
-	ByteString prime2;
-	ByteString exponent1;
-	ByteString exponent2;
-	ByteString coefficient;
-	if (isKeyPrivate)
-	{
-		bool bOK = true;
-		bOK = bOK && token->decrypt(key->getAttribute(CKA_MODULUS)->getByteStringValue(), modulus);
-		bOK = bOK && token->decrypt(key->getAttribute(CKA_PUBLIC_EXPONENT)->getByteStringValue(), publicExponent);
-		bOK = bOK && token->decrypt(key->getAttribute(CKA_PRIVATE_EXPONENT)->getByteStringValue(), privateExponent);
-		bOK = bOK && token->decrypt(key->getAttribute(CKA_PRIME_1)->getByteStringValue(), prime1);
-		bOK = bOK && token->decrypt(key->getAttribute(CKA_PRIME_2)->getByteStringValue(), prime2);
-		bOK = bOK && token->decrypt(key->getAttribute(CKA_EXPONENT_1)->getByteStringValue(), exponent1);
-		bOK = bOK && token->decrypt(key->getAttribute(CKA_EXPONENT_2)->getByteStringValue(), exponent2);
-		bOK = bOK && token->decrypt(key->getAttribute(CKA_COEFFICIENT)->getByteStringValue(), coefficient);
-		if (!bOK)
+		if (getRSAPrivateKey((RSAPrivateKey*)privateKey, token, key) != CKR_OK)
+		{
+			asymCrypto->recyclePrivateKey(privateKey);
+			CryptoFactory::i()->recycleAsymmetricAlgorithm(asymCrypto);
 			return CKR_GENERAL_ERROR;
+		}
 	}
 	else
 	{
-		modulus = key->getAttribute(CKA_MODULUS)->getByteStringValue();
-		publicExponent = key->getAttribute(CKA_PUBLIC_EXPONENT)->getByteStringValue();
-		privateExponent = key->getAttribute(CKA_PRIVATE_EXPONENT)->getByteStringValue();
-		prime1 = key->getAttribute(CKA_PRIME_1)->getByteStringValue();
-		prime2 = key->getAttribute(CKA_PRIME_2)->getByteStringValue();
-		exponent1 =  key->getAttribute(CKA_EXPONENT_1)->getByteStringValue();
-		exponent2 = key->getAttribute(CKA_EXPONENT_2)->getByteStringValue();
-		coefficient = key->getAttribute(CKA_COEFFICIENT)->getByteStringValue();
-	}
-
-	privateKey->setN(modulus);
-	privateKey->setE(publicExponent);
-	privateKey->setD(privateExponent);
-	privateKey->setP(prime1);
-	privateKey->setQ(prime2);
-	privateKey->setDP1(exponent1);
-	privateKey->setDQ1(exponent2);
-	privateKey->setPQ(coefficient);
+		return CKR_MECHANISM_INVALID;
+        }
 
 	// Initialize signing
 	if (bIsMultiPartOp && !asymCrypto->signInit(privateKey,mechanism))
@@ -2017,7 +1958,7 @@ CK_RV SoftHSM::C_Sign(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pData, CK_ULONG ul
 
 	// PKCS #11 Mechanisms v2.30: Cryptoki Draft 7 page 32
 	// We must allow input length <= k and therfore need to prepend the data with zeroes.
-	if (strcmp(mechanism,"rsa") == 0) {
+	if (strcmp(mechanism,"rsa-raw") == 0) {
 		data.wipe(size-ulDataLen);
 	}
 
@@ -2202,70 +2143,69 @@ CK_RV SoftHSM::C_VerifyInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechan
 	// Get the asymmetric algorithm matching the mechanism
 	const char *mechanism;
 	bool bIsMultiPartOp;
+	bool isRSA = false;
 	switch(pMechanism->mechanism) {
 		case CKM_RSA_PKCS:
 			mechanism = "rsa-pkcs";
 			bIsMultiPartOp = false;
+			isRSA = true;
 			break;
 		case CKM_RSA_X_509:
-			mechanism = "rsa";
+			mechanism = "rsa-raw";
 			bIsMultiPartOp = false;
+			isRSA = true;
 			break;
 		case CKM_MD5_RSA_PKCS:
 			mechanism = "rsa-md5-pkcs";
 			bIsMultiPartOp = true;
+			isRSA = true;
 			break;
 		case CKM_SHA1_RSA_PKCS:
 			mechanism = "rsa-sha1-pkcs";
 			bIsMultiPartOp = true;
+			isRSA = true;
 			break;
 		case CKM_SHA256_RSA_PKCS:
 			mechanism = "rsa-sha256-pkcs";
 			bIsMultiPartOp = true;
+			isRSA = true;
 			break;
 		case CKM_SHA512_RSA_PKCS:
 			mechanism = "rsa-sha512-pkcs";
 			bIsMultiPartOp = true;
+			isRSA = true;
 			break;
 		default:
 			return CKR_MECHANISM_INVALID;
 	}
-	AsymmetricAlgorithm* asymCrypto = CryptoFactory::i()->getAsymmetricAlgorithm("rsa");
-	if (asymCrypto == NULL) return CKR_MECHANISM_INVALID;
 
-	// Retrieve the private key atrtibutes from the private key object
-	RSAPublicKey* publicKey = (RSAPublicKey*)asymCrypto->newPublicKey();
-	if (publicKey == NULL)
+	AsymmetricAlgorithm* asymCrypto = NULL;
+	PublicKey* publicKey = NULL;
+	if (isRSA)
 	{
-		CryptoFactory::i()->recycleAsymmetricAlgorithm(asymCrypto);
-		return CKR_HOST_MEMORY;
-	}
+		asymCrypto = CryptoFactory::i()->getAsymmetricAlgorithm("rsa");
+		if (asymCrypto == NULL) return CKR_MECHANISM_INVALID;
 
-	// Get the CKA_PRIVATE attribute, when the attribute is not present use default false
-	OSAttribute* attr = key->getAttribute(CKA_PRIVATE);
-	bool isKeyPrivate = (attr != NULL && attr->getBooleanValue());
+		publicKey = asymCrypto->newPublicKey();
+		if (publicKey == NULL)
+		{
+			CryptoFactory::i()->recycleAsymmetricAlgorithm(asymCrypto);
+			return CKR_HOST_MEMORY;
+		}
 
-	// RSA Public Key Attributes
-	ByteString modulus;
-	ByteString publicExponent;
-	if (isKeyPrivate)
-	{
-		bool bOK = true;
-		bOK = bOK && token->decrypt(key->getAttribute(CKA_MODULUS)->getByteStringValue(), modulus);
-		bOK = bOK && token->decrypt(key->getAttribute(CKA_PUBLIC_EXPONENT)->getByteStringValue(), publicExponent);
-		if (!bOK)
+		if (getRSAPublicKey((RSAPublicKey*)publicKey, token, key) != CKR_OK)
+		{
+			asymCrypto->recyclePublicKey(publicKey);
+			CryptoFactory::i()->recycleAsymmetricAlgorithm(asymCrypto);
 			return CKR_GENERAL_ERROR;
+		}
 	}
 	else
 	{
-		modulus = key->getAttribute(CKA_MODULUS)->getByteStringValue();
-		publicExponent = key->getAttribute(CKA_PUBLIC_EXPONENT)->getByteStringValue();
-	}
+		return CKR_MECHANISM_INVALID;
+        }
 
-	publicKey->setN(modulus);
-	publicKey->setE(publicExponent);
-
-	// Initialize signing
+	// Initialize verifying
 	if (bIsMultiPartOp && !asymCrypto->verifyInit(publicKey,mechanism))
 	{
 		asymCrypto->recyclePublicKey(publicKey);
@@ -2324,7 +2264,7 @@ CK_RV SoftHSM::C_Verify(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pData, CK_ULONG 
 
 	// PKCS #11 Mechanisms v2.30: Cryptoki Draft 7 page 32
 	// We must allow input length <= k and therfore need to prepend the data with zeroes.
-	if (strcmp(mechanism,"rsa") == 0) {
+	if (strcmp(mechanism,"rsa-raw") == 0) {
 		data.wipe(size-ulDataLen);
 	}
 
@@ -3184,3 +3124,92 @@ CK_RV SoftHSM::CreateObject(CK_SESSION_HANDLE hSession, CK_ATTRIBUTE_PTR pTempla
 	return CKR_OK;
 }
 
+CK_RV SoftHSM::getRSAPrivateKey(RSAPrivateKey* privateKey, Token* token, OSObject* key)
+{
+	if (privateKey == NULL) return CKR_ARGUMENTS_BAD;
+	if (token == NULL) return CKR_ARGUMENTS_BAD;
+	if (key == NULL) return CKR_ARGUMENTS_BAD;
+
+	// Get the CKA_PRIVATE attribute, when the attribute is not present use default false
+	OSAttribute* attr = key->getAttribute(CKA_PRIVATE);
+	bool isKeyPrivate = (attr != NULL && attr->getBooleanValue());
+
+	// RSA Private Key Attributes
+	ByteString modulus;
+	ByteString publicExponent;
+	ByteString privateExponent;
+	ByteString prime1;
+	ByteString prime2;
+	ByteString exponent1;
+	ByteString exponent2;
+	ByteString coefficient;
+	if (isKeyPrivate)
+	{
+		bool bOK = true;
+		bOK = bOK && token->decrypt(key->getAttribute(CKA_MODULUS)->getByteStringValue(), modulus);
+		bOK = bOK && token->decrypt(key->getAttribute(CKA_PUBLIC_EXPONENT)->getByteStringValue(), publicExponent);
+		bOK = bOK && token->decrypt(key->getAttribute(CKA_PRIVATE_EXPONENT)->getByteStringValue(), privateExponent);
+		bOK = bOK && token->decrypt(key->getAttribute(CKA_PRIME_1)->getByteStringValue(), prime1);
+		bOK = bOK && token->decrypt(key->getAttribute(CKA_PRIME_2)->getByteStringValue(), prime2);
+		bOK = bOK && token->decrypt(key->getAttribute(CKA_EXPONENT_1)->getByteStringValue(), exponent1);
+		bOK = bOK && token->decrypt(key->getAttribute(CKA_EXPONENT_2)->getByteStringValue(), exponent2);
+		bOK = bOK && token->decrypt(key->getAttribute(CKA_COEFFICIENT)->getByteStringValue(), coefficient);
+		if (!bOK)
+			return CKR_GENERAL_ERROR;
+	}
+	else
+	{
+		modulus = key->getAttribute(CKA_MODULUS)->getByteStringValue();
+		publicExponent = key->getAttribute(CKA_PUBLIC_EXPONENT)->getByteStringValue();
+		privateExponent = key->getAttribute(CKA_PRIVATE_EXPONENT)->getByteStringValue();
+		prime1 = key->getAttribute(CKA_PRIME_1)->getByteStringValue();
+		prime2 = key->getAttribute(CKA_PRIME_2)->getByteStringValue();
+		exponent1 =  key->getAttribute(CKA_EXPONENT_1)->getByteStringValue();
+		exponent2 = key->getAttribute(CKA_EXPONENT_2)->getByteStringValue();
+		coefficient = key->getAttribute(CKA_COEFFICIENT)->getByteStringValue();
+	}
+
+	privateKey->setN(modulus);
+	privateKey->setE(publicExponent);
+	privateKey->setD(privateExponent);
+	privateKey->setP(prime1);
+	privateKey->setQ(prime2);
+	privateKey->setDP1(exponent1);
+	privateKey->setDQ1(exponent2);
+	privateKey->setPQ(coefficient);
+
+	return CKR_OK;
+}
+
+CK_RV SoftHSM::getRSAPublicKey(RSAPublicKey* publicKey, Token* token, OSObject* key)
+{
+	if (publicKey == NULL) return CKR_ARGUMENTS_BAD;
+	if (token == NULL) return CKR_ARGUMENTS_BAD;
+	if (key == NULL) return CKR_ARGUMENTS_BAD;
+
+	// Get the CKA_PRIVATE attribute, when the attribute is not present use default false
+	OSAttribute* attr = key->getAttribute(CKA_PRIVATE);
+	bool isKeyPrivate = (attr != NULL && attr->getBooleanValue());
+
+	// RSA Public Key Attributes
+	ByteString modulus;
+	ByteString publicExponent;
+	if (isKeyPrivate)
+	{
+		bool bOK = true;
+		bOK = bOK && token->decrypt(key->getAttribute(CKA_MODULUS)->getByteStringValue(), modulus);
+		bOK = bOK && token->decrypt(key->getAttribute(CKA_PUBLIC_EXPONENT)->getByteStringValue(), publicExponent);
+		if (!bOK)
+			return CKR_GENERAL_ERROR;
+	}
+	else
+	{
+		modulus = key->getAttribute(CKA_MODULUS)->getByteStringValue();
+		publicExponent = key->getAttribute(CKA_PUBLIC_EXPONENT)->getByteStringValue();
+	}
+
+	publicKey->setN(modulus);
+	publicKey->setE(publicExponent);
+
+	return CKR_OK;
+}

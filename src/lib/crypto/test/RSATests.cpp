@@ -284,10 +284,10 @@ void RSATests::testSigningVerifying()
 			dataToSign[0] &= 0x7F;
 
 			// Sign the data
-			CPPUNIT_ASSERT(rsa->sign(kp->getPrivateKey(), dataToSign, signature, "rsa"));
+			CPPUNIT_ASSERT(rsa->sign(kp->getPrivateKey(), dataToSign, signature, "rsa-raw"));
 
 			// Verify the signature
-			CPPUNIT_ASSERT(rsa->verify(kp->getPublicKey(), dataToSign, signature, "rsa"));
+			CPPUNIT_ASSERT(rsa->verify(kp->getPublicKey(), dataToSign, signature, "rsa-raw"));
 	
 			rsa->recycleKeyPair(kp);
 		}

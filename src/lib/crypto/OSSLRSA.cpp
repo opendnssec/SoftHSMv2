@@ -124,7 +124,7 @@ bool OSSLRSA::sign(PrivateKey* privateKey, const ByteString& dataToSign, ByteStr
 
 		return true;
 	}
-	else if (!lowerMechanism.compare("rsa"))
+	else if (!lowerMechanism.compare("rsa-raw"))
 	{
 		// Separate implementation for raw RSA signing
 
@@ -436,7 +436,7 @@ bool OSSLRSA::verify(PublicKey* publicKey, const ByteString& originalData, const
 
 		return (originalData == recoveredData);
 	}
-	else if (!lowerMechanism.compare("rsa"))
+	else if (!lowerMechanism.compare("rsa-raw"))
 	{
 		// Specific implementation for raw RSA verifiction; originalData is assumed to contain the
 		// full input data used to compute the signature and verification is performed by comparing

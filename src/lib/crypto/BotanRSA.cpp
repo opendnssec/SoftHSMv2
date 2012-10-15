@@ -70,7 +70,7 @@ std::string mechanism)
 	{
 		emsa = "EMSA3(Raw)";
 	}
-	else if (!lowerMechanism.compare("rsa"))
+	else if (!lowerMechanism.compare("rsa-raw"))
 	{
 		emsa = "Raw";
 	}
@@ -294,7 +294,7 @@ bool BotanRSA::verify(PublicKey* publicKey, const ByteString& originalData, cons
 	{
 		emsa = "EMSA3(Raw)";
 	}
-	else if (!lowerMechanism.compare("rsa"))
+	else if (!lowerMechanism.compare("rsa-raw"))
 	{
 		emsa = "Raw";
 	}
