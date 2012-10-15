@@ -1333,8 +1333,6 @@ CK_RV SoftHSM::C_Encrypt(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pData, CK_ULONG
 	Session* session = (Session*)handleManager->getSession(hSession);
 	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
 
-	// TODO: Should we lock the session?
-
 	// Check if we are doing the correct operation
 	if (session->getOpType() != SESSION_OP_ENCRYPT)
 		return CKR_OPERATION_NOT_INITIALIZED;
@@ -1514,8 +1512,6 @@ CK_RV SoftHSM::C_Decrypt(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pEncryptedData,
 	Session* session = (Session*)handleManager->getSession(hSession);
 	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
 
-	// TODO: Should we lock the session?
-
 	// Check if we are doing the correct operation
 	if (session->getOpType() != SESSION_OP_DECRYPT)
 		return CKR_OPERATION_NOT_INITIALIZED;
@@ -1605,8 +1601,6 @@ CK_RV SoftHSM::C_DigestInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechan
 	Session* session = (Session*)handleManager->getSession(hSession);
 	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
 
-	// TODO: Should we lock the session?
-
 	// Check if we have another operation
 	if (session->getOpType() != SESSION_OP_NONE) return CKR_OPERATION_ACTIVE;
 
@@ -1654,8 +1648,6 @@ CK_RV SoftHSM::C_Digest(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pData, CK_ULONG 
 	// Get the session
 	Session* session = (Session*)handleManager->getSession(hSession);
 	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
-
-	// TODO: Should we lock the session?
 
 	// Check if we are doing the correct operation
 	if (session->getOpType() != SESSION_OP_DIGEST) return CKR_OPERATION_NOT_INITIALIZED;
@@ -1719,8 +1711,6 @@ CK_RV SoftHSM::C_DigestUpdate(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pPart, CK_
 	Session* session = (Session*)handleManager->getSession(hSession);
 	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
 
-	// TODO: Should we lock the session?
-
 	// Check if we are doing the correct operation
 	if (session->getOpType() != SESSION_OP_DIGEST) return CKR_OPERATION_NOT_INITIALIZED;
 
@@ -1759,8 +1749,6 @@ CK_RV SoftHSM::C_DigestFinal(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pDigest, CK
 	// Get the session
 	Session* session = (Session*)handleManager->getSession(hSession);
 	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
-
-	// TODO: Should we lock the session?
 
 	// Check if we are doing the correct operation
 	if (session->getOpType() != SESSION_OP_DIGEST) return CKR_OPERATION_NOT_INITIALIZED;
@@ -1923,8 +1911,6 @@ CK_RV SoftHSM::C_Sign(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pData, CK_ULONG ul
 	Session* session = (Session*)handleManager->getSession(hSession);
 	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
 
-	// TODO: Should we lock the session?
-
 	// Check if we are doing the correct operation
 	if (session->getOpType() != SESSION_OP_SIGN)
 		return CKR_OPERATION_NOT_INITIALIZED;
@@ -1997,8 +1983,6 @@ CK_RV SoftHSM::C_SignUpdate(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pPart, CK_UL
 	Session* session = (Session*)handleManager->getSession(hSession);
 	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
 
-	// TODO: Should we lock the session?
-
 	// Check if we are doing the correct operation
 	if (session->getOpType() != SESSION_OP_SIGN || !session->getIsMultiPartOp())
 		return CKR_OPERATION_NOT_INITIALIZED;
@@ -2033,8 +2017,6 @@ CK_RV SoftHSM::C_SignFinal(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pSignature, C
 	// Get the session
 	Session* session = (Session*)handleManager->getSession(hSession);
 	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
-
-	// TODO: Should we lock the session?
 
 	// Check if we are doing the correct operation
 	if (session->getOpType() != SESSION_OP_SIGN || !session->getIsMultiPartOp())
@@ -2234,8 +2216,6 @@ CK_RV SoftHSM::C_Verify(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pData, CK_ULONG 
 	Session* session = (Session*)handleManager->getSession(hSession);
 	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
 
-	// TODO: Should we lock the session?
-
 	// Check if we are doing the correct operation
 	if (session->getOpType() != SESSION_OP_VERIFY)
 		return CKR_OPERATION_NOT_INITIALIZED;
@@ -2293,8 +2273,6 @@ CK_RV SoftHSM::C_VerifyUpdate(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pPart, CK_
 	Session* session = (Session*)handleManager->getSession(hSession);
 	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
 
-	// TODO: Should we lock the session?
-
 	// Check if we are doing the correct operation
 	if (session->getOpType() != SESSION_OP_VERIFY || !session->getIsMultiPartOp())
 		return CKR_OPERATION_NOT_INITIALIZED;
@@ -2330,8 +2308,6 @@ CK_RV SoftHSM::C_VerifyFinal(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pSignature,
 	// Get the session
 	Session* session = (Session*)handleManager->getSession(hSession);
 	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
-
-	// TODO: Should we lock the session?
 
 	// Check if we are doing the correct operation
 	if (session->getOpType() != SESSION_OP_VERIFY || !session->getIsMultiPartOp())
