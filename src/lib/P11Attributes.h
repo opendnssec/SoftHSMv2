@@ -426,7 +426,7 @@ class P11AttrStartDate : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrStartDate(OSObject* osobject) : P11Attribute(osobject) { type = CKA_START_DATE; size = sizeof(CK_DATE); checks = 0; }
+	P11AttrStartDate(OSObject* osobject) : P11Attribute(osobject) { type = CKA_START_DATE; checks = 0; }
 
 protected:
 	// Set the default value of the attribute
@@ -452,7 +452,7 @@ class P11AttrEndDate : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrEndDate(OSObject* osobject) : P11Attribute(osobject) { type = CKA_END_DATE; size = sizeof(CK_DATE); checks = 0; }
+	P11AttrEndDate(OSObject* osobject) : P11Attribute(osobject) { type = CKA_END_DATE; checks = 0; }
 
 protected:
 	// Set the default value of the attribute
