@@ -171,7 +171,7 @@ CK_RV P11Attribute::retrieve(Token *token, bool isPrivate, CK_VOID_PTR pValue, C
 			return CKR_GENERAL_ERROR;
 		}
 
-		if (isPrivate)
+		if (isPrivate && attr->getByteStringValue().size() != 0)
 		{
 			ByteString value;
 			if (!token->decrypt(attr->getByteStringValue(),value))
