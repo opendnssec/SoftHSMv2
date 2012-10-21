@@ -562,12 +562,6 @@ bool P11RSAPublicKeyObj::init(OSObject *osobject)
 	OSAttribute attrKeyType((unsigned long)CKK_RSA);
 	osobject->setAttribute(CKA_KEY_TYPE, attrKeyType);
 
-	OSAttribute attrMechType((unsigned long)CKM_RSA_PKCS_KEY_PAIR_GEN);
-	osobject->setAttribute(CKA_KEY_GEN_MECHANISM, attrMechType);
-
-	OSAttribute attrLocal(true);
-	osobject->setAttribute(CKA_LOCAL, attrLocal);
-
 	// Create parent
 	if (!P11PublicKeyObj::init(osobject)) return false;
 
@@ -679,12 +673,6 @@ bool P11RSAPrivateKeyObj::init(OSObject *osobject)
 
 	OSAttribute attrKeyType((unsigned long)CKK_RSA);
 	osobject->setAttribute(CKA_KEY_TYPE, attrKeyType);
-
-	OSAttribute attrMechType((unsigned long)CKM_RSA_PKCS_KEY_PAIR_GEN);
-	osobject->setAttribute(CKA_KEY_GEN_MECHANISM, attrMechType);
-
-	OSAttribute attrLocal(true);
-	osobject->setAttribute(CKA_LOCAL, attrLocal);
 
 	if (initialized) return true;
 
