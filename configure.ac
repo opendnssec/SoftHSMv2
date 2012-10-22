@@ -98,7 +98,7 @@ full_sysconfdir=`eval eval eval eval eval echo "${sysconfdir}" | sed "s#NONE#${p
 full_localstatedir=`eval eval eval eval eval echo "${localstatedir}" | sed "s#NONE#${prefix}#" | sed "s#NONE#${ac_default_prefix}#"`
 full_libdir=`eval eval eval eval eval echo "${libdir}" | sed "s#NONE#${prefix}#" | sed "s#NONE#${ac_default_prefix}#"`
 default_softhsm2_conf="`eval echo ${full_sysconfdir} | sed s,NONE,$ac_default_prefix,g`/softhsm2.conf"
-softhsmtokendir=${full_localstatedir}/softhsm/tokens/
+softhsmtokendir=${full_localstatedir}/lib/softhsm/tokens/
 
 # Install the library in a sub-directory
 full_libdir="$full_libdir/softhsm"
