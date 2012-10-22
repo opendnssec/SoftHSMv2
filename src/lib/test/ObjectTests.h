@@ -49,6 +49,10 @@ class ObjectTests : public CppUnit::TestFixture
 	CPPUNIT_TEST(testSetAttributeValue);
 	CPPUNIT_TEST(testFindObjects);
 	CPPUNIT_TEST(testGenerateKeys);
+	CPPUNIT_TEST(testDefaultDataAttributes);
+	CPPUNIT_TEST(testDefaultX509CertAttributes);
+	CPPUNIT_TEST(testDefaultRSAPubAttributes);
+	CPPUNIT_TEST(testDefaultRSAPrivAttributes);
 	CPPUNIT_TEST_SUITE_END();
 
 public:
@@ -58,6 +62,10 @@ public:
 	void testSetAttributeValue();
 	void testFindObjects();
 	void testGenerateKeys();
+	void testDefaultDataAttributes();
+	void testDefaultX509CertAttributes();
+	void testDefaultRSAPubAttributes();
+	void testDefaultRSAPrivAttributes();
 
 	void setUp();
 	void tearDown();
@@ -87,15 +95,15 @@ protected:
 		CK_BBOOL bTrusted,
 		CK_ULONG ulCertificateCategory,
 		CK_BYTE_PTR pCheckValue, CK_ULONG ulCheckValueLen,
-		CK_DATE startDate,
-		CK_DATE endDate
+		CK_DATE startDate, CK_ULONG ulStartDateLen,
+		CK_DATE endDate, CK_ULONG ulEndDateLen
 	);
 	void checkX509CertificateObjectAttributes
 	(	CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject,
 		CK_BYTE_PTR pSubject, CK_ULONG ulSubjectLen,
 		CK_BYTE_PTR pId, CK_ULONG ulIdLen,
 		CK_BYTE_PTR pIssuer, CK_ULONG ulIssuerLen,
-		CK_BYTE_PTR pSerialNumber, CK_ULONG ulSerialNumber,
+		CK_BYTE_PTR pSerialNumber, CK_ULONG ulSerialNumberLen,
 		CK_BYTE_PTR pValue, CK_ULONG ulValueLen,
 		CK_BYTE_PTR pUrl, CK_ULONG ulUrlLen,
 		CK_BYTE_PTR pHashOfSubjectPublicKey, CK_ULONG ulHashOfSubjectPublicKeyLen,
@@ -107,8 +115,8 @@ protected:
 	(	CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject,
 		CK_KEY_TYPE keyType,
 		CK_BYTE_PTR pId, CK_ULONG ulIdLen,
-		CK_DATE startDate,
-		CK_DATE endDate,
+		CK_DATE startDate, CK_ULONG ulStartDateLen,
+		CK_DATE endDate, CK_ULONG ulEndDateLen,
 		CK_BBOOL bDerive,
 		CK_BBOOL bLocal,
 		CK_MECHANISM_TYPE keyMechanismType,
@@ -138,6 +146,23 @@ protected:
 		CK_BBOOL bWrapWithTrusted,
 		CK_ATTRIBUTE_PTR pUnwrapTemplate, CK_ULONG ulUnwrapTemplateLen, /* len = count * sizeof(CK_ATTRIBUTE) */
 		CK_BBOOL bAlwaysAuthenticate
+	);
+	void checkCommonRSAPublicKeyAttributes
+	(	CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject,
+		CK_BYTE_PTR pModulus, CK_ULONG ulModulusLen,
+		CK_ULONG ulModulusBits,
+		CK_BYTE_PTR pPublicExponent, CK_ULONG ulPublicExponentLen
+	);
+	void checkCommonRSAPrivateKeyAttributes
+	(	CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject,
+		CK_BYTE_PTR pModulus, CK_ULONG ulModulusLen,
+		CK_BYTE_PTR pPublicExponent, CK_ULONG ulPublicExponentLen,
+		CK_BYTE_PTR pPrivateExponent, CK_ULONG ulPrivateExponentLen,
+		CK_BYTE_PTR pPrime1, CK_ULONG ulPrime1Len,
+		CK_BYTE_PTR pPrime2, CK_ULONG ulPrime2Len,
+		CK_BYTE_PTR pExponent1, CK_ULONG ulExponent1Len,
+		CK_BYTE_PTR pExponent2, CK_ULONG ulExponent2Len,
+		CK_BYTE_PTR pCoefficient, CK_ULONG ulCoefficientLen
 	);
 
 	CK_RV createDataObjectMinimal(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_OBJECT_HANDLE &hObject);
