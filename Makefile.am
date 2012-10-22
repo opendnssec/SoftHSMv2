@@ -12,3 +12,6 @@ MAINTAINERCLEANFILES = \
         $(srcdir)/config.guess $(srcdir)/config.sub
 
 SUBDIRS = src
+
+EXTRA_DIST =	$(srcdir)/m4/*.m4 \
+		$(srcdir)/LICENSE

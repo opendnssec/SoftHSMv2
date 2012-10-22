@@ -18,7 +18,10 @@ libsofthsm_common_la_SOURCES =	Configuration.cpp \
 				IPCSignal.cpp
 libsofthsm_common_la_LIBADD =	@SEMAPHORE_LIB@
 
-EXTRA_DIST =			$(srcdir)/*.h
+man_MANS =			softhsm2.conf.5
+
+EXTRA_DIST =			$(srcdir)/*.h \
+				$(srcdir)/softhsm2.conf.5.in
 
 install-data-hook:
 	test -d ${DESTDIR}${sysconfdir} || \

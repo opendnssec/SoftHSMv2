@@ -147,6 +147,7 @@ AC_DEFINE_UNQUOTED(
 )
 
 AC_SUBST([softhsmtokendir])
+AC_SUBST([default_softhsm2_conf])
 
 # Generate the libtool script and install script
 AC_PROG_INSTALL
@@ -159,6 +160,7 @@ AC_CONFIG_FILES([
 	src/lib/Makefile
 	src/lib/common/Makefile
 	src/lib/common/softhsm2.conf
+	src/lib/common/softhsm2.conf.5
 	src/lib/crypto/Makefile
 	src/lib/crypto/test/Makefile
 	src/lib/data_mgr/Makefile

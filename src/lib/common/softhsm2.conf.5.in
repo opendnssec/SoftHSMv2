@@ -1,0 +1,56 @@
+.TH softhsm2.conf 5 "22 October 2012" "SoftHSM"
+.\" $Id$
+.SH NAME
+softhsm2.conf \- SoftHSM configuration file
+.SH SYNOPSIS
+.B softhsm2.conf
+.SH DESCRIPTION
+This is the configuration file for SoftHSM. It can be found on a
+default location, but can also be relocated by using the
+environment variable. Any configuration must be done according
+to the file format found in this document.
+.SH FILE FORMAT
+Each configuration option is a pair of name and value separated by
+a equality sign. The configuration option must be located on a single line.
+.LP
+.RS
+.nf
+<name> = <value>
+.fi
+.RE
+.LP
+It is also possible to add comments in the file by using the hash sign.
+Anything after the hash sign will be ignored.
+.LP
+.RS
+.nf
+# A comment
+.RE
+.LP
+Any empty lines or lines that does not have the correct format will be ignored.
+.SH DIRECTORIES.TOKENDIR
+The location where SoftHSM can store the tokens.
+.LP
+.RS
+.nf
+directories.tokendir = @softhsmtokendir@
+.fi
+.RE
+.LP
+.SH ENVIRONMENT
+.TP
+SOFTHSM2_CONF
+When defined, the value will be used as path to the configuration file.
+.SH FILES
+.TP
+.I @default_softhsm2_conf@
+default location of the SoftHSM configuration file
+.TP
+.I @default_softhsm2_conf@.sample
+an example of a SoftHSM configuration file
+.SH AUTHOR
+Written by Rickard Bellgrim, René Post, and Roland van Rijswijk.
+.SH "SEE ALSO"
+.IR softhsm-keyconv (1),
+.IR softhsm-migrate (1),
+.IR softhsm-util (1)
