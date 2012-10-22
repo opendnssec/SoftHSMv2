@@ -2837,15 +2837,20 @@ CK_RV SoftHSM::generateRSA
 
 				// RSA Public Key Attributes
 				ByteString modulus;
+				ByteString publicExponent;
 				if (isPublicKeyPrivate)
 				{
 					token->encrypt(pub->getN(), modulus);
+					token->encrypt(pub->getE(), publicExponent);
 				}
 				else
 				{
 					modulus = pub->getN();
+					publicExponent = pub->getE();
 				}
 				bOK = bOK && osobject->setAttribute(CKA_MODULUS, modulus);
+				bOK = bOK && osobject->setAttribute(CKA_MODULUS_BITS, pub->getBitLength());
+				bOK = bOK && osobject->setAttribute(CKA_PUBLIC_EXPONENT, publicExponent);
 
 				if (bOK)
 					bOK = osobject->commitTransaction();
