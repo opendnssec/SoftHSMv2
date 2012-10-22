@@ -93,7 +93,10 @@ public:
 	// Split of the specified part of the string as a separate byte string
 	ByteString split(size_t len);
 
-	// Return the size
+	// Return the size in bits
+	size_t bits() const;
+
+	// Return the size in bytes
 	size_t size() const;
 
 	// Resize

@@ -304,6 +304,19 @@ void ByteStringTests::testSplitting()
 	CPPUNIT_ASSERT(b1.size() == 0);
 }
 
+void ByteStringTests::testBits()
+{
+	ByteString b1("0");
+	ByteString b2("08");
+	ByteString b3("00FFFFF");
+	ByteString b4("123456");
+
+	CPPUNIT_ASSERT(b1.bits() == 0);
+	CPPUNIT_ASSERT(b2.bits() == 4);
+	CPPUNIT_ASSERT(b3.bits() == 20);
+	CPPUNIT_ASSERT(b4.bits() == 21);
+}
+
 void ByteStringTests::testSerialising()
 {
 	ByteString b1("AA11AA11AA11AA11AA11AA11AA11");

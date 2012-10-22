@@ -257,7 +257,34 @@ ByteString ByteString::split(size_t len)
 	return rv;
 }
 
-// The size of the byte string
+// The size of the byte string in bits
+size_t ByteString::bits() const
+{
+	size_t bits = byteString.size() * 8;
+
+	if (bits == 0) return 0;
+
+	for (size_t i = 0; i < byteString.size(); i++)
+	{
+		unsigned char byte = byteString[i];
+
+		for (unsigned char mask = 0x80; mask > 0; mask >>= 1)
+		{
+			if ((byte & mask) == 0)
+			{
+				bits--;
+			}
+			else
+			{
+				return bits;
+			}
+		}
+	}
+
+	return bits;
+}
+
+// The size of the byte string in bytes
 size_t ByteString::size() const
 {
 	return byteString.size();

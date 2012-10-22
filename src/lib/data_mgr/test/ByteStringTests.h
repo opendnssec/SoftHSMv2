@@ -48,6 +48,7 @@ class ByteStringTests : public CppUnit::TestFixture
 	CPPUNIT_TEST(testToHexStr);
 	CPPUNIT_TEST(testLongValues);
 	CPPUNIT_TEST(testSplitting);
+	CPPUNIT_TEST(testBits);
 	CPPUNIT_TEST(testSerialising);
 	CPPUNIT_TEST_SUITE_END();
 
@@ -60,6 +61,7 @@ public:
 	void testToHexStr();
 	void testLongValues();
 	void testSplitting();
+	void testBits();
 	void testSerialising();
 
 	void setUp();
