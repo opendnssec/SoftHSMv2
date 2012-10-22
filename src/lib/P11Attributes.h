@@ -800,7 +800,7 @@ class P11AttrSensitive : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrSensitive(OSObject* osobject) : P11Attribute(osobject) { type = CKA_SENSITIVE; checks = ck8|ck9|ck11; }
+	P11AttrSensitive(OSObject* osobject) : P11Attribute(osobject) { type = CKA_SENSITIVE; size = sizeof(CK_BBOOL); checks = ck8|ck9|ck11; }
 
 protected:
 	// Set the default value of the attribute
