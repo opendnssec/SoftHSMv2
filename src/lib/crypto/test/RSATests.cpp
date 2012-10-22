@@ -80,7 +80,9 @@ void RSATests::testKeyGeneration()
 
 	// Key sizes to test
 	std::vector<size_t> keySizes;
+	keySizes.push_back(1023);
 	keySizes.push_back(1024);
+	keySizes.push_back(1025);
 	keySizes.push_back(1280);
 	keySizes.push_back(2048);
 	//keySizes.push_back(4096);
@@ -90,19 +92,19 @@ void RSATests::testKeyGeneration()
 		for (std::vector<size_t>::iterator k = keySizes.begin(); k != keySizes.end(); k++)
 		{
 			p.setE(*e);
-			p.setBitLength(*k);	
-		
+			p.setBitLength(*k);
+
 			// Generate key-pair
 			CPPUNIT_ASSERT(rsa->generateKeyPair(&kp, &p));
-		
+
 			RSAPublicKey* pub = (RSAPublicKey*) kp->getPublicKey();
 			RSAPrivateKey* priv = (RSAPrivateKey*) kp->getPrivateKey();
-		
-			CPPUNIT_ASSERT(pub->getN().size() == (*k/8));
-			CPPUNIT_ASSERT(priv->getN().size() == (*k/8));
+
+			CPPUNIT_ASSERT(pub->getBitLength() == *k);
+			CPPUNIT_ASSERT(priv->getBitLength() == *k);
 			CPPUNIT_ASSERT(pub->getE() == *e);
 			CPPUNIT_ASSERT(priv->getE() == *e);
-		
+
 			rsa->recycleKeyPair(kp);
 		}
 	}
@@ -115,7 +117,7 @@ void RSATests::testSerialisation()
 	RSAParameters p;
 
 	p.setE("010001");
-	p.setBitLength(1024);	
+	p.setBitLength(1024);
 
 	CPPUNIT_ASSERT(rsa->generateKeyPair(&kp, &p));
 	CPPUNIT_ASSERT(kp != NULL);
@@ -218,11 +220,11 @@ void RSATests::testSigningVerifying()
 		for (std::vector<size_t>::iterator k = keySizes.begin(); k != keySizes.end(); k++)
 		{
 			p.setE(*e);
-			p.setBitLength(*k);	
+			p.setBitLength(*k);
 
 			// Generate key-pair
 			CPPUNIT_ASSERT(rsa->generateKeyPair(&kp, &p));
-	
+
 			// Generate some data to sign
 			ByteString dataToSign;
 
@@ -288,7 +290,7 @@ void RSATests::testSigningVerifying()
 
 			// Verify the signature
 			CPPUNIT_ASSERT(rsa->verify(kp->getPublicKey(), dataToSign, signature, "rsa-raw"));
-	
+
 			rsa->recycleKeyPair(kp);
 		}
 	}
@@ -448,11 +450,11 @@ void RSATests::testEncryptDecrypt()
 		for (std::vector<size_t>::iterator k = keySizes.begin(); k != keySizes.end(); k++)
 		{
 			p.setE(*e);
-			p.setBitLength(*k);	
+			p.setBitLength(*k);
 
 			// Generate key-pair
 			CPPUNIT_ASSERT(rsa->generateKeyPair(&kp, &p));
-	
+
 			RNG* rng = CryptoFactory::i()->getRNG();
 
 			for (std::vector<const char*>::iterator pad = paddings.begin(); pad != paddings.end(); pad++)
@@ -495,7 +497,7 @@ void RSATests::testEncryptDecrypt()
 				// Check that the data was properly decrypted
 				CPPUNIT_ASSERT(decryptedData == testData);
 			}
-			
+
 			rsa->recycleKeyPair(kp);
 		}
 	}

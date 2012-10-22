@@ -46,6 +46,12 @@ bool DSAPublicKey::isOfType(const char* type)
 	return !strcmp(this->type, type);
 }
 
+// Get the bit length
+unsigned long DSAPublicKey::getBitLength() const
+{
+	return getP().bits();
+}
+
 // Get the output length
 unsigned long DSAPublicKey::getOutputLength() const
 {

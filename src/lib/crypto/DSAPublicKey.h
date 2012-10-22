@@ -47,6 +47,9 @@ public:
 	// Check if the key is of the given type
 	virtual bool isOfType(const char* type);
 
+	// Get the bit length
+	virtual unsigned long getBitLength() const;
+
 	// Get the output length
 	virtual unsigned long getOutputLength() const;
 

@@ -83,10 +83,16 @@ void DSATests::testKeyGeneration()
 		AsymmetricParameters** ap = (AsymmetricParameters**) &p;
 
 		CPPUNIT_ASSERT(dsa->generateParameters(ap, (void*) *k));
-	
+
 		// Generate key-pair
 		CPPUNIT_ASSERT(dsa->generateKeyPair(&kp, p));
-	
+
+		DSAPublicKey* pub = (DSAPublicKey*) kp->getPublicKey();
+		DSAPrivateKey* priv = (DSAPrivateKey*) kp->getPrivateKey();
+
+		CPPUNIT_ASSERT(pub->getBitLength() == *k);
+		CPPUNIT_ASSERT(priv->getBitLength() == *k);
+
 		dsa->recycleParameters(p);
 		dsa->recycleKeyPair(kp);
 	}
