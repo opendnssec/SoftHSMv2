@@ -71,7 +71,7 @@ INSTALLING
 
       export SOFTHSM2_CONF=/home/user/config.file
 
-    What to configure...
+    Details on the configuration can be found in "man softhsm2.conf".
 
   5. Initialize your tokens.
 
