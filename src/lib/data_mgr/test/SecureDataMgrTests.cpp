@@ -60,6 +60,7 @@ void SecureDataMgrTests::testSecureDataManager()
 	// Instantiate a blank secure data manager
 	SecureDataManager s1;
 	ByteString plaintext = "010203040506070809";
+	ByteString emptyPlaintext = "";
 	ByteString encrypted;
 
 	// Verify that no function other than setting the SO PIN works
@@ -180,5 +181,10 @@ void SecureDataMgrTests::testSecureDataManager()
 	// Check that decrypting earlier data can be done with the recreated key
 	CPPUNIT_ASSERT(s2.decrypt(encrypted, decrypted));
 	CPPUNIT_ASSERT(decrypted == plaintext);
+
+	// Check that empty plaintext can be handled
+	CPPUNIT_ASSERT(s2.encrypt(emptyPlaintext, encrypted));
+	CPPUNIT_ASSERT(s2.decrypt(encrypted, decrypted));
+	CPPUNIT_ASSERT(decrypted == emptyPlaintext);
 }
 
