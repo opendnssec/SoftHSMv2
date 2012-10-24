@@ -90,4 +90,5 @@ INSTALLING
 
 BACKUP
 
-  TODO
+  All of the tokens and their objects are stored in the location given by
+  softhsm2.conf. Backup can thus be done as a regular file copy.
