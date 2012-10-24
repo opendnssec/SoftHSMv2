@@ -2849,7 +2849,6 @@ CK_RV SoftHSM::generateRSA
 					publicExponent = pub->getE();
 				}
 				bOK = bOK && osobject->setAttribute(CKA_MODULUS, modulus);
-				bOK = bOK && osobject->setAttribute(CKA_MODULUS_BITS, pub->getBitLength());
 				bOK = bOK && osobject->setAttribute(CKA_PUBLIC_EXPONENT, publicExponent);
 
 				if (bOK)

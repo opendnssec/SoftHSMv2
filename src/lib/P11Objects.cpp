@@ -204,33 +204,6 @@ CK_RV P11Object::saveTemplate(Token *token, bool isPrivate, CK_ATTRIBUTE_PTR pTe
 			osobject->abortTransaction();
 			return rv;
 		}
-
-		// TODO: This is a workaround until there is a proper check for attributes
-		//       which affects other attributes.
-		// Set key length when importing a public RSA key
-		if (pTemplate[i].type == CKA_MODULUS &&
-		    op == OBJECT_OP_CREATE &&
-		    osobject->getAttribute(CKA_CLASS)->getUnsignedLongValue() == CKO_PUBLIC_KEY &&
-		    osobject->getAttribute(CKA_KEY_TYPE)->getUnsignedLongValue() == CKK_RSA)
-		{
-			ByteString modulus((unsigned char*)pTemplate[i].pValue, pTemplate[i].ulValueLen);
-			CK_ULONG bits = modulus.bits();
-
-			P11Attribute* modBits = attributes[CKA_MODULUS_BITS];
-			if (modBits == NULL)
-			{
-				osobject->abortTransaction();
-				return CKR_ATTRIBUTE_TYPE_INVALID;
-			}
-
-			// Using OBJECT_OP_GENERATE for now...
-			CK_RV rv = modBits->update(token, isPrivate, &bits, sizeof(bits), OBJECT_OP_GENERATE);
-			if (rv != CKR_OK)
-			{
-				osobject->abortTransaction();
-				return rv;
-			}
-		}
 	}
 
 	// [PKCS#11 v2.3 pg. 60]

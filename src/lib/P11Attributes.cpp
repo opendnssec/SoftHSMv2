@@ -1609,6 +1609,40 @@ bool P11AttrModulus::setDefault()
 	return osobject->setAttribute(type, attr);
 }
 
+// Update the value if allowed
+CK_RV P11AttrModulus::updateAttr(Token *token, bool isPrivate, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op)
+{
+	ByteString plaintext((unsigned char*)pValue, ulValueLen);
+	ByteString value;
+
+	// Encrypt
+
+	if (isPrivate)
+	{
+		if (!token->encrypt(plaintext, value))
+			return CKR_GENERAL_ERROR;
+	}
+	else
+		value = plaintext;
+
+	// Attribute specific checks
+
+	if (value.size() < ulValueLen)
+		return CKR_GENERAL_ERROR;
+
+	// Store data
+
+	osobject->setAttribute(type, value);
+
+	OSAttribute* attrClass = osobject->getAttribute(CKA_CLASS);
+	if (op == OBJECT_OP_CREATE && attrClass != NULL && attrClass->getUnsignedLongValue() == CKO_PUBLIC_KEY)
+	{
+		osobject->setAttribute(CKA_MODULUS_BITS, plaintext.bits());
+	}
+
+	return CKR_OK;
+}
+
 /*****************************************
  * CKA_PUBLIC_EXPONENT
  *****************************************/
