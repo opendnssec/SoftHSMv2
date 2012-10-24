@@ -1550,3 +1550,73 @@ void ObjectTests::testDefaultRSAPrivAttributes()
 	checkCommonPrivateKeyAttributes(hSession, hObject, NULL_PTR, 0, CK_FALSE, CK_TRUE, CK_TRUE, CK_TRUE, CK_TRUE, CK_TRUE, CK_FALSE, CK_FALSE, CK_FALSE, NULL_PTR, 0, CK_FALSE);
 	checkCommonRSAPrivateKeyAttributes(hSession, hObject, pN, sizeof(pN), NULL_PTR, 0, pD, sizeof(pD), NULL_PTR, 0, NULL_PTR, 0, NULL_PTR, 0, NULL_PTR, 0, NULL_PTR, 0);
 }
+
+void ObjectTests::testAlwaysNeverAttribute()
+{
+	CK_RV rv;
+	CK_UTF8CHAR pin[] = SLOT_0_USER1_PIN;
+	CK_ULONG pinLength = sizeof(pin) - 1;
+	CK_SESSION_HANDLE hSession;
+	CK_OBJECT_HANDLE hPuk = CK_INVALID_HANDLE;
+	CK_OBJECT_HANDLE hPrk = CK_INVALID_HANDLE;
+
+	CK_MECHANISM mechanism = { CKM_RSA_PKCS_KEY_PAIR_GEN, NULL_PTR, 0 };
+	CK_ULONG bits = 1536;
+	CK_BBOOL bFalse = CK_FALSE;
+	CK_BBOOL bTrue = CK_TRUE;
+	CK_BBOOL always;
+	CK_BBOOL never;
+	CK_ATTRIBUTE pukAttribs[] = {
+		{ CKA_MODULUS_BITS, &bits, sizeof(bits) },
+	};
+	CK_ATTRIBUTE prkAttribs[] = {
+		{ CKA_SENSITIVE, &bTrue, sizeof(bTrue) },
+		{ CKA_EXTRACTABLE, &bFalse, sizeof(bFalse) }
+	};
+
+	CK_ATTRIBUTE getTemplate[] = {
+		{ CKA_ALWAYS_SENSITIVE, &always, sizeof(always) },
+		{ CKA_NEVER_EXTRACTABLE, &never, sizeof(never) }
+	 };
+
+	// Just make sure that we finalize any previous tests
+	C_Finalize(NULL_PTR);
+
+	// Initialize the library and start the test.
+	rv = C_Initialize(NULL_PTR);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Open read-write session
+	rv = C_OpenSession(SLOT_INIT_TOKEN, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSession);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Login USER into the sessions so we can create a private objects
+	rv = C_Login(hSession, CKU_USER, pin, pinLength);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Create object
+	rv = C_GenerateKeyPair(hSession, &mechanism, pukAttribs, 1, prkAttribs, 2, &hPuk, &hPrk);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Check value
+	rv = C_GetAttributeValue(hSession, hPrk, getTemplate, 2);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	CPPUNIT_ASSERT(always == CK_TRUE);
+	CPPUNIT_ASSERT(never == CK_TRUE);
+
+	// Set value
+	rv = C_SetAttributeValue(hSession, hPrk, prkAttribs, 2);
+	CPPUNIT_ASSERT(rv == CKR_ATTRIBUTE_READ_ONLY);
+
+	// Create object
+	prkAttribs[0].pValue = &bFalse;
+	prkAttribs[1].pValue = &bTrue;
+	rv = C_GenerateKeyPair(hSession, &mechanism, pukAttribs, 1, prkAttribs, 2, &hPuk, &hPrk);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Check value
+	rv = C_GetAttributeValue(hSession, hPrk, getTemplate, 2);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	CPPUNIT_ASSERT(always == CK_FALSE);
+	CPPUNIT_ASSERT(never == CK_FALSE);
+}

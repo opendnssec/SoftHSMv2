@@ -53,6 +53,7 @@ class ObjectTests : public CppUnit::TestFixture
 	CPPUNIT_TEST(testDefaultX509CertAttributes);
 	CPPUNIT_TEST(testDefaultRSAPubAttributes);
 	CPPUNIT_TEST(testDefaultRSAPrivAttributes);
+	CPPUNIT_TEST(testAlwaysNeverAttribute);
 	CPPUNIT_TEST_SUITE_END();
 
 public:
@@ -66,6 +67,7 @@ public:
 	void testDefaultX509CertAttributes();
 	void testDefaultRSAPubAttributes();
 	void testDefaultRSAPrivAttributes();
+	void testAlwaysNeverAttribute();
 
 	void setUp();
 	void tearDown();
