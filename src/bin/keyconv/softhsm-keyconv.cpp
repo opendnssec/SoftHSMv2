@@ -93,6 +93,12 @@ int main(int argc, char* argv[])
 	char* out_path = NULL;
 	char* file_pin = NULL;
 
+	if (argc == 1)
+	{
+		usage();
+		exit(0);
+	}
+
 	while ((opt = getopt_long(argc, argv, "hv", long_options, &option_index)) != -1)
 	{
 		switch (opt)
