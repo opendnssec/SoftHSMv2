@@ -417,7 +417,7 @@ int db2session(sqlite3* db, CK_SESSION_HANDLE hSession, int noPublicKey)
 				if (noPublicKey) continue;
 				if (getKeyType(objects[i]) != CKK_RSA)
 				{
-					fprintf(stderr, "ERROR: Cannot export object %i. Only supporting RSA keys. "
+					fprintf(stderr, "ERROR: Cannot export object %lu. Only supporting RSA keys. "
 						"Continuing.\n", objects[i]);
 					result = 1;
 					break;
@@ -428,7 +428,7 @@ int db2session(sqlite3* db, CK_SESSION_HANDLE hSession, int noPublicKey)
 			case CKO_PRIVATE_KEY:
 				if (getKeyType(objects[i]) != CKK_RSA)
 				{
-					fprintf(stderr, "ERROR: Cannot export object %i. Only supporting RSA keys. "
+					fprintf(stderr, "ERROR: Cannot export object %lu. Only supporting RSA keys. "
 						"Continuing.\n", objects[i]);
 					result = 1;
 					break;
@@ -437,12 +437,12 @@ int db2session(sqlite3* db, CK_SESSION_HANDLE hSession, int noPublicKey)
 				if (rv) result = 1;
 				break;
 			case CKO_VENDOR_DEFINED:
-				fprintf(stderr, "ERROR: Could not get the class of object %i. "
+				fprintf(stderr, "ERROR: Could not get the class of object %lu. "
 						"Continuing.\n", objects[i]);
 				result = 1;
 				break;
 			default:
-				fprintf(stderr, "ERROR: Not supporting class %i in object %i. "
+				fprintf(stderr, "ERROR: Not supporting class %lu in object %lu. "
 						"Continuing.\n", ckClass, objects[i]);
 				result = 1;
 				break;
@@ -624,12 +624,12 @@ int dbRSAPub2session(sqlite3* db, CK_OBJECT_HANDLE objectID, CK_SESSION_HANDLE h
 	if (rv != CKR_OK)
 	{
 		fprintf(stderr, "ERROR %X: Could not save the public key in the token. "
-				"Skipping object %i\n", rv, objectID);
+				"Skipping object %lu\n", (unsigned int)rv, objectID);
 		result = 1;
 	}
 	else
 	{
-		printf("Object %i has been migrated\n", objectID);
+		printf("Object %lu has been migrated\n", objectID);
 	}
 
 	freeTemplate(pubTemplate, 17);
@@ -689,12 +689,12 @@ int dbRSAPriv2session(sqlite3* db, CK_OBJECT_HANDLE objectID, CK_SESSION_HANDLE 
 	if (rv != CKR_OK)
 	{
 		fprintf(stderr, "ERROR %X: Could not save the private key in the token. "
-				"Skipping object %i\n", rv, objectID);
+				"Skipping object %lu\n", (unsigned int)rv, objectID);
 		result = 1;
 	}
 	else
 	{
-		printf("Object %i has been migrated\n", objectID);
+		printf("Object %lu has been migrated\n", objectID);
 	}
 
 	freeTemplate(privTemplate, 23);
@@ -729,7 +729,7 @@ int getAttribute(CK_OBJECT_HANDLE objectRef, CK_ATTRIBUTE* attTemplate)
 			if (!attTemplate->pValue)
 			{
 				fprintf(stderr, "ERROR: Could not allocate memory. "
-						"Skipping object %i\n", objectRef);
+						"Skipping object %lu\n", objectRef);
 				retVal = 1;
 			}
 			else
@@ -743,8 +743,8 @@ int getAttribute(CK_OBJECT_HANDLE objectRef, CK_ATTRIBUTE* attTemplate)
 	}
 	else
 	{
-		fprintf(stderr, "ERROR: Do not have attribute %i. "
-				"Skipping object %i\n", attTemplate->type, objectRef);
+		fprintf(stderr, "ERROR: Do not have attribute %lu. "
+				"Skipping object %lu\n", attTemplate->type, objectRef);
 		retVal = 1;
 	}
 
