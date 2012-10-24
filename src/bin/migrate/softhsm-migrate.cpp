@@ -198,7 +198,7 @@ int migrate(char* dbPath, char* slot, char* userPIN, int noPublicKey)
 
 	// Open the database
 	db = openDB(dbPath);
-	if (!db)
+	if (db == NULL)
 	{
 		return 1;
 	}
@@ -386,6 +386,8 @@ int openP11(char* slot, char* userPIN, CK_SESSION_HANDLE* hSession)
 		}
 		return 1;
 	}
+
+	return 0;
 }
 
 // Migrate the database to the session
