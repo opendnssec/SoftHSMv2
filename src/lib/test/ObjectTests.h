@@ -54,6 +54,7 @@ class ObjectTests : public CppUnit::TestFixture
 	CPPUNIT_TEST(testDefaultRSAPubAttributes);
 	CPPUNIT_TEST(testDefaultRSAPrivAttributes);
 	CPPUNIT_TEST(testAlwaysNeverAttribute);
+	CPPUNIT_TEST(testSensitiveAttributes);
 	CPPUNIT_TEST(testGetInvalidAttribute);
 	CPPUNIT_TEST_SUITE_END();
 
@@ -69,6 +70,7 @@ public:
 	void testDefaultRSAPubAttributes();
 	void testDefaultRSAPrivAttributes();
 	void testAlwaysNeverAttribute();
+	void testSensitiveAttributes();
 	void testGetInvalidAttribute();
 
 	void setUp();
