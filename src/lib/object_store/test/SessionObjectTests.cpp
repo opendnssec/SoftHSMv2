@@ -90,6 +90,7 @@ void SessionObjectTests::testBoolAttr()
 	CPPUNIT_ASSERT(testObject.getAttribute(CKA_EXTRACTABLE)->isBooleanAttribute());
 	CPPUNIT_ASSERT(testObject.getAttribute(CKA_NEVER_EXTRACTABLE)->isBooleanAttribute());
 	CPPUNIT_ASSERT(testObject.getAttribute(CKA_SIGN)->isBooleanAttribute());
+	CPPUNIT_ASSERT(testObject.getAttribute(CKA_ID) == NULL);
 
 	CPPUNIT_ASSERT(testObject.getAttribute(CKA_TOKEN)->getBooleanValue() == true);
 	CPPUNIT_ASSERT(testObject.getAttribute(CKA_SENSITIVE)->getBooleanValue() == false);

@@ -1358,7 +1358,7 @@ void ObjectTests::testDefaultDataAttributes()
 	CK_OBJECT_CLASS objClass = CKO_DATA;
 	CK_ATTRIBUTE objTemplate[] = {
 		{ CKA_CLASS, &objClass, sizeof(objClass) }
-	 };
+	};
 
 	// Just make sure that we finalize any previous tests
 	C_Finalize(NULL_PTR);
@@ -1404,7 +1404,7 @@ void ObjectTests::testDefaultX509CertAttributes()
 		{ CKA_CERTIFICATE_TYPE, &certificateType, sizeof(certificateType) },
 		{ CKA_SUBJECT, pSubject, sizeof(pSubject)-1 },
 		{ CKA_VALUE, pValue, sizeof(pValue)-1 }
-	 };
+	};
 
 	// Just make sure that we finalize any previous tests
 	C_Finalize(NULL_PTR);
@@ -1457,7 +1457,7 @@ void ObjectTests::testDefaultRSAPubAttributes()
 		{ CKA_KEY_TYPE, &objType, sizeof(objType) },
 		{ CKA_MODULUS, pN, sizeof(pN) },
 		{ CKA_PUBLIC_EXPONENT, pE, sizeof(pE) }
-	 };
+	};
 
 	// Just make sure that we finalize any previous tests
 	C_Finalize(NULL_PTR);
@@ -1522,7 +1522,7 @@ void ObjectTests::testDefaultRSAPrivAttributes()
 		{ CKA_EXTRACTABLE, &bTrue, sizeof(bTrue) },
 		{ CKA_MODULUS, pN, sizeof(pN) },
 		{ CKA_PRIVATE_EXPONENT, pD, sizeof(pD) }
-	 };
+	};
 
 	// Just make sure that we finalize any previous tests
 	C_Finalize(NULL_PTR);
@@ -1633,7 +1633,7 @@ void ObjectTests::testGetInvalidAttribute()
 	CK_BBOOL bSign;
 	CK_ATTRIBUTE objTemplate[] = {
 		{ CKA_CLASS, &objClass, sizeof(objClass) }
-	 };
+	};
 	CK_ATTRIBUTE getTemplate[] = {
 		{ CKA_SIGN, &bSign, sizeof(bSign) }
 	};
@@ -1658,7 +1658,6 @@ void ObjectTests::testGetInvalidAttribute()
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// Check value
-	// SoftHSM will currently segfault
-//	rv = C_GetAttributeValue(hSession, hObject, getTemplate, 1);
-//	CPPUNIT_ASSERT(rv == CKR_ATTRIBUTE_TYPE_INVALID);
+	rv = C_GetAttributeValue(hSession, hObject, getTemplate, 1);
+	CPPUNIT_ASSERT(rv == CKR_ATTRIBUTE_TYPE_INVALID);
 }
