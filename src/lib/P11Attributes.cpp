@@ -1637,7 +1637,8 @@ CK_RV P11AttrModulus::updateAttr(Token *token, bool isPrivate, CK_VOID_PTR pValu
 	OSAttribute* attrClass = osobject->getAttribute(CKA_CLASS);
 	if (op == OBJECT_OP_CREATE && attrClass != NULL && attrClass->getUnsignedLongValue() == CKO_PUBLIC_KEY)
 	{
-		osobject->setAttribute(CKA_MODULUS_BITS, (unsigned long)plaintext.bits());
+		OSAttribute bits((unsigned long)plaintext.bits());
+		osobject->setAttribute(CKA_MODULUS_BITS, bits);
 	}
 
 	return CKR_OK;
