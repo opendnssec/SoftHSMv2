@@ -1084,8 +1084,23 @@ log_force_stop ()
 
 log_grep ()
 {
+	local output=""
+	OPTIND=1
+	while getopts ":o" opt; do
+		case "$opt" in
+			o)
+				output=1
+				;;
+			\?)
+				echo "log_grep: Invalid option: -$OPTARG" >&2
+				exit 1
+				;;
+		esac
+	done
+	shift $((OPTIND-1))
+
 	if [ -z "$1" -o -z "$2" -o -z "$3" ]; then
-		echo "usage: log_grep <log name> <stdout|stderr|both> <grep string ...>" >&2
+		echo "usage: log_grep [-o] <log name> <stdout|stderr|both> <grep string ...>" >&2
 		exit 1
 	fi
 
@@ -1122,8 +1137,12 @@ log_grep ()
 		exit 1
 	fi
 
-	echo "log_grep: greping in $name for: $grep_string"
-	$GREP -q -- "$grep_string" $log_files 2>/dev/null
+	if [ -n "$output" ]; then
+		$GREP -- "$grep_string" $log_files 2>/dev/null
+	else
+		echo "log_grep: greping in $name for: $grep_string"
+		$GREP -q -- "$grep_string" $log_files 2>/dev/null
+	fi
 }
 
 log_grep_count ()
