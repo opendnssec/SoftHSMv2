@@ -127,11 +127,11 @@ bool Directory::refresh()
 
 		if (!lstat(fullPath.c_str(), &entryStatus))
 		{
-			if (S_ISDIR(entryStatus->st_mode))
+			if (S_ISDIR(entryStatus.st_mode))
 			{
 				subDirs.push_back(name);
 			}
-			else if (S_ISREG(entryStatus->st_mode))
+			else if (S_ISREG(entryStatus.st_mode))
 			{
 				files.push_back(name);
 			}
