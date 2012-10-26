@@ -26,6 +26,7 @@ case "$DISTRIBUTION" in
 			cd build &&
 			../configure --prefix="$INSTALL_ROOT" \
 				--with-migrate \
+				--with-crypto-backend=botan \
 				--with-botan=/usr &&
 			$MAKE &&
 			$MAKE check &&
@@ -41,6 +42,7 @@ case "$DISTRIBUTION" in
 			cd build &&
 			../configure --prefix="$INSTALL_ROOT" \
 				--with-migrate \
+				--with-crypto-backend=botan \
 				--with-botan=/usr/pkg \
 				--with-sqlite3=/usr/pkg &&
 			$MAKE &&
@@ -58,6 +60,7 @@ case "$DISTRIBUTION" in
 			cd build &&
 			../configure --prefix="$INSTALL_ROOT" \
 				--with-migrate \
+				--with-crypto-backend=botan \
 				--with-botan=/usr/local \
 				--with-sqlite3=/usr/local &&
 			$MAKE &&
@@ -75,6 +78,7 @@ case "$DISTRIBUTION" in
 			cd build &&
 			../configure --prefix="$INSTALL_ROOT" \
 				--with-migrate \
+				--with-crypto-backend=botan \
 				--with-botan=/usr/local &&
 			$MAKE &&
 			$MAKE check &&
