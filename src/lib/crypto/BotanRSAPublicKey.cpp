@@ -46,7 +46,7 @@ BotanRSAPublicKey::BotanRSAPublicKey()
 
 BotanRSAPublicKey::BotanRSAPublicKey(const Botan::RSA_PublicKey* inRSA)
 {
-	BotanRSAPublicKey::BotanRSAPublicKey();
+	BotanRSAPublicKey();
 
 	setFromBotan(inRSA);
 }

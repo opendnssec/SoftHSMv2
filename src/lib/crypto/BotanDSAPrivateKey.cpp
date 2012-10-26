@@ -48,7 +48,7 @@ BotanDSAPrivateKey::BotanDSAPrivateKey()
 
 BotanDSAPrivateKey::BotanDSAPrivateKey(const Botan::DSA_PrivateKey* inDSA)
 {
-	BotanDSAPrivateKey::BotanDSAPrivateKey();
+	BotanDSAPrivateKey();
 
 	setFromBotan(inDSA);
 }
