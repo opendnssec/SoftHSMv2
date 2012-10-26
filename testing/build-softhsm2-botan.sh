@@ -25,6 +25,7 @@ case "$DISTRIBUTION" in
 			mkdir -p build &&
 			cd build &&
 			../configure --prefix="$INSTALL_ROOT" \
+				--disable-non-paged-memory \
 				--with-migrate \
 				--with-crypto-backend=botan \
 				--with-botan=/usr &&
@@ -41,6 +42,7 @@ case "$DISTRIBUTION" in
 			mkdir -p build &&
 			cd build &&
 			../configure --prefix="$INSTALL_ROOT" \
+				--disable-non-paged-memory \
 				--with-migrate \
 				--with-crypto-backend=botan \
 				--with-botan=/usr/pkg \
@@ -59,6 +61,7 @@ case "$DISTRIBUTION" in
 			mkdir -p build &&
 			cd build &&
 			../configure --prefix="$INSTALL_ROOT" \
+				--disable-non-paged-memory \
 				--with-migrate \
 				--with-crypto-backend=botan \
 				--with-botan=/usr/local \
@@ -77,6 +80,7 @@ case "$DISTRIBUTION" in
 			mkdir -p build &&
 			cd build &&
 			../configure --prefix="$INSTALL_ROOT" \
+				--disable-non-paged-memory \
 				--with-migrate \
 				--with-crypto-backend=botan \
 				--with-botan=/usr/local &&
