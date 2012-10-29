@@ -22,12 +22,21 @@ case "$DISTRIBUTION" in
 	debian | \
 	opensuse | \
 	suse | \
-	freebsd | \
-	netbsd )
+	freebsd )
 		(
 			gunzip -c "$BOTAN_SRC" | tar xf - &&
 			cd "$BOTAN" &&
 			./configure.py --prefix="$INSTALL_ROOT" &&
+			$MAKE &&
+			$MAKE install
+		) &&
+		build_ok=1
+		;;
+	netbsd )
+		(
+			gunzip -c "$BOTAN_SRC" | tar xf - &&
+			cd "$BOTAN" &&
+			python2.7 ./configure.py --prefix="$INSTALL_ROOT" &&
 			$MAKE &&
 			$MAKE install
 		) &&
@@ -49,7 +58,7 @@ case "$DISTRIBUTION" in
 		(
 			gunzip -c "$BOTAN_SRC" | tar xf - &&
 			cd "$BOTAN" &&
-			./configure.py --prefix="$INSTALL_ROOT" \
+			python2.7 ./configure.py --prefix="$INSTALL_ROOT" \
 				--disable-asm &&
 			$MAKE &&
 			$MAKE install
