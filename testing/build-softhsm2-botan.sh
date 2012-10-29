@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 source `dirname "$0"`/lib.sh && init || exit 1
 
+require botan
+
 check_if_built softhsm2 && exit 0
 start_build softhsm2
 
@@ -28,7 +30,7 @@ case "$DISTRIBUTION" in
 				--disable-non-paged-memory \
 				--with-migrate \
 				--with-crypto-backend=botan \
-				--with-botan=/usr &&
+				--with-botan="$INSTALL_ROOT" &&
 			$MAKE &&
 			$MAKE check &&
 			$MAKE install &&
@@ -45,7 +47,7 @@ case "$DISTRIBUTION" in
 				--disable-non-paged-memory \
 				--with-migrate \
 				--with-crypto-backend=botan \
-				--with-botan=/usr/pkg \
+				--with-botan="$INSTALL_ROOT" \
 				--with-sqlite3=/usr/pkg &&
 			$MAKE &&
 			$MAKE check &&
@@ -64,7 +66,7 @@ case "$DISTRIBUTION" in
 				--disable-non-paged-memory \
 				--with-migrate \
 				--with-crypto-backend=botan \
-				--with-botan=/usr/local \
+				--with-botan="$INSTALL_ROOT" \
 				--with-sqlite3=/usr/local &&
 			$MAKE &&
 			$MAKE check &&
@@ -83,7 +85,7 @@ case "$DISTRIBUTION" in
 				--disable-non-paged-memory \
 				--with-migrate \
 				--with-crypto-backend=botan \
-				--with-botan=/usr/local &&
+				--with-botan="$INSTALL_ROOT" &&
 			$MAKE &&
 			$MAKE check &&
 			$MAKE install &&
