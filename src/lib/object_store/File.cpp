@@ -39,6 +39,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/file.h>
+#include <fcntl.h>
+#include <errno.h>
 
 // Constructor
 //
@@ -282,10 +284,18 @@ bool File::seek(long offset /* = -1 */)
 // Lock the file
 bool File::lock(bool block /* = true */)
 {
+	struct flock fl;
+	fl.l_type = isWrite() ? F_WRLCK : F_RDLCK;
+	fl.l_whence = SEEK_SET;
+	fl.l_start = 0;
+	fl.l_len = 0;
+	fl.l_pid = 0;
+
 	if (locked || !valid) return false;
 
-	if (flock(fileno(stream), block ? LOCK_EX : LOCK_EX | LOCK_NB))
+	if (fcntl(fileno(stream), block ? F_SETLKW : F_SETLK, &fl) != 0)
 	{
+		ERROR_MSG("Could not lock the file: %s", strerror(errno));
 		return false;
 	}
 
@@ -297,12 +307,20 @@ bool File::lock(bool block /* = true */)
 // Unlock the file
 bool File::unlock()
 {
+	struct flock fl;
+	fl.l_type = F_UNLCK;
+	fl.l_whence = SEEK_SET;
+	fl.l_start = 0;
+	fl.l_len = 0;
+	fl.l_pid = 0;
+
 	if (!locked || !valid) return false;
 
-	if (flock(fileno(stream), LOCK_UN))
+	if (fcntl(fileno(stream), F_SETLK, &fl) != 0)
 	{
 		valid = false;
 
+		ERROR_MSG("Could not unlock the file: %s", strerror(errno));
 		return false;
 	}
 

@@ -48,6 +48,7 @@ CPPUNIT_TEST_SUITE_REGISTRATION(FileTests);
 void FileTests::setUp()
 {
 	// FIXME: this only works on *NIX/BSD, not on other platforms
+	int rv = system("rm -rf testdir");
 	CPPUNIT_ASSERT(!system("mkdir testdir"));
 }
 
@@ -105,14 +106,13 @@ void FileTests::testLockUnlock()
 	File file2("testdir/existingFile");
 
 	CPPUNIT_ASSERT(file1.lock(false));
-	CPPUNIT_ASSERT(!file2.lock(false));
-	CPPUNIT_ASSERT(!file2.unlock());
-	CPPUNIT_ASSERT(file1.unlock());
+	CPPUNIT_ASSERT(!file1.lock(false));
 	CPPUNIT_ASSERT(file2.lock(false));
 	CPPUNIT_ASSERT(file2.unlock());
+	CPPUNIT_ASSERT(file1.unlock());
 	CPPUNIT_ASSERT(file1.lock());
-	CPPUNIT_ASSERT(!file2.lock(false));
-	CPPUNIT_ASSERT(!file2.unlock());
+	CPPUNIT_ASSERT(file2.lock());
+	CPPUNIT_ASSERT(file2.unlock());
 	CPPUNIT_ASSERT(file1.unlock());
 }
 
