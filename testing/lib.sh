@@ -34,7 +34,8 @@ append_path ()
 {
 	if [ -d "$1" ]; then
 		if [ -n "$PATH" ]; then
-			echo "$PATH" | $GREP -q -- "$1" 2>/dev/null && return;
+			echo "$PATH" | $GREP -q -- "$1:" 2>/dev/null && return;
+			echo "$PATH" | $GREP -q -- "$1\$" 2>/dev/null && return;
 			PATH="$PATH:$1"
 		else
 			PATH="$1"
@@ -47,7 +48,8 @@ prepend_path ()
 {
 	if [ -d "$1" ]; then
 		if [ -n "$PATH" ]; then
-			echo "$PATH" | $GREP -q -- "$1" 2>/dev/null && return;
+			echo "$PATH" | $GREP -q -- "$1:" 2>/dev/null && return;
+			echo "$PATH" | $GREP -q -- "$1\$" 2>/dev/null && return;
 			PATH="$1:$PATH"
 		else
 			PATH="$1"
@@ -60,7 +62,8 @@ append_cflags ()
 {
 	if [ -n "$1" ]; then
 		if [ -n "$CFLAGS" ]; then
-			echo "$CFLAGS" | $GREP -q -- "$1" 2>/dev/null && return;
+			echo "$CFLAGS" | $GREP -q -- "$1 " 2>/dev/null && return;
+			echo "$CFLAGS" | $GREP -q -- "$1\$" 2>/dev/null && return;
 			CFLAGS="$CFLAGS $1"
 		else
 			CFLAGS="$1"
@@ -73,7 +76,8 @@ append_cppflags ()
 {
 	if [ -n "$1" ]; then
 		if [ -n "$CPPFLAGS" ]; then
-			echo "$CPPFLAGS" | $GREP -q -- "$1" 2>/dev/null && return;
+			echo "$CPPFLAGS" | $GREP -q -- "$1 " 2>/dev/null && return;
+			echo "$CPPFLAGS" | $GREP -q -- "$1\$" 2>/dev/null && return;
 			CPPFLAGS="$CPPFLAGS $1"
 		else
 			CPPFLAGS="$1"
@@ -86,7 +90,8 @@ append_ldflags ()
 {
 	if [ -n "$1" ]; then
 		if [ -n "$LDFLAGS" ]; then
-			echo "$LDFLAGS" | $GREP -q -- "$1" 2>/dev/null && return;
+			echo "$LDFLAGS" | $GREP -q -- "$1 " 2>/dev/null && return;
+			echo "$LDFLAGS" | $GREP -q -- "$1\$" 2>/dev/null && return;
 			LDFLAGS="$LDFLAGS $1"
 		else
 			LDFLAGS="$1"
@@ -99,7 +104,8 @@ append_ld_library_path ()
 {
 	if [ -d "$1" ]; then
 		if [ -n "$LD_LIBRARY_PATH" ]; then
-			echo "$LD_LIBRARY_PATH" | $GREP -q -- "$1" 2>/dev/null && return;
+			echo "$LD_LIBRARY_PATH" | $GREP -q -- "$1:" 2>/dev/null && return;
+			echo "$LD_LIBRARY_PATH" | $GREP -q -- "$1\$" 2>/dev/null && return;
 			LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$1"
 		else
 			LD_LIBRARY_PATH="$1"
