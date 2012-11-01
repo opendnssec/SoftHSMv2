@@ -20,7 +20,7 @@ handlemgrtest_SOURCES =		handlemgrtest.cpp \
 
 handlemgrtest_LDADD =		../../libsofthsm_convarch.la 
 
-handlemgrtest_LDFLAGS = 	-no-install `cppunit-config --libs`
+handlemgrtest_LDFLAGS = 	@CRYPTO_LIBS@ -no-install `cppunit-config --libs`
 
 TESTS = 			handlemgrtest
 

@@ -28,7 +28,7 @@ cryptotest_SOURCES =		cryptotest.cpp \
 
 cryptotest_LDADD =		../../libsofthsm_convarch.la
 
-cryptotest_LDFLAGS = 		-no-install `cppunit-config --libs`
+cryptotest_LDFLAGS = 		@CRYPTO_LIBS@ -no-install `cppunit-config --libs`
 
 TESTS = 			cryptotest
 

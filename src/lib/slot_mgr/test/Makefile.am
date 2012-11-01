@@ -19,7 +19,7 @@ slotmgrtest_SOURCES =		slotmgrtest.cpp \
 
 slotmgrtest_LDADD =		../../libsofthsm_convarch.la 
 
-slotmgrtest_LDFLAGS = 		-no-install `cppunit-config --libs` -pthread
+slotmgrtest_LDFLAGS = 		@CRYPTO_LIBS@ -no-install `cppunit-config --libs` -pthread
 
 TESTS = 			slotmgrtest
 

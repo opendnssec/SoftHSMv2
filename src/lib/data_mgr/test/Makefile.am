@@ -21,7 +21,7 @@ datamgrtest_SOURCES =		datamgrtest.cpp \
 
 datamgrtest_LDADD =		../../libsofthsm_convarch.la 
 
-datamgrtest_LDFLAGS = 		-no-install `cppunit-config --libs`
+datamgrtest_LDFLAGS = 		@CRYPTO_LIBS@ -no-install `cppunit-config --libs`
 
 TESTS = 			datamgrtest
 

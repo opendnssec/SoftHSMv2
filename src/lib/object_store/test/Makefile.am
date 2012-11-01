@@ -26,7 +26,7 @@ objstoretest_SOURCES =		objstoretest.cpp \
 
 objstoretest_LDADD =		../../libsofthsm_convarch.la 
 
-objstoretest_LDFLAGS = 		-no-install `cppunit-config --libs` -pthread
+objstoretest_LDFLAGS = 		@CRYPTO_LIBS@ -no-install `cppunit-config --libs` -pthread
 
 TESTS = 			objstoretest
 

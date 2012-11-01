@@ -20,7 +20,7 @@ sessionmgrtest_SOURCES =	sessionmgrtest.cpp \
 
 sessionmgrtest_LDADD =		../../libsofthsm_convarch.la 
 
-sessionmgrtest_LDFLAGS =	-no-install `cppunit-config --libs` -pthread
+sessionmgrtest_LDFLAGS =	@CRYPTO_LIBS@ -no-install `cppunit-config --libs` -pthread
 
 TESTS = 			sessionmgrtest
 

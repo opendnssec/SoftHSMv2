@@ -24,7 +24,7 @@ p11test_SOURCES =		p11test.cpp \
 
 p11test_LDADD =			../libsofthsm.la 
 
-p11test_LDFLAGS = 		-no-install `cppunit-config --libs` -pthread -static
+p11test_LDFLAGS = 		@CRYPTO_LIBS@ -no-install `cppunit-config --libs` -pthread -static
 
 TESTS = 			p11test
 
