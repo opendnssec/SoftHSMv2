@@ -559,6 +559,15 @@ init ()
 	return 0
 }
 
+finish ()
+{
+	local core
+	
+	find "$WORKSPACE" "$INSTALL_ROOT" -name core -type f 2>/dev/null | while read core; do
+		chmod a+r "$core" 2>/dev/null
+	done
+}
+
 check_if_built ()
 {
 	if [ -z "$1" ]; then
