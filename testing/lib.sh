@@ -475,6 +475,10 @@ setup_install_root ()
 		if [ -d "$INSTALL_ROOT/sbin" ]; then
 			prepend_path "$INSTALL_ROOT/sbin"
 		fi
+		if [ -d "$INSTALL_ROOT/lib64" ]; then
+			append_ldflags "-L$INSTALL_ROOT/lib64"
+			append_ld_library_path "$INSTALL_ROOT/lib64"
+		fi
 		if [ -d "$INSTALL_ROOT/lib" ]; then
 			append_ldflags "-L$INSTALL_ROOT/lib"
 			append_ld_library_path "$INSTALL_ROOT/lib"
