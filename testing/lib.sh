@@ -572,8 +572,8 @@ init ()
 finish ()
 {
 	local core
-	
-	find "$WORKSPACE" "$INSTALL_ROOT" -name core -type f 2>/dev/null | while read core; do
+
+	find "$WORKSPACE" "$INSTALL_ROOT" -name '*core' -type f 2>/dev/null | while read core; do
 		chmod a+r "$core" 2>/dev/null
 	done
 }
@@ -646,6 +646,20 @@ set_build_ok ()
 	if [ -f "$INSTALL_ROOT/.$name_tag.ok" ]; then
 		echo "set_build_ok: Build already mark ok, this should not happend. Did you forget to start_build?" >&2
 		exit 1
+	fi
+
+	echo "$SVN_REVISION" > "$WORKSPACE/.$name_tag.build"
+
+	if [ -f "$WORKSPACE/.$name_tag.build" ]; then
+		local build_svn_rev=`cat "$WORKSPACE/.$name_tag.build" 2>/dev/null`
+		
+		if [ "$SVN_REVISION" != "$build_svn_rev" ]; then
+			echo "set_build_ok: Can't tag build file $WORKSPACE/.$name_tag.build !" >&2
+			return 1
+		fi
+	else
+		echo "set_build_ok: Can't tag build file $WORKSPACE/.$name_tag.build !" >&2
+		return 1
 	fi
 
 	echo "$SVN_REVISION" > "$INSTALL_ROOT/.$name_tag.build"
@@ -813,12 +827,26 @@ set_test_ok ()
 		exit 1
 	fi
 
+	echo "$SVN_REVISION" > "$WORKSPACE/.$name_tag.test"
+
+	if [ -f "$WORKSPACE/.$name_tag.test" ]; then
+		local test_svn_rev=`cat "$WORKSPACE/.$name_tag.test" 2>/dev/null`
+		
+		if [ "$SVN_REVISION" != "$test_svn_rev" ]; then
+			echo "set_test_ok: Can't tag test file $WORKSPACE/.$name_tag.test !" >&2
+			return 1
+		fi
+	else
+		echo "set_test_ok: Can't tag test file $WORKSPACE/.$name_tag.test !" >&2
+		return 1
+	fi
+
 	echo "$SVN_REVISION" > "$INSTALL_ROOT/.$name_tag.test"
 
 	if [ -f "$INSTALL_ROOT/.$name_tag.test" ]; then
-		local build_svn_rev=`cat "$INSTALL_ROOT/.$name_tag.test" 2>/dev/null`
+		local test_svn_rev=`cat "$INSTALL_ROOT/.$name_tag.test" 2>/dev/null`
 		
-		if [ "$SVN_REVISION" = "$build_svn_rev" ]; then
+		if [ "$SVN_REVISION" = "$test_svn_rev" ]; then
 			if ! touch "$INSTALL_ROOT/.$name_tag.ok.test" 2>/dev/null; then
 				echo "set_test_ok: Can't tag test ok $INSTALL_ROOT/.$name_tag.ok.test !" >&2
 				return 1
@@ -827,7 +855,7 @@ set_test_ok ()
 		fi
 	fi
 	
-	echo "set_test_ok: Was not able to tag build ok!" >&2
+	echo "set_test_ok: Was not able to tag test ok!" >&2
 	return 1
 }
 
