@@ -42,6 +42,18 @@
 // Initialise the one-and-only instance
 SecureMemoryRegistry* SecureMemoryRegistry::instance = NULL;
 
+// Constructor
+SecureMemoryRegistry::SecureMemoryRegistry()
+{
+	SecMemRegistryMutex = MutexFactory::i()->getMutex();
+}
+
+// Destructor
+SecureMemoryRegistry::~SecureMemoryRegistry()
+{
+	MutexFactory::i()->recycleMutex(SecMemRegistryMutex);
+}
+
 // Return the one-and-only instance
 SecureMemoryRegistry* SecureMemoryRegistry::i()
 {
@@ -64,6 +76,8 @@ SecureMemoryRegistry* SecureMemoryRegistry::i()
 // Register a block of memory
 void SecureMemoryRegistry::add(void* pointer, size_t blocksize)
 {
+	MutexLocker lock(SecMemRegistryMutex);
+
 	registry[pointer] = blocksize;
 
 	//DEBUG_MSG("Registered block of %d bytes at 0x%x", blocksize, pointer);
@@ -73,6 +87,8 @@ void SecureMemoryRegistry::add(void* pointer, size_t blocksize)
 size_t SecureMemoryRegistry::remove(void* pointer)
 {
 	//DEBUG_MSG("Unregistered block of %d bytes at 0x%x", registry[pointer], pointer);
+
+	MutexLocker lock(SecMemRegistryMutex);
 
 	size_t rv = registry[pointer];
 
@@ -84,6 +100,8 @@ size_t SecureMemoryRegistry::remove(void* pointer)
 // Wipe all registered blocks of memory
 void SecureMemoryRegistry::wipe()
 {
+	MutexLocker lock(SecMemRegistryMutex);
+
 	// Be very careful in this method to catch any weird exceptions that
 	// may occur since if we're in this method it means something has already
 	// gone pear shaped once before and we're exiting on a fatal exception

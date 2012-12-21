@@ -40,10 +40,15 @@
 #include <stdlib.h>
 #include <map>
 #include <memory>
+#include "MutexFactory.h"
 
 class SecureMemoryRegistry
 {
 public:
+	SecureMemoryRegistry();
+
+	virtual ~SecureMemoryRegistry();
+
 	static SecureMemoryRegistry* i();
 
 	void add(void* pointer, size_t blocksize);
@@ -52,12 +57,12 @@ public:
 
 	void wipe();
 
-	virtual ~SecureMemoryRegistry() { }
-
 private:
 	static SecureMemoryRegistry* instance;
 
 	std::map<void*, size_t> registry;
+
+	Mutex* SecMemRegistryMutex;
 };
 
 #endif // !_SOFTHSM_V2_SECUREMEMORYREGISTRY_H
