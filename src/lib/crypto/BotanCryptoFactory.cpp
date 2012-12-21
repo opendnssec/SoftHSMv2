@@ -42,7 +42,9 @@
 #include "BotanRNG.h"
 #include "BotanRSA.h"
 #include "BotanSHA1.h"
+#include "BotanSHA224.h"
 #include "BotanSHA256.h"
+#include "BotanSHA384.h"
 #include "BotanSHA512.h"
 
 #include <botan/init.h>
@@ -159,9 +161,17 @@ HashAlgorithm* BotanCryptoFactory::getHashAlgorithm(std::string algorithm)
 	{
 		return new BotanSHA1();
 	}
+	else if (!lcAlgo.compare("sha224"))
+	{
+		return new BotanSHA224();
+	}
 	else if (!lcAlgo.compare("sha256"))
 	{
 		return new BotanSHA256();
+	}
+	else if (!lcAlgo.compare("sha384"))
+	{
+		return new BotanSHA384();
 	}
 	else if (!lcAlgo.compare("sha512"))
 	{

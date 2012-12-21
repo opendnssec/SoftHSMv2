@@ -148,6 +148,51 @@ void HashTests::testSHA1()
 	rng = NULL;
 }
 
+void HashTests::testSHA224()
+{
+	// Get an RNG and SHA224 hash instance
+	CPPUNIT_ASSERT((rng = CryptoFactory::i()->getRNG()) != NULL);
+	CPPUNIT_ASSERT((hash = CryptoFactory::i()->getHashAlgorithm("sha224")) != NULL);
+
+	// Generate some random input data
+	ByteString b;
+	ByteString osslHash, shsmHash;
+
+	CPPUNIT_ASSERT(rng->generateRandom(b, 53287));
+
+	// Write it to file
+	writeTmpFile(b);
+
+	// Use OpenSSL externally to hash it
+	CPPUNIT_ASSERT(system("cat shsmv2-hashtest.tmp | openssl sha -sha224 -binary > shsmv2-hashtest-out.tmp") == 0);
+
+	// Read the hash from file
+	readTmpFile(osslHash);
+
+	// Now recreate the hash using our implementation in a single operation
+	CPPUNIT_ASSERT(hash->hashInit());
+	CPPUNIT_ASSERT(hash->hashUpdate(b));
+	CPPUNIT_ASSERT(hash->hashFinal(shsmHash));
+
+	CPPUNIT_ASSERT(osslHash == shsmHash);
+
+	// Now recreate the hash in a single part operation
+	shsmHash.wipe();
+
+	CPPUNIT_ASSERT(hash->hashInit());
+	CPPUNIT_ASSERT(hash->hashUpdate(b.substr(0, 567)));
+	CPPUNIT_ASSERT(hash->hashUpdate(b.substr(567, 989)));
+	CPPUNIT_ASSERT(hash->hashUpdate(b.substr(567 + 989)));
+	CPPUNIT_ASSERT(hash->hashFinal(shsmHash));
+
+	CPPUNIT_ASSERT(osslHash == shsmHash);
+
+	CryptoFactory::i()->recycleHashAlgorithm(hash);
+
+	hash = NULL;
+	rng = NULL;
+}
+
 void HashTests::testSHA256()
 {
 	// Get an RNG and SHA256 hash instance
@@ -165,6 +210,51 @@ void HashTests::testSHA256()
 
 	// Use OpenSSL externally to hash it
 	CPPUNIT_ASSERT(system("cat shsmv2-hashtest.tmp | openssl sha -sha256 -binary > shsmv2-hashtest-out.tmp") == 0);
+
+	// Read the hash from file
+	readTmpFile(osslHash);
+
+	// Now recreate the hash using our implementation in a single operation
+	CPPUNIT_ASSERT(hash->hashInit());
+	CPPUNIT_ASSERT(hash->hashUpdate(b));
+	CPPUNIT_ASSERT(hash->hashFinal(shsmHash));
+
+	CPPUNIT_ASSERT(osslHash == shsmHash);
+
+	// Now recreate the hash in a single part operation
+	shsmHash.wipe();
+
+	CPPUNIT_ASSERT(hash->hashInit());
+	CPPUNIT_ASSERT(hash->hashUpdate(b.substr(0, 567)));
+	CPPUNIT_ASSERT(hash->hashUpdate(b.substr(567, 989)));
+	CPPUNIT_ASSERT(hash->hashUpdate(b.substr(567 + 989)));
+	CPPUNIT_ASSERT(hash->hashFinal(shsmHash));
+
+	CPPUNIT_ASSERT(osslHash == shsmHash);
+
+	CryptoFactory::i()->recycleHashAlgorithm(hash);
+
+	hash = NULL;
+	rng = NULL;
+}
+
+void HashTests::testSHA384()
+{
+	// Get an RNG and SHA384 hash instance
+	CPPUNIT_ASSERT((rng = CryptoFactory::i()->getRNG()) != NULL);
+	CPPUNIT_ASSERT((hash = CryptoFactory::i()->getHashAlgorithm("sha384")) != NULL);
+
+	// Generate some random input data
+	ByteString b;
+	ByteString osslHash, shsmHash;
+
+	CPPUNIT_ASSERT(rng->generateRandom(b, 53287));
+
+	// Write it to file
+	writeTmpFile(b);
+
+	// Use OpenSSL externally to hash it
+	CPPUNIT_ASSERT(system("cat shsmv2-hashtest.tmp | openssl sha -sha384 -binary > shsmv2-hashtest-out.tmp") == 0);
 
 	// Read the hash from file
 	readTmpFile(osslHash);

@@ -27,49 +27,22 @@
  */
 
 /*****************************************************************************
- HashTests.h
+ OSSLSHA384.h
 
- Contains test cases to test the hash implementations
+ OpenSSL SHA384 implementation
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_HASHTESTS_H
-#define _SOFTHSM_V2_HASHTESTS_H
+#include "config.h"
+#include "OSSLSHA384.h"
+#include <openssl/evp.h>
 
-#include <cppunit/extensions/HelperMacros.h>
-#include "HashAlgorithm.h"
-#include "RNG.h"
-
-class HashTests : public CppUnit::TestFixture
+int OSSLSHA384::getHashSize()
 {
-	CPPUNIT_TEST_SUITE(HashTests);
-	CPPUNIT_TEST(testMD5);
-	CPPUNIT_TEST(testSHA1);
-	CPPUNIT_TEST(testSHA224);
-	CPPUNIT_TEST(testSHA256);
-	CPPUNIT_TEST(testSHA384);
-	CPPUNIT_TEST(testSHA512);
-	CPPUNIT_TEST_SUITE_END();
+	return 48;
+}
 
-public:
-	void testMD5();
-	void testSHA1();
-	void testSHA224();
-	void testSHA256();
-	void testSHA384();
-	void testSHA512();
-
-	void setUp();
-	void tearDown();
-
-private:
-	void writeTmpFile(ByteString& data);
-
-	void readTmpFile(ByteString& data);
-
-	HashAlgorithm* hash;
-
-	RNG* rng;
-};
-
-#endif // !_SOFTHSM_V2_HASHTESTS_H
+const EVP_MD* OSSLSHA384::getEVPHash() const
+{
+	return EVP_sha384();
+}
 

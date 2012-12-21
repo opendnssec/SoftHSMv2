@@ -39,7 +39,9 @@
 #include "OSSLDES.h"
 #include "OSSLMD5.h"
 #include "OSSLSHA1.h"
+#include "OSSLSHA224.h"
 #include "OSSLSHA256.h"
+#include "OSSLSHA384.h"
 #include "OSSLSHA512.h"
 #include "OSSLRSA.h"
 #include "OSSLDSA.h"
@@ -148,9 +150,17 @@ HashAlgorithm* OSSLCryptoFactory::getHashAlgorithm(std::string algorithm)
 	{
 		return new OSSLSHA1();
 	}
+	else if (!lcAlgo.compare("sha224"))
+	{
+		return new OSSLSHA224();
+	}
 	else if (!lcAlgo.compare("sha256"))
 	{
 		return new OSSLSHA256();
+	}
+	else if (!lcAlgo.compare("sha384"))
+	{
+		return new OSSLSHA384();
 	}
 	else if (!lcAlgo.compare("sha512"))
 	{

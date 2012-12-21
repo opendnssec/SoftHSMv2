@@ -232,6 +232,16 @@ bool OSSLRSA::signInit(PrivateKey* privateKey, const std::string mechanism)
 			pCurrentHash = NULL;
 		}
 	}
+	else if (!lowerMechanism.compare("rsa-sha384-pkcs"))
+	{
+		pCurrentHash = CryptoFactory::i()->getHashAlgorithm("sha384");
+
+		if (!pCurrentHash->hashInit())
+		{
+			delete pCurrentHash;
+			pCurrentHash = NULL;
+		}
+	}
 	else if (!lowerMechanism.compare("rsa-sha512-pkcs"))
 	{
 		pCurrentHash = CryptoFactory::i()->getHashAlgorithm("sha512");
@@ -362,6 +372,10 @@ bool OSSLRSA::signFinal(ByteString& signature)
 	else if (!lowerMechanism.compare("rsa-sha256-pkcs"))
 	{
 		type = NID_sha256;
+	}
+	else if (!lowerMechanism.compare("rsa-sha384-pkcs"))
+	{
+		type = NID_sha384;
 	}
 	else if (!lowerMechanism.compare("rsa-sha512-pkcs"))
 	{
@@ -531,6 +545,16 @@ bool OSSLRSA::verifyInit(PublicKey* publicKey, const std::string mechanism)
 			pCurrentHash = NULL;
 		}
 	}
+	else if (!lowerMechanism.compare("rsa-sha384-pkcs"))
+	{
+		pCurrentHash = CryptoFactory::i()->getHashAlgorithm("sha384");
+
+		if (!pCurrentHash->hashInit())
+		{
+			delete pCurrentHash;
+			pCurrentHash = NULL;
+		}
+	}
 	else if (!lowerMechanism.compare("rsa-sha512-pkcs"))
 	{
 		pCurrentHash = CryptoFactory::i()->getHashAlgorithm("sha512");
@@ -658,6 +682,10 @@ bool OSSLRSA::verifyFinal(const ByteString& signature)
 	else if (!lowerMechanism.compare("rsa-sha256-pkcs"))
 	{
 		type = NID_sha256;
+	}
+	else if (!lowerMechanism.compare("rsa-sha384-pkcs"))
+	{
+		type = NID_sha384;
 	}
 	else if (!lowerMechanism.compare("rsa-sha512-pkcs"))
 	{

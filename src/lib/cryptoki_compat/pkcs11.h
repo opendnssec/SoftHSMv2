@@ -65,7 +65,7 @@ extern "C" {
    versions).  */
 #define CRYPTOKI_VERSION_MAJOR		2
 #define CRYPTOKI_VERSION_MINOR		20
-#define CRYPTOKI_VERSION_REVISION	6
+#define CRYPTOKI_VERSION_REVISION	7
 
 
 /* Compatibility interface is default, unless CRYPTOKI_GNU is
@@ -166,6 +166,27 @@ extern "C" {
 #define source_data pSourceData
 #define source_data_len ulSourceDataLen
 
+#define slen sLen
+
+#define ck_ec_kdf_type_t CK_EC_KDF_TYPE
+
+#define shared_data_len ulSharedDataLen
+#define shared_data pSharedData
+#define public_data_len ulPublicDataLen
+#define public_data pPublicData
+
+#define private_data_len ulPrivateDataLen
+#define private_data hPrivateData
+#define public_data_len2 ulPublicDataLen2
+#define public_data2 pPublicData2
+
+#define public_key publicKey
+
+#define ck_x9_42_dh_kdf_type_t CK_X9_42_DH_KDF_TYPE
+
+#define other_info_len ulOtherInfoLen
+#define other_info pOtherInfo
+
 #define ck_rv_t CK_RV
 #define ck_notify_t CK_NOTIFY
 
@@ -209,7 +230,7 @@ struct ck_info
 typedef unsigned long ck_notification_t;
 
 #define CKN_SURRENDER	(0)
-
+#define CKN_OTP_CHANGED	(1)
 
 typedef unsigned long ck_slot_id_t;
 
@@ -322,6 +343,7 @@ typedef unsigned long ck_object_class_t;
 #define CKO_HW_FEATURE		(5)
 #define CKO_DOMAIN_PARAMETERS	(6)
 #define CKO_MECHANISM		(7)
+#define CKO_OTP_KEY		(8)
 #define CKO_VENDOR_DEFINED	((unsigned long) (1 << 31))
 
 
@@ -360,6 +382,19 @@ typedef unsigned long ck_key_type_t;
 #define CKK_AES			(0x1f)
 #define CKK_BLOWFISH		(0x20)
 #define CKK_TWOFISH		(0x21)
+#define CKK_SECURID		(0x22)
+#define CKK_HOTP		(0x23)
+#define CKK_ACTI		(0x24)
+#define CKK_CAMELLIA		(0x25)
+#define CKK_ARIA		(0x26)
+#define CKK_MD5_HMAC		(0x27)
+#define CKK_SHA_1_HMAC		(0x28)
+#define CKK_RIPEMD128_HMAC	(0x29)
+#define CKK_RIPEMD160_HMAC	(0x2A)
+#define CKK_SHA256_HMAC		(0x2B)
+#define CKK_SHA384_HMAC		(0x2C)
+#define CKK_SHA512_HMAC		(0x2D)
+#define CKK_SHA224_HMAC		(0x2E)
 #define CKK_VENDOR_DEFINED	((unsigned long) (1 << 31))
 
 
@@ -370,6 +405,14 @@ typedef unsigned long ck_certificate_type_t;
 #define CKC_WTLS		(2)
 #define CKC_VENDOR_DEFINED	((unsigned long) (1 << 31))
 
+#define CK_OTP_FORMAT_DECIMAL		(0)
+#define CK_OTP_FORMAT_HEXADECIMAL	(1)
+#define CK_OTP_FORMAT_ALPHANUMERIC	(2)
+#define CK_OTP_FORMAT_BINARY		(3)
+
+#define CK_OTP_PARAM_IGNORED		(0)
+#define CK_OTP_PARAM_OPTIONAL		(1)
+#define CK_OTP_PARAM_MANDATORY		(2)
 
 typedef unsigned long ck_attribute_type_t;
 
@@ -439,6 +482,20 @@ typedef unsigned long ck_attribute_type_t;
 #define CKA_AUTH_PIN_FLAGS		(0x201)
 #define CKA_ALWAYS_AUTHENTICATE		(0x202)
 #define CKA_WRAP_WITH_TRUSTED		(0x210)
+#define CKA_OTP_FORMAT			(0x220)
+#define CKA_OTP_LENGTH			(0x221)
+#define CKA_OTP_TIME_INTERVAL		(0x222)
+#define CKA_OTP_USER_FRIENDLY_MODE	(0x223)
+#define CKA_OTP_CHALLENGE_REQUIREMENT	(0x224)
+#define CKA_OTP_TIME_REQUIREMENT	(0x225)
+#define CKA_OTP_COUNTER_REQUIREMENT	(0x226)
+#define CKA_OTP_PIN_REQUIREMENT		(0x227)
+#define CKA_OTP_COUNTER			(0x22E)
+#define CKA_OTP_TIME			(0x22F)
+#define CKA_OTP_USER_IDENTIFIER		(0x22A)
+#define CKA_OTP_SERVICE_IDENTIFIER	(0x22B)
+#define CKA_OTP_SERVICE_LOGO		(0x22C)
+#define CKA_OTP_SERVICE_LOGO_TYPE	(0x22D)
 #define CKA_HW_FEATURE_TYPE		(0x300)
 #define CKA_RESET_ON_INIT		(0x301)
 #define CKA_HAS_RESET			(0x302)
@@ -510,6 +567,8 @@ typedef unsigned long ck_mechanism_type_t;
 #define CKM_SHA256_RSA_PKCS_PSS		(0x43)
 #define CKM_SHA384_RSA_PKCS_PSS		(0x44)
 #define CKM_SHA512_RSA_PKCS_PSS		(0x45)
+#define CKM_SHA224_RSA_PKCS		(0x46)
+#define CKM_SHA224_RSA_PKCS_PSS		(0x47)
 #define CKM_RC2_KEY_GEN			(0x100)
 #define CKM_RC2_ECB			(0x101)
 #define	CKM_RC2_CBC			(0x102)
@@ -537,6 +596,10 @@ typedef unsigned long ck_mechanism_type_t;
 #define CKM_CDMF_MAC			(0x143)
 #define CKM_CDMF_MAC_GENERAL		(0x144)
 #define CKM_CDMF_CBC_PAD		(0x145)
+#define CKM_DES_OFB64			(0x150)
+#define CKM_DES_OFB8			(0x151)
+#define CKM_DES_CFB64			(0x152)
+#define CKM_DES_CFB8			(0x153)
 #define CKM_MD2				(0x200)
 #define CKM_MD2_HMAC			(0x201)
 #define CKM_MD2_HMAC_GENERAL		(0x202)
@@ -555,12 +618,21 @@ typedef unsigned long ck_mechanism_type_t;
 #define CKM_SHA256			(0x250)
 #define CKM_SHA256_HMAC			(0x251)
 #define CKM_SHA256_HMAC_GENERAL		(0x252)
+#define CKM_SHA224			(0x255)
+#define CKM_SHA224_HMAC			(0x256)
+#define CKM_SHA224_HMAC_GENERAL		(0x257)
 #define CKM_SHA384			(0x260)
 #define CKM_SHA384_HMAC			(0x261)
 #define CKM_SHA384_HMAC_GENERAL		(0x262)
 #define CKM_SHA512			(0x270)
 #define CKM_SHA512_HMAC			(0x271)
 #define CKM_SHA512_HMAC_GENERAL		(0x272)
+#define CKM_SECURID_KEY_GEN		(0x280)
+#define CKM_SECURID			(0x281)
+#define CKM_HOTP_KEY_GEN		(0x290)
+#define CKM_HOTP			(0x291)
+#define CKM_ACTI			(0x2A0)
+#define CKM_ACTI_KEY_GEN		(0x2A1)
 #define CKM_CAST_KEY_GEN		(0x300)
 #define CKM_CAST_ECB			(0x301)
 #define CKM_CAST_CBC			(0x302)
@@ -611,11 +683,16 @@ typedef unsigned long ck_mechanism_type_t;
 #define CKM_TLS_MASTER_KEY_DERIVE	(0x375)
 #define CKM_TLS_KEY_AND_MAC_DERIVE	(0x376)
 #define CKM_TLS_MASTER_KEY_DERIVE_DH	(0x377)
+#define CKM_TLS_PRF			(0x378)
 #define CKM_SSL3_MD5_MAC		(0x380)
 #define CKM_SSL3_SHA1_MAC		(0x381)
 #define CKM_MD5_KEY_DERIVATION		(0x390)
 #define CKM_MD2_KEY_DERIVATION		(0x391)
 #define CKM_SHA1_KEY_DERIVATION		(0x392)
+#define CKM_SHA256_KEY_DERIVATION	(0x393)
+#define CKM_SHA384_KEY_DERIVATION	(0x394)
+#define CKM_SHA512_KEY_DERIVATION	(0x395)
+#define CKM_SHA224_KEY_DERIVATION	(0x396)
 #define CKM_PBE_MD2_DES_CBC		(0x3a0)
 #define CKM_PBE_MD5_DES_CBC		(0x3a1)
 #define CKM_PBE_MD5_CAST_CBC		(0x3a2)
@@ -632,8 +709,35 @@ typedef unsigned long ck_mechanism_type_t;
 #define CKM_PBE_SHA1_RC2_40_CBC		(0x3ab)
 #define CKM_PKCS5_PBKD2			(0x3b0)
 #define CKM_PBA_SHA1_WITH_SHA1_HMAC	(0x3c0)
+#define CKM_WTLS_PRE_MASTER_KEY_GEN	(0x3d0)
+#define CKM_WTLS_MASTER_KEY_DERIVE	(0x3d1)
+#define CKM_WTLS_MASTER_KEY_DERIVE_DH_ECC (0x3d2)
+#define CKM_WTLS_PRF			(0x3d3)
+#define CKM_WTLS_SERVER_KEY_AND_MAC_DERIVE (0x3d4)
+#define CKM_WTLS_CLIENT_KEY_AND_MAC_DERIVE (0x3d5)
 #define CKM_KEY_WRAP_LYNKS		(0x400)
 #define CKM_KEY_WRAP_SET_OAEP		(0x401)
+#define CKM_CMS_SIG			(0x500)
+#define CKM_KIP_DERIVE			(0x510)
+#define CKM_KIP_WRAP			(0x511)
+#define CKM_KIP_MAC			(0x512)
+#define CKM_CAMELLIA_KEY_GEN		(0x550)
+#define CKM_CAMELLIA_ECB		(0x551)
+#define CKM_CAMELLIA_CBC		(0x552)
+#define CKM_CAMELLIA_MAC		(0x553)
+#define CKM_CAMELLIA_MAC_GENERAL	(0x554)
+#define CKM_CAMELLIA_CBC_PAD		(0x555)
+#define CKM_CAMELLIA_ECB_ENCRYPT_DATA	(0x556)
+#define CKM_CAMELLIA_CBC_ENCRYPT_DATA	(0x557)
+#define CKM_CAMELLIA_CTR		(0x558)
+#define CKM_ARIA_KEY_GEN		(0x560)
+#define CKM_ARIA_ECB			(0x561)
+#define CKM_ARIA_CBC			(0x562)
+#define CKM_ARIA_MAC			(0x563)
+#define CKM_ARIA_MAC_GENERAL		(0x564)
+#define CKM_ARIA_CBC_PAD		(0x565)
+#define CKM_ARIA_ECB_ENCRYPT_DATA	(0x566)
+#define CKM_ARIA_CBC_ENCRYPT_DATA	(0x567)
 #define CKM_SKIPJACK_KEY_GEN		(0x1000)
 #define CKM_SKIPJACK_ECB64		(0x1001)
 #define CKM_SKIPJACK_CBC64		(0x1002)
@@ -675,6 +779,17 @@ typedef unsigned long ck_mechanism_type_t;
 #define CKM_AES_MAC			(0x1083)
 #define CKM_AES_MAC_GENERAL		(0x1084)
 #define CKM_AES_CBC_PAD			(0x1085)
+#define CKM_AES_CTR			(0x1086)
+#define CKM_BLOWFISH_KEY_GEN		(0x1090)
+#define CKM_BLOWFISH_CBC		(0x1091)
+#define CKM_TWOFISH_KEY_GEN		(0x1092)
+#define CKM_TWOFISH_CBC			(0x1093)
+#define CKM_DES_ECB_ENCRYPT_DATA	(0x1100)
+#define CKM_DES_CBC_ENCRYPT_DATA	(0x1101)
+#define CKM_DES3_ECB_ENCRYPT_DATA	(0x1102)
+#define CKM_DES3_CBC_ENCRYPT_DATA	(0x1103)
+#define CKM_AES_ECB_ENCRYPT_DATA	(0x1104)
+#define CKM_AES_CBC_ENCRYPT_DATA	(0x1105)
 #define CKM_DSA_PARAMETER_GEN		(0x2000)
 #define CKM_DH_PKCS_PARAMETER_GEN	(0x2001)
 #define CKM_X9_42_DH_PARAMETER_GEN	(0x2002)
@@ -703,6 +818,8 @@ struct ck_mechanism_info
 #define CKG_MGF1_SHA256       (0x00000002)
 #define CKG_MGF1_SHA384       (0x00000003)
 #define CKG_MGF1_SHA512       (0x00000004)
+/* v2.20 amendment 3 */
+#define CKG_MGF1_SHA224       (0x00000005)
 
 struct ck_rsa_pkcs_oaep_params {
   ck_mechanism_type_t hash_alg;
@@ -710,6 +827,90 @@ struct ck_rsa_pkcs_oaep_params {
   unsigned long source;
   void *source_data;
   unsigned long source_data_len;
+};
+
+struct ck_rsa_pkcs_pss_params {
+  ck_mechanism_type_t hash_alg;
+  unsigned long mgf;
+  unsigned long slen;
+};
+
+typedef unsigned long ck_ec_kdf_type_t;
+
+/* The following EC Key Derivation Functions are defined */
+#define CKD_NULL                       (0x00000001)
+#define CKD_SHA1_KDF                   (0x00000002)
+
+struct ck_ecdh1_derive_params {
+  ck_ec_kdf_type_t kdf;
+  unsigned long shared_data_len;
+  unsigned char *shared_data;
+  unsigned long public_data_len;
+  unsigned char *public_data;
+};
+
+struct ck_ecdh2_derive_params {
+  ck_ec_kdf_type_t kdf;
+  unsigned long shared_data_len;
+  unsigned char *shared_data;
+  unsigned long public_data_len;
+  unsigned char *public_data;
+  unsigned long private_data_len;
+  ck_object_handle_t private_data;
+  unsigned long public_data_len2;
+  unsigned char *public_data2;
+};
+
+struct ck_ecmqv_derive_params {
+  ck_ec_kdf_type_t kdf;
+  unsigned long shared_data_len;
+  unsigned char *shared_data;
+  unsigned long public_data_len;
+  unsigned char *public_data;
+  unsigned long private_data_len;
+  ck_object_handle_t private_data;
+  unsigned long public_data_len2;
+  unsigned char *public_data2;
+  ck_object_handle_t public_key;
+};
+
+typedef unsigned long ck_x9_42_dh_kdf_type_t;
+
+/* The following X9.42 DH key derivation functions are defined */
+#define CKD_SHA1_KDF_ASN1              (0x00000003)
+#define CKD_SHA1_KDF_CONCATENATE       (0x00000004)
+
+struct ck_x9_42_dh1_derive_params {
+  ck_x9_42_dh_kdf_type_t kdf;
+  unsigned long other_info_len;
+  unsigned char *other_info;
+  unsigned long public_data_len;
+  unsigned char *public_data;
+};
+
+struct ck_x9_42_dh2_derive_params {
+  ck_x9_42_dh_kdf_type_t kdf;
+  unsigned long other_info_len;
+  unsigned char *other_info;
+  unsigned long public_data_len;
+  unsigned char *public_data;
+  unsigned long private_data_len;
+  ck_object_handle_t private_data;
+  unsigned long public_data_len2;
+  unsigned char *public_data2;
+};
+
+struct ck_x9_42_mqv_derive_params {
+  ck_x9_42_dh_kdf_type_t kdf;
+  unsigned long other_info_len;
+  unsigned char *other_info;
+  unsigned long public_data_len;
+  unsigned char *public_data;
+  unsigned long private_data_len;
+  ck_object_handle_t private_data;
+  unsigned long public_data_len2;
+  unsigned char *public_data2;
+  ck_object_handle_t public_key;
 };
 
 #define CKF_HW			(1 << 0)
@@ -725,6 +926,12 @@ struct ck_rsa_pkcs_oaep_params {
 #define CKF_WRAP		(1 << 17)
 #define CKF_UNWRAP		(1 << 18)
 #define CKF_DERIVE		(1 << 19)
+#define CKF_EC_F_P		(1 << 20)
+#define CKF_EC_F_2M		(1 << 21)
+#define CKF_EC_ECPARAMETERS	(1 << 22)
+#define CKF_EC_NAMEDCURVE	(1 << 23)
+#define CKF_EC_UNCOMPRESS	(1 << 24)
+#define CKF_EC_COMPRESS		(1 << 25)
 #define CKF_EXTENSION		((unsigned long) (1 << 31))
 
 
@@ -1201,6 +1408,8 @@ struct ck_c_initialize_args
 #define CKR_CRYPTOKI_ALREADY_INITIALIZED	(0x191)
 #define CKR_MUTEX_BAD				(0x1a0)
 #define CKR_MUTEX_NOT_LOCKED			(0x1a1)
+#define CKR_NEW_PIN_MODE			(0x1b0)
+#define CKR_NEXT_OTP				(0x1b1)
 #define CKR_FUNCTION_REJECTED			(0x200)
 #define CKR_VENDOR_DEFINED			((unsigned long) (1 << 31))
 
@@ -1355,6 +1564,22 @@ typedef struct ck_c_initialize_args *CK_C_INITIALIZE_ARGS_PTR;
 #undef hash_alg
 #undef source_data
 #undef source_data_len
+#undef slen
+
+#undef ck_ec_kdf_type_t
+#undef shared_data_len
+#undef shared_data
+#undef public_data_len
+#undef public_data
+#undef private_data_len
+#undef private_data
+#undef public_data_len2
+#undef public_data2
+#undef public_key
+
+#undef ck_x9_42_dh_kdf_type_t
+#undef other_info_len
+#undef other_info
 
 #undef ck_rv_t
 #undef ck_notify_t

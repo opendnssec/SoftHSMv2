@@ -254,6 +254,7 @@ void SignVerifyTests::testRsaSignVerify()
 	digestRsaPkcsSignVerify(CKM_MD5_RSA_PKCS, hSessionRW, hPuk,hPrk);
 	digestRsaPkcsSignVerify(CKM_SHA1_RSA_PKCS, hSessionRW, hPuk,hPrk);
 	digestRsaPkcsSignVerify(CKM_SHA256_RSA_PKCS, hSessionRW, hPuk,hPrk);
+	digestRsaPkcsSignVerify(CKM_SHA384_RSA_PKCS, hSessionRW, hPuk,hPrk);
 	digestRsaPkcsSignVerify(CKM_SHA512_RSA_PKCS, hSessionRW, hPuk,hPrk);
 
 	// Public Token Keys
@@ -265,6 +266,7 @@ void SignVerifyTests::testRsaSignVerify()
 	digestRsaPkcsSignVerify(CKM_MD5_RSA_PKCS, hSessionRW, hPuk,hPrk);
 	digestRsaPkcsSignVerify(CKM_SHA1_RSA_PKCS, hSessionRW, hPuk,hPrk);
 	digestRsaPkcsSignVerify(CKM_SHA256_RSA_PKCS, hSessionRW, hPuk,hPrk);
+	digestRsaPkcsSignVerify(CKM_SHA384_RSA_PKCS, hSessionRW, hPuk,hPrk);
 	digestRsaPkcsSignVerify(CKM_SHA512_RSA_PKCS, hSessionRW, hPuk,hPrk);
 
 	// Private Token Keys
@@ -276,6 +278,7 @@ void SignVerifyTests::testRsaSignVerify()
 	digestRsaPkcsSignVerify(CKM_MD5_RSA_PKCS, hSessionRW, hPuk,hPrk);
 	digestRsaPkcsSignVerify(CKM_SHA1_RSA_PKCS, hSessionRW, hPuk,hPrk);
 	digestRsaPkcsSignVerify(CKM_SHA256_RSA_PKCS, hSessionRW, hPuk,hPrk);
+	digestRsaPkcsSignVerify(CKM_SHA384_RSA_PKCS, hSessionRW, hPuk,hPrk);
 	digestRsaPkcsSignVerify(CKM_SHA512_RSA_PKCS, hSessionRW, hPuk,hPrk);
 }
 

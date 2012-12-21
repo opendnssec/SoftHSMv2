@@ -1,7 +1,7 @@
 /* $Id$ */
 
 /*
- * Copyright (c) 2010 SURFnet bv
+ * Copyright (c) 2010 .SE (The Internet Infrastructure Foundation)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,49 +27,21 @@
  */
 
 /*****************************************************************************
- HashTests.h
+ BotanSHA384.cpp
 
- Contains test cases to test the hash implementations
+ Botan SHA384 implementation
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_HASHTESTS_H
-#define _SOFTHSM_V2_HASHTESTS_H
+#include "config.h"
+#include "BotanSHA384.h"
+#include <botan/sha2_64.h>
 
-#include <cppunit/extensions/HelperMacros.h>
-#include "HashAlgorithm.h"
-#include "RNG.h"
-
-class HashTests : public CppUnit::TestFixture
+int BotanSHA384::getHashSize()
 {
-	CPPUNIT_TEST_SUITE(HashTests);
-	CPPUNIT_TEST(testMD5);
-	CPPUNIT_TEST(testSHA1);
-	CPPUNIT_TEST(testSHA224);
-	CPPUNIT_TEST(testSHA256);
-	CPPUNIT_TEST(testSHA384);
-	CPPUNIT_TEST(testSHA512);
-	CPPUNIT_TEST_SUITE_END();
+	return 48;
+}
 
-public:
-	void testMD5();
-	void testSHA1();
-	void testSHA224();
-	void testSHA256();
-	void testSHA384();
-	void testSHA512();
-
-	void setUp();
-	void tearDown();
-
-private:
-	void writeTmpFile(ByteString& data);
-
-	void readTmpFile(ByteString& data);
-
-	HashAlgorithm* hash;
-
-	RNG* rng;
-};
-
-#endif // !_SOFTHSM_V2_HASHTESTS_H
-
+Botan::HashFunction* BotanSHA384::getHash() const
+{
+	return new Botan::SHA_384();
+}

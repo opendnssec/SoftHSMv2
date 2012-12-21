@@ -172,6 +172,10 @@ bool BotanRSA::signInit(PrivateKey* privateKey, const std::string mechanism)
 	{
 		emsa = "EMSA3(SHA-256)";
 	}
+	else if (!lowerMechanism.compare("rsa-sha384-pkcs"))
+	{
+		emsa = "EMSA3(SHA-384)";
+	}
 	else if (!lowerMechanism.compare("rsa-sha512-pkcs"))
 	{
 		emsa = "EMSA3(SHA-512)";
@@ -392,6 +396,10 @@ bool BotanRSA::verifyInit(PublicKey* publicKey, const std::string mechanism)
 	else if (!lowerMechanism.compare("rsa-sha256-pkcs"))
 	{
 		emsa = "EMSA3(SHA-256)";
+	}
+	else if (!lowerMechanism.compare("rsa-sha384-pkcs"))
+	{
+		emsa = "EMSA3(SHA-384)";
 	}
 	else if (!lowerMechanism.compare("rsa-sha512-pkcs"))
 	{

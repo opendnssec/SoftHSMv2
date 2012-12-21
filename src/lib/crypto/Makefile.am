@@ -46,7 +46,9 @@ libsofthsm_crypto_la_SOURCES +=	OSSLAES.cpp \
 				OSSLRSAPrivateKey.cpp \
 				OSSLRSAPublicKey.cpp \
 				OSSLSHA1.cpp \
+				OSSLSHA224.cpp \
 				OSSLSHA256.cpp \
+				OSSLSHA384.cpp \
 				OSSLSHA512.cpp \
 				OSSLUtil.cpp
 endif
@@ -68,7 +70,9 @@ libsofthsm_crypto_la_SOURCES +=	BotanAES.cpp \
 				BotanRSAPrivateKey.cpp \
 				BotanRSAPublicKey.cpp \
 				BotanSHA1.cpp \
+				BotanSHA224.cpp \
 				BotanSHA256.cpp \
+				BotanSHA384.cpp \
 				BotanSHA512.cpp \
 				BotanSymmetricAlgorithm.cpp \
 				BotanUtil.cpp
