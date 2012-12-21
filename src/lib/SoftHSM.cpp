@@ -56,6 +56,8 @@
 #include "HandleManager.h"
 #include "P11Objects.h"
 
+#include <stdlib.h>
+
 static CK_RV newP11Object(CK_OBJECT_CLASS objClass, CK_KEY_TYPE keyType, std::auto_ptr< P11Object > &p11object)
 {
 	switch(objClass) {
@@ -180,6 +182,11 @@ static CK_ATTRIBUTE bsAttribute(CK_ATTRIBUTE_TYPE type, const ByteString &value)
 {
 	CK_ATTRIBUTE attr = {type, (CK_VOID_PTR)value.const_byte_str(), value.size() };
 	return attr;
+}
+
+static void libcleanup()
+{
+	SoftHSM::i()->C_Finalize(NULL);
 }
 
 /*****************************************************************************
@@ -348,6 +355,9 @@ CK_RV SoftHSM::C_Initialize(CK_VOID_PTR pInitArgs)
 
 	// Set the state to initialised
 	isInitialised = true;
+
+	// Hook cleanup on dlclose() or exit()
+	atexit(libcleanup);
 
 	return CKR_OK;
 }
