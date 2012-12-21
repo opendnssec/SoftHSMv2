@@ -1162,7 +1162,7 @@ CK_RV SoftHSM::C_FindObjectsInit(CK_SESSION_HANDLE hSession, CK_ATTRIBUTE_PTR pT
 					if (attr->isByteStringAttribute())
 					{
 						ByteString bsAttrValue;
-						if (isPrivateObject)
+						if (isPrivateObject && attr->getByteStringValue().size() != 0)
 						{
 							if (!token->decrypt(attr->getByteStringValue(), bsAttrValue))
 								return CKR_GENERAL_ERROR;
