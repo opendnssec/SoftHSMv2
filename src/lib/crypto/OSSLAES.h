@@ -46,12 +46,12 @@ public:
 	// Destructor
 	virtual ~OSSLAES() { }
 
+	// Return the block size
+	virtual size_t getBlockSize() const;
+
 protected:
 	// Return the right EVP cipher for the operation
 	virtual const EVP_CIPHER* getCipher() const;
-
-	// Return the block size
-	virtual size_t getBlockSize() const;
 };
 
 #endif // !_SOFTHSM_V2_OSSLAES_H

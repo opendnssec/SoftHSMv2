@@ -38,6 +38,8 @@
 
 const EVP_CIPHER* OSSLDES::getCipher() const
 {
+	if (currentKey == NULL) return NULL;
+
 	// Check currentKey bit length; 3DES only supports 56-bit, 112-bit or 168-bit keys 
 	if ((currentKey->getBitLen() != 56) && 
 	    (currentKey->getBitLen() != 112) &&

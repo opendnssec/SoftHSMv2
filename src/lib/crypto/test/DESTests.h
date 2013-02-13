@@ -41,6 +41,7 @@
 class DESTests : public CppUnit::TestFixture
 {
 	CPPUNIT_TEST_SUITE(DESTests);
+	CPPUNIT_TEST(testBlockSize);
 	CPPUNIT_TEST(testCBC);
 	CPPUNIT_TEST(testECB);
 	CPPUNIT_TEST(testOFB);
@@ -48,6 +49,7 @@ class DESTests : public CppUnit::TestFixture
 	CPPUNIT_TEST_SUITE_END();
 
 public:
+	void testBlockSize();
 	void testCBC();
 	void testECB();
 	void testOFB();

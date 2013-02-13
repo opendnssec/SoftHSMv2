@@ -61,6 +61,11 @@ void AESTests::tearDown()
 	fflush(stdout);
 }
 
+void AESTests::testBlockSize()
+{
+	CPPUNIT_ASSERT(aes->getBlockSize() == 16);
+}
+
 void AESTests::testCBC()
 {
 	char testKeys128[][33] =

@@ -129,11 +129,11 @@ void SecureDataMgrTests::testSecureDataManager()
 	// Check that is is now also possible to log in with the user PIN
 	CPPUNIT_ASSERT(s2.loginUser(userPIN));
 
-	// Check that encrypting the data results in the same encrypted value as before
+	// Check that encrypting the data results in different ciphertext because of the random IV
 	ByteString encrypted2;
 
 	CPPUNIT_ASSERT(s2.encrypt(plaintext, encrypted2));
-	CPPUNIT_ASSERT(encrypted == encrypted2);
+	CPPUNIT_ASSERT(encrypted != encrypted2);
 
 	// Check that decrypting earlier data can be done with the recreated key
 	CPPUNIT_ASSERT(s2.decrypt(encrypted, decrypted));
@@ -174,9 +174,9 @@ void SecureDataMgrTests::testSecureDataManager()
 	// Check that it is possible to log in with the new user PIN
 	CPPUNIT_ASSERT(s2.loginUser(newUserPIN));
 	
-	// Check that encrypting the data results in the same encrypted value as before
+	// Check that encrypting the data results in the different ciphertext because of the random IV
 	CPPUNIT_ASSERT(s2.encrypt(plaintext, encrypted2));
-	CPPUNIT_ASSERT(encrypted == encrypted2);
+	CPPUNIT_ASSERT(encrypted != encrypted2);
 
 	// Check that decrypting earlier data can be done with the recreated key
 	CPPUNIT_ASSERT(s2.decrypt(encrypted, decrypted));

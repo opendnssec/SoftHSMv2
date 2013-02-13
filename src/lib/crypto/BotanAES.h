@@ -45,12 +45,12 @@ public:
 	// Destructor
 	virtual ~BotanAES() { }
 
+	// Return the block size
+	virtual size_t getBlockSize() const;
+
 protected:
 	// Return the right EVP cipher for the operation
 	virtual std::string getCipher() const;
-
-	// Return the block size
-	virtual size_t getBlockSize() const;
 };
 
 #endif // !_SOFTHSM_V2_BOTANAES_H

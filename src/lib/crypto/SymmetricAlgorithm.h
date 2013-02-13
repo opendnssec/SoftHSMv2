@@ -63,6 +63,9 @@ public:
 	virtual bool generateKey(SymmetricKey& key, RNG* rng = NULL);
 	virtual bool reconstructKey(SymmetricKey& key, const ByteString& serialisedData);
 
+	// Return the block size
+	virtual size_t getBlockSize() const = 0;
+
 protected:
 	// The current cipher mode
 	std::string currentCipherMode;

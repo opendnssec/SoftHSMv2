@@ -61,6 +61,11 @@ void DESTests::tearDown()
 	fflush(stdout);
 }
 
+void DESTests::testBlockSize()
+{
+	CPPUNIT_ASSERT(des->getBlockSize() == 8);
+}
+
 void DESTests::testCBC()
 {
 	char testKeys56[][17] =

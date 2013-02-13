@@ -60,12 +60,12 @@ public:
 	virtual bool decryptUpdate(const ByteString& encryptedData, ByteString& data);
 	virtual bool decryptFinal(ByteString& data);
 
+	// Return the block size
+	virtual size_t getBlockSize() const = 0;
+
 protected:
 	// Return the right EVP cipher for the operation
 	virtual const EVP_CIPHER* getCipher() const = 0;
-
-	// Return the block size
-	virtual size_t getBlockSize() const = 0;
 
 private:
 	// The current EVP context

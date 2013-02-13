@@ -38,6 +38,8 @@
 
 const EVP_CIPHER* OSSLAES::getCipher() const
 {
+	if (currentKey == NULL) return NULL;
+
 	// Check currentKey bit length; AES only supports 128, 192 or 256 bit keys
 	if ((currentKey->getBitLen() != 128) && 
 	    (currentKey->getBitLen() != 192) &&

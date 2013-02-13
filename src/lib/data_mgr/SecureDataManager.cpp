@@ -123,10 +123,18 @@ bool SecureDataManager::pbeEncryptKey(const ByteString& passphrase, ByteString& 
 	encryptedKey.wipe();
 	encryptedKey += salt;
 
+	// Generate random IV
+	ByteString IV;
+
+	if (!rng->generateRandom(IV, aes->getBlockSize())) return false;
+
+	// Add the IV
+	encryptedKey += IV;
+
 	// Encrypt the data
 	ByteString block;
 
-	if (!aes->encryptInit(pbeKey, "cbc")) 
+	if (!aes->encryptInit(pbeKey, "cbc", IV)) 
 	{
 		delete pbeKey;
 
@@ -246,8 +254,11 @@ bool SecureDataManager::login(const ByteString& passphrase, const ByteString& en
 	// First, take the salt from the encrypted key
 	ByteString salt = encryptedKey.substr(0,8);
 
+	// Then, take the IV from the encrypted key
+	ByteString IV = encryptedKey.substr(8, aes->getBlockSize());
+
 	// Now, take the encrypted data from the encrypted key
-	ByteString encryptedKeyData = encryptedKey.substr(8);
+	ByteString encryptedKeyData = encryptedKey.substr(8 + aes->getBlockSize());
 
 	// Derive the PBE key
 	AESKey* pbeKey = NULL;
@@ -262,7 +273,7 @@ bool SecureDataManager::login(const ByteString& passphrase, const ByteString& en
 	ByteString finalBlock;
 
 	// NOTE: The login will fail here if incorrect passphrase is supplied
-	if (!aes->decryptInit(pbeKey, "cbc") ||
+	if (!aes->decryptInit(pbeKey, "cbc", IV) ||
 	    !aes->decryptUpdate(encryptedKeyData, decryptedKeyData) ||
 	    !aes->decryptFinal(finalBlock))
 	{
@@ -341,11 +352,21 @@ bool SecureDataManager::decrypt(const ByteString& encrypted, ByteString& plainte
 
 		remask(unmaskedKey);
 	}
+	
+	// Take the IV from the input data
+	ByteString IV = encrypted.substr(0, aes->getBlockSize());
+
+	if (IV.size() != aes->getBlockSize())
+	{
+		ERROR_MSG("Invalid IV in encrypted data");
+
+		return false;
+	}
 
 	ByteString finalBlock;
 
-	if (!aes->decryptInit(&theKey, "cbc") ||
-	    !aes->decryptUpdate(encrypted, plaintext) ||
+	if (!aes->decryptInit(&theKey, "cbc", IV) ||
+	    !aes->decryptUpdate(encrypted.substr(aes->getBlockSize()), plaintext) ||
 	    !aes->decryptFinal(finalBlock))
 	{
 		return false;
@@ -378,9 +399,17 @@ bool SecureDataManager::encrypt(const ByteString& plaintext, ByteString& encrypt
 		remask(unmaskedKey);
 	}
 
+	// Wipe encrypted data block
+	encrypted.wipe();
+
+	// Generate random IV
+	ByteString IV;
+
+	if (!rng->generateRandom(IV, aes->getBlockSize())) return false;
+
 	ByteString finalBlock;
 
-	if (!aes->encryptInit(&theKey, "cbc") ||
+	if (!aes->encryptInit(&theKey, "cbc", IV) ||
 	    !aes->encryptUpdate(plaintext, encrypted) ||
 	    !aes->encryptFinal(finalBlock))
 	{
@@ -388,6 +417,9 @@ bool SecureDataManager::encrypt(const ByteString& plaintext, ByteString& encrypt
 	}
 
 	encrypted += finalBlock;
+
+	// Add IV to output data
+	encrypted = IV + encrypted;
 
 	return true;
 }
