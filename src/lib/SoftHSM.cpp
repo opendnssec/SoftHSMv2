@@ -113,6 +113,7 @@ static CK_RV extractObjectInformation(CK_ATTRIBUTE_PTR pTemplate, CK_ULONG ulCou
 					objClass = *(CK_OBJECT_CLASS_PTR)pTemplate[i].pValue;
 					bHasClass = true;
 				}
+				break;
 			case CKA_KEY_TYPE:
 				if (pTemplate[i].ulValueLen == sizeof(CK_KEY_TYPE))
 				{
