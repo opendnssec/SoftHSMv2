@@ -20,6 +20,12 @@ PKCS#11 interface, the SoftHSM. SoftHSM is designed to meet the requirements of
 OpenDNSSEC, but can also work together with other cryptographic products
 because of the PKCS#11 interface.
 
+## Developers
+
+- Rickard Bellgrim (.SE, The Internet Infrastructure Foundation, www.iis.se)
+- René Post (XPT Software and Consulting, www.xpt.nl)
+- Roland van Rijswijk (SURFnet bv, www.surfnet.nl)
+
 ## Dependencies
 
 SoftHSM depends on a cryptographic library, Botan or OpenSSL.
