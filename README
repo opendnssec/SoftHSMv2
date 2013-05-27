@@ -1,38 +1,38 @@
-$Id$
+# SoftHSM version 2
 
-  SoftHSM is part of the OpenDNSSEC project.
-  Read more at www.opendnssec.org
+SoftHSM is part of the OpenDNSSEC project. Read more at www.opendnssec.org.
 
-INTRODUCTION
+## Introduction
 
-  OpenDNSSEC handles and stores its cryptographic keys via the PKCS#11 
-  interface. This interface specifies how to communicate with cryptographic 
-  devices such as HSM:s (Hardware Security Modules) and smart cards. The 
-  purpose of these devices is, among others, to generate cryptographic keys 
-  and sign information without revealing private-key material to the outside 
-  world. They are often designed to perform well on these specific tasks 
-  compared to ordinary processes in a normal computer.
+OpenDNSSEC handles and stores its cryptographic keys via the PKCS#11 interface.
+This interface specifies how to communicate with cryptographic devices such as
+HSM:s (Hardware Security Modules) and smart cards. The purpose of these devices
+is, among others, to generate cryptographic keys and sign information without
+revealing private-key material to the outside world. They are often designed to
+perform well on these specific tasks compared to ordinary processes in a normal
+computer.
 
-  A potential problem with the use of the PKCS#11 interface is that it might 
-  limit the wide spread use of OpenDNSSEC, since a potential user might not 
-  be willing to invest in a new hardware device. To counter this effect, 
-  OpenDNSSEC is providing a software implementation of a generic 
-  cryptographic device with a PKCS#11 interface, the SoftHSM. SoftHSM is 
-  designed to meet the requirements of OpenDNSSEC, but can also work together 
-  with other cryptographic products because of the PKCS#11 interface.
+A potential problem with the use of the PKCS#11 interface is that it might
+limit the wide spread use of OpenDNSSEC, since a potential user might not be
+willing to invest in a new hardware device. To counter this effect, OpenDNSSEC
+is providing a software implementation of a generic cryptographic device with a
+PKCS#11 interface, the SoftHSM. SoftHSM is designed to meet the requirements of
+OpenDNSSEC, but can also work together with other cryptographic products
+because of the PKCS#11 interface.
 
-DEPENDENCIES
+## Dependencies
 
-  SoftHSM depends on a cryptographic library, Botan or OpenSSL.
-  Minimum required versions:
-  * Botan 1.10.0
-  * OpenSSL 0.9.8
+SoftHSM depends on a cryptographic library, Botan or OpenSSL.
+Minimum required versions:
 
-  There is a migration tool for converting token databases from SoftHSMv1
-  into the new type of tokens. If this tool is built, then SQLite3 is
-  required (>= 3.4.2).
+- Botan 1.10.0 
+- OpenSSL 0.9.8
 
-INSTALLING
+There is a migration tool for converting token databases from SoftHSMv1 into
+the new type of tokens. If this tool is built, then SQLite3 is required (>=
+3.4.2).
+
+## Installation
 
   1. Configure the installation/compilation scripts.
 
@@ -88,7 +88,17 @@ INSTALLING
 
   6. Link to this library and use the PKCS#11 interface.
 
-BACKUP
+## Backup
 
-  All of the tokens and their objects are stored in the location given by
-  softhsm2.conf. Backup can thus be done as a regular file copy.
+All of the tokens and their objects are stored in the location given by
+softhsm2.conf. Backup can thus be done as a regular file copy.
+
+
+## Building from the repository
+
+If the code is downloaded directly from the code repository, you have to
+prepare the configuration scripts before continuing with the real README.
+
+1. You need to install automake, autoconf, libtool, etc.
+2. Run the command 'sh autogen.sh'
+3. Continue reading in the file README.
