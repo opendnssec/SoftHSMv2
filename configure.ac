@@ -1,7 +1,3 @@
-dnl
-dnl $Id$
-dnl
-
 ##################
 #                #
 #    Version     #
