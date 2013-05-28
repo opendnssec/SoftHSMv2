@@ -40,59 +40,67 @@ the new type of tokens. If this tool is built, then SQLite3 is required (>=
 
 ## Installation
 
-  1. Configure the installation/compilation scripts.
+### Configure
 
-    ./configure
+Configure the installation/compilation scripts:
 
-    Options:
+	./configure
 
-      --disable-non-paged-memory
-                              Disable non-paged memory for secure storage
-                              (default enabled)
-      --with-crypto-backend   Select crypto backend (openssl|botan)
-      --with-openssl=PATH     Specify prefix of path of OpenSSL
-      --with-botan=PATH       Specify prefix of path of Botan
-      --with-loglevel=INT     The log level. 0=No log 1=Error 2=Warning 3=Info
-                              4=Debug (default INT=3)
-      --with-migrate          Build the migration tool. Used when migrating
-                              a SoftHSM v1 token database. Requires SQLite3.
-      --with-sqlite3=PATH     Specify prefix of path of SQLite3
+Options:
 
-    For more options:
+	--disable-non-paged-memory
+	                        Disable non-paged memory for secure storage
+	                        (default enabled)
+	--with-crypto-backend   Select crypto backend (openssl|botan)
+	--with-openssl=PATH     Specify prefix of path of OpenSSL
+	--with-botan=PATH       Specify prefix of path of Botan
+	--with-loglevel=INT     The log level. 0=No log 1=Error 2=Warning 3=Info
+	                        4=Debug (default INT=3)
+	--with-migrate          Build the migration tool. Used when migrating
+	                        a SoftHSM v1 token database. Requires SQLite3.
+	--with-sqlite3=PATH     Specify prefix of path of SQLite3
 
-    ./configure --help
+For more options:
 
-  2. Compile the source code.
+	./configure --help
 
-    make
 
-  3. Install the library.
+### Compile
 
-    sudo make install
+Compile the source code using the following command:
 
-  4. Location of the configuration file.
+	make
 
-    The default location of the config file is /etc/softhsm2.conf
-    This location can be change by setting the environment variable.
+### Install Library
 
-      export SOFTHSM2_CONF=/home/user/config.file
+Install the library using the follow command:
 
-    Details on the configuration can be found in "man softhsm2.conf".
+	sudo make install
 
-  5. Initialize your tokens.
+### Configure
 
-    Use either softhsm-util or the PKCS#11 interface. The SO PIN can e.g.
-    be used to re-initialize the token and the user PIN is handed out to the
-    application so it can interact with the token.
+The default location of the config file is /etc/softhsm2.conf. This location
+can be change by setting the environment variable.
+
+	export SOFTHSM2_CONF=/home/user/config.file
+
+Details on the configuration can be found in "man softhsm2.conf".
+
+### Initialize Tokens
+
+Use either softhsm-util or the PKCS#11 interface. The SO PIN can e.g. be used
+to re-initialize the token and the user PIN is handed out to the application so
+it can interact with the token.
 
       softhsm-util --init-token --slot 0 --label "My token 1"
 
-    Type in SO PIN and user PIN.
+Type in SO PIN and user PIN. Once a token has been initialized, more slots will
+be added automatically with a new uninitialized token.
 
-    Once a token has been initialized, more slots will be added automatically
-    with a new uninitialized token.
+### Link
 
-  6. Link to this library and use the PKCS#11 interface.
+Link to this library and use the PKCS#11 interface.
+
 
 ## Backup
 
@@ -107,4 +115,4 @@ prepare the configuration scripts before continuing with the real README.
 
 1. You need to install automake, autoconf, libtool, etc.
 2. Run the command 'sh autogen.sh'
-3. Continue reading in the file README.
+3. Continue reading this README.
