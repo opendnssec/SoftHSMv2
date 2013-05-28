@@ -1,5 +1,3 @@
-# $Id$
-
 AC_DEFUN([ACX_PEDANTIC],[
 	AC_ARG_ENABLE(
 		[pedantic],

@@ -1,5 +1,3 @@
-# $Id$
-
 AC_DEFUN([ACX_CRYPTO_BACKEND],[
 
 	# First check if we want to support GOST

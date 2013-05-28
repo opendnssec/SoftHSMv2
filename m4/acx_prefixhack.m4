@@ -1,5 +1,3 @@
-# $Id$
-#
 # Special processing of paths depending on whether --prefix,
 # --sysconfdir or --localstatedir arguments were given.
 

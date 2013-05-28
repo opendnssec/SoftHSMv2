@@ -1,5 +1,3 @@
-# $Id$
-
 AC_DEFUN([ACX_STRICT],[
 	AC_ARG_ENABLE(
 		[strict],

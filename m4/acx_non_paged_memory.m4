@@ -1,5 +1,3 @@
-# $Id$
-
 AC_DEFUN([ACX_NON_PAGED_MEMORY],[
 
 	AC_ARG_ENABLE(non-paged-memory,

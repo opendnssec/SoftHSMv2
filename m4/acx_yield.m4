@@ -1,5 +1,3 @@
-# $Id$
-
 AC_DEFUN([ACX_YIELD],[
 	YIELD_LIB=
 	# Solaris has sched_yield in librt, not in libpthread or libc.

@@ -1,5 +1,3 @@
-# $Id$
-
 AC_DEFUN([ACX_SQLITE3],[
 	AC_ARG_WITH(sqlite3,
         	AC_HELP_STRING([--with-sqlite3=PATH],[Specify prefix of path of SQLite3]),

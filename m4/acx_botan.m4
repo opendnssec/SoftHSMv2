@@ -1,5 +1,3 @@
-# $Id$
-
 AC_DEFUN([ACX_BOTAN],[
 	AC_ARG_WITH(botan,
         	AC_HELP_STRING([--with-botan=PATH],[Specify prefix of path of Botan]),
