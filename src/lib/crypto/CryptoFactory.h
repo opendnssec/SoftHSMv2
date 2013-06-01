@@ -41,6 +41,7 @@
 #include "SymmetricAlgorithm.h"
 #include "AsymmetricAlgorithm.h"
 #include "HashAlgorithm.h"
+#include "MacAlgorithm.h"
 #include "RNG.h"
 
 class CryptoFactory
@@ -69,6 +70,13 @@ public:
 	// Recycle a hash algorithm instance -- override this function in the derived
 	// class if you need to perform specific clean-up
 	virtual void recycleHashAlgorithm(HashAlgorithm* toRecycle);
+
+	// Create a concrete instance of a MAC algorithm
+	virtual MacAlgorithm* getMacAlgorithm(std::string algorithm) = 0;
+
+	// Recycle a MAC algorithm instance -- override this function in the derived
+	// class if you need to perform specific clean-up
+	virtual void recycleMacAlgorithm(MacAlgorithm* toRecycle);
 
 	// Get the global RNG (may be an unique RNG per thread)
 	virtual RNG* getRNG(std::string name = "default") = 0;

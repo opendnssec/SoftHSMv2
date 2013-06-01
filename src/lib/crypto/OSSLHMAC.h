@@ -1,7 +1,6 @@
 /* $Id$ */
 
 /*
- * Copyright (c) 2010 SURFnet bv
  * Copyright (c) 2010 .SE (The Internet Infrastructure Foundation)
  * All rights reserved.
  *
@@ -28,66 +27,71 @@
  */
 
 /*****************************************************************************
- BotanCryptoFactory.h
+ OSSLHMAC.h
 
- This is a Botan based cryptographic algorithm factory
+ OpenSSL HMAC implementation
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_BOTANCRYPTOFACTORY_H
-#define _SOFTHSM_V2_BOTANCRYPTOFACTORY_H
-
-#ifdef HAVE_PTHREAD_H
-#include <pthread.h>
-#endif
+#ifndef _SOFTHSM_V2_OSSLHMAC_H
+#define _SOFTHSM_V2_OSSLHMAC_H
 
 #include "config.h"
-#include "CryptoFactory.h"
-#include "SymmetricAlgorithm.h"
-#include "AsymmetricAlgorithm.h"
-#include "HashAlgorithm.h"
-#include "MacAlgorithm.h"
-#include "RNG.h"
-#include "MutexFactory.h"
-#include <memory>
-#include <map>
+#include "OSSLEVPMacAlgorithm.h"
+#include <openssl/evp.h>
 
-class BotanCryptoFactory : public CryptoFactory
+class OSSLHMACMD5 : public OSSLEVPMacAlgorithm
 {
-public:
-	// Return the one-and-only instance
-	static BotanCryptoFactory* i();
-
-	// Create a concrete instance of a symmetric algorithm
-	SymmetricAlgorithm* getSymmetricAlgorithm(std::string algorithm);
-
-	// Create a concrete instance of an asymmetric algorithm
-	AsymmetricAlgorithm* getAsymmetricAlgorithm(std::string algorithm);
-
-	// Create a concrete instance of a hash algorithm
-	HashAlgorithm* getHashAlgorithm(std::string algorithm);
-
-	// Create a concrete instance of a MAC algorithm
-	MacAlgorithm* getMacAlgorithm(std::string algorithm);
-
-	// Get the global RNG (may be an unique RNG per thread)
-	RNG* getRNG(std::string name = "default");
-
-	// Destructor
-	~BotanCryptoFactory();
-
-private:
-	// Constructor
-	BotanCryptoFactory();
-
-	// The one-and-only instance
-	static std::auto_ptr<BotanCryptoFactory> instance;
-
-	// Thread specific RNG
-#ifdef HAVE_PTHREAD_H
-	std::map<pthread_t, RNG*> rngs;
-#endif
-        Mutex* rngsMutex;
+	virtual unsigned long getMinKeySize();
+	virtual unsigned long getMaxKeySize();
+protected:
+	virtual const EVP_MD* getEVPHash() const;
+	virtual size_t getMacSize() const;
 };
 
-#endif // !_SOFTHSM_V2_BOTANCRYPTOFACTORY_H
+class OSSLHMACSHA1 : public OSSLEVPMacAlgorithm
+{
+	virtual unsigned long getMinKeySize();
+	virtual unsigned long getMaxKeySize();
+protected:
+	virtual const EVP_MD* getEVPHash() const;
+	virtual size_t getMacSize() const;
+};
+
+class OSSLHMACSHA224 : public OSSLEVPMacAlgorithm
+{
+	virtual unsigned long getMinKeySize();
+	virtual unsigned long getMaxKeySize();
+protected:
+	virtual const EVP_MD* getEVPHash() const;
+	virtual size_t getMacSize() const;
+};
+
+class OSSLHMACSHA256 : public OSSLEVPMacAlgorithm
+{
+	virtual unsigned long getMinKeySize();
+	virtual unsigned long getMaxKeySize();
+protected:
+	virtual const EVP_MD* getEVPHash() const;
+	virtual size_t getMacSize() const;
+};
+
+class OSSLHMACSHA384 : public OSSLEVPMacAlgorithm
+{
+	virtual unsigned long getMinKeySize();
+	virtual unsigned long getMaxKeySize();
+protected:
+	virtual const EVP_MD* getEVPHash() const;
+	virtual size_t getMacSize() const;
+};
+
+class OSSLHMACSHA512 : public OSSLEVPMacAlgorithm
+{
+	virtual unsigned long getMinKeySize();
+	virtual unsigned long getMaxKeySize();
+protected:
+	virtual const EVP_MD* getEVPHash() const;
+	virtual size_t getMacSize() const;
+};
+
+#endif // !_SOFTHSM_V2_OSSLHMAC_H
 

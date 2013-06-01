@@ -180,6 +180,12 @@ private:
 	SessionManager* sessionManager;
 	HandleManager* handleManager;
 
+	// Sign/Verify variants
+	CK_RV MacSignInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechanism, CK_OBJECT_HANDLE hKey);
+	CK_RV AsymSignInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechanism, CK_OBJECT_HANDLE hKey);
+	CK_RV MacVerifyInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechanism, CK_OBJECT_HANDLE hKey);
+	CK_RV AsymVerifyInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechanism, CK_OBJECT_HANDLE hKey);
+
 	// Key generation
 	CK_RV generateRSA
 	(CK_SESSION_HANDLE hSession,
@@ -219,5 +225,6 @@ private:
 
 	CK_RV getRSAPrivateKey(RSAPrivateKey* privateKey, Token* token, OSObject* key);
 	CK_RV getRSAPublicKey(RSAPublicKey* publicKey, Token* token, OSObject* key);
+	CK_RV getSymmetricKey(SymmetricKey* skey, Token* token, OSObject* key);
 };
 
