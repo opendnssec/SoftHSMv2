@@ -29,7 +29,7 @@
 /*****************************************************************************
  BotanDSAPublicKey.cpp
 
- Botan DSA private key class
+ Botan DSA public key class
  *****************************************************************************/
 
 #include "config.h"

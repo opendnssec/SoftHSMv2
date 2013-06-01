@@ -29,7 +29,7 @@
 /*****************************************************************************
  OSSLDSAPublicKey.h
 
- OpenSSL DSA private key class
+ OpenSSL DSA public key class
  *****************************************************************************/
 
 #ifndef _SOFTHSM_V2_OSSLDSAPUBLICKEY_H

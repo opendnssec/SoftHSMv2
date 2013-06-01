@@ -124,7 +124,7 @@ int main(int argc, char* argv[])
 	int opt;
 
 	char* inPath = NULL;
-	char* outPath = NULL;
+	//char* outPath = NULL;
 	char* soPIN = NULL;
 	char* userPIN = NULL;
 	char* filePIN = NULL;
@@ -138,7 +138,7 @@ int main(int argc, char* argv[])
 	int doInitToken = 0;
 	int doShowSlots = 0;
 	int doImport = 0;
-	int doExport = 0;
+	//int doExport = 0;
 	int action = 0;
 	int rv = 0;
 
@@ -487,7 +487,7 @@ int importKeyPair
 		return 1;
 	}
 
-	int objIDLen = 0;
+	size_t objIDLen = 0;
 	char* objID = hexStrToBin(objectID, strlen(objectID), &objIDLen);
 	if (objID == NULL)
 	{
@@ -549,7 +549,7 @@ int importKeyPair
 }
 
 // Convert a char array of hexadecimal characters into a binary representation
-char* hexStrToBin(char* objectID, int idLength, int* newLen)
+char* hexStrToBin(char* objectID, int idLength, size_t* newLen)
 {
 	char* bytes = NULL;
 
@@ -576,7 +576,7 @@ char* hexStrToBin(char* objectID, int idLength, int* newLen)
 		return NULL;
 	}
 
-	for (int i = 0; i < *newLen; i++)
+	for (size_t i = 0; i < *newLen; i++)
 	{
 		bytes[i] = hexdigit_to_int(objectID[2*i]) * 16 +
 				hexdigit_to_int(objectID[2*i+1]);
@@ -634,7 +634,7 @@ int hexdigit_to_int(char ch)
 }
 
 // Search for an object
-CK_OBJECT_HANDLE searchObject(CK_SESSION_HANDLE hSession, char* objID, int objIDLen)
+CK_OBJECT_HANDLE searchObject(CK_SESSION_HANDLE hSession, char* objID, size_t objIDLen)
 {
 	if (objID == NULL)
 	{

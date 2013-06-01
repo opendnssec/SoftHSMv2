@@ -33,6 +33,7 @@
  *****************************************************************************/
 
 #include <config.h>
+#define UTIL_OSSL
 #include "softhsm-util.h"
 #include "softhsm-util-ossl.h"
 
@@ -69,7 +70,7 @@ int crypto_import_key_pair
 	char* filePIN,
 	char* label,
 	char* objID,
-	int objIDLen,
+	size_t objIDLen,
 	int noPublicKey
 )
 {
@@ -194,7 +195,7 @@ int crypto_save_rsa
 	CK_SESSION_HANDLE hSession,
 	char* label,
 	char* objID,
-	int objIDLen,
+	size_t objIDLen,
 	int noPublicKey,
 	RSA* rsa
 )
@@ -353,7 +354,7 @@ int crypto_save_dsa
 	CK_SESSION_HANDLE hSession,
 	char* label,
 	char* objID,
-	int objIDLen,
+	size_t objIDLen,
 	int noPublicKey,
 	DSA* dsa
 )

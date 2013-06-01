@@ -132,7 +132,6 @@ CK_RV P11Object::loadTemplate(Token *token, CK_ATTRIBUTE_PTR pTemplate, CK_ULONG
 	// 5. Otherwise, the ulValueLen field is modified to hold the value -1.
 
 	// If case 3 or 4 applies to all the requested attributes, then the call will return CKR_OK.
-	CK_RV rv = CKR_OK;
 	for (CK_ULONG i = 0; i < ulAttributeCount; ++i)
 	{
 		P11Attribute* attr = attributes[pTemplate[i].type];

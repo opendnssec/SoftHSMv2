@@ -37,7 +37,6 @@
 
 #include "OSObject.h"
 #include "P11Attributes.h"
-#include "RSAPublicKey.h"
 #include "Token.h"
 #include "cryptoki.h"
 #include <map>

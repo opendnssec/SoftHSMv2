@@ -29,7 +29,7 @@
 /*****************************************************************************
  OSSLRSAPublicKey.cpp
 
- OpenSSL RSA private key class
+ OpenSSL RSA public key class
  *****************************************************************************/
 
 #include "config.h"

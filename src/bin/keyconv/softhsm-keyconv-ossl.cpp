@@ -33,6 +33,7 @@
  *****************************************************************************/
 
 #include <config.h>
+#define KEYCONV_OSSL
 #include "softhsm-keyconv.h"
 
 #include <stdio.h>

@@ -511,7 +511,7 @@ CK_RV SoftHSM::C_GetMechanismList(CK_SLOT_ID slotID, CK_MECHANISM_TYPE_PTR pMech
 
 	*pulCount = nrSupportedMechanisms;
 
-	for (int i = 0; i < nrSupportedMechanisms; i ++)
+	for (CK_ULONG i = 0; i < nrSupportedMechanisms; i ++)
 	{
 		pMechanismList[i] = supportedMechanisms[i];
 	}
@@ -1450,6 +1450,10 @@ CK_RV SoftHSM::C_EncryptFinal(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pEncrypted
 	Session* session = (Session*)handleManager->getSession(hSession);
 	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
 
+	// Check if we are doing the correct operation
+	if (session->getOpType() != SESSION_OP_ENCRYPT) return CKR_OPERATION_NOT_INITIALIZED;
+
+	session->resetOp();
 	return CKR_FUNCTION_NOT_SUPPORTED;
 }
 
@@ -1638,6 +1642,10 @@ CK_RV SoftHSM::C_DecryptFinal(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pData, CK_
 	Session* session = (Session*)handleManager->getSession(hSession);
 	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
 
+	// Check if we are doing the correct operation
+	if (session->getOpType() != SESSION_OP_DECRYPT) return CKR_OPERATION_NOT_INITIALIZED;
+
+	session->resetOp();
 	return CKR_FUNCTION_NOT_SUPPORTED;
 }
 
@@ -2734,7 +2742,7 @@ CK_RV SoftHSM::C_CancelFunction(CK_SESSION_HANDLE hSession)
 	return CKR_FUNCTION_NOT_PARALLEL;
 }
 
-// Wait or poll for a slot even on the specified slot
+// Wait or poll for a slot event on the specified slot
 CK_RV SoftHSM::C_WaitForSlotEvent(CK_FLAGS flags, CK_SLOT_ID_PTR pSlot, CK_VOID_PTR pReserved)
 {
 	return CKR_FUNCTION_NOT_SUPPORTED;
@@ -2838,8 +2846,8 @@ CK_RV SoftHSM::generateRSA
 
 		// Add the additional
 		if (ulPublicKeyAttributeCount > (maxAttribs - publicKeyAttribsCount))
-			return CKR_TEMPLATE_INCONSISTENT;
-		for (int i=0; i < ulPublicKeyAttributeCount && rv == CKR_OK; ++i)
+			rv = CKR_TEMPLATE_INCONSISTENT;
+		for (CK_ULONG i=0; i < ulPublicKeyAttributeCount && rv == CKR_OK; ++i)
 		{
 			switch (pPublicKeyTemplate[i].type)
 			{
@@ -2890,7 +2898,7 @@ CK_RV SoftHSM::generateRSA
 					osobject->abortTransaction();
 
 				if (!bOK)
-					rv == CKR_FUNCTION_FAILED;
+					rv = CKR_FUNCTION_FAILED;
 			}
 		}
 	}
@@ -2909,8 +2917,8 @@ CK_RV SoftHSM::generateRSA
 		};
 		CK_ULONG privateKeyAttribsCount = 4;
 		if (ulPrivateKeyAttributeCount > (maxAttribs - privateKeyAttribsCount))
-			return CKR_TEMPLATE_INCONSISTENT;
-		for (int i=0; i < ulPrivateKeyAttributeCount && rv == CKR_OK; ++i)
+			rv = CKR_TEMPLATE_INCONSISTENT;
+		for (CK_ULONG i=0; i < ulPrivateKeyAttributeCount && rv == CKR_OK; ++i)
 		{
 			switch (pPrivateKeyTemplate[i].type)
 			{
@@ -3023,7 +3031,7 @@ CK_RV SoftHSM::generateRSA
 	return rv;
 }
 
-// Generate an DSA key pair
+// Generate a DSA key pair
 CK_RV SoftHSM::generateDSA
 (CK_SESSION_HANDLE hSession,
 	CK_ATTRIBUTE_PTR pPublicKeyTemplate,
