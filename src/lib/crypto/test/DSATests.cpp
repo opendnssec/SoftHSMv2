@@ -75,6 +75,8 @@ void DSATests::testKeyGeneration()
 	keySizes.push_back(512);
 	keySizes.push_back(768);
 	keySizes.push_back(1024);
+	keySizes.push_back(1536);
+	keySizes.push_back(2048);
 
 	for (std::vector<size_t>::iterator k = keySizes.begin(); k != keySizes.end(); k++)
 	{
@@ -167,10 +169,14 @@ void DSATests::testSigningVerifying()
 	keySizes.push_back(512);
 	keySizes.push_back(768);
 	keySizes.push_back(1024);
+	keySizes.push_back(1536);
+	keySizes.push_back(2048);
 
 	// Mechanisms to test
 	std::vector<const char*> mechanisms;
 	mechanisms.push_back("dsa-sha1");
+	mechanisms.push_back("dsa-sha224");
+	mechanisms.push_back("dsa-sha256");
 
 	for (std::vector<size_t>::iterator k = keySizes.begin(); k != keySizes.end(); k++)
 	{
@@ -189,6 +195,7 @@ void DSATests::testSigningVerifying()
 
 		CPPUNIT_ASSERT(rng->generateRandom(dataToSign, 567));
 
+		// Test mechanisms that perform internal hashing
 		for (std::vector<const char*>::iterator m = mechanisms.begin(); m != mechanisms.end(); m++)
 		{
 			ByteString blockSignature, singlePartSignature;
@@ -213,6 +220,16 @@ void DSATests::testSigningVerifying()
 			// And single-pass verification
 			CPPUNIT_ASSERT(dsa->verify(kp->getPublicKey(), dataToSign, singlePartSignature, *m));
 		}
+
+		// Test mechanisms that do not perform internal hashing
+		CPPUNIT_ASSERT(rng->generateRandom(dataToSign, *k >= 2048 ? 32 : 20));
+
+		// Sign the data
+		ByteString signature;
+		CPPUNIT_ASSERT(dsa->sign(kp->getPrivateKey(), dataToSign, signature, "dsa"));
+
+		// Verify the signature
+		CPPUNIT_ASSERT(dsa->verify(kp->getPublicKey(), dataToSign, signature, "dsa"));
 
 		dsa->recycleKeyPair(kp);
 		dsa->recycleParameters(p);
