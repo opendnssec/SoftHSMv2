@@ -16,6 +16,9 @@ libsofthsm_crypto_la_SOURCES =	AsymmetricAlgorithm.cpp \
 				DSAParameters.cpp \
 				DSAPublicKey.cpp \
 				DSAPrivateKey.cpp \
+				ECParameters.cpp \
+				ECPublicKey.cpp \
+				ECPrivateKey.cpp \
 				HashAlgorithm.cpp \
 				RSAParameters.cpp \
 				RSAPrivateKey.cpp \
@@ -37,6 +40,10 @@ libsofthsm_crypto_la_SOURCES +=	OSSLAES.cpp \
 				OSSLDSAKeyPair.cpp \
 				OSSLDSAPrivateKey.cpp \
 				OSSLDSAPublicKey.cpp \
+				OSSLECDSA.cpp \
+				OSSLECKeyPair.cpp \
+				OSSLECPrivateKey.cpp \
+				OSSLECPublicKey.cpp \
 				OSSLEVPHashAlgorithm.cpp \
 				OSSLEVPSymmetricAlgorithm.cpp \
 				OSSLMD5.cpp \
@@ -62,6 +69,10 @@ libsofthsm_crypto_la_SOURCES +=	BotanAES.cpp \
 				BotanDSAKeyPair.cpp \
 				BotanDSAPrivateKey.cpp \
 				BotanDSAPublicKey.cpp \
+				BotanECDSA.cpp \
+				BotanECDSAKeyPair.cpp \
+				BotanECDSAPrivateKey.cpp \
+				BotanECDSAPublicKey.cpp \
 				BotanHashAlgorithm.cpp \
 				BotanMD5.cpp \
 				BotanRNG.cpp \
