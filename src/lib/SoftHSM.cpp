@@ -453,7 +453,7 @@ CK_RV SoftHSM::C_GetTokenInfo(CK_SLOT_ID slotID, CK_TOKEN_INFO_PTR pInfo)
 CK_RV SoftHSM::C_GetMechanismList(CK_SLOT_ID slotID, CK_MECHANISM_TYPE_PTR pMechanismList, CK_ULONG_PTR pulCount)
 {
 	// A list with the supported mechanisms
-	CK_ULONG nrSupportedMechanisms = 24;
+	CK_ULONG nrSupportedMechanisms = 25;
 	CK_MECHANISM_TYPE supportedMechanisms[] =
 	{
 		CKM_MD5,
@@ -468,6 +468,7 @@ CK_RV SoftHSM::C_GetMechanismList(CK_SLOT_ID slotID, CK_MECHANISM_TYPE_PTR pMech
 		CKM_MD5_RSA_PKCS,
 		CKM_SHA1_RSA_PKCS,
 		CKM_RSA_PKCS_OAEP,
+		CKM_SHA224_RSA_PKCS,
 		CKM_SHA256_RSA_PKCS,
 		CKM_SHA384_RSA_PKCS,
 		CKM_SHA512_RSA_PKCS,
@@ -595,6 +596,7 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 			break;
 		case CKM_MD5_RSA_PKCS:
 		case CKM_SHA1_RSA_PKCS:
+		case CKM_SHA224_RSA_PKCS:
 		case CKM_SHA256_RSA_PKCS:
 		case CKM_SHA384_RSA_PKCS:
 		case CKM_SHA512_RSA_PKCS:
@@ -1899,6 +1901,11 @@ CK_RV SoftHSM::C_SignInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechanis
 			bIsMultiPartOp = true;
 			isRSA = true;
 			break;
+		case CKM_SHA224_RSA_PKCS:
+			mechanism = "rsa-sha224-pkcs";
+			bIsMultiPartOp = true;
+			isRSA = true;
+			break;
 		case CKM_SHA256_RSA_PKCS:
 			mechanism = "rsa-sha256-pkcs";
 			bIsMultiPartOp = true;
@@ -2206,6 +2213,11 @@ CK_RV SoftHSM::C_VerifyInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechan
 			break;
 		case CKM_SHA1_RSA_PKCS:
 			mechanism = "rsa-sha1-pkcs";
+			bIsMultiPartOp = true;
+			isRSA = true;
+			break;
+		case CKM_SHA224_RSA_PKCS:
+			mechanism = "rsa-sha224-pkcs";
 			bIsMultiPartOp = true;
 			isRSA = true;
 			break;

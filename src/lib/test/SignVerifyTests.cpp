@@ -242,6 +242,7 @@ void SignVerifyTests::testRsaSignVerify()
 	rsaPkcsSignVerify(CKM_RSA_X_509, hSessionRO, hPuk,hPrk);
 	digestRsaPkcsSignVerify(CKM_MD5_RSA_PKCS, hSessionRO, hPuk,hPrk);
 	digestRsaPkcsSignVerify(CKM_SHA1_RSA_PKCS, hSessionRO, hPuk,hPrk);
+	digestRsaPkcsSignVerify(CKM_SHA224_RSA_PKCS, hSessionRO, hPuk,hPrk);
 	digestRsaPkcsSignVerify(CKM_SHA256_RSA_PKCS, hSessionRO, hPuk,hPrk);
 	digestRsaPkcsSignVerify(CKM_SHA512_RSA_PKCS, hSessionRO, hPuk,hPrk);
 
@@ -253,6 +254,7 @@ void SignVerifyTests::testRsaSignVerify()
 	rsaPkcsSignVerify(CKM_RSA_X_509, hSessionRW, hPuk,hPrk);
 	digestRsaPkcsSignVerify(CKM_MD5_RSA_PKCS, hSessionRW, hPuk,hPrk);
 	digestRsaPkcsSignVerify(CKM_SHA1_RSA_PKCS, hSessionRW, hPuk,hPrk);
+	digestRsaPkcsSignVerify(CKM_SHA224_RSA_PKCS, hSessionRW, hPuk,hPrk);
 	digestRsaPkcsSignVerify(CKM_SHA256_RSA_PKCS, hSessionRW, hPuk,hPrk);
 	digestRsaPkcsSignVerify(CKM_SHA384_RSA_PKCS, hSessionRW, hPuk,hPrk);
 	digestRsaPkcsSignVerify(CKM_SHA512_RSA_PKCS, hSessionRW, hPuk,hPrk);
@@ -265,6 +267,7 @@ void SignVerifyTests::testRsaSignVerify()
 	rsaPkcsSignVerify(CKM_RSA_X_509, hSessionRW, hPuk,hPrk);
 	digestRsaPkcsSignVerify(CKM_MD5_RSA_PKCS, hSessionRW, hPuk,hPrk);
 	digestRsaPkcsSignVerify(CKM_SHA1_RSA_PKCS, hSessionRW, hPuk,hPrk);
+	digestRsaPkcsSignVerify(CKM_SHA224_RSA_PKCS, hSessionRW, hPuk,hPrk);
 	digestRsaPkcsSignVerify(CKM_SHA256_RSA_PKCS, hSessionRW, hPuk,hPrk);
 	digestRsaPkcsSignVerify(CKM_SHA384_RSA_PKCS, hSessionRW, hPuk,hPrk);
 	digestRsaPkcsSignVerify(CKM_SHA512_RSA_PKCS, hSessionRW, hPuk,hPrk);
@@ -277,6 +280,7 @@ void SignVerifyTests::testRsaSignVerify()
 	rsaPkcsSignVerify(CKM_RSA_X_509, hSessionRW, hPuk,hPrk);
 	digestRsaPkcsSignVerify(CKM_MD5_RSA_PKCS, hSessionRW, hPuk,hPrk);
 	digestRsaPkcsSignVerify(CKM_SHA1_RSA_PKCS, hSessionRW, hPuk,hPrk);
+	digestRsaPkcsSignVerify(CKM_SHA224_RSA_PKCS, hSessionRW, hPuk,hPrk);
 	digestRsaPkcsSignVerify(CKM_SHA256_RSA_PKCS, hSessionRW, hPuk,hPrk);
 	digestRsaPkcsSignVerify(CKM_SHA384_RSA_PKCS, hSessionRW, hPuk,hPrk);
 	digestRsaPkcsSignVerify(CKM_SHA512_RSA_PKCS, hSessionRW, hPuk,hPrk);
