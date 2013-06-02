@@ -490,7 +490,11 @@ CK_RV SoftHSM::C_GetTokenInfo(CK_SLOT_ID slotID, CK_TOKEN_INFO_PTR pInfo)
 CK_RV SoftHSM::C_GetMechanismList(CK_SLOT_ID slotID, CK_MECHANISM_TYPE_PTR pMechanismList, CK_ULONG_PTR pulCount)
 {
 	// A list with the supported mechanisms
+#ifdef WITH_ECC
 	CK_ULONG nrSupportedMechanisms = 39;
+#else
+	CK_ULONG nrSupportedMechanisms = 37;
+#endif
 	CK_MECHANISM_TYPE supportedMechanisms[] =
 	{
 		CKM_MD5,
@@ -530,8 +534,10 @@ CK_RV SoftHSM::C_GetMechanismList(CK_SLOT_ID slotID, CK_MECHANISM_TYPE_PTR pMech
 		CKM_DH_PKCS_KEY_PAIR_GEN,
 		CKM_DH_PKCS_PARAMETER_GEN,
 		CKM_DH_PKCS_DERIVE,
+#ifdef WITH_ECC
 		CKM_EC_KEY_PAIR_GEN,
 		CKM_ECDSA
+#endif
 	};
 
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
@@ -573,7 +579,9 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 	unsigned long rsaMinSize, rsaMaxSize;
 	unsigned long dsaMinSize, dsaMaxSize;
 	unsigned long dhMinSize, dhMaxSize;
+#ifdef WITH_ECC
 	unsigned long ecdsaMinSize, ecdsaMaxSize;
+#endif
 
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
 	if (pInfo == NULL_PTR) return CKR_ARGUMENTS_BAD;
@@ -631,6 +639,7 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 	}
 	CryptoFactory::i()->recycleAsymmetricAlgorithm(dh);
 
+#ifdef WITH_ECC
 	AsymmetricAlgorithm* ecdsa = CryptoFactory::i()->getAsymmetricAlgorithm("ECDSA");
 	if (ecdsa != NULL)
 	{
@@ -642,6 +651,7 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 		return CKR_GENERAL_ERROR;
 	}
 	CryptoFactory::i()->recycleAsymmetricAlgorithm(ecdsa);
+#endif
 
 	switch (type)
 	{
@@ -750,6 +760,7 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 			pInfo->ulMaxKeySize = dhMaxSize;
 			pInfo->flags = CKF_DERIVE;
 			break;
+#ifdef WITH_ECC
 		case CKM_EC_KEY_PAIR_GEN:
 			pInfo->ulMinKeySize = ecdsaMinSize;
 			pInfo->ulMaxKeySize = ecdsaMaxSize;
@@ -761,6 +772,7 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 			pInfo->ulMaxKeySize = ecdsaMaxSize;
 			pInfo->flags = CKF_SIGN | CKF_VERIFY | CKF_EC_COMMOM;
 			break;
+#endif
 		default:
 			DEBUG_MSG("The selected mechanism is not supported");
 			return CKR_MECHANISM_INVALID;
@@ -2134,10 +2146,12 @@ CK_RV SoftHSM::AsymSignInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechan
 			bAllowMultiPartOp = true;
 			isDSA = true;
 			break;
+#ifdef WITH_ECC
 		case CKM_ECDSA:
 			mechanism = "ecdsa";
 			bAllowMultiPartOp = false;
 			break;
+#endif
 		default:
 			return CKR_MECHANISM_INVALID;
 	}
@@ -2184,6 +2198,7 @@ CK_RV SoftHSM::AsymSignInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechan
         }
 	else
 	{
+#ifdef WITH_ECC
 		asymCrypto = CryptoFactory::i()->getAsymmetricAlgorithm("ecdsa");
 		if (asymCrypto == NULL) return CKR_MECHANISM_INVALID;
 
@@ -2200,6 +2215,9 @@ CK_RV SoftHSM::AsymSignInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechan
 			CryptoFactory::i()->recycleAsymmetricAlgorithm(asymCrypto);
 			return CKR_GENERAL_ERROR;
 		}
+#else
+		return CKR_MECHANISM_INVALID;
+#endif
         }
 
 	// Initialize signing
@@ -2746,10 +2764,12 @@ CK_RV SoftHSM::AsymVerifyInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 			bAllowMultiPartOp = true;
 			isDSA = true;
 			break;
+#ifdef WITH_ECC
 		case CKM_ECDSA:
 			mechanism = "ecdsa";
 			bAllowMultiPartOp = false;
 			break;
+#endif
 		default:
 			return CKR_MECHANISM_INVALID;
 	}
@@ -2796,6 +2816,7 @@ CK_RV SoftHSM::AsymVerifyInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
         }
 	else
 	{
+#ifdef WITH_ECC
 		asymCrypto = CryptoFactory::i()->getAsymmetricAlgorithm("ecdsa");
 		if (asymCrypto == NULL) return CKR_MECHANISM_INVALID;
 
@@ -2812,6 +2833,9 @@ CK_RV SoftHSM::AsymVerifyInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 			CryptoFactory::i()->recycleAsymmetricAlgorithm(asymCrypto);
 			return CKR_GENERAL_ERROR;
 		}
+#else
+		return CKR_MECHANISM_INVALID;
+#endif
         }
 
 	// Initialize verifying
@@ -3313,9 +3337,11 @@ CK_RV SoftHSM::C_GenerateKeyPair
 		case CKM_DH_PKCS_KEY_PAIR_GEN:
 			keyType = CKK_DH;
 			break;
+#ifdef WITH_ECC
 		case CKM_EC_KEY_PAIR_GEN:
 			keyType = CKK_EC;
 			break;
+#endif
 		default:
 			return CKR_MECHANISM_INVALID;
 	}

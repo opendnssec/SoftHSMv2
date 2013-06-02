@@ -41,6 +41,7 @@
 #include "RNG.h"
 #include "AsymmetricKeyPair.h"
 #include "AsymmetricAlgorithm.h"
+#ifdef WITH_ECC
 #include "ECParameters.h"
 #include "ECPublicKey.h"
 #include "ECPrivateKey.h"
@@ -204,4 +205,4 @@ void ECDSATests::testSignVerifyKnownVector()
 {
 	// TODO
 }
-
+#endif

@@ -57,6 +57,7 @@ BIGNUM* OSSL::byteString2bn(const ByteString& byteString)
 	return BN_bin2bn(byteString.const_byte_str(), byteString.size(), NULL);
 }
 
+#ifdef WITH_ECC
 // Convert an OpenSSL EC GROUP to a ByteString
 ByteString OSSL::grp2ByteString(const EC_GROUP* grp)
 {
@@ -150,4 +151,4 @@ EC_POINT* OSSL::byteString2pt(const ByteString& byteString, const EC_GROUP* grp)
 	}
 	return pt;
 }
-
+#endif

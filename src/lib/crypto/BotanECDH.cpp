@@ -33,6 +33,7 @@
  *****************************************************************************/
 
 #include "config.h"
+#ifdef WITH_ECC
 #include "log.h"
 #include "BotanECDH.h"
 #include "BotanRNG.h"
@@ -331,4 +332,4 @@ bool BotanECDH::reconstructParameters(AsymmetricParameters** ppParams, ByteStrin
 
 	return true;
 }
-
+#endif

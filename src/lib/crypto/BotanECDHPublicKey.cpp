@@ -33,6 +33,7 @@
  *****************************************************************************/
 
 #include "config.h"
+#ifdef WITH_ECC
 #include "log.h"
 #include "BotanECDHPublicKey.h"
 #include "BotanUtil.h"
@@ -150,3 +151,4 @@ void BotanECDHPublicKey::createBotanKey()
 		}
 	}
 }
+#endif
