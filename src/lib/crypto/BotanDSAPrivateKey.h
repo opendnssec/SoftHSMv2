@@ -59,11 +59,10 @@ public:
 	// Setters for the DSA private key components
 	virtual void setX(const ByteString& x);
 
-	// Setters for the DSA public key components
+	// Setters for the DSA domain parameters
 	virtual void setP(const ByteString& p);
 	virtual void setQ(const ByteString& q);
 	virtual void setG(const ByteString& g);
-	virtual void setY(const ByteString& y);
 
 	// Set from Botan representation
 	virtual void setFromBotan(const Botan::DSA_PrivateKey* dsa);

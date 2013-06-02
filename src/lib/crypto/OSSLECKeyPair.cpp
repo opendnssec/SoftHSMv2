@@ -27,40 +27,46 @@
  */
 
 /*****************************************************************************
- OSSLUtil.h
+ OSSLECKeyPair.cpp
 
- OpenSSL convenience functions
+ OpenSSL Elliptic Curve key-pair class
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_OSSLUTIL_H
-#define _SOFTHSM_V2_OSSLUTIL_H
-
 #include "config.h"
-#include "ByteString.h"
-#include <openssl/bn.h>
-#include <openssl/ec.h>
+#include "log.h"
+#include "OSSLECKeyPair.h"
 
-namespace OSSL
+// Set the public key
+void OSSLECKeyPair::setPublicKey(OSSLECPublicKey& publicKey)
 {
-	// Convert an OpenSSL BIGNUM to a ByteString
-	ByteString bn2ByteString(const BIGNUM* bn);
-
-	// Convert a ByteString to an OpenSSL BIGNUM
-	BIGNUM* byteString2bn(const ByteString& byteString);
-
-	// Convert an OpenSSL EC GROUP to a ByteString
-	ByteString grp2ByteString(const EC_GROUP* grp);
-
-	// Convert a ByteString to an OpenSSL EC GROUP
-	EC_GROUP* byteString2grp(const ByteString& byteString);
-
-	// Convert an OpenSSL EC POINT in the given EC GROUP to a ByteString
-	ByteString pt2ByteString(const EC_POINT* pt, const EC_GROUP* grp);
-
-	// Convert a ByteString to an OpenSSL EC POINT in the given EC GROUP
-	EC_POINT* byteString2pt(const ByteString& byteString, const EC_GROUP* grp);
-
+	pubKey = publicKey;
 }
 
-#endif // !_SOFTHSM_V2_OSSLUTIL_H
+// Set the private key
+void OSSLECKeyPair::setPrivateKey(OSSLECPrivateKey& privateKey)
+{
+	privKey = privateKey;
+}
+
+// Return the public key
+PublicKey* OSSLECKeyPair::getPublicKey()
+{
+	return &pubKey;
+}
+
+const PublicKey* OSSLECKeyPair::getConstPublicKey() const
+{
+	return &pubKey;
+}
+
+// Return the private key
+PrivateKey* OSSLECKeyPair::getPrivateKey()
+{
+	return &privKey;
+}
+
+const PrivateKey* OSSLECKeyPair::getConstPrivateKey() const
+{
+	return &privKey;
+}
 

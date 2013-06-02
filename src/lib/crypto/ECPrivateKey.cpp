@@ -27,109 +27,81 @@
  */
 
 /*****************************************************************************
- DSAPrivateKey.cpp
+ ECPrivateKey.cpp
 
- DSA private key class
+ Elliptic Curve private key class
  *****************************************************************************/
 
 #include "config.h"
 #include "log.h"
-#include "DSAPrivateKey.h"
+#include "ECPrivateKey.h"
 #include <string.h>
 
 // Set the type
-/*static*/ const char* DSAPrivateKey::type = "Abstract DSA private key";
+/*static*/ const char* ECPrivateKey::type = "Abstract EC private key";
 
 // Check if the key is of the given type
-bool DSAPrivateKey::isOfType(const char* type)
+bool ECPrivateKey::isOfType(const char* type)
 {
 	return !strcmp(this->type, type);
 }
 
 // Get the bit length
-unsigned long DSAPrivateKey::getBitLength() const
+unsigned long ECPrivateKey::getBitLength() const
 {
-	return getP().bits();
+	return getD().bits();
 }
 
 // Get the output length
-unsigned long DSAPrivateKey::getOutputLength() const
+unsigned long ECPrivateKey::getOutputLength() const
 {
-	return getQ().size() * 2;
+	return this->getOrderLength() * 2;
 }
 
-// Setters for the DSA private key components
-void DSAPrivateKey::setX(const ByteString& x)
+// Setters for the EC private key components
+void ECPrivateKey::setD(const ByteString& d)
 {
-	this->x = x;
+	this->d = d;
 }
 
-// Setters for the DSA domain parameters
-void DSAPrivateKey::setP(const ByteString& p)
+// Setters for the EC public key components
+void ECPrivateKey::setEC(const ByteString& ec)
 {
-	this->p = p;
+	this->ec = ec;
 }
 
-void DSAPrivateKey::setQ(const ByteString& q)
+// Getters for the EC private key components
+const ByteString& ECPrivateKey::getD() const
 {
-	this->q = q;
+	return d;
 }
 
-void DSAPrivateKey::setG(const ByteString& g)
+// Getters for the EC public key components
+const ByteString& ECPrivateKey::getEC() const
 {
-	this->g = g;
-}
-
-// Getters for the DSA private key components
-const ByteString& DSAPrivateKey::getX() const
-{
-	return x;
-}
-
-// Getters for the DSA domain parameters
-const ByteString& DSAPrivateKey::getP() const
-{
-	return p;
-}
-
-const ByteString& DSAPrivateKey::getQ() const
-{
-	return q;
-}
-
-const ByteString& DSAPrivateKey::getG() const
-{
-	return g;
+	return ec;
 }
 
 // Serialisation
-ByteString DSAPrivateKey::serialise() const
+ByteString ECPrivateKey::serialise() const
 {
-	return p.serialise() +
-	       q.serialise() +
-	       g.serialise() +
-	       x.serialise();
+	return ec.serialise() +
+	       d.serialise();
 }
 
-bool DSAPrivateKey::deserialise(ByteString& serialised)
+bool ECPrivateKey::deserialise(ByteString& serialised)
 {
-	ByteString dP = ByteString::chainDeserialise(serialised);
-	ByteString dQ = ByteString::chainDeserialise(serialised);
-	ByteString dG = ByteString::chainDeserialise(serialised);
-	ByteString dX = ByteString::chainDeserialise(serialised);
+	ByteString dEC = ByteString::chainDeserialise(serialised);
+	ByteString dD = ByteString::chainDeserialise(serialised);
 
-	if ((dP.size() == 0) ||
-	    (dQ.size() == 0) ||
-	    (dG.size() == 0) ||
-	    (dX.size() == 0))
+	if ((dEC.size() == 0) ||
+	    (dD.size() == 0))
 	{
 		return false;
 	}
 
-	setP(dP);
-	setQ(dQ);
-	setG(dG);
-	setX(dX);
+	setEC(dEC);
+	setD(dD);
 
 	return true;
 }

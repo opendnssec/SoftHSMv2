@@ -27,109 +27,79 @@
  */
 
 /*****************************************************************************
- DSAPrivateKey.cpp
+ ECPublicKey.cpp
 
- DSA private key class
+ Elliptic Curve public key class
  *****************************************************************************/
 
 #include "config.h"
 #include "log.h"
-#include "DSAPrivateKey.h"
+#include "ECPublicKey.h"
 #include <string.h>
 
 // Set the type
-/*static*/ const char* DSAPrivateKey::type = "Abstract DSA private key";
+/*static*/ const char* ECPublicKey::type = "Abstract EC public key";
 
 // Check if the key is of the given type
-bool DSAPrivateKey::isOfType(const char* type)
+bool ECPublicKey::isOfType(const char* type)
 {
 	return !strcmp(this->type, type);
 }
 
 // Get the bit length
-unsigned long DSAPrivateKey::getBitLength() const
+unsigned long ECPublicKey::getBitLength() const
 {
-	return getP().bits();
+	return getQ().size() * 8;
 }
 
 // Get the output length
-unsigned long DSAPrivateKey::getOutputLength() const
+unsigned long ECPublicKey::getOutputLength() const
 {
-	return getQ().size() * 2;
+	return this->getOrderLength() * 2;
 }
 
-// Setters for the DSA private key components
-void DSAPrivateKey::setX(const ByteString& x)
+// Setters for the EC public key components
+void ECPublicKey::setEC(const ByteString& ec)
 {
-	this->x = x;
+	this->ec = ec;
 }
 
-// Setters for the DSA domain parameters
-void DSAPrivateKey::setP(const ByteString& p)
-{
-	this->p = p;
-}
-
-void DSAPrivateKey::setQ(const ByteString& q)
+void ECPublicKey::setQ(const ByteString& q)
 {
 	this->q = q;
 }
 
-void DSAPrivateKey::setG(const ByteString& g)
+// Getters for the EC public key components
+const ByteString& ECPublicKey::getEC() const
 {
-	this->g = g;
+	return ec;
 }
 
-// Getters for the DSA private key components
-const ByteString& DSAPrivateKey::getX() const
-{
-	return x;
-}
-
-// Getters for the DSA domain parameters
-const ByteString& DSAPrivateKey::getP() const
-{
-	return p;
-}
-
-const ByteString& DSAPrivateKey::getQ() const
+const ByteString& ECPublicKey::getQ() const
 {
 	return q;
 }
 
-const ByteString& DSAPrivateKey::getG() const
-{
-	return g;
-}
-
 // Serialisation
-ByteString DSAPrivateKey::serialise() const
+ByteString ECPublicKey::serialise() const
 {
-	return p.serialise() +
-	       q.serialise() +
-	       g.serialise() +
-	       x.serialise();
+	return ec.serialise() +
+	       q.serialise();
 }
 
-bool DSAPrivateKey::deserialise(ByteString& serialised)
+bool ECPublicKey::deserialise(ByteString& serialised)
 {
-	ByteString dP = ByteString::chainDeserialise(serialised);
+	ByteString dEC = ByteString::chainDeserialise(serialised);
 	ByteString dQ = ByteString::chainDeserialise(serialised);
-	ByteString dG = ByteString::chainDeserialise(serialised);
-	ByteString dX = ByteString::chainDeserialise(serialised);
 
-	if ((dP.size() == 0) ||
-	    (dQ.size() == 0) ||
-	    (dG.size() == 0) ||
-	    (dX.size() == 0))
+	if ((dEC.size() == 0) ||
+	    (dQ.size() == 0))
 	{
 		return false;
 	}
 
-	setP(dP);
+	setEC(dEC);
 	setQ(dQ);
-	setG(dG);
-	setX(dX);
 
 	return true;
 }
