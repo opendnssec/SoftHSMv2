@@ -48,6 +48,7 @@ libsofthsm_crypto_la_SOURCES +=	OSSLAES.cpp \
 				OSSLDSAKeyPair.cpp \
 				OSSLDSAPrivateKey.cpp \
 				OSSLDSAPublicKey.cpp \
+				OSSLECDH.cpp \
 				OSSLECDSA.cpp \
 				OSSLECKeyPair.cpp \
 				OSSLECPrivateKey.cpp \
@@ -83,6 +84,10 @@ libsofthsm_crypto_la_SOURCES +=	BotanAES.cpp \
 				BotanDSAKeyPair.cpp \
 				BotanDSAPrivateKey.cpp \
 				BotanDSAPublicKey.cpp \
+				BotanECDH.cpp \
+				BotanECDHKeyPair.cpp \
+				BotanECDHPrivateKey.cpp \
+				BotanECDHPublicKey.cpp \
 				BotanECDSA.cpp \
 				BotanECDSAKeyPair.cpp \
 				BotanECDSAPrivateKey.cpp \
