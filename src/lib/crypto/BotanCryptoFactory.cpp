@@ -38,6 +38,7 @@
 #include "BotanDSA.h"
 #include "BotanECDSA.h"
 #include "BotanDH.h"
+#include "BotanECDH.h"
 #include "BotanMD5.h"
 #include "BotanRNG.h"
 #include "BotanRSA.h"
@@ -142,6 +143,10 @@ AsymmetricAlgorithm* BotanCryptoFactory::getAsymmetricAlgorithm(std::string algo
 	else if (!lcAlgo.compare("dh"))
 	{
 		return new BotanDH();
+	}
+	else if (!lcAlgo.compare("ecdh"))
+	{
+		return new BotanECDH();
 	}
 	else
 	{
