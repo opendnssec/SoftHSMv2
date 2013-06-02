@@ -231,7 +231,7 @@ bool BotanDH::generateParameters(AsymmetricParameters** ppParams, void* paramete
 	try
 	{
 		BotanRNG* brng = (BotanRNG*)BotanCryptoFactory::i()->getRNG();
-		group = new Botan::DL_Group(*brng->getRNG(), Botan::DL_Group::Prime_Subgroup, bitLen);
+		group = new Botan::DL_Group(*brng->getRNG(), Botan::DL_Group::Strong, bitLen);
 	}
 	catch (...)
 	{
