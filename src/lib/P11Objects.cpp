@@ -638,6 +638,50 @@ bool P11DSAPublicKeyObj::init(OSObject *osobject)
 	return true;
 }
 
+// Constructor
+P11DHPublicKeyObj::P11DHPublicKeyObj()
+{
+	initialized = false;
+}
+
+// Add attributes
+bool P11DHPublicKeyObj::init(OSObject *osobject)
+{
+	if (initialized) return true;
+	if (osobject == NULL) return false;
+
+	OSAttribute attrKeyType((unsigned long)CKK_DH);
+	osobject->setAttribute(CKA_KEY_TYPE, attrKeyType);
+
+	// Create parent
+	if (!P11PublicKeyObj::init(osobject)) return false;
+
+	// Create attributes
+	P11Attribute* attrPrime = new P11AttrPrime(osobject,P11Attribute::ck3);
+	P11Attribute* attrBase = new P11AttrBase(osobject,P11Attribute::ck3);
+	P11Attribute* attrValue = new P11AttrValue(osobject,P11Attribute::ck1);
+
+	// Initialize the attributes
+	if
+	(
+		!attrPrime->init() ||
+		!attrBase->init() ||
+		!attrValue->init()
+	)
+	{
+		ERROR_MSG("Could not initialize the attribute");
+		return false;
+	}
+
+	// Add them to the map
+	attributes[attrPrime->getType()] = attrPrime;
+	attributes[attrBase->getType()] = attrBase;
+	attributes[attrValue->getType()] = attrValue;
+
+	initialized = true;
+	return true;
+}
+
 //constructor
 P11PrivateKeyObj::P11PrivateKeyObj()
 {
@@ -803,6 +847,49 @@ bool P11DSAPrivateKeyObj::init(OSObject *osobject)
 	// Add them to the map
 	attributes[attrPrime->getType()] = attrPrime;
 	attributes[attrSubPrime->getType()] = attrSubPrime;
+	attributes[attrBase->getType()] = attrBase;
+	attributes[attrValue->getType()] = attrValue;
+
+	initialized = true;
+	return true;
+}
+
+// Constructor
+P11DHPrivateKeyObj::P11DHPrivateKeyObj()
+{
+	initialized = false;
+}
+
+// Add attributes
+bool P11DHPrivateKeyObj::init(OSObject *osobject)
+{
+	// Create parent
+	if (!P11PrivateKeyObj::init(osobject)) return false;
+
+	OSAttribute attrKeyType((unsigned long)CKK_DH);
+	osobject->setAttribute(CKA_KEY_TYPE, attrKeyType);
+
+	if (initialized) return true;
+
+	// Create attributes
+	P11Attribute* attrPrime = new P11AttrPrime(osobject,P11Attribute::ck4|P11Attribute::ck6);
+	P11Attribute* attrBase = new P11AttrBase(osobject,P11Attribute::ck4|P11Attribute::ck6);
+	P11Attribute* attrValue = new P11AttrValue(osobject,P11Attribute::ck1|P11Attribute::ck4|P11Attribute::ck6|P11Attribute::ck7);
+
+	// Initialize the attributes
+	if
+	(
+		!attrPrime->init() ||
+		!attrBase->init() ||
+		!attrValue->init()
+	)
+	{
+		ERROR_MSG("Could not initialize the attribute");
+		return false;
+	}
+
+	// Add them to the map
+	attributes[attrPrime->getType()] = attrPrime;
 	attributes[attrBase->getType()] = attrBase;
 	attributes[attrValue->getType()] = attrValue;
 
@@ -991,6 +1078,50 @@ bool P11DSADomainObj::init(OSObject *osobject)
 	attributes[attrPrimeBits->getType()] = attrPrimeBits;
 	attributes[attrPrime->getType()] = attrPrime;
 	attributes[attrSubPrime->getType()] = attrSubPrime;
+	attributes[attrBase->getType()] = attrBase;
+
+	initialized = true;
+	return true;
+}
+
+// Constructor
+P11DHDomainObj::P11DHDomainObj()
+{
+	initialized = false;
+}
+
+// Add attributes
+bool P11DHDomainObj::init(OSObject *osobject)
+{
+	if (initialized) return true;
+	if (osobject == NULL) return false;
+
+	OSAttribute attrKeyType((unsigned long)CKK_DH);
+	osobject->setAttribute(CKA_KEY_TYPE, attrKeyType);
+
+	// Create parent
+	if (!P11DomainObj::init(osobject)) return false;
+
+	// Create attributes
+	P11Attribute* attrPrimeBits = new P11AttrPrimeBits(osobject);
+	P11Attribute* attrPrime = new P11AttrPrime(osobject);
+	P11Attribute* attrBase = new P11AttrBase(osobject);
+
+	// Initialize the attributes
+	if
+	(
+		!attrPrimeBits->init() ||
+		!attrPrime->init() ||
+		!attrBase->init()
+	)
+	{
+		ERROR_MSG("Could not initialize the attribute");
+		return false;
+	}
+
+	// Add them to the map
+	attributes[attrPrimeBits->getType()] = attrPrimeBits;
+	attributes[attrPrime->getType()] = attrPrime;
 	attributes[attrBase->getType()] = attrBase;
 
 	initialized = true;
