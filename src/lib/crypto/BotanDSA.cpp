@@ -61,6 +61,81 @@ BotanDSA::~BotanDSA()
 }
 	
 // Signing functions
+bool BotanDSA::sign(PrivateKey* privateKey, const ByteString& dataToSign,
+		    ByteString& signature, const std::string mechanism)
+{
+	std::string lowerMechanism;
+	lowerMechanism.resize(mechanism.size());
+	std::transform(mechanism.begin(), mechanism.end(), lowerMechanism.begin(), tolower);
+	std::string emsa;
+
+	if (!lowerMechanism.compare("dsa"))
+	{
+		emsa = "Raw";
+	}
+	else
+        {
+		// Call default implementation
+		return AsymmetricAlgorithm::sign(privateKey, dataToSign, signature, mechanism);
+        }
+
+	// Check if the private key is the right type
+	if (!privateKey->isOfType(BotanDSAPrivateKey::type))
+	{
+		ERROR_MSG("Invalid key type supplied");
+
+		return false;
+	}
+
+        BotanDSAPrivateKey* pk = (BotanDSAPrivateKey*) privateKey;
+        Botan::DSA_PrivateKey* botanKey = pk->getBotanKey();
+
+        if (!botanKey)
+        {
+		ERROR_MSG("Could not get the Botan private key");
+
+		return false;
+	}
+
+	try
+	{       
+		signer = new Botan::PK_Signer(*botanKey, emsa);
+		// Should we add DISABLE_FAULT_PROTECTION? Makes this operation faster.
+	}
+	catch (...)
+	{
+		ERROR_MSG("Could not create the signer token");
+
+		return false;
+	}
+
+	// Perform the signature operation
+	Botan::SecureVector<Botan::byte> signResult;
+	try
+	{
+		BotanRNG* rng = (BotanRNG*)BotanCryptoFactory::i()->getRNG();
+		signResult = signer->sign_message(dataToSign.const_byte_str(), dataToSign.size(), *rng->getRNG());
+	}
+	catch (...)
+	{
+		ERROR_MSG("Could not sign the data");
+
+		delete signer;
+		signer = NULL;
+
+		return false;
+	}
+
+	// Return the result
+	signature.resize(signResult.size());
+	memcpy(&signature[0], signResult.begin(), signResult.size());
+
+	delete signer;
+	signer = NULL;
+
+	return true;
+}
+
 bool BotanDSA::signInit(PrivateKey* privateKey, const std::string mechanism)
 {
 	if (!AsymmetricAlgorithm::signInit(privateKey, mechanism))
@@ -88,7 +163,23 @@ bool BotanDSA::signInit(PrivateKey* privateKey, const std::string mechanism)
 	{
 		emsa = "EMSA1(SHA-160)";
 	}
-        else
+        else if (!lowerMechanism.compare("dsa-sha224"))
+	{
+		emsa = "EMSA1(SHA-224)";
+	}
+	else if (!lowerMechanism.compare("dsa-sha256"))
+	{
+		emsa = "EMSA1(SHA-256)";
+	}
+	else if (!lowerMechanism.compare("dsa-sha384"))
+	{
+		emsa = "EMSA1(SHA-384)";
+	}
+	else if (!lowerMechanism.compare("dsa-sha512"))
+	{
+		emsa = "EMSA1(SHA-512)";
+	}
+	else
         {
 		ERROR_MSG("Invalid mechanism supplied (%s)", mechanism.c_str());
 
@@ -191,6 +282,78 @@ bool BotanDSA::signFinal(ByteString& signature)
 }
 
 // Verification functions
+bool BotanDSA::verify(PublicKey* publicKey, const ByteString& originalData,
+		      const ByteString& signature, const std::string mechanism)
+{
+	std::string lowerMechanism;
+	lowerMechanism.resize(mechanism.size());
+	std::transform(mechanism.begin(), mechanism.end(), lowerMechanism.begin(), tolower);
+	std::string emsa;
+
+	if (!lowerMechanism.compare("dsa"))
+	{
+		emsa = "Raw";
+	}
+        else
+        {
+		// Call the generic function
+		return AsymmetricAlgorithm::verify(publicKey, originalData, signature, mechanism);
+	}
+
+	// Check if the private key is the right type
+	if (!publicKey->isOfType(BotanDSAPublicKey::type))
+	{
+		ERROR_MSG("Invalid key type supplied");
+
+		return false;
+	}
+
+	BotanDSAPublicKey* pk = (BotanDSAPublicKey*) publicKey;
+	Botan::DSA_PublicKey* botanKey = pk->getBotanKey();
+
+	if (!botanKey)
+	{
+		ERROR_MSG("Could not get the Botan public key");
+
+		return false;
+	}
+
+	try
+	{
+		verifier = new Botan::PK_Verifier(*botanKey, emsa);
+	}
+	catch (...)
+	{
+		ERROR_MSG("Could not create the verifier token");
+
+		return false;
+	}
+
+	// Perform the verify operation
+	bool verResult;
+	try
+	{
+		verResult = verifier->verify_message(originalData.const_byte_str(),
+							originalData.size(),
+							signature.const_byte_str(),
+							signature.size());
+	}
+	catch (...)
+	{
+		ERROR_MSG("Could not check the signature");
+
+		delete verifier;                     
+		verifier = NULL;
+
+		return false;
+	}
+
+	delete verifier;
+	verifier = NULL;
+
+	return verResult;
+}
+
 bool BotanDSA::verifyInit(PublicKey* publicKey, const std::string mechanism)
 {
 	if (!AsymmetricAlgorithm::verifyInit(publicKey, mechanism))
@@ -217,6 +380,22 @@ bool BotanDSA::verifyInit(PublicKey* publicKey, const std::string mechanism)
 	if (!lowerMechanism.compare("dsa-sha1"))
 	{
 		emsa = "EMSA1(SHA-160)";
+	}
+        else if (!lowerMechanism.compare("dsa-sha224"))
+	{
+		emsa = "EMSA1(SHA-224)";
+	}
+        else if (!lowerMechanism.compare("dsa-sha256"))
+	{
+		emsa = "EMSA1(SHA-256)";
+	}
+        else if (!lowerMechanism.compare("dsa-sha384"))
+	{
+		emsa = "EMSA1(SHA-384)";
+	}
+        else if (!lowerMechanism.compare("dsa-sha512"))
+	{
+		emsa = "EMSA1(SHA-512)";
 	}
         else
         {

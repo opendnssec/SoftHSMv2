@@ -457,7 +457,7 @@ CK_RV SoftHSM::C_GetTokenInfo(CK_SLOT_ID slotID, CK_TOKEN_INFO_PTR pInfo)
 CK_RV SoftHSM::C_GetMechanismList(CK_SLOT_ID slotID, CK_MECHANISM_TYPE_PTR pMechanismList, CK_ULONG_PTR pulCount)
 {
 	// A list with the supported mechanisms
-	CK_ULONG nrSupportedMechanisms = 24;
+	CK_ULONG nrSupportedMechanisms = 33;
 	CK_MECHANISM_TYPE supportedMechanisms[] =
 	{
 		CKM_MD5,
@@ -487,7 +487,12 @@ CK_RV SoftHSM::C_GetMechanismList(CK_SLOT_ID slotID, CK_MECHANISM_TYPE_PTR pMech
 		CKM_AES_CBC,
 		CKM_DSA_PARAMETER_GEN,
 		CKM_DSA_KEY_PAIR_GEN,
-		CKM_DSA_SHA1
+		CKM_DSA,
+		CKM_DSA_SHA1,
+		CKM_DSA_SHA224,
+		CKM_DSA_SHA256,
+		CKM_DSA_SHA384,
+		CKM_DSA_SHA512
 	};
 
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
@@ -649,7 +654,12 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 			pInfo->ulMaxKeySize = dsaMaxSize;
 			pInfo->flags = CKF_GENERATE_KEY_PAIR;
 			break;
+		case CKM_DSA:
 		case CKM_DSA_SHA1:
+		case CKM_DSA_SHA224:
+		case CKM_DSA_SHA256:
+		case CKM_DSA_SHA384:
+		case CKM_DSA_SHA512:
 			pInfo->ulMinKeySize = dsaMinSize;
 			pInfo->ulMaxKeySize = dsaMaxSize;
 			pInfo->flags = CKF_SIGN | CKF_VERIFY;
@@ -1919,8 +1929,38 @@ CK_RV SoftHSM::C_SignInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechanis
 			bIsMultiPartOp = true;
 			isRSA = true;
 			break;
+		case CKM_DSA:
+			mechanism = "dsa";
+			// bAllowMultiPartOp = false;
+			bIsMultiPartOp = false;
+			isDSA = true;
+			break;
 		case CKM_DSA_SHA1:
 			mechanism = "dsa-sha1";
+			// bAllowMultiPartOp = true;
+			bIsMultiPartOp = true;
+			isDSA = true;
+			break;
+		case CKM_DSA_SHA224:
+			mechanism = "dsa-sha224";
+			// bAllowMultiPartOp = true;
+			bIsMultiPartOp = true;
+			isDSA = true;
+			break;
+		case CKM_DSA_SHA256:
+			mechanism = "dsa-sha256";
+			// bAllowMultiPartOp = true;
+			bIsMultiPartOp = true;
+			isDSA = true;
+			break;
+		case CKM_DSA_SHA384:
+			mechanism = "dsa-sha384";
+			// bAllowMultiPartOp = true;
+			bIsMultiPartOp = true;
+			isDSA = true;
+			break;
+		case CKM_DSA_SHA512:
+			mechanism = "dsa-sha512";
 			// bAllowMultiPartOp = true;
 			bIsMultiPartOp = true;
 			isDSA = true;
@@ -2255,8 +2295,38 @@ CK_RV SoftHSM::C_VerifyInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechan
 			bIsMultiPartOp = true;
 			isRSA = true;
 			break;
+		case CKM_DSA:
+			mechanism = "dsa";
+			// bAllowMultiPartOp = false;
+			bIsMultiPartOp = false;
+			isDSA = true;
+			break;
 		case CKM_DSA_SHA1:
 			mechanism = "dsa-sha1";
+			// bAllowMultiPartOp = true;
+			bIsMultiPartOp = true;
+			isDSA = true;
+			break;
+		case CKM_DSA_SHA224:
+			mechanism = "dsa-sha224";
+			// bAllowMultiPartOp = true;
+			bIsMultiPartOp = true;
+			isDSA = true;
+			break;
+		case CKM_DSA_SHA256:
+			mechanism = "dsa-sha256";
+			// bAllowMultiPartOp = true;
+			bIsMultiPartOp = true;
+			isDSA = true;
+			break;
+		case CKM_DSA_SHA384:
+			mechanism = "dsa-sha384";
+			// bAllowMultiPartOp = true;
+			bIsMultiPartOp = true;
+			isDSA = true;
+			break;
+		case CKM_DSA_SHA512:
+			mechanism = "dsa-sha512";
 			// bAllowMultiPartOp = true;
 			bIsMultiPartOp = true;
 			isDSA = true;
