@@ -2126,7 +2126,7 @@ CK_RV SoftHSM::AsymSignInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechan
 			break;
 		case CKM_SHA224_RSA_PKCS:
 			mechanism = "rsa-sha224-pkcs";
-			bIsMultiPartOp = true;
+			bAllowMultiPartOp = true;
 			isRSA = true;
 			break;
 		case CKM_SHA256_RSA_PKCS:
@@ -2743,7 +2743,7 @@ CK_RV SoftHSM::AsymVerifyInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 			break;
 		case CKM_SHA224_RSA_PKCS:
 			mechanism = "rsa-sha224-pkcs";
-			bIsMultiPartOp = true;
+			bAllowMultiPartOp = true;
 			isRSA = true;
 			break;
 		case CKM_SHA256_RSA_PKCS:
