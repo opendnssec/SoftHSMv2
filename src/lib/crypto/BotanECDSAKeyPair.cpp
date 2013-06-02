@@ -33,6 +33,7 @@
  *****************************************************************************/
 
 #include "config.h"
+#ifdef WITH_ECC
 #include "log.h"
 #include "BotanECDSAKeyPair.h"
 
@@ -69,4 +70,4 @@ const PrivateKey* BotanECDSAKeyPair::getConstPrivateKey() const
 {
 	return &privKey;
 }
-
+#endif

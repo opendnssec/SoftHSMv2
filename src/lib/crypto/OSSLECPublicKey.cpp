@@ -33,6 +33,7 @@
  *****************************************************************************/
 
 #include "config.h"
+#ifdef WITH_ECC
 #include "log.h"
 #include "OSSLECPublicKey.h"
 #include "OSSLUtil.h"
@@ -129,4 +130,4 @@ EC_KEY* OSSLECPublicKey::getOSSLKey()
 {
 	return eckey;
 }
-
+#endif

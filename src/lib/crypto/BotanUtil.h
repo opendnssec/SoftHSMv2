@@ -36,7 +36,9 @@
 #include "config.h"
 #include "ByteString.h"
 #include <botan/bigint.h>
+#ifdef WITH_ECC
 #include <botan/ec_group.h>
+#endif
 
 namespace BotanUtil
 {
@@ -46,6 +48,7 @@ namespace BotanUtil
 	// Convert a ByteString to a Botan BigInt
 	Botan::BigInt byteString2bigInt(const ByteString& byteString);
 
+#ifdef WITH_ECC
 	// Convert a Botan EC group to a ByteString
 	ByteString ecGroup2ByteString(const Botan::EC_Group& ecGroup);
 
@@ -57,6 +60,7 @@ namespace BotanUtil
 
 	// Convert a ByteString to a Botan EC point in the given EC group
 	Botan::PointGFp byteString2ECPoint(const ByteString& byteString, const Botan::EC_Group& ecGroup);
+#endif
 }
 
 #endif // !_SOFTHSM_V2_BOTANUTIL_H

@@ -53,6 +53,7 @@ Botan::BigInt BotanUtil::byteString2bigInt(const ByteString& byteString)
 	return Botan::BigInt(byteString.const_byte_str(), byteString.size());
 }
 
+#ifdef WITH_ECC
 // Convert a Botan EC group to a ByteString
 ByteString BotanUtil::ecGroup2ByteString(const Botan::EC_Group& ecGroup)
 {
@@ -97,3 +98,4 @@ Botan::PointGFp BotanUtil::byteString2ECPoint(const ByteString& byteString, cons
 		.verify_end();
 	return Botan::OS2ECP(&repr[0], repr.size(), ecGroup.get_curve());
 }
+#endif

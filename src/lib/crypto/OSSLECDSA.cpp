@@ -33,6 +33,7 @@
  *****************************************************************************/
 
 #include "config.h"
+#ifdef WITH_ECC
 #include "log.h"
 #include "OSSLECDSA.h"
 #include "CryptoFactory.h"
@@ -404,4 +405,4 @@ bool OSSLECDSA::reconstructParameters(AsymmetricParameters** ppParams, ByteStrin
 
 	return true;
 }
-
+#endif
