@@ -387,7 +387,8 @@ unsigned long BotanDSA::getMinKeySize()
 
 unsigned long BotanDSA::getMaxKeySize()
 {
-	return 1024;
+	// Taken from OpenSSL
+	return 10000;
 }
 
 bool BotanDSA::generateParameters(AsymmetricParameters** ppParams, void* parameters /* = NULL */, RNG* rng /* = NULL*/)
@@ -407,10 +408,12 @@ bool BotanDSA::generateParameters(AsymmetricParameters** ppParams, void* paramet
 	}
 
 	Botan::DL_Group* group = NULL;
+	// Taken from OpenSSL
+	size_t qLen = bitLen >= 2048 ? 256 : 160;
 	try
 	{
 		BotanRNG* brng = (BotanRNG*)BotanCryptoFactory::i()->getRNG();
-		group = new Botan::DL_Group(*brng->getRNG(), Botan::DL_Group::Prime_Subgroup, bitLen, 160);
+		group = new Botan::DL_Group(*brng->getRNG(), Botan::DL_Group::Prime_Subgroup, bitLen, qLen);
 	}
 	catch (...)
 	{
