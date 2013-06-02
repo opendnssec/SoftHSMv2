@@ -27,40 +27,80 @@
  */
 
 /*****************************************************************************
- OSSLUtil.h
+ ECPublicKey.cpp
 
- OpenSSL convenience functions
+ Elliptic Curve public key class
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_OSSLUTIL_H
-#define _SOFTHSM_V2_OSSLUTIL_H
-
 #include "config.h"
-#include "ByteString.h"
-#include <openssl/bn.h>
-#include <openssl/ec.h>
+#include "log.h"
+#include "ECPublicKey.h"
+#include <string.h>
 
-namespace OSSL
+// Set the type
+/*static*/ const char* ECPublicKey::type = "Abstract EC public key";
+
+// Check if the key is of the given type
+bool ECPublicKey::isOfType(const char* type)
 {
-	// Convert an OpenSSL BIGNUM to a ByteString
-	ByteString bn2ByteString(const BIGNUM* bn);
-
-	// Convert a ByteString to an OpenSSL BIGNUM
-	BIGNUM* byteString2bn(const ByteString& byteString);
-
-	// Convert an OpenSSL EC GROUP to a ByteString
-	ByteString grp2ByteString(const EC_GROUP* grp);
-
-	// Convert a ByteString to an OpenSSL EC GROUP
-	EC_GROUP* byteString2grp(const ByteString& byteString);
-
-	// Convert an OpenSSL EC POINT in the given EC GROUP to a ByteString
-	ByteString pt2ByteString(const EC_POINT* pt, const EC_GROUP* grp);
-
-	// Convert a ByteString to an OpenSSL EC POINT in the given EC GROUP
-	EC_POINT* byteString2pt(const ByteString& byteString, const EC_GROUP* grp);
-
+	return !strcmp(this->type, type);
 }
 
-#endif // !_SOFTHSM_V2_OSSLUTIL_H
+// Get the bit length
+unsigned long ECPublicKey::getBitLength() const
+{
+	return getQ().size() * 8;
+}
+
+// Get the output length
+unsigned long ECPublicKey::getOutputLength() const
+{
+	return this->getOrderLength() * 2;
+}
+
+// Setters for the EC public key components
+void ECPublicKey::setEC(const ByteString& ec)
+{
+	this->ec = ec;
+}
+
+void ECPublicKey::setQ(const ByteString& q)
+{
+	this->q = q;
+}
+
+// Getters for the EC public key components
+const ByteString& ECPublicKey::getEC() const
+{
+	return ec;
+}
+
+const ByteString& ECPublicKey::getQ() const
+{
+	return q;
+}
+
+// Serialisation
+ByteString ECPublicKey::serialise() const
+{
+	return ec.serialise() +
+	       q.serialise();
+}
+
+bool ECPublicKey::deserialise(ByteString& serialised)
+{
+	ByteString dEC = ByteString::chainDeserialise(serialised);
+	ByteString dQ = ByteString::chainDeserialise(serialised);
+
+	if ((dEC.size() == 0) ||
+	    (dQ.size() == 0))
+	{
+		return false;
+	}
+
+	setEC(dEC);
+	setQ(dQ);
+
+	return true;
+}
 

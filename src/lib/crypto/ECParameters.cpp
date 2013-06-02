@@ -27,40 +27,54 @@
  */
 
 /*****************************************************************************
- OSSLUtil.h
+ ECParameters.cpp
 
- OpenSSL convenience functions
+ Elliptic Curve parameters (only used for key generation)
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_OSSLUTIL_H
-#define _SOFTHSM_V2_OSSLUTIL_H
-
 #include "config.h"
-#include "ByteString.h"
-#include <openssl/bn.h>
-#include <openssl/ec.h>
+#include "log.h"
+#include "ECParameters.h"
+#include <string.h>
 
-namespace OSSL
+// The type
+/*static*/ const char* ECParameters::type = "Generic EC parameters";
+
+// Set the curve OID ec
+void ECParameters::setEC(const ByteString& ec)
 {
-	// Convert an OpenSSL BIGNUM to a ByteString
-	ByteString bn2ByteString(const BIGNUM* bn);
-
-	// Convert a ByteString to an OpenSSL BIGNUM
-	BIGNUM* byteString2bn(const ByteString& byteString);
-
-	// Convert an OpenSSL EC GROUP to a ByteString
-	ByteString grp2ByteString(const EC_GROUP* grp);
-
-	// Convert a ByteString to an OpenSSL EC GROUP
-	EC_GROUP* byteString2grp(const ByteString& byteString);
-
-	// Convert an OpenSSL EC POINT in the given EC GROUP to a ByteString
-	ByteString pt2ByteString(const EC_POINT* pt, const EC_GROUP* grp);
-
-	// Convert a ByteString to an OpenSSL EC POINT in the given EC GROUP
-	EC_POINT* byteString2pt(const ByteString& byteString, const EC_GROUP* grp);
-
+	this->ec = ec;
 }
 
-#endif // !_SOFTHSM_V2_OSSLUTIL_H
+// Get the curve OID ec
+const ByteString& ECParameters::getEC() const
+{
+	return ec;
+}
+
+// Are the parameters of the given type?
+bool ECParameters::areOfType(const char* type)
+{
+	return (strcmp(type, ECParameters::type) == 0);
+}
+
+// Serialisation
+ByteString ECParameters::serialise() const
+{
+	return ec.serialise();
+}
+
+bool ECParameters::deserialise(ByteString& serialised)
+{
+	ByteString dEC = ByteString::chainDeserialise(serialised);
+
+	if (dEC.size() == 0)
+	{
+		return false;
+	}
+
+	setEC(dEC);
+
+	return true;
+}
 

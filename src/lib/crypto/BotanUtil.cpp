@@ -34,6 +34,9 @@
 
 #include "config.h"
 #include "BotanUtil.h"
+#include <botan/der_enc.h>
+#include <botan/ber_dec.h>
+#include <botan/asn1_obj.h>
 
 // Convert a Botan BigInt to a ByteString
 ByteString BotanUtil::bigInt2ByteString(const Botan::BigInt& bigInt)
@@ -52,3 +55,47 @@ Botan::BigInt BotanUtil::byteString2bigInt(const ByteString& byteString)
 	return Botan::BigInt(byteString.const_byte_str(), byteString.size());
 }
 
+// Convert a Botan EC group to a ByteString
+ByteString BotanUtil::ecGroup2ByteString(const Botan::EC_Group& ecGroup)
+{
+	Botan::SecureVector<Botan::byte> der = ecGroup.DER_encode(Botan::EC_DOMPAR_ENC_OID);
+	return ByteString(&der[0], der.size());
+}
+
+// Convert a ByteString to a Botan EC group
+Botan::EC_Group BotanUtil::byteString2ECGroup(const ByteString& byteString)
+{
+	return Botan::EC_Group(Botan::MemoryVector<Botan::byte>(byteString.const_byte_str(), byteString.size()));
+}
+
+// Convert a Botan EC point to a ByteString
+ByteString BotanUtil::ecPoint2ByteString(const Botan::PointGFp& ecPoint)
+{
+	ByteString point;
+
+	try
+	{
+		Botan::SecureVector<Botan::byte> repr = Botan::EC2OSP(ecPoint, Botan::PointGFp::UNCOMPRESSED);
+		Botan::SecureVector<Botan::byte> der;
+		der = Botan::DER_Encoder()
+			.encode(repr, Botan::OCTET_STRING)
+			.get_contents();
+		point.resize(der.size());
+		memcpy(&point[0], &der[0], der.size());
+	}
+	catch (...)
+	{
+		ERROR_MSG("Can't convert from EC point");
+	}
+	return point;
+}
+
+// Convert a ByteString to a Botan EC point
+Botan::PointGFp BotanUtil::byteString2ECPoint(const ByteString& byteString, const Botan::EC_Group& ecGroup)
+{
+	Botan::SecureVector<Botan::byte> repr;
+	Botan::BER_Decoder(byteString.const_byte_str(), byteString.size())
+		.decode(repr, Botan::OCTET_STRING)
+		.verify_end();
+	return Botan::OS2ECP(&repr[0], repr.size(), ecGroup.get_curve());
+}

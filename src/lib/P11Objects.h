@@ -37,7 +37,6 @@
 
 #include "OSObject.h"
 #include "P11Attributes.h"
-#include "RSAPublicKey.h"
 #include "Token.h"
 #include "cryptoki.h"
 #include <map>
@@ -175,6 +174,19 @@ protected:
 	bool initialized;
 };
 
+class P11ECPublicKeyObj : public P11PublicKeyObj
+{
+public:
+	// Constructor
+	P11ECPublicKeyObj();
+
+	// Add attributes
+	virtual bool init(OSObject *osobject);
+
+protected:
+	bool initialized;
+};
+
 class P11PrivateKeyObj : public P11KeyObj
 {
 protected:
@@ -217,6 +229,19 @@ class P11DHPrivateKeyObj : public P11PrivateKeyObj
 public:
 	// Constructor
 	P11DHPrivateKeyObj();
+
+	// Add attributes
+	virtual bool init(OSObject *osobject);
+
+protected:
+	bool initialized;
+};
+
+class P11ECPrivateKeyObj : public P11PrivateKeyObj
+{
+public:
+	// Constructor
+	P11ECPrivateKeyObj();
 
 	// Add attributes
 	virtual bool init(OSObject *osobject);

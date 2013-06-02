@@ -52,7 +52,7 @@ class P11Attribute
 {
 public:
 	// Destructor
-	~P11Attribute();
+	virtual ~P11Attribute();
 
 	// Initialize the attribute
 	bool init();
@@ -1066,6 +1066,36 @@ protected:
 
 	// Update the value if allowed
 	virtual CK_RV updateAttr(Token *token, bool isPrivate, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op);
+};
+
+/*****************************************
+ * CKA_EC_PARAMS
+ *****************************************/
+
+class P11AttrEcParams : public P11Attribute
+{
+public:
+	// Constructor
+	P11AttrEcParams(OSObject* osobject, CK_ULONG inchecks = 0) : P11Attribute(osobject) { type = CKA_EC_PARAMS; checks = ck1|inchecks; }
+
+protected:
+	// Set the default value of the attribute
+	virtual bool setDefault();
+};
+
+/*****************************************
+ * CKA_EC_POINT
+ *****************************************/
+
+class P11AttrEcPoint : public P11Attribute
+{
+public:
+	// Constructor
+	P11AttrEcPoint(OSObject* osobject) : P11Attribute(osobject) { type = CKA_EC_POINT; checks = ck1|ck4; }
+
+protected:
+	// Set the default value of the attribute
+	virtual bool setDefault();
 };
 
 #endif // !_SOFTHSM_V2_P11ATTRIBUTES_H
