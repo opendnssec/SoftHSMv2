@@ -3493,6 +3493,7 @@ CK_RV SoftHSM::generateDSAParameters
 
 	// Extract desired parameter information
 	size_t bitLen = 0;
+	size_t qLen = 0;
 	for (CK_ULONG i = 0; i < ulCount; i++)
 	{
 		switch (pTemplate[i].type)
@@ -3505,6 +3506,14 @@ CK_RV SoftHSM::generateDSAParameters
 				}
 				bitLen = *(CK_ULONG*)pTemplate[i].pValue;
 				break;
+			case CKA_SUBPRIME_BITS:
+				if (pTemplate[i].ulValueLen != sizeof(CK_ULONG))
+				{
+					INFO_MSG("CKA_SUBPRIME_BITS does not have the size of CK_ULONG");
+					return CKR_TEMPLATE_INCOMPLETE;
+				}
+				qLen = *(CK_ULONG*)pTemplate[i].pValue;
+				break;
 			default:
 				break;
 		}
@@ -3516,6 +3525,13 @@ CK_RV SoftHSM::generateDSAParameters
 		INFO_MSG("Missing CKA_PRIME_BITS in pTemplate");
 		return CKR_TEMPLATE_INCOMPLETE;
 	}
+
+	// No real choice for CKA_SUBPRIME_BITS
+	if ((qLen != 0) &&
+	    (((bitLen >= 2048) && (qLen != 256)) ||
+	     ((bitLen < 2048) && (qLen != 160))))
+		INFO_MSG("CKA_SUBPRIME_BITS is ignored");
+
 
 	// Generate domain parameters
 	AsymmetricParameters* p = NULL;

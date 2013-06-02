@@ -466,6 +466,7 @@ typedef unsigned long ck_attribute_type_t;
 #define CKA_BASE			(0x132)
 #define CKA_PRIME_BITS			(0x133)
 #define CKA_SUB_PRIME_BITS		(0x134)
+#define CKA_SUBPRIME_BITS		(0x134)
 #define CKA_VALUE_BITS			(0x160)
 #define CKA_VALUE_LEN			(0x161)
 #define CKA_EXTRACTABLE			(0x162)
