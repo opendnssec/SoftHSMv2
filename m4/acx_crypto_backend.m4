@@ -1,6 +1,26 @@
 AC_DEFUN([ACX_CRYPTO_BACKEND],[
 
-	# First check if we want to support GOST
+	# First check if we want to support ECC and GOST
+
+	AC_ARG_ENABLE(ecc,
+		AC_HELP_STRING([--enable-ecc],
+			[Enable support for ECC (default enabled)]
+		),
+		[enable_ecc="${enableval}"],
+		[enable_ecc="yes"]
+	)
+	AC_MSG_CHECKING(for ECC support)
+	if test "x${enable_ecc}" = "xyes"; then
+		AC_MSG_RESULT(yes)
+		AC_DEFINE_UNQUOTED(
+			[WITH_ECC],
+			[],
+			[Compile with ECC support]
+		)
+	else
+		AC_MSG_RESULT(no)
+	fi
+	AM_CONDITIONAL([WITH_ECC], [test "x${enable_ecc}" = "xyes"])
 
 	AC_ARG_ENABLE(gost,
 		AC_HELP_STRING([--enable-gost],
@@ -46,6 +66,10 @@ AC_DEFUN([ACX_CRYPTO_BACKEND],[
 		CRYPTO_INCLUDES=$OPENSSL_INCLUDES
 		CRYPTO_LIBS=$OPENSSL_LIBS
 
+		if test "x${enable_ecc}" = "xyes"; then
+			ACX_OPENSSL_ECC
+		fi
+
 		AC_DEFINE_UNQUOTED(
 			[WITH_OPENSSL],
 			[],
@@ -63,6 +87,10 @@ AC_DEFUN([ACX_CRYPTO_BACKEND],[
 
 		CRYPTO_INCLUDES=$BOTAN_INCLUDES
 		CRYPTO_LIBS=$BOTAN_LIBS
+
+		if test "x${enable_ecc}" = "xyes"; then
+			ACX_BOTAN_ECC
+		fi
 
 		AC_DEFINE_UNQUOTED(
 			[WITH_BOTAN],
