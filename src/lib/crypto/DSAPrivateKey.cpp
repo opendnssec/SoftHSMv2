@@ -64,7 +64,7 @@ void DSAPrivateKey::setX(const ByteString& x)
 	this->x = x;
 }
 
-// Setters for the DSA public key components
+// Setters for the DSA domain parameters
 void DSAPrivateKey::setP(const ByteString& p)
 {
 	this->p = p;
@@ -80,18 +80,13 @@ void DSAPrivateKey::setG(const ByteString& g)
 	this->g = g;
 }
 
-void DSAPrivateKey::setY(const ByteString& y)
-{
-	this->y = y;
-}
-
 // Getters for the DSA private key components
 const ByteString& DSAPrivateKey::getX() const
 {
 	return x;
 }
 
-// Getters for the DSA public key components
+// Getters for the DSA domain parameters
 const ByteString& DSAPrivateKey::getP() const
 {
 	return p;
@@ -107,19 +102,13 @@ const ByteString& DSAPrivateKey::getG() const
 	return g;
 }
 
-const ByteString& DSAPrivateKey::getY() const
-{
-	return y;
-}
-
 // Serialisation
 ByteString DSAPrivateKey::serialise() const
 {
 	return p.serialise() +
 	       q.serialise() +
 	       g.serialise() +
-	       x.serialise() +
-	       y.serialise();
+	       x.serialise();
 }
 
 bool DSAPrivateKey::deserialise(ByteString& serialised)
@@ -128,13 +117,11 @@ bool DSAPrivateKey::deserialise(ByteString& serialised)
 	ByteString dQ = ByteString::chainDeserialise(serialised);
 	ByteString dG = ByteString::chainDeserialise(serialised);
 	ByteString dX = ByteString::chainDeserialise(serialised);
-	ByteString dY = ByteString::chainDeserialise(serialised);
 
 	if ((dP.size() == 0) ||
 	    (dQ.size() == 0) ||
 	    (dG.size() == 0) ||
-	    (dX.size() == 0) ||
-	    (dY.size() == 0))
+	    (dX.size() == 0))
 	{
 		return false;
 	}
@@ -143,7 +130,6 @@ bool DSAPrivateKey::deserialise(ByteString& serialised)
 	setQ(dQ);
 	setG(dG);
 	setX(dX);
-	setY(dY);
 
 	return true;
 }

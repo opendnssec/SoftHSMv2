@@ -153,17 +153,18 @@ bool OSSLDSA::signFinal(ByteString& signature)
 	
 	DSA* dsa = pk->getOSSLKey();
 
-	// Resize the data block for the signature to the modulus size of the key
-	signature.resize(DSA_size(dsa));
-
 	// Perform the signature operation
-	unsigned int sigLen = signature.size();
-
-	bool rv = (DSA_sign(0, &hash[0], hash.size(), &signature[0], &sigLen, dsa) == 1);
-
+	unsigned int sigLen = pk->getOutputLength();
 	signature.resize(sigLen);
-
-	return rv;
+	memset(&signature[0], 0, sigLen);
+	DSA_SIG* sig = DSA_do_sign(&hash[0], hash.size(), dsa);
+	if (sig == NULL)
+		return false;
+	// Store the 2 values with padding
+	BN_bn2bin(sig->r, &signature[sigLen / 2 - BN_num_bytes(sig->r)]);
+	BN_bn2bin(sig->s, &signature[sigLen - BN_num_bytes(sig->s)]);
+	DSA_SIG_free(sig);
+	return true;
 }
 
 // Verification functions
@@ -259,11 +260,32 @@ bool OSSLDSA::verifyFinal(const ByteString& signature)
 	}
 
 	// Perform the verify operation
-	bool rv = (DSA_verify(0, &hash[0], hash.size(), (unsigned char*) signature.const_byte_str(), signature.size(), pk->getOSSLKey()) == 1);
+	unsigned int sigLen = pk->getOutputLength();
+	if (signature.size() != sigLen)
+		return false;
+	DSA_SIG* sig = DSA_SIG_new();
+	if (sig == NULL)
+		return false;
+	const unsigned char *s = signature.const_byte_str();
+	sig->r = BN_bin2bn(s, sigLen / 2, NULL);
+	sig->s = BN_bin2bn(s + sigLen / 2, sigLen / 2, NULL);
+	if (sig->r == NULL || sig->s == NULL)
+	{
+		DSA_SIG_free(sig);
+		return false;
+	}
+	int ret = DSA_do_verify(&hash[0], hash.size(), sig, pk->getOSSLKey());
+	if (ret != 1)
+	{
+		if (ret < 0)
+			ERROR_MSG("DSA verify failed (0x%08X)", ERR_get_error());
 
-	if (!rv) ERROR_MSG("DSA verify failed (0x%08X)", ERR_get_error());
+		DSA_SIG_free(sig);
+		return false;
+	}
 
-	return rv;
+	DSA_SIG_free(sig);
+	return true;
 }
 
 // Encryption functions

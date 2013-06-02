@@ -148,6 +148,45 @@ protected:
 	bool initialized;
 };
 
+class P11DSAPublicKeyObj : public P11PublicKeyObj
+{
+public:
+	// Constructor
+	P11DSAPublicKeyObj();
+
+	// Add attributes
+	virtual bool init(OSObject *osobject);
+
+protected:
+	bool initialized;
+};
+
+class P11DHPublicKeyObj : public P11PublicKeyObj
+{
+public:
+	// Constructor
+	P11DHPublicKeyObj();
+
+	// Add attributes
+	virtual bool init(OSObject *osobject);
+
+protected:
+	bool initialized;
+};
+
+class P11ECPublicKeyObj : public P11PublicKeyObj
+{
+public:
+	// Constructor
+	P11ECPublicKeyObj();
+
+	// Add attributes
+	virtual bool init(OSObject *osobject);
+
+protected:
+	bool initialized;
+};
+
 class P11PrivateKeyObj : public P11KeyObj
 {
 protected:
@@ -172,15 +211,60 @@ protected:
 	bool initialized;
 };
 
+class P11DSAPrivateKeyObj : public P11PrivateKeyObj
+{
+public:
+	// Constructor
+	P11DSAPrivateKeyObj();
+
+	// Add attributes
+	virtual bool init(OSObject *osobject);
+
+protected:
+	bool initialized;
+};
+
+class P11DHPrivateKeyObj : public P11PrivateKeyObj
+{
+public:
+	// Constructor
+	P11DHPrivateKeyObj();
+
+	// Add attributes
+	virtual bool init(OSObject *osobject);
+
+protected:
+	bool initialized;
+};
+
+class P11ECPrivateKeyObj : public P11PrivateKeyObj
+{
+public:
+	// Constructor
+	P11ECPrivateKeyObj();
+
+	// Add attributes
+	virtual bool init(OSObject *osobject);
+
+protected:
+	bool initialized;
+};
+
 class P11SecretKeyObj : public P11KeyObj
 {
-protected:
+public:
 	// Constructor
 	P11SecretKeyObj();
 
 	// Add attributes
 	virtual bool init(OSObject *osobject);
+
+	// Better than multiply subclasses
+	virtual bool setKeyType(CK_KEY_TYPE keytype);
+	virtual CK_KEY_TYPE getKeyType();
+protected:
 	bool initialized;
+	CK_KEY_TYPE keytype;
 };
 
 class P11DomainObj : public P11Object
@@ -191,6 +275,30 @@ protected:
 
 	// Add attributes
 	virtual bool init(OSObject *osobject);
+	bool initialized;
+};
+
+class P11DSADomainObj : public P11DomainObj
+{
+public:
+	// Constructor
+	P11DSADomainObj();
+
+	// Add attributes
+	virtual bool init(OSObject *osobject);
+protected:
+	bool initialized;
+};
+
+class P11DHDomainObj : public P11DomainObj
+{
+public:
+	// Constructor
+	P11DHDomainObj();
+
+	// Add attributes
+	virtual bool init(OSObject *osobject);
+protected:
 	bool initialized;
 };
 

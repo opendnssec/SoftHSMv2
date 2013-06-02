@@ -45,6 +45,7 @@
 #include "SymmetricAlgorithm.h"
 #include "AsymmetricAlgorithm.h"
 #include "HashAlgorithm.h"
+#include "MacAlgorithm.h"
 #include "RNG.h"
 #include "MutexFactory.h"
 #include <memory>
@@ -64,6 +65,9 @@ public:
 
 	// Create a concrete instance of a hash algorithm
 	HashAlgorithm* getHashAlgorithm(std::string algorithm);
+
+	// Create a concrete instance of a MAC algorithm
+	MacAlgorithm* getMacAlgorithm(std::string algorithm);
 
 	// Get the global RNG (may be an unique RNG per thread)
 	RNG* getRNG(std::string name = "default");

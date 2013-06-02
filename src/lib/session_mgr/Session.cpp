@@ -47,9 +47,11 @@ Session::Session(Slot* slot, bool isReadWrite, CK_VOID_PTR pApplication, CK_NOTI
 	operation = SESSION_OP_NONE;
 	findOp = NULL;
 	digestOp = NULL;
+	macOp = NULL;
 	asymmetricCryptoOp = NULL;
 	publicKey = NULL;
 	privateKey = NULL;
+	symmetricKey = NULL;
 }
 
 // Constructor
@@ -64,9 +66,11 @@ Session::Session()
 	operation = SESSION_OP_NONE;
 	findOp = NULL;
 	digestOp = NULL;
+	macOp = NULL;
 	asymmetricCryptoOp = NULL;
 	publicKey = NULL;
 	privateKey = NULL;
+	symmetricKey = NULL;
 }
 
 // Destructor
@@ -171,31 +175,35 @@ void Session::resetOp()
 		CryptoFactory::i()->recycleHashAlgorithm(digestOp);
 		digestOp = NULL;
 	}
-	else
+	else if (findOp != NULL)
 	{
-		if (findOp != NULL)
+		findOp->recycle();
+		findOp = NULL;
+	}
+	else if (asymmetricCryptoOp != NULL)
+	{
+		if (publicKey != NULL)
 		{
-			findOp->recycle();
-			findOp = NULL;
+			asymmetricCryptoOp->recyclePublicKey(publicKey);
+			publicKey = NULL;
 		}
-		else
+		if (privateKey != NULL)
 		{
-			if (asymmetricCryptoOp != NULL)
-			{
-				if (publicKey != NULL)
-				{
-					asymmetricCryptoOp->recyclePublicKey(publicKey);
-					publicKey = NULL;
-				}
-				if (privateKey != NULL)
-				{
-					asymmetricCryptoOp->recyclePrivateKey(privateKey);
-					privateKey = NULL;
-				}
-				CryptoFactory::i()->recycleAsymmetricAlgorithm(asymmetricCryptoOp);
-				asymmetricCryptoOp = NULL;
-			}
+			asymmetricCryptoOp->recyclePrivateKey(privateKey);
+			privateKey = NULL;
 		}
+		CryptoFactory::i()->recycleAsymmetricAlgorithm(asymmetricCryptoOp);
+		asymmetricCryptoOp = NULL;
+	}
+	else if (macOp != NULL)
+	{
+		if (symmetricKey != NULL)
+		{
+			macOp->recycleKey(symmetricKey);
+			symmetricKey = NULL;
+		}
+		CryptoFactory::i()->recycleMacAlgorithm(macOp);
+		macOp = NULL;
 	}
 
 	operation = SESSION_OP_NONE;
@@ -231,6 +239,24 @@ HashAlgorithm* Session::getDigestOp()
 	return digestOp;
 }
 
+// Set the MACing operator
+void Session::setMacOp(MacAlgorithm *macOp)
+{
+	if (this->macOp != NULL)
+	{
+		setSymmetricKey(NULL);
+		CryptoFactory::i()->recycleMacAlgorithm(macOp);
+	}
+
+	this->macOp = macOp;
+}
+
+// Get the MACing operator
+MacAlgorithm *Session::getMacOp()
+{
+	return macOp;
+}
+
 void Session::setAsymmetricCryptoOp(AsymmetricAlgorithm *asymmetricCryptoOp)
 {
 	if (this->asymmetricCryptoOp != NULL)
@@ -258,14 +284,24 @@ const char *Session::getMechanism()
 	return mechanism;
 }
 
-void Session::setIsMultiPartOp(bool isMultiPartOp)
+void Session::setAllowMultiPartOp(bool allowMultiPartOp)
 {
-	this->isMultiPartOp = isMultiPartOp;
+	this->allowMultiPartOp = allowMultiPartOp;
 }
 
-bool Session::getIsMultiPartOp()
+bool Session::getAllowMultiPartOp()
 {
-	return isMultiPartOp;
+	return allowMultiPartOp;
+}
+
+void Session::setAllowSinglePartOp(bool allowSinglePartOp)
+{
+	this->allowSinglePartOp = allowSinglePartOp;
+}
+
+bool Session::getAllowSinglePartOp()
+{
+	return allowSinglePartOp;
 }
 
 void Session::setPublicKey(PublicKey* publicKey)
@@ -302,4 +338,22 @@ void Session::setPrivateKey(PrivateKey* privateKey)
 PrivateKey* Session::getPrivateKey()
 {
 	return privateKey;
+}
+
+void Session::setSymmetricKey(SymmetricKey* symmetricKey)
+{
+	if (macOp == NULL)
+		return;
+
+	if (this->symmetricKey != NULL)
+	{
+		macOp->recycleKey(symmetricKey);
+	}
+
+	this->symmetricKey = symmetricKey;
+}
+
+SymmetricKey* Session::getSymmetricKey()
+{
+	return symmetricKey;
 }
