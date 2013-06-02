@@ -33,6 +33,7 @@
  *****************************************************************************/
 
 #include "config.h"
+#ifdef WITH_ECC
 #include "log.h"
 #include "BotanECDHPrivateKey.h"
 #include "BotanCryptoFactory.h"
@@ -156,3 +157,4 @@ void BotanECDHPrivateKey::createBotanKey()
 		}
 	}
 }
+#endif

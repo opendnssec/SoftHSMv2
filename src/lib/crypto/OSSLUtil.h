@@ -38,7 +38,9 @@
 #include "config.h"
 #include "ByteString.h"
 #include <openssl/bn.h>
+#ifdef WITH_ECC
 #include <openssl/ec.h>
+#endif
 
 namespace OSSL
 {
@@ -48,6 +50,7 @@ namespace OSSL
 	// Convert a ByteString to an OpenSSL BIGNUM
 	BIGNUM* byteString2bn(const ByteString& byteString);
 
+#ifdef WITH_ECC
 	// Convert an OpenSSL EC GROUP to a ByteString
 	ByteString grp2ByteString(const EC_GROUP* grp);
 
@@ -59,7 +62,7 @@ namespace OSSL
 
 	// Convert a ByteString to an OpenSSL EC POINT in the given EC GROUP
 	EC_POINT* byteString2pt(const ByteString& byteString, const EC_GROUP* grp);
-
+#endif
 }
 
 #endif // !_SOFTHSM_V2_OSSLUTIL_H
