@@ -149,6 +149,19 @@ protected:
 	bool initialized;
 };
 
+class P11DSAPublicKeyObj : public P11PublicKeyObj
+{
+public:
+	// Constructor
+	P11DSAPublicKeyObj();
+
+	// Add attributes
+	virtual bool init(OSObject *osobject);
+
+protected:
+	bool initialized;
+};
+
 class P11PrivateKeyObj : public P11KeyObj
 {
 protected:
@@ -165,6 +178,19 @@ class P11RSAPrivateKeyObj : public P11PrivateKeyObj
 public:
 	// Constructor
 	P11RSAPrivateKeyObj();
+
+	// Add attributes
+	virtual bool init(OSObject *osobject);
+
+protected:
+	bool initialized;
+};
+
+class P11DSAPrivateKeyObj : public P11PrivateKeyObj
+{
+public:
+	// Constructor
+	P11DSAPrivateKeyObj();
 
 	// Add attributes
 	virtual bool init(OSObject *osobject);
@@ -192,6 +218,18 @@ protected:
 
 	// Add attributes
 	virtual bool init(OSObject *osobject);
+	bool initialized;
+};
+
+class P11DSADomainObj : public P11DomainObj
+{
+public:
+	// Constructor
+	P11DSADomainObj();
+
+	// Add attributes
+	virtual bool init(OSObject *osobject);
+protected:
 	bool initialized;
 };
 

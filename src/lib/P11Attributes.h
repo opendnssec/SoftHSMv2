@@ -1005,4 +1005,67 @@ protected:
 	virtual CK_RV updateAttr(Token *token, bool isPrivate, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op);
 };
 
+/*****************************************
+ * CKA_PRIME
+ *****************************************/
+
+class P11AttrPrime : public P11Attribute
+{
+public:
+	// Constructor
+	P11AttrPrime(OSObject* osobject, CK_ULONG inchecks = 0) : P11Attribute(osobject) { type = CKA_PRIME; checks = ck1|inchecks; }
+
+protected:
+	// Set the default value of the attribute
+	virtual bool setDefault();
+};
+
+/*****************************************
+ * CKA_SUBPRIME
+ *****************************************/
+
+class P11AttrSubPrime : public P11Attribute
+{
+public:
+	// Constructor
+	P11AttrSubPrime(OSObject* osobject, CK_ULONG inchecks = 0) : P11Attribute(osobject) { type = CKA_SUBPRIME; checks = ck1|inchecks; }
+
+protected:
+	// Set the default value of the attribute
+	virtual bool setDefault();
+};
+
+/*****************************************
+ * CKA_BASE
+ *****************************************/
+
+class P11AttrBase : public P11Attribute
+{
+public:
+	// Constructor
+	P11AttrBase(OSObject* osobject, CK_ULONG inchecks = 0) : P11Attribute(osobject) { type = CKA_BASE; checks = ck1|inchecks; }
+
+protected:
+	// Set the default value of the attribute
+	virtual bool setDefault();
+};
+
+/*****************************************
+ * CKA_PRIME_BITS
+ *****************************************/
+
+class P11AttrPrimeBits : public P11Attribute
+{
+public:
+	// Constructor
+	P11AttrPrimeBits(OSObject* osobject) : P11Attribute(osobject) { type = CKA_PRIME_BITS; size = sizeof(CK_ULONG); checks = ck2|ck3;}
+
+protected:
+	// Set the default value of the attribute
+	virtual bool setDefault();
+
+	// Update the value if allowed
+	virtual CK_RV updateAttr(Token *token, bool isPrivate, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op);
+};
+
 #endif // !_SOFTHSM_V2_P11ATTRIBUTES_H
