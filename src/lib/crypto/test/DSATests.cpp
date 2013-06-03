@@ -238,6 +238,60 @@ void DSATests::testSigningVerifying()
 
 void DSATests::testSignVerifyKnownVector()
 {
-	// TODO
-}
+	DSAPublicKey* pubKey1 = (DSAPublicKey*) dsa->newPublicKey();
+	DSAPublicKey* pubKey2 = (DSAPublicKey*) dsa->newPublicKey();
+	DSAPrivateKey* privKey1 = (DSAPrivateKey*) dsa->newPrivateKey();
+	DSAPrivateKey* privKey2 = (DSAPrivateKey*) dsa->newPrivateKey();
 
+	// Reconstruct public and private key #1
+	ByteString p1 = "e0a67598cd1b763bc98c8abb333e5dda0cd3aa0e5e1fb5ba8a7b4eabc10ba338fae06dd4b90fda70d7cf0cb0c638be3341bec0af8a7330a3307ded2299a0ee606df035177a239c34a912c202aa5f83b9c4a7cf0235b5316bfc6efb9a248411258b30b839af172440f32563056cb67a861158ddd90e6a894c72a5bbef9e286c6b";
+	ByteString q1 = "e950511eab424b9a19a2aeb4e159b7844c589c4f";
+	ByteString g1 = "d29d5121b0423c2769ab21843e5a3240ff19cacc792264e3bb6be4f78edd1b15c4dff7f1d905431f0ab16790e1f773b5ce01c804e509066a9919f5195f4abc58189fd9ff987389cb5bedf21b4dab4f8b76a055ffe2770988fe2ec2de11ad92219f0b351869ac24da3d7ba87011a701ce8ee7bfe49486ed4527b7186ca4610a75";
+	ByteString x1 = "d0ec4e50bb290a42e9e355c73d8809345de2e139";
+	ByteString y1 = "25282217f5730501dd8dba3edfcf349aaffec20921128d70fac44110332201bba3f10986140cbb97c726938060473c8ec97b4731db004293b5e730363609df9780f8d883d8c4d41ded6a2f1e1bbbdc979e1b9d6d3c940301f4e978d65b19041fcf1e8b518f5c0576c770fe5a7a485d8329ee2914a2de1b5da4a6128ceab70f79";
+
+	pubKey1->setP(p1);
+	pubKey1->setQ(q1);
+	pubKey1->setG(g1);
+	pubKey1->setY(y1);
+	privKey1->setP(p1);
+	privKey1->setQ(q1);
+	privKey1->setG(g1);
+	privKey1->setX(x1);
+
+	// Test with key #1
+	ByteString data1 = "616263"; // "abc"
+	ByteString goodSignature1 = "636155ac9a4633b4665d179f9e4117df68601f346c540b02d9d4852f89df8cfc99963204f4347704";
+	ByteString badSignature1 = "636155ac9a4633b4665d179f9e4117df68601f346c540b02d9d4852f89df8cfc99963204f4347705";
+
+	// Reconstruct public and private key #2
+	ByteString p2 = "f56c2a7d366e3ebdeaa1891fd2a0d099436438a673fed4d75f594959cffebca7be0fc72e4fe67d91d801cba0693ac4ed9e411b41d19e2fd1699c4390ad27d94c69c0b143f1dc88932cfe2310c886412047bd9b1c7a67f8a25909132627f51a0c866877e672e555342bdf9355347dbd43b47156b2c20bad9d2b071bc2fdcf9757f75c168c5d9fc43131be162a0756d1bdec2ca0eb0e3b018a8b38d3ef2487782aeb9fbf99d8b30499c55e4f61e5c7dcee2a2bb55bd7f75fcdf00e48f2e8356bdb59d86114028f67b8e07b127744778aff1cf1399a4d679d92fde7d941c5c85c5d7bff91ba69f9489d531d1ebfa727cfda651390f8021719fa9f7216ceb177bd75";
+	ByteString q2 = "c24ed361870b61e0d367f008f99f8a1f75525889c89db1b673c45af5867cb467";
+	ByteString g2 = "8dc6cc814cae4a1c05a3e186a6fe27eaba8cdb133fdce14a963a92e809790cba096eaa26140550c129fa2b98c16e84236aa33bf919cd6f587e048c52666576db6e925c6cbe9b9ec5c16020f9a44c9f1c8f7a8e611c1f6ec2513ea6aa0b8d0f72fed73ca37df240db57bbb27431d618697b9e771b0b301d5df05955425061a30dc6d33bb6d2a32bd0a75a0a71d2184f506372abf84a56aeeea8eb693bf29a640345fa1298a16e85421b2208d00068a5a42915f82cf0b858c8fa39d43d704b6927e0b2f916304e86fb6a1b487f07d8139e428bb096c6d67a76ec0b8d4ef274b8a2cf556d279ad267ccef5af477afed029f485b5597739f5d0240f67c2d948a6279";
+	ByteString x2 = "0caf2ef547ec49c4f3a6fe6df4223a174d01f2c115d49a6f73437c29a2a8458c";
+	ByteString y2 = "2828003d7c747199143c370fdd07a2861524514acc57f63f80c38c2087c6b795b62de1c224bf8d1d1424e60ce3f5ae3f76c754a2464af292286d873a7a30b7eacbbc75aafde7191d9157598cdb0b60e0c5aa3f6ebe425500c611957dbf5ed35490714a42811fdcdeb19af2ab30beadff2907931cee7f3b55532cffaeb371f84f01347630eb227a419b1f3f558bc8a509d64a765d8987d493b007c4412c297caf41566e26faee475137ec781a0dc088a26c8804a98c23140e7c936281864b99571ee95c416aa38ceebb41fdbff1eb1d1dc97b63ce1355257627c8b0fd840ddb20ed35be92f08c49aea5613957d7e5c7a6d5a5834b4cb069e0831753ecf65ba02b";
+
+	pubKey2->setP(p2);
+	pubKey2->setQ(q2);
+	pubKey2->setG(g2);
+	pubKey2->setY(y2);
+	privKey2->setP(p2);
+	privKey2->setQ(q2);
+	privKey2->setG(g2);
+	privKey2->setX(x2);
+
+	// Test with key #2
+	ByteString data2 = "616263"; // "abc"
+	ByteString goodSignature2 = "315c875dcd4850e948b8ac42824e9483a32d5ba5abe0681b9b9448d444f2be3c89718d12e54a8d9ed066e4a55f7ed5a2229cd23b9a3cee78f83ed6aa61f6bcb9";
+	ByteString badSignature2 = "315c875dcd4850e948b8ac42824e9483a32d5ba5abe0681b9b9448d444f2be3c89718d12e54a8d9ed066e4a55f7ed5a2229cd23b9a3cee78f83ed6aa61f6bcb8";
+
+	CPPUNIT_ASSERT(dsa->verify(pubKey1, data1, goodSignature1, "dsa-sha1"));
+	CPPUNIT_ASSERT(!dsa->verify(pubKey1, data1, badSignature1, "dsa-sha1"));
+	CPPUNIT_ASSERT(dsa->verify(pubKey2, data2, goodSignature2, "dsa-sha256"));
+	CPPUNIT_ASSERT(!dsa->verify(pubKey2, data2, badSignature2, "dsa-sha256"));
+
+	dsa->recyclePublicKey(pubKey1);
+	dsa->recyclePublicKey(pubKey2);
+	dsa->recyclePrivateKey(privKey1);
+	dsa->recyclePrivateKey(privKey2);
+}
