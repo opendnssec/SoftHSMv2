@@ -5438,8 +5438,13 @@ CK_RV SoftHSM::deriveECDH
 		CryptoFactory::i()->recycleAsymmetricAlgorithm(ecdh);
 		return CKR_HOST_MEMORY;
 	}
-	((ECPublicKey*)publicKey)->setEC(((ECPrivateKey*)privateKey)->getEC());
-	((ECPublicKey*)publicKey)->setQ(publicData);
+	if (getECDHPublicKey((ECPublicKey*)publicKey, (ECPrivateKey*)privateKey, publicData) != CKR_OK)
+	{
+		ecdh->recyclePrivateKey(privateKey);
+		ecdh->recyclePublicKey(publicKey);
+		CryptoFactory::i()->recycleAsymmetricAlgorithm(ecdh);
+		return CKR_GENERAL_ERROR;
+	}
 
 	// Derive the secret
 	SymmetricKey* secret = NULL;
@@ -5901,6 +5906,20 @@ CK_RV SoftHSM::getDHPublicKey(DHPublicKey* publicKey, DHPrivateKey* privateKey, 
 
 	// Set value
 	publicKey->setY(pubParams);
+
+	return CKR_OK;
+}
+
+CK_RV SoftHSM::getECDHPublicKey(ECPublicKey* publicKey, ECPrivateKey* privateKey, ByteString& pubData)
+{
+	if (publicKey == NULL) return CKR_ARGUMENTS_BAD;
+	if (privateKey == NULL) return CKR_ARGUMENTS_BAD;
+
+	// Copy Domain Parameters from Private Key
+	publicKey->setEC(privateKey->getEC());
+
+	// Set value
+	publicKey->setQ(pubData);
 
 	return CKR_OK;
 }

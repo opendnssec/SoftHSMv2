@@ -305,6 +305,7 @@ private:
 	CK_RV getECPublicKey(ECPublicKey* publicKey, Token* token, OSObject* key);
 	CK_RV getDHPrivateKey(DHPrivateKey* privateKey, Token* token, OSObject* key);
 	CK_RV getDHPublicKey(DHPublicKey* publicKey, DHPrivateKey* privateKey, ByteString& pubParams);
+	CK_RV getECDHPublicKey(ECPublicKey* publicKey, ECPrivateKey* privateKey, ByteString& pubData);
 	CK_RV getSymmetricKey(SymmetricKey* skey, Token* token, OSObject* key);
 };
 
