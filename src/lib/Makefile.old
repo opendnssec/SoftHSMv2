@@ -1,7 +1,5 @@
 # Temporary Makefile that is used until this project has been auto'd by Rickard ;-)
 #
-# $Id$
-
 CC=gcc
 CFLAGS=-g -Wall -DWITH_OPENSSL
 

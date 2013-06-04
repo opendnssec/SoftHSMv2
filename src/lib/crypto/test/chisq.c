@@ -1,5 +1,3 @@
-/* $Id$ */
-
 /* This code was taken from http://www.fourmilab.ch/random/ where it states that:
 
    This software is in the public domain. Permission to use, copy, modify, and distribute 

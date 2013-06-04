@@ -1,5 +1,3 @@
-# $Id$
-
 MAINTAINERCLEANFILES = $(srcdir)/Makefile.in
 
 SUBDIRS = common keyconv util

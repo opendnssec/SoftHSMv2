@@ -1,5 +1,3 @@
-/* $Id$ */
-
 /*
  * Copyright (c) 2010 SURFnet bv
  * Copyright (c) 2010 .SE (The Internet Infrastructure Foundation)

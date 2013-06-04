@@ -1,5 +1,3 @@
-/* $Id$ */
-
 /*
  * Copyright (c) 2011 .SE (The Internet Infrastructure Foundation)
  * All rights reserved.
