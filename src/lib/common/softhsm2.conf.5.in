@@ -1,5 +1,4 @@
 .TH softhsm2.conf 5 "22 October 2012" "SoftHSM"
-.\" $Id$
 .SH NAME
 softhsm2.conf \- SoftHSM configuration file
 .SH SYNOPSIS
