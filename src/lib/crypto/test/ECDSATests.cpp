@@ -198,11 +198,71 @@ void ECDSATests::testSigningVerifying()
 
 		ecdsa->recycleKeyPair(kp);
 		ecdsa->recycleParameters(p);
+		CryptoFactory::i()->recycleHashAlgorithm(hash);
 	}
 }
 
 void ECDSATests::testSignVerifyKnownVector()
 {
-	// TODO
+	ECPublicKey* pubKey1 = (ECPublicKey*) ecdsa->newPublicKey();
+	ECPublicKey* pubKey2 = (ECPublicKey*) ecdsa->newPublicKey();
+	ECPrivateKey* privKey1 = (ECPrivateKey*) ecdsa->newPrivateKey();
+	ECPrivateKey* privKey2 = (ECPrivateKey*) ecdsa->newPrivateKey();
+	HashAlgorithm* hash1 = CryptoFactory::i()->getHashAlgorithm("sha256");
+	HashAlgorithm* hash2 = CryptoFactory::i()->getHashAlgorithm("sha384");
+
+	// Reconstruct public and private key #1
+	ByteString ec1 = "06082a8648ce3d030107"; // X9.62 prime256v1
+	ByteString d1 = "dc51d3866a15bacde33d96f992fca99da7e6ef0934e7097559c27f1614c88a7f";
+	// add 04 (ASN_String) <len+1> 04 (UNCOMPRESSED) in front!
+	ByteString q1 = "0441042442a5cc0ecd015fa3ca31dc8e2bbc70bf42d60cbca20085e0822cb04235e9706fc98bd7e50211a4a27102fa3549df79ebcb4bf246b80945cddfe7d509bbfd7d";
+
+	pubKey1->setEC(ec1);
+	pubKey1->setQ(q1);
+	privKey1->setEC(ec1);
+	privKey1->setD(d1);
+	CPPUNIT_ASSERT(hash1 != NULL);
+
+	// Test with key #1
+	ByteString data1 = "616263"; // "abc"
+	ByteString goodSignature1 = "cb28e0999b9c7715fd0a80d8e47a77079716cbbf917dd72e97566ea1c066957c86fa3bb4e26cad5bf90b7f81899256ce7594bb1ea0c89212748bff3b3d5b0315";
+	ByteString badSignature1 = "cb28e0999b9c7715fd0a80d8e47a77079716cbbf917dd72e97566ea1c066957c86fa3bb4e26cad5bf90b7f81899256ce7594bb1ea0c89212748bff3b3d5b0316";
+
+	// Reconstruct public and private key #2
+	ByteString ec2 = "06052b81040022"; // secp384r1
+	ByteString d2 = "0beb646634ba87735d77ae4809a0ebea865535de4c1e1dcb692e84708e81a5af62e528c38b2a81b35309668d73524d9f";
+	// add 04 (ASN_String) <len+1> 04 (UNCOMPRESSED) in front!
+	ByteString q2 = "04610496281bf8dd5e0525ca049c048d345d3082968d10fedf5c5aca0c64e6465a97ea5ce10c9dfec21797415710721f437922447688ba94708eb6e2e4d59f6ab6d7edff9301d249fe49c33096655f5d502fad3d383b91c5e7edaa2b714cc99d5743ca";
+
+	pubKey2->setEC(ec2);
+	pubKey2->setQ(q2);
+	privKey2->setEC(ec2);
+	privKey2->setD(d2);
+	CPPUNIT_ASSERT(hash2 != NULL);
+
+	// Test with key #2
+	ByteString data2 = "616263"; // "abc"
+	ByteString goodSignature2 = "fb017b914e29149432d8bac29a514640b46f53ddab2c69948084e2930f1c8f7e08e07c9c63f2d21a07dcb56a6af56eb3b263a1305e057f984d38726a1b46874109f417bca112674c528262a40a629af1cbb9f516ce0fa7d2ff630863a00e8b9f";
+	ByteString badSignature2 = "fb017b914e29149432d8bac29a514640b46f53ddab2c69948084e2930f1c8f7e08e07c9c63f2d21a07dcb56a6af56eb3b263a1305e057f984d38726a1b46874109f417bca112674c528262a40a629af1cbb9f516ce0fa7d2ff630863a00e8b9e";
+
+	CPPUNIT_ASSERT(hash1->hashInit());
+	CPPUNIT_ASSERT(hash1->hashUpdate(data1));
+	ByteString hResult1;
+	CPPUNIT_ASSERT(hash1->hashFinal(hResult1));
+	CPPUNIT_ASSERT(ecdsa->verify(pubKey1, hResult1, goodSignature1, "ECDSA"));
+	CPPUNIT_ASSERT(!ecdsa->verify(pubKey1, hResult1, badSignature1, "ECDSA"));
+	CPPUNIT_ASSERT(hash2->hashInit());
+	CPPUNIT_ASSERT(hash2->hashUpdate(data2));
+	ByteString hResult2;
+	CPPUNIT_ASSERT(hash2->hashFinal(hResult2));
+	CPPUNIT_ASSERT(ecdsa->verify(pubKey2, hResult2, goodSignature2, "ECDSA"));
+	CPPUNIT_ASSERT(!ecdsa->verify(pubKey2, hResult2, badSignature2, "ECDSA"));
+
+	ecdsa->recyclePublicKey(pubKey1);
+	ecdsa->recyclePublicKey(pubKey2);
+	ecdsa->recyclePrivateKey(privKey1);
+	ecdsa->recyclePrivateKey(privKey2);
+	CryptoFactory::i()->recycleHashAlgorithm(hash1);
+	CryptoFactory::i()->recycleHashAlgorithm(hash2);
 }
 #endif
