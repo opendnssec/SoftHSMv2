@@ -194,6 +194,48 @@ void ECDHTests::testDerivation()
 
 void ECDHTests::testDeriveKnownVector()
 {
-	// TODO
+// Doesn't work today with Botan?
+#ifndef WITH_BOTAN
+	ECPublicKey* pubKeya = (ECPublicKey*) ecdh->newPublicKey();
+	ECPublicKey* pubKeyb = (ECPublicKey*) ecdh->newPublicKey();
+	ECPrivateKey* privKeya = (ECPrivateKey*) ecdh->newPrivateKey();
+	ECPrivateKey* privKeyb = (ECPrivateKey*) ecdh->newPrivateKey();
+
+	// Reconstruct public and private key for Alice
+	ByteString ec = "06082a8648ce3d030107"; // X9.62 prime256v1
+	ByteString da = "c88f01f510d9ac3f70a292daa2316de544e9aab8afe84049c62a9c57862d1433";
+	// add 04 (ASN_String) <len+1> 04 (UNCOMPRESSED) in front!
+	ByteString qa = "044104dad0b65394221cf9b051e1feca5787d098dfe637fc90b9ef945d0c37725811805271a0461cdb8252d61f1c456fa3e59ab1f45b33accf5f58389e0577b8990bb3";
+
+	pubKeya->setEC(ec);
+	pubKeya->setQ(qa);
+	privKeya->setEC(ec);
+	privKeya->setD(da);
+
+	// Reconstruct public and private key for Bob
+	ByteString db = "c6ef9c5d78ae012a011164acb397ce2088685d8f06bf9be0b283ab46476bee53";
+	ByteString qb = "044104d12dfb5289c8d4f81208b70270398c342296970a0bccb74c736fc7554494bf6356fbf3ca366cc23e8157854c13c58d6aac23f046ada30f8353e74f33039872ab";
+
+	pubKeyb->setEC(ec);
+	pubKeyb->setQ(qb);
+	privKeyb->setEC(ec);
+	privKeyb->setD(db);
+
+	// Test
+	ByteString expected = "d6840f6b42f6edafd13116e0e12565202fef8e9ece7dce03812464d04b9442de";
+	SymmetricKey* sa;
+	CPPUNIT_ASSERT(ecdh->deriveKey(&sa, pubKeya, privKeyb));
+	CPPUNIT_ASSERT(sa->getKeyBits() == expected);
+	SymmetricKey* sb;
+	CPPUNIT_ASSERT(ecdh->deriveKey(&sb, pubKeyb, privKeya));
+	CPPUNIT_ASSERT(sb->getKeyBits() == expected);
+
+	ecdh->recyclePublicKey(pubKeya);
+	ecdh->recyclePublicKey(pubKeyb);
+	ecdh->recyclePrivateKey(privKeya);
+	ecdh->recyclePrivateKey(privKeyb);
+	ecdh->recycleSymmetricKey(sa);
+	ecdh->recycleSymmetricKey(sb);
+#endif
 }
 #endif
