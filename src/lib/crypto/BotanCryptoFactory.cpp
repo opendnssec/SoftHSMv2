@@ -36,6 +36,11 @@
 #include "BotanAES.h"
 #include "BotanDES.h"
 #include "BotanDSA.h"
+#include "BotanDH.h"
+#ifdef WITH_ECC
+#include "BotanECDH.h"
+#include "BotanECDSA.h"
+#endif
 #include "BotanMD5.h"
 #include "BotanRNG.h"
 #include "BotanRSA.h"
@@ -44,6 +49,7 @@
 #include "BotanSHA256.h"
 #include "BotanSHA384.h"
 #include "BotanSHA512.h"
+#include "BotanHMAC.h"
 
 #include <botan/init.h>
 
@@ -132,6 +138,20 @@ AsymmetricAlgorithm* BotanCryptoFactory::getAsymmetricAlgorithm(std::string algo
 	{
 		return new BotanDSA();
 	}
+	else if (!lcAlgo.compare("dh"))
+	{
+		return new BotanDH();
+	}
+#ifdef WITH_ECC
+	else if (!lcAlgo.compare("ecdh"))
+	{
+		return new BotanECDH();
+	}
+	else if (!lcAlgo.compare("ecdsa"))
+	{
+		return new BotanECDSA();
+	}
+#endif
 	else
 	{
 		// No algorithm implementation is available
@@ -174,6 +194,49 @@ HashAlgorithm* BotanCryptoFactory::getHashAlgorithm(std::string algorithm)
 	else if (!lcAlgo.compare("sha512"))
 	{
 		return new BotanSHA512();
+	}
+	else
+	{
+		// No algorithm implementation is available
+		ERROR_MSG("Unknown algorithm '%s'", algorithm.c_str());
+
+		return NULL;
+	}
+
+	// No algorithm implementation is available
+	return NULL;
+}
+
+// Create a concrete instance of a MAC algorithm
+MacAlgorithm* BotanCryptoFactory::getMacAlgorithm(std::string algorithm)
+{
+	std::string lcAlgo;
+	lcAlgo.resize(algorithm.size());
+	std::transform(algorithm.begin(), algorithm.end(), lcAlgo.begin(), tolower);
+
+	if (!lcAlgo.compare("hmac-md5"))
+	{
+		return new BotanHMACMD5();
+	}
+	else if (!lcAlgo.compare("hmac-sha1"))
+	{
+		return new BotanHMACSHA1();
+	}
+	else if (!lcAlgo.compare("hmac-sha224"))
+	{
+		return new BotanHMACSHA224();
+	}
+	else if (!lcAlgo.compare("hmac-sha256"))
+	{
+		return new BotanHMACSHA256();
+	}
+	else if (!lcAlgo.compare("hmac-sha384"))
+	{
+		return new BotanHMACSHA384();
+	}
+	else if (!lcAlgo.compare("hmac-sha512"))
+	{
+		return new BotanHMACSHA512();
 	}
 	else
 	{

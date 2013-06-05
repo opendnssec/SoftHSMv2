@@ -209,6 +209,7 @@ void RSATests::testSigningVerifying()
 	std::vector<const char*> mechanisms;
 	mechanisms.push_back("rsa-md5-pkcs");
 	mechanisms.push_back("rsa-sha1-pkcs");
+	mechanisms.push_back("rsa-sha224-pkcs");
 	mechanisms.push_back("rsa-sha256-pkcs");
 	mechanisms.push_back("rsa-sha384-pkcs");
 	mechanisms.push_back("rsa-sha512-pkcs");
