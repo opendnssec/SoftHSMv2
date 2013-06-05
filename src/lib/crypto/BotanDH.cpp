@@ -185,13 +185,7 @@ bool BotanDH::deriveKey(SymmetricKey **ppSymmetricKey, PublicKey* publicKey, Pri
 	catch (...)
 	{
 		ERROR_MSG("Botan DH key agreement failed");
-
-		return false;
 	}
-
-	ByteString secret;
-	secret.resize(sk.length());
-	memcpy(&secret[0], sk.begin(), sk.length());
 
 	*ppSymmetricKey = new SymmetricKey(sk.length() * 8);
 	if (*ppSymmetricKey == NULL)
@@ -200,12 +194,9 @@ bool BotanDH::deriveKey(SymmetricKey **ppSymmetricKey, PublicKey* publicKey, Pri
 
 		return false;
 	}
-	if (!(*ppSymmetricKey)->setKeyBits(secret))
-	{
-		delete *ppSymmetricKey;
-		*ppSymmetricKey = NULL;
-		return false;
-	}
+	ByteString secret = (*ppSymmetricKey)->getKeyBits();
+	secret.resize(sk.length());
+	memcpy(&secret[0], sk.begin(), sk.length());
 
 	return true;
 }
