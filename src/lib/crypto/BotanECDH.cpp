@@ -184,7 +184,13 @@ bool BotanECDH::deriveKey(SymmetricKey **ppSymmetricKey, PublicKey* publicKey, P
 	catch (...)
 	{
 		ERROR_MSG("Botan ECDH key agreement failed");
+
+		return false;
 	}
+
+	ByteString secret;
+	secret.resize(sk.length());
+	memcpy(&secret[0], sk.begin(), sk.length());
 
 	*ppSymmetricKey = new SymmetricKey(sk.length() * 8);
 	if (*ppSymmetricKey == NULL)
@@ -193,9 +199,12 @@ bool BotanECDH::deriveKey(SymmetricKey **ppSymmetricKey, PublicKey* publicKey, P
 
 		return false;
 	}
-	ByteString secret = (*ppSymmetricKey)->getKeyBits();
-	secret.resize(sk.length());
-	memcpy(&secret[0], sk.begin(), sk.length());
+	if (!(*ppSymmetricKey)->setKeyBits(secret))
+	{
+		delete *ppSymmetricKey;
+		*ppSymmetricKey = NULL;
+		return false;
+	}
 
 	return true;
 }

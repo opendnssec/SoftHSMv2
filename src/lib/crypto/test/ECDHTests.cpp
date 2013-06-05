@@ -194,8 +194,6 @@ void ECDHTests::testDerivation()
 
 void ECDHTests::testDeriveKnownVector()
 {
-// Doesn't work today with Botan?
-#ifndef WITH_BOTAN
 	ECPublicKey* pubKeya = (ECPublicKey*) ecdh->newPublicKey();
 	ECPublicKey* pubKeyb = (ECPublicKey*) ecdh->newPublicKey();
 	ECPrivateKey* privKeya = (ECPrivateKey*) ecdh->newPrivateKey();
@@ -236,6 +234,5 @@ void ECDHTests::testDeriveKnownVector()
 	ecdh->recyclePrivateKey(privKeyb);
 	ecdh->recycleSymmetricKey(sa);
 	ecdh->recycleSymmetricKey(sb);
-#endif
 }
 #endif
