@@ -50,7 +50,7 @@ class P11Attribute
 {
 public:
 	// Destructor
-	~P11Attribute();
+	virtual ~P11Attribute();
 
 	// Initialize the attribute
 	bool init();

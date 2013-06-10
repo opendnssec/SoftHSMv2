@@ -42,7 +42,7 @@ void usage();
 int initToken(char* slot, char* label, char* soPIN, char* userPIN);
 int showSlots();
 int importKeyPair(char* filePath, char* filePIN, char* slot, char* userPIN, char* objectLabel, char* objectID, int forceExec, int noPublicKey);
-int crypto_import_key_pair(CK_SESSION_HANDLE hSession, char* filePath, char* filePIN, char* label, char* objID, int objIDLen, int noPublicKey);
+int crypto_import_key_pair(CK_SESSION_HANDLE hSession, char* filePath, char* filePIN, char* label, char* objID, size_t objIDLen, int noPublicKey);
 
 // Support functions
 
@@ -50,14 +50,16 @@ void crypto_init();
 void crypto_final();
 
 /// Hex
-char* hexStrToBin(char* objectID, int idLength, int* newLen);
+char* hexStrToBin(char* objectID, int idLength, size_t* newLen);
 int hexdigit_to_int(char ch);
 
 /// Library
+#if !defined(UTIL_BOTAN) && !defined(UTIL_OSSL)
 static void* moduleHandle;
+#endif
 extern CK_FUNCTION_LIST_PTR p11;
 
 /// PKCS#11 support
-CK_OBJECT_HANDLE searchObject(CK_SESSION_HANDLE hSession, char* objID, int objIDLen);
+CK_OBJECT_HANDLE searchObject(CK_SESSION_HANDLE hSession, char* objID, size_t objIDLen);
 
 #endif // !_SOFTHSM_V2_SOFTHSM_UTIL_H
