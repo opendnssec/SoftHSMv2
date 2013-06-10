@@ -36,6 +36,11 @@
 #include "BotanAES.h"
 #include "BotanDES.h"
 #include "BotanDSA.h"
+#include "BotanDH.h"
+#ifdef WITH_ECC
+#include "BotanECDH.h"
+#include "BotanECDSA.h"
+#endif
 #include "BotanMD5.h"
 #include "BotanRNG.h"
 #include "BotanRSA.h"
@@ -44,6 +49,11 @@
 #include "BotanSHA256.h"
 #include "BotanSHA384.h"
 #include "BotanSHA512.h"
+#ifdef WITH_GOST
+#include "BotanGOST.h"
+#include "BotanGOSTR3411.h"
+#endif
+#include "BotanHMAC.h"
 
 #include <botan/init.h>
 
@@ -132,6 +142,26 @@ AsymmetricAlgorithm* BotanCryptoFactory::getAsymmetricAlgorithm(std::string algo
 	{
 		return new BotanDSA();
 	}
+	else if (!lcAlgo.compare("dh"))
+	{
+		return new BotanDH();
+	}
+#ifdef WITH_ECC
+	else if (!lcAlgo.compare("ecdh"))
+	{
+		return new BotanECDH();
+	}
+	else if (!lcAlgo.compare("ecdsa"))
+	{
+		return new BotanECDSA();
+	}
+#endif
+#ifdef WITH_GOST
+	else if (!lcAlgo.compare("gost"))
+	{
+		return new BotanGOST();
+	}
+#endif
 	else
 	{
 		// No algorithm implementation is available
@@ -175,6 +205,61 @@ HashAlgorithm* BotanCryptoFactory::getHashAlgorithm(std::string algorithm)
 	{
 		return new BotanSHA512();
 	}
+#ifdef WITH_GOST
+	else if (!lcAlgo.compare("gost"))
+	{
+		return new BotanGOSTR3411();
+	}
+#endif
+	else
+	{
+		// No algorithm implementation is available
+		ERROR_MSG("Unknown algorithm '%s'", algorithm.c_str());
+
+		return NULL;
+	}
+
+	// No algorithm implementation is available
+	return NULL;
+}
+
+// Create a concrete instance of a MAC algorithm
+MacAlgorithm* BotanCryptoFactory::getMacAlgorithm(std::string algorithm)
+{
+	std::string lcAlgo;
+	lcAlgo.resize(algorithm.size());
+	std::transform(algorithm.begin(), algorithm.end(), lcAlgo.begin(), tolower);
+
+	if (!lcAlgo.compare("hmac-md5"))
+	{
+		return new BotanHMACMD5();
+	}
+	else if (!lcAlgo.compare("hmac-sha1"))
+	{
+		return new BotanHMACSHA1();
+	}
+	else if (!lcAlgo.compare("hmac-sha224"))
+	{
+		return new BotanHMACSHA224();
+	}
+	else if (!lcAlgo.compare("hmac-sha256"))
+	{
+		return new BotanHMACSHA256();
+	}
+	else if (!lcAlgo.compare("hmac-sha384"))
+	{
+		return new BotanHMACSHA384();
+	}
+	else if (!lcAlgo.compare("hmac-sha512"))
+	{
+		return new BotanHMACSHA512();
+	}
+#ifdef WITH_GOST
+	else if (!lcAlgo.compare("hmac-gost"))
+	{
+		return new BotanHMACGOSTR3411();
+	}
+#endif
 	else
 	{
 		// No algorithm implementation is available

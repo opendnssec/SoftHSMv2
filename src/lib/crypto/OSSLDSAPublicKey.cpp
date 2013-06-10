@@ -27,7 +27,7 @@
 /*****************************************************************************
  OSSLDSAPublicKey.cpp
 
- OpenSSL DSA private key class
+ OpenSSL DSA public key class
  *****************************************************************************/
 
 #include "config.h"

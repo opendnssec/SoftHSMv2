@@ -31,6 +31,7 @@
  *****************************************************************************/
 
 #include <config.h>
+#define KEYCONV_BOTAN
 #include "softhsm-keyconv.h"
 
 #include <stdio.h>

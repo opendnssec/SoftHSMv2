@@ -15,8 +15,13 @@ check_PROGRAMS =		cryptotest
 cryptotest_SOURCES =		cryptotest.cpp \
 				AESTests.cpp \
 				DESTests.cpp \
+				DHTests.cpp \
 				DSATests.cpp \
+				ECDHTests.cpp \
+				ECDSATests.cpp \
+				GOSTTests.cpp \
 				HashTests.cpp \
+				MacTests.cpp \
 				RNGTests.cpp \
 				RSATests.cpp \
 				chisq.c \

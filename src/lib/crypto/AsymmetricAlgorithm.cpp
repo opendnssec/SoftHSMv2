@@ -137,6 +137,11 @@ bool AsymmetricAlgorithm::generateParameters(AsymmetricParameters** ppParams, vo
 	return false;
 }
 
+bool AsymmetricAlgorithm::deriveKey(SymmetricKey **ppSymmetricKey, PublicKey* publicKey, PrivateKey* privateKey)
+{
+	return false;
+}
+
 bool AsymmetricAlgorithm::reconstructParameters(AsymmetricParameters** ppParams, ByteString& serialisedData)
 {
 	return false;
@@ -164,6 +169,11 @@ void AsymmetricAlgorithm::recyclePublicKey(PublicKey* toRecycle)
 }
 
 void AsymmetricAlgorithm::recyclePrivateKey(PrivateKey* toRecycle)
+{
+	delete toRecycle;
+}
+
+void AsymmetricAlgorithm::recycleSymmetricKey(SymmetricKey* toRecycle)
 {
 	delete toRecycle;
 }

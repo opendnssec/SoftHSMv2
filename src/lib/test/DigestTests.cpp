@@ -258,6 +258,9 @@ void DigestTests::testDigestAll()
 		{ CKM_SHA256, NULL_PTR, 0 },
 		{ CKM_SHA384, NULL_PTR, 0 },
 		{ CKM_SHA512, NULL_PTR, 0 },
+#ifdef WITH_GOST
+		{ CKM_GOSTR3411, NULL_PTR, 0 },
+#endif
 	};
 	CK_ULONG digestLen;
 	CK_BYTE_PTR digest;
