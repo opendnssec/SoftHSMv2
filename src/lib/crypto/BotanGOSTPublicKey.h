@@ -27,82 +27,66 @@
  */
 
 /*****************************************************************************
- BotanHMAC.cpp
+ BotanGOSTPublicKey.h
 
- Botan HMAC implementation
+ Botan GOST R 34.11-2001 public key class
  *****************************************************************************/
 
+#ifndef _SOFTHSM_V2_BOTANGOSTPUBLICKEY_H
+#define _SOFTHSM_V2_BOTANGOSTPUBLICKEY_H
+
 #include "config.h"
-#include "BotanHMAC.h"
+#include "GOSTPublicKey.h"
+#include <botan/gost_3410.h>
 
-std::string BotanHMACMD5::getHash() const
+class BotanGOSTPublicKey : public GOSTPublicKey
 {
-	return "MD5";
-}
+public:
+	// Constructors
+	BotanGOSTPublicKey();
+	
+	BotanGOSTPublicKey(const Botan::GOST_3410_PublicKey* inECKEY);
+	
+	// Destructor
+	virtual ~BotanGOSTPublicKey();
 
-size_t BotanHMACMD5::getMacSize() const
-{
-	return 16;
-}
+	// The type
+	static const char* type;
 
-std::string BotanHMACSHA1::getHash() const
-{
-	return "SHA-1";
-}
+	// Check if the key is of the given type
+	virtual bool isOfType(const char* type);
 
-size_t BotanHMACSHA1::getMacSize() const
-{
-	return 20;
-}
+	// Get the output length
+	virtual unsigned long getOutputLength() const;
 
-std::string BotanHMACSHA224::getHash() const
-{
-	return "SHA-224";
-}
+	// Get the base point order length
+	virtual unsigned long getOrderLength() const;
 
-size_t BotanHMACSHA224::getMacSize() const
-{
-	return 28;
-}
+	// Setters for the GOST public key components
+	virtual void setEC(const ByteString& ec);
+	virtual void setQ(const ByteString& q);
 
-std::string BotanHMACSHA256::getHash() const
-{
-	return "SHA-256";
-}
+	// Serialisation
+	virtual ByteString serialise() const;
+	virtual bool deserialise(ByteString& serialised);
 
-size_t BotanHMACSHA256::getMacSize() const
-{
-	return 32;
-}
+	// Set from Botan representation
+	virtual void setFromBotan(const Botan::GOST_3410_PublicKey* eckey);
 
-std::string BotanHMACSHA384::getHash() const
-{
-	return "SHA-384";
-}
+	// Retrieve the Botan representation of the key
+	Botan::GOST_3410_PublicKey* getBotanKey();
 
-size_t BotanHMACSHA384::getMacSize() const
-{
-	return 48;
-}
+protected:
+	// Public components
+	ByteString ec;
 
-std::string BotanHMACSHA512::getHash() const
-{
-	return "SHA-512";
-}
+private:
+	// The internal Botan representation
+	Botan::GOST_3410_PublicKey* eckey;
 
-size_t BotanHMACSHA512::getMacSize() const
-{
-	return 64;
-}
+	// Create the Botan representation of the key
+	void createBotanKey();
+};
 
-#ifdef WITH_GOST
-std::string BotanHMACGOSTR3411::getHash() const
-{
-	return "GOST-34.11";
-}
+#endif // !_SOFTHSM_V2_BOTANGOSTPUBLICKEY_H
 
-size_t BotanHMACGOSTR3411::getMacSize() const
-{
-	return 32;
-}
-#endif

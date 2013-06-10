@@ -27,98 +27,24 @@
  */
 
 /*****************************************************************************
- OSSLEVPHashAlgorithm.cpp
+ OSSLGOSTR3411.h
 
- Base class for OpenSSL hash algorithm classes
+ OpenSSL GOST R 34.11-94 implementation
  *****************************************************************************/
+
+#ifndef _SOFTHSM_V2_OSSLGOSTR3411_H
+#define _SOFTHSM_V2_OSSLGOSTR3411_H
 
 #include "config.h"
 #include "OSSLEVPHashAlgorithm.h"
+#include <openssl/evp.h>
 
-// Destructor
-OSSLEVPHashAlgorithm::~OSSLEVPHashAlgorithm()
+class OSSLGOSTR3411 : public OSSLEVPHashAlgorithm
 {
-	EVP_MD_CTX_cleanup(&curCTX);
-}
+	virtual int getHashSize();
+protected:
+	virtual const EVP_MD* getEVPHash() const;
+};
 
-// Hashing functions
-bool OSSLEVPHashAlgorithm::hashInit()
-{
-	if (!HashAlgorithm::hashInit())
-	{
-		return false;
-	}
-
-	// Initialize the context
-	EVP_MD_CTX_init(&curCTX);
-
-	// Initialize EVP digesting
-	if (!EVP_DigestInit_ex(&curCTX, getEVPHash(), NULL))
-	{
-		ERROR_MSG("EVP_DigestInit failed");
-
-		EVP_MD_CTX_cleanup(&curCTX);
-
-		ByteString dummy;
-		HashAlgorithm::hashFinal(dummy);
-
-		return false;
-	}
-
-	return true;
-}
-
-bool OSSLEVPHashAlgorithm::hashUpdate(const ByteString& data)
-{
-	if (!HashAlgorithm::hashUpdate(data))
-	{
-		return false;
-	}
-
-	// Continue digesting
-	if (data.size() == 0)
-	{
-		return true;
-	}
-
-	if (!EVP_DigestUpdate(&curCTX, (unsigned char*) data.const_byte_str(), data.size()))
-	{
-		ERROR_MSG("EVP_DigestUpdate failed");
-
-		EVP_MD_CTX_cleanup(&curCTX);
-
-		ByteString dummy;
-		HashAlgorithm::hashFinal(dummy);
-
-		return false;
-	}
-
-	return true;
-}
-
-bool OSSLEVPHashAlgorithm::hashFinal(ByteString& hashedData)
-{
-	if (!HashAlgorithm::hashFinal(hashedData))
-	{
-		return false;
-	}
-
-	hashedData.resize(EVP_MD_size(getEVPHash()));
-	unsigned int outLen = hashedData.size();
-
-	if (!EVP_DigestFinal_ex(&curCTX, &hashedData[0], &outLen))
-	{
-		ERROR_MSG("EVP_DigestFinal failed");
-
-		EVP_MD_CTX_cleanup(&curCTX);
-
-		return false;
-	}
-
-	hashedData.resize(outLen);
-
-	EVP_MD_CTX_cleanup(&curCTX);
-
-	return true;
-}
+#endif // !_SOFTHSM_V2_OSSLGOSTR3411_H
 

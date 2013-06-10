@@ -1,7 +1,7 @@
 /* $Id$ */
 
 /*
- * Copyright (c) 2010 .SE (The Internet Infrastructure Foundation)
+ * Copyright (c) 2010 SURFnet bv
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,82 +27,43 @@
  */
 
 /*****************************************************************************
- BotanHMAC.cpp
+ OSSLGOSTKeyPair.h
 
- Botan HMAC implementation
+ OpenSSL GOST R 34.10-2001 key-pair class
  *****************************************************************************/
 
+#ifndef _SOFTHSM_V2_OSSLGOSTKEYPAIR_H
+#define _SOFTHSM_V2_OSSLGOSTKEYPAIR_H
+
 #include "config.h"
-#include "BotanHMAC.h"
+#include "AsymmetricKeyPair.h"
+#include "OSSLGOSTPublicKey.h"
+#include "OSSLGOSTPrivateKey.h"
 
-std::string BotanHMACMD5::getHash() const
+class OSSLGOSTKeyPair : public AsymmetricKeyPair
 {
-	return "MD5";
-}
+public:
+	// Set the public key
+	void setPublicKey(OSSLGOSTPublicKey& publicKey);
 
-size_t BotanHMACMD5::getMacSize() const
-{
-	return 16;
-}
+	// Set the private key
+	void setPrivateKey(OSSLGOSTPrivateKey& privateKey);
 
-std::string BotanHMACSHA1::getHash() const
-{
-	return "SHA-1";
-}
+	// Return the public key
+	virtual PublicKey* getPublicKey();
+	virtual const PublicKey* getConstPublicKey() const;
 
-size_t BotanHMACSHA1::getMacSize() const
-{
-	return 20;
-}
+	// Return the private key
+	virtual PrivateKey* getPrivateKey();
+	virtual const PrivateKey* getConstPrivateKey() const;
 
-std::string BotanHMACSHA224::getHash() const
-{
-	return "SHA-224";
-}
+private:
+	// The public key
+	OSSLGOSTPublicKey pubKey;
 
-size_t BotanHMACSHA224::getMacSize() const
-{
-	return 28;
-}
+	// The private key
+	OSSLGOSTPrivateKey privKey;
+};
 
-std::string BotanHMACSHA256::getHash() const
-{
-	return "SHA-256";
-}
+#endif // !_SOFTHSM_V2_OSSLGOSTKEYPAIR_H
 
-size_t BotanHMACSHA256::getMacSize() const
-{
-	return 32;
-}
-
-std::string BotanHMACSHA384::getHash() const
-{
-	return "SHA-384";
-}
-
-size_t BotanHMACSHA384::getMacSize() const
-{
-	return 48;
-}
-
-std::string BotanHMACSHA512::getHash() const
-{
-	return "SHA-512";
-}
-
-size_t BotanHMACSHA512::getMacSize() const
-{
-	return 64;
-}
-
-#ifdef WITH_GOST
-std::string BotanHMACGOSTR3411::getHash() const
-{
-	return "GOST-34.11";
-}
-
-size_t BotanHMACGOSTR3411::getMacSize() const
-{
-	return 32;
-}
-#endif

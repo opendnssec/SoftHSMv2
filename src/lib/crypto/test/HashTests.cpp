@@ -86,7 +86,7 @@ void HashTests::testMD5()
 
 	CPPUNIT_ASSERT(osslHash == shsmHash);
 
-	// Now recreate the hash in a single part operation
+	// Now recreate the hash in a multiple part operation
 	shsmHash.wipe();
 
 	CPPUNIT_ASSERT(hash->hashInit());
@@ -131,7 +131,7 @@ void HashTests::testSHA1()
 
 	CPPUNIT_ASSERT(osslHash == shsmHash);
 
-	// Now recreate the hash in a single part operation
+	// Now recreate the hash in a multiple part operation
 	shsmHash.wipe();
 
 	CPPUNIT_ASSERT(hash->hashInit());
@@ -176,7 +176,7 @@ void HashTests::testSHA224()
 
 	CPPUNIT_ASSERT(osslHash == shsmHash);
 
-	// Now recreate the hash in a single part operation
+	// Now recreate the hash in a multiple part operation
 	shsmHash.wipe();
 
 	CPPUNIT_ASSERT(hash->hashInit());
@@ -221,7 +221,7 @@ void HashTests::testSHA256()
 
 	CPPUNIT_ASSERT(osslHash == shsmHash);
 
-	// Now recreate the hash in a single part operation
+	// Now recreate the hash in a multiple part operation
 	shsmHash.wipe();
 
 	CPPUNIT_ASSERT(hash->hashInit());
@@ -266,7 +266,7 @@ void HashTests::testSHA384()
 
 	CPPUNIT_ASSERT(osslHash == shsmHash);
 
-	// Now recreate the hash in a single part operation
+	// Now recreate the hash in a multiple part operation
 	shsmHash.wipe();
 
 	CPPUNIT_ASSERT(hash->hashInit());
@@ -311,7 +311,7 @@ void HashTests::testSHA512()
 
 	CPPUNIT_ASSERT(osslHash == shsmHash);
 
-	// Now recreate the hash in a single part operation
+	// Now recreate the hash in a multiple part operation
 	shsmHash.wipe();
 
 	CPPUNIT_ASSERT(hash->hashInit());

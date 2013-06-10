@@ -1,7 +1,7 @@
 /* $Id$ */
 
 /*
- * Copyright (c) 2010 SURFnet bv
+ * Copyright (c) 2010 .SE (The Internet Infrastructure Foundation)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,60 +27,58 @@
  */
 
 /*****************************************************************************
- MacAlgorithm.h
+ BotanGOST.h
 
- Base class for MAC algorithm classes
+ Botan GOST R 34.10-2001 asymmetric algorithm implementation
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_MACALGORITHM_H
-#define _SOFTHSM_V2_MACALGORITHM_H
+#ifndef _SOFTHSM_V2_BOTANGOST_H
+#define _SOFTHSM_V2_BOTANGOST_H
 
-#include <string>
 #include "config.h"
-#include "SymmetricKey.h"
-#include "RNG.h"
+#include "AsymmetricAlgorithm.h"
+#include <botan/pubkey.h>
 
-class MacAlgorithm
+class BotanGOST : public AsymmetricAlgorithm
 {
 public:
-	// Base constructors
-	MacAlgorithm();
+	// Constructor
+	BotanGOST();
 
 	// Destructor
-	virtual ~MacAlgorithm() { }
+	virtual ~BotanGOST();
 
 	// Signing functions
-	virtual bool signInit(const SymmetricKey* key);
+	virtual bool signInit(PrivateKey* privateKey, const std::string mechanism);
 	virtual bool signUpdate(const ByteString& dataToSign);
 	virtual bool signFinal(ByteString& signature);
 
 	// Verification functions
-	virtual bool verifyInit(const SymmetricKey* key);
+	virtual bool verifyInit(PublicKey* publicKey, const std::string mechanism);
 	virtual bool verifyUpdate(const ByteString& originalData);
-	virtual bool verifyFinal(ByteString& signature);
+	virtual bool verifyFinal(const ByteString& signature);
 
-	// Key
+	// Encryption functions
+	virtual bool encrypt(PublicKey* publicKey, const ByteString& data, ByteString& encryptedData, const std::string padding);
+
+	// Decryption functions
+	virtual bool decrypt(PrivateKey* privateKey, const ByteString& encryptedData, ByteString& data, const std::string padding);
+
+	// Key factory
+	virtual bool generateKeyPair(AsymmetricKeyPair** ppKeyPair, AsymmetricParameters* parameters, RNG* rng = NULL);
 	virtual unsigned long getMinKeySize();
 	virtual unsigned long getMaxKeySize();
-	virtual void recycleKey(SymmetricKey* toRecycle);
-
-	// Return the MAC size
-	virtual size_t getMacSize() const = 0;
-
-protected:
-	// The current key
-	const SymmetricKey* currentKey;
+	virtual bool reconstructKeyPair(AsymmetricKeyPair** ppKeyPair, ByteString& serialisedData);
+	virtual bool reconstructPublicKey(PublicKey** ppPublicKey, ByteString& serialisedData);
+	virtual bool reconstructPrivateKey(PrivateKey** ppPrivateKey, ByteString& serialisedData);
+	virtual bool reconstructParameters(AsymmetricParameters** ppParams, ByteString& serialisedData);
+	virtual PublicKey* newPublicKey();
+	virtual PrivateKey* newPrivateKey();
+	virtual AsymmetricParameters* newParameters();
 
 private:
-	// The current operation
-	enum
-	{
-		NONE,
-		SIGN,
-		VERIFY
-	} 
-	currentOperation;
+	Botan::PK_Signer* signer;
+	Botan::PK_Verifier* verifier;
 };
 
-#endif // !_SOFTHSM_V2_MACALGORITHM_H
-
+#endif // !_SOFTHSM_V2_BOTANGOST_H

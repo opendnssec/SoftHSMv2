@@ -51,11 +51,18 @@
 #include "OSSLECDH.h"
 #include "OSSLECDSA.h"
 #endif
+#ifdef WITH_GOST
+#include "OSSLGOSTR3411.h"
+#include "OSSLGOST.h"
+#endif
 
 #include <algorithm>
 #include <string.h>
 #include <openssl/ssl.h>
 #include <openssl/err.h>
+#ifdef WITH_GOST
+#include <openssl/objects.h>
+#endif
 
 // Initialise the one-and-only instance
 std::auto_ptr<OSSLCryptoFactory> OSSLCryptoFactory::instance(NULL); 
@@ -68,11 +75,69 @@ OSSLCryptoFactory::OSSLCryptoFactory()
 
 	// Initialise the one-and-only RNG
 	rng = new OSSLRNG();
+
+#ifdef WITH_GOST
+	// Load engines
+	ENGINE_load_builtin_engines();
+
+	// Initialise the GOST engine
+	eg = ENGINE_by_id("gost");
+	if (eg == NULL)
+	{
+		ERROR_MSG("can't get the GOST engine");
+		return;
+	}
+	if (ENGINE_init(eg) <= 0)
+	{
+		ENGINE_free(eg);
+		eg = NULL;
+		ERROR_MSG("can't initialize the GOST engine");
+		return;
+	}
+	// better than digest_gost
+	EVP_GOST_34_11 = ENGINE_get_digest(eg, NID_id_GostR3411_94);
+	if (EVP_GOST_34_11 == NULL)
+	{
+		ERROR_MSG("can't get the GOST digest");
+		goto err;
+	}
+	// from the openssl.cnf
+	if (ENGINE_register_pkey_asn1_meths(eg) <= 0)
+	{
+		ERROR_MSG("can't register ASN.1 for the GOST engine");
+		goto err;
+	}
+	if (ENGINE_ctrl_cmd_string(eg,
+				   "CRYPT_PARAMS",
+				   "id-Gost28147-89-CryptoPro-A-ParamSet",
+				   0) <= 0)
+	{
+		ERROR_MSG("can't set params of the GOST engine");
+		goto err;
+	}
+	return;
+
+err:
+	ENGINE_finish(eg);
+	ENGINE_free(eg);
+	eg = NULL;
+	return;
+#endif
 }
 
 // Destructor
 OSSLCryptoFactory::~OSSLCryptoFactory()
 {
+#ifdef WITH_GOST
+	// Finish the GOST engine
+	if (eg != NULL)
+	{
+		ENGINE_finish(eg);
+		ENGINE_free(eg);
+		eg = NULL;
+	}
+#endif
+
 	// Destroy the one-and-only RNG
 	delete rng;
 
@@ -146,6 +211,12 @@ AsymmetricAlgorithm* OSSLCryptoFactory::getAsymmetricAlgorithm(std::string algor
 		return new OSSLECDSA();
 	}
 #endif
+#ifdef WITH_GOST
+	else if (!lcAlgo.compare("gost"))
+	{
+		return new OSSLGOST();
+	}
+#endif
 	else
 	{
 		// No algorithm implementation is available
@@ -186,6 +257,12 @@ HashAlgorithm* OSSLCryptoFactory::getHashAlgorithm(std::string algorithm)
 	{
 		return new OSSLSHA512();
 	}
+#ifdef WITH_GOST
+	else if (!lcAlgo.compare("gost"))
+	{
+		return new OSSLGOSTR3411();
+	}
+#endif
 	else
 	{
 		// No algorithm implementation is available
@@ -229,6 +306,12 @@ MacAlgorithm* OSSLCryptoFactory::getMacAlgorithm(std::string algorithm)
 	{
 		return new OSSLHMACSHA512();
 	}
+#ifdef WITH_GOST
+	else if (!lcAlgo.compare("hmac-gost"))
+	{
+		return new OSSLHMACGOSTR3411();
+	}
+#endif
 	else
 	{
 		// No algorithm implementation is available

@@ -51,6 +51,10 @@
 #include "BotanSHA256.h"
 #include "BotanSHA384.h"
 #include "BotanSHA512.h"
+#ifdef WITH_GOST
+#include "BotanGOST.h"
+#include "BotanGOSTR3411.h"
+#endif
 #include "BotanHMAC.h"
 
 #include <botan/init.h>
@@ -154,6 +158,12 @@ AsymmetricAlgorithm* BotanCryptoFactory::getAsymmetricAlgorithm(std::string algo
 		return new BotanECDSA();
 	}
 #endif
+#ifdef WITH_GOST
+	else if (!lcAlgo.compare("gost"))
+	{
+		return new BotanGOST();
+	}
+#endif
 	else
 	{
 		// No algorithm implementation is available
@@ -197,6 +207,12 @@ HashAlgorithm* BotanCryptoFactory::getHashAlgorithm(std::string algorithm)
 	{
 		return new BotanSHA512();
 	}
+#ifdef WITH_GOST
+	else if (!lcAlgo.compare("gost"))
+	{
+		return new BotanGOSTR3411();
+	}
+#endif
 	else
 	{
 		// No algorithm implementation is available
@@ -240,6 +256,12 @@ MacAlgorithm* BotanCryptoFactory::getMacAlgorithm(std::string algorithm)
 	{
 		return new BotanHMACSHA512();
 	}
+#ifdef WITH_GOST
+	else if (!lcAlgo.compare("hmac-gost"))
+	{
+		return new BotanHMACGOSTR3411();
+	}
+#endif
 	else
 	{
 		// No algorithm implementation is available
