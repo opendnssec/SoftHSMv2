@@ -1,3 +1,5 @@
+/* $Id$ */
+
 /*
  * Copyright (c) 2010 SURFnet bv
  * All rights reserved.
@@ -25,57 +27,60 @@
  */
 
 /*****************************************************************************
- OSSLCryptoFactory.h
+ MacAlgorithm.h
 
- This is an OpenSSL based cryptographic algorithm factory
+ Base class for MAC algorithm classes
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_OSSLCRYPTOFACTORY_H
-#define _SOFTHSM_V2_OSSLCRYPTOFACTORY_H
+#ifndef _SOFTHSM_V2_MACALGORITHM_H
+#define _SOFTHSM_V2_MACALGORITHM_H
 
+#include <string>
 #include "config.h"
-#include "CryptoFactory.h"
-#include "SymmetricAlgorithm.h"
-#include "AsymmetricAlgorithm.h"
-#include "HashAlgorithm.h"
-#include "MacAlgorithm.h"
+#include "SymmetricKey.h"
 #include "RNG.h"
-#include <memory>
 
-class OSSLCryptoFactory : public CryptoFactory
+class MacAlgorithm
 {
 public:
-	// Return the one-and-only instance
-	static OSSLCryptoFactory* i();
-
-	// Create a concrete instance of a symmetric algorithm
-	virtual SymmetricAlgorithm* getSymmetricAlgorithm(std::string algorithm);
-
-	// Create a concrete instance of an asymmetric algorithm
-	virtual AsymmetricAlgorithm* getAsymmetricAlgorithm(std::string algorithm);
-
-	// Create a concrete instance of a hash algorithm
-	virtual HashAlgorithm* getHashAlgorithm(std::string algorithm);
-
-	// Create a concrete instance of a MAC algorithm
-	virtual MacAlgorithm* getMacAlgorithm(std::string algorithm);
-
-	// Get the global RNG (may be an unique RNG per thread)
-	virtual RNG* getRNG(std::string name = "default");
+	// Base constructors
+	MacAlgorithm();
 
 	// Destructor
-	virtual ~OSSLCryptoFactory();
+	virtual ~MacAlgorithm() { }
+
+	// Signing functions
+	virtual bool signInit(const SymmetricKey* key);
+	virtual bool signUpdate(const ByteString& dataToSign);
+	virtual bool signFinal(ByteString& signature);
+
+	// Verification functions
+	virtual bool verifyInit(const SymmetricKey* key);
+	virtual bool verifyUpdate(const ByteString& originalData);
+	virtual bool verifyFinal(ByteString& signature);
+
+	// Key
+	virtual unsigned long getMinKeySize() = 0;
+	virtual unsigned long getMaxKeySize() = 0;
+	virtual void recycleKey(SymmetricKey* toRecycle);
+
+	// Return the MAC size
+	virtual size_t getMacSize() const = 0;
+
+protected:
+	// The current key
+	const SymmetricKey* currentKey;
 
 private:
-	// Constructor
-	OSSLCryptoFactory();
-
-	// The one-and-only instance
-	static std::auto_ptr<OSSLCryptoFactory> instance;
-
-	// The one-and-only RNG instance
-	RNG* rng;
+	// The current operation
+	enum
+	{
+		NONE,
+		SIGN,
+		VERIFY
+	} 
+	currentOperation;
 };
 
-#endif // !_SOFTHSM_V2_OSSLCRYPTOFACTORY_H
+#endif // !_SOFTHSM_V2_MACALGORITHM_H
 

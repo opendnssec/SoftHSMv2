@@ -173,13 +173,19 @@ protected:
 
 class P11SecretKeyObj : public P11KeyObj
 {
-protected:
+public:
 	// Constructor
 	P11SecretKeyObj();
 
 	// Add attributes
 	virtual bool init(OSObject *osobject);
+
+	// Better than multiply subclasses
+	virtual bool setKeyType(CK_KEY_TYPE keytype);
+	virtual CK_KEY_TYPE getKeyType();
+protected:
 	bool initialized;
+	CK_KEY_TYPE keytype;
 };
 
 class P11DomainObj : public P11Object

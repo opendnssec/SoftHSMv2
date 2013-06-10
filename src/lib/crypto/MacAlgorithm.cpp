@@ -1,3 +1,5 @@
+/* $Id$ */
+
 /*
  * Copyright (c) 2010 SURFnet bv
  * All rights reserved.
@@ -25,57 +27,94 @@
  */
 
 /*****************************************************************************
- OSSLCryptoFactory.h
+ MacAlgorithm.cpp
 
- This is an OpenSSL based cryptographic algorithm factory
+ Base class for MAC algorithm classes
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_OSSLCRYPTOFACTORY_H
-#define _SOFTHSM_V2_OSSLCRYPTOFACTORY_H
-
-#include "config.h"
-#include "CryptoFactory.h"
-#include "SymmetricAlgorithm.h"
-#include "AsymmetricAlgorithm.h"
-#include "HashAlgorithm.h"
 #include "MacAlgorithm.h"
-#include "RNG.h"
-#include <memory>
+#include <algorithm>
+#include <string.h>
 
-class OSSLCryptoFactory : public CryptoFactory
+MacAlgorithm::MacAlgorithm()
 {
-public:
-	// Return the one-and-only instance
-	static OSSLCryptoFactory* i();
+	currentOperation = NONE;
+	currentKey = NULL;
+}
 
-	// Create a concrete instance of a symmetric algorithm
-	virtual SymmetricAlgorithm* getSymmetricAlgorithm(std::string algorithm);
+bool MacAlgorithm::signInit(const SymmetricKey* key)
+{
+	if ((key == NULL) || (currentOperation != NONE))
+	{
+		return false;
+	}
 
-	// Create a concrete instance of an asymmetric algorithm
-	virtual AsymmetricAlgorithm* getAsymmetricAlgorithm(std::string algorithm);
+	currentKey = key;
+	currentOperation = SIGN;
 
-	// Create a concrete instance of a hash algorithm
-	virtual HashAlgorithm* getHashAlgorithm(std::string algorithm);
+	return true;
+}
 
-	// Create a concrete instance of a MAC algorithm
-	virtual MacAlgorithm* getMacAlgorithm(std::string algorithm);
+bool MacAlgorithm::signUpdate(const ByteString& dataToSign)
+{
+	if (currentOperation != SIGN)
+	{
+		return false;
+	}
 
-	// Get the global RNG (may be an unique RNG per thread)
-	virtual RNG* getRNG(std::string name = "default");
+	return true;
+}
 
-	// Destructor
-	virtual ~OSSLCryptoFactory();
+bool MacAlgorithm::signFinal(ByteString& signature)
+{
+	if (currentOperation != SIGN)
+	{
+		return false;
+	}
 
-private:
-	// Constructor
-	OSSLCryptoFactory();
+	currentOperation = NONE;
+	currentKey = NULL;
 
-	// The one-and-only instance
-	static std::auto_ptr<OSSLCryptoFactory> instance;
+	return true;
+}
 
-	// The one-and-only RNG instance
-	RNG* rng;
-};
+bool MacAlgorithm::verifyInit(const SymmetricKey* key)
+{
+	if ((key == NULL) || (currentOperation != NONE))
+	{
+		return false;
+	}
 
-#endif // !_SOFTHSM_V2_OSSLCRYPTOFACTORY_H
+	currentOperation = VERIFY;
+	currentKey = key;
 
+	return true;
+}
+
+bool MacAlgorithm::verifyUpdate(const ByteString& originalData)
+{
+	if (currentOperation != VERIFY)
+	{
+		return false;
+	}
+
+	return true;
+}
+
+bool MacAlgorithm::verifyFinal(ByteString& signature)
+{
+	if (currentOperation != VERIFY)
+	{
+		return false;
+	}
+
+	currentOperation = NONE;
+	currentKey = NULL;
+
+	return true;
+}
+
+void MacAlgorithm::recycleKey(SymmetricKey* toRecycle)
+{
+	delete currentKey;
+}

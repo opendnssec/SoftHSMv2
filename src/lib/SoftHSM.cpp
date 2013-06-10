@@ -79,10 +79,21 @@ static CK_RV newP11Object(CK_OBJECT_CLASS objClass, CK_KEY_TYPE keyType, std::au
 				return CKR_ATTRIBUTE_VALUE_INVALID;
 			break;
 		case CKO_SECRET_KEY:
-#if 0
-			p11object.reset( new P11SecretKeyObj );
+			if ((keyType == CKK_GENERIC_SECRET) ||
+			    (keyType == CKK_MD5_HMAC) ||
+			    (keyType == CKK_SHA_1_HMAC) ||
+			    (keyType == CKK_SHA224_HMAC) ||
+			    (keyType == CKK_SHA256_HMAC) ||
+			    (keyType == CKK_SHA384_HMAC) ||
+			    (keyType == CKK_SHA512_HMAC))
+			{
+				P11SecretKeyObj* key = new P11SecretKeyObj;
+				p11object.reset(key);
+				key->setKeyType(keyType);
+			}
+			else
+				return CKR_ATTRIBUTE_VALUE_INVALID;
 			break;
-#endif
 		default:
 			return CKR_ATTRIBUTE_VALUE_INVALID; // invalid value for a valid argument
 	}
@@ -451,7 +462,7 @@ CK_RV SoftHSM::C_GetTokenInfo(CK_SLOT_ID slotID, CK_TOKEN_INFO_PTR pInfo)
 CK_RV SoftHSM::C_GetMechanismList(CK_SLOT_ID slotID, CK_MECHANISM_TYPE_PTR pMechanismList, CK_ULONG_PTR pulCount)
 {
 	// A list with the supported mechanisms
-	CK_ULONG nrSupportedMechanisms = 24;
+	CK_ULONG nrSupportedMechanisms = 30;
 	CK_MECHANISM_TYPE supportedMechanisms[] =
 	{
 		CKM_MD5,
@@ -460,6 +471,12 @@ CK_RV SoftHSM::C_GetMechanismList(CK_SLOT_ID slotID, CK_MECHANISM_TYPE_PTR pMech
 		CKM_SHA256,
 		CKM_SHA384,
 		CKM_SHA512,
+		CKM_MD5_HMAC,
+		CKM_SHA_1_HMAC,
+		CKM_SHA224_HMAC,
+		CKM_SHA256_HMAC,
+		CKM_SHA384_HMAC,
+		CKM_SHA512_HMAC,
 		CKM_RSA_PKCS_KEY_PAIR_GEN,
 		CKM_RSA_PKCS,
 		CKM_RSA_X_509,
@@ -579,6 +596,17 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 			pInfo->ulMinKeySize = 0;
 			pInfo->ulMaxKeySize = 0;
 			pInfo->flags = CKF_DIGEST;
+			break;
+		case CKM_MD5_HMAC:
+		case CKM_SHA_1_HMAC:
+		case CKM_SHA224_HMAC:
+		case CKM_SHA256_HMAC:
+		case CKM_SHA384_HMAC:
+		case CKM_SHA512_HMAC:
+			// Key size is not in use
+			pInfo->ulMinKeySize = 0;
+			pInfo->ulMaxKeySize = 0;
+			pInfo->flags = CKF_SIGN | CKF_VERIFY;
 			break;
 		case CKM_RSA_PKCS_KEY_PAIR_GEN:
 			pInfo->ulMinKeySize = rsaMinSize;
@@ -1347,7 +1375,8 @@ CK_RV SoftHSM::C_EncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMecha
 	session->setOpType(SESSION_OP_ENCRYPT);
 	session->setAsymmetricCryptoOp(asymCrypto);
 	session->setMechanism(mechanism);
-	session->setIsMultiPartOp(false);
+	session->setAllowMultiPartOp(false);
+	session->setAllowSinglePartOp(true);
 	session->setPublicKey(publicKey);
 
 	return CKR_OK;
@@ -1372,7 +1401,7 @@ CK_RV SoftHSM::C_Encrypt(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pData, CK_ULONG
 	AsymmetricAlgorithm* asymCrypto = session->getAsymmetricCryptoOp();
 	const char *mechanism = session->getMechanism();
 	PublicKey* publicKey = session->getPublicKey();
-	if (asymCrypto == NULL || mechanism == NULL || session->getIsMultiPartOp() || publicKey == NULL)
+	if (asymCrypto == NULL || mechanism == NULL || !session->getAllowSinglePartOp() || publicKey == NULL)
 	{
 		session->resetOp();
 		return CKR_OPERATION_NOT_INITIALIZED;
@@ -1543,7 +1572,8 @@ CK_RV SoftHSM::C_DecryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMecha
 	session->setOpType(SESSION_OP_DECRYPT);
 	session->setAsymmetricCryptoOp(asymCrypto);
 	session->setMechanism(mechanism);
-	session->setIsMultiPartOp(false);
+	session->setAllowMultiPartOp(false);
+	session->setAllowSinglePartOp(true);
 	session->setPrivateKey(privateKey);
 
 	return CKR_OK;
@@ -1568,7 +1598,7 @@ CK_RV SoftHSM::C_Decrypt(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pEncryptedData,
 	AsymmetricAlgorithm* asymCrypto = session->getAsymmetricCryptoOp();
 	const char *mechanism = session->getMechanism();
 	PrivateKey* privateKey = session->getPrivateKey();
-	if (asymCrypto == NULL || mechanism == NULL || session->getIsMultiPartOp() || privateKey == NULL)
+	if (asymCrypto == NULL || mechanism == NULL || !session->getAllowSinglePartOp() || privateKey == NULL)
 	{
 		session->resetOp();
 		return CKR_OPERATION_NOT_INITIALIZED;
@@ -1846,8 +1876,109 @@ CK_RV SoftHSM::C_DigestFinal(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pDigest, CK
 	return CKR_OK;
 }
 
-// Initialise a signing operation using the specified key and mechanism
-CK_RV SoftHSM::C_SignInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechanism, CK_OBJECT_HANDLE hKey)
+// Sign*/Verify*() is for MACs too
+static bool isMacMechanism(CK_MECHANISM_PTR pMechanism)
+{
+	if (pMechanism == NULL_PTR) return false;
+
+	switch(pMechanism->mechanism) {
+		case CKM_MD5_HMAC:
+		case CKM_SHA_1_HMAC:
+		case CKM_SHA224_HMAC:
+		case CKM_SHA256_HMAC:
+		case CKM_SHA384_HMAC:
+		case CKM_SHA512_HMAC:
+			return true;
+		default:
+			return false;
+	}
+}
+
+// MacAlgorithm version of C_SignInit
+CK_RV SoftHSM::MacSignInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechanism, CK_OBJECT_HANDLE hKey)
+{
+	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
+
+	if (pMechanism == NULL_PTR) return CKR_ARGUMENTS_BAD;
+
+	// Get the session
+	Session* session = (Session*)handleManager->getSession(hSession);
+	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
+
+	// Check if we have another operation
+	if (session->getOpType() != SESSION_OP_NONE) return CKR_OPERATION_ACTIVE;
+
+	// Get the token
+	Token* token = session->getToken();
+	if (token == NULL) return CKR_GENERAL_ERROR;
+
+	// Check the key handle.
+	OSObject *key = (OSObject *)handleManager->getObject(hKey);
+	if (key == NULL_PTR) return CKR_OBJECT_HANDLE_INVALID;
+
+	// Check if key can be used for signing
+        if (!key->attributeExists(CKA_SIGN) || key->getAttribute(CKA_SIGN)->getBooleanValue() == false)
+		return CKR_KEY_FUNCTION_NOT_PERMITTED;
+
+	// Get the MAC algorithm matching the mechanism
+	MacAlgorithm* mac = NULL;
+	switch(pMechanism->mechanism) {
+		case CKM_MD5_HMAC:
+			mac = CryptoFactory::i()->getMacAlgorithm("hmac-md5");
+			break;
+		case CKM_SHA_1_HMAC:
+			mac = CryptoFactory::i()->getMacAlgorithm("hmac-sha1");
+			break;
+		case CKM_SHA224_HMAC:
+			mac = CryptoFactory::i()->getMacAlgorithm("hmac-sha224");
+			break;
+		case CKM_SHA256_HMAC:
+			mac = CryptoFactory::i()->getMacAlgorithm("hmac-sha256");
+			break;
+		case CKM_SHA384_HMAC:
+			mac = CryptoFactory::i()->getMacAlgorithm("hmac-sha384");
+			break;
+		case CKM_SHA512_HMAC:
+			mac = CryptoFactory::i()->getMacAlgorithm("hmac-sha512");
+			break;
+		default:
+			return CKR_MECHANISM_INVALID;
+	}
+	if (mac == NULL) return CKR_MECHANISM_INVALID;
+
+	SymmetricKey* privkey = new SymmetricKey();
+	if (privkey == NULL)
+	{
+		CryptoFactory::i()->recycleMacAlgorithm(mac);
+		return CKR_HOST_MEMORY;
+	}
+
+	if (getSymmetricKey(privkey, token, key) != CKR_OK)
+	{
+		mac->recycleKey(privkey);
+		CryptoFactory::i()->recycleMacAlgorithm(mac);
+		return CKR_GENERAL_ERROR;
+	}
+
+	// Initialize signing
+	if (!mac->signInit(privkey))
+	{
+		mac->recycleKey(privkey);
+		CryptoFactory::i()->recycleMacAlgorithm(mac);
+		return CKR_MECHANISM_INVALID;
+	}
+
+	session->setOpType(SESSION_OP_SIGN);
+	session->setMacOp(mac);
+	session->setAllowMultiPartOp(true);
+	session->setAllowSinglePartOp(true);
+	session->setSymmetricKey(privkey);
+
+	return CKR_OK;
+}
+
+// AsymmetricAlgorithm version of C_SignInit
+CK_RV SoftHSM::AsymSignInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechanism, CK_OBJECT_HANDLE hKey)
 {
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
 
@@ -1874,42 +2005,42 @@ CK_RV SoftHSM::C_SignInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechanis
 
 	// Get the asymmetric algorithm matching the mechanism
 	const char *mechanism;
-	bool bIsMultiPartOp;
+	bool bAllowMultiPartOp;
 	bool isRSA = false;
 	switch(pMechanism->mechanism) {
 		case CKM_RSA_PKCS:
 			mechanism = "rsa-pkcs";
-			bIsMultiPartOp = false;
+			bAllowMultiPartOp = false;
 			isRSA = true;
 			break;
 		case CKM_RSA_X_509:
 			mechanism = "rsa-raw";
-			bIsMultiPartOp = false;
+			bAllowMultiPartOp = false;
 			isRSA = true;
 			break;
 		case CKM_MD5_RSA_PKCS:
 			mechanism = "rsa-md5-pkcs";
-			bIsMultiPartOp = true;
+			bAllowMultiPartOp = true;
 			isRSA = true;
 			break;
 		case CKM_SHA1_RSA_PKCS:
 			mechanism = "rsa-sha1-pkcs";
-			bIsMultiPartOp = true;
+			bAllowMultiPartOp = true;
 			isRSA = true;
 			break;
 		case CKM_SHA256_RSA_PKCS:
 			mechanism = "rsa-sha256-pkcs";
-			bIsMultiPartOp = true;
+			bAllowMultiPartOp = true;
 			isRSA = true;
 			break;
 		case CKM_SHA384_RSA_PKCS:
 			mechanism = "rsa-sha384-pkcs";
-			bIsMultiPartOp = true;
+			bAllowMultiPartOp = true;
 			isRSA = true;
 			break;
 		case CKM_SHA512_RSA_PKCS:
 			mechanism = "rsa-sha512-pkcs";
-			bIsMultiPartOp = true;
+			bAllowMultiPartOp = true;
 			isRSA = true;
 			break;
 		default:
@@ -1943,7 +2074,7 @@ CK_RV SoftHSM::C_SignInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechanis
         }
 
 	// Initialize signing
-	if (bIsMultiPartOp && !asymCrypto->signInit(privateKey,mechanism))
+	if (bAllowMultiPartOp && !asymCrypto->signInit(privateKey,mechanism))
 	{
 		asymCrypto->recyclePrivateKey(privateKey);
 		CryptoFactory::i()->recycleAsymmetricAlgorithm(asymCrypto);
@@ -1953,32 +2084,86 @@ CK_RV SoftHSM::C_SignInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechanis
 	session->setOpType(SESSION_OP_SIGN);
 	session->setAsymmetricCryptoOp(asymCrypto);
 	session->setMechanism(mechanism);
-	session->setIsMultiPartOp(bIsMultiPartOp);
+	session->setAllowMultiPartOp(bAllowMultiPartOp);
+	session->setAllowSinglePartOp(true);
 	session->setPrivateKey(privateKey);
 
 	return CKR_OK;
 }
 
-// Sign the data in a single pass operation
-CK_RV SoftHSM::C_Sign(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pData, CK_ULONG ulDataLen, CK_BYTE_PTR pSignature, CK_ULONG_PTR pulSignatureLen)
+// Initialise a signing operation using the specified key and mechanism
+CK_RV SoftHSM::C_SignInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechanism, CK_OBJECT_HANDLE hKey)
 {
-	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
+	if (isMacMechanism(pMechanism))
+		return MacSignInit(hSession, pMechanism, hKey);
+	else
+		return AsymSignInit(hSession, pMechanism, hKey);
+}
 
-	if (pData == NULL_PTR) return CKR_ARGUMENTS_BAD;
-	if (pulSignatureLen == NULL_PTR) return CKR_ARGUMENTS_BAD;
-
-	// Get the session
-	Session* session = (Session*)handleManager->getSession(hSession);
-	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
-
-	// Check if we are doing the correct operation
-	if (session->getOpType() != SESSION_OP_SIGN)
+// MacAlgorithm version of C_Sign
+static CK_RV MacSign(Session* session, CK_BYTE_PTR pData, CK_ULONG ulDataLen, CK_BYTE_PTR pSignature, CK_ULONG_PTR pulSignatureLen)
+{
+	MacAlgorithm* mac = session->getMacOp();
+	if (mac == NULL || !session->getAllowSinglePartOp())
+	{
+		session->resetOp();
 		return CKR_OPERATION_NOT_INITIALIZED;
+	}
 
+	// Size of the signature
+	CK_ULONG size = mac->getMacSize();
+	if (pSignature == NULL_PTR)
+	{
+		*pulSignatureLen = size;
+		return CKR_OK;
+	}
+
+	// Check buffer size
+	if (*pulSignatureLen < size)
+	{
+		*pulSignatureLen = size;
+		return CKR_BUFFER_TOO_SMALL;
+	}
+
+	// Get the data
+	ByteString data(pData, ulDataLen);
+
+	// Sign the data
+	if (!mac->signUpdate(data))
+	{
+		session->resetOp();
+		return CKR_GENERAL_ERROR;
+	}
+
+	// Get the signature
+	ByteString signature;
+	if (!mac->signFinal(signature))
+	{
+		session->resetOp();
+		return CKR_GENERAL_ERROR;
+	}
+
+	// Check size
+	if (signature.size() != size)
+	{
+		ERROR_MSG("The size of the signature differs from the size of the mechanism");
+		session->resetOp();
+		return CKR_GENERAL_ERROR;
+	}
+	memcpy(pSignature, signature.byte_str(), size);
+	*pulSignatureLen = size;
+
+	session->resetOp();
+	return CKR_OK;
+}
+
+// AsymmetricAlgorithm version of C_Sign
+static CK_RV AsymSign(Session* session, CK_BYTE_PTR pData, CK_ULONG ulDataLen, CK_BYTE_PTR pSignature, CK_ULONG_PTR pulSignatureLen)
+{
 	AsymmetricAlgorithm* asymCrypto = session->getAsymmetricCryptoOp();
 	const char *mechanism = session->getMechanism();
 	PrivateKey* privateKey = session->getPrivateKey();
-	if (asymCrypto == NULL || mechanism == NULL || session->getIsMultiPartOp() || privateKey == NULL)
+	if (asymCrypto == NULL || mechanism == NULL || !session->getAllowSinglePartOp() || privateKey == NULL)
 	{
 		session->resetOp();
 		return CKR_OPERATION_NOT_INITIALIZED;
@@ -2012,7 +2197,16 @@ CK_RV SoftHSM::C_Sign(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pData, CK_ULONG ul
 	ByteString signature;
 
 	// Sign the data
-	if (!asymCrypto->sign(privateKey,data,signature,mechanism))
+	if (session->getAllowMultiPartOp())
+	{
+		if (!asymCrypto->signUpdate(data) ||
+		    !asymCrypto->signFinal(signature))
+		{
+			session->resetOp();
+			return CKR_GENERAL_ERROR;
+		}
+	}
+	else if (!asymCrypto->sign(privateKey,data,signature,mechanism))
 	{
 		session->resetOp();
 		return CKR_GENERAL_ERROR;
@@ -2032,23 +2226,59 @@ CK_RV SoftHSM::C_Sign(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pData, CK_ULONG ul
 	return CKR_OK;
 }
 
-// Update a running signing operation with additional data
-CK_RV SoftHSM::C_SignUpdate(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pPart, CK_ULONG ulPartLen)
+// Sign the data in a single pass operation
+CK_RV SoftHSM::C_Sign(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pData, CK_ULONG ulDataLen, CK_BYTE_PTR pSignature, CK_ULONG_PTR pulSignatureLen)
 {
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
 
-	if (pPart == NULL_PTR) return CKR_ARGUMENTS_BAD;
+	if (pData == NULL_PTR) return CKR_ARGUMENTS_BAD;
+	if (pulSignatureLen == NULL_PTR) return CKR_ARGUMENTS_BAD;
 
 	// Get the session
 	Session* session = (Session*)handleManager->getSession(hSession);
 	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
 
 	// Check if we are doing the correct operation
-	if (session->getOpType() != SESSION_OP_SIGN || !session->getIsMultiPartOp())
+	if (session->getOpType() != SESSION_OP_SIGN)
 		return CKR_OPERATION_NOT_INITIALIZED;
 
+	if (session->getMacOp() != NULL)
+		return MacSign(session, pData, ulDataLen,
+			       pSignature, pulSignatureLen);
+	else
+		return AsymSign(session, pData, ulDataLen,
+				pSignature, pulSignatureLen);
+}
+
+// MacAlgorithm version of C_SignUpdate
+static CK_RV MacSignUpdate(Session* session, CK_BYTE_PTR pPart, CK_ULONG ulPartLen)
+{
+	MacAlgorithm* mac = session->getMacOp();
+	if (mac == NULL || !session->getAllowMultiPartOp())
+	{
+		session->resetOp();
+		return CKR_OPERATION_NOT_INITIALIZED;
+	}
+
+	// Get the part
+	ByteString part(pPart, ulPartLen);
+
+	// Sign the data
+	if (!mac->signUpdate(part))
+	{
+		session->resetOp();
+		return CKR_GENERAL_ERROR;
+	}
+
+	session->setAllowSinglePartOp(false);
+	return CKR_OK;
+}
+
+// AsymmetricAlgorithm version of C_SignUpdate
+static CK_RV AsymSignUpdate(Session* session, CK_BYTE_PTR pPart, CK_ULONG ulPartLen)
+{
 	AsymmetricAlgorithm* asymCrypto = session->getAsymmetricCryptoOp();
-	if (asymCrypto == NULL)
+	if (asymCrypto == NULL || !session->getAllowMultiPartOp())
 	{
 		session->resetOp();
 		return CKR_OPERATION_NOT_INITIALIZED;
@@ -2064,24 +2294,81 @@ CK_RV SoftHSM::C_SignUpdate(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pPart, CK_UL
 		return CKR_GENERAL_ERROR;
 	}
 
+	session->setAllowSinglePartOp(false);
 	return CKR_OK;
 }
 
-// Finalise a running signing operation and return the signature
-CK_RV SoftHSM::C_SignFinal(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pSignature, CK_ULONG_PTR pulSignatureLen)
+// Update a running signing operation with additional data
+CK_RV SoftHSM::C_SignUpdate(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pPart, CK_ULONG ulPartLen)
 {
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
 
-	if (pulSignatureLen == NULL_PTR) return CKR_ARGUMENTS_BAD;
+	if (pPart == NULL_PTR) return CKR_ARGUMENTS_BAD;
 
 	// Get the session
 	Session* session = (Session*)handleManager->getSession(hSession);
 	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
 
 	// Check if we are doing the correct operation
-	if (session->getOpType() != SESSION_OP_SIGN || !session->getIsMultiPartOp())
+	if (session->getOpType() != SESSION_OP_SIGN)
 		return CKR_OPERATION_NOT_INITIALIZED;
 
+	if (session->getMacOp() != NULL)
+		return MacSignUpdate(session, pPart, ulPartLen);
+	else
+		return AsymSignUpdate(session, pPart, ulPartLen);
+}
+
+// MacAlgorithm version of C_SignFinal
+static CK_RV MacSignFinal(Session* session, CK_BYTE_PTR pSignature, CK_ULONG_PTR pulSignatureLen)
+{
+	MacAlgorithm* mac = session->getMacOp();
+	if (mac == NULL)
+	{
+		session->resetOp();
+		return CKR_OPERATION_NOT_INITIALIZED;
+	}
+
+	// Size of the signature
+	CK_ULONG size = mac->getMacSize();
+	if (pSignature == NULL_PTR)
+	{
+		*pulSignatureLen = size;
+		return CKR_OK;
+	}
+
+	// Check buffer size
+	if (*pulSignatureLen < size)
+	{
+		*pulSignatureLen = size;
+		return CKR_BUFFER_TOO_SMALL;
+	}
+
+	// Get the signature
+	ByteString signature;
+	if (!mac->signFinal(signature))
+	{
+		session->resetOp();
+		return CKR_GENERAL_ERROR;
+	}
+
+	// Check size
+	if (signature.size() != size)
+	{
+		ERROR_MSG("The size of the signature differs from the size of the mechanism");
+		session->resetOp();
+		return CKR_GENERAL_ERROR;
+	}
+	memcpy(pSignature, signature.byte_str(), size);
+	*pulSignatureLen = size;
+
+	session->resetOp();
+	return CKR_OK;
+}
+
+// AsymmetricAlgorithm version of C_SignFinal
+static CK_RV AsymSignFinal(Session* session, CK_BYTE_PTR pSignature, CK_ULONG_PTR pulSignatureLen)
+{
 	AsymmetricAlgorithm* asymCrypto = session->getAsymmetricCryptoOp();
 	PrivateKey* privateKey = session->getPrivateKey();
 	if (asymCrypto == NULL || privateKey == NULL)
@@ -2105,10 +2392,8 @@ CK_RV SoftHSM::C_SignFinal(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pSignature, C
 		return CKR_BUFFER_TOO_SMALL;
 	}
 
-	// Get the data
+	// Get the signature
 	ByteString signature;
-
-	// Generate the signature
 	if (!asymCrypto->signFinal(signature))
 	{
 		session->resetOp();
@@ -2127,6 +2412,27 @@ CK_RV SoftHSM::C_SignFinal(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pSignature, C
 
 	session->resetOp();
 	return CKR_OK;
+}
+
+// Finalise a running signing operation and return the signature
+CK_RV SoftHSM::C_SignFinal(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pSignature, CK_ULONG_PTR pulSignatureLen)
+{
+	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
+
+	if (pulSignatureLen == NULL_PTR) return CKR_ARGUMENTS_BAD;
+
+	// Get the session
+	Session* session = (Session*)handleManager->getSession(hSession);
+	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
+
+	// Check if we are doing the correct operation
+	if (session->getOpType() != SESSION_OP_SIGN || !session->getAllowMultiPartOp())
+		return CKR_OPERATION_NOT_INITIALIZED;
+
+	if (session->getMacOp() != NULL)
+		return MacSignFinal(session, pSignature, pulSignatureLen);
+	else
+		return AsymSignFinal(session, pSignature, pulSignatureLen);
 }
 
 // Initialise a signing operation that allows recovery of the signed data
@@ -2156,8 +2462,91 @@ CK_RV SoftHSM::C_SignRecover(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pData, CK_U
 	return CKR_FUNCTION_NOT_SUPPORTED;
 }
 
-// Initialise a verification operation using the specified key and mechanism
-CK_RV SoftHSM::C_VerifyInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechanism, CK_OBJECT_HANDLE hKey)
+// MacAlgorithm version of C_VerifyInit
+CK_RV SoftHSM::MacVerifyInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechanism, CK_OBJECT_HANDLE hKey)
+{
+	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
+
+	if (pMechanism == NULL_PTR) return CKR_ARGUMENTS_BAD;
+
+	// Get the session
+	Session* session = (Session*)handleManager->getSession(hSession);
+	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
+
+	// Check if we have another operation
+	if (session->getOpType() != SESSION_OP_NONE) return CKR_OPERATION_ACTIVE;
+
+	// Get the token
+	Token* token = session->getToken();
+	if (token == NULL) return CKR_GENERAL_ERROR;
+
+	// Check the key handle.
+	OSObject *key = (OSObject *)handleManager->getObject(hKey);
+	if (key == NULL_PTR) return CKR_OBJECT_HANDLE_INVALID;
+
+	// Check if key can be used for verifying
+        if (!key->attributeExists(CKA_VERIFY) || key->getAttribute(CKA_VERIFY)->getBooleanValue() == false)
+		return CKR_KEY_FUNCTION_NOT_PERMITTED;
+
+	// Get the MAC algorithm matching the mechanism
+	MacAlgorithm* mac = NULL;
+	switch(pMechanism->mechanism) {
+		case CKM_MD5_HMAC:
+			mac = CryptoFactory::i()->getMacAlgorithm("hmac-md5");
+			break;
+		case CKM_SHA_1_HMAC:
+			mac = CryptoFactory::i()->getMacAlgorithm("hmac-sha1");
+			break;
+		case CKM_SHA224_HMAC:
+			mac = CryptoFactory::i()->getMacAlgorithm("hmac-sha224");
+			break;
+		case CKM_SHA256_HMAC:
+			mac = CryptoFactory::i()->getMacAlgorithm("hmac-sha256");
+			break;
+		case CKM_SHA384_HMAC:
+			mac = CryptoFactory::i()->getMacAlgorithm("hmac-sha384");
+			break;
+		case CKM_SHA512_HMAC:
+			mac = CryptoFactory::i()->getMacAlgorithm("hmac-sha512");
+			break;
+		default:
+			return CKR_MECHANISM_INVALID;
+	}
+	if (mac == NULL) return CKR_MECHANISM_INVALID;
+
+	SymmetricKey* pubkey = new SymmetricKey();
+	if (pubkey == NULL)
+	{
+		CryptoFactory::i()->recycleMacAlgorithm(mac);
+		return CKR_HOST_MEMORY;
+	}
+
+	if (getSymmetricKey(pubkey, token, key) != CKR_OK)
+	{
+		mac->recycleKey(pubkey);
+		CryptoFactory::i()->recycleMacAlgorithm(mac);
+		return CKR_GENERAL_ERROR;
+	}
+
+	// Initialize verifying
+	if (!mac->verifyInit(pubkey))
+	{
+		mac->recycleKey(pubkey);
+		CryptoFactory::i()->recycleMacAlgorithm(mac);
+		return CKR_MECHANISM_INVALID;
+	}
+
+	session->setOpType(SESSION_OP_VERIFY);
+	session->setMacOp(mac);
+	session->setAllowMultiPartOp(true);
+	session->setAllowSinglePartOp(true);
+	session->setSymmetricKey(pubkey);
+
+	return CKR_OK;
+}
+
+// AsymmetricAlgorithm version of C_VerifyInit
+CK_RV SoftHSM::AsymVerifyInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechanism, CK_OBJECT_HANDLE hKey)
 {
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
 
@@ -2184,42 +2573,42 @@ CK_RV SoftHSM::C_VerifyInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechan
 
 	// Get the asymmetric algorithm matching the mechanism
 	const char *mechanism;
-	bool bIsMultiPartOp;
+	bool bAllowMultiPartOp;
 	bool isRSA = false;
 	switch(pMechanism->mechanism) {
 		case CKM_RSA_PKCS:
 			mechanism = "rsa-pkcs";
-			bIsMultiPartOp = false;
+			bAllowMultiPartOp = false;
 			isRSA = true;
 			break;
 		case CKM_RSA_X_509:
 			mechanism = "rsa-raw";
-			bIsMultiPartOp = false;
+			bAllowMultiPartOp = false;
 			isRSA = true;
 			break;
 		case CKM_MD5_RSA_PKCS:
 			mechanism = "rsa-md5-pkcs";
-			bIsMultiPartOp = true;
+			bAllowMultiPartOp = true;
 			isRSA = true;
 			break;
 		case CKM_SHA1_RSA_PKCS:
 			mechanism = "rsa-sha1-pkcs";
-			bIsMultiPartOp = true;
+			bAllowMultiPartOp = true;
 			isRSA = true;
 			break;
 		case CKM_SHA256_RSA_PKCS:
 			mechanism = "rsa-sha256-pkcs";
-			bIsMultiPartOp = true;
+			bAllowMultiPartOp = true;
 			isRSA = true;
 			break;
 		case CKM_SHA384_RSA_PKCS:
 			mechanism = "rsa-sha384-pkcs";
-			bIsMultiPartOp = true;
+			bAllowMultiPartOp = true;
 			isRSA = true;
 			break;
 		case CKM_SHA512_RSA_PKCS:
 			mechanism = "rsa-sha512-pkcs";
-			bIsMultiPartOp = true;
+			bAllowMultiPartOp = true;
 			isRSA = true;
 			break;
 		default:
@@ -2253,7 +2642,7 @@ CK_RV SoftHSM::C_VerifyInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechan
         }
 
 	// Initialize verifying
-	if (bIsMultiPartOp && !asymCrypto->verifyInit(publicKey,mechanism))
+	if (bAllowMultiPartOp && !asymCrypto->verifyInit(publicKey,mechanism))
 	{
 		asymCrypto->recyclePublicKey(publicKey);
 		CryptoFactory::i()->recycleAsymmetricAlgorithm(asymCrypto);
@@ -2263,9 +2652,119 @@ CK_RV SoftHSM::C_VerifyInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechan
 	session->setOpType(SESSION_OP_VERIFY);
 	session->setAsymmetricCryptoOp(asymCrypto);
 	session->setMechanism(mechanism);
-	session->setIsMultiPartOp(bIsMultiPartOp);
+	session->setAllowMultiPartOp(bAllowMultiPartOp);
+	session->setAllowSinglePartOp(true);
 	session->setPublicKey(publicKey);
 
+	return CKR_OK;
+}
+
+// Initialise a verification operation using the specified key and mechanism
+CK_RV SoftHSM::C_VerifyInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechanism, CK_OBJECT_HANDLE hKey)
+{
+	if (isMacMechanism(pMechanism))
+		return MacVerifyInit(hSession, pMechanism, hKey);
+	else
+		return AsymVerifyInit(hSession, pMechanism, hKey);
+}
+
+// MacAlgorithm version of C_Verify
+static CK_RV MacVerify(Session* session, CK_BYTE_PTR pData, CK_ULONG ulDataLen, CK_BYTE_PTR pSignature, CK_ULONG ulSignatureLen)
+{
+	MacAlgorithm* mac = session->getMacOp();
+	if (mac == NULL || !session->getAllowSinglePartOp())
+	{
+		session->resetOp();
+		return CKR_OPERATION_NOT_INITIALIZED;
+	}
+
+	// Size of the signature
+	CK_ULONG size = mac->getMacSize();
+
+	// Check buffer size
+	if (ulSignatureLen != size)
+	{
+		ERROR_MSG("The size of the signature differs from the size of the mechanism");
+		session->resetOp();
+		return CKR_SIGNATURE_LEN_RANGE;
+	}
+
+	// Get the data
+	ByteString data(pData, ulDataLen);
+
+	// Verify the data
+	if (!mac->verifyUpdate(data))
+	{
+		session->resetOp();
+		return CKR_GENERAL_ERROR;
+	}
+
+	// Get the signature
+	ByteString signature(pSignature, ulSignatureLen);
+
+	// Verify the signature
+	if (!mac->verifyFinal(signature))
+	{
+		session->resetOp();
+		return CKR_SIGNATURE_INVALID;
+	}
+
+	session->resetOp();
+	return CKR_OK;
+}
+
+// AsymmetricAlgorithm version of C_Verify
+static CK_RV AsymVerify(Session* session, CK_BYTE_PTR pData, CK_ULONG ulDataLen, CK_BYTE_PTR pSignature, CK_ULONG ulSignatureLen)
+{
+	AsymmetricAlgorithm* asymCrypto = session->getAsymmetricCryptoOp();
+	const char *mechanism = session->getMechanism();
+	PublicKey* publicKey = session->getPublicKey();
+	if (asymCrypto == NULL || mechanism == NULL || !session->getAllowSinglePartOp() || publicKey == NULL)
+	{
+		session->resetOp();
+		return CKR_OPERATION_NOT_INITIALIZED;
+	}
+
+	// Size of the signature
+	CK_ULONG size = publicKey->getOutputLength();
+
+	// Check buffer size
+	if (ulSignatureLen != size)
+	{
+		ERROR_MSG("The size of the signature differs from the size of the mechanism");
+		session->resetOp();
+		return CKR_SIGNATURE_LEN_RANGE;
+	}
+
+	// Get the data
+	ByteString data;
+
+	// PKCS #11 Mechanisms v2.30: Cryptoki Draft 7 page 32
+	// We must allow input length <= k and therfore need to prepend the data with zeroes.
+	if (strcmp(mechanism,"rsa-raw") == 0) {
+		data.wipe(size-ulDataLen);
+	}
+
+	data += ByteString(pData, ulDataLen);
+	ByteString signature(pSignature, ulSignatureLen);
+
+	// Verify the data
+	if (session->getAllowMultiPartOp())
+	{
+		if (!asymCrypto->verifyUpdate(data) ||
+		    !asymCrypto->verifyFinal(signature))
+		{
+			session->resetOp();
+			return CKR_SIGNATURE_INVALID;
+		}
+	}
+	else if (!asymCrypto->verify(publicKey,data,signature,mechanism))
+	{
+		session->resetOp();
+		return CKR_SIGNATURE_INVALID;
+	}
+
+	session->resetOp();
 	return CKR_OK;
 }
 
@@ -2285,65 +2784,44 @@ CK_RV SoftHSM::C_Verify(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pData, CK_ULONG 
 	if (session->getOpType() != SESSION_OP_VERIFY)
 		return CKR_OPERATION_NOT_INITIALIZED;
 
-	AsymmetricAlgorithm* asymCrypto = session->getAsymmetricCryptoOp();
-	const char *mechanism = session->getMechanism();
-	PublicKey* publicKey = session->getPublicKey();
-	if (asymCrypto == NULL || mechanism == NULL || session->getIsMultiPartOp() || publicKey == NULL)
+	if (session->getMacOp() != NULL)
+		return MacVerify(session, pData, ulDataLen,
+				 pSignature, ulSignatureLen);
+	else
+		return AsymVerify(session, pData, ulDataLen,
+				  pSignature, ulSignatureLen);
+}
+
+// MacAlgorithm version of C_VerifyUpdate
+static CK_RV MacVerifyUpdate(Session* session, CK_BYTE_PTR pPart, CK_ULONG ulPartLen)
+{
+	MacAlgorithm* mac = session->getMacOp();
+	if (mac == NULL || !session->getAllowMultiPartOp())
 	{
 		session->resetOp();
 		return CKR_OPERATION_NOT_INITIALIZED;
 	}
 
-	// Size of the signature
-	CK_ULONG size = publicKey->getOutputLength();
-
-	// Check buffer size
-	if (ulSignatureLen != size)
-	{
-		ERROR_MSG("The size of the signature differs from the size of the mechanism");
-		return CKR_SIGNATURE_LEN_RANGE;
-	}
-
-	// Get the data
-	ByteString data;
-
-	// PKCS #11 Mechanisms v2.30: Cryptoki Draft 7 page 32
-	// We must allow input length <= k and therfore need to prepend the data with zeroes.
-	if (strcmp(mechanism,"rsa-raw") == 0) {
-		data.wipe(size-ulDataLen);
-	}
-
-	data += ByteString(pData, ulDataLen);
-	ByteString signature(pSignature, ulSignatureLen);
+	// Get the part
+	ByteString part(pPart, ulPartLen);
 
 	// Verify the data
-	if (!asymCrypto->verify(publicKey,data,signature,mechanism))
+	if (!mac->verifyUpdate(part))
 	{
+		// verifyUpdate can't fail for a logical reason, so we assume total breakdown.
 		session->resetOp();
-		return CKR_SIGNATURE_INVALID;
+		return CKR_GENERAL_ERROR;
 	}
 
-	session->resetOp();
+	session->setAllowSinglePartOp(false);
 	return CKR_OK;
 }
 
-// Update a running verification operation with additional data
-CK_RV SoftHSM::C_VerifyUpdate(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pPart, CK_ULONG ulPartLen)
+// AsymmetricAlgorithm version of C_VerifyUpdate
+static CK_RV AsymVerifyUpdate(Session* session, CK_BYTE_PTR pPart, CK_ULONG ulPartLen)
 {
-	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
-
-	if (pPart == NULL_PTR) return CKR_ARGUMENTS_BAD;
-
-	// Get the session
-	Session* session = (Session*)handleManager->getSession(hSession);
-	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
-
-	// Check if we are doing the correct operation
-	if (session->getOpType() != SESSION_OP_VERIFY || !session->getIsMultiPartOp())
-		return CKR_OPERATION_NOT_INITIALIZED;
-
 	AsymmetricAlgorithm* asymCrypto = session->getAsymmetricCryptoOp();
-	if (asymCrypto == NULL)
+	if (asymCrypto == NULL || !session->getAllowMultiPartOp())
 	{
 		session->resetOp();
 		return CKR_OPERATION_NOT_INITIALIZED;
@@ -2360,24 +2838,69 @@ CK_RV SoftHSM::C_VerifyUpdate(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pPart, CK_
 		return CKR_GENERAL_ERROR;
 	}
 
+	session->setAllowSinglePartOp(false);
 	return CKR_OK;
 }
 
-// Finalise the verification operation and check the signature
-CK_RV SoftHSM::C_VerifyFinal(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pSignature, CK_ULONG ulSignatureLen)
+// Update a running verification operation with additional data
+CK_RV SoftHSM::C_VerifyUpdate(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pPart, CK_ULONG ulPartLen)
 {
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
 
-	if (pSignature == NULL_PTR) return CKR_ARGUMENTS_BAD;
+	if (pPart == NULL_PTR) return CKR_ARGUMENTS_BAD;
 
 	// Get the session
 	Session* session = (Session*)handleManager->getSession(hSession);
 	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
 
 	// Check if we are doing the correct operation
-	if (session->getOpType() != SESSION_OP_VERIFY || !session->getIsMultiPartOp())
+	if (session->getOpType() != SESSION_OP_VERIFY)
 		return CKR_OPERATION_NOT_INITIALIZED;
 
+	if (session->getMacOp() != NULL)
+		return MacVerifyUpdate(session, pPart, ulPartLen);
+	else
+		return AsymVerifyUpdate(session, pPart, ulPartLen);
+}
+
+// MacAlgorithm version of C_SignFinal
+static CK_RV MacVerifyFinal(Session* session, CK_BYTE_PTR pSignature, CK_ULONG ulSignatureLen)
+{
+	MacAlgorithm* mac = session->getMacOp();
+	if (mac == NULL)
+	{
+		session->resetOp();
+		return CKR_OPERATION_NOT_INITIALIZED;
+	}
+
+	// Size of the signature
+	CK_ULONG size = mac->getMacSize();
+
+	// Check buffer size
+	if (ulSignatureLen != size)
+	{
+		ERROR_MSG("The size of the signature differs from the size of the mechanism");
+		session->resetOp();
+		return CKR_SIGNATURE_LEN_RANGE;
+	}
+
+	// Get the signature
+	ByteString signature(pSignature, ulSignatureLen);
+
+	// Verify the data
+	if (!mac->verifyFinal(signature))
+	{
+		session->resetOp();
+		return CKR_SIGNATURE_INVALID;
+	}
+
+	session->resetOp();
+	return CKR_OK;
+}
+
+// AsymmetricAlgorithm version of C_VerifyFinal
+static CK_RV AsymVerifyFinal(Session* session, CK_BYTE_PTR pSignature, CK_ULONG ulSignatureLen)
+{
 	AsymmetricAlgorithm* asymCrypto = session->getAsymmetricCryptoOp();
 	PublicKey* publicKey = session->getPublicKey();
 	if (asymCrypto == NULL || publicKey == NULL)
@@ -2393,6 +2916,7 @@ CK_RV SoftHSM::C_VerifyFinal(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pSignature,
 	if (ulSignatureLen != size)
 	{
 		ERROR_MSG("The size of the signature differs from the size of the mechanism");
+		session->resetOp();
 		return CKR_SIGNATURE_LEN_RANGE;
 	}
 
@@ -2408,6 +2932,27 @@ CK_RV SoftHSM::C_VerifyFinal(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pSignature,
 
 	session->resetOp();
 	return CKR_OK;
+}
+
+// Finalise the verification operation and check the signature
+CK_RV SoftHSM::C_VerifyFinal(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pSignature, CK_ULONG ulSignatureLen)
+{
+	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
+
+	if (pSignature == NULL_PTR) return CKR_ARGUMENTS_BAD;
+
+	// Get the session
+	Session* session = (Session*)handleManager->getSession(hSession);
+	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
+
+	// Check if we are doing the correct operation
+	if (session->getOpType() != SESSION_OP_VERIFY || !session->getAllowMultiPartOp())
+		return CKR_OPERATION_NOT_INITIALIZED;
+
+	if (session->getMacOp() != NULL)
+		return MacVerifyFinal(session, pSignature, ulSignatureLen);
+	else
+		return AsymVerifyFinal(session, pSignature, ulSignatureLen);
 }
 
 // Initialise a verification operation the allows recovery of the signed data from the signature
@@ -3255,6 +3800,32 @@ CK_RV SoftHSM::getRSAPublicKey(RSAPublicKey* publicKey, Token* token, OSObject* 
 
 	publicKey->setN(modulus);
 	publicKey->setE(publicExponent);
+
+	return CKR_OK;
+}
+
+CK_RV SoftHSM::getSymmetricKey(SymmetricKey* skey, Token* token, OSObject* key)
+{
+	if (skey == NULL) return CKR_ARGUMENTS_BAD;
+	if (token == NULL) return CKR_ARGUMENTS_BAD;
+	if (key == NULL) return CKR_ARGUMENTS_BAD;
+
+	// Get the CKA_PRIVATE attribute, when the attribute is not present use default false
+	OSAttribute* attr = key->getAttribute(CKA_PRIVATE);
+	bool isKeyPrivate = (attr != NULL && attr->getBooleanValue());
+
+	ByteString keybits;
+	if (isKeyPrivate)
+	{
+	  if (!token->decrypt(key->getAttribute(CKA_VALUE)->getByteStringValue(), keybits))
+			return CKR_GENERAL_ERROR;
+	}
+	else
+	{
+		keybits = key->getAttribute(CKA_VALUE)->getByteStringValue();
+	}
+
+	skey->setKeyBits(keybits);
 
 	return CKR_OK;
 }
