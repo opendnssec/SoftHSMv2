@@ -1,7 +1,7 @@
 /* $Id$ */
 
 /*
- * Copyright (c) 2010 .SE (The Internet Infrastructure Foundation)
+ * Copyright (c) 2010 SURFnet bv
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,82 +27,24 @@
  */
 
 /*****************************************************************************
- BotanHMAC.cpp
+ OSSLGOSTR3411.h
 
- Botan HMAC implementation
+ OpenSSL GOST R 34.11-94 implementation
  *****************************************************************************/
 
 #include "config.h"
-#include "BotanHMAC.h"
-
-std::string BotanHMACMD5::getHash() const
-{
-	return "MD5";
-}
-
-size_t BotanHMACMD5::getMacSize() const
-{
-	return 16;
-}
-
-std::string BotanHMACSHA1::getHash() const
-{
-	return "SHA-1";
-}
-
-size_t BotanHMACSHA1::getMacSize() const
-{
-	return 20;
-}
-
-std::string BotanHMACSHA224::getHash() const
-{
-	return "SHA-224";
-}
-
-size_t BotanHMACSHA224::getMacSize() const
-{
-	return 28;
-}
-
-std::string BotanHMACSHA256::getHash() const
-{
-	return "SHA-256";
-}
-
-size_t BotanHMACSHA256::getMacSize() const
-{
-	return 32;
-}
-
-std::string BotanHMACSHA384::getHash() const
-{
-	return "SHA-384";
-}
-
-size_t BotanHMACSHA384::getMacSize() const
-{
-	return 48;
-}
-
-std::string BotanHMACSHA512::getHash() const
-{
-	return "SHA-512";
-}
-
-size_t BotanHMACSHA512::getMacSize() const
-{
-	return 64;
-}
-
 #ifdef WITH_GOST
-std::string BotanHMACGOSTR3411::getHash() const
-{
-	return "GOST-34.11";
-}
+#include "OSSLGOSTR3411.h"
+#include "OSSLCryptoFactory.h"
+#include <openssl/evp.h>
 
-size_t BotanHMACGOSTR3411::getMacSize() const
+int OSSLGOSTR3411::getHashSize()
 {
 	return 32;
+}
+
+const EVP_MD* OSSLGOSTR3411::getEVPHash() const
+{
+	return OSSLCryptoFactory::i()->EVP_GOST_34_11;
 }
 #endif

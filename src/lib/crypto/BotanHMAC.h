@@ -42,8 +42,6 @@
 
 class BotanHMACMD5 : public BotanMacAlgorithm
 {
-	virtual unsigned long getMinKeySize();
-	virtual unsigned long getMaxKeySize();
 protected:
 	virtual std::string getHash() const;
 	virtual size_t getMacSize() const;
@@ -51,8 +49,6 @@ protected:
 
 class BotanHMACSHA1 : public BotanMacAlgorithm
 {
-	virtual unsigned long getMinKeySize();
-	virtual unsigned long getMaxKeySize();
 protected:
 	virtual std::string getHash() const;
 	virtual size_t getMacSize() const;
@@ -60,8 +56,6 @@ protected:
 
 class BotanHMACSHA224 : public BotanMacAlgorithm
 {
-	virtual unsigned long getMinKeySize();
-	virtual unsigned long getMaxKeySize();
 protected:
 	virtual std::string getHash() const;
 	virtual size_t getMacSize() const;
@@ -69,8 +63,6 @@ protected:
 
 class BotanHMACSHA256 : public BotanMacAlgorithm
 {
-	virtual unsigned long getMinKeySize();
-	virtual unsigned long getMaxKeySize();
 protected:
 	virtual std::string getHash() const;
 	virtual size_t getMacSize() const;
@@ -78,8 +70,6 @@ protected:
 
 class BotanHMACSHA384 : public BotanMacAlgorithm
 {
-	virtual unsigned long getMinKeySize();
-	virtual unsigned long getMaxKeySize();
 protected:
 	virtual std::string getHash() const;
 	virtual size_t getMacSize() const;
@@ -87,12 +77,19 @@ protected:
 
 class BotanHMACSHA512 : public BotanMacAlgorithm
 {
-	virtual unsigned long getMinKeySize();
-	virtual unsigned long getMaxKeySize();
 protected:
 	virtual std::string getHash() const;
 	virtual size_t getMacSize() const;
 };
+
+#ifdef WITH_GOST
+class BotanHMACGOSTR3411 : public BotanMacAlgorithm
+{
+protected:
+	virtual std::string getHash() const;
+	virtual size_t getMacSize() const;
+};
+#endif
 
 #endif // !_SOFTHSM_V2_BOTANHMAC_H
 

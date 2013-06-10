@@ -94,7 +94,7 @@ void MacTests::testHMACMD5()
 
 	CPPUNIT_ASSERT(osslMac == shsmMac);
 
-	// Now recreate the MAC in a single part operation
+	// Now recreate the MAC in a multiple part operation
 	shsmMac.wipe();
 
 	CPPUNIT_ASSERT(mac->signInit(&key));
@@ -145,7 +145,7 @@ void MacTests::testHMACSHA1()
 	CPPUNIT_ASSERT(mac->verifyUpdate(b));
 	CPPUNIT_ASSERT(mac->verifyFinal(osslMac));
 
-	// Now recreate the MAC in a single part operation
+	// Now recreate the MAC in a multiple part operation
 	CPPUNIT_ASSERT(mac->signInit(&key));
 	CPPUNIT_ASSERT(mac->signUpdate(b.substr(0, 567)));
 	CPPUNIT_ASSERT(mac->signUpdate(b.substr(567, 989)));
@@ -206,7 +206,7 @@ void MacTests::testHMACSHA224()
 
 	CPPUNIT_ASSERT(osslMac == shsmMac);
 
-	// Now verify the MAC in a single part operation
+	// Now verify the MAC in a multiple part operation
 	CPPUNIT_ASSERT(mac->verifyInit(&key));
 	CPPUNIT_ASSERT(mac->verifyUpdate(b.substr(0, 567)));
 	CPPUNIT_ASSERT(mac->verifyUpdate(b.substr(567, 989)));
@@ -261,7 +261,7 @@ void MacTests::testHMACSHA256()
 	CPPUNIT_ASSERT(mac->verifyUpdate(b));
 	CPPUNIT_ASSERT(mac->verifyFinal(osslMac));
 
-	// Now verify the MAC in a single part operation
+	// Now verify the MAC in a multiple part operation
 	CPPUNIT_ASSERT(mac->verifyInit(&key));
 	CPPUNIT_ASSERT(mac->verifyUpdate(b.substr(0, 567)));
 	CPPUNIT_ASSERT(mac->verifyUpdate(b.substr(567, 989)));
@@ -316,7 +316,7 @@ void MacTests::testHMACSHA384()
 
 	CPPUNIT_ASSERT(osslMac == shsmMac);
 
-	// Now recreate the MAC in a single part operation
+	// Now recreate the MAC in a multiple part operation
 	shsmMac.wipe();
 
 	CPPUNIT_ASSERT(mac->signInit(&key));
@@ -375,7 +375,7 @@ void MacTests::testHMACSHA512()
 	CPPUNIT_ASSERT(mac->verifyUpdate(b));
 	CPPUNIT_ASSERT(mac->verifyFinal(osslMac));
 
-	// Now verify the MAC in a single part operation
+	// Now verify the MAC in a multiple part operation
 	CPPUNIT_ASSERT(mac->verifyInit(&key));
 	CPPUNIT_ASSERT(mac->verifyUpdate(b.substr(0, 567)));
 	CPPUNIT_ASSERT(mac->verifyUpdate(b.substr(567, 989)));

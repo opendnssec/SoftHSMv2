@@ -1840,3 +1840,36 @@ bool P11AttrEcPoint::setDefault()
 	return osobject->setAttribute(type, attr);
 }
 
+/*****************************************
+ * CKA_GOSTR3410_PARAMS
+ *****************************************/
+
+// Set default value
+bool P11AttrGostR3410Params::setDefault()
+{
+	OSAttribute attr(ByteString(""));
+	return osobject->setAttribute(type, attr);
+}
+
+/*****************************************
+ * CKA_GOSTR3411_PARAMS
+ *****************************************/
+
+// Set default value
+bool P11AttrGostR3411Params::setDefault()
+{
+	OSAttribute attr(ByteString(""));
+	return osobject->setAttribute(type, attr);
+}
+
+/*****************************************
+ * CKA_GOST28147_PARAMS
+ *****************************************/
+
+// Set default value
+bool P11AttrGost28147Params::setDefault()
+{
+	OSAttribute attr(ByteString(""));
+	return osobject->setAttribute(type, attr);
+}
+

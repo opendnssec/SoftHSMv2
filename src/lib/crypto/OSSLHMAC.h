@@ -41,8 +41,6 @@
 
 class OSSLHMACMD5 : public OSSLEVPMacAlgorithm
 {
-	virtual unsigned long getMinKeySize();
-	virtual unsigned long getMaxKeySize();
 protected:
 	virtual const EVP_MD* getEVPHash() const;
 	virtual size_t getMacSize() const;
@@ -50,8 +48,6 @@ protected:
 
 class OSSLHMACSHA1 : public OSSLEVPMacAlgorithm
 {
-	virtual unsigned long getMinKeySize();
-	virtual unsigned long getMaxKeySize();
 protected:
 	virtual const EVP_MD* getEVPHash() const;
 	virtual size_t getMacSize() const;
@@ -59,8 +55,6 @@ protected:
 
 class OSSLHMACSHA224 : public OSSLEVPMacAlgorithm
 {
-	virtual unsigned long getMinKeySize();
-	virtual unsigned long getMaxKeySize();
 protected:
 	virtual const EVP_MD* getEVPHash() const;
 	virtual size_t getMacSize() const;
@@ -68,8 +62,6 @@ protected:
 
 class OSSLHMACSHA256 : public OSSLEVPMacAlgorithm
 {
-	virtual unsigned long getMinKeySize();
-	virtual unsigned long getMaxKeySize();
 protected:
 	virtual const EVP_MD* getEVPHash() const;
 	virtual size_t getMacSize() const;
@@ -77,8 +69,6 @@ protected:
 
 class OSSLHMACSHA384 : public OSSLEVPMacAlgorithm
 {
-	virtual unsigned long getMinKeySize();
-	virtual unsigned long getMaxKeySize();
 protected:
 	virtual const EVP_MD* getEVPHash() const;
 	virtual size_t getMacSize() const;
@@ -86,12 +76,19 @@ protected:
 
 class OSSLHMACSHA512 : public OSSLEVPMacAlgorithm
 {
-	virtual unsigned long getMinKeySize();
-	virtual unsigned long getMaxKeySize();
 protected:
 	virtual const EVP_MD* getEVPHash() const;
 	virtual size_t getMacSize() const;
 };
+
+#ifdef WITH_GOST
+class OSSLHMACGOSTR3411 : public OSSLEVPMacAlgorithm
+{
+protected:
+	virtual const EVP_MD* getEVPHash() const;
+	virtual size_t getMacSize() const;
+};
+#endif
 
 #endif // !_SOFTHSM_V2_OSSLHMAC_H
 

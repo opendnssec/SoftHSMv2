@@ -70,6 +70,10 @@ AC_DEFUN([ACX_CRYPTO_BACKEND],[
 			ACX_OPENSSL_ECC
 		fi
 
+		if test "x${enable_gost}" = "xyes"; then
+			ACX_OPENSSL_GOST
+		fi
+
 		AC_DEFINE_UNQUOTED(
 			[WITH_OPENSSL],
 			[],
@@ -90,6 +94,10 @@ AC_DEFUN([ACX_CRYPTO_BACKEND],[
 
 		if test "x${enable_ecc}" = "xyes"; then
 			ACX_BOTAN_ECC
+		fi
+
+		if test "x${enable_gost}" = "xyes"; then
+			ACX_BOTAN_GOST
 		fi
 
 		AC_DEFINE_UNQUOTED(

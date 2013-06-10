@@ -1,7 +1,7 @@
 /* $Id$ */
 
 /*
- * Copyright (c) 2010 .SE (The Internet Infrastructure Foundation)
+ * Copyright (c) 2010 SURFnet bv
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,82 +27,56 @@
  */
 
 /*****************************************************************************
- BotanHMAC.cpp
+ GOSTTests.h
 
- Botan HMAC implementation
+ Contains test cases to test the GOST implementations
  *****************************************************************************/
 
-#include "config.h"
-#include "BotanHMAC.h"
+#ifndef _SOFTHSM_V2_HASHTESTS_H
+#define _SOFTHSM_V2_HASHTESTS_H
 
-std::string BotanHMACMD5::getHash() const
-{
-	return "MD5";
-}
+#include <cppunit/extensions/HelperMacros.h>
+#include "AsymmetricAlgorithm.h"
+#include "HashAlgorithm.h"
+#include "MacAlgorithm.h"
+#include "RNG.h"
 
-size_t BotanHMACMD5::getMacSize() const
+class GOSTTests : public CppUnit::TestFixture
 {
-	return 16;
-}
+	CPPUNIT_TEST_SUITE(GOSTTests);
+	CPPUNIT_TEST(testHash);
+	CPPUNIT_TEST(testHmac);
+	CPPUNIT_TEST(testHashKnownVector);
+	CPPUNIT_TEST(testKeyGeneration);
+	CPPUNIT_TEST(testSerialisation);
+	CPPUNIT_TEST(testSigningVerifying);
+	CPPUNIT_TEST(testSignVerifyKnownVector);
+	CPPUNIT_TEST_SUITE_END();
 
-std::string BotanHMACSHA1::getHash() const
-{
-	return "SHA-1";
-}
+public:
+	void testHash();
+	void testHmac();
+	void testHashKnownVector();
+	void testKeyGeneration();
+	void testSerialisation();
+	void testSigningVerifying();
+	void testSignVerifyKnownVector();
 
-size_t BotanHMACSHA1::getMacSize() const
-{
-	return 20;
-}
+	void setUp();
+	void tearDown();
 
-std::string BotanHMACSHA224::getHash() const
-{
-	return "SHA-224";
-}
+private:
+	void writeTmpFile(ByteString& data);
 
-size_t BotanHMACSHA224::getMacSize() const
-{
-	return 28;
-}
+	void readTmpFile(ByteString& data);
 
-std::string BotanHMACSHA256::getHash() const
-{
-	return "SHA-256";
-}
+	HashAlgorithm* hash;
 
-size_t BotanHMACSHA256::getMacSize() const
-{
-	return 32;
-}
+	MacAlgorithm* mac;
 
-std::string BotanHMACSHA384::getHash() const
-{
-	return "SHA-384";
-}
+	AsymmetricAlgorithm* gost;
 
-size_t BotanHMACSHA384::getMacSize() const
-{
-	return 48;
-}
+	RNG* rng;
+};
 
-std::string BotanHMACSHA512::getHash() const
-{
-	return "SHA-512";
-}
-
-size_t BotanHMACSHA512::getMacSize() const
-{
-	return 64;
-}
-
-#ifdef WITH_GOST
-std::string BotanHMACGOSTR3411::getHash() const
-{
-	return "GOST-34.11";
-}
-
-size_t BotanHMACGOSTR3411::getMacSize() const
-{
-	return 32;
-}
-#endif
+#endif // !_SOFTHSM_V2_HASHTESTS_H

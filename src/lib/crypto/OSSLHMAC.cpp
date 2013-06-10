@@ -34,16 +34,9 @@
 
 #include "config.h"
 #include "OSSLHMAC.h"
-
-unsigned long OSSLHMACMD5::getMinKeySize()
-{
-	return 0;
-}
-
-unsigned long OSSLHMACMD5::getMaxKeySize()
-{
-	return 2*64;
-}
+#ifdef WITH_GOST
+#include "OSSLCryptoFactory.h"
+#endif
 
 const EVP_MD* OSSLHMACMD5::getEVPHash() const
 {
@@ -53,16 +46,6 @@ const EVP_MD* OSSLHMACMD5::getEVPHash() const
 size_t OSSLHMACMD5::getMacSize() const
 {
 	return 16;
-}
-
-unsigned long OSSLHMACSHA1::getMinKeySize()
-{
-	return 0;
-}
-
-unsigned long OSSLHMACSHA1::getMaxKeySize()
-{
-	return 2*64;
 }
 
 const EVP_MD* OSSLHMACSHA1::getEVPHash() const
@@ -75,16 +58,6 @@ size_t OSSLHMACSHA1::getMacSize() const
 	return 20;
 }
 
-unsigned long OSSLHMACSHA224::getMinKeySize()
-{
-	return 0;
-}
-
-unsigned long OSSLHMACSHA224::getMaxKeySize()
-{
-	return 2*64;
-}
-
 const EVP_MD* OSSLHMACSHA224::getEVPHash() const
 {
 	return EVP_sha224();
@@ -93,16 +66,6 @@ const EVP_MD* OSSLHMACSHA224::getEVPHash() const
 size_t OSSLHMACSHA224::getMacSize() const
 {
 	return 28;
-}
-
-unsigned long OSSLHMACSHA256::getMinKeySize()
-{
-	return 0;
-}
-
-unsigned long OSSLHMACSHA256::getMaxKeySize()
-{
-	return 2*64;
 }
 
 const EVP_MD* OSSLHMACSHA256::getEVPHash() const
@@ -115,16 +78,6 @@ size_t OSSLHMACSHA256::getMacSize() const
 	return 32;
 }
 
-unsigned long OSSLHMACSHA384::getMinKeySize()
-{
-	return 0;
-}
-
-unsigned long OSSLHMACSHA384::getMaxKeySize()
-{
-	return 2*128;
-}
-
 const EVP_MD* OSSLHMACSHA384::getEVPHash() const
 {
 	return EVP_sha384();
@@ -133,16 +86,6 @@ const EVP_MD* OSSLHMACSHA384::getEVPHash() const
 size_t OSSLHMACSHA384::getMacSize() const
 {
 	return 48;
-}
-
-unsigned long OSSLHMACSHA512::getMinKeySize()
-{
-	return 0;
-}
-
-unsigned long OSSLHMACSHA512::getMaxKeySize()
-{
-	return 2*128;
 }
 
 const EVP_MD* OSSLHMACSHA512::getEVPHash() const
@@ -154,3 +97,15 @@ size_t OSSLHMACSHA512::getMacSize() const
 {
 	return 64;
 }
+
+#ifdef WITH_GOST
+const EVP_MD* OSSLHMACGOSTR3411::getEVPHash() const
+{
+	return OSSLCryptoFactory::i()->EVP_GOST_34_11;
+}
+
+size_t OSSLHMACGOSTR3411::getMacSize() const
+{
+	return 32;
+}
+#endif

@@ -1,3 +1,5 @@
+/* $Id$ */
+
 /*
  * Copyright (c) 2010 SURFnet bv
  * All rights reserved.
@@ -25,98 +27,39 @@
  */
 
 /*****************************************************************************
- OSSLEVPHashAlgorithm.cpp
+ GOSTPublicKey.cpp
 
- Base class for OpenSSL hash algorithm classes
+ GOST R 34.10-2001 public key class
  *****************************************************************************/
 
 #include "config.h"
-#include "OSSLEVPHashAlgorithm.h"
+#include "log.h"
+#include "GOSTPublicKey.h"
+#include <string.h>
 
-// Destructor
-OSSLEVPHashAlgorithm::~OSSLEVPHashAlgorithm()
+// Set the type
+/*static*/ const char* GOSTPublicKey::type = "Abstract GOST public key";
+
+// Check if the key is of the given type
+bool GOSTPublicKey::isOfType(const char* type)
 {
-	EVP_MD_CTX_cleanup(&curCTX);
+	return !strcmp(this->type, type);
 }
 
-// Hashing functions
-bool OSSLEVPHashAlgorithm::hashInit()
+// Get the bit length
+unsigned long GOSTPublicKey::getBitLength() const
 {
-	if (!HashAlgorithm::hashInit())
-	{
-		return false;
-	}
-
-	// Initialize the context
-	EVP_MD_CTX_init(&curCTX);
-
-	// Initialize EVP digesting
-	if (!EVP_DigestInit_ex(&curCTX, getEVPHash(), NULL))
-	{
-		ERROR_MSG("EVP_DigestInit failed");
-
-		EVP_MD_CTX_cleanup(&curCTX);
-
-		ByteString dummy;
-		HashAlgorithm::hashFinal(dummy);
-
-		return false;
-	}
-
-	return true;
+	return getQ().size() * 8;
 }
 
-bool OSSLEVPHashAlgorithm::hashUpdate(const ByteString& data)
+// Setters for the GOST public key components
+void GOSTPublicKey::setQ(const ByteString& q)
 {
-	if (!HashAlgorithm::hashUpdate(data))
-	{
-		return false;
-	}
-
-	// Continue digesting
-	if (data.size() == 0)
-	{
-		return true;
-	}
-
-	if (!EVP_DigestUpdate(&curCTX, (unsigned char*) data.const_byte_str(), data.size()))
-	{
-		ERROR_MSG("EVP_DigestUpdate failed");
-
-		EVP_MD_CTX_cleanup(&curCTX);
-
-		ByteString dummy;
-		HashAlgorithm::hashFinal(dummy);
-
-		return false;
-	}
-
-	return true;
+	this->q = q;
 }
 
-bool OSSLEVPHashAlgorithm::hashFinal(ByteString& hashedData)
+// Getters for the GOST public key components
+const ByteString& GOSTPublicKey::getQ() const
 {
-	if (!HashAlgorithm::hashFinal(hashedData))
-	{
-		return false;
-	}
-
-	hashedData.resize(EVP_MD_size(getEVPHash()));
-	unsigned int outLen = hashedData.size();
-
-	if (!EVP_DigestFinal_ex(&curCTX, &hashedData[0], &outLen))
-	{
-		ERROR_MSG("EVP_DigestFinal failed");
-
-		EVP_MD_CTX_cleanup(&curCTX);
-
-		return false;
-	}
-
-	hashedData.resize(outLen);
-
-	EVP_MD_CTX_cleanup(&curCTX);
-
-	return true;
+	return q;
 }
-

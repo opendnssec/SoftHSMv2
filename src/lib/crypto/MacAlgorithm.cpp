@@ -114,6 +114,16 @@ bool MacAlgorithm::verifyFinal(ByteString& signature)
 	return true;
 }
 
+unsigned long MacAlgorithm::getMinKeySize()
+{
+	return 0;
+}
+
+unsigned long MacAlgorithm::getMaxKeySize()
+{
+	return 0;
+}
+
 void MacAlgorithm::recycleKey(SymmetricKey* toRecycle)
 {
 	delete currentKey;

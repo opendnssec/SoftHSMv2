@@ -60,10 +60,6 @@ public:
 	virtual bool verifyUpdate(const ByteString& originalData);
 	virtual bool verifyFinal(ByteString& signature);
 
-	// Key
-	virtual unsigned long getMinKeySize() = 0;
-	virtual unsigned long getMaxKeySize() = 0;
-
 	// Return the MAC size
 	virtual size_t getMacSize() const = 0;
 

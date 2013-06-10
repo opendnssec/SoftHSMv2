@@ -27,82 +27,23 @@
  */
 
 /*****************************************************************************
- BotanHMAC.cpp
+ BotanGOSTR3411.cpp
 
- Botan HMAC implementation
+ Botan GOST R 34.11-94 implementation
  *****************************************************************************/
 
 #include "config.h"
-#include "BotanHMAC.h"
-
-std::string BotanHMACMD5::getHash() const
-{
-	return "MD5";
-}
-
-size_t BotanHMACMD5::getMacSize() const
-{
-	return 16;
-}
-
-std::string BotanHMACSHA1::getHash() const
-{
-	return "SHA-1";
-}
-
-size_t BotanHMACSHA1::getMacSize() const
-{
-	return 20;
-}
-
-std::string BotanHMACSHA224::getHash() const
-{
-	return "SHA-224";
-}
-
-size_t BotanHMACSHA224::getMacSize() const
-{
-	return 28;
-}
-
-std::string BotanHMACSHA256::getHash() const
-{
-	return "SHA-256";
-}
-
-size_t BotanHMACSHA256::getMacSize() const
-{
-	return 32;
-}
-
-std::string BotanHMACSHA384::getHash() const
-{
-	return "SHA-384";
-}
-
-size_t BotanHMACSHA384::getMacSize() const
-{
-	return 48;
-}
-
-std::string BotanHMACSHA512::getHash() const
-{
-	return "SHA-512";
-}
-
-size_t BotanHMACSHA512::getMacSize() const
-{
-	return 64;
-}
-
 #ifdef WITH_GOST
-std::string BotanHMACGOSTR3411::getHash() const
-{
-	return "GOST-34.11";
-}
+#include "BotanGOSTR3411.h"
+#include <botan/gost_3411.h>
 
-size_t BotanHMACGOSTR3411::getMacSize() const
+int BotanGOSTR3411::getHashSize()
 {
 	return 32;
+}
+
+Botan::HashFunction* BotanGOSTR3411::getHash() const
+{
+	return new Botan::GOST_34_11();
 }
 #endif

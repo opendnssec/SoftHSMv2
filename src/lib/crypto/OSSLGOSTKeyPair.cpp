@@ -1,3 +1,5 @@
+/* $Id$ */
+
 /*
  * Copyright (c) 2010 SURFnet bv
  * All rights reserved.
@@ -25,98 +27,47 @@
  */
 
 /*****************************************************************************
- OSSLEVPHashAlgorithm.cpp
+ OSSLGOSTKeyPair.cpp
 
- Base class for OpenSSL hash algorithm classes
+ OpenSSL GOST R 34.10-2001 key-pair class
  *****************************************************************************/
 
 #include "config.h"
-#include "OSSLEVPHashAlgorithm.h"
+#ifdef WITH_GOST
+#include "log.h"
+#include "OSSLGOSTKeyPair.h"
 
-// Destructor
-OSSLEVPHashAlgorithm::~OSSLEVPHashAlgorithm()
+// Set the public key
+void OSSLGOSTKeyPair::setPublicKey(OSSLGOSTPublicKey& publicKey)
 {
-	EVP_MD_CTX_cleanup(&curCTX);
+	pubKey = publicKey;
 }
 
-// Hashing functions
-bool OSSLEVPHashAlgorithm::hashInit()
+// Set the private key
+void OSSLGOSTKeyPair::setPrivateKey(OSSLGOSTPrivateKey& privateKey)
 {
-	if (!HashAlgorithm::hashInit())
-	{
-		return false;
-	}
-
-	// Initialize the context
-	EVP_MD_CTX_init(&curCTX);
-
-	// Initialize EVP digesting
-	if (!EVP_DigestInit_ex(&curCTX, getEVPHash(), NULL))
-	{
-		ERROR_MSG("EVP_DigestInit failed");
-
-		EVP_MD_CTX_cleanup(&curCTX);
-
-		ByteString dummy;
-		HashAlgorithm::hashFinal(dummy);
-
-		return false;
-	}
-
-	return true;
+	privKey = privateKey;
 }
 
-bool OSSLEVPHashAlgorithm::hashUpdate(const ByteString& data)
+// Return the public key
+PublicKey* OSSLGOSTKeyPair::getPublicKey()
 {
-	if (!HashAlgorithm::hashUpdate(data))
-	{
-		return false;
-	}
-
-	// Continue digesting
-	if (data.size() == 0)
-	{
-		return true;
-	}
-
-	if (!EVP_DigestUpdate(&curCTX, (unsigned char*) data.const_byte_str(), data.size()))
-	{
-		ERROR_MSG("EVP_DigestUpdate failed");
-
-		EVP_MD_CTX_cleanup(&curCTX);
-
-		ByteString dummy;
-		HashAlgorithm::hashFinal(dummy);
-
-		return false;
-	}
-
-	return true;
+	return &pubKey;
 }
 
-bool OSSLEVPHashAlgorithm::hashFinal(ByteString& hashedData)
+const PublicKey* OSSLGOSTKeyPair::getConstPublicKey() const
 {
-	if (!HashAlgorithm::hashFinal(hashedData))
-	{
-		return false;
-	}
-
-	hashedData.resize(EVP_MD_size(getEVPHash()));
-	unsigned int outLen = hashedData.size();
-
-	if (!EVP_DigestFinal_ex(&curCTX, &hashedData[0], &outLen))
-	{
-		ERROR_MSG("EVP_DigestFinal failed");
-
-		EVP_MD_CTX_cleanup(&curCTX);
-
-		return false;
-	}
-
-	hashedData.resize(outLen);
-
-	EVP_MD_CTX_cleanup(&curCTX);
-
-	return true;
+	return &pubKey;
 }
 
+// Return the private key
+PrivateKey* OSSLGOSTKeyPair::getPrivateKey()
+{
+	return &privKey;
+}
+
+const PrivateKey* OSSLGOSTKeyPair::getConstPrivateKey() const
+{
+	return &privKey;
+}
+#endif

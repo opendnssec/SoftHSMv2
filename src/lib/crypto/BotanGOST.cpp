@@ -27,72 +27,87 @@
  */
 
 /*****************************************************************************
- BotanECDSA.cpp
+ BotanGOST.cpp
 
- Botan ECDSA asymmetric algorithm implementation
+ Botan GOST R 34.10-2001 asymmetric algorithm implementation
  *****************************************************************************/
 
 #include "config.h"
-#ifdef WITH_ECC
+#ifdef WITH_GOST
 #include "log.h"
-#include "BotanECDSA.h"
+#include "BotanGOST.h"
 #include "BotanRNG.h"
 #include "CryptoFactory.h"
 #include "BotanCryptoFactory.h"
 #include "ECParameters.h"
-#include "BotanECDSAKeyPair.h"
+#include "BotanGOSTKeyPair.h"
 #include "BotanUtil.h"
 #include <algorithm>
 #include <botan/ec_group.h>
-#include <botan/ecdsa.h>
+#include <botan/gost_3410.h>
 #include <iostream>
 
 // Constructor
-BotanECDSA::BotanECDSA()
+BotanGOST::BotanGOST()
 {
 	signer = NULL;
 	verifier = NULL;
 }
 
 // Destructor
-BotanECDSA::~BotanECDSA()
+BotanGOST::~BotanGOST()
 {
 	delete signer;
 	delete verifier;
 }
 	
 // Signing functions
-bool BotanECDSA::sign(PrivateKey* privateKey, const ByteString& dataToSign, ByteString& signature, const std::string mechanism)
+bool BotanGOST::signInit(PrivateKey* privateKey, const std::string mechanism)
 {
+	if (!AsymmetricAlgorithm::signInit(privateKey, mechanism))
+	{
+		return false;
+	}
+
+	// Check if the private key is the right type
+	if (!privateKey->isOfType(BotanGOSTPrivateKey::type))
+	{
+		ERROR_MSG("Invalid key type supplied");
+
+		ByteString dummy;
+		AsymmetricAlgorithm::signFinal(dummy);
+
+		return false;
+	}
+
 	std::string lowerMechanism;
 	lowerMechanism.resize(mechanism.size());
 	std::transform(mechanism.begin(), mechanism.end(), lowerMechanism.begin(), tolower);
 	std::string emsa;
 
-	if (!lowerMechanism.compare("ecdsa"))
+	if (!lowerMechanism.compare("gost"))
 	{
-		emsa = "Raw";
+		emsa = "EMSA1(GOST-R-34.11-94)";
 	}
         else
         {
 		ERROR_MSG("Invalid mechanism supplied (%s)", mechanism.c_str());
+
+		ByteString dummy;
+		AsymmetricAlgorithm::signFinal(dummy);
+
 		return false;
         }
 
-	// Check if the private key is the right type
-	if (!privateKey->isOfType(BotanECDSAPrivateKey::type))
-	{
-		ERROR_MSG("Invalid key type supplied");
-
-		return false;
-	}
-
-        BotanECDSAPrivateKey* pk = (BotanECDSAPrivateKey*) privateKey;
-        Botan::ECDSA_PrivateKey* botanKey = pk->getBotanKey();
+        BotanGOSTPrivateKey* pk = (BotanGOSTPrivateKey*) currentPrivateKey;
+        Botan::GOST_3410_PrivateKey* botanKey = pk->getBotanKey();
 
         if (botanKey == NULL)
         {
 		ERROR_MSG("Could not get the Botan private key");
+
+		ByteString dummy;
+		AsymmetricAlgorithm::signFinal(dummy);
 
 		return false;
 	}
@@ -106,6 +121,46 @@ bool BotanECDSA::sign(PrivateKey* privateKey, const ByteString& dataToSign, Byte
 	{
 		ERROR_MSG("Could not create the signer token");
 
+		ByteString dummy;
+		AsymmetricAlgorithm::signFinal(dummy);
+
+		return false;
+	}
+
+	return true;
+}
+
+bool BotanGOST::signUpdate(const ByteString& dataToSign)
+{
+	if (!AsymmetricAlgorithm::signUpdate(dataToSign))
+	{
+		return false;
+	}
+
+	try
+	{
+		signer->update(dataToSign.const_byte_str(), dataToSign.size());
+	}
+	catch (...)
+	{
+		ERROR_MSG("Could not add data to signer token");
+
+		ByteString dummy;
+		AsymmetricAlgorithm::signFinal(dummy);
+
+		delete signer;
+		signer = NULL;
+
+		return false;
+	}
+
+	return true;
+}
+
+bool BotanGOST::signFinal(ByteString& signature)
+{
+	if (!AsymmetricAlgorithm::signFinal(signature))
+	{
 		return false;
 	}
 
@@ -114,7 +169,7 @@ bool BotanECDSA::sign(PrivateKey* privateKey, const ByteString& dataToSign, Byte
 	try
 	{
 		BotanRNG* rng = (BotanRNG*)BotanCryptoFactory::i()->getRNG();
-		signResult = signer->sign_message(dataToSign.const_byte_str(), dataToSign.size(), *rng->getRNG());
+		signResult = signer->signature(*rng->getRNG());
 	}
 	catch (...)
 	{
@@ -136,61 +191,53 @@ bool BotanECDSA::sign(PrivateKey* privateKey, const ByteString& dataToSign, Byte
 	return true;
 }
 
-// Signing functions
-bool BotanECDSA::signInit(PrivateKey* privateKey, const std::string mechanism)
-{
-	ERROR_MSG("ECDSA does not support multi part signing");
-
-	return false;
-}
-
-bool BotanECDSA::signUpdate(const ByteString& dataToSign)
-{
-	ERROR_MSG("ECDSA does not support multi part signing");
-
-	return false;
-}
-
-bool BotanECDSA::signFinal(ByteString& signature)
-{
-	ERROR_MSG("ECDSA does not support multi part signing");
-
-	return false;
-}
-
 // Verification functions
-bool BotanECDSA::verify(PublicKey* publicKey, const ByteString& originalData, const ByteString& signature, const std::string mechanism)
+bool BotanGOST::verifyInit(PublicKey* publicKey, const std::string mechanism)
 {
+	if (!AsymmetricAlgorithm::verifyInit(publicKey, mechanism))
+	{
+		return false;
+	}
+
+	// Check if the public key is the right type
+	if (!publicKey->isOfType(BotanGOSTPublicKey::type))
+	{
+		ERROR_MSG("Invalid key type supplied");
+
+		ByteString dummy;
+		AsymmetricAlgorithm::verifyFinal(dummy);
+
+		return false;
+	}
+
 	std::string lowerMechanism;
 	lowerMechanism.resize(mechanism.size());
 	std::transform(mechanism.begin(), mechanism.end(), lowerMechanism.begin(), tolower);
 	std::string emsa;
 
-	if (!lowerMechanism.compare("ecdsa"))
+	if (!lowerMechanism.compare("gost"))
 	{
-		emsa = "Raw";
+		emsa = "EMSA1(GOST-R-34.11-94)";
 	}
         else
         {
 		ERROR_MSG("Invalid mechanism supplied (%s)", mechanism.c_str());
 
-		return false;
-	}
-
-	// Check if the public key is the right type
-	if (!publicKey->isOfType(BotanECDSAPublicKey::type))
-	{
-		ERROR_MSG("Invalid key type supplied");
+		ByteString dummy;
+		AsymmetricAlgorithm::verifyFinal(dummy);
 
 		return false;
 	}
 
-	BotanECDSAPublicKey* pk = (BotanECDSAPublicKey*) publicKey;
-	Botan::ECDSA_PublicKey* botanKey = pk->getBotanKey();
+	BotanGOSTPublicKey* pk = (BotanGOSTPublicKey*) currentPublicKey;
+	Botan::GOST_3410_PublicKey* botanKey = pk->getBotanKey();
 
 	if (botanKey == NULL)
 	{
 		ERROR_MSG("Could not get the Botan public key");
+
+		ByteString dummy;
+		AsymmetricAlgorithm::verifyFinal(dummy);
 
 		return false;
 	}
@@ -203,6 +250,46 @@ bool BotanECDSA::verify(PublicKey* publicKey, const ByteString& originalData, co
 	{
 		ERROR_MSG("Could not create the verifier token");
 
+		ByteString dummy;
+		AsymmetricAlgorithm::verifyFinal(dummy);
+
+		return false;
+	}
+
+	return true;
+}
+
+bool BotanGOST::verifyUpdate(const ByteString& originalData)
+{
+	if (!AsymmetricAlgorithm::verifyUpdate(originalData))
+	{
+		return false;
+	}
+
+	try
+	{
+		verifier->update(originalData.const_byte_str(), originalData.size());
+	}
+	catch (...)
+	{
+		ERROR_MSG("Could not add data to the verifier token");
+
+		ByteString dummy;
+		AsymmetricAlgorithm::verifyFinal(dummy);
+
+		delete verifier;
+		verifier = NULL;
+
+		return false;
+	}
+
+	return true;
+}
+
+bool BotanGOST::verifyFinal(const ByteString& signature)
+{
+	if (!AsymmetricAlgorithm::verifyFinal(signature))
+	{
 		return false;
 	}
 
@@ -210,10 +297,7 @@ bool BotanECDSA::verify(PublicKey* publicKey, const ByteString& originalData, co
 	bool verResult;
 	try
 	{
-		verResult = verifier->verify_message(originalData.const_byte_str(),
-							originalData.size(),
-							signature.const_byte_str(),
-							signature.size());
+		verResult = verifier->check_signature(signature.const_byte_str(), signature.size());
 	}
 	catch (...)
 	{
@@ -231,46 +315,24 @@ bool BotanECDSA::verify(PublicKey* publicKey, const ByteString& originalData, co
 	return verResult;
 }
 
-// Verification functions
-bool BotanECDSA::verifyInit(PublicKey* publicKey, const std::string mechanism)
-{
-	ERROR_MSG("ECDSA does not support multi part verifying");
-
-	return false;
-}
-
-bool BotanECDSA::verifyUpdate(const ByteString& originalData)
-{
-	ERROR_MSG("ECDSA does not support multi part verifying");
-
-	return false;
-}
-
-bool BotanECDSA::verifyFinal(const ByteString& signature)
-{
-	ERROR_MSG("ECDSA does not support multi part verifying");
-
-	return false;
-}
-
 // Encryption functions
-bool BotanECDSA::encrypt(PublicKey* publicKey, const ByteString& data, ByteString& encryptedData, const std::string padding)
+bool BotanGOST::encrypt(PublicKey* publicKey, const ByteString& data, ByteString& encryptedData, const std::string padding)
 {
-	ERROR_MSG("ECDSA does not support encryption");
+	ERROR_MSG("GOST does not support encryption");
 
 	return false;
 }
 
 // Decryption functions
-bool BotanECDSA::decrypt(PrivateKey* privateKey, const ByteString& encryptedData, ByteString& data, const std::string padding)
+bool BotanGOST::decrypt(PrivateKey* privateKey, const ByteString& encryptedData, ByteString& data, const std::string padding)
 {
-	ERROR_MSG("ECDSA does not support decryption");
+	ERROR_MSG("GOST does not support decryption");
 
 	return false;
 }
 
 // Key factory
-bool BotanECDSA::generateKeyPair(AsymmetricKeyPair** ppKeyPair, AsymmetricParameters* parameters, RNG* rng /* = NULL */)
+bool BotanGOST::generateKeyPair(AsymmetricKeyPair** ppKeyPair, AsymmetricParameters* parameters, RNG* rng /* = NULL */)
 {
 	// Check parameters
 	if ((ppKeyPair == NULL) ||
@@ -281,7 +343,7 @@ bool BotanECDSA::generateKeyPair(AsymmetricKeyPair** ppKeyPair, AsymmetricParame
 
 	if (!parameters->areOfType(ECParameters::type))
 	{
-		ERROR_MSG("Invalid parameters supplied for ECDSA key generation");
+		ERROR_MSG("Invalid parameters supplied for GOST key generation");
 
 		return false;
 	}
@@ -289,24 +351,24 @@ bool BotanECDSA::generateKeyPair(AsymmetricKeyPair** ppKeyPair, AsymmetricParame
 	ECParameters* params = (ECParameters*) parameters;
 
 	// Generate the key-pair
-	Botan::ECDSA_PrivateKey* eckp = NULL;
+	Botan::GOST_3410_PrivateKey* eckp = NULL;
 	try
 	{
 		BotanRNG* rng = (BotanRNG*)BotanCryptoFactory::i()->getRNG();
-		eckp = new Botan::ECDSA_PrivateKey(*rng->getRNG(), BotanUtil::byteString2ECGroup(params->getEC()));
+		eckp = new Botan::GOST_3410_PrivateKey(*rng->getRNG(), BotanUtil::byteString2ECGroup(params->getEC()));
 	}
 	catch (...)
 	{
-		ERROR_MSG("ECDSA key generation failed");
+		ERROR_MSG("GOST key generation failed");
 
 		return false;
 	}
 
 	// Create an asymmetric key-pair object to return
-	BotanECDSAKeyPair* kp = new BotanECDSAKeyPair();
+	BotanGOSTKeyPair* kp = new BotanGOSTKeyPair();
 
-	((BotanECDSAPublicKey*) kp->getPublicKey())->setFromBotan(eckp);
-	((BotanECDSAPrivateKey*) kp->getPrivateKey())->setFromBotan(eckp);
+	((BotanGOSTPublicKey*) kp->getPublicKey())->setFromBotan(eckp);
+	((BotanGOSTPrivateKey*) kp->getPrivateKey())->setFromBotan(eckp);
 
 	*ppKeyPair = kp;
 
@@ -316,19 +378,17 @@ bool BotanECDSA::generateKeyPair(AsymmetricKeyPair** ppKeyPair, AsymmetricParame
 	return true;
 }
 
-unsigned long BotanECDSA::getMinKeySize()
+unsigned long BotanGOST::getMinKeySize()
 {
-	// Smallest EC group is secp112r1
-	return 112;
+	return 0;
 }
 
-unsigned long BotanECDSA::getMaxKeySize()
+unsigned long BotanGOST::getMaxKeySize()
 {
-	// Biggest EC group is secp521r1
-	return 521;
+	return 0;
 }
 
-bool BotanECDSA::reconstructKeyPair(AsymmetricKeyPair** ppKeyPair, ByteString& serialisedData)
+bool BotanGOST::reconstructKeyPair(AsymmetricKeyPair** ppKeyPair, ByteString& serialisedData)
 {
 	// Check input
 	if ((ppKeyPair == NULL) ||
@@ -340,16 +400,16 @@ bool BotanECDSA::reconstructKeyPair(AsymmetricKeyPair** ppKeyPair, ByteString& s
 	ByteString dPub = ByteString::chainDeserialise(serialisedData);
 	ByteString dPriv = ByteString::chainDeserialise(serialisedData);
 
-	BotanECDSAKeyPair* kp = new BotanECDSAKeyPair();
+	BotanGOSTKeyPair* kp = new BotanGOSTKeyPair();
 
 	bool rv = true;
 
-	if (!((ECPublicKey*) kp->getPublicKey())->deserialise(dPub))
+	if (!((BotanGOSTPublicKey*) kp->getPublicKey())->deserialise(dPub))
 	{
 		rv = false;
 	}
 
-	if (!((ECPrivateKey*) kp->getPrivateKey())->deserialise(dPriv))
+	if (!((BotanGOSTPrivateKey*) kp->getPrivateKey())->deserialise(dPriv))
 	{
 		rv = false;
 	}
@@ -366,7 +426,7 @@ bool BotanECDSA::reconstructKeyPair(AsymmetricKeyPair** ppKeyPair, ByteString& s
 	return true;
 }
 
-bool BotanECDSA::reconstructPublicKey(PublicKey** ppPublicKey, ByteString& serialisedData)
+bool BotanGOST::reconstructPublicKey(PublicKey** ppPublicKey, ByteString& serialisedData)
 {
 	// Check input
 	if ((ppPublicKey == NULL) ||
@@ -375,7 +435,7 @@ bool BotanECDSA::reconstructPublicKey(PublicKey** ppPublicKey, ByteString& seria
 		return false;
 	}
 
-	BotanECDSAPublicKey* pub = new BotanECDSAPublicKey();
+	BotanGOSTPublicKey* pub = new BotanGOSTPublicKey();
 
 	if (!pub->deserialise(serialisedData))
 	{
@@ -389,7 +449,7 @@ bool BotanECDSA::reconstructPublicKey(PublicKey** ppPublicKey, ByteString& seria
 	return true;
 }
 
-bool BotanECDSA::reconstructPrivateKey(PrivateKey** ppPrivateKey, ByteString& serialisedData)
+bool BotanGOST::reconstructPrivateKey(PrivateKey** ppPrivateKey, ByteString& serialisedData)
 {
 	// Check input
 	if ((ppPrivateKey == NULL) ||
@@ -398,7 +458,7 @@ bool BotanECDSA::reconstructPrivateKey(PrivateKey** ppPrivateKey, ByteString& se
 		return false;
 	}
 
-	BotanECDSAPrivateKey* priv = new BotanECDSAPrivateKey();
+	BotanGOSTPrivateKey* priv = new BotanGOSTPrivateKey();
 
 	if (!priv->deserialise(serialisedData))
 	{
@@ -412,22 +472,22 @@ bool BotanECDSA::reconstructPrivateKey(PrivateKey** ppPrivateKey, ByteString& se
 	return true;
 }
 
-PublicKey* BotanECDSA::newPublicKey()
+PublicKey* BotanGOST::newPublicKey()
 {
-	return (PublicKey*) new BotanECDSAPublicKey();
+	return (PublicKey*) new BotanGOSTPublicKey();
 }
 
-PrivateKey* BotanECDSA::newPrivateKey()
+PrivateKey* BotanGOST::newPrivateKey()
 {
-	return (PrivateKey*) new BotanECDSAPrivateKey();
+	return (PrivateKey*) new BotanGOSTPrivateKey();
 }
 	
-AsymmetricParameters* BotanECDSA::newParameters()
+AsymmetricParameters* BotanGOST::newParameters()
 {
 	return (AsymmetricParameters*) new ECParameters();
 }
 
-bool BotanECDSA::reconstructParameters(AsymmetricParameters** ppParams, ByteString& serialisedData)
+bool BotanGOST::reconstructParameters(AsymmetricParameters** ppParams, ByteString& serialisedData)
 {
 	// Check input parameters
 	if ((ppParams == NULL) || (serialisedData.size() == 0))

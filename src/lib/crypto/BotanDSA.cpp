@@ -298,7 +298,7 @@ bool BotanDSA::verify(PublicKey* publicKey, const ByteString& originalData,
 		return AsymmetricAlgorithm::verify(publicKey, originalData, signature, mechanism);
 	}
 
-	// Check if the private key is the right type
+	// Check if the public key is the right type
 	if (!publicKey->isOfType(BotanDSAPublicKey::type))
 	{
 		ERROR_MSG("Invalid key type supplied");
@@ -359,7 +359,7 @@ bool BotanDSA::verifyInit(PublicKey* publicKey, const std::string mechanism)
 		return false;
 	}
 
-	// Check if the private key is the right type
+	// Check if the public key is the right type
 	if (!publicKey->isOfType(BotanDSAPublicKey::type))
 	{
 		ERROR_MSG("Invalid key type supplied");

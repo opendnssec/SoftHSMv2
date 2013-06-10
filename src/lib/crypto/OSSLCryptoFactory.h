@@ -41,6 +41,10 @@
 #include "MacAlgorithm.h"
 #include "RNG.h"
 #include <memory>
+#ifdef WITH_GOST
+#include <openssl/conf.h>
+#include <openssl/engine.h>
+#endif
 
 class OSSLCryptoFactory : public CryptoFactory
 {
@@ -66,6 +70,11 @@ public:
 	// Destructor
 	virtual ~OSSLCryptoFactory();
 
+#ifdef WITH_GOST
+	// The EVP_MD for GOST R 34.11-94
+	const EVP_MD *EVP_GOST_34_11;
+#endif
+
 private:
 	// Constructor
 	OSSLCryptoFactory();
@@ -75,6 +84,11 @@ private:
 
 	// The one-and-only RNG instance
 	RNG* rng;
+
+#ifdef WITH_GOST
+	// The GOST engine
+	ENGINE *eg;
+#endif
 };
 
 #endif // !_SOFTHSM_V2_OSSLCRYPTOFACTORY_H

@@ -724,6 +724,50 @@ bool P11DHPublicKeyObj::init(OSObject *osobject)
 	return true;
 }
 
+// Constructor
+P11GOSTPublicKeyObj::P11GOSTPublicKeyObj()
+{
+	initialized = false;
+}
+
+// Add attributes
+bool P11GOSTPublicKeyObj::init(OSObject *osobject)
+{
+	if (initialized) return true;
+	if (osobject == NULL) return false;
+
+	OSAttribute attrKeyType((unsigned long)CKK_GOSTR3410);
+	osobject->setAttribute(CKA_KEY_TYPE, attrKeyType);
+
+	// Create parent
+	if (!P11PublicKeyObj::init(osobject)) return false;
+
+	// Create attributes
+	P11Attribute* attrValue = new P11AttrValue(osobject,P11Attribute::ck1);
+	P11Attribute* attrGostR3410Params = new P11AttrGostR3410Params(osobject,P11Attribute::ck3);
+	P11Attribute* attrGostR3411Params = new P11AttrGostR3411Params(osobject,P11Attribute::ck3);
+
+	// Initialize the attributes
+	if
+	(
+		!attrValue->init() ||
+		!attrGostR3410Params->init() ||
+		!attrGostR3411Params->init()
+	)
+	{
+		ERROR_MSG("Could not initialize the attribute");
+		return false;
+	}
+
+	// Add them to the map
+	attributes[attrValue->getType()] = attrValue;
+	attributes[attrGostR3410Params->getType()] = attrGostR3410Params;
+	attributes[attrGostR3411Params->getType()] = attrGostR3411Params;
+
+	initialized = true;
+	return true;
+}
+
 //constructor
 P11PrivateKeyObj::P11PrivateKeyObj()
 {
@@ -975,6 +1019,49 @@ bool P11DHPrivateKeyObj::init(OSObject *osobject)
 	attributes[attrPrime->getType()] = attrPrime;
 	attributes[attrBase->getType()] = attrBase;
 	attributes[attrValue->getType()] = attrValue;
+
+	initialized = true;
+	return true;
+}
+
+// Constructor
+P11GOSTPrivateKeyObj::P11GOSTPrivateKeyObj()
+{
+	initialized = false;
+}
+
+// Add attributes
+bool P11GOSTPrivateKeyObj::init(OSObject *osobject)
+{
+	// Create parent
+	if (!P11PrivateKeyObj::init(osobject)) return false;
+
+	OSAttribute attrKeyType((unsigned long)CKK_GOSTR3410);
+	osobject->setAttribute(CKA_KEY_TYPE, attrKeyType);
+
+	if (initialized) return true;
+
+	// Create attributes
+	P11Attribute* attrValue = new P11AttrValue(osobject,P11Attribute::ck1|P11Attribute::ck4|P11Attribute::ck6|P11Attribute::ck7);
+	P11Attribute* attrGostR3410Params = new P11AttrGostR3410Params(osobject,P11Attribute::ck4|P11Attribute::ck6);
+	P11Attribute* attrGostR3411Params = new P11AttrGostR3411Params(osobject,P11Attribute::ck4|P11Attribute::ck6);
+
+	// Initialize the attributes
+	if
+	(
+		!attrValue->init() ||
+		!attrGostR3410Params->init() ||
+		!attrGostR3411Params->init()
+	)
+	{
+		ERROR_MSG("Could not initialize the attribute");
+		return false;
+	}
+
+	// Add them to the map
+	attributes[attrValue->getType()] = attrValue;
+	attributes[attrGostR3410Params->getType()] = attrGostR3410Params;
+	attributes[attrGostR3411Params->getType()] = attrGostR3411Params;
 
 	initialized = true;
 	return true;

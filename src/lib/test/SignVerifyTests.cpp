@@ -408,6 +408,12 @@ void SignVerifyTests::testHmacSignVerify()
 	CPPUNIT_ASSERT(rv == CKR_OK);
 	hmacSignVerify(CKM_SHA512_HMAC, hSessionRO, hKey);
 
+#ifdef WITH_GOST
+	rv = generateKey(hSessionRW,CKK_GOST28147,IN_SESSION,IS_PUBLIC,hKey);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	hmacSignVerify(CKM_GOSTR3411_HMAC, hSessionRO, hKey);
+#endif
+
 	// Private Session Keys
 	rv = generateKey(hSessionRW,CKK_MD5_HMAC,IN_SESSION,IS_PRIVATE,hKey);
 	CPPUNIT_ASSERT(rv == CKR_OK);
@@ -432,6 +438,12 @@ void SignVerifyTests::testHmacSignVerify()
 	rv = generateKey(hSessionRW,CKK_SHA512_HMAC,IN_SESSION,IS_PRIVATE,hKey);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 	hmacSignVerify(CKM_SHA512_HMAC, hSessionRW, hKey);
+
+#ifdef WITH_GOST
+	rv = generateKey(hSessionRW,CKK_GOST28147,IN_SESSION,IS_PRIVATE,hKey);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	hmacSignVerify(CKM_GOSTR3411_HMAC, hSessionRW, hKey);
+#endif
 
 	// Public Token Keys
 	rv = generateKey(hSessionRW,CKK_MD5_HMAC,ON_TOKEN,IS_PUBLIC,hKey);
@@ -458,6 +470,12 @@ void SignVerifyTests::testHmacSignVerify()
 	CPPUNIT_ASSERT(rv == CKR_OK);
 	hmacSignVerify(CKM_SHA512_HMAC, hSessionRW, hKey);
 
+#ifdef WITH_GOST
+	rv = generateKey(hSessionRW,CKK_GOST28147,ON_TOKEN,IS_PUBLIC,hKey);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	hmacSignVerify(CKM_GOSTR3411_HMAC, hSessionRW, hKey);
+#endif
+
 	// Private Token Keys
 	rv = generateKey(hSessionRW,CKK_MD5_HMAC,ON_TOKEN,IS_PRIVATE,hKey);
 	CPPUNIT_ASSERT(rv == CKR_OK);
@@ -482,5 +500,11 @@ void SignVerifyTests::testHmacSignVerify()
 	rv = generateKey(hSessionRW,CKK_SHA512_HMAC,ON_TOKEN,IS_PRIVATE,hKey);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 	hmacSignVerify(CKM_SHA512_HMAC, hSessionRW, hKey);
+
+#ifdef WITH_GOST
+	rv = generateKey(hSessionRW,CKK_GOST28147,ON_TOKEN,IS_PRIVATE,hKey);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	hmacSignVerify(CKM_GOSTR3411_HMAC, hSessionRW, hKey);
+#endif
 }
 
