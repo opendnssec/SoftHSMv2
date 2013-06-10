@@ -41,8 +41,10 @@
 #include "OSSLSHA256.h"
 #include "OSSLSHA384.h"
 #include "OSSLSHA512.h"
+#include "OSSLHMAC.h"
 #include "OSSLRSA.h"
 #include "OSSLDSA.h"
+#include "OSSLDH.h"
 
 #include <algorithm>
 #include <string.h>
@@ -124,6 +126,10 @@ AsymmetricAlgorithm* OSSLCryptoFactory::getAsymmetricAlgorithm(std::string algor
 	{
 		return new OSSLDSA();
 	}
+	else if (!lcAlgo.compare("dh"))
+	{
+		return new OSSLDH();
+	}
 	else
 	{
 		// No algorithm implementation is available
@@ -163,6 +169,49 @@ HashAlgorithm* OSSLCryptoFactory::getHashAlgorithm(std::string algorithm)
 	else if (!lcAlgo.compare("sha512"))
 	{
 		return new OSSLSHA512();
+	}
+	else
+	{
+		// No algorithm implementation is available
+		ERROR_MSG("Unknown algorithm '%s'", algorithm.c_str());
+
+		return NULL;
+	}
+
+	// No algorithm implementation is available
+	return NULL;
+}
+
+// Create a concrete instance of a MAC algorithm
+MacAlgorithm* OSSLCryptoFactory::getMacAlgorithm(std::string algorithm)
+{
+	std::string lcAlgo;
+	lcAlgo.resize(algorithm.size());
+	std::transform(algorithm.begin(), algorithm.end(), lcAlgo.begin(), tolower);
+
+	if (!lcAlgo.compare("hmac-md5"))
+	{
+		return new OSSLHMACMD5();
+	}
+	else if (!lcAlgo.compare("hmac-sha1"))
+	{
+		return new OSSLHMACSHA1();
+	}
+	else if (!lcAlgo.compare("hmac-sha224"))
+	{
+		return new OSSLHMACSHA224();
+	}
+	else if (!lcAlgo.compare("hmac-sha256"))
+	{
+		return new OSSLHMACSHA256();
+	}
+	else if (!lcAlgo.compare("hmac-sha384"))
+	{
+		return new OSSLHMACSHA384();
+	}
+	else if (!lcAlgo.compare("hmac-sha512"))
+	{
+		return new OSSLHMACSHA512();
 	}
 	else
 	{

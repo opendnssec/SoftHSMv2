@@ -65,7 +65,6 @@ void OSSLDSAPrivateKey::setFromOSSL(const DSA* dsa)
 	if (dsa->q) { ByteString q = OSSL::bn2ByteString(dsa->q); setQ(q); }
 	if (dsa->g) { ByteString g = OSSL::bn2ByteString(dsa->g); setG(g); }
 	if (dsa->priv_key) { ByteString x = OSSL::bn2ByteString(dsa->priv_key); setX(x); }
-	if (dsa->pub_key) { ByteString y = OSSL::bn2ByteString(dsa->pub_key); setY(y); }
 }
 
 // Check if the key is of the given type
@@ -89,7 +88,7 @@ void OSSLDSAPrivateKey::setX(const ByteString& x)
 }
 
 
-// Setters for the DSA public key components
+// Setters for the DSA domain parameters
 void OSSLDSAPrivateKey::setP(const ByteString& p)
 {
 	DSAPrivateKey::setP(p);
@@ -127,19 +126,6 @@ void OSSLDSAPrivateKey::setG(const ByteString& g)
 	}
 
 	dsa->g = OSSL::byteString2bn(g);
-}
-
-void OSSLDSAPrivateKey::setY(const ByteString& y)
-{
-	DSAPrivateKey::setY(y);
-
-	if (dsa->pub_key) 
-	{
-		BN_clear_free(dsa->pub_key);
-		dsa->pub_key = NULL;
-	}
-
-	dsa->pub_key = OSSL::byteString2bn(y);
 }
 
 // Retrieve the OpenSSL representation of the key

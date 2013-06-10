@@ -144,7 +144,6 @@ void DSATests::testSerialisation()
 	CPPUNIT_ASSERT(privKey->getQ() == dPrivKey->getQ());
 	CPPUNIT_ASSERT(privKey->getG() == dPrivKey->getG());
 	CPPUNIT_ASSERT(privKey->getX() == dPrivKey->getX());
-	CPPUNIT_ASSERT(privKey->getY() == dPrivKey->getY());
 
 	CPPUNIT_ASSERT(pubKey->getP() == dPubKey->getP());
 	CPPUNIT_ASSERT(pubKey->getQ() == dPubKey->getQ());

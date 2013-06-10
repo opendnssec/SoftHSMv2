@@ -241,6 +241,7 @@ void SignVerifyTests::testRsaSignVerify()
 	digestRsaPkcsSignVerify(CKM_MD5_RSA_PKCS, hSessionRO, hPuk,hPrk);
 	digestRsaPkcsSignVerify(CKM_SHA1_RSA_PKCS, hSessionRO, hPuk,hPrk);
 	digestRsaPkcsSignVerify(CKM_SHA256_RSA_PKCS, hSessionRO, hPuk,hPrk);
+	digestRsaPkcsSignVerify(CKM_SHA384_RSA_PKCS, hSessionRO, hPuk,hPrk);
 	digestRsaPkcsSignVerify(CKM_SHA512_RSA_PKCS, hSessionRO, hPuk,hPrk);
 
 	// Private Session Keys
@@ -278,5 +279,204 @@ void SignVerifyTests::testRsaSignVerify()
 	digestRsaPkcsSignVerify(CKM_SHA256_RSA_PKCS, hSessionRW, hPuk,hPrk);
 	digestRsaPkcsSignVerify(CKM_SHA384_RSA_PKCS, hSessionRW, hPuk,hPrk);
 	digestRsaPkcsSignVerify(CKM_SHA512_RSA_PKCS, hSessionRW, hPuk,hPrk);
+}
+
+CK_RV SignVerifyTests::generateKey(CK_SESSION_HANDLE hSession, CK_KEY_TYPE keyType, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_OBJECT_HANDLE &hKey)
+{
+	CK_RV rv;
+	CK_OBJECT_CLASS keyClass = CKO_SECRET_KEY;
+	CK_BYTE val[75];
+	//CK_BBOOL bFalse = CK_FALSE;
+	CK_BBOOL bTrue = CK_TRUE;
+	CK_ATTRIBUTE kAttribs[] = {
+		{ CKA_CLASS, &keyClass, sizeof(keyClass) },
+		{ CKA_KEY_TYPE, &keyType, sizeof(keyType) },
+		{ CKA_TOKEN, &bToken, sizeof(bToken) },
+		{ CKA_PRIVATE, &bPrivate, sizeof(bPrivate) },
+		{ CKA_SENSITIVE, &bTrue, sizeof(bTrue) },
+		{ CKA_VERIFY, &bTrue, sizeof(bTrue) },
+		{ CKA_SIGN, &bTrue, sizeof(bTrue) },
+		{ CKA_VALUE, &val[0], sizeof(val) }
+	};
+
+	rv = C_GenerateRandom(hSession, val, 75);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	hKey = CK_INVALID_HANDLE;
+	return C_CreateObject(hSession, kAttribs, sizeof(kAttribs)/sizeof(CK_ATTRIBUTE), &hKey);
+}
+
+void SignVerifyTests::hmacSignVerify(CK_MECHANISM_TYPE mechanismType, CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hKey)
+{
+	CK_RV rv;
+	CK_MECHANISM mechanism = { mechanismType, NULL_PTR, 0 };
+	CK_BYTE data[] = { 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B,0x0C, 0x0D, 0x0F };
+	CK_BYTE signature[256];
+	CK_ULONG ulSignatureLen = 0;
+
+	rv = C_SignInit(hSession,&mechanism,hKey);
+	CPPUNIT_ASSERT(rv==CKR_OK);
+
+	rv =C_SignUpdate(hSession,data,sizeof(data));
+	CPPUNIT_ASSERT(rv==CKR_OK);
+
+	ulSignatureLen = sizeof(signature);
+	rv =C_SignFinal(hSession,signature,&ulSignatureLen);
+	CPPUNIT_ASSERT(rv==CKR_OK);
+
+	rv = C_VerifyInit(hSession,&mechanism,hKey);
+	CPPUNIT_ASSERT(rv==CKR_OK);
+
+	rv = C_VerifyUpdate(hSession,data,sizeof(data));
+	CPPUNIT_ASSERT(rv==CKR_OK);
+
+	rv = C_VerifyFinal(hSession,signature,ulSignatureLen);
+	CPPUNIT_ASSERT(rv==CKR_OK);
+
+	// verify again, but now change the input that is being signed.
+	rv = C_VerifyInit(hSession,&mechanism,hKey);
+	CPPUNIT_ASSERT(rv==CKR_OK);
+
+	data[0] = 0xff;
+	rv = C_VerifyUpdate(hSession,data,sizeof(data));
+	CPPUNIT_ASSERT(rv==CKR_OK);
+
+	rv = C_VerifyFinal(hSession,signature,ulSignatureLen);
+	CPPUNIT_ASSERT(rv==CKR_SIGNATURE_INVALID);
+}
+
+void SignVerifyTests::testHmacSignVerify()
+{
+	CK_RV rv;
+	CK_UTF8CHAR pin[] = SLOT_0_USER1_PIN;
+	CK_ULONG pinLength = sizeof(pin) - 1;
+	CK_UTF8CHAR sopin[] = SLOT_0_SO1_PIN;
+	//CK_ULONG sopinLength = sizeof(sopin) - 1;
+	CK_SESSION_HANDLE hSessionRO;
+	CK_SESSION_HANDLE hSessionRW;
+
+	// Just make sure that we finalize any previous tests
+	C_Finalize(NULL_PTR);
+
+	// Open read-only session on when the token is not initialized should fail
+	rv = C_OpenSession(SLOT_INIT_TOKEN, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSessionRO);
+	CPPUNIT_ASSERT(rv == CKR_CRYPTOKI_NOT_INITIALIZED);
+
+	// Initialize the library and start the test.
+	rv = C_Initialize(NULL_PTR);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Open read-only session
+	rv = C_OpenSession(SLOT_INIT_TOKEN, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSessionRO);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Open read-write session
+	rv = C_OpenSession(SLOT_INIT_TOKEN, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSessionRW);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Login USER into the sessions so we can create a private objects
+	rv = C_Login(hSessionRO,CKU_USER,pin,pinLength);
+	CPPUNIT_ASSERT(rv==CKR_OK);
+
+	// Public Session keys
+	CK_OBJECT_HANDLE hKey = CK_INVALID_HANDLE;
+	rv = generateKey(hSessionRW,CKK_MD5_HMAC,IN_SESSION,IS_PUBLIC,hKey);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	hmacSignVerify(CKM_MD5_HMAC, hSessionRO, hKey);
+
+	rv = generateKey(hSessionRW,CKK_SHA_1_HMAC,IN_SESSION,IS_PUBLIC,hKey);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	hmacSignVerify(CKM_SHA_1_HMAC, hSessionRO, hKey);
+
+	rv = generateKey(hSessionRW,CKK_SHA224_HMAC,IN_SESSION,IS_PUBLIC,hKey);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	hmacSignVerify(CKM_SHA224_HMAC, hSessionRO, hKey);
+
+	rv = generateKey(hSessionRW,CKK_SHA256_HMAC,IN_SESSION,IS_PUBLIC,hKey);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	hmacSignVerify(CKM_SHA256_HMAC, hSessionRO, hKey);
+
+	rv = generateKey(hSessionRW,CKK_SHA384_HMAC,IN_SESSION,IS_PUBLIC,hKey);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	hmacSignVerify(CKM_SHA384_HMAC, hSessionRO, hKey);
+
+	rv = generateKey(hSessionRW,CKK_SHA512_HMAC,IN_SESSION,IS_PUBLIC,hKey);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	hmacSignVerify(CKM_SHA512_HMAC, hSessionRO, hKey);
+
+	// Private Session Keys
+	rv = generateKey(hSessionRW,CKK_MD5_HMAC,IN_SESSION,IS_PRIVATE,hKey);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	hmacSignVerify(CKM_MD5_HMAC, hSessionRW, hKey);
+
+	rv = generateKey(hSessionRW,CKK_SHA_1_HMAC,IN_SESSION,IS_PRIVATE,hKey);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	hmacSignVerify(CKM_SHA_1_HMAC, hSessionRW, hKey);
+
+	rv = generateKey(hSessionRW,CKK_SHA224_HMAC,IN_SESSION,IS_PRIVATE,hKey);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	hmacSignVerify(CKM_SHA256_HMAC, hSessionRW, hKey);
+
+	rv = generateKey(hSessionRW,CKK_SHA256_HMAC,IN_SESSION,IS_PRIVATE,hKey);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	hmacSignVerify(CKM_SHA256_HMAC, hSessionRW, hKey);
+
+	rv = generateKey(hSessionRW,CKK_SHA384_HMAC,IN_SESSION,IS_PRIVATE,hKey);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	hmacSignVerify(CKM_SHA384_HMAC, hSessionRW, hKey);
+
+	rv = generateKey(hSessionRW,CKK_SHA512_HMAC,IN_SESSION,IS_PRIVATE,hKey);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	hmacSignVerify(CKM_SHA512_HMAC, hSessionRW, hKey);
+
+	// Public Token Keys
+	rv = generateKey(hSessionRW,CKK_MD5_HMAC,ON_TOKEN,IS_PUBLIC,hKey);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	hmacSignVerify(CKM_MD5_HMAC, hSessionRW, hKey);
+
+	rv = generateKey(hSessionRW,CKK_SHA_1_HMAC,ON_TOKEN,IS_PUBLIC,hKey);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	hmacSignVerify(CKM_SHA_1_HMAC, hSessionRW, hKey);
+
+	rv = generateKey(hSessionRW,CKK_SHA224_HMAC,ON_TOKEN,IS_PUBLIC,hKey);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	hmacSignVerify(CKM_SHA224_HMAC, hSessionRW, hKey);
+
+	rv = generateKey(hSessionRW,CKK_SHA256_HMAC,ON_TOKEN,IS_PUBLIC,hKey);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	hmacSignVerify(CKM_SHA256_HMAC, hSessionRW, hKey);
+
+	rv = generateKey(hSessionRW,CKK_SHA384_HMAC,ON_TOKEN,IS_PUBLIC,hKey);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	hmacSignVerify(CKM_SHA384_HMAC, hSessionRW, hKey);
+
+	rv = generateKey(hSessionRW,CKK_SHA512_HMAC,ON_TOKEN,IS_PUBLIC,hKey);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	hmacSignVerify(CKM_SHA512_HMAC, hSessionRW, hKey);
+
+	// Private Token Keys
+	rv = generateKey(hSessionRW,CKK_MD5_HMAC,ON_TOKEN,IS_PRIVATE,hKey);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	hmacSignVerify(CKM_MD5_HMAC, hSessionRW, hKey);
+
+	rv = generateKey(hSessionRW,CKK_SHA_1_HMAC,ON_TOKEN,IS_PRIVATE,hKey);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	hmacSignVerify(CKM_SHA_1_HMAC, hSessionRW, hKey);
+
+	rv = generateKey(hSessionRW,CKK_SHA224_HMAC,ON_TOKEN,IS_PRIVATE,hKey);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	hmacSignVerify(CKM_SHA224_HMAC, hSessionRW, hKey);
+
+	rv = generateKey(hSessionRW,CKK_SHA256_HMAC,ON_TOKEN,IS_PRIVATE,hKey);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	hmacSignVerify(CKM_SHA256_HMAC, hSessionRW, hKey);
+
+	rv = generateKey(hSessionRW,CKK_SHA384_HMAC,ON_TOKEN,IS_PRIVATE,hKey);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	hmacSignVerify(CKM_SHA384_HMAC, hSessionRW, hKey);
+
+	rv = generateKey(hSessionRW,CKK_SHA512_HMAC,ON_TOKEN,IS_PRIVATE,hKey);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	hmacSignVerify(CKM_SHA512_HMAC, hSessionRW, hKey);
 }
 
