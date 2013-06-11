@@ -723,10 +723,16 @@ P11SecretKeyObj::P11SecretKeyObj()
 // Add attributes
 bool P11SecretKeyObj::init(OSObject *osobject)
 {
+	if (initialized) return true;
+	if (osobject == NULL) return false;
+
+	OSAttribute attrClass((unsigned long)CKO_SECRET_KEY);
+	osobject->setAttribute(CKA_CLASS, attrClass);
+	OSAttribute attrKeyType(keytype);
+	osobject->setAttribute(CKA_KEY_TYPE, attrKeyType);
+
 	// Create parent
 	if (!P11KeyObj::init(osobject)) return false;
-
-	if (initialized) return true;
 
 	// Create attributes
 	P11Attribute* attrSensitive = new P11AttrSensitive(osobject);
@@ -742,6 +748,7 @@ bool P11SecretKeyObj::init(OSObject *osobject)
 	P11Attribute* attrCheckValue = new P11AttrCheckValue(osobject);
 	P11Attribute* attrWrapWithTrusted = new P11AttrWrapWithTrusted(osobject);
 	P11Attribute* attrTrusted = new P11AttrTrusted(osobject);
+	P11Attribute* attrValue = new P11AttrValue(osobject,0);
 		// CKA_WRAP_TEMPLATE is not supported
 		// CKA_UNWRAP_TEMPLATE is not supported
 
@@ -760,7 +767,8 @@ bool P11SecretKeyObj::init(OSObject *osobject)
 		!attrNeverExtractable->init() ||
 		!attrCheckValue->init() ||
 		!attrWrapWithTrusted->init() ||
-		!attrTrusted->init()
+		!attrTrusted->init() ||
+		!attrValue->init()
 	)
 	{
 		ERROR_MSG("Could not initialize the attribute");
@@ -781,9 +789,28 @@ bool P11SecretKeyObj::init(OSObject *osobject)
 	attributes[attrCheckValue->getType()] = attrCheckValue;
 	attributes[attrWrapWithTrusted->getType()] = attrWrapWithTrusted;
 	attributes[attrTrusted->getType()] = attrTrusted;
+	attributes[attrValue->getType()] = attrValue;
 
 	initialized = true;
 	return true;
+}
+
+// Set Key Type
+bool P11SecretKeyObj::setKeyType(CK_KEY_TYPE keytype)
+{
+	if (!initialized)
+	{
+		this->keytype = keytype;
+		return true;
+	}
+	else
+		return false;
+}
+
+// Get Key Type
+CK_KEY_TYPE P11SecretKeyObj::getKeyType()
+{
+	return this->keytype;
 }
 
 // Constructor

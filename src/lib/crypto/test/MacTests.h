@@ -1,3 +1,5 @@
+/* $Id$ */
+
 /*
  * Copyright (c) 2010 SURFnet bv
  * All rights reserved.
@@ -25,57 +27,49 @@
  */
 
 /*****************************************************************************
- OSSLCryptoFactory.h
+ MacTests.h
 
- This is an OpenSSL based cryptographic algorithm factory
+ Contains test cases to test the MAC implementations
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_OSSLCRYPTOFACTORY_H
-#define _SOFTHSM_V2_OSSLCRYPTOFACTORY_H
+#ifndef _SOFTHSM_V2_MACTESTS_H
+#define _SOFTHSM_V2_MACTESTS_H
 
-#include "config.h"
-#include "CryptoFactory.h"
-#include "SymmetricAlgorithm.h"
-#include "AsymmetricAlgorithm.h"
-#include "HashAlgorithm.h"
+#include <cppunit/extensions/HelperMacros.h>
 #include "MacAlgorithm.h"
 #include "RNG.h"
-#include <memory>
 
-class OSSLCryptoFactory : public CryptoFactory
+class MacTests : public CppUnit::TestFixture
 {
+	CPPUNIT_TEST_SUITE(MacTests);
+	CPPUNIT_TEST(testHMACMD5);
+	CPPUNIT_TEST(testHMACSHA1);
+	CPPUNIT_TEST(testHMACSHA224);
+	CPPUNIT_TEST(testHMACSHA256);
+	CPPUNIT_TEST(testHMACSHA384);
+	CPPUNIT_TEST(testHMACSHA512);
+	CPPUNIT_TEST_SUITE_END();
+
 public:
-	// Return the one-and-only instance
-	static OSSLCryptoFactory* i();
+	void testHMACMD5();
+	void testHMACSHA1();
+	void testHMACSHA224();
+	void testHMACSHA256();
+	void testHMACSHA384();
+	void testHMACSHA512();
 
-	// Create a concrete instance of a symmetric algorithm
-	virtual SymmetricAlgorithm* getSymmetricAlgorithm(std::string algorithm);
-
-	// Create a concrete instance of an asymmetric algorithm
-	virtual AsymmetricAlgorithm* getAsymmetricAlgorithm(std::string algorithm);
-
-	// Create a concrete instance of a hash algorithm
-	virtual HashAlgorithm* getHashAlgorithm(std::string algorithm);
-
-	// Create a concrete instance of a MAC algorithm
-	virtual MacAlgorithm* getMacAlgorithm(std::string algorithm);
-
-	// Get the global RNG (may be an unique RNG per thread)
-	virtual RNG* getRNG(std::string name = "default");
-
-	// Destructor
-	virtual ~OSSLCryptoFactory();
+	void setUp();
+	void tearDown();
 
 private:
-	// Constructor
-	OSSLCryptoFactory();
+	void writeTmpFile(ByteString& data);
 
-	// The one-and-only instance
-	static std::auto_ptr<OSSLCryptoFactory> instance;
+	void readTmpFile(ByteString& data);
 
-	// The one-and-only RNG instance
+	MacAlgorithm* mac;
+
 	RNG* rng;
 };
 
-#endif // !_SOFTHSM_V2_OSSLCRYPTOFACTORY_H
+#endif // !_SOFTHSM_V2_MACTESTS_H
 
