@@ -57,11 +57,10 @@ public:
 	// Setters for the DSA private key components
 	virtual void setX(const ByteString& x);
 
-	// Setters for the DSA public key components
+	// Setters for the DSA domain parameters
 	virtual void setP(const ByteString& p);
 	virtual void setQ(const ByteString& q);
 	virtual void setG(const ByteString& g);
-	virtual void setY(const ByteString& y);
 
 	// Set from OpenSSL representation
 	virtual void setFromOSSL(const DSA* dsa);
