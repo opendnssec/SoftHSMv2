@@ -1,5 +1,7 @@
+/* $Id$ */
+
 /*
- * Copyright (c) 2010 SURFnet bv
+ * Copyright (c) 2010 .SE (The Internet Infrastructure Foundation)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,87 +27,56 @@
  */
 
 /*****************************************************************************
- AsymmetricAlgorithm.h
+ BotanDH.h
 
- Base class for asymmetric algorithm classes
+ Botan Diffie-Hellman asymmetric algorithm implementation
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_ASYMMETRICALGORITHM_H
-#define _SOFTHSM_V2_ASYMMETRICALGORITHM_H
+#ifndef _SOFTHSM_V2_BOTANDH_H
+#define _SOFTHSM_V2_BOTANDH_H
 
 #include "config.h"
-#include <string>
-#include "AsymmetricKeyPair.h"
-#include "AsymmetricParameters.h"
-#include "PublicKey.h"
-#include "PrivateKey.h"
-#include "SymmetricKey.h"
-#include "RNG.h"
+#include "AsymmetricAlgorithm.h"
+#include <botan/pubkey.h>
 
-class AsymmetricAlgorithm
+class BotanDH : public AsymmetricAlgorithm
 {
 public:
-	// Base constructors
-	AsymmetricAlgorithm();
-
 	// Destructor
-	virtual ~AsymmetricAlgorithm() { }
+	virtual ~BotanDH() { }
 
 	// Signing functions
-	virtual bool sign(PrivateKey* privateKey, const ByteString& dataToSign, ByteString& signature, const std::string mechanism);
 	virtual bool signInit(PrivateKey* privateKey, const std::string mechanism);
 	virtual bool signUpdate(const ByteString& dataToSign);
 	virtual bool signFinal(ByteString& signature);
 
 	// Verification functions
-	virtual bool verify(PublicKey* publicKey, const ByteString& originalData, const ByteString& signature, const std::string mechanism);
 	virtual bool verifyInit(PublicKey* publicKey, const std::string mechanism);
 	virtual bool verifyUpdate(const ByteString& originalData);
 	virtual bool verifyFinal(const ByteString& signature);
 
 	// Encryption functions
-	virtual bool encrypt(PublicKey* publicKey, const ByteString& data, ByteString& encryptedData, const std::string padding) = 0;
+	virtual bool encrypt(PublicKey* publicKey, const ByteString& data, ByteString& encryptedData, const std::string padding);
 
 	// Decryption functions
-	virtual bool decrypt(PrivateKey* privateKey, const ByteString& encryptedData, ByteString& data, const std::string padding) = 0;
+	virtual bool decrypt(PrivateKey* privateKey, const ByteString& encryptedData, ByteString& data, const std::string padding);
 
 	// Key factory
-	virtual bool generateKeyPair(AsymmetricKeyPair** ppKeyPair, AsymmetricParameters* parameters, RNG* rng = NULL) = 0;
-	virtual unsigned long getMinKeySize() = 0;
-	virtual unsigned long getMaxKeySize() = 0;
+	virtual bool generateKeyPair(AsymmetricKeyPair** ppKeyPair, AsymmetricParameters* parameters, RNG* rng = NULL);
+	virtual unsigned long getMinKeySize();
+	virtual unsigned long getMaxKeySize();
 	virtual bool generateParameters(AsymmetricParameters** ppParams, void* parameters = NULL, RNG* rng = NULL);
 	virtual bool deriveKey(SymmetricKey **ppSymmetricKey, PublicKey* publicKey, PrivateKey* privateKey);
-	virtual bool reconstructKeyPair(AsymmetricKeyPair** ppKeyPair, ByteString& serialisedData) = 0;
-	virtual bool reconstructPublicKey(PublicKey** ppPublicKey, ByteString& serialisedData) = 0;
-	virtual bool reconstructPrivateKey(PrivateKey** ppPrivateKey, ByteString& serialisedData) = 0;
+	virtual bool reconstructKeyPair(AsymmetricKeyPair** ppKeyPair, ByteString& serialisedData);
+	virtual bool reconstructPublicKey(PublicKey** ppPublicKey, ByteString& serialisedData);
+	virtual bool reconstructPrivateKey(PrivateKey** ppPrivateKey, ByteString& serialisedData);
 	virtual bool reconstructParameters(AsymmetricParameters** ppParams, ByteString& serialisedData);
-	virtual PublicKey* newPublicKey() = 0;
-	virtual PrivateKey* newPrivateKey() = 0;
+	virtual PublicKey* newPublicKey();
+	virtual PrivateKey* newPrivateKey();
 	virtual AsymmetricParameters* newParameters();
 
-	// Key recycling -- override these functions in a derived class if you need to perform specific cleanup
-	virtual void recycleKeyPair(AsymmetricKeyPair* toRecycle);
-	virtual void recycleParameters(AsymmetricParameters* toRecycle);
-	virtual void recyclePublicKey(PublicKey* toRecycle);
-	virtual void recyclePrivateKey(PrivateKey* toRecycle);
-	virtual void recycleSymmetricKey(SymmetricKey* toRecycle);
-
-protected:
-	PublicKey* currentPublicKey;
-	PrivateKey* currentPrivateKey;
-
-	std::string currentMechanism;
-	std::string currentPadding;
-
 private:
-	enum
-	{
-		NONE,
-		SIGN,
-		VERIFY
-	}
-	currentOperation;
 };
 
-#endif // !_SOFTHSM_V2_ASYMMETRICALGORITHM_H
+#endif // !_SOFTHSM_V2_BOTANDH_H
 

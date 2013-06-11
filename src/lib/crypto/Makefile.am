@@ -11,6 +11,9 @@ libsofthsm_crypto_la_SOURCES =	AsymmetricAlgorithm.cpp \
 				AsymmetricKeyPair.cpp \
 				CryptoFactory.cpp \
 				DESKey.cpp \
+				DHParameters.cpp \
+				DHPublicKey.cpp \
+				DHPrivateKey.cpp \
 				DSAParameters.cpp \
 				DSAPublicKey.cpp \
 				DSAPrivateKey.cpp \
@@ -35,6 +38,10 @@ if WITH_OPENSSL
 libsofthsm_crypto_la_SOURCES +=	OSSLAES.cpp \
 				OSSLCryptoFactory.cpp \
 				OSSLDES.cpp \
+				OSSLDH.cpp \
+				OSSLDHKeyPair.cpp \
+				OSSLDHPrivateKey.cpp \
+				OSSLDHPublicKey.cpp \
 				OSSLDSA.cpp \
 				OSSLDSAKeyPair.cpp \
 				OSSLDSAPrivateKey.cpp \
@@ -66,6 +73,10 @@ if WITH_BOTAN
 libsofthsm_crypto_la_SOURCES +=	BotanAES.cpp \
 				BotanCryptoFactory.cpp \
 				BotanDES.cpp \
+				BotanDH.cpp \
+				BotanDHKeyPair.cpp \
+				BotanDHPrivateKey.cpp \
+				BotanDHPublicKey.cpp \
 				BotanDSA.cpp \
 				BotanDSAKeyPair.cpp \
 				BotanDSAPrivateKey.cpp \

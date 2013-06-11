@@ -46,6 +46,8 @@
 #include "DSAPrivateKey.h"
 #include "ECPublicKey.h"
 #include "ECPrivateKey.h"
+#include "DHPublicKey.h"
+#include "DHPrivateKey.h"
 
 #include <memory>
 
@@ -239,6 +241,40 @@ private:
 		CK_BBOOL isPrivateKeyOnToken,
 		CK_BBOOL isPrivateKeyPrivate
 	);
+	CK_RV generateDH
+	(
+		CK_SESSION_HANDLE hSession,
+		CK_ATTRIBUTE_PTR pPublicKeyTemplate,
+		CK_ULONG ulPublicKeyAttributeCount,
+		CK_ATTRIBUTE_PTR pPrivateKeyTemplate,
+		CK_ULONG ulPrivateKeyAttributeCount,
+		CK_OBJECT_HANDLE_PTR phPublicKey,
+		CK_OBJECT_HANDLE_PTR phPrivateKey,
+		CK_BBOOL isPublicKeyOnToken,
+		CK_BBOOL isPublicKeyPrivate,
+		CK_BBOOL isPrivateKeyOnToken,
+		CK_BBOOL isPrivateKeyPrivate
+	);
+	CK_RV generateDHParameters
+	(
+		CK_SESSION_HANDLE hSession,
+		CK_ATTRIBUTE_PTR pTemplate,
+		CK_ULONG ulCount,
+		CK_OBJECT_HANDLE_PTR phKey,
+		CK_BBOOL isToken,
+		CK_BBOOL isPrivate
+	);
+	CK_RV deriveDH
+	(
+		CK_SESSION_HANDLE hSession,
+		CK_MECHANISM_PTR pMechanism,
+		CK_OBJECT_HANDLE hBaseKey,
+		CK_ATTRIBUTE_PTR pTemplate,
+		CK_ULONG ulCount,
+		CK_OBJECT_HANDLE_PTR phKey,
+		CK_BBOOL isOnToken,
+		CK_BBOOL isPrivate
+	);
 	CK_RV CreateObject
 	(
 		CK_SESSION_HANDLE hSession,
@@ -254,6 +290,8 @@ private:
 	CK_RV getDSAPublicKey(DSAPublicKey* publicKey, Token* token, OSObject* key);
 	CK_RV getECPrivateKey(ECPrivateKey* privateKey, Token* token, OSObject* key);
 	CK_RV getECPublicKey(ECPublicKey* publicKey, Token* token, OSObject* key);
+	CK_RV getDHPrivateKey(DHPrivateKey* privateKey, Token* token, OSObject* key);
+	CK_RV getDHPublicKey(DHPublicKey* publicKey, DHPrivateKey* privateKey, ByteString& pubParams);
 	CK_RV getSymmetricKey(SymmetricKey* skey, Token* token, OSObject* key);
 };
 
