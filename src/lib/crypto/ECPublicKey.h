@@ -1,3 +1,5 @@
+/* $Id$ */
+
 /*
  * Copyright (c) 2010 SURFnet bv
  * All rights reserved.
@@ -25,40 +27,51 @@
  */
 
 /*****************************************************************************
- OSSLUtil.h
+ ECPublicKey.h
 
- OpenSSL convenience functions
+ Elliptic Curve public key class
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_OSSLUTIL_H
-#define _SOFTHSM_V2_OSSLUTIL_H
+#ifndef _SOFTHSM_V2_ECPUBLICKEY_H
+#define _SOFTHSM_V2_ECPUBLICKEY_H
 
 #include "config.h"
-#include "ByteString.h"
-#include <openssl/bn.h>
-#include <openssl/ec.h>
+#include "PublicKey.h"
 
-namespace OSSL
+class ECPublicKey : public PublicKey
 {
-	// Convert an OpenSSL BIGNUM to a ByteString
-	ByteString bn2ByteString(const BIGNUM* bn);
+public:
+	// The type
+	static const char* type;
 
-	// Convert a ByteString to an OpenSSL BIGNUM
-	BIGNUM* byteString2bn(const ByteString& byteString);
+	// Check if the key is of the given type
+	virtual bool isOfType(const char* type);
 
-	// Convert an OpenSSL EC GROUP to a ByteString
-	ByteString grp2ByteString(const EC_GROUP* grp);
+	// Get the bit length
+	virtual unsigned long getBitLength() const;
 
-	// Convert a ByteString to an OpenSSL EC GROUP
-	EC_GROUP* byteString2grp(const ByteString& byteString);
+	// Get the output length
+	virtual unsigned long getOutputLength() const;
 
-	// Convert an OpenSSL EC POINT in the given EC GROUP to a ByteString
-	ByteString pt2ByteString(const EC_POINT* pt, const EC_GROUP* grp);
+	// Get the base point order length
+	virtual unsigned long getOrderLength() const = 0;
 
-	// Convert a ByteString to an OpenSSL EC POINT in the given EC GROUP
-	EC_POINT* byteString2pt(const ByteString& byteString, const EC_GROUP* grp);
+	// Setters for the EC public key components
+	virtual void setEC(const ByteString& ec);
+	virtual void setQ(const ByteString& q);
 
-}
+	// Getters for the EC public key components
+	virtual const ByteString& getEC() const;
+	virtual const ByteString& getQ() const;
 
-#endif // !_SOFTHSM_V2_OSSLUTIL_H
+	// Serialisation
+	virtual ByteString serialise() const;
+	virtual bool deserialise(ByteString& serialised);
+
+protected:
+	// Public components
+	ByteString ec,q;
+};
+
+#endif // !_SOFTHSM_V2_ECPUBLICKEY_H
 

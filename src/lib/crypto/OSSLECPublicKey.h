@@ -1,3 +1,5 @@
+/* $Id$ */
+
 /*
  * Copyright (c) 2010 SURFnet bv
  * All rights reserved.
@@ -25,40 +27,52 @@
  */
 
 /*****************************************************************************
- OSSLUtil.h
+ OSSLECPublicKey.h
 
- OpenSSL convenience functions
+ OpenSSL Elliptic Curve public key class
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_OSSLUTIL_H
-#define _SOFTHSM_V2_OSSLUTIL_H
+#ifndef _SOFTHSM_V2_OSSLECPUBLICKEY_H
+#define _SOFTHSM_V2_OSSLECPUBLICKEY_H
 
 #include "config.h"
-#include "ByteString.h"
-#include <openssl/bn.h>
+#include "ECPublicKey.h"
 #include <openssl/ec.h>
 
-namespace OSSL
+class OSSLECPublicKey : public ECPublicKey
 {
-	// Convert an OpenSSL BIGNUM to a ByteString
-	ByteString bn2ByteString(const BIGNUM* bn);
+public:
+	// Constructors
+	OSSLECPublicKey();
+	
+	OSSLECPublicKey(const EC_KEY* inECKEY);
+	
+	// Destructor
+	virtual ~OSSLECPublicKey();
 
-	// Convert a ByteString to an OpenSSL BIGNUM
-	BIGNUM* byteString2bn(const ByteString& byteString);
+	// The type
+	static const char* type;
 
-	// Convert an OpenSSL EC GROUP to a ByteString
-	ByteString grp2ByteString(const EC_GROUP* grp);
+	// Check if the key is of the given type
+	virtual bool isOfType(const char* type);
 
-	// Convert a ByteString to an OpenSSL EC GROUP
-	EC_GROUP* byteString2grp(const ByteString& byteString);
+	// Get the base point order length
+	virtual unsigned long getOrderLength() const;
 
-	// Convert an OpenSSL EC POINT in the given EC GROUP to a ByteString
-	ByteString pt2ByteString(const EC_POINT* pt, const EC_GROUP* grp);
+	// Setters for the EC public key components
+	virtual void setEC(const ByteString& ec);
+	virtual void setQ(const ByteString& q);
 
-	// Convert a ByteString to an OpenSSL EC POINT in the given EC GROUP
-	EC_POINT* byteString2pt(const ByteString& byteString, const EC_GROUP* grp);
+	// Set from OpenSSL representation
+	virtual void setFromOSSL(const EC_KEY* eckey);
 
-}
+	// Retrieve the OpenSSL representation of the key
+	EC_KEY* getOSSLKey();
 
-#endif // !_SOFTHSM_V2_OSSLUTIL_H
+private:
+	// The internal OpenSSL representation
+	EC_KEY* eckey;
+};
+
+#endif // !_SOFTHSM_V2_OSSLDSAPUBLICKEY_H
 

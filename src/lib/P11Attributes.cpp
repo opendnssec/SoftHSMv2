@@ -1817,3 +1817,26 @@ CK_RV P11AttrPrimeBits::updateAttr(Token *token, bool isPrivate, CK_VOID_PTR pVa
 
 	return CKR_OK;
 }
+
+/*****************************************
+ * CKA_EC_PARAMS
+ *****************************************/
+
+// Set default value
+bool P11AttrEcParams::setDefault()
+{
+	OSAttribute attr(ByteString(""));
+	return osobject->setAttribute(type, attr);
+}
+
+/*****************************************
+ * CKA_EC_POINT
+ *****************************************/
+
+// Set default value
+bool P11AttrEcPoint::setDefault()
+{
+	OSAttribute attr(ByteString(""));
+	return osobject->setAttribute(type, attr);
+}
+

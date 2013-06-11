@@ -1,5 +1,7 @@
+/* $Id$ */
+
 /*
- * Copyright (c) 2010 SURFnet bv
+ * Copyright (c) 2010 .SE (The Internet Infrastructure Foundation)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,40 +27,57 @@
  */
 
 /*****************************************************************************
- OSSLUtil.h
+ BotanECDSAPrivateKey.h
 
- OpenSSL convenience functions
+ Botan ECDSA private key class
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_OSSLUTIL_H
-#define _SOFTHSM_V2_OSSLUTIL_H
+#ifndef _SOFTHSM_V2_BOTANECDSAPRIVATEKEY_H
+#define _SOFTHSM_V2_BOTANECDSAPRIVATEKEY_H
 
 #include "config.h"
-#include "ByteString.h"
-#include <openssl/bn.h>
-#include <openssl/ec.h>
+#include "ECPrivateKey.h"
+#include <botan/ecdsa.h>
 
-namespace OSSL
+class BotanECDSAPrivateKey : public ECPrivateKey
 {
-	// Convert an OpenSSL BIGNUM to a ByteString
-	ByteString bn2ByteString(const BIGNUM* bn);
+public:
+	// Constructors
+	BotanECDSAPrivateKey();
 
-	// Convert a ByteString to an OpenSSL BIGNUM
-	BIGNUM* byteString2bn(const ByteString& byteString);
+	BotanECDSAPrivateKey(const Botan::ECDSA_PrivateKey* inECKEY);
+	
+	// Destructor
+	virtual ~BotanECDSAPrivateKey();
 
-	// Convert an OpenSSL EC GROUP to a ByteString
-	ByteString grp2ByteString(const EC_GROUP* grp);
+	// The type
+	static const char* type;
 
-	// Convert a ByteString to an OpenSSL EC GROUP
-	EC_GROUP* byteString2grp(const ByteString& byteString);
+	// Check if the key is of the given type
+	virtual bool isOfType(const char* type);
 
-	// Convert an OpenSSL EC POINT in the given EC GROUP to a ByteString
-	ByteString pt2ByteString(const EC_POINT* pt, const EC_GROUP* grp);
+	// Get the base point order length
+	virtual unsigned long getOrderLength() const;
 
-	// Convert a ByteString to an OpenSSL EC POINT in the given EC GROUP
-	EC_POINT* byteString2pt(const ByteString& byteString, const EC_GROUP* grp);
+	// Setters for the ECDSA private key components
+	virtual void setD(const ByteString& d);
 
-}
+	// Setters for the ECDSA public key components
+	virtual void setEC(const ByteString& ec);
 
-#endif // !_SOFTHSM_V2_OSSLUTIL_H
+	// Set from Botan representation
+	virtual void setFromBotan(const Botan::ECDSA_PrivateKey* eckey);
+
+	// Retrieve the Botan representation of the key
+	Botan::ECDSA_PrivateKey* getBotanKey();
+
+private:
+	// The internal Botan representation
+	Botan::ECDSA_PrivateKey* eckey;
+
+	// Create the Botan representation of the key
+	void createBotanKey();
+};
+
+#endif // !_SOFTHSM_V2_BOTANECDSAPRIVATEKEY_H
 

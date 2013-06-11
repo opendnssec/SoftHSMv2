@@ -1,3 +1,5 @@
+/* $Id$ */
+
 /*
  * Copyright (c) 2010 SURFnet bv
  * All rights reserved.
@@ -25,40 +27,40 @@
  */
 
 /*****************************************************************************
- OSSLUtil.h
+ ECParameters.h
 
- OpenSSL convenience functions
+ Elliptic Curve parameters (only used for key generation)
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_OSSLUTIL_H
-#define _SOFTHSM_V2_OSSLUTIL_H
+#ifndef _SOFTHSM_V2_ECPARAMETERS_H
+#define _SOFTHSM_V2_ECPARAMETERS_H
 
 #include "config.h"
 #include "ByteString.h"
-#include <openssl/bn.h>
-#include <openssl/ec.h>
+#include "AsymmetricParameters.h"
 
-namespace OSSL
+class ECParameters : public AsymmetricParameters
 {
-	// Convert an OpenSSL BIGNUM to a ByteString
-	ByteString bn2ByteString(const BIGNUM* bn);
+public:
+	// The type
+	static const char* type;
 
-	// Convert a ByteString to an OpenSSL BIGNUM
-	BIGNUM* byteString2bn(const ByteString& byteString);
+	// Set the curve OID ec
+	void setEC(const ByteString& ec);
 
-	// Convert an OpenSSL EC GROUP to a ByteString
-	ByteString grp2ByteString(const EC_GROUP* grp);
+	// Get the curve OID ec
+	const ByteString& getEC() const;
 
-	// Convert a ByteString to an OpenSSL EC GROUP
-	EC_GROUP* byteString2grp(const ByteString& byteString);
+	// Are the parameters of the given type?
+	virtual bool areOfType(const char* type);
 
-	// Convert an OpenSSL EC POINT in the given EC GROUP to a ByteString
-	ByteString pt2ByteString(const EC_POINT* pt, const EC_GROUP* grp);
+	// Serialisation
+	virtual ByteString serialise() const;
+	virtual bool deserialise(ByteString& serialised);
 
-	// Convert a ByteString to an OpenSSL EC POINT in the given EC GROUP
-	EC_POINT* byteString2pt(const ByteString& byteString, const EC_GROUP* grp);
+private:
+	ByteString ec;
+};
 
-}
-
-#endif // !_SOFTHSM_V2_OSSLUTIL_H
+#endif // !_SOFTHSM_V2_ECPARAMETERS_H
 
