@@ -2068,38 +2068,32 @@ CK_RV SoftHSM::AsymSignInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechan
 			break;
 		case CKM_DSA:
 			mechanism = "dsa";
-			// bAllowMultiPartOp = false;
-			bIsMultiPartOp = false;
+			bAllowMultiPartOp = false;
 			isDSA = true;
 			break;
 		case CKM_DSA_SHA1:
 			mechanism = "dsa-sha1";
-			// bAllowMultiPartOp = true;
-			bIsMultiPartOp = true;
+			bAllowMultiPartOp = true;
 			isDSA = true;
 			break;
 		case CKM_DSA_SHA224:
 			mechanism = "dsa-sha224";
-			// bAllowMultiPartOp = true;
-			bIsMultiPartOp = true;
+			bAllowMultiPartOp = true;
 			isDSA = true;
 			break;
 		case CKM_DSA_SHA256:
 			mechanism = "dsa-sha256";
-			// bAllowMultiPartOp = true;
-			bIsMultiPartOp = true;
+			bAllowMultiPartOp = true;
 			isDSA = true;
 			break;
 		case CKM_DSA_SHA384:
 			mechanism = "dsa-sha384";
-			// bAllowMultiPartOp = true;
-			bIsMultiPartOp = true;
+			bAllowMultiPartOp = true;
 			isDSA = true;
 			break;
 		case CKM_DSA_SHA512:
 			mechanism = "dsa-sha512";
-			// bAllowMultiPartOp = true;
-			bIsMultiPartOp = true;
+			bAllowMultiPartOp = true;
 			isDSA = true;
 			break;
 		default:
@@ -2692,38 +2686,32 @@ CK_RV SoftHSM::AsymVerifyInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 			break;
 		case CKM_DSA:
 			mechanism = "dsa";
-			// bAllowMultiPartOp = false;
-			bIsMultiPartOp = false;
+			bAllowMultiPartOp = false;
 			isDSA = true;
 			break;
 		case CKM_DSA_SHA1:
 			mechanism = "dsa-sha1";
-			// bAllowMultiPartOp = true;
-			bIsMultiPartOp = true;
+			bAllowMultiPartOp = true;
 			isDSA = true;
 			break;
 		case CKM_DSA_SHA224:
 			mechanism = "dsa-sha224";
-			// bAllowMultiPartOp = true;
-			bIsMultiPartOp = true;
+			bAllowMultiPartOp = true;
 			isDSA = true;
 			break;
 		case CKM_DSA_SHA256:
 			mechanism = "dsa-sha256";
-			// bAllowMultiPartOp = true;
-			bIsMultiPartOp = true;
+			bAllowMultiPartOp = true;
 			isDSA = true;
 			break;
 		case CKM_DSA_SHA384:
 			mechanism = "dsa-sha384";
-			// bAllowMultiPartOp = true;
-			bIsMultiPartOp = true;
+			bAllowMultiPartOp = true;
 			isDSA = true;
 			break;
 		case CKM_DSA_SHA512:
 			mechanism = "dsa-sha512";
-			// bAllowMultiPartOp = true;
-			bIsMultiPartOp = true;
+			bAllowMultiPartOp = true;
 			isDSA = true;
 			break;
 		default:
