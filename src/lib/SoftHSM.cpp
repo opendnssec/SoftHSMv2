@@ -119,6 +119,14 @@ static CK_RV newP11Object(CK_OBJECT_CLASS objClass, CK_KEY_TYPE keyType, std::au
 			else
 				return CKR_ATTRIBUTE_VALUE_INVALID;
 			break;
+		case CKO_DOMAIN_PARAMETERS:
+			if (keyType == CKK_DSA)
+				p11object.reset( new P11DSADomainObj );
+			else if (keyType == CKK_DH)
+				p11object.reset( new P11DHDomainObj );
+			else
+				return CKR_ATTRIBUTE_VALUE_INVALID;
+			break;
 		default:
 			return CKR_ATTRIBUTE_VALUE_INVALID; // invalid value for a valid argument
 	}
@@ -3438,7 +3446,7 @@ CK_RV SoftHSM::C_DecryptVerifyUpdate(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pEn
 	return CKR_FUNCTION_NOT_SUPPORTED;
 }
 
-// Generate a secret key using the specified mechanism
+// Generate a secret key or a domain parameter set using the specified mechanism
 CK_RV SoftHSM::C_GenerateKey(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechanism, CK_ATTRIBUTE_PTR pTemplate, CK_ULONG ulCount, CK_OBJECT_HANDLE_PTR phKey)
 {
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
@@ -6142,6 +6150,7 @@ CK_RV SoftHSM::getDSAPublicKey(DSAPublicKey* publicKey, Token* token, OSObject* 
 	publicKey->setQ(subprime);
 	publicKey->setG(generator);
 	publicKey->setY(value);
+
 	return CKR_OK;
 }
 
@@ -6357,6 +6366,7 @@ CK_RV SoftHSM::getSymmetricKey(SymmetricKey* skey, Token* token, OSObject* key)
 	}
 
 	skey->setKeyBits(keybits);
+
 	return CKR_OK;
 }
 

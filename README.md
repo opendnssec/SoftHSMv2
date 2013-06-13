@@ -51,6 +51,8 @@ Options:
 	--disable-non-paged-memory
 	                        Disable non-paged memory for secure storage
 	                        (default enabled)
+	--enable-ecc            Enable support for ECC (default enabled)
+	--enable-gost		Enable support for GOST (default disabled)
 	--with-crypto-backend   Select crypto backend (openssl|botan)
 	--with-openssl=PATH     Specify prefix of path of OpenSSL
 	--with-botan=PATH       Specify prefix of path of Botan
