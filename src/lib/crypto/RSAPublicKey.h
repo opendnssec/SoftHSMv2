@@ -1,5 +1,3 @@
-/* $Id$ */
-
 /*
  * Copyright (c) 2010 SURFnet bv
  * All rights reserved.
@@ -29,7 +27,7 @@
 /*****************************************************************************
  RSAPublicKey.h
 
- RSA private key class
+ RSA public key class
  *****************************************************************************/
 
 #ifndef _SOFTHSM_V2_RSAPUBLICKEY_H

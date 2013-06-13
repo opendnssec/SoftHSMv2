@@ -1,5 +1,3 @@
-/* $Id$ */
-
 /*
  * Copyright (c) 2010 SURFnet bv
  * All rights reserved.
@@ -29,7 +27,7 @@
 /*****************************************************************************
  DSAPublicKey.cpp
 
- DSA private key class
+ DSA public key class
  *****************************************************************************/
 
 #include "config.h"

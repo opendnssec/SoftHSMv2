@@ -1,5 +1,3 @@
-/* $Id$ */
-
 /*
  * Copyright (c) 2010 .SE (The Internet Infrastructure Foundation)
  * All rights reserved.
@@ -73,8 +71,6 @@ void BotanDSAPrivateKey::setFromBotan(const Botan::DSA_PrivateKey* dsa)
 	setG(g);
 	ByteString x = BotanUtil::bigInt2ByteString(dsa->get_x());
 	setX(x);
-	ByteString y = BotanUtil::bigInt2ByteString(dsa->get_y());
-	setY(y);
 }
 
 // Check if the key is of the given type
@@ -96,7 +92,7 @@ void BotanDSAPrivateKey::setX(const ByteString& x)
 }
 
 
-// Setters for the DSA public key components
+// Setters for the DSA domain parameters
 void BotanDSAPrivateKey::setP(const ByteString& p)
 {
 	DSAPrivateKey::setP(p);
@@ -122,17 +118,6 @@ void BotanDSAPrivateKey::setQ(const ByteString& q)
 void BotanDSAPrivateKey::setG(const ByteString& g)
 {
 	DSAPrivateKey::setG(g);
-
-	if (dsa)
-	{
-		delete dsa;
-		dsa = NULL;
-	}
-}
-
-void BotanDSAPrivateKey::setY(const ByteString& y)
-{
-	DSAPrivateKey::setY(y);
 
 	if (dsa)
 	{
@@ -179,7 +164,7 @@ void BotanDSAPrivateKey::createBotanKey()
 		}
 		catch (...)
 		{
-			ERROR_MSG("Could not create the Botan public key");
+			ERROR_MSG("Could not create the Botan private key");
 		}
 	}
 }

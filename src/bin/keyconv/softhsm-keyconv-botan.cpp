@@ -1,5 +1,3 @@
-/* $Id$ */
-
 /*
  * Copyright (c) 2010 .SE (The Internet Infrastructure Foundation)
  * All rights reserved.
@@ -33,6 +31,7 @@
  *****************************************************************************/
 
 #include <config.h>
+#define KEYCONV_BOTAN
 #include "softhsm-keyconv.h"
 
 #include <stdio.h>

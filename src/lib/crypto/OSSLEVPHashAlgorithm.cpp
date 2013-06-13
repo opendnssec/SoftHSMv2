@@ -1,5 +1,3 @@
-/* $Id$ */
-
 /*
  * Copyright (c) 2010 SURFnet bv
  * All rights reserved.
@@ -76,6 +74,11 @@ bool OSSLEVPHashAlgorithm::hashUpdate(const ByteString& data)
 	}
 
 	// Continue digesting
+	if (data.size() == 0)
+	{
+		return true;
+	}
+
 	if (!EVP_DigestUpdate(&curCTX, (unsigned char*) data.const_byte_str(), data.size()))
 	{
 		ERROR_MSG("EVP_DigestUpdate failed");

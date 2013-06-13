@@ -1,5 +1,3 @@
-/* $Id$ */
-
 /*
  * Copyright (c) 2010 .SE (The Internet Infrastructure Foundation)
  * All rights reserved.
@@ -280,7 +278,7 @@ int to_pkcs8(char* in_path, char* out_path, char* file_pin)
 	switch (algorithm)
 	{
 		case DNS_KEYALG_ERROR:
-			fprintf(stderr, "ERROR: The algorithm was not given in the file.\n",
+			fprintf(stderr, "ERROR: The algorithm %i was not given in the file.\n",
 					algorithm);
 			error = 1;
 			break;

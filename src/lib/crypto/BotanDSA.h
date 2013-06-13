@@ -1,5 +1,3 @@
-/* $Id$ */
-
 /*
  * Copyright (c) 2010 .SE (The Internet Infrastructure Foundation)
  * All rights reserved.
@@ -49,11 +47,13 @@ public:
 	virtual ~BotanDSA();
 
 	// Signing functions
+	virtual bool sign(PrivateKey* privateKey, const ByteString& dataToSign, ByteString& signature, const std::string mechanism);
 	virtual bool signInit(PrivateKey* privateKey, const std::string mechanism);
 	virtual bool signUpdate(const ByteString& dataToSign);
 	virtual bool signFinal(ByteString& signature);
 
 	// Verification functions
+	virtual bool verify(PublicKey* publicKey, const ByteString& originalData, const ByteString& signature, const std::string mechanism);
 	virtual bool verifyInit(PublicKey* publicKey, const std::string mechanism);
 	virtual bool verifyUpdate(const ByteString& originalData);
 	virtual bool verifyFinal(const ByteString& signature);

@@ -1,5 +1,3 @@
-/* $Id: ByteString.h 54 2010-04-14 12:10:06Z rijswijk $ */
-
 /*
  * Copyright (c) 2010 SURFnet bv
  * All rights reserved.

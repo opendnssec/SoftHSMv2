@@ -1,5 +1,3 @@
-/* $Id$ */
-
 /*
  * Copyright (c) 2010 SURFnet bv
  * All rights reserved.
@@ -40,8 +38,13 @@
 #include "SymmetricAlgorithm.h"
 #include "AsymmetricAlgorithm.h"
 #include "HashAlgorithm.h"
+#include "MacAlgorithm.h"
 #include "RNG.h"
 #include <memory>
+#ifdef WITH_GOST
+#include <openssl/conf.h>
+#include <openssl/engine.h>
+#endif
 
 class OSSLCryptoFactory : public CryptoFactory
 {
@@ -58,11 +61,19 @@ public:
 	// Create a concrete instance of a hash algorithm
 	virtual HashAlgorithm* getHashAlgorithm(std::string algorithm);
 
+	// Create a concrete instance of a MAC algorithm
+	virtual MacAlgorithm* getMacAlgorithm(std::string algorithm);
+
 	// Get the global RNG (may be an unique RNG per thread)
 	virtual RNG* getRNG(std::string name = "default");
 
 	// Destructor
 	virtual ~OSSLCryptoFactory();
+
+#ifdef WITH_GOST
+	// The EVP_MD for GOST R 34.11-94
+	const EVP_MD *EVP_GOST_34_11;
+#endif
 
 private:
 	// Constructor
@@ -73,6 +84,11 @@ private:
 
 	// The one-and-only RNG instance
 	RNG* rng;
+
+#ifdef WITH_GOST
+	// The GOST engine
+	ENGINE *eg;
+#endif
 };
 
 #endif // !_SOFTHSM_V2_OSSLCRYPTOFACTORY_H

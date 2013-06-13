@@ -1,5 +1,3 @@
-/* $Id$ */
-
 /*
  * Copyright (c) 2010 SURFnet bv
  * All rights reserved.
@@ -41,6 +39,7 @@
 #include "AsymmetricParameters.h"
 #include "PublicKey.h"
 #include "PrivateKey.h"
+#include "SymmetricKey.h"
 #include "RNG.h"
 
 class AsymmetricAlgorithm
@@ -75,6 +74,7 @@ public:
 	virtual unsigned long getMinKeySize() = 0;
 	virtual unsigned long getMaxKeySize() = 0;
 	virtual bool generateParameters(AsymmetricParameters** ppParams, void* parameters = NULL, RNG* rng = NULL);
+	virtual bool deriveKey(SymmetricKey **ppSymmetricKey, PublicKey* publicKey, PrivateKey* privateKey);
 	virtual bool reconstructKeyPair(AsymmetricKeyPair** ppKeyPair, ByteString& serialisedData) = 0;
 	virtual bool reconstructPublicKey(PublicKey** ppPublicKey, ByteString& serialisedData) = 0;
 	virtual bool reconstructPrivateKey(PrivateKey** ppPrivateKey, ByteString& serialisedData) = 0;
@@ -88,6 +88,7 @@ public:
 	virtual void recycleParameters(AsymmetricParameters* toRecycle);
 	virtual void recyclePublicKey(PublicKey* toRecycle);
 	virtual void recyclePrivateKey(PrivateKey* toRecycle);
+	virtual void recycleSymmetricKey(SymmetricKey* toRecycle);
 
 protected:
 	PublicKey* currentPublicKey;

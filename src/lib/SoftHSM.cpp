@@ -1,5 +1,3 @@
-/* $Id$ */
-
 /*
  * Copyright (c) 2010 SURFnet bv
  * Copyright (c) 2010 .SE (The Internet Infrastructure Foundation)
@@ -48,6 +46,14 @@
 #include "DSAParameters.h"
 #include "DSAPublicKey.h"
 #include "DSAPrivateKey.h"
+#include "ECPublicKey.h"
+#include "ECPrivateKey.h"
+#include "ECParameters.h"
+#include "DHParameters.h"
+#include "DHPublicKey.h"
+#include "DHPrivateKey.h"
+#include "GOSTPublicKey.h"
+#include "GOSTPrivateKey.h"
 #include "cryptoki.h"
 #include "SoftHSM.h"
 #include "osmutex.h"
@@ -70,6 +76,14 @@ static CK_RV newP11Object(CK_OBJECT_CLASS objClass, CK_KEY_TYPE keyType, std::au
 		case CKO_PUBLIC_KEY:
 			if (keyType == CKK_RSA)
 				p11object.reset( new P11RSAPublicKeyObj );
+			else if (keyType == CKK_DSA)
+				p11object.reset( new P11DSAPublicKeyObj );
+			else if (keyType == CKK_EC)
+				p11object.reset( new P11ECPublicKeyObj );
+			else if (keyType == CKK_DH)
+				p11object.reset( new P11DHPublicKeyObj );
+			else if (keyType == CKK_GOSTR3410)
+				p11object.reset( new P11GOSTPublicKeyObj );
 			else
 				return CKR_ATTRIBUTE_VALUE_INVALID;
 			break;
@@ -77,14 +91,34 @@ static CK_RV newP11Object(CK_OBJECT_CLASS objClass, CK_KEY_TYPE keyType, std::au
 			// we need to know the type too
 			if (keyType == CKK_RSA)
 				p11object.reset( new P11RSAPrivateKeyObj );
+			else if (keyType == CKK_DSA)
+				p11object.reset( new P11DSAPrivateKeyObj );
+			else if (keyType == CKK_EC)
+				p11object.reset( new P11ECPrivateKeyObj );
+			else if (keyType == CKK_DH)
+				p11object.reset( new P11DHPrivateKeyObj );
+			else if (keyType == CKK_GOSTR3410)
+				p11object.reset( new P11GOSTPrivateKeyObj );
 			else
 				return CKR_ATTRIBUTE_VALUE_INVALID;
 			break;
 		case CKO_SECRET_KEY:
-#if 0
-			p11object.reset( new P11SecretKeyObj );
+			if ((keyType == CKK_GENERIC_SECRET) ||
+			    (keyType == CKK_MD5_HMAC) ||
+			    (keyType == CKK_SHA_1_HMAC) ||
+			    (keyType == CKK_SHA224_HMAC) ||
+			    (keyType == CKK_SHA256_HMAC) ||
+			    (keyType == CKK_SHA384_HMAC) ||
+			    (keyType == CKK_SHA512_HMAC) ||
+			    (keyType == CKK_GOST28147))
+			{
+				P11SecretKeyObj* key = new P11SecretKeyObj;
+				p11object.reset(key);
+				key->setKeyType(keyType);
+			}
+			else
+				return CKR_ATTRIBUTE_VALUE_INVALID;
 			break;
-#endif
 		default:
 			return CKR_ATTRIBUTE_VALUE_INVALID; // invalid value for a valid argument
 	}
@@ -453,7 +487,19 @@ CK_RV SoftHSM::C_GetTokenInfo(CK_SLOT_ID slotID, CK_TOKEN_INFO_PTR pInfo)
 CK_RV SoftHSM::C_GetMechanismList(CK_SLOT_ID slotID, CK_MECHANISM_TYPE_PTR pMechanismList, CK_ULONG_PTR pulCount)
 {
 	// A list with the supported mechanisms
-	CK_ULONG nrSupportedMechanisms = 24;
+#ifdef WITH_ECC
+#ifdef WITH_GOST
+	CK_ULONG nrSupportedMechanisms = 50;
+#else
+	CK_ULONG nrSupportedMechanisms = 46;
+#endif
+#else
+#ifdef WITH_GOST
+	CK_ULONG nrSupportedMechanisms = 47;
+#else
+	CK_ULONG nrSupportedMechanisms = 43;
+#endif
+#endif
 	CK_MECHANISM_TYPE supportedMechanisms[] =
 	{
 		CKM_MD5,
@@ -462,12 +508,19 @@ CK_RV SoftHSM::C_GetMechanismList(CK_SLOT_ID slotID, CK_MECHANISM_TYPE_PTR pMech
 		CKM_SHA256,
 		CKM_SHA384,
 		CKM_SHA512,
+		CKM_MD5_HMAC,
+		CKM_SHA_1_HMAC,
+		CKM_SHA224_HMAC,
+		CKM_SHA256_HMAC,
+		CKM_SHA384_HMAC,
+		CKM_SHA512_HMAC,
 		CKM_RSA_PKCS_KEY_PAIR_GEN,
 		CKM_RSA_PKCS,
 		CKM_RSA_X_509,
 		CKM_MD5_RSA_PKCS,
 		CKM_SHA1_RSA_PKCS,
 		CKM_RSA_PKCS_OAEP,
+		CKM_SHA224_RSA_PKCS,
 		CKM_SHA256_RSA_PKCS,
 		CKM_SHA384_RSA_PKCS,
 		CKM_SHA512_RSA_PKCS,
@@ -483,7 +536,26 @@ CK_RV SoftHSM::C_GetMechanismList(CK_SLOT_ID slotID, CK_MECHANISM_TYPE_PTR pMech
 		CKM_AES_CBC,
 		CKM_DSA_PARAMETER_GEN,
 		CKM_DSA_KEY_PAIR_GEN,
-		CKM_DSA_SHA1
+		CKM_DSA,
+		CKM_DSA_SHA1,
+		CKM_DSA_SHA224,
+		CKM_DSA_SHA256,
+		CKM_DSA_SHA384,
+		CKM_DSA_SHA512,
+		CKM_DH_PKCS_KEY_PAIR_GEN,
+		CKM_DH_PKCS_PARAMETER_GEN,
+		CKM_DH_PKCS_DERIVE,
+#ifdef WITH_ECC
+		CKM_EC_KEY_PAIR_GEN,
+		CKM_ECDSA,
+		CKM_ECDH1_DERIVE,
+#endif
+#ifdef WITH_GOST
+		CKM_GOSTR3411,
+		CKM_GOSTR3411_HMAC,
+		CKM_GOSTR3410_KEY_PAIR_GEN,
+		CKM_GOSTR3410_WITH_GOSTR3411
+#endif
 	};
 
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
@@ -511,7 +583,7 @@ CK_RV SoftHSM::C_GetMechanismList(CK_SLOT_ID slotID, CK_MECHANISM_TYPE_PTR pMech
 
 	*pulCount = nrSupportedMechanisms;
 
-	for (int i = 0; i < nrSupportedMechanisms; i ++)
+	for (CK_ULONG i = 0; i < nrSupportedMechanisms; i ++)
 	{
 		pMechanismList[i] = supportedMechanisms[i];
 	}
@@ -524,6 +596,11 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 {
 	unsigned long rsaMinSize, rsaMaxSize;
 	unsigned long dsaMinSize, dsaMaxSize;
+	unsigned long dhMinSize, dhMaxSize;
+#ifdef WITH_ECC
+	unsigned long ecdsaMinSize, ecdsaMaxSize;
+	unsigned long ecdhMinSize, ecdhMaxSize;
+#endif
 
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
 	if (pInfo == NULL_PTR) return CKR_ARGUMENTS_BAD;
@@ -569,6 +646,44 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 	}
 	CryptoFactory::i()->recycleAsymmetricAlgorithm(dsa);
 
+	AsymmetricAlgorithm* dh = CryptoFactory::i()->getAsymmetricAlgorithm("DH");
+	if (dh != NULL)
+	{
+		dhMinSize = dh->getMinKeySize();
+		dhMaxSize = dh->getMaxKeySize();
+	}
+	else
+	{
+		return CKR_GENERAL_ERROR;
+	}
+	CryptoFactory::i()->recycleAsymmetricAlgorithm(dh);
+
+#ifdef WITH_ECC
+	AsymmetricAlgorithm* ecdsa = CryptoFactory::i()->getAsymmetricAlgorithm("ECDSA");
+	if (ecdsa != NULL)
+	{
+		ecdsaMinSize = ecdsa->getMinKeySize();
+		ecdsaMaxSize = ecdsa->getMaxKeySize();
+	}
+	else
+	{
+		return CKR_GENERAL_ERROR;
+	}
+	CryptoFactory::i()->recycleAsymmetricAlgorithm(ecdsa);
+
+	AsymmetricAlgorithm* ecdh = CryptoFactory::i()->getAsymmetricAlgorithm("ECDH");
+	if (ecdh != NULL)
+	{
+		ecdhMinSize = ecdh->getMinKeySize();
+		ecdhMaxSize = ecdh->getMaxKeySize();
+	}
+	else
+	{
+		return CKR_GENERAL_ERROR;
+	}
+	CryptoFactory::i()->recycleAsymmetricAlgorithm(ecdh);
+#endif
+
 	switch (type)
 	{
 		case CKM_MD5:
@@ -581,6 +696,17 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 			pInfo->ulMinKeySize = 0;
 			pInfo->ulMaxKeySize = 0;
 			pInfo->flags = CKF_DIGEST;
+			break;
+		case CKM_MD5_HMAC:
+		case CKM_SHA_1_HMAC:
+		case CKM_SHA224_HMAC:
+		case CKM_SHA256_HMAC:
+		case CKM_SHA384_HMAC:
+		case CKM_SHA512_HMAC:
+			// Key size is not in use
+			pInfo->ulMinKeySize = 0;
+			pInfo->ulMaxKeySize = 0;
+			pInfo->flags = CKF_SIGN | CKF_VERIFY;
 			break;
 		case CKM_RSA_PKCS_KEY_PAIR_GEN:
 			pInfo->ulMinKeySize = rsaMinSize;
@@ -595,6 +721,7 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 			break;
 		case CKM_MD5_RSA_PKCS:
 		case CKM_SHA1_RSA_PKCS:
+		case CKM_SHA224_RSA_PKCS:
 		case CKM_SHA256_RSA_PKCS:
 		case CKM_SHA384_RSA_PKCS:
 		case CKM_SHA512_RSA_PKCS:
@@ -645,11 +772,75 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 			pInfo->ulMaxKeySize = dsaMaxSize;
 			pInfo->flags = CKF_GENERATE_KEY_PAIR;
 			break;
+		case CKM_DSA:
 		case CKM_DSA_SHA1:
+		case CKM_DSA_SHA224:
+		case CKM_DSA_SHA256:
+		case CKM_DSA_SHA384:
+		case CKM_DSA_SHA512:
 			pInfo->ulMinKeySize = dsaMinSize;
 			pInfo->ulMaxKeySize = dsaMaxSize;
 			pInfo->flags = CKF_SIGN | CKF_VERIFY;
 			break;
+		case CKM_DH_PKCS_KEY_PAIR_GEN:
+			pInfo->ulMinKeySize = dhMinSize;
+			pInfo->ulMaxKeySize = dhMaxSize;
+			pInfo->flags = CKF_GENERATE_KEY_PAIR;
+			break;
+		case CKM_DH_PKCS_PARAMETER_GEN:
+			pInfo->ulMinKeySize = dhMinSize;
+			pInfo->ulMaxKeySize = dhMaxSize;
+			pInfo->flags = CKF_GENERATE;
+			break;
+		case CKM_DH_PKCS_DERIVE:
+			pInfo->ulMinKeySize = dhMinSize;
+			pInfo->ulMaxKeySize = dhMaxSize;
+			pInfo->flags = CKF_DERIVE;
+			break;
+#ifdef WITH_ECC
+		case CKM_EC_KEY_PAIR_GEN:
+			pInfo->ulMinKeySize = ecdsaMinSize;
+			pInfo->ulMaxKeySize = ecdsaMaxSize;
+#define CKF_EC_COMMOM	(CKF_EC_F_P | CKF_EC_NAMEDCURVE | CKF_EC_UNCOMPRESS)
+			pInfo->flags = CKF_GENERATE_KEY_PAIR | CKF_EC_COMMOM;
+			break;
+		case CKM_ECDSA:
+			pInfo->ulMinKeySize = ecdsaMinSize;
+			pInfo->ulMaxKeySize = ecdsaMaxSize;
+			pInfo->flags = CKF_SIGN | CKF_VERIFY | CKF_EC_COMMOM;
+			break;
+		case CKM_ECDH1_DERIVE:
+			pInfo->ulMinKeySize = ecdhMinSize;
+			pInfo->ulMaxKeySize = ecdhMaxSize;
+			pInfo->flags = CKF_DERIVE;
+			break;
+#endif
+#ifdef WITH_GOST
+		case CKM_GOSTR3411:
+			// Key size is not in use
+			pInfo->ulMinKeySize = 0;
+			pInfo->ulMaxKeySize = 0;
+			pInfo->flags = CKF_DIGEST;
+			break;
+		case CKM_GOSTR3411_HMAC:
+			// Key size is not in use
+			pInfo->ulMinKeySize = 0;
+			pInfo->ulMaxKeySize = 0;
+			pInfo->flags = CKF_SIGN | CKF_VERIFY;
+			break;
+		case CKM_GOSTR3410_KEY_PAIR_GEN:
+			// Key size is not in use
+			pInfo->ulMinKeySize = 0;
+			pInfo->ulMaxKeySize = 0;
+			pInfo->flags = CKF_GENERATE_KEY_PAIR;
+			break;
+		case CKM_GOSTR3410_WITH_GOSTR3411:
+			// Key size is not in use
+			pInfo->ulMinKeySize = 0;
+			pInfo->ulMaxKeySize = 0;
+			pInfo->flags = CKF_SIGN | CKF_VERIFY;
+			break;
+#endif
 		default:
 			DEBUG_MSG("The selected mechanism is not supported");
 			return CKR_MECHANISM_INVALID;
@@ -1349,7 +1540,8 @@ CK_RV SoftHSM::C_EncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMecha
 	session->setOpType(SESSION_OP_ENCRYPT);
 	session->setAsymmetricCryptoOp(asymCrypto);
 	session->setMechanism(mechanism);
-	session->setIsMultiPartOp(false);
+	session->setAllowMultiPartOp(false);
+	session->setAllowSinglePartOp(true);
 	session->setPublicKey(publicKey);
 
 	return CKR_OK;
@@ -1374,7 +1566,7 @@ CK_RV SoftHSM::C_Encrypt(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pData, CK_ULONG
 	AsymmetricAlgorithm* asymCrypto = session->getAsymmetricCryptoOp();
 	const char *mechanism = session->getMechanism();
 	PublicKey* publicKey = session->getPublicKey();
-	if (asymCrypto == NULL || mechanism == NULL || session->getIsMultiPartOp() || publicKey == NULL)
+	if (asymCrypto == NULL || mechanism == NULL || !session->getAllowSinglePartOp() || publicKey == NULL)
 	{
 		session->resetOp();
 		return CKR_OPERATION_NOT_INITIALIZED;
@@ -1450,6 +1642,10 @@ CK_RV SoftHSM::C_EncryptFinal(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pEncrypted
 	Session* session = (Session*)handleManager->getSession(hSession);
 	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
 
+	// Check if we are doing the correct operation
+	if (session->getOpType() != SESSION_OP_ENCRYPT) return CKR_OPERATION_NOT_INITIALIZED;
+
+	session->resetOp();
 	return CKR_FUNCTION_NOT_SUPPORTED;
 }
 
@@ -1545,7 +1741,8 @@ CK_RV SoftHSM::C_DecryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMecha
 	session->setOpType(SESSION_OP_DECRYPT);
 	session->setAsymmetricCryptoOp(asymCrypto);
 	session->setMechanism(mechanism);
-	session->setIsMultiPartOp(false);
+	session->setAllowMultiPartOp(false);
+	session->setAllowSinglePartOp(true);
 	session->setPrivateKey(privateKey);
 
 	return CKR_OK;
@@ -1570,7 +1767,7 @@ CK_RV SoftHSM::C_Decrypt(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pEncryptedData,
 	AsymmetricAlgorithm* asymCrypto = session->getAsymmetricCryptoOp();
 	const char *mechanism = session->getMechanism();
 	PrivateKey* privateKey = session->getPrivateKey();
-	if (asymCrypto == NULL || mechanism == NULL || session->getIsMultiPartOp() || privateKey == NULL)
+	if (asymCrypto == NULL || mechanism == NULL || !session->getAllowSinglePartOp() || privateKey == NULL)
 	{
 		session->resetOp();
 		return CKR_OPERATION_NOT_INITIALIZED;
@@ -1638,6 +1835,10 @@ CK_RV SoftHSM::C_DecryptFinal(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pData, CK_
 	Session* session = (Session*)handleManager->getSession(hSession);
 	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
 
+	// Check if we are doing the correct operation
+	if (session->getOpType() != SESSION_OP_DECRYPT) return CKR_OPERATION_NOT_INITIALIZED;
+
+	session->resetOp();
 	return CKR_FUNCTION_NOT_SUPPORTED;
 }
 
@@ -1676,6 +1877,11 @@ CK_RV SoftHSM::C_DigestInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechan
 		case CKM_SHA512:
 			hash = CryptoFactory::i()->getHashAlgorithm("sha512");
 			break;
+#ifdef WITH_GOST
+		case CKM_GOSTR3411:
+			hash = CryptoFactory::i()->getHashAlgorithm("gost");
+			break;
+#endif
 		default:
 			return CKR_MECHANISM_INVALID;
 	}
@@ -1848,8 +2054,117 @@ CK_RV SoftHSM::C_DigestFinal(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pDigest, CK
 	return CKR_OK;
 }
 
-// Initialise a signing operation using the specified key and mechanism
-CK_RV SoftHSM::C_SignInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechanism, CK_OBJECT_HANDLE hKey)
+// Sign*/Verify*() is for MACs too
+static bool isMacMechanism(CK_MECHANISM_PTR pMechanism)
+{
+	if (pMechanism == NULL_PTR) return false;
+
+	switch(pMechanism->mechanism) {
+		case CKM_MD5_HMAC:
+		case CKM_SHA_1_HMAC:
+		case CKM_SHA224_HMAC:
+		case CKM_SHA256_HMAC:
+		case CKM_SHA384_HMAC:
+		case CKM_SHA512_HMAC:
+#ifdef WITH_GOST
+		case CKM_GOSTR3411_HMAC:
+#endif
+			return true;
+		default:
+			return false;
+	}
+}
+
+// MacAlgorithm version of C_SignInit
+CK_RV SoftHSM::MacSignInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechanism, CK_OBJECT_HANDLE hKey)
+{
+	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
+
+	if (pMechanism == NULL_PTR) return CKR_ARGUMENTS_BAD;
+
+	// Get the session
+	Session* session = (Session*)handleManager->getSession(hSession);
+	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
+
+	// Check if we have another operation
+	if (session->getOpType() != SESSION_OP_NONE) return CKR_OPERATION_ACTIVE;
+
+	// Get the token
+	Token* token = session->getToken();
+	if (token == NULL) return CKR_GENERAL_ERROR;
+
+	// Check the key handle.
+	OSObject *key = (OSObject *)handleManager->getObject(hKey);
+	if (key == NULL_PTR) return CKR_OBJECT_HANDLE_INVALID;
+
+	// Check if key can be used for signing
+        if (!key->attributeExists(CKA_SIGN) || key->getAttribute(CKA_SIGN)->getBooleanValue() == false)
+		return CKR_KEY_FUNCTION_NOT_PERMITTED;
+
+	// Get the MAC algorithm matching the mechanism
+	MacAlgorithm* mac = NULL;
+	switch(pMechanism->mechanism) {
+		case CKM_MD5_HMAC:
+			mac = CryptoFactory::i()->getMacAlgorithm("hmac-md5");
+			break;
+		case CKM_SHA_1_HMAC:
+			mac = CryptoFactory::i()->getMacAlgorithm("hmac-sha1");
+			break;
+		case CKM_SHA224_HMAC:
+			mac = CryptoFactory::i()->getMacAlgorithm("hmac-sha224");
+			break;
+		case CKM_SHA256_HMAC:
+			mac = CryptoFactory::i()->getMacAlgorithm("hmac-sha256");
+			break;
+		case CKM_SHA384_HMAC:
+			mac = CryptoFactory::i()->getMacAlgorithm("hmac-sha384");
+			break;
+		case CKM_SHA512_HMAC:
+			mac = CryptoFactory::i()->getMacAlgorithm("hmac-sha512");
+			break;
+#ifdef WITH_GOST
+		case CKM_GOSTR3411_HMAC:
+			mac = CryptoFactory::i()->getMacAlgorithm("hmac-gost");
+			break;
+#endif
+		default:
+			return CKR_MECHANISM_INVALID;
+	}
+	if (mac == NULL) return CKR_MECHANISM_INVALID;
+
+	SymmetricKey* privkey = new SymmetricKey();
+	if (privkey == NULL)
+	{
+		CryptoFactory::i()->recycleMacAlgorithm(mac);
+		return CKR_HOST_MEMORY;
+	}
+
+	if (getSymmetricKey(privkey, token, key) != CKR_OK)
+	{
+		mac->recycleKey(privkey);
+		CryptoFactory::i()->recycleMacAlgorithm(mac);
+		return CKR_GENERAL_ERROR;
+	}
+
+	// Initialize signing
+	if (!mac->signInit(privkey))
+	{
+		mac->recycleKey(privkey);
+		CryptoFactory::i()->recycleMacAlgorithm(mac);
+		return CKR_MECHANISM_INVALID;
+	}
+
+	session->setOpType(SESSION_OP_SIGN);
+	session->setMacOp(mac);
+	session->setAllowMultiPartOp(true);
+	session->setAllowSinglePartOp(true);
+	session->setSymmetricKey(privkey);
+
+	return CKR_OK;
+}
+
+// AsymmetricAlgorithm version of C_SignInit
+CK_RV SoftHSM::AsymSignInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechanism, CK_OBJECT_HANDLE hKey)
 {
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
 
@@ -1876,44 +2191,94 @@ CK_RV SoftHSM::C_SignInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechanis
 
 	// Get the asymmetric algorithm matching the mechanism
 	const char *mechanism;
-	bool bIsMultiPartOp;
+	bool bAllowMultiPartOp;
 	bool isRSA = false;
+	bool isDSA = false;
+	bool isECDSA = false;
 	switch(pMechanism->mechanism) {
 		case CKM_RSA_PKCS:
 			mechanism = "rsa-pkcs";
-			bIsMultiPartOp = false;
+			bAllowMultiPartOp = false;
 			isRSA = true;
 			break;
 		case CKM_RSA_X_509:
 			mechanism = "rsa-raw";
-			bIsMultiPartOp = false;
+			bAllowMultiPartOp = false;
 			isRSA = true;
 			break;
 		case CKM_MD5_RSA_PKCS:
 			mechanism = "rsa-md5-pkcs";
-			bIsMultiPartOp = true;
+			bAllowMultiPartOp = true;
 			isRSA = true;
 			break;
 		case CKM_SHA1_RSA_PKCS:
 			mechanism = "rsa-sha1-pkcs";
-			bIsMultiPartOp = true;
+			bAllowMultiPartOp = true;
+			isRSA = true;
+			break;
+		case CKM_SHA224_RSA_PKCS:
+			mechanism = "rsa-sha224-pkcs";
+			bAllowMultiPartOp = true;
 			isRSA = true;
 			break;
 		case CKM_SHA256_RSA_PKCS:
 			mechanism = "rsa-sha256-pkcs";
-			bIsMultiPartOp = true;
+			bAllowMultiPartOp = true;
 			isRSA = true;
 			break;
 		case CKM_SHA384_RSA_PKCS:
 			mechanism = "rsa-sha384-pkcs";
-			bIsMultiPartOp = true;
+			bAllowMultiPartOp = true;
 			isRSA = true;
 			break;
 		case CKM_SHA512_RSA_PKCS:
 			mechanism = "rsa-sha512-pkcs";
-			bIsMultiPartOp = true;
+			bAllowMultiPartOp = true;
 			isRSA = true;
 			break;
+		case CKM_DSA:
+			mechanism = "dsa";
+			bAllowMultiPartOp = false;
+			isDSA = true;
+			break;
+		case CKM_DSA_SHA1:
+			mechanism = "dsa-sha1";
+			bAllowMultiPartOp = true;
+			isDSA = true;
+			break;
+		case CKM_DSA_SHA224:
+			mechanism = "dsa-sha224";
+			bAllowMultiPartOp = true;
+			isDSA = true;
+			break;
+		case CKM_DSA_SHA256:
+			mechanism = "dsa-sha256";
+			bAllowMultiPartOp = true;
+			isDSA = true;
+			break;
+		case CKM_DSA_SHA384:
+			mechanism = "dsa-sha384";
+			bAllowMultiPartOp = true;
+			isDSA = true;
+			break;
+		case CKM_DSA_SHA512:
+			mechanism = "dsa-sha512";
+			bAllowMultiPartOp = true;
+			isDSA = true;
+			break;
+#ifdef WITH_ECC
+		case CKM_ECDSA:
+			mechanism = "ecdsa";
+			bAllowMultiPartOp = false;
+			isECDSA = true;
+			break;
+#endif
+#ifdef WITH_GOST
+		case CKM_GOSTR3410_WITH_GOSTR3411:
+			mechanism = "gost";
+			bAllowMultiPartOp = true;
+			break;
+#endif
 		default:
 			return CKR_MECHANISM_INVALID;
 	}
@@ -1939,13 +2304,72 @@ CK_RV SoftHSM::C_SignInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechanis
 			return CKR_GENERAL_ERROR;
 		}
 	}
+	else if (isDSA)
+	{
+		asymCrypto = CryptoFactory::i()->getAsymmetricAlgorithm("dsa");
+		if (asymCrypto == NULL) return CKR_MECHANISM_INVALID;
+
+		privateKey = asymCrypto->newPrivateKey();
+		if (privateKey == NULL)
+		{
+			CryptoFactory::i()->recycleAsymmetricAlgorithm(asymCrypto);
+			return CKR_HOST_MEMORY;
+		}
+
+		if (getDSAPrivateKey((DSAPrivateKey*)privateKey, token, key) != CKR_OK)
+		{
+			asymCrypto->recyclePrivateKey(privateKey);
+			CryptoFactory::i()->recycleAsymmetricAlgorithm(asymCrypto);
+			return CKR_GENERAL_ERROR;
+		}
+        }
+#ifdef WITH_ECC
+	else if (isECDSA)
+	{
+		asymCrypto = CryptoFactory::i()->getAsymmetricAlgorithm("ecdsa");
+		if (asymCrypto == NULL) return CKR_MECHANISM_INVALID;
+
+		privateKey = asymCrypto->newPrivateKey();
+		if (privateKey == NULL)
+		{
+			CryptoFactory::i()->recycleAsymmetricAlgorithm(asymCrypto);
+			return CKR_HOST_MEMORY;
+		}
+
+		if (getECPrivateKey((ECPrivateKey*)privateKey, token, key) != CKR_OK)
+		{
+			asymCrypto->recyclePrivateKey(privateKey);
+			CryptoFactory::i()->recycleAsymmetricAlgorithm(asymCrypto);
+			return CKR_GENERAL_ERROR;
+		}
+	}
+#endif
 	else
 	{
+#ifdef WITH_GOST
+		asymCrypto = CryptoFactory::i()->getAsymmetricAlgorithm("gost");
+		if (asymCrypto == NULL) return CKR_MECHANISM_INVALID;
+
+		privateKey = asymCrypto->newPrivateKey();
+		if (privateKey == NULL)
+		{
+			CryptoFactory::i()->recycleAsymmetricAlgorithm(asymCrypto);
+			return CKR_HOST_MEMORY;
+		}
+
+		if (getGOSTPrivateKey((GOSTPrivateKey*)privateKey, token, key) != CKR_OK)
+		{
+			asymCrypto->recyclePrivateKey(privateKey);
+			CryptoFactory::i()->recycleAsymmetricAlgorithm(asymCrypto);
+			return CKR_GENERAL_ERROR;
+		}
+#else
 		return CKR_MECHANISM_INVALID;
+#endif
         }
 
 	// Initialize signing
-	if (bIsMultiPartOp && !asymCrypto->signInit(privateKey,mechanism))
+	if (bAllowMultiPartOp && !asymCrypto->signInit(privateKey,mechanism))
 	{
 		asymCrypto->recyclePrivateKey(privateKey);
 		CryptoFactory::i()->recycleAsymmetricAlgorithm(asymCrypto);
@@ -1955,32 +2379,86 @@ CK_RV SoftHSM::C_SignInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechanis
 	session->setOpType(SESSION_OP_SIGN);
 	session->setAsymmetricCryptoOp(asymCrypto);
 	session->setMechanism(mechanism);
-	session->setIsMultiPartOp(bIsMultiPartOp);
+	session->setAllowMultiPartOp(bAllowMultiPartOp);
+	session->setAllowSinglePartOp(true);
 	session->setPrivateKey(privateKey);
 
 	return CKR_OK;
 }
 
-// Sign the data in a single pass operation
-CK_RV SoftHSM::C_Sign(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pData, CK_ULONG ulDataLen, CK_BYTE_PTR pSignature, CK_ULONG_PTR pulSignatureLen)
+// Initialise a signing operation using the specified key and mechanism
+CK_RV SoftHSM::C_SignInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechanism, CK_OBJECT_HANDLE hKey)
 {
-	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
+	if (isMacMechanism(pMechanism))
+		return MacSignInit(hSession, pMechanism, hKey);
+	else
+		return AsymSignInit(hSession, pMechanism, hKey);
+}
 
-	if (pData == NULL_PTR) return CKR_ARGUMENTS_BAD;
-	if (pulSignatureLen == NULL_PTR) return CKR_ARGUMENTS_BAD;
-
-	// Get the session
-	Session* session = (Session*)handleManager->getSession(hSession);
-	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
-
-	// Check if we are doing the correct operation
-	if (session->getOpType() != SESSION_OP_SIGN)
+// MacAlgorithm version of C_Sign
+static CK_RV MacSign(Session* session, CK_BYTE_PTR pData, CK_ULONG ulDataLen, CK_BYTE_PTR pSignature, CK_ULONG_PTR pulSignatureLen)
+{
+	MacAlgorithm* mac = session->getMacOp();
+	if (mac == NULL || !session->getAllowSinglePartOp())
+	{
+		session->resetOp();
 		return CKR_OPERATION_NOT_INITIALIZED;
+	}
 
+	// Size of the signature
+	CK_ULONG size = mac->getMacSize();
+	if (pSignature == NULL_PTR)
+	{
+		*pulSignatureLen = size;
+		return CKR_OK;
+	}
+
+	// Check buffer size
+	if (*pulSignatureLen < size)
+	{
+		*pulSignatureLen = size;
+		return CKR_BUFFER_TOO_SMALL;
+	}
+
+	// Get the data
+	ByteString data(pData, ulDataLen);
+
+	// Sign the data
+	if (!mac->signUpdate(data))
+	{
+		session->resetOp();
+		return CKR_GENERAL_ERROR;
+	}
+
+	// Get the signature
+	ByteString signature;
+	if (!mac->signFinal(signature))
+	{
+		session->resetOp();
+		return CKR_GENERAL_ERROR;
+	}
+
+	// Check size
+	if (signature.size() != size)
+	{
+		ERROR_MSG("The size of the signature differs from the size of the mechanism");
+		session->resetOp();
+		return CKR_GENERAL_ERROR;
+	}
+	memcpy(pSignature, signature.byte_str(), size);
+	*pulSignatureLen = size;
+
+	session->resetOp();
+	return CKR_OK;
+}
+
+// AsymmetricAlgorithm version of C_Sign
+static CK_RV AsymSign(Session* session, CK_BYTE_PTR pData, CK_ULONG ulDataLen, CK_BYTE_PTR pSignature, CK_ULONG_PTR pulSignatureLen)
+{
 	AsymmetricAlgorithm* asymCrypto = session->getAsymmetricCryptoOp();
 	const char *mechanism = session->getMechanism();
 	PrivateKey* privateKey = session->getPrivateKey();
-	if (asymCrypto == NULL || mechanism == NULL || session->getIsMultiPartOp() || privateKey == NULL)
+	if (asymCrypto == NULL || mechanism == NULL || !session->getAllowSinglePartOp() || privateKey == NULL)
 	{
 		session->resetOp();
 		return CKR_OPERATION_NOT_INITIALIZED;
@@ -2014,7 +2492,16 @@ CK_RV SoftHSM::C_Sign(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pData, CK_ULONG ul
 	ByteString signature;
 
 	// Sign the data
-	if (!asymCrypto->sign(privateKey,data,signature,mechanism))
+	if (session->getAllowMultiPartOp())
+	{
+		if (!asymCrypto->signUpdate(data) ||
+		    !asymCrypto->signFinal(signature))
+		{
+			session->resetOp();
+			return CKR_GENERAL_ERROR;
+		}
+	}
+	else if (!asymCrypto->sign(privateKey,data,signature,mechanism))
 	{
 		session->resetOp();
 		return CKR_GENERAL_ERROR;
@@ -2034,23 +2521,59 @@ CK_RV SoftHSM::C_Sign(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pData, CK_ULONG ul
 	return CKR_OK;
 }
 
-// Update a running signing operation with additional data
-CK_RV SoftHSM::C_SignUpdate(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pPart, CK_ULONG ulPartLen)
+// Sign the data in a single pass operation
+CK_RV SoftHSM::C_Sign(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pData, CK_ULONG ulDataLen, CK_BYTE_PTR pSignature, CK_ULONG_PTR pulSignatureLen)
 {
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
 
-	if (pPart == NULL_PTR) return CKR_ARGUMENTS_BAD;
+	if (pData == NULL_PTR) return CKR_ARGUMENTS_BAD;
+	if (pulSignatureLen == NULL_PTR) return CKR_ARGUMENTS_BAD;
 
 	// Get the session
 	Session* session = (Session*)handleManager->getSession(hSession);
 	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
 
 	// Check if we are doing the correct operation
-	if (session->getOpType() != SESSION_OP_SIGN || !session->getIsMultiPartOp())
+	if (session->getOpType() != SESSION_OP_SIGN)
 		return CKR_OPERATION_NOT_INITIALIZED;
 
+	if (session->getMacOp() != NULL)
+		return MacSign(session, pData, ulDataLen,
+			       pSignature, pulSignatureLen);
+	else
+		return AsymSign(session, pData, ulDataLen,
+				pSignature, pulSignatureLen);
+}
+
+// MacAlgorithm version of C_SignUpdate
+static CK_RV MacSignUpdate(Session* session, CK_BYTE_PTR pPart, CK_ULONG ulPartLen)
+{
+	MacAlgorithm* mac = session->getMacOp();
+	if (mac == NULL || !session->getAllowMultiPartOp())
+	{
+		session->resetOp();
+		return CKR_OPERATION_NOT_INITIALIZED;
+	}
+
+	// Get the part
+	ByteString part(pPart, ulPartLen);
+
+	// Sign the data
+	if (!mac->signUpdate(part))
+	{
+		session->resetOp();
+		return CKR_GENERAL_ERROR;
+	}
+
+	session->setAllowSinglePartOp(false);
+	return CKR_OK;
+}
+
+// AsymmetricAlgorithm version of C_SignUpdate
+static CK_RV AsymSignUpdate(Session* session, CK_BYTE_PTR pPart, CK_ULONG ulPartLen)
+{
 	AsymmetricAlgorithm* asymCrypto = session->getAsymmetricCryptoOp();
-	if (asymCrypto == NULL)
+	if (asymCrypto == NULL || !session->getAllowMultiPartOp())
 	{
 		session->resetOp();
 		return CKR_OPERATION_NOT_INITIALIZED;
@@ -2066,24 +2589,81 @@ CK_RV SoftHSM::C_SignUpdate(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pPart, CK_UL
 		return CKR_GENERAL_ERROR;
 	}
 
+	session->setAllowSinglePartOp(false);
 	return CKR_OK;
 }
 
-// Finalise a running signing operation and return the signature
-CK_RV SoftHSM::C_SignFinal(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pSignature, CK_ULONG_PTR pulSignatureLen)
+// Update a running signing operation with additional data
+CK_RV SoftHSM::C_SignUpdate(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pPart, CK_ULONG ulPartLen)
 {
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
 
-	if (pulSignatureLen == NULL_PTR) return CKR_ARGUMENTS_BAD;
+	if (pPart == NULL_PTR) return CKR_ARGUMENTS_BAD;
 
 	// Get the session
 	Session* session = (Session*)handleManager->getSession(hSession);
 	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
 
 	// Check if we are doing the correct operation
-	if (session->getOpType() != SESSION_OP_SIGN || !session->getIsMultiPartOp())
+	if (session->getOpType() != SESSION_OP_SIGN)
 		return CKR_OPERATION_NOT_INITIALIZED;
 
+	if (session->getMacOp() != NULL)
+		return MacSignUpdate(session, pPart, ulPartLen);
+	else
+		return AsymSignUpdate(session, pPart, ulPartLen);
+}
+
+// MacAlgorithm version of C_SignFinal
+static CK_RV MacSignFinal(Session* session, CK_BYTE_PTR pSignature, CK_ULONG_PTR pulSignatureLen)
+{
+	MacAlgorithm* mac = session->getMacOp();
+	if (mac == NULL)
+	{
+		session->resetOp();
+		return CKR_OPERATION_NOT_INITIALIZED;
+	}
+
+	// Size of the signature
+	CK_ULONG size = mac->getMacSize();
+	if (pSignature == NULL_PTR)
+	{
+		*pulSignatureLen = size;
+		return CKR_OK;
+	}
+
+	// Check buffer size
+	if (*pulSignatureLen < size)
+	{
+		*pulSignatureLen = size;
+		return CKR_BUFFER_TOO_SMALL;
+	}
+
+	// Get the signature
+	ByteString signature;
+	if (!mac->signFinal(signature))
+	{
+		session->resetOp();
+		return CKR_GENERAL_ERROR;
+	}
+
+	// Check size
+	if (signature.size() != size)
+	{
+		ERROR_MSG("The size of the signature differs from the size of the mechanism");
+		session->resetOp();
+		return CKR_GENERAL_ERROR;
+	}
+	memcpy(pSignature, signature.byte_str(), size);
+	*pulSignatureLen = size;
+
+	session->resetOp();
+	return CKR_OK;
+}
+
+// AsymmetricAlgorithm version of C_SignFinal
+static CK_RV AsymSignFinal(Session* session, CK_BYTE_PTR pSignature, CK_ULONG_PTR pulSignatureLen)
+{
 	AsymmetricAlgorithm* asymCrypto = session->getAsymmetricCryptoOp();
 	PrivateKey* privateKey = session->getPrivateKey();
 	if (asymCrypto == NULL || privateKey == NULL)
@@ -2107,10 +2687,8 @@ CK_RV SoftHSM::C_SignFinal(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pSignature, C
 		return CKR_BUFFER_TOO_SMALL;
 	}
 
-	// Get the data
+	// Get the signature
 	ByteString signature;
-
-	// Generate the signature
 	if (!asymCrypto->signFinal(signature))
 	{
 		session->resetOp();
@@ -2129,6 +2707,27 @@ CK_RV SoftHSM::C_SignFinal(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pSignature, C
 
 	session->resetOp();
 	return CKR_OK;
+}
+
+// Finalise a running signing operation and return the signature
+CK_RV SoftHSM::C_SignFinal(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pSignature, CK_ULONG_PTR pulSignatureLen)
+{
+	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
+
+	if (pulSignatureLen == NULL_PTR) return CKR_ARGUMENTS_BAD;
+
+	// Get the session
+	Session* session = (Session*)handleManager->getSession(hSession);
+	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
+
+	// Check if we are doing the correct operation
+	if (session->getOpType() != SESSION_OP_SIGN || !session->getAllowMultiPartOp())
+		return CKR_OPERATION_NOT_INITIALIZED;
+
+	if (session->getMacOp() != NULL)
+		return MacSignFinal(session, pSignature, pulSignatureLen);
+	else
+		return AsymSignFinal(session, pSignature, pulSignatureLen);
 }
 
 // Initialise a signing operation that allows recovery of the signed data
@@ -2158,8 +2757,96 @@ CK_RV SoftHSM::C_SignRecover(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pData, CK_U
 	return CKR_FUNCTION_NOT_SUPPORTED;
 }
 
-// Initialise a verification operation using the specified key and mechanism
-CK_RV SoftHSM::C_VerifyInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechanism, CK_OBJECT_HANDLE hKey)
+// MacAlgorithm version of C_VerifyInit
+CK_RV SoftHSM::MacVerifyInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechanism, CK_OBJECT_HANDLE hKey)
+{
+	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
+
+	if (pMechanism == NULL_PTR) return CKR_ARGUMENTS_BAD;
+
+	// Get the session
+	Session* session = (Session*)handleManager->getSession(hSession);
+	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
+
+	// Check if we have another operation
+	if (session->getOpType() != SESSION_OP_NONE) return CKR_OPERATION_ACTIVE;
+
+	// Get the token
+	Token* token = session->getToken();
+	if (token == NULL) return CKR_GENERAL_ERROR;
+
+	// Check the key handle.
+	OSObject *key = (OSObject *)handleManager->getObject(hKey);
+	if (key == NULL_PTR) return CKR_OBJECT_HANDLE_INVALID;
+
+	// Check if key can be used for verifying
+        if (!key->attributeExists(CKA_VERIFY) || key->getAttribute(CKA_VERIFY)->getBooleanValue() == false)
+		return CKR_KEY_FUNCTION_NOT_PERMITTED;
+
+	// Get the MAC algorithm matching the mechanism
+	MacAlgorithm* mac = NULL;
+	switch(pMechanism->mechanism) {
+		case CKM_MD5_HMAC:
+			mac = CryptoFactory::i()->getMacAlgorithm("hmac-md5");
+			break;
+		case CKM_SHA_1_HMAC:
+			mac = CryptoFactory::i()->getMacAlgorithm("hmac-sha1");
+			break;
+		case CKM_SHA224_HMAC:
+			mac = CryptoFactory::i()->getMacAlgorithm("hmac-sha224");
+			break;
+		case CKM_SHA256_HMAC:
+			mac = CryptoFactory::i()->getMacAlgorithm("hmac-sha256");
+			break;
+		case CKM_SHA384_HMAC:
+			mac = CryptoFactory::i()->getMacAlgorithm("hmac-sha384");
+			break;
+		case CKM_SHA512_HMAC:
+			mac = CryptoFactory::i()->getMacAlgorithm("hmac-sha512");
+			break;
+#ifdef WITH_GOST
+		case CKM_GOSTR3411_HMAC:
+			mac = CryptoFactory::i()->getMacAlgorithm("hmac-gost");
+			break;
+#endif
+		default:
+			return CKR_MECHANISM_INVALID;
+	}
+	if (mac == NULL) return CKR_MECHANISM_INVALID;
+
+	SymmetricKey* pubkey = new SymmetricKey();
+	if (pubkey == NULL)
+	{
+		CryptoFactory::i()->recycleMacAlgorithm(mac);
+		return CKR_HOST_MEMORY;
+	}
+
+	if (getSymmetricKey(pubkey, token, key) != CKR_OK)
+	{
+		mac->recycleKey(pubkey);
+		CryptoFactory::i()->recycleMacAlgorithm(mac);
+		return CKR_GENERAL_ERROR;
+	}
+
+	// Initialize verifying
+	if (!mac->verifyInit(pubkey))
+	{
+		mac->recycleKey(pubkey);
+		CryptoFactory::i()->recycleMacAlgorithm(mac);
+		return CKR_MECHANISM_INVALID;
+	}
+
+	session->setOpType(SESSION_OP_VERIFY);
+	session->setMacOp(mac);
+	session->setAllowMultiPartOp(true);
+	session->setAllowSinglePartOp(true);
+	session->setSymmetricKey(pubkey);
+
+	return CKR_OK;
+}
+
+// AsymmetricAlgorithm version of C_VerifyInit
+CK_RV SoftHSM::AsymVerifyInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechanism, CK_OBJECT_HANDLE hKey)
 {
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
 
@@ -2186,44 +2873,94 @@ CK_RV SoftHSM::C_VerifyInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechan
 
 	// Get the asymmetric algorithm matching the mechanism
 	const char *mechanism;
-	bool bIsMultiPartOp;
+	bool bAllowMultiPartOp;
 	bool isRSA = false;
+	bool isDSA = false;
+	bool isECDSA = false;
 	switch(pMechanism->mechanism) {
 		case CKM_RSA_PKCS:
 			mechanism = "rsa-pkcs";
-			bIsMultiPartOp = false;
+			bAllowMultiPartOp = false;
 			isRSA = true;
 			break;
 		case CKM_RSA_X_509:
 			mechanism = "rsa-raw";
-			bIsMultiPartOp = false;
+			bAllowMultiPartOp = false;
 			isRSA = true;
 			break;
 		case CKM_MD5_RSA_PKCS:
 			mechanism = "rsa-md5-pkcs";
-			bIsMultiPartOp = true;
+			bAllowMultiPartOp = true;
 			isRSA = true;
 			break;
 		case CKM_SHA1_RSA_PKCS:
 			mechanism = "rsa-sha1-pkcs";
-			bIsMultiPartOp = true;
+			bAllowMultiPartOp = true;
+			isRSA = true;
+			break;
+		case CKM_SHA224_RSA_PKCS:
+			mechanism = "rsa-sha224-pkcs";
+			bAllowMultiPartOp = true;
 			isRSA = true;
 			break;
 		case CKM_SHA256_RSA_PKCS:
 			mechanism = "rsa-sha256-pkcs";
-			bIsMultiPartOp = true;
+			bAllowMultiPartOp = true;
 			isRSA = true;
 			break;
 		case CKM_SHA384_RSA_PKCS:
 			mechanism = "rsa-sha384-pkcs";
-			bIsMultiPartOp = true;
+			bAllowMultiPartOp = true;
 			isRSA = true;
 			break;
 		case CKM_SHA512_RSA_PKCS:
 			mechanism = "rsa-sha512-pkcs";
-			bIsMultiPartOp = true;
+			bAllowMultiPartOp = true;
 			isRSA = true;
 			break;
+		case CKM_DSA:
+			mechanism = "dsa";
+			bAllowMultiPartOp = false;
+			isDSA = true;
+			break;
+		case CKM_DSA_SHA1:
+			mechanism = "dsa-sha1";
+			bAllowMultiPartOp = true;
+			isDSA = true;
+			break;
+		case CKM_DSA_SHA224:
+			mechanism = "dsa-sha224";
+			bAllowMultiPartOp = true;
+			isDSA = true;
+			break;
+		case CKM_DSA_SHA256:
+			mechanism = "dsa-sha256";
+			bAllowMultiPartOp = true;
+			isDSA = true;
+			break;
+		case CKM_DSA_SHA384:
+			mechanism = "dsa-sha384";
+			bAllowMultiPartOp = true;
+			isDSA = true;
+			break;
+		case CKM_DSA_SHA512:
+			mechanism = "dsa-sha512";
+			bAllowMultiPartOp = true;
+			isDSA = true;
+			break;
+#ifdef WITH_ECC
+		case CKM_ECDSA:
+			mechanism = "ecdsa";
+			bAllowMultiPartOp = false;
+			isECDSA = true;
+			break;
+#endif
+#ifdef WITH_GOST
+		case CKM_GOSTR3410_WITH_GOSTR3411:
+			mechanism = "gost";
+			bAllowMultiPartOp = true;
+			break;
+#endif
 		default:
 			return CKR_MECHANISM_INVALID;
 	}
@@ -2249,13 +2986,72 @@ CK_RV SoftHSM::C_VerifyInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechan
 			return CKR_GENERAL_ERROR;
 		}
 	}
+	else if (isDSA)
+	{
+		asymCrypto = CryptoFactory::i()->getAsymmetricAlgorithm("dsa");
+		if (asymCrypto == NULL) return CKR_MECHANISM_INVALID;
+
+		publicKey = asymCrypto->newPublicKey();
+		if (publicKey == NULL)
+		{
+			CryptoFactory::i()->recycleAsymmetricAlgorithm(asymCrypto);
+			return CKR_HOST_MEMORY;
+		}
+
+		if (getDSAPublicKey((DSAPublicKey*)publicKey, token, key) != CKR_OK)
+		{
+			asymCrypto->recyclePublicKey(publicKey);
+			CryptoFactory::i()->recycleAsymmetricAlgorithm(asymCrypto);
+			return CKR_GENERAL_ERROR;
+		}
+        }
+#ifdef WITH_ECC
+	else if (isECDSA)
+	{
+		asymCrypto = CryptoFactory::i()->getAsymmetricAlgorithm("ecdsa");
+		if (asymCrypto == NULL) return CKR_MECHANISM_INVALID;
+
+		publicKey = asymCrypto->newPublicKey();
+		if (publicKey == NULL)
+		{
+			CryptoFactory::i()->recycleAsymmetricAlgorithm(asymCrypto);
+			return CKR_HOST_MEMORY;
+		}
+
+		if (getECPublicKey((ECPublicKey*)publicKey, token, key) != CKR_OK)
+		{
+			asymCrypto->recyclePublicKey(publicKey);
+			CryptoFactory::i()->recycleAsymmetricAlgorithm(asymCrypto);
+			return CKR_GENERAL_ERROR;
+		}
+	}
+#endif
 	else
 	{
+#ifdef WITH_GOST
+		asymCrypto = CryptoFactory::i()->getAsymmetricAlgorithm("gost");
+		if (asymCrypto == NULL) return CKR_MECHANISM_INVALID;
+
+		publicKey = asymCrypto->newPublicKey();
+		if (publicKey == NULL)
+		{
+			CryptoFactory::i()->recycleAsymmetricAlgorithm(asymCrypto);
+			return CKR_HOST_MEMORY;
+		}
+
+		if (getGOSTPublicKey((GOSTPublicKey*)publicKey, token, key) != CKR_OK)
+		{
+			asymCrypto->recyclePublicKey(publicKey);
+			CryptoFactory::i()->recycleAsymmetricAlgorithm(asymCrypto);
+			return CKR_GENERAL_ERROR;
+		}
+#else
 		return CKR_MECHANISM_INVALID;
+#endif
         }
 
 	// Initialize verifying
-	if (bIsMultiPartOp && !asymCrypto->verifyInit(publicKey,mechanism))
+	if (bAllowMultiPartOp && !asymCrypto->verifyInit(publicKey,mechanism))
 	{
 		asymCrypto->recyclePublicKey(publicKey);
 		CryptoFactory::i()->recycleAsymmetricAlgorithm(asymCrypto);
@@ -2265,9 +3061,119 @@ CK_RV SoftHSM::C_VerifyInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechan
 	session->setOpType(SESSION_OP_VERIFY);
 	session->setAsymmetricCryptoOp(asymCrypto);
 	session->setMechanism(mechanism);
-	session->setIsMultiPartOp(bIsMultiPartOp);
+	session->setAllowMultiPartOp(bAllowMultiPartOp);
+	session->setAllowSinglePartOp(true);
 	session->setPublicKey(publicKey);
 
+	return CKR_OK;
+}
+
+// Initialise a verification operation using the specified key and mechanism
+CK_RV SoftHSM::C_VerifyInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechanism, CK_OBJECT_HANDLE hKey)
+{
+	if (isMacMechanism(pMechanism))
+		return MacVerifyInit(hSession, pMechanism, hKey);
+	else
+		return AsymVerifyInit(hSession, pMechanism, hKey);
+}
+
+// MacAlgorithm version of C_Verify
+static CK_RV MacVerify(Session* session, CK_BYTE_PTR pData, CK_ULONG ulDataLen, CK_BYTE_PTR pSignature, CK_ULONG ulSignatureLen)
+{
+	MacAlgorithm* mac = session->getMacOp();
+	if (mac == NULL || !session->getAllowSinglePartOp())
+	{
+		session->resetOp();
+		return CKR_OPERATION_NOT_INITIALIZED;
+	}
+
+	// Size of the signature
+	CK_ULONG size = mac->getMacSize();
+
+	// Check buffer size
+	if (ulSignatureLen != size)
+	{
+		ERROR_MSG("The size of the signature differs from the size of the mechanism");
+		session->resetOp();
+		return CKR_SIGNATURE_LEN_RANGE;
+	}
+
+	// Get the data
+	ByteString data(pData, ulDataLen);
+
+	// Verify the data
+	if (!mac->verifyUpdate(data))
+	{
+		session->resetOp();
+		return CKR_GENERAL_ERROR;
+	}
+
+	// Get the signature
+	ByteString signature(pSignature, ulSignatureLen);
+
+	// Verify the signature
+	if (!mac->verifyFinal(signature))
+	{
+		session->resetOp();
+		return CKR_SIGNATURE_INVALID;
+	}
+
+	session->resetOp();
+	return CKR_OK;
+}
+
+// AsymmetricAlgorithm version of C_Verify
+static CK_RV AsymVerify(Session* session, CK_BYTE_PTR pData, CK_ULONG ulDataLen, CK_BYTE_PTR pSignature, CK_ULONG ulSignatureLen)
+{
+	AsymmetricAlgorithm* asymCrypto = session->getAsymmetricCryptoOp();
+	const char *mechanism = session->getMechanism();
+	PublicKey* publicKey = session->getPublicKey();
+	if (asymCrypto == NULL || mechanism == NULL || !session->getAllowSinglePartOp() || publicKey == NULL)
+	{
+		session->resetOp();
+		return CKR_OPERATION_NOT_INITIALIZED;
+	}
+
+	// Size of the signature
+	CK_ULONG size = publicKey->getOutputLength();
+
+	// Check buffer size
+	if (ulSignatureLen != size)
+	{
+		ERROR_MSG("The size of the signature differs from the size of the mechanism");
+		session->resetOp();
+		return CKR_SIGNATURE_LEN_RANGE;
+	}
+
+	// Get the data
+	ByteString data;
+
+	// PKCS #11 Mechanisms v2.30: Cryptoki Draft 7 page 32
+	// We must allow input length <= k and therfore need to prepend the data with zeroes.
+	if (strcmp(mechanism,"rsa-raw") == 0) {
+		data.wipe(size-ulDataLen);
+	}
+
+	data += ByteString(pData, ulDataLen);
+	ByteString signature(pSignature, ulSignatureLen);
+
+	// Verify the data
+	if (session->getAllowMultiPartOp())
+	{
+		if (!asymCrypto->verifyUpdate(data) ||
+		    !asymCrypto->verifyFinal(signature))
+		{
+			session->resetOp();
+			return CKR_SIGNATURE_INVALID;
+		}
+	}
+	else if (!asymCrypto->verify(publicKey,data,signature,mechanism))
+	{
+		session->resetOp();
+		return CKR_SIGNATURE_INVALID;
+	}
+
+	session->resetOp();
 	return CKR_OK;
 }
 
@@ -2287,65 +3193,44 @@ CK_RV SoftHSM::C_Verify(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pData, CK_ULONG 
 	if (session->getOpType() != SESSION_OP_VERIFY)
 		return CKR_OPERATION_NOT_INITIALIZED;
 
-	AsymmetricAlgorithm* asymCrypto = session->getAsymmetricCryptoOp();
-	const char *mechanism = session->getMechanism();
-	PublicKey* publicKey = session->getPublicKey();
-	if (asymCrypto == NULL || mechanism == NULL || session->getIsMultiPartOp() || publicKey == NULL)
+	if (session->getMacOp() != NULL)
+		return MacVerify(session, pData, ulDataLen,
+				 pSignature, ulSignatureLen);
+	else
+		return AsymVerify(session, pData, ulDataLen,
+				  pSignature, ulSignatureLen);
+}
+
+// MacAlgorithm version of C_VerifyUpdate
+static CK_RV MacVerifyUpdate(Session* session, CK_BYTE_PTR pPart, CK_ULONG ulPartLen)
+{
+	MacAlgorithm* mac = session->getMacOp();
+	if (mac == NULL || !session->getAllowMultiPartOp())
 	{
 		session->resetOp();
 		return CKR_OPERATION_NOT_INITIALIZED;
 	}
 
-	// Size of the signature
-	CK_ULONG size = publicKey->getOutputLength();
-
-	// Check buffer size
-	if (ulSignatureLen != size)
-	{
-		ERROR_MSG("The size of the signature differs from the size of the mechanism");
-		return CKR_SIGNATURE_LEN_RANGE;
-	}
-
-	// Get the data
-	ByteString data;
-
-	// PKCS #11 Mechanisms v2.30: Cryptoki Draft 7 page 32
-	// We must allow input length <= k and therfore need to prepend the data with zeroes.
-	if (strcmp(mechanism,"rsa-raw") == 0) {
-		data.wipe(size-ulDataLen);
-	}
-
-	data += ByteString(pData, ulDataLen);
-	ByteString signature(pSignature, ulSignatureLen);
+	// Get the part
+	ByteString part(pPart, ulPartLen);
 
 	// Verify the data
-	if (!asymCrypto->verify(publicKey,data,signature,mechanism))
+	if (!mac->verifyUpdate(part))
 	{
+		// verifyUpdate can't fail for a logical reason, so we assume total breakdown.
 		session->resetOp();
-		return CKR_SIGNATURE_INVALID;
+		return CKR_GENERAL_ERROR;
 	}
 
-	session->resetOp();
+	session->setAllowSinglePartOp(false);
 	return CKR_OK;
 }
 
-// Update a running verification operation with additional data
-CK_RV SoftHSM::C_VerifyUpdate(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pPart, CK_ULONG ulPartLen)
+// AsymmetricAlgorithm version of C_VerifyUpdate
+static CK_RV AsymVerifyUpdate(Session* session, CK_BYTE_PTR pPart, CK_ULONG ulPartLen)
 {
-	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
-
-	if (pPart == NULL_PTR) return CKR_ARGUMENTS_BAD;
-
-	// Get the session
-	Session* session = (Session*)handleManager->getSession(hSession);
-	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
-
-	// Check if we are doing the correct operation
-	if (session->getOpType() != SESSION_OP_VERIFY || !session->getIsMultiPartOp())
-		return CKR_OPERATION_NOT_INITIALIZED;
-
 	AsymmetricAlgorithm* asymCrypto = session->getAsymmetricCryptoOp();
-	if (asymCrypto == NULL)
+	if (asymCrypto == NULL || !session->getAllowMultiPartOp())
 	{
 		session->resetOp();
 		return CKR_OPERATION_NOT_INITIALIZED;
@@ -2362,24 +3247,69 @@ CK_RV SoftHSM::C_VerifyUpdate(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pPart, CK_
 		return CKR_GENERAL_ERROR;
 	}
 
+	session->setAllowSinglePartOp(false);
 	return CKR_OK;
 }
 
-// Finalise the verification operation and check the signature
-CK_RV SoftHSM::C_VerifyFinal(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pSignature, CK_ULONG ulSignatureLen)
+// Update a running verification operation with additional data
+CK_RV SoftHSM::C_VerifyUpdate(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pPart, CK_ULONG ulPartLen)
 {
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
 
-	if (pSignature == NULL_PTR) return CKR_ARGUMENTS_BAD;
+	if (pPart == NULL_PTR) return CKR_ARGUMENTS_BAD;
 
 	// Get the session
 	Session* session = (Session*)handleManager->getSession(hSession);
 	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
 
 	// Check if we are doing the correct operation
-	if (session->getOpType() != SESSION_OP_VERIFY || !session->getIsMultiPartOp())
+	if (session->getOpType() != SESSION_OP_VERIFY)
 		return CKR_OPERATION_NOT_INITIALIZED;
 
+	if (session->getMacOp() != NULL)
+		return MacVerifyUpdate(session, pPart, ulPartLen);
+	else
+		return AsymVerifyUpdate(session, pPart, ulPartLen);
+}
+
+// MacAlgorithm version of C_SignFinal
+static CK_RV MacVerifyFinal(Session* session, CK_BYTE_PTR pSignature, CK_ULONG ulSignatureLen)
+{
+	MacAlgorithm* mac = session->getMacOp();
+	if (mac == NULL)
+	{
+		session->resetOp();
+		return CKR_OPERATION_NOT_INITIALIZED;
+	}
+
+	// Size of the signature
+	CK_ULONG size = mac->getMacSize();
+
+	// Check buffer size
+	if (ulSignatureLen != size)
+	{
+		ERROR_MSG("The size of the signature differs from the size of the mechanism");
+		session->resetOp();
+		return CKR_SIGNATURE_LEN_RANGE;
+	}
+
+	// Get the signature
+	ByteString signature(pSignature, ulSignatureLen);
+
+	// Verify the data
+	if (!mac->verifyFinal(signature))
+	{
+		session->resetOp();
+		return CKR_SIGNATURE_INVALID;
+	}
+
+	session->resetOp();
+	return CKR_OK;
+}
+
+// AsymmetricAlgorithm version of C_VerifyFinal
+static CK_RV AsymVerifyFinal(Session* session, CK_BYTE_PTR pSignature, CK_ULONG ulSignatureLen)
+{
 	AsymmetricAlgorithm* asymCrypto = session->getAsymmetricCryptoOp();
 	PublicKey* publicKey = session->getPublicKey();
 	if (asymCrypto == NULL || publicKey == NULL)
@@ -2395,6 +3325,7 @@ CK_RV SoftHSM::C_VerifyFinal(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pSignature,
 	if (ulSignatureLen != size)
 	{
 		ERROR_MSG("The size of the signature differs from the size of the mechanism");
+		session->resetOp();
 		return CKR_SIGNATURE_LEN_RANGE;
 	}
 
@@ -2410,6 +3341,27 @@ CK_RV SoftHSM::C_VerifyFinal(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pSignature,
 
 	session->resetOp();
 	return CKR_OK;
+}
+
+// Finalise the verification operation and check the signature
+CK_RV SoftHSM::C_VerifyFinal(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pSignature, CK_ULONG ulSignatureLen)
+{
+	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
+
+	if (pSignature == NULL_PTR) return CKR_ARGUMENTS_BAD;
+
+	// Get the session
+	Session* session = (Session*)handleManager->getSession(hSession);
+	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
+
+	// Check if we are doing the correct operation
+	if (session->getOpType() != SESSION_OP_VERIFY || !session->getAllowMultiPartOp())
+		return CKR_OPERATION_NOT_INITIALIZED;
+
+	if (session->getMacOp() != NULL)
+		return MacVerifyFinal(session, pSignature, ulSignatureLen);
+	else
+		return AsymVerifyFinal(session, pSignature, ulSignatureLen);
 }
 
 // Initialise a verification operation the allows recovery of the signed data from the signature
@@ -2491,11 +3443,72 @@ CK_RV SoftHSM::C_GenerateKey(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMecha
 {
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
 
+	if (pMechanism == NULL_PTR) return CKR_ARGUMENTS_BAD;
+	if (pTemplate == NULL_PTR) return CKR_ARGUMENTS_BAD;
+	if (phKey == NULL_PTR) return CKR_ARGUMENTS_BAD;
+
 	// Get the session
 	Session* session = (Session*)handleManager->getSession(hSession);
 	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
 
-	return CKR_FUNCTION_NOT_SUPPORTED;
+	// Check the mechanism, only accept DSA and DH parameters
+	CK_OBJECT_CLASS objClass;
+	CK_KEY_TYPE keyType;
+	switch (pMechanism->mechanism)
+	{
+		case CKM_DSA_PARAMETER_GEN:
+			objClass = CKO_DOMAIN_PARAMETERS;
+			keyType = CKK_DSA;
+			break;
+		case CKM_DH_PKCS_PARAMETER_GEN:
+			objClass = CKO_DOMAIN_PARAMETERS;
+			keyType = CKK_DH;
+			break;
+		default:
+			return CKR_MECHANISM_INVALID;
+	}
+
+	// Extract information from the template that is needed to create the object.
+	CK_BBOOL isToken = CK_FALSE;
+	CK_BBOOL isPrivate = CK_TRUE;
+	CK_CERTIFICATE_TYPE dummy;
+	extractObjectInformation(pTemplate, ulCount, objClass, keyType, dummy, isToken, isPrivate);
+
+	// Report errors and/or unexpected usage.
+	if (objClass != CKO_SECRET_KEY && objClass != CKO_DOMAIN_PARAMETERS)
+		return CKR_TEMPLATE_INCONSISTENT;
+	if (pMechanism->mechanism == CKM_DSA_PARAMETER_GEN &&
+	    (objClass != CKO_DOMAIN_PARAMETERS || keyType != CKK_DSA))
+		return CKR_TEMPLATE_INCONSISTENT;
+	if (pMechanism->mechanism == CKM_DH_PKCS_PARAMETER_GEN &&
+	    (objClass != CKO_DOMAIN_PARAMETERS || keyType != CKK_DH))
+		return CKR_TEMPLATE_INCONSISTENT;
+
+	// Check authorization
+	CK_RV rv = haveWrite(session->getState(), isToken, isPrivate);
+	if (rv != CKR_OK)
+	{
+		if (rv == CKR_USER_NOT_LOGGED_IN)
+			INFO_MSG("User is not authorized");
+		if (rv == CKR_SESSION_READ_ONLY)
+			INFO_MSG("Session is read-only");
+
+		return rv;
+	}
+
+	// Generate DSA domain parameters
+	if (pMechanism->mechanism == CKM_DSA_PARAMETER_GEN)
+	{
+		return this->generateDSAParameters(hSession, pTemplate, ulCount, phKey, isToken, isPrivate);
+	}
+
+	// Generate DH domain parameters
+	if (pMechanism->mechanism == CKM_DH_PKCS_PARAMETER_GEN)
+	{
+		return this->generateDHParameters(hSession, pTemplate, ulCount, phKey, isToken, isPrivate);
+	}
+
+	return CKR_GENERAL_ERROR;
 }
 
 // Generate a key-pair using the specified mechanism
@@ -2523,7 +3536,7 @@ CK_RV SoftHSM::C_GenerateKeyPair
 	Session* session = (Session*)handleManager->getSession(hSession);
 	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
 
-	// Check the mechanism, only accept RSA and DSA key pair generation.
+	// Check the mechanism, only accept RSA, DSA, EC and DH key pair generation.
 	CK_KEY_TYPE keyType;
 	switch (pMechanism->mechanism)
 	{
@@ -2533,6 +3546,19 @@ CK_RV SoftHSM::C_GenerateKeyPair
 		case CKM_DSA_KEY_PAIR_GEN:
 			keyType = CKK_DSA;
 			break;
+		case CKM_DH_PKCS_KEY_PAIR_GEN:
+			keyType = CKK_DH;
+			break;
+#ifdef WITH_ECC
+		case CKM_EC_KEY_PAIR_GEN:
+			keyType = CKK_EC;
+			break;
+#endif
+#ifdef WITH_GOST
+		case CKM_GOSTR3410_KEY_PAIR_GEN:
+			keyType = CKK_GOSTR3410;
+			break;
+#endif
 		default:
 			return CKR_MECHANISM_INVALID;
 	}
@@ -2551,6 +3577,12 @@ CK_RV SoftHSM::C_GenerateKeyPair
 		return CKR_TEMPLATE_INCONSISTENT;
 	if (pMechanism->mechanism == CKM_DSA_KEY_PAIR_GEN && keyType != CKK_DSA)
 		return CKR_TEMPLATE_INCONSISTENT;
+	if (pMechanism->mechanism == CKM_EC_KEY_PAIR_GEN && keyType != CKK_EC)
+		return CKR_TEMPLATE_INCONSISTENT;
+	if (pMechanism->mechanism == CKM_DH_PKCS_KEY_PAIR_GEN && keyType != CKK_DH)
+		return CKR_TEMPLATE_INCONSISTENT;
+	if (pMechanism->mechanism == CKM_GOSTR3410_KEY_PAIR_GEN && keyType != CKK_GOSTR3410)
+		return CKR_TEMPLATE_INCONSISTENT;
 
 	// Extract information from the private key template that is needed to create the object.
 	CK_OBJECT_CLASS privateKeyClass = CKO_PRIVATE_KEY;
@@ -2564,6 +3596,12 @@ CK_RV SoftHSM::C_GenerateKeyPair
 	if (pMechanism->mechanism == CKM_RSA_PKCS_KEY_PAIR_GEN && keyType != CKK_RSA)
 		return CKR_TEMPLATE_INCONSISTENT;
 	if (pMechanism->mechanism == CKM_DSA_KEY_PAIR_GEN && keyType != CKK_DSA)
+		return CKR_TEMPLATE_INCONSISTENT;
+	if (pMechanism->mechanism == CKM_EC_KEY_PAIR_GEN && keyType != CKK_EC)
+		return CKR_TEMPLATE_INCONSISTENT;
+	if (pMechanism->mechanism == CKM_DH_PKCS_KEY_PAIR_GEN && keyType != CKK_DH)
+		return CKR_TEMPLATE_INCONSISTENT;
+	if (pMechanism->mechanism == CKM_GOSTR3410_KEY_PAIR_GEN && keyType != CKK_GOSTR3410)
 		return CKR_TEMPLATE_INCONSISTENT;
 
 	// Check user credentials
@@ -2592,6 +3630,36 @@ CK_RV SoftHSM::C_GenerateKeyPair
 	if (pMechanism->mechanism == CKM_DSA_KEY_PAIR_GEN)
 	{
 			return this->generateDSA(hSession,
+									 pPublicKeyTemplate, ulPublicKeyAttributeCount,
+									 pPrivateKeyTemplate, ulPrivateKeyAttributeCount,
+									 phPublicKey, phPrivateKey,
+									 ispublicKeyToken, ispublicKeyPrivate, isprivateKeyToken, isprivateKeyPrivate);
+	}
+
+	// Generate EC keys
+	if (pMechanism->mechanism == CKM_EC_KEY_PAIR_GEN)
+	{
+			return this->generateEC(hSession,
+									 pPublicKeyTemplate, ulPublicKeyAttributeCount,
+									 pPrivateKeyTemplate, ulPrivateKeyAttributeCount,
+									 phPublicKey, phPrivateKey,
+									 ispublicKeyToken, ispublicKeyPrivate, isprivateKeyToken, isprivateKeyPrivate);
+	}
+
+	// Generate DH keys
+	if (pMechanism->mechanism == CKM_DH_PKCS_KEY_PAIR_GEN)
+	{
+			return this->generateDH(hSession,
+									 pPublicKeyTemplate, ulPublicKeyAttributeCount,
+									 pPrivateKeyTemplate, ulPrivateKeyAttributeCount,
+									 phPublicKey, phPrivateKey,
+									 ispublicKeyToken, ispublicKeyPrivate, isprivateKeyToken, isprivateKeyPrivate);
+	}
+
+	// Generate GOST keys
+	if (pMechanism->mechanism == CKM_GOSTR3410_KEY_PAIR_GEN)
+	{
+			return this->generateGOST(hSession,
 									 pPublicKeyTemplate, ulPublicKeyAttributeCount,
 									 pPrivateKeyTemplate, ulPrivateKeyAttributeCount,
 									 phPublicKey, phPrivateKey,
@@ -2656,11 +3724,102 @@ CK_RV SoftHSM::C_DeriveKey
 {
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
 
+	if (pMechanism == NULL_PTR) return CKR_ARGUMENTS_BAD;
+	if (pTemplate == NULL_PTR) return CKR_ARGUMENTS_BAD;
+	if (phKey == NULL_PTR) return CKR_ARGUMENTS_BAD;
+
 	// Get the session
 	Session* session = (Session*)handleManager->getSession(hSession);
 	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
 
-	return CKR_FUNCTION_NOT_SUPPORTED;
+	// Check the mechanism, only accept DH and ECDH derive
+	switch (pMechanism->mechanism)
+	{
+		case CKM_DH_PKCS_DERIVE:
+			break;
+#ifdef WITH_ECC
+		case CKM_ECDH1_DERIVE:
+			break;
+#endif
+		default:
+			return CKR_MECHANISM_INVALID;
+	}
+
+	// Get the token
+	Token* token = session->getToken();
+	if (token == NULL) return CKR_GENERAL_ERROR;
+
+	// Check the key handle.
+	OSObject *key = (OSObject *)handleManager->getObject(hBaseKey);
+	if (key == NULL_PTR) return CKR_OBJECT_HANDLE_INVALID;
+
+	CK_BBOOL isKeyOnToken = key->getAttribute(CKA_TOKEN)->getBooleanValue();
+	CK_BBOOL isKeyPrivate = key->getAttribute(CKA_PRIVATE)->getBooleanValue();
+
+	// Check user credentials
+	CK_RV rv = haveWrite(session->getState(), isKeyOnToken, isKeyPrivate);
+	if (rv != CKR_OK)
+	{
+		if (rv == CKR_USER_NOT_LOGGED_IN)
+			INFO_MSG("User is not authorized");
+		if (rv == CKR_SESSION_READ_ONLY)
+			INFO_MSG("Session is read-only");
+
+		return rv;
+	}
+
+	// Check key class and type
+	if (key->getAttribute(CKA_CLASS)->getUnsignedLongValue() != CKO_PRIVATE_KEY)
+		return CKR_KEY_TYPE_INCONSISTENT;
+	if (pMechanism->mechanism == CKM_DH_PKCS_DERIVE && key->getAttribute(CKA_KEY_TYPE)->getUnsignedLongValue() != CKK_DH)
+		return CKR_KEY_TYPE_INCONSISTENT;
+	if (pMechanism->mechanism == CKM_ECDH1_DERIVE && key->getAttribute(CKA_KEY_TYPE)->getUnsignedLongValue() != CKK_EC)
+		return CKR_KEY_TYPE_INCONSISTENT;
+
+	// Check if key can be used for derive
+        if (!key->attributeExists(CKA_DERIVE) || key->getAttribute(CKA_DERIVE)->getBooleanValue() == false)
+		return CKR_KEY_FUNCTION_NOT_PERMITTED;
+
+	// Extract information from the template that is needed to create the object.
+
+	CK_OBJECT_CLASS objClass;
+	CK_KEY_TYPE keyType;
+	CK_BBOOL isOnToken = CK_FALSE;
+	CK_BBOOL isPrivate = CK_TRUE;
+	CK_CERTIFICATE_TYPE dummy;
+	extractObjectInformation(pTemplate, ulCount, objClass, keyType, dummy, isOnToken, isPrivate);
+
+	// Report errors and/or unexpected usage.
+	if (objClass != CKO_SECRET_KEY || keyType != CKK_GENERIC_SECRET)
+		return CKR_TEMPLATE_INCONSISTENT;
+
+	// Check authorization
+	rv = haveWrite(session->getState(), isOnToken, isPrivate);
+	if (rv != CKR_OK)
+	{
+		if (rv == CKR_USER_NOT_LOGGED_IN)
+			INFO_MSG("User is not authorized");
+		if (rv == CKR_SESSION_READ_ONLY)
+			INFO_MSG("Session is read-only");
+
+		return rv;
+	}
+
+	// Derive DH secret
+	if (pMechanism->mechanism == CKM_DH_PKCS_DERIVE)
+	{
+		return this->deriveDH(hSession, pMechanism, hBaseKey, pTemplate, ulCount, phKey, isOnToken, isPrivate);
+	}
+
+#ifdef WITH_ECC
+	// Derive ECDH secret
+	if (pMechanism->mechanism == CKM_ECDH1_DERIVE)
+	{
+		return this->deriveECDH(hSession, pMechanism, hBaseKey, pTemplate, ulCount, phKey, isOnToken, isPrivate);
+	}
+#endif
+
+	return CKR_GENERAL_ERROR;
 }
 
 // Seed the random number generator with new data
@@ -2734,7 +3893,7 @@ CK_RV SoftHSM::C_CancelFunction(CK_SESSION_HANDLE hSession)
 	return CKR_FUNCTION_NOT_PARALLEL;
 }
 
-// Wait or poll for a slot even on the specified slot
+// Wait or poll for a slot event on the specified slot
 CK_RV SoftHSM::C_WaitForSlotEvent(CK_FLAGS flags, CK_SLOT_ID_PTR pSlot, CK_VOID_PTR pReserved)
 {
 	return CKR_FUNCTION_NOT_SUPPORTED;
@@ -2838,8 +3997,8 @@ CK_RV SoftHSM::generateRSA
 
 		// Add the additional
 		if (ulPublicKeyAttributeCount > (maxAttribs - publicKeyAttribsCount))
-			return CKR_TEMPLATE_INCONSISTENT;
-		for (int i=0; i < ulPublicKeyAttributeCount && rv == CKR_OK; ++i)
+			rv = CKR_TEMPLATE_INCONSISTENT;
+		for (CK_ULONG i=0; i < ulPublicKeyAttributeCount && rv == CKR_OK; ++i)
 		{
 			switch (pPublicKeyTemplate[i].type)
 			{
@@ -2890,7 +4049,7 @@ CK_RV SoftHSM::generateRSA
 					osobject->abortTransaction();
 
 				if (!bOK)
-					rv == CKR_FUNCTION_FAILED;
+					rv = CKR_FUNCTION_FAILED;
 			}
 		}
 	}
@@ -2909,8 +4068,8 @@ CK_RV SoftHSM::generateRSA
 		};
 		CK_ULONG privateKeyAttribsCount = 4;
 		if (ulPrivateKeyAttributeCount > (maxAttribs - privateKeyAttribsCount))
-			return CKR_TEMPLATE_INCONSISTENT;
-		for (int i=0; i < ulPrivateKeyAttributeCount && rv == CKR_OK; ++i)
+			rv = CKR_TEMPLATE_INCONSISTENT;
+		for (CK_ULONG i=0; i < ulPrivateKeyAttributeCount && rv == CKR_OK; ++i)
 		{
 			switch (pPrivateKeyTemplate[i].type)
 			{
@@ -3023,7 +4182,7 @@ CK_RV SoftHSM::generateRSA
 	return rv;
 }
 
-// Generate an DSA key pair
+// Generate a DSA key pair
 CK_RV SoftHSM::generateDSA
 (CK_SESSION_HANDLE hSession,
 	CK_ATTRIBUTE_PTR pPublicKeyTemplate,
@@ -3037,13 +4196,23 @@ CK_RV SoftHSM::generateDSA
 	CK_BBOOL isPrivateKeyOnToken,
 	CK_BBOOL isPrivateKeyPrivate)
 {
-	AsymmetricKeyPair* kp = NULL;
-	DSAParameters p;
+	*phPublicKey = CK_INVALID_HANDLE;
+	*phPrivateKey = CK_INVALID_HANDLE;
+
+	// Get the session
+	Session* session = (Session*)handleManager->getSession(hSession);
+	if (session == NULL)
+		return CKR_SESSION_HANDLE_INVALID;
+
+	// Get the token
+	Token* token = session->getToken();
+	if (token == NULL)
+		return CKR_GENERAL_ERROR;
+
+	// Extract desired key information
 	ByteString prime;
 	ByteString subprime;
 	ByteString generator;
-
-	// Extract desired key information
 	for (CK_ULONG i = 0; i < ulPublicKeyAttributeCount; i++)
 	{
 		switch (pPublicKeyTemplate[i].type)
@@ -3069,11 +4238,13 @@ CK_RV SoftHSM::generateDSA
 	}
 
 	// Set the parameters
+	DSAParameters p;
 	p.setP(prime);
 	p.setQ(subprime);
 	p.setG(generator);
 
 	// Generate key pair
+	AsymmetricKeyPair* kp = NULL;
 	AsymmetricAlgorithm* dsa = CryptoFactory::i()->getAsymmetricAlgorithm("DSA");
 	if (dsa == NULL) return CKR_GENERAL_ERROR;
 	if (!dsa->generateKeyPair(&kp, &p))
@@ -3086,13 +4257,1645 @@ CK_RV SoftHSM::generateDSA
 	DSAPublicKey* pub = (DSAPublicKey*) kp->getPublicKey();
 	DSAPrivateKey* priv = (DSAPrivateKey*) kp->getPrivateKey();
 
-	// TODO: Save keys
+	CK_RV rv = CKR_OK;
+
+	// Create a public key using C_CreateObject
+	if (rv == CKR_OK)
+	{
+		const CK_ULONG maxAttribs = 32;
+		CK_OBJECT_CLASS publicKeyClass = CKO_PUBLIC_KEY;
+		CK_KEY_TYPE publicKeyType = CKK_DSA;
+		CK_ATTRIBUTE publicKeyAttribs[maxAttribs] = {
+			{ CKA_CLASS, &publicKeyClass, sizeof(publicKeyClass) },
+			{ CKA_TOKEN, &isPublicKeyOnToken, sizeof(isPublicKeyOnToken) },
+			{ CKA_PRIVATE, &isPublicKeyPrivate, sizeof(isPublicKeyPrivate) },
+			{ CKA_KEY_TYPE, &publicKeyType, sizeof(publicKeyType) },
+		};
+		CK_ULONG publicKeyAttribsCount = 4;
+
+		// Put the generated key material in the attributes
+		publicKeyAttribs[publicKeyAttribsCount++] = bsAttribute(CKA_VALUE, pub->getY());
+
+		// Add the additional
+		if (ulPublicKeyAttributeCount > (maxAttribs - publicKeyAttribsCount))
+			rv = CKR_TEMPLATE_INCONSISTENT;
+		for (CK_ULONG i=0; i < ulPublicKeyAttributeCount && rv == CKR_OK; ++i)
+		{
+			switch (pPublicKeyTemplate[i].type)
+			{
+				case CKA_CLASS:
+				case CKA_TOKEN:
+				case CKA_PRIVATE:
+				case CKA_KEY_TYPE:
+					continue;
+				default:
+					publicKeyAttribs[publicKeyAttribsCount++] = pPublicKeyTemplate[i];
+			}
+		}
+
+		if (rv == CKR_OK)
+			rv = this->CreateObject(hSession,publicKeyAttribs,publicKeyAttribsCount,phPublicKey,OBJECT_OP_GENERATE);
+
+		// Store the attributes that are being supplied by the key generation to the object
+		if (rv == CKR_OK)
+		{
+			OSObject* osobject = (OSObject*)handleManager->getObject(*phPublicKey);
+			if (osobject->startTransaction()) {
+				bool bOK = true;
+
+				// Common Key Attributes
+				bOK = bOK && osobject->setAttribute(CKA_LOCAL,true);
+				CK_ULONG ulKeyGenMechanism = (CK_ULONG)CKM_DSA_KEY_PAIR_GEN;
+				bOK = bOK && osobject->setAttribute(CKA_KEY_GEN_MECHANISM,ulKeyGenMechanism);
+
+				// DSA Public Key Attributes
+				ByteString prime;
+				ByteString subprime;
+				ByteString generator;
+				ByteString value;
+				if (isPublicKeyPrivate)
+				{
+					token->encrypt(pub->getP(), prime);
+					token->encrypt(pub->getQ(), subprime);
+					token->encrypt(pub->getG(), generator);
+					token->encrypt(pub->getY(), value);
+				}
+				else
+				{
+					prime = pub->getP();
+					subprime = pub->getQ();
+					generator = pub->getG();
+					value = pub->getY();
+				}
+				bOK = bOK && osobject->setAttribute(CKA_PRIME, prime);
+				bOK = bOK && osobject->setAttribute(CKA_SUBPRIME, subprime);
+				bOK = bOK && osobject->setAttribute(CKA_BASE, generator);
+				bOK = bOK && osobject->setAttribute(CKA_VALUE, value);
+
+				if (bOK)
+					bOK = osobject->commitTransaction();
+				else
+					osobject->abortTransaction();
+
+				if (!bOK)
+					rv = CKR_FUNCTION_FAILED;
+			}
+		}
+	}
+
+	// Create a private key using C_CreateObject
+	if (rv == CKR_OK)
+	{
+		const CK_ULONG maxAttribs = 32;
+		CK_OBJECT_CLASS privateKeyClass = CKO_PRIVATE_KEY;
+		CK_KEY_TYPE privateKeyType = CKK_DSA;
+		CK_ATTRIBUTE privateKeyAttribs[maxAttribs] = {
+			{ CKA_CLASS, &privateKeyClass, sizeof(privateKeyClass) },
+			{ CKA_TOKEN, &isPrivateKeyOnToken, sizeof(isPrivateKeyOnToken) },
+			{ CKA_PRIVATE, &isPrivateKeyPrivate, sizeof(isPrivateKeyPrivate) },
+			{ CKA_KEY_TYPE, &privateKeyType, sizeof(privateKeyType) },
+		};
+		CK_ULONG privateKeyAttribsCount = 4;
+		if (ulPrivateKeyAttributeCount > (maxAttribs - privateKeyAttribsCount))
+			rv = CKR_TEMPLATE_INCONSISTENT;
+		for (CK_ULONG i=0; i < ulPrivateKeyAttributeCount && rv == CKR_OK; ++i)
+		{
+			switch (pPrivateKeyTemplate[i].type)
+			{
+				case CKA_CLASS:
+				case CKA_TOKEN:
+				case CKA_PRIVATE:
+				case CKA_KEY_TYPE:
+					continue;
+				default:
+					privateKeyAttribs[privateKeyAttribsCount++] = pPrivateKeyTemplate[i];
+			}
+		}
+
+		if (rv == CKR_OK)
+			rv = this->CreateObject(hSession,privateKeyAttribs,privateKeyAttribsCount,phPrivateKey,OBJECT_OP_GENERATE);
+
+		// Store the attributes that are being supplied by the key generation to the object
+		if (rv == CKR_OK)
+		{
+			OSObject* osobject = (OSObject*)handleManager->getObject(*phPrivateKey);
+			if (osobject->startTransaction()) {
+				bool bOK = true;
+
+				// Common Key Attributes
+				bOK = bOK && osobject->setAttribute(CKA_LOCAL,true);
+				CK_ULONG ulKeyGenMechanism = (CK_ULONG)CKM_DSA_KEY_PAIR_GEN;
+				bOK = bOK && osobject->setAttribute(CKA_KEY_GEN_MECHANISM,ulKeyGenMechanism);
+
+				// Common Private Key Attributes
+				bool bAlwaysSensitive = osobject->getAttribute(CKA_SENSITIVE)->getBooleanValue();
+				bOK = bOK && osobject->setAttribute(CKA_ALWAYS_SENSITIVE,bAlwaysSensitive);
+				bool bNeverExtractable =  osobject->getAttribute(CKA_EXTRACTABLE)->getBooleanValue() == false;
+				bOK = bOK && osobject->setAttribute(CKA_NEVER_EXTRACTABLE, bNeverExtractable);
+
+				// DSA Private Key Attributes
+				ByteString prime;
+				ByteString subprime;
+				ByteString generator;
+				ByteString value;
+				if (isPrivateKeyPrivate)
+				{
+					token->encrypt(priv->getP(), prime);
+					token->encrypt(priv->getQ(), subprime);
+					token->encrypt(priv->getG(), generator);
+					token->encrypt(priv->getX(), value);
+				}
+				else
+				{
+					prime = priv->getP();
+					subprime = priv->getQ();
+					generator = priv->getG();
+					value = priv->getX();
+				}
+				bOK = bOK && osobject->setAttribute(CKA_PRIME, prime);
+				bOK = bOK && osobject->setAttribute(CKA_SUBPRIME, subprime);
+				bOK = bOK && osobject->setAttribute(CKA_BASE, generator);
+				bOK = bOK && osobject->setAttribute(CKA_VALUE, value);
+
+				if (bOK)
+					bOK = osobject->commitTransaction();
+				else
+					osobject->abortTransaction();
+
+				if (!bOK)
+					rv = CKR_FUNCTION_FAILED;
+			}
+		}
+	}
 
 	// Clean up
 	dsa->recycleKeyPair(kp);
 	CryptoFactory::i()->recycleAsymmetricAlgorithm(dsa);
 
-	return CKR_FUNCTION_NOT_SUPPORTED;
+	// Remove keys that may have been created already when the function fails.
+	if (rv != CKR_OK)
+	{
+		if (*phPrivateKey != CK_INVALID_HANDLE)
+		{
+			OSObject* priv = (OSObject*)handleManager->getObject(*phPrivateKey);
+			handleManager->destroyObject(*phPrivateKey);
+			if (priv) priv->destroyObject();
+			*phPrivateKey = CK_INVALID_HANDLE;
+		}
+
+		if (*phPublicKey != CK_INVALID_HANDLE)
+		{
+			OSObject* pub = (OSObject*)handleManager->getObject(*phPublicKey);
+			handleManager->destroyObject(*phPublicKey);
+			if (pub) pub->destroyObject();
+			*phPublicKey = CK_INVALID_HANDLE;
+		}
+	}
+
+	return rv;
+}
+
+// Generate a DSA domain parameter set
+CK_RV SoftHSM::generateDSAParameters
+(CK_SESSION_HANDLE hSession,
+	CK_ATTRIBUTE_PTR pTemplate,
+	CK_ULONG ulCount,
+	CK_OBJECT_HANDLE_PTR phKey,
+	CK_BBOOL isToken,
+	CK_BBOOL isPrivate)
+{
+	*phKey = CK_INVALID_HANDLE;
+
+	// Get the session
+	Session* session = (Session*)handleManager->getSession(hSession);
+	if (session == NULL)
+		return CKR_SESSION_HANDLE_INVALID;
+
+	// Get the token
+	Token* token = session->getToken();
+	if (token == NULL)
+		return CKR_GENERAL_ERROR;
+
+	// Extract desired parameter information
+	size_t bitLen = 0;
+	size_t qLen = 0;
+	for (CK_ULONG i = 0; i < ulCount; i++)
+	{
+		switch (pTemplate[i].type)
+		{
+			case CKA_PRIME_BITS:
+				if (pTemplate[i].ulValueLen != sizeof(CK_ULONG))
+				{
+					INFO_MSG("CKA_PRIME_BITS does not have the size of CK_ULONG");
+					return CKR_TEMPLATE_INCOMPLETE;
+				}
+				bitLen = *(CK_ULONG*)pTemplate[i].pValue;
+				break;
+			case CKA_SUBPRIME_BITS:
+				if (pTemplate[i].ulValueLen != sizeof(CK_ULONG))
+				{
+					INFO_MSG("CKA_SUBPRIME_BITS does not have the size of CK_ULONG");
+					return CKR_TEMPLATE_INCOMPLETE;
+				}
+				qLen = *(CK_ULONG*)pTemplate[i].pValue;
+				break;
+			default:
+				break;
+		}
+	}
+
+	// CKA_PRIME_BITS must be specified
+	if (bitLen == 0)
+	{
+		INFO_MSG("Missing CKA_PRIME_BITS in pTemplate");
+		return CKR_TEMPLATE_INCOMPLETE;
+	}
+
+	// No real choice for CKA_SUBPRIME_BITS
+	if ((qLen != 0) &&
+	    (((bitLen >= 2048) && (qLen != 256)) ||
+	     ((bitLen < 2048) && (qLen != 160))))
+		INFO_MSG("CKA_SUBPRIME_BITS is ignored");
+
+
+	// Generate domain parameters
+	AsymmetricParameters* p = NULL;
+	AsymmetricAlgorithm* dsa = CryptoFactory::i()->getAsymmetricAlgorithm("DSA");
+	if (dsa == NULL) return CKR_GENERAL_ERROR;
+	if (!dsa->generateParameters(&p, (void *)bitLen))
+	{
+		ERROR_MSG("Could not generate parameters");
+		CryptoFactory::i()->recycleAsymmetricAlgorithm(dsa);
+		return CKR_GENERAL_ERROR;
+	}
+
+	DSAParameters* params = (DSAParameters*) p;
+
+	CK_RV rv = CKR_OK;
+
+	// Create the domain parameter object using C_CreateObject
+	const CK_ULONG maxAttribs = 32;
+	CK_OBJECT_CLASS objClass = CKO_DOMAIN_PARAMETERS;
+	CK_KEY_TYPE keyType = CKK_DSA;
+	CK_ATTRIBUTE paramsAttribs[maxAttribs] = {
+		{ CKA_CLASS, &objClass, sizeof(objClass) },
+		{ CKA_TOKEN, &isToken, sizeof(isToken) },
+		{ CKA_PRIVATE, &isPrivate, sizeof(isPrivate) },
+		{ CKA_KEY_TYPE, &keyType, sizeof(keyType) },
+	};
+	CK_ULONG paramsAttribsCount = 4;
+
+	// Add the additional
+	if (ulCount > (maxAttribs - paramsAttribsCount))
+		rv = CKR_TEMPLATE_INCONSISTENT;
+	for (CK_ULONG i=0; i < ulCount && rv == CKR_OK; ++i)
+	{
+		switch (pTemplate[i].type)
+		{
+			case CKA_CLASS:
+			case CKA_TOKEN:
+			case CKA_PRIVATE:
+			case CKA_KEY_TYPE:
+				continue;
+		default:
+			paramsAttribs[paramsAttribsCount++] = pTemplate[i];
+		}
+	}
+
+	if (rv == CKR_OK)
+		rv = this->CreateObject(hSession, paramsAttribs, paramsAttribsCount, phKey,OBJECT_OP_GENERATE);
+
+	// Store the attributes that are being supplied
+	if (rv == CKR_OK)
+	{
+		OSObject* osobject = (OSObject*)handleManager->getObject(*phKey);
+		if (osobject->startTransaction()) {
+			bool bOK = true;
+
+			// Common Attributes
+			bOK = bOK && osobject->setAttribute(CKA_LOCAL,true);
+			CK_ULONG ulKeyGenMechanism = (CK_ULONG)CKM_DSA_PARAMETER_GEN;
+			bOK = bOK && osobject->setAttribute(CKA_KEY_GEN_MECHANISM,ulKeyGenMechanism);
+
+			// DSA Domain Parameters Attributes
+			ByteString prime;
+			ByteString subprime;
+			ByteString generator;
+			if (isPrivate)
+			{
+				token->encrypt(params->getP(), prime);
+				token->encrypt(params->getQ(), subprime);
+				token->encrypt(params->getG(), generator);
+			}
+			else
+			{
+				prime = params->getP();
+				subprime = params->getQ();
+				generator = params->getG();
+			}
+			bOK = bOK && osobject->setAttribute(CKA_PRIME, prime);
+			bOK = bOK && osobject->setAttribute(CKA_SUBPRIME, subprime);
+			bOK = bOK && osobject->setAttribute(CKA_BASE, generator);
+
+			if (bOK)
+				bOK = osobject->commitTransaction();
+			else
+				osobject->abortTransaction();
+
+			if (!bOK)
+				rv = CKR_FUNCTION_FAILED;
+		}
+	}
+
+	// Clean up
+	dsa->recycleParameters(p);
+	CryptoFactory::i()->recycleAsymmetricAlgorithm(dsa);
+
+	// Remove parameters that may have been created already when the function fails.
+	if (rv != CKR_OK)
+	{
+		if (*phKey != CK_INVALID_HANDLE)
+		{
+			OSObject* params = (OSObject*)handleManager->getObject(*phKey);
+			handleManager->destroyObject(*phKey);
+			if (params) params->destroyObject();
+			*phKey = CK_INVALID_HANDLE;
+		}
+	}
+
+	return rv;
+}
+
+// Generate an EC key pair
+CK_RV SoftHSM::generateEC
+(CK_SESSION_HANDLE hSession,
+	CK_ATTRIBUTE_PTR pPublicKeyTemplate,
+	CK_ULONG ulPublicKeyAttributeCount,
+	CK_ATTRIBUTE_PTR pPrivateKeyTemplate,
+	CK_ULONG ulPrivateKeyAttributeCount,
+	CK_OBJECT_HANDLE_PTR phPublicKey,
+	CK_OBJECT_HANDLE_PTR phPrivateKey,
+	CK_BBOOL isPublicKeyOnToken,
+	CK_BBOOL isPublicKeyPrivate,
+	CK_BBOOL isPrivateKeyOnToken,
+	CK_BBOOL isPrivateKeyPrivate)
+{
+	*phPublicKey = CK_INVALID_HANDLE;
+	*phPrivateKey = CK_INVALID_HANDLE;
+
+	// Get the session
+	Session* session = (Session*)handleManager->getSession(hSession);
+	if (session == NULL)
+		return CKR_SESSION_HANDLE_INVALID;
+
+	// Get the token
+	Token* token = session->getToken();
+	if (token == NULL)
+		return CKR_GENERAL_ERROR;
+
+	// Extract desired key information
+	ByteString params;
+	for (CK_ULONG i = 0; i < ulPublicKeyAttributeCount; i++)
+	{
+		switch (pPublicKeyTemplate[i].type)
+		{
+			case CKA_EC_PARAMS:
+				params = ByteString((unsigned char*)pPublicKeyTemplate[i].pValue, pPublicKeyTemplate[i].ulValueLen);
+				break;
+			default:
+				break;
+		}
+	}
+
+	// The parameters must be specified to be able to generate a key pair.
+	if (params.size() == 0) {
+		INFO_MSG("Missing parameter(s) in pPublicKeyTemplate");
+		return CKR_TEMPLATE_INCOMPLETE;
+	}
+
+	// Set the parameters
+	ECParameters p;
+	p.setEC(params);
+
+	// Generate key pair
+	AsymmetricKeyPair* kp = NULL;
+	AsymmetricAlgorithm* ec = CryptoFactory::i()->getAsymmetricAlgorithm("ECDSA");
+	if (ec == NULL) return CKR_GENERAL_ERROR;
+	if (!ec->generateKeyPair(&kp, &p))
+	{
+		ERROR_MSG("Could not generate key pair");
+		CryptoFactory::i()->recycleAsymmetricAlgorithm(ec);
+		return CKR_GENERAL_ERROR;
+	}
+
+	ECPublicKey* pub = (ECPublicKey*) kp->getPublicKey();
+	ECPrivateKey* priv = (ECPrivateKey*) kp->getPrivateKey();
+
+	CK_RV rv = CKR_OK;
+
+	// Create a public key using C_CreateObject
+	if (rv == CKR_OK)
+	{
+		const CK_ULONG maxAttribs = 32;
+		CK_OBJECT_CLASS publicKeyClass = CKO_PUBLIC_KEY;
+		CK_KEY_TYPE publicKeyType = CKK_EC;
+		CK_ATTRIBUTE publicKeyAttribs[maxAttribs] = {
+			{ CKA_CLASS, &publicKeyClass, sizeof(publicKeyClass) },
+			{ CKA_TOKEN, &isPublicKeyOnToken, sizeof(isPublicKeyOnToken) },
+			{ CKA_PRIVATE, &isPublicKeyPrivate, sizeof(isPublicKeyPrivate) },
+			{ CKA_KEY_TYPE, &publicKeyType, sizeof(publicKeyType) },
+		};
+		CK_ULONG publicKeyAttribsCount = 4;
+
+		// Add the additional
+		if (ulPublicKeyAttributeCount > (maxAttribs - publicKeyAttribsCount))
+			rv = CKR_TEMPLATE_INCONSISTENT;
+		for (CK_ULONG i=0; i < ulPublicKeyAttributeCount && rv == CKR_OK; ++i)
+		{
+			switch (pPublicKeyTemplate[i].type)
+			{
+				case CKA_CLASS:
+				case CKA_TOKEN:
+				case CKA_PRIVATE:
+				case CKA_KEY_TYPE:
+					continue;
+				default:
+					publicKeyAttribs[publicKeyAttribsCount++] = pPublicKeyTemplate[i];
+			}
+		}
+
+		if (rv == CKR_OK)
+			rv = this->CreateObject(hSession,publicKeyAttribs,publicKeyAttribsCount,phPublicKey,OBJECT_OP_GENERATE);
+
+		// Store the attributes that are being supplied by the key generation to the object
+		if (rv == CKR_OK)
+		{
+			OSObject* osobject = (OSObject*)handleManager->getObject(*phPublicKey);
+			if (osobject->startTransaction()) {
+				bool bOK = true;
+
+				// Common Key Attributes
+				bOK = bOK && osobject->setAttribute(CKA_LOCAL,true);
+				CK_ULONG ulKeyGenMechanism = (CK_ULONG)CKM_EC_KEY_PAIR_GEN;
+				bOK = bOK && osobject->setAttribute(CKA_KEY_GEN_MECHANISM,ulKeyGenMechanism);
+
+				// EC Public Key Attributes
+				ByteString group;
+				ByteString point;
+				if (isPublicKeyPrivate)
+				{
+					token->encrypt(pub->getEC(), group);
+					token->encrypt(pub->getQ(), point);
+				}
+				else
+				{
+					group = pub->getEC();
+					point = pub->getQ();
+				}
+				bOK = bOK && osobject->setAttribute(CKA_EC_PARAMS, group);
+				bOK = bOK && osobject->setAttribute(CKA_EC_POINT, point);
+
+				if (bOK)
+					bOK = osobject->commitTransaction();
+				else
+					osobject->abortTransaction();
+
+				if (!bOK)
+					rv = CKR_FUNCTION_FAILED;
+			}
+		}
+	}
+
+	// Create a private key using C_CreateObject
+	if (rv == CKR_OK)
+	{
+		const CK_ULONG maxAttribs = 32;
+		CK_OBJECT_CLASS privateKeyClass = CKO_PRIVATE_KEY;
+		CK_KEY_TYPE privateKeyType = CKK_EC;
+		CK_ATTRIBUTE privateKeyAttribs[maxAttribs] = {
+			{ CKA_CLASS, &privateKeyClass, sizeof(privateKeyClass) },
+			{ CKA_TOKEN, &isPrivateKeyOnToken, sizeof(isPrivateKeyOnToken) },
+			{ CKA_PRIVATE, &isPrivateKeyPrivate, sizeof(isPrivateKeyPrivate) },
+			{ CKA_KEY_TYPE, &privateKeyType, sizeof(privateKeyType) },
+		};
+		CK_ULONG privateKeyAttribsCount = 4;
+		if (ulPrivateKeyAttributeCount > (maxAttribs - privateKeyAttribsCount))
+			rv = CKR_TEMPLATE_INCONSISTENT;
+		for (CK_ULONG i=0; i < ulPrivateKeyAttributeCount && rv == CKR_OK; ++i)
+		{
+			switch (pPrivateKeyTemplate[i].type)
+			{
+				case CKA_CLASS:
+				case CKA_TOKEN:
+				case CKA_PRIVATE:
+				case CKA_KEY_TYPE:
+					continue;
+				default:
+					privateKeyAttribs[privateKeyAttribsCount++] = pPrivateKeyTemplate[i];
+			}
+		}
+
+		if (rv == CKR_OK)
+			rv = this->CreateObject(hSession,privateKeyAttribs,privateKeyAttribsCount,phPrivateKey,OBJECT_OP_GENERATE);
+
+		// Store the attributes that are being supplied by the key generation to the object
+		if (rv == CKR_OK)
+		{
+			OSObject* osobject = (OSObject*)handleManager->getObject(*phPrivateKey);
+			if (osobject->startTransaction()) {
+				bool bOK = true;
+
+				// Common Key Attributes
+				bOK = bOK && osobject->setAttribute(CKA_LOCAL,true);
+				CK_ULONG ulKeyGenMechanism = (CK_ULONG)CKM_EC_KEY_PAIR_GEN;
+				bOK = bOK && osobject->setAttribute(CKA_KEY_GEN_MECHANISM,ulKeyGenMechanism);
+
+				// Common Private Key Attributes
+				bool bAlwaysSensitive = osobject->getAttribute(CKA_SENSITIVE)->getBooleanValue();
+				bOK = bOK && osobject->setAttribute(CKA_ALWAYS_SENSITIVE,bAlwaysSensitive);
+				bool bNeverExtractable =  osobject->getAttribute(CKA_EXTRACTABLE)->getBooleanValue() == false;
+				bOK = bOK && osobject->setAttribute(CKA_NEVER_EXTRACTABLE, bNeverExtractable);
+
+				// EC Private Key Attributes
+				ByteString group;
+				ByteString value;
+				if (isPrivateKeyPrivate)
+				{
+					token->encrypt(priv->getEC(), group);
+					token->encrypt(priv->getD(), value);
+				}
+				else
+				{
+					group = priv->getEC();
+					value = priv->getD();
+				}
+				bOK = bOK && osobject->setAttribute(CKA_EC_PARAMS, group);
+				bOK = bOK && osobject->setAttribute(CKA_VALUE, value);
+
+				if (bOK)
+					bOK = osobject->commitTransaction();
+				else
+					osobject->abortTransaction();
+
+				if (!bOK)
+					rv = CKR_FUNCTION_FAILED;
+			}
+		}
+	}
+
+	// Clean up
+	ec->recycleKeyPair(kp);
+	CryptoFactory::i()->recycleAsymmetricAlgorithm(ec);
+
+	// Remove keys that may have been created already when the function fails.
+	if (rv != CKR_OK)
+	{
+		if (*phPrivateKey != CK_INVALID_HANDLE)
+		{
+			OSObject* priv = (OSObject*)handleManager->getObject(*phPrivateKey);
+			handleManager->destroyObject(*phPrivateKey);
+			if (priv) priv->destroyObject();
+			*phPrivateKey = CK_INVALID_HANDLE;
+		}
+
+		if (*phPublicKey != CK_INVALID_HANDLE)
+		{
+			OSObject* pub = (OSObject*)handleManager->getObject(*phPublicKey);
+			handleManager->destroyObject(*phPublicKey);
+			if (pub) pub->destroyObject();
+			*phPublicKey = CK_INVALID_HANDLE;
+		}
+	}
+
+	return rv;
+}
+
+// Generate a DH key pair
+CK_RV SoftHSM::generateDH
+(CK_SESSION_HANDLE hSession,
+	CK_ATTRIBUTE_PTR pPublicKeyTemplate,
+	CK_ULONG ulPublicKeyAttributeCount,
+	CK_ATTRIBUTE_PTR pPrivateKeyTemplate,
+	CK_ULONG ulPrivateKeyAttributeCount,
+	CK_OBJECT_HANDLE_PTR phPublicKey,
+	CK_OBJECT_HANDLE_PTR phPrivateKey,
+	CK_BBOOL isPublicKeyOnToken,
+	CK_BBOOL isPublicKeyPrivate,
+	CK_BBOOL isPrivateKeyOnToken,
+	CK_BBOOL isPrivateKeyPrivate)
+{
+	*phPublicKey = CK_INVALID_HANDLE;
+	*phPrivateKey = CK_INVALID_HANDLE;
+
+	// Get the session
+	Session* session = (Session*)handleManager->getSession(hSession);
+	if (session == NULL)
+		return CKR_SESSION_HANDLE_INVALID;
+
+	// Get the token
+	Token* token = session->getToken();
+	if (token == NULL)
+		return CKR_GENERAL_ERROR;
+
+	// Extract desired key information
+	ByteString prime;
+	ByteString generator;
+	for (CK_ULONG i = 0; i < ulPublicKeyAttributeCount; i++)
+	{
+		switch (pPublicKeyTemplate[i].type)
+		{
+			case CKA_PRIME:
+				prime = ByteString((unsigned char*)pPublicKeyTemplate[i].pValue, pPublicKeyTemplate[i].ulValueLen);
+				break;
+			case CKA_BASE:
+				generator = ByteString((unsigned char*)pPublicKeyTemplate[i].pValue, pPublicKeyTemplate[i].ulValueLen);
+				break;
+			default:
+				break;
+		}
+	}
+
+	// The parameters must be specified to be able to generate a key pair.
+	if (prime.size() == 0 || generator.size() == 0) {
+		INFO_MSG("Missing parameter(s) in pPublicKeyTemplate");
+		return CKR_TEMPLATE_INCOMPLETE;
+	}
+
+	// Set the parameters
+	DHParameters p;
+	p.setP(prime);
+	p.setG(generator);
+
+	// Generate key pair
+	AsymmetricKeyPair* kp = NULL;
+	AsymmetricAlgorithm* dh = CryptoFactory::i()->getAsymmetricAlgorithm("DH");
+	if (dh == NULL) return CKR_GENERAL_ERROR;
+	if (!dh->generateKeyPair(&kp, &p))
+	{
+		ERROR_MSG("Could not generate key pair");
+		CryptoFactory::i()->recycleAsymmetricAlgorithm(dh);
+		return CKR_GENERAL_ERROR;
+	}
+
+	DHPublicKey* pub = (DHPublicKey*) kp->getPublicKey();
+	DHPrivateKey* priv = (DHPrivateKey*) kp->getPrivateKey();
+
+	CK_RV rv = CKR_OK;
+
+	// Create a public key using C_CreateObject
+	if (rv == CKR_OK)
+	{
+		const CK_ULONG maxAttribs = 32;
+		CK_OBJECT_CLASS publicKeyClass = CKO_PUBLIC_KEY;
+		CK_KEY_TYPE publicKeyType = CKK_DH;
+		CK_ATTRIBUTE publicKeyAttribs[maxAttribs] = {
+			{ CKA_CLASS, &publicKeyClass, sizeof(publicKeyClass) },
+			{ CKA_TOKEN, &isPublicKeyOnToken, sizeof(isPublicKeyOnToken) },
+			{ CKA_PRIVATE, &isPublicKeyPrivate, sizeof(isPublicKeyPrivate) },
+			{ CKA_KEY_TYPE, &publicKeyType, sizeof(publicKeyType) },
+		};
+		CK_ULONG publicKeyAttribsCount = 4;
+
+		// Put the generated key material in the attributes
+		publicKeyAttribs[publicKeyAttribsCount++] = bsAttribute(CKA_VALUE, pub->getY());
+
+		// Add the additional
+		if (ulPublicKeyAttributeCount > (maxAttribs - publicKeyAttribsCount))
+			rv = CKR_TEMPLATE_INCONSISTENT;
+		for (CK_ULONG i=0; i < ulPublicKeyAttributeCount && rv == CKR_OK; ++i)
+		{
+			switch (pPublicKeyTemplate[i].type)
+			{
+				case CKA_CLASS:
+				case CKA_TOKEN:
+				case CKA_PRIVATE:
+				case CKA_KEY_TYPE:
+					continue;
+				default:
+					publicKeyAttribs[publicKeyAttribsCount++] = pPublicKeyTemplate[i];
+			}
+		}
+
+		if (rv == CKR_OK)
+			rv = this->CreateObject(hSession,publicKeyAttribs,publicKeyAttribsCount,phPublicKey,OBJECT_OP_GENERATE);
+
+		// Store the attributes that are being supplied by the key generation to the object
+		if (rv == CKR_OK)
+		{
+			OSObject* osobject = (OSObject*)handleManager->getObject(*phPublicKey);
+			if (osobject->startTransaction()) {
+				bool bOK = true;
+
+				// Common Key Attributes
+				bOK = bOK && osobject->setAttribute(CKA_LOCAL,true);
+				CK_ULONG ulKeyGenMechanism = (CK_ULONG)CKM_DH_PKCS_KEY_PAIR_GEN;
+				bOK = bOK && osobject->setAttribute(CKA_KEY_GEN_MECHANISM,ulKeyGenMechanism);
+
+				// DH Public Key Attributes
+				ByteString prime;
+				ByteString generator;
+				ByteString value;
+				if (isPublicKeyPrivate)
+				{
+					token->encrypt(pub->getP(), prime);
+					token->encrypt(pub->getG(), generator);
+					token->encrypt(pub->getY(), value);
+				}
+				else
+				{
+					prime = pub->getP();
+					generator = pub->getG();
+					value = pub->getY();
+				}
+				bOK = bOK && osobject->setAttribute(CKA_PRIME, prime);
+				bOK = bOK && osobject->setAttribute(CKA_BASE, generator);
+				bOK = bOK && osobject->setAttribute(CKA_VALUE, value);
+
+				if (bOK)
+					bOK = osobject->commitTransaction();
+				else
+					osobject->abortTransaction();
+
+				if (!bOK)
+					rv = CKR_FUNCTION_FAILED;
+			}
+		}
+	}
+
+	// Create a private key using C_CreateObject
+	if (rv == CKR_OK)
+	{
+		const CK_ULONG maxAttribs = 32;
+		CK_OBJECT_CLASS privateKeyClass = CKO_PRIVATE_KEY;
+		CK_KEY_TYPE privateKeyType = CKK_DH;
+		CK_ATTRIBUTE privateKeyAttribs[maxAttribs] = {
+			{ CKA_CLASS, &privateKeyClass, sizeof(privateKeyClass) },
+			{ CKA_TOKEN, &isPrivateKeyOnToken, sizeof(isPrivateKeyOnToken) },
+			{ CKA_PRIVATE, &isPrivateKeyPrivate, sizeof(isPrivateKeyPrivate) },
+			{ CKA_KEY_TYPE, &privateKeyType, sizeof(privateKeyType) },
+		};
+		CK_ULONG privateKeyAttribsCount = 4;
+		if (ulPrivateKeyAttributeCount > (maxAttribs - privateKeyAttribsCount))
+			rv = CKR_TEMPLATE_INCONSISTENT;
+		for (CK_ULONG i=0; i < ulPrivateKeyAttributeCount && rv == CKR_OK; ++i)
+		{
+			switch (pPrivateKeyTemplate[i].type)
+			{
+				case CKA_CLASS:
+				case CKA_TOKEN:
+				case CKA_PRIVATE:
+				case CKA_KEY_TYPE:
+					continue;
+				default:
+					privateKeyAttribs[privateKeyAttribsCount++] = pPrivateKeyTemplate[i];
+			}
+		}
+
+		if (rv == CKR_OK)
+			rv = this->CreateObject(hSession,privateKeyAttribs,privateKeyAttribsCount,phPrivateKey,OBJECT_OP_GENERATE);
+
+		// Store the attributes that are being supplied by the key generation to the object
+		if (rv == CKR_OK)
+		{
+			OSObject* osobject = (OSObject*)handleManager->getObject(*phPrivateKey);
+			if (osobject->startTransaction()) {
+				bool bOK = true;
+
+				// Common Key Attributes
+				bOK = bOK && osobject->setAttribute(CKA_LOCAL,true);
+				CK_ULONG ulKeyGenMechanism = (CK_ULONG)CKM_DH_PKCS_KEY_PAIR_GEN;
+				bOK = bOK && osobject->setAttribute(CKA_KEY_GEN_MECHANISM,ulKeyGenMechanism);
+
+				// Common Private Key Attributes
+				bool bAlwaysSensitive = osobject->getAttribute(CKA_SENSITIVE)->getBooleanValue();
+				bOK = bOK && osobject->setAttribute(CKA_ALWAYS_SENSITIVE,bAlwaysSensitive);
+				bool bNeverExtractable =  osobject->getAttribute(CKA_EXTRACTABLE)->getBooleanValue() == false;
+				bOK = bOK && osobject->setAttribute(CKA_NEVER_EXTRACTABLE, bNeverExtractable);
+
+				// DH Private Key Attributes
+				ByteString prime;
+				ByteString generator;
+				ByteString value;
+				if (isPrivateKeyPrivate)
+				{
+					token->encrypt(priv->getP(), prime);
+					token->encrypt(priv->getG(), generator);
+					token->encrypt(priv->getX(), value);
+				}
+				else
+				{
+					prime = priv->getP();
+					generator = priv->getG();
+					value = priv->getX();
+				}
+				bOK = bOK && osobject->setAttribute(CKA_PRIME, prime);
+				bOK = bOK && osobject->setAttribute(CKA_BASE, generator);
+				bOK = bOK && osobject->setAttribute(CKA_VALUE, value);
+
+				if (bOK)
+					bOK = osobject->commitTransaction();
+				else
+					osobject->abortTransaction();
+
+				if (!bOK)
+					rv = CKR_FUNCTION_FAILED;
+			}
+		}
+	}
+
+	// Clean up
+	dh->recycleKeyPair(kp);
+	CryptoFactory::i()->recycleAsymmetricAlgorithm(dh);
+
+	// Remove keys that may have been created already when the function fails.
+	if (rv != CKR_OK)
+	{
+		if (*phPrivateKey != CK_INVALID_HANDLE)
+		{
+			OSObject* priv = (OSObject*)handleManager->getObject(*phPrivateKey);
+			handleManager->destroyObject(*phPrivateKey);
+			if (priv) priv->destroyObject();
+			*phPrivateKey = CK_INVALID_HANDLE;
+		}
+
+		if (*phPublicKey != CK_INVALID_HANDLE)
+		{
+			OSObject* pub = (OSObject*)handleManager->getObject(*phPublicKey);
+			handleManager->destroyObject(*phPublicKey);
+			if (pub) pub->destroyObject();
+			*phPublicKey = CK_INVALID_HANDLE;
+		}
+	}
+
+	return rv;
+}
+
+// Generate a DH domain parameter set
+CK_RV SoftHSM::generateDHParameters
+(CK_SESSION_HANDLE hSession,
+	CK_ATTRIBUTE_PTR pTemplate,
+	CK_ULONG ulCount,
+	CK_OBJECT_HANDLE_PTR phKey,
+	CK_BBOOL isToken,
+	CK_BBOOL isPrivate)
+{
+	*phKey = CK_INVALID_HANDLE;
+
+	// Get the session
+	Session* session = (Session*)handleManager->getSession(hSession);
+	if (session == NULL)
+		return CKR_SESSION_HANDLE_INVALID;
+
+	// Get the token
+	Token* token = session->getToken();
+	if (token == NULL)
+		return CKR_GENERAL_ERROR;
+
+	// Extract desired parameter information
+	size_t bitLen = 0;
+	for (CK_ULONG i = 0; i < ulCount; i++)
+	{
+		switch (pTemplate[i].type)
+		{
+			case CKA_PRIME_BITS:
+				if (pTemplate[i].ulValueLen != sizeof(CK_ULONG))
+				{
+					INFO_MSG("CKA_PRIME_BITS does not have the size of CK_ULONG");
+					return CKR_TEMPLATE_INCOMPLETE;
+				}
+				bitLen = *(CK_ULONG*)pTemplate[i].pValue;
+				break;
+			default:
+				break;
+		}
+	}
+
+	// CKA_PRIME_BITS must be specified
+	if (bitLen == 0)
+	{
+		INFO_MSG("Missing CKA_PRIME_BITS in pTemplate");
+		return CKR_TEMPLATE_INCOMPLETE;
+	}
+
+	// Generate domain parameters
+	AsymmetricParameters* p = NULL;
+	AsymmetricAlgorithm* dh = CryptoFactory::i()->getAsymmetricAlgorithm("DH");
+	if (dh == NULL) return CKR_GENERAL_ERROR;
+	if (!dh->generateParameters(&p, (void *)bitLen))
+	{
+		ERROR_MSG("Could not generate parameters");
+		CryptoFactory::i()->recycleAsymmetricAlgorithm(dh);
+		return CKR_GENERAL_ERROR;
+	}
+
+	DHParameters* params = (DHParameters*) p;
+
+	CK_RV rv = CKR_OK;
+
+	// Create the domain parameter object using C_CreateObject
+	const CK_ULONG maxAttribs = 32;
+	CK_OBJECT_CLASS objClass = CKO_DOMAIN_PARAMETERS;
+	CK_KEY_TYPE keyType = CKK_DH;
+	CK_ATTRIBUTE paramsAttribs[maxAttribs] = {
+		{ CKA_CLASS, &objClass, sizeof(objClass) },
+		{ CKA_TOKEN, &isToken, sizeof(isToken) },
+		{ CKA_PRIVATE, &isPrivate, sizeof(isPrivate) },
+		{ CKA_KEY_TYPE, &keyType, sizeof(keyType) },
+	};
+	CK_ULONG paramsAttribsCount = 4;
+
+	// Add the additional
+	if (ulCount > (maxAttribs - paramsAttribsCount))
+		rv = CKR_TEMPLATE_INCONSISTENT;
+	for (CK_ULONG i=0; i < ulCount && rv == CKR_OK; ++i)
+	{
+		switch (pTemplate[i].type)
+		{
+			case CKA_CLASS:
+			case CKA_TOKEN:
+			case CKA_PRIVATE:
+			case CKA_KEY_TYPE:
+				continue;
+		default:
+			paramsAttribs[paramsAttribsCount++] = pTemplate[i];
+		}
+	}
+
+	if (rv == CKR_OK)
+		rv = this->CreateObject(hSession, paramsAttribs, paramsAttribsCount, phKey,OBJECT_OP_GENERATE);
+
+	// Store the attributes that are being supplied
+	if (rv == CKR_OK)
+	{
+		OSObject* osobject = (OSObject*)handleManager->getObject(*phKey);
+		if (osobject->startTransaction()) {
+			bool bOK = true;
+
+			// Common Attributes
+			bOK = bOK && osobject->setAttribute(CKA_LOCAL,true);
+			CK_ULONG ulKeyGenMechanism = (CK_ULONG)CKM_DH_PKCS_PARAMETER_GEN;
+			bOK = bOK && osobject->setAttribute(CKA_KEY_GEN_MECHANISM,ulKeyGenMechanism);
+
+			// DH Domain Parameters Attributes
+			ByteString prime;
+			ByteString generator;
+			if (isPrivate)
+			{
+				token->encrypt(params->getP(), prime);
+				token->encrypt(params->getG(), generator);
+			}
+			else
+			{
+				prime = params->getP();
+				generator = params->getG();
+			}
+			bOK = bOK && osobject->setAttribute(CKA_PRIME, prime);
+			bOK = bOK && osobject->setAttribute(CKA_BASE, generator);
+
+			if (bOK)
+				bOK = osobject->commitTransaction();
+			else
+				osobject->abortTransaction();
+
+			if (!bOK)
+				rv = CKR_FUNCTION_FAILED;
+		}
+	}
+
+	// Clean up
+	dh->recycleParameters(p);
+	CryptoFactory::i()->recycleAsymmetricAlgorithm(dh);
+
+	// Remove parameters that may have been created already when the function fails.
+	if (rv != CKR_OK)
+	{
+		if (*phKey != CK_INVALID_HANDLE)
+		{
+			OSObject* params = (OSObject*)handleManager->getObject(*phKey);
+			handleManager->destroyObject(*phKey);
+			if (params) params->destroyObject();
+			*phKey = CK_INVALID_HANDLE;
+		}
+	}
+
+	return rv;
+}
+
+// Generate a GOST key pair
+CK_RV SoftHSM::generateGOST
+(CK_SESSION_HANDLE hSession,
+	CK_ATTRIBUTE_PTR pPublicKeyTemplate,
+	CK_ULONG ulPublicKeyAttributeCount,
+	CK_ATTRIBUTE_PTR pPrivateKeyTemplate,
+	CK_ULONG ulPrivateKeyAttributeCount,
+	CK_OBJECT_HANDLE_PTR phPublicKey,
+	CK_OBJECT_HANDLE_PTR phPrivateKey,
+	CK_BBOOL isPublicKeyOnToken,
+	CK_BBOOL isPublicKeyPrivate,
+	CK_BBOOL isPrivateKeyOnToken,
+	CK_BBOOL isPrivateKeyPrivate)
+{
+	*phPublicKey = CK_INVALID_HANDLE;
+	*phPrivateKey = CK_INVALID_HANDLE;
+
+	// Get the session
+	Session* session = (Session*)handleManager->getSession(hSession);
+	if (session == NULL)
+		return CKR_SESSION_HANDLE_INVALID;
+
+	// Get the token
+	Token* token = session->getToken();
+	if (token == NULL)
+		return CKR_GENERAL_ERROR;
+
+	// Extract desired key information
+	//// TODO
+	ByteString params = GostR3419_A_ParamSet;
+
+	// Set the parameters
+	ECParameters p;
+	p.setEC(params);
+
+	// Generate key pair
+	AsymmetricKeyPair* kp = NULL;
+	AsymmetricAlgorithm* gost = CryptoFactory::i()->getAsymmetricAlgorithm("GOST");
+	if (gost == NULL) return CKR_GENERAL_ERROR;
+	if (!gost->generateKeyPair(&kp, &p))
+	{
+		ERROR_MSG("Could not generate key pair");
+		CryptoFactory::i()->recycleAsymmetricAlgorithm(gost);
+		return CKR_GENERAL_ERROR;
+	}
+
+	GOSTPublicKey* pub = (GOSTPublicKey*) kp->getPublicKey();
+	GOSTPrivateKey* priv = (GOSTPrivateKey*) kp->getPrivateKey();
+
+	CK_RV rv = CKR_OK;
+
+	// Create a public key using C_CreateObject
+	if (rv == CKR_OK)
+	{
+		const CK_ULONG maxAttribs = 32;
+		CK_OBJECT_CLASS publicKeyClass = CKO_PUBLIC_KEY;
+		CK_KEY_TYPE publicKeyType = CKK_GOSTR3410;
+		CK_ATTRIBUTE publicKeyAttribs[maxAttribs] = {
+			{ CKA_CLASS, &publicKeyClass, sizeof(publicKeyClass) },
+			{ CKA_TOKEN, &isPublicKeyOnToken, sizeof(isPublicKeyOnToken) },
+			{ CKA_PRIVATE, &isPublicKeyPrivate, sizeof(isPublicKeyPrivate) },
+			{ CKA_KEY_TYPE, &publicKeyType, sizeof(publicKeyType) },
+		};
+		CK_ULONG publicKeyAttribsCount = 4;
+
+		// Add the additional
+		if (ulPublicKeyAttributeCount > (maxAttribs - publicKeyAttribsCount))
+			rv = CKR_TEMPLATE_INCONSISTENT;
+		for (CK_ULONG i=0; i < ulPublicKeyAttributeCount && rv == CKR_OK; ++i)
+		{
+			switch (pPublicKeyTemplate[i].type)
+			{
+				case CKA_CLASS:
+				case CKA_TOKEN:
+				case CKA_PRIVATE:
+				case CKA_KEY_TYPE:
+					continue;
+				default:
+					publicKeyAttribs[publicKeyAttribsCount++] = pPublicKeyTemplate[i];
+			}
+		}
+
+		if (rv == CKR_OK)
+			rv = this->CreateObject(hSession,publicKeyAttribs,publicKeyAttribsCount,phPublicKey,OBJECT_OP_GENERATE);
+
+		// Store the attributes that are being supplied by the key generation to the object
+		if (rv == CKR_OK)
+		{
+			OSObject* osobject = (OSObject*)handleManager->getObject(*phPublicKey);
+			if (osobject->startTransaction()) {
+				bool bOK = true;
+
+				// Common Key Attributes
+				bOK = bOK && osobject->setAttribute(CKA_LOCAL,true);
+				CK_ULONG ulKeyGenMechanism = (CK_ULONG)CKM_EC_KEY_PAIR_GEN;
+				bOK = bOK && osobject->setAttribute(CKA_KEY_GEN_MECHANISM,ulKeyGenMechanism);
+
+				// EC Public Key Attributes
+				ByteString point;
+				if (isPublicKeyPrivate)
+				{
+					token->encrypt(pub->getQ(), point);
+				}
+				else
+				{
+					point = pub->getQ();
+				}
+				bOK = bOK && osobject->setAttribute(CKA_VALUE, point);
+
+				if (bOK)
+					bOK = osobject->commitTransaction();
+				else
+					osobject->abortTransaction();
+
+				if (!bOK)
+					rv = CKR_FUNCTION_FAILED;
+			}
+		}
+	}
+
+	// Create a private key using C_CreateObject
+	if (rv == CKR_OK)
+	{
+		const CK_ULONG maxAttribs = 32;
+		CK_OBJECT_CLASS privateKeyClass = CKO_PRIVATE_KEY;
+		CK_KEY_TYPE privateKeyType = CKK_GOSTR3410;
+		CK_ATTRIBUTE privateKeyAttribs[maxAttribs] = {
+			{ CKA_CLASS, &privateKeyClass, sizeof(privateKeyClass) },
+			{ CKA_TOKEN, &isPrivateKeyOnToken, sizeof(isPrivateKeyOnToken) },
+			{ CKA_PRIVATE, &isPrivateKeyPrivate, sizeof(isPrivateKeyPrivate) },
+			{ CKA_KEY_TYPE, &privateKeyType, sizeof(privateKeyType) },
+		};
+		CK_ULONG privateKeyAttribsCount = 4;
+		if (ulPrivateKeyAttributeCount > (maxAttribs - privateKeyAttribsCount))
+			rv = CKR_TEMPLATE_INCONSISTENT;
+		for (CK_ULONG i=0; i < ulPrivateKeyAttributeCount && rv == CKR_OK; ++i)
+		{
+			switch (pPrivateKeyTemplate[i].type)
+			{
+				case CKA_CLASS:
+				case CKA_TOKEN:
+				case CKA_PRIVATE:
+				case CKA_KEY_TYPE:
+					continue;
+				default:
+					privateKeyAttribs[privateKeyAttribsCount++] = pPrivateKeyTemplate[i];
+			}
+		}
+
+		if (rv == CKR_OK)
+			rv = this->CreateObject(hSession,privateKeyAttribs,privateKeyAttribsCount,phPrivateKey,OBJECT_OP_GENERATE);
+
+		// Store the attributes that are being supplied by the key generation to the object
+		if (rv == CKR_OK)
+		{
+			OSObject* osobject = (OSObject*)handleManager->getObject(*phPrivateKey);
+			if (osobject->startTransaction()) {
+				bool bOK = true;
+
+				// Common Key Attributes
+				bOK = bOK && osobject->setAttribute(CKA_LOCAL,true);
+				CK_ULONG ulKeyGenMechanism = (CK_ULONG)CKM_EC_KEY_PAIR_GEN;
+				bOK = bOK && osobject->setAttribute(CKA_KEY_GEN_MECHANISM,ulKeyGenMechanism);
+
+				// Common Private Key Attributes
+				bool bAlwaysSensitive = osobject->getAttribute(CKA_SENSITIVE)->getBooleanValue();
+				bOK = bOK && osobject->setAttribute(CKA_ALWAYS_SENSITIVE,bAlwaysSensitive);
+				bool bNeverExtractable =  osobject->getAttribute(CKA_EXTRACTABLE)->getBooleanValue() == false;
+				bOK = bOK && osobject->setAttribute(CKA_NEVER_EXTRACTABLE, bNeverExtractable);
+
+				// GOST Private Key Attributes
+				ByteString value;
+				if (isPrivateKeyPrivate)
+				{
+					token->encrypt(priv->getD(), value);
+				}
+				else
+				{
+					value = priv->getD();
+				}
+				bOK = bOK && osobject->setAttribute(CKA_VALUE, value);
+
+				if (bOK)
+					bOK = osobject->commitTransaction();
+				else
+					osobject->abortTransaction();
+
+				if (!bOK)
+					rv = CKR_FUNCTION_FAILED;
+			}
+		}
+	}
+
+	// Clean up
+	gost->recycleKeyPair(kp);
+	CryptoFactory::i()->recycleAsymmetricAlgorithm(gost);
+
+	// Remove keys that may have been created already when the function fails.
+	if (rv != CKR_OK)
+	{
+		if (*phPrivateKey != CK_INVALID_HANDLE)
+		{
+			OSObject* priv = (OSObject*)handleManager->getObject(*phPrivateKey);
+			handleManager->destroyObject(*phPrivateKey);
+			if (priv) priv->destroyObject();
+			*phPrivateKey = CK_INVALID_HANDLE;
+		}
+
+		if (*phPublicKey != CK_INVALID_HANDLE)
+		{
+			OSObject* pub = (OSObject*)handleManager->getObject(*phPublicKey);
+			handleManager->destroyObject(*phPublicKey);
+			if (pub) pub->destroyObject();
+			*phPublicKey = CK_INVALID_HANDLE;
+		}
+	}
+
+	return rv;
+}
+
+// Derive a DH secret
+CK_RV SoftHSM::deriveDH
+(CK_SESSION_HANDLE hSession,
+	CK_MECHANISM_PTR pMechanism,
+	CK_OBJECT_HANDLE hBaseKey,
+	CK_ATTRIBUTE_PTR pTemplate,
+	CK_ULONG ulCount,
+	CK_OBJECT_HANDLE_PTR phKey,
+	CK_BBOOL isOnToken,
+	CK_BBOOL isPrivate)
+{
+	*phKey = CK_INVALID_HANDLE;
+
+	if (pMechanism->pParameter == NULL_PTR) return CKR_MECHANISM_PARAM_INVALID;
+	if (pMechanism->ulParameterLen == 0) return CKR_MECHANISM_PARAM_INVALID;
+
+	// Get the session
+	Session* session = (Session*)handleManager->getSession(hSession);
+	if (session == NULL)
+		return CKR_SESSION_HANDLE_INVALID;
+
+	// Get the token
+	Token* token = session->getToken();
+	if (token == NULL)
+		return CKR_GENERAL_ERROR;
+
+	// Extract desired parameter information
+	size_t byteLen = 0;
+	for (CK_ULONG i = 0; i < ulCount; i++)
+	{
+		switch (pTemplate[i].type)
+		{
+			case CKA_VALUE:
+				INFO_MSG("CKA_VALUE must not be included");
+				return CKR_TEMPLATE_INCONSISTENT;
+			case CKA_VALUE_LEN:
+				if (pTemplate[i].ulValueLen != sizeof(CK_ULONG))
+				{
+					INFO_MSG("CKA_VALUE_LEN does not have the size of CK_ULONG");
+					return CKR_TEMPLATE_INCOMPLETE;
+				}
+				byteLen = *(CK_ULONG*)pTemplate[i].pValue;
+				break;
+			default:
+				break;
+		}
+	}
+
+	// Get the base key handle
+	OSObject *baseKey = (OSObject *)handleManager->getObject(hBaseKey);
+	if (baseKey == NULL)
+		return CKR_KEY_HANDLE_INVALID;
+
+	// Get the DH algorithm handler
+	AsymmetricAlgorithm* dh = CryptoFactory::i()->getAsymmetricAlgorithm("DH");
+	if (dh == NULL)
+		return CKR_MECHANISM_INVALID;
+
+	// Get the keys
+	PrivateKey* privateKey = dh->newPrivateKey();
+	if (privateKey == NULL)
+	{
+		CryptoFactory::i()->recycleAsymmetricAlgorithm(dh);
+		return CKR_HOST_MEMORY;
+	}
+	if (getDHPrivateKey((DHPrivateKey*)privateKey, token, baseKey) != CKR_OK)
+	{
+		dh->recyclePrivateKey(privateKey);
+		CryptoFactory::i()->recycleAsymmetricAlgorithm(dh);
+		return CKR_GENERAL_ERROR;
+	}
+
+	ByteString mechParameters;
+	mechParameters.resize(pMechanism->ulParameterLen);
+	memcpy(&mechParameters[0], pMechanism->pParameter, pMechanism->ulParameterLen);
+	PublicKey* publicKey = dh->newPublicKey();
+	if (publicKey == NULL)
+	{
+		dh->recyclePrivateKey(privateKey);
+		CryptoFactory::i()->recycleAsymmetricAlgorithm(dh);
+		return CKR_HOST_MEMORY;
+	}
+	if (getDHPublicKey((DHPublicKey*)publicKey, (DHPrivateKey*)privateKey, mechParameters) != CKR_OK)
+	{
+		dh->recyclePrivateKey(privateKey);
+		dh->recyclePublicKey(publicKey);
+		CryptoFactory::i()->recycleAsymmetricAlgorithm(dh);
+		return CKR_GENERAL_ERROR;
+	}
+
+	// Derive the secret
+	SymmetricKey* secret = NULL;
+	CK_RV rv = CKR_OK;
+	if (!dh->deriveKey(&secret, publicKey, privateKey))
+		rv = CKR_GENERAL_ERROR;
+	dh->recyclePrivateKey(privateKey);
+	dh->recyclePublicKey(publicKey);
+
+	// Create the secret object using C_CreateObject
+	const CK_ULONG maxAttribs = 32;
+	CK_OBJECT_CLASS objClass = CKO_SECRET_KEY;
+	CK_KEY_TYPE keyType = CKK_GENERIC_SECRET;;
+	CK_ATTRIBUTE secretAttribs[maxAttribs] = {
+		{ CKA_CLASS, &objClass, sizeof(objClass) },
+		{ CKA_TOKEN, &isOnToken, sizeof(isOnToken) },
+		{ CKA_PRIVATE, &isPrivate, sizeof(isPrivate) },
+		{ CKA_KEY_TYPE, &keyType, sizeof(keyType) },
+	};
+	CK_ULONG secretAttribsCount = 4;
+
+	// Add the additional
+	if (ulCount > (maxAttribs - secretAttribsCount))
+		rv = CKR_TEMPLATE_INCONSISTENT;
+	for (CK_ULONG i=0; i < ulCount && rv == CKR_OK; ++i)
+	{
+		switch (pTemplate[i].type)
+		{
+			case CKA_CLASS:
+			case CKA_TOKEN:
+			case CKA_PRIVATE:
+			case CKA_KEY_TYPE:
+			case CKA_VALUE_LEN:
+				continue;
+		default:
+			secretAttribs[secretAttribsCount++] = pTemplate[i];
+		}
+	}
+
+	if (rv == CKR_OK)
+		rv = this->CreateObject(hSession, secretAttribs, secretAttribsCount, phKey, OBJECT_OP_GENERATE);
+
+	// Store the attributes that are being supplied
+	if (rv == CKR_OK)
+	{
+		OSObject* osobject = (OSObject*)handleManager->getObject(*phKey);
+		if (osobject->startTransaction()) {
+			bool bOK = true;
+
+			// Common Attributes
+			bOK = bOK && osobject->setAttribute(CKA_LOCAL,false);
+
+			// Secret Attributes
+			ByteString value;
+			if (isPrivate)
+			{
+				token->encrypt(secret->getKeyBits(), value);
+			}
+			else
+			{
+				value = secret->getKeyBits();
+			}
+			// Truncate value when requested
+			if (byteLen != 0 && byteLen < value.size())
+				value.resize(byteLen);
+			bOK = bOK && osobject->setAttribute(CKA_VALUE, value);
+
+			if (bOK)
+				bOK = osobject->commitTransaction();
+			else
+				osobject->abortTransaction();
+
+			if (!bOK)
+				rv = CKR_FUNCTION_FAILED;
+		}
+	}
+
+	// Clean up
+	dh->recycleSymmetricKey(secret);
+	CryptoFactory::i()->recycleAsymmetricAlgorithm(dh);
+
+	// Remove secret that may have been created already when the function fails.
+	if (rv != CKR_OK)
+	{
+		if (*phKey != CK_INVALID_HANDLE)
+		{
+			OSObject* secret = (OSObject*)handleManager->getObject(*phKey);
+			handleManager->destroyObject(*phKey);
+			if (secret) secret->destroyObject();
+			*phKey = CK_INVALID_HANDLE;
+		}
+	}
+
+	return rv;
+}
+
+// Derive an ECDH secret
+CK_RV SoftHSM::deriveECDH
+(CK_SESSION_HANDLE hSession,
+	CK_MECHANISM_PTR pMechanism,
+	CK_OBJECT_HANDLE hBaseKey,
+	CK_ATTRIBUTE_PTR pTemplate,
+	CK_ULONG ulCount,
+	CK_OBJECT_HANDLE_PTR phKey,
+	CK_BBOOL isOnToken,
+	CK_BBOOL isPrivate)
+{
+#ifdef WITH_ECC
+	*phKey = CK_INVALID_HANDLE;
+
+	if ((pMechanism->pParameter == NULL_PTR) ||
+	    (pMechanism->ulParameterLen != sizeof(CK_ECDH1_DERIVE_PARAMS)))
+	{
+		DEBUG_MSG("pParameter must be of type CK_ECDH1_DERIVE_PARAMS");
+		return CKR_MECHANISM_PARAM_INVALID;
+	}
+	if (CK_ECDH1_DERIVE_PARAMS_PTR(pMechanism->pParameter)->kdf != CKD_NULL)
+	{
+		DEBUG_MSG("kdf must be CKD_NULL");
+		return CKR_MECHANISM_PARAM_INVALID;
+	}
+	if ((CK_ECDH1_DERIVE_PARAMS_PTR(pMechanism->pParameter)->ulSharedDataLen != 0) ||
+	    (CK_ECDH1_DERIVE_PARAMS_PTR(pMechanism->pParameter)->pSharedData != NULL_PTR))
+	{
+		DEBUG_MSG("there must be no shared data");
+		return CKR_MECHANISM_PARAM_INVALID;
+	}
+	if ((CK_ECDH1_DERIVE_PARAMS_PTR(pMechanism->pParameter)->ulPublicDataLen == 0) ||
+	    (CK_ECDH1_DERIVE_PARAMS_PTR(pMechanism->pParameter)->pPublicData == NULL_PTR))
+	{
+		DEBUG_MSG("there must be a public data");
+		return CKR_MECHANISM_PARAM_INVALID;
+	}
+
+	// Get the session
+	Session* session = (Session*)handleManager->getSession(hSession);
+	if (session == NULL)
+		return CKR_SESSION_HANDLE_INVALID;
+
+	// Get the token
+	Token* token = session->getToken();
+	if (token == NULL)
+		return CKR_GENERAL_ERROR;
+
+	// Extract desired parameter information
+	size_t byteLen = 0;
+	for (CK_ULONG i = 0; i < ulCount; i++)
+	{
+		switch (pTemplate[i].type)
+		{
+			case CKA_VALUE:
+				INFO_MSG("CKA_VALUE must not be included");
+				return CKR_TEMPLATE_INCONSISTENT;
+			case CKA_VALUE_LEN:
+				if (pTemplate[i].ulValueLen != sizeof(CK_ULONG))
+				{
+					INFO_MSG("CKA_VALUE_LEN does not have the size of CK_ULONG");
+					return CKR_TEMPLATE_INCOMPLETE;
+				}
+				byteLen = *(CK_ULONG*)pTemplate[i].pValue;
+				break;
+			default:
+				break;
+		}
+	}
+
+	// Get the base key handle
+	OSObject *baseKey = (OSObject *)handleManager->getObject(hBaseKey);
+	if (baseKey == NULL)
+		return CKR_KEY_HANDLE_INVALID;
+
+	// Get the ECDH algorithm handler
+	AsymmetricAlgorithm* ecdh = CryptoFactory::i()->getAsymmetricAlgorithm("ECDH");
+	if (ecdh == NULL)
+		return CKR_MECHANISM_INVALID;
+
+	// Get the keys
+	PrivateKey* privateKey = ecdh->newPrivateKey();
+	if (privateKey == NULL)
+	{
+		CryptoFactory::i()->recycleAsymmetricAlgorithm(ecdh);
+		return CKR_HOST_MEMORY;
+	}
+	if (getECPrivateKey((ECPrivateKey*)privateKey, token, baseKey) != CKR_OK)
+	{
+		ecdh->recyclePrivateKey(privateKey);
+		CryptoFactory::i()->recycleAsymmetricAlgorithm(ecdh);
+		return CKR_GENERAL_ERROR;
+	}
+
+	ByteString publicData;
+	publicData.resize(CK_ECDH1_DERIVE_PARAMS_PTR(pMechanism->pParameter)->ulPublicDataLen);
+	memcpy(&publicData[0],
+	       CK_ECDH1_DERIVE_PARAMS_PTR(pMechanism->pParameter)->pPublicData,
+	       CK_ECDH1_DERIVE_PARAMS_PTR(pMechanism->pParameter)->ulPublicDataLen);
+	PublicKey* publicKey = ecdh->newPublicKey();
+	if (publicKey == NULL)
+	{
+		ecdh->recyclePrivateKey(privateKey);
+		CryptoFactory::i()->recycleAsymmetricAlgorithm(ecdh);
+		return CKR_HOST_MEMORY;
+	}
+	if (getECDHPublicKey((ECPublicKey*)publicKey, (ECPrivateKey*)privateKey, publicData) != CKR_OK)
+	{
+		ecdh->recyclePrivateKey(privateKey);
+		ecdh->recyclePublicKey(publicKey);
+		CryptoFactory::i()->recycleAsymmetricAlgorithm(ecdh);
+		return CKR_GENERAL_ERROR;
+	}
+
+	// Derive the secret
+	SymmetricKey* secret = NULL;
+	CK_RV rv = CKR_OK;
+	if (!ecdh->deriveKey(&secret, publicKey, privateKey))
+		rv = CKR_GENERAL_ERROR;
+	ecdh->recyclePrivateKey(privateKey);
+	ecdh->recyclePublicKey(publicKey);
+
+	// Create the secret object using C_CreateObject
+	const CK_ULONG maxAttribs = 32;
+	CK_OBJECT_CLASS objClass = CKO_SECRET_KEY;
+	CK_KEY_TYPE keyType = CKK_GENERIC_SECRET;;
+	CK_ATTRIBUTE secretAttribs[maxAttribs] = {
+		{ CKA_CLASS, &objClass, sizeof(objClass) },
+		{ CKA_TOKEN, &isOnToken, sizeof(isOnToken) },
+		{ CKA_PRIVATE, &isPrivate, sizeof(isPrivate) },
+		{ CKA_KEY_TYPE, &keyType, sizeof(keyType) },
+	};
+	CK_ULONG secretAttribsCount = 4;
+
+	// Add the additional
+	if (ulCount > (maxAttribs - secretAttribsCount))
+		rv = CKR_TEMPLATE_INCONSISTENT;
+	for (CK_ULONG i=0; i < ulCount && rv == CKR_OK; ++i)
+	{
+		switch (pTemplate[i].type)
+		{
+			case CKA_CLASS:
+			case CKA_TOKEN:
+			case CKA_PRIVATE:
+			case CKA_KEY_TYPE:
+			case CKA_VALUE_LEN:
+				continue;
+		default:
+			secretAttribs[secretAttribsCount++] = pTemplate[i];
+		}
+	}
+
+	if (rv == CKR_OK)
+		rv = this->CreateObject(hSession, secretAttribs, secretAttribsCount, phKey, OBJECT_OP_GENERATE);
+
+	// Store the attributes that are being supplied
+	if (rv == CKR_OK)
+	{
+		OSObject* osobject = (OSObject*)handleManager->getObject(*phKey);
+		if (osobject->startTransaction()) {
+			bool bOK = true;
+
+			// Common Attributes
+			bOK = bOK && osobject->setAttribute(CKA_LOCAL,false);
+
+			// Secret Attributes
+			ByteString value;
+			if (isPrivate)
+			{
+				token->encrypt(secret->getKeyBits(), value);
+			}
+			else
+			{
+				value = secret->getKeyBits();
+			}
+			// Truncate value when requested
+			if (byteLen != 0 && byteLen < value.size())
+				value.resize(byteLen);
+			bOK = bOK && osobject->setAttribute(CKA_VALUE, value);
+
+			if (bOK)
+				bOK = osobject->commitTransaction();
+			else
+				osobject->abortTransaction();
+
+			if (!bOK)
+				rv = CKR_FUNCTION_FAILED;
+		}
+	}
+
+	// Clean up
+	ecdh->recycleSymmetricKey(secret);
+	CryptoFactory::i()->recycleAsymmetricAlgorithm(ecdh);
+
+	// Remove secret that may have been created already when the function fails.
+	if (rv != CKR_OK)
+	{
+		if (*phKey != CK_INVALID_HANDLE)
+		{
+			OSObject* secret = (OSObject*)handleManager->getObject(*phKey);
+			handleManager->destroyObject(*phKey);
+			if (secret) secret->destroyObject();
+			*phKey = CK_INVALID_HANDLE;
+		}
+	}
+
+	return rv;
+#else
+	return CKR_MECHANISM_INVALID;
+#endif
 }
 
 CK_RV SoftHSM::CreateObject(CK_SESSION_HANDLE hSession, CK_ATTRIBUTE_PTR pTemplate, CK_ULONG ulCount, CK_OBJECT_HANDLE_PTR phObject, int op)
@@ -3260,3 +6063,300 @@ CK_RV SoftHSM::getRSAPublicKey(RSAPublicKey* publicKey, Token* token, OSObject* 
 
 	return CKR_OK;
 }
+
+CK_RV SoftHSM::getDSAPrivateKey(DSAPrivateKey* privateKey, Token* token, OSObject* key)
+{
+	if (privateKey == NULL) return CKR_ARGUMENTS_BAD;
+	if (token == NULL) return CKR_ARGUMENTS_BAD;
+	if (key == NULL) return CKR_ARGUMENTS_BAD;
+
+	// Get the CKA_PRIVATE attribute, when the attribute is not present use default false
+	OSAttribute* attr = key->getAttribute(CKA_PRIVATE);
+	bool isKeyPrivate = (attr != NULL && attr->getBooleanValue());
+
+	// DSA Private Key Attributes
+	ByteString prime;
+	ByteString subprime;
+	ByteString generator;
+	ByteString value;
+	if (isKeyPrivate)
+	{
+		bool bOK = true;
+		bOK = bOK && token->decrypt(key->getAttribute(CKA_PRIME)->getByteStringValue(), prime);
+		bOK = bOK && token->decrypt(key->getAttribute(CKA_SUBPRIME)->getByteStringValue(), subprime);
+		bOK = bOK && token->decrypt(key->getAttribute(CKA_BASE)->getByteStringValue(), generator);
+		bOK = bOK && token->decrypt(key->getAttribute(CKA_VALUE)->getByteStringValue(), value);
+		if (!bOK)
+			return CKR_GENERAL_ERROR;
+	}
+	else
+	{
+		prime = key->getAttribute(CKA_PRIME)->getByteStringValue();
+		subprime = key->getAttribute(CKA_SUBPRIME)->getByteStringValue();
+		generator = key->getAttribute(CKA_BASE)->getByteStringValue();
+		value = key->getAttribute(CKA_VALUE)->getByteStringValue();
+	}
+
+	privateKey->setP(prime);
+	privateKey->setQ(subprime);
+	privateKey->setG(generator);
+	privateKey->setX(value);
+
+	return CKR_OK;
+}
+
+CK_RV SoftHSM::getDSAPublicKey(DSAPublicKey* publicKey, Token* token, OSObject* key)
+{
+	if (publicKey == NULL) return CKR_ARGUMENTS_BAD;
+	if (token == NULL) return CKR_ARGUMENTS_BAD;
+	if (key == NULL) return CKR_ARGUMENTS_BAD;
+
+	// Get the CKA_PRIVATE attribute, when the attribute is not present use default false
+	OSAttribute* attr = key->getAttribute(CKA_PRIVATE);
+	bool isKeyPrivate = (attr != NULL && attr->getBooleanValue());
+
+	// DSA Public Key Attributes
+	ByteString prime;
+	ByteString subprime;
+	ByteString generator;
+	ByteString value;
+	if (isKeyPrivate)
+	{
+		bool bOK = true;
+		bOK = bOK && token->decrypt(key->getAttribute(CKA_PRIME)->getByteStringValue(), prime);
+		bOK = bOK && token->decrypt(key->getAttribute(CKA_SUBPRIME)->getByteStringValue(), subprime);
+		bOK = bOK && token->decrypt(key->getAttribute(CKA_BASE)->getByteStringValue(), generator);
+		bOK = bOK && token->decrypt(key->getAttribute(CKA_VALUE)->getByteStringValue(), value);
+		if (!bOK)
+			return CKR_GENERAL_ERROR;
+	}
+	else
+	{
+		prime = key->getAttribute(CKA_PRIME)->getByteStringValue();
+		subprime = key->getAttribute(CKA_SUBPRIME)->getByteStringValue();
+		generator = key->getAttribute(CKA_BASE)->getByteStringValue();
+		value = key->getAttribute(CKA_VALUE)->getByteStringValue();
+	}
+
+	publicKey->setP(prime);
+	publicKey->setQ(subprime);
+	publicKey->setG(generator);
+	publicKey->setY(value);
+	return CKR_OK;
+}
+
+CK_RV SoftHSM::getECPrivateKey(ECPrivateKey* privateKey, Token* token, OSObject* key)
+{
+	if (privateKey == NULL) return CKR_ARGUMENTS_BAD;
+	if (token == NULL) return CKR_ARGUMENTS_BAD;
+	if (key == NULL) return CKR_ARGUMENTS_BAD;
+
+	// Get the CKA_PRIVATE attribute, when the attribute is not present use default false
+	OSAttribute* attr = key->getAttribute(CKA_PRIVATE);
+	bool isKeyPrivate = (attr != NULL && attr->getBooleanValue());
+
+	// EC Private Key Attributes
+	ByteString group;
+	ByteString value;
+	if (isKeyPrivate)
+	{
+		bool bOK = true;
+		bOK = bOK && token->decrypt(key->getAttribute(CKA_EC_PARAMS)->getByteStringValue(), group);
+		bOK = bOK && token->decrypt(key->getAttribute(CKA_VALUE)->getByteStringValue(), value);
+		if (!bOK)
+			return CKR_GENERAL_ERROR;
+	}
+	else
+	{
+		group = key->getAttribute(CKA_EC_PARAMS)->getByteStringValue();
+		value = key->getAttribute(CKA_VALUE)->getByteStringValue();
+	}
+
+	privateKey->setEC(group);
+	privateKey->setD(value);
+
+	return CKR_OK;
+}
+
+CK_RV SoftHSM::getECPublicKey(ECPublicKey* publicKey, Token* token, OSObject* key)
+{
+	if (publicKey == NULL) return CKR_ARGUMENTS_BAD;
+	if (token == NULL) return CKR_ARGUMENTS_BAD;
+	if (key == NULL) return CKR_ARGUMENTS_BAD;
+
+	// Get the CKA_PRIVATE attribute, when the attribute is not present use default false
+	OSAttribute* attr = key->getAttribute(CKA_PRIVATE);
+	bool isKeyPrivate = (attr != NULL && attr->getBooleanValue());
+
+	// EC Public Key Attributes
+	ByteString group;
+	ByteString point;
+	if (isKeyPrivate)
+	{
+		bool bOK = true;
+		bOK = bOK && token->decrypt(key->getAttribute(CKA_EC_PARAMS)->getByteStringValue(), group);
+		bOK = bOK && token->decrypt(key->getAttribute(CKA_EC_POINT)->getByteStringValue(), point);
+		if (!bOK)
+			return CKR_GENERAL_ERROR;
+	}
+	else
+	{
+		group = key->getAttribute(CKA_EC_PARAMS)->getByteStringValue();
+		point = key->getAttribute(CKA_EC_POINT)->getByteStringValue();
+	}
+
+	publicKey->setEC(group);
+	publicKey->setQ(point);
+
+	return CKR_OK;
+}
+
+CK_RV SoftHSM::getDHPrivateKey(DHPrivateKey* privateKey, Token* token, OSObject* key)
+{
+	if (privateKey == NULL) return CKR_ARGUMENTS_BAD;
+	if (token == NULL) return CKR_ARGUMENTS_BAD;
+	if (key == NULL) return CKR_ARGUMENTS_BAD;
+
+	// Get the CKA_PRIVATE attribute, when the attribute is not present use default false
+	OSAttribute* attr = key->getAttribute(CKA_PRIVATE);
+	bool isKeyPrivate = (attr != NULL && attr->getBooleanValue());
+
+	// DH Private Key Attributes
+	ByteString prime;
+	ByteString generator;
+	ByteString value;
+	if (isKeyPrivate)
+	{
+		bool bOK = true;
+		bOK = bOK && token->decrypt(key->getAttribute(CKA_PRIME)->getByteStringValue(), prime);
+		bOK = bOK && token->decrypt(key->getAttribute(CKA_BASE)->getByteStringValue(), generator);
+		bOK = bOK && token->decrypt(key->getAttribute(CKA_VALUE)->getByteStringValue(), value);
+		if (!bOK)
+			return CKR_GENERAL_ERROR;
+	}
+	else
+	{
+		prime = key->getAttribute(CKA_PRIME)->getByteStringValue();
+		generator = key->getAttribute(CKA_BASE)->getByteStringValue();
+		value = key->getAttribute(CKA_VALUE)->getByteStringValue();
+	}
+
+	privateKey->setP(prime);
+	privateKey->setG(generator);
+	privateKey->setX(value);
+
+	return CKR_OK;
+}
+
+CK_RV SoftHSM::getDHPublicKey(DHPublicKey* publicKey, DHPrivateKey* privateKey, ByteString& pubParams)
+{
+	if (publicKey == NULL) return CKR_ARGUMENTS_BAD;
+	if (privateKey == NULL) return CKR_ARGUMENTS_BAD;
+
+	// Copy Domain Parameters from Private Key
+	publicKey->setP(privateKey->getP());
+	publicKey->setG(privateKey->getG());
+
+	// Set value
+	publicKey->setY(pubParams);
+
+	return CKR_OK;
+}
+
+CK_RV SoftHSM::getECDHPublicKey(ECPublicKey* publicKey, ECPrivateKey* privateKey, ByteString& pubData)
+{
+	if (publicKey == NULL) return CKR_ARGUMENTS_BAD;
+	if (privateKey == NULL) return CKR_ARGUMENTS_BAD;
+
+	// Copy Domain Parameters from Private Key
+	publicKey->setEC(privateKey->getEC());
+
+	// Set value
+	publicKey->setQ(pubData);
+
+	return CKR_OK;
+}
+
+CK_RV SoftHSM::getGOSTPrivateKey(GOSTPrivateKey* privateKey, Token* token, OSObject* key)
+{
+	if (privateKey == NULL) return CKR_ARGUMENTS_BAD;
+	if (token == NULL) return CKR_ARGUMENTS_BAD;
+	if (key == NULL) return CKR_ARGUMENTS_BAD;
+
+	// Get the CKA_PRIVATE attribute, when the attribute is not present use default false
+	OSAttribute* attr = key->getAttribute(CKA_PRIVATE);
+	bool isKeyPrivate = (attr != NULL && attr->getBooleanValue());
+
+	// GOST Private Key Attributes
+	ByteString value;
+	if (isKeyPrivate)
+	{
+		bool bOK = true;
+		bOK = bOK && token->decrypt(key->getAttribute(CKA_VALUE)->getByteStringValue(), value);
+		if (!bOK)
+			return CKR_GENERAL_ERROR;
+	}
+	else
+	{
+		value = key->getAttribute(CKA_VALUE)->getByteStringValue();
+	}
+
+	privateKey->setD(value);
+
+	return CKR_OK;
+}
+
+CK_RV SoftHSM::getGOSTPublicKey(GOSTPublicKey* publicKey, Token* token, OSObject* key)
+{
+	if (publicKey == NULL) return CKR_ARGUMENTS_BAD;
+	if (token == NULL) return CKR_ARGUMENTS_BAD;
+	if (key == NULL) return CKR_ARGUMENTS_BAD;
+
+	// Get the CKA_PRIVATE attribute, when the attribute is not present use default false
+	OSAttribute* attr = key->getAttribute(CKA_PRIVATE);
+	bool isKeyPrivate = (attr != NULL && attr->getBooleanValue());
+
+	// GOST Public Key Attributes
+	ByteString point;
+	if (isKeyPrivate)
+	{
+		bool bOK = true;
+		bOK = bOK && token->decrypt(key->getAttribute(CKA_VALUE)->getByteStringValue(), point);
+		if (!bOK)
+			return CKR_GENERAL_ERROR;
+	}
+	else
+	{
+		point = key->getAttribute(CKA_VALUE)->getByteStringValue();
+	}
+
+	publicKey->setQ(point);
+
+	return CKR_OK;
+}
+
+CK_RV SoftHSM::getSymmetricKey(SymmetricKey* skey, Token* token, OSObject* key)
+{
+	if (skey == NULL) return CKR_ARGUMENTS_BAD;
+	if (token == NULL) return CKR_ARGUMENTS_BAD;
+	if (key == NULL) return CKR_ARGUMENTS_BAD;
+
+	// Get the CKA_PRIVATE attribute, when the attribute is not present use default false
+	OSAttribute* attr = key->getAttribute(CKA_PRIVATE);
+	bool isKeyPrivate = (attr != NULL && attr->getBooleanValue());
+
+	ByteString keybits;
+	if (isKeyPrivate)
+	{
+		if (!token->decrypt(key->getAttribute(CKA_VALUE)->getByteStringValue(), keybits))
+			return CKR_GENERAL_ERROR;
+	}
+	else
+	{
+		keybits = key->getAttribute(CKA_VALUE)->getByteStringValue();
+	}
+
+	skey->setKeyBits(keybits);
+	return CKR_OK;
+}
+

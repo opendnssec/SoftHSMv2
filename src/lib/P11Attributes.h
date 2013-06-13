@@ -1,5 +1,3 @@
-/* $Id$ */
-
 /*
  * Copyright (c) 2011 .SE (The Internet Infrastructure Foundation)
  * All rights reserved.
@@ -52,7 +50,7 @@ class P11Attribute
 {
 public:
 	// Destructor
-	~P11Attribute();
+	virtual ~P11Attribute();
 
 	// Initialize the attribute
 	bool init();
@@ -1003,6 +1001,150 @@ protected:
 
 	// Update the value if allowed
 	virtual CK_RV updateAttr(Token *token, bool isPrivate, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op);
+};
+
+/*****************************************
+ * CKA_PRIME
+ *****************************************/
+
+class P11AttrPrime : public P11Attribute
+{
+public:
+	// Constructor
+	P11AttrPrime(OSObject* osobject, CK_ULONG inchecks = 0) : P11Attribute(osobject) { type = CKA_PRIME; checks = ck1|inchecks; }
+
+protected:
+	// Set the default value of the attribute
+	virtual bool setDefault();
+};
+
+/*****************************************
+ * CKA_SUBPRIME
+ *****************************************/
+
+class P11AttrSubPrime : public P11Attribute
+{
+public:
+	// Constructor
+	P11AttrSubPrime(OSObject* osobject, CK_ULONG inchecks = 0) : P11Attribute(osobject) { type = CKA_SUBPRIME; checks = ck1|inchecks; }
+
+protected:
+	// Set the default value of the attribute
+	virtual bool setDefault();
+};
+
+/*****************************************
+ * CKA_BASE
+ *****************************************/
+
+class P11AttrBase : public P11Attribute
+{
+public:
+	// Constructor
+	P11AttrBase(OSObject* osobject, CK_ULONG inchecks = 0) : P11Attribute(osobject) { type = CKA_BASE; checks = ck1|inchecks; }
+
+protected:
+	// Set the default value of the attribute
+	virtual bool setDefault();
+};
+
+/*****************************************
+ * CKA_PRIME_BITS
+ *****************************************/
+
+class P11AttrPrimeBits : public P11Attribute
+{
+public:
+	// Constructor
+	P11AttrPrimeBits(OSObject* osobject) : P11Attribute(osobject) { type = CKA_PRIME_BITS; size = sizeof(CK_ULONG); checks = ck2|ck3;}
+
+protected:
+	// Set the default value of the attribute
+	virtual bool setDefault();
+
+	// Update the value if allowed
+	virtual CK_RV updateAttr(Token *token, bool isPrivate, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op);
+};
+
+/*****************************************
+ * CKA_EC_PARAMS
+ *****************************************/
+
+class P11AttrEcParams : public P11Attribute
+{
+public:
+	// Constructor
+	P11AttrEcParams(OSObject* osobject, CK_ULONG inchecks = 0) : P11Attribute(osobject) { type = CKA_EC_PARAMS; checks = ck1|inchecks; }
+
+protected:
+	// Set the default value of the attribute
+	virtual bool setDefault();
+};
+
+/*****************************************
+ * CKA_EC_POINT
+ *****************************************/
+
+class P11AttrEcPoint : public P11Attribute
+{
+public:
+	// Constructor
+	P11AttrEcPoint(OSObject* osobject) : P11Attribute(osobject) { type = CKA_EC_POINT; checks = ck1|ck4; }
+
+protected:
+	// Set the default value of the attribute
+	virtual bool setDefault();
+};
+
+/*****************************************
+ * CKA_GOSTR3410_PARAMS
+ *****************************************/
+
+class P11AttrGostR3410Params : public P11Attribute
+{
+public:
+	// Constructor
+	P11AttrGostR3410Params(OSObject* osobject, CK_ULONG inchecks = 0) : P11Attribute(osobject) { type = CKA_GOSTR3410_PARAMS; checks = ck1|inchecks; }
+
+// id-GostR3410-2001-CryptoPro-A-ParamSet 1.2.643.2.2.35.1
+#define GostR3419_A_ParamSet	"06072a850302022301"
+
+protected:
+	// Set the default value of the attribute
+	virtual bool setDefault();
+};
+
+/*****************************************
+ * CKA_GOSTR3411_PARAMS
+ *****************************************/
+
+class P11AttrGostR3411Params : public P11Attribute
+{
+public:
+	// Constructor
+	P11AttrGostR3411Params(OSObject* osobject, CK_ULONG inchecks = 0) : P11Attribute(osobject) { type = CKA_GOSTR3411_PARAMS; checks = ck1|ck8|inchecks; }
+
+// id-GostR3411-94-CryptoProParamSet 1.2.643.2.2.30.1
+#define GostR3411_ParamSet	"06072a850302021e01"
+
+protected:
+	// Set the default value of the attribute
+	virtual bool setDefault();
+};
+
+/*****************************************
+ * CKA_GOST28147_PARAMS
+ *****************************************/
+
+class P11AttrGost28147Params : public P11Attribute
+{
+public:
+	// Constructor
+	P11AttrGost28147Params(OSObject* osobject, CK_ULONG inchecks = 0) : P11Attribute(osobject) { type = CKA_GOST28147_PARAMS; checks = ck8|inchecks; }
+
+protected:
+	// Set the default value of the attribute
+	virtual bool setDefault();
 };
 
 #endif // !_SOFTHSM_V2_P11ATTRIBUTES_H

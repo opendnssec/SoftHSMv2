@@ -1,5 +1,3 @@
-/* $Id: log.h 31 2010-03-05 12:51:02Z rb $ */
-
 /*
  * Copyright (c) 2010 SURFnet bv
  * All rights reserved.

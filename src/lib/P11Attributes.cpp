@@ -1,5 +1,3 @@
-/* $Id$ */
-
 /*
  * Copyright (c) 2011 .SE (The Internet Infrastructure Foundation)
  * All rights reserved.
@@ -1753,3 +1751,125 @@ CK_RV P11AttrModulusBits::updateAttr(Token *token, bool isPrivate, CK_VOID_PTR p
 
 	return CKR_OK;
 }
+
+/*****************************************
+ * CKA_PRIME
+ *****************************************/
+
+// Set default value
+bool P11AttrPrime::setDefault()
+{
+	OSAttribute attr(ByteString(""));
+	return osobject->setAttribute(type, attr);
+}
+
+/*****************************************
+ * CKA_SUBPRIME
+ *****************************************/
+
+// Set default value
+bool P11AttrSubPrime::setDefault()
+{
+	OSAttribute attr(ByteString(""));
+	return osobject->setAttribute(type, attr);
+}
+
+/*****************************************
+ * CKA_BASE
+ *****************************************/
+
+// Set default value
+bool P11AttrBase::setDefault()
+{
+	OSAttribute attr(ByteString(""));
+	return osobject->setAttribute(type, attr);
+}
+
+/*****************************************
+ * CKA_PRIME_BITS
+ *****************************************/
+
+// Set default value
+bool P11AttrPrimeBits::setDefault()
+{
+	OSAttribute attr((unsigned long)0);
+	return osobject->setAttribute(type, attr);
+}
+
+// Update the value if allowed
+CK_RV P11AttrPrimeBits::updateAttr(Token *token, bool isPrivate, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op)
+{
+	// Attribute specific checks
+
+	if (op != OBJECT_OP_GENERATE)
+	{
+		return CKR_ATTRIBUTE_READ_ONLY;
+	}
+
+	if (ulValueLen != sizeof(CK_ULONG))
+	{
+		return CKR_ATTRIBUTE_VALUE_INVALID;
+	}
+
+	// Store data
+
+	osobject->setAttribute(type, *(CK_ULONG*)pValue);
+
+	return CKR_OK;
+}
+
+/*****************************************
+ * CKA_EC_PARAMS
+ *****************************************/
+
+// Set default value
+bool P11AttrEcParams::setDefault()
+{
+	OSAttribute attr(ByteString(""));
+	return osobject->setAttribute(type, attr);
+}
+
+/*****************************************
+ * CKA_EC_POINT
+ *****************************************/
+
+// Set default value
+bool P11AttrEcPoint::setDefault()
+{
+	OSAttribute attr(ByteString(""));
+	return osobject->setAttribute(type, attr);
+}
+
+/*****************************************
+ * CKA_GOSTR3410_PARAMS
+ *****************************************/
+
+// Set default value
+bool P11AttrGostR3410Params::setDefault()
+{
+	OSAttribute attr(ByteString(""));
+	return osobject->setAttribute(type, attr);
+}
+
+/*****************************************
+ * CKA_GOSTR3411_PARAMS
+ *****************************************/
+
+// Set default value
+bool P11AttrGostR3411Params::setDefault()
+{
+	OSAttribute attr(ByteString(""));
+	return osobject->setAttribute(type, attr);
+}
+
+/*****************************************
+ * CKA_GOST28147_PARAMS
+ *****************************************/
+
+// Set default value
+bool P11AttrGost28147Params::setDefault()
+{
+	OSAttribute attr(ByteString(""));
+	return osobject->setAttribute(type, attr);
+}
+

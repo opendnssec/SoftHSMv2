@@ -1,5 +1,3 @@
-/* $Id$ */
-
 /*
  * Copyright (c) 2010 SURFnet bv
  * All rights reserved.
@@ -29,7 +27,7 @@
 /*****************************************************************************
  OSSLDSAPublicKey.h
 
- OpenSSL DSA private key class
+ OpenSSL DSA public key class
  *****************************************************************************/
 
 #ifndef _SOFTHSM_V2_OSSLDSAPUBLICKEY_H

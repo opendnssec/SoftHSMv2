@@ -1,5 +1,3 @@
-/* $Id$ */
-
 /*
  * Copyright (c) 2010 .SE (The Internet Infrastructure Foundation)
  * All rights reserved.
@@ -38,7 +36,9 @@
 #include "Slot.h"
 #include "FindOperation.h"
 #include "HashAlgorithm.h"
+#include "MacAlgorithm.h"
 #include "AsymmetricAlgorithm.h"
+#include "SymmetricAlgorithm.h"
 #include "Token.h"
 #include "cryptoki.h"
 
@@ -86,6 +86,10 @@ public:
 	void setDigestOp(HashAlgorithm* digestOp);
 	HashAlgorithm* getDigestOp();
 
+	// Mac
+	void setMacOp(MacAlgorithm* macOp);
+	MacAlgorithm* getMacOp();
+
 	// Asymetric Crypto
 	void setAsymmetricCryptoOp(AsymmetricAlgorithm* asymmetricCryptoOp);
 	AsymmetricAlgorithm* getAsymmetricCryptoOp();
@@ -93,14 +97,20 @@ public:
 	void setMechanism(const char *mechanism);
 	const char *getMechanism();
 
-	void setIsMultiPartOp(bool isMultiPartOp);
-	bool getIsMultiPartOp();
+	void setAllowMultiPartOp(bool allowMultiPartOp);
+	bool getAllowMultiPartOp();
+
+	void setAllowSinglePartOp(bool allowSinglePartOp);
+	bool getAllowSinglePartOp();
 
 	void setPublicKey(PublicKey* publicKey);
 	PublicKey* getPublicKey();
 
 	void setPrivateKey(PrivateKey* privateKey);
 	PrivateKey* getPrivateKey();
+
+	void setSymmetricKey(SymmetricKey* symmetricKey);
+	SymmetricKey* getSymmetricKey();
 
 private:
 	// Constructor
@@ -127,12 +137,19 @@ private:
 	// Digest
 	HashAlgorithm* digestOp;
 
-	// Asymetric Crypto
+	// Mac
+	MacAlgorithm* macOp;
+
+	// Asymmetric Crypto
 	AsymmetricAlgorithm* asymmetricCryptoOp;
 	const char * mechanism;
-	bool isMultiPartOp;
+	bool allowMultiPartOp;
+	bool allowSinglePartOp;
 	PublicKey* publicKey;
 	PrivateKey* privateKey;
+
+	// Symmetric Crypto
+	SymmetricKey* symmetricKey;
 };
 
 #endif // !_SOFTHSM_V2_SESSION_H

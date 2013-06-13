@@ -1,5 +1,3 @@
-/* $Id$ */
-
 /*
  * Copyright (c) 2010 SURFnet bv
  * All rights reserved.
@@ -80,6 +78,13 @@ void CryptoFactory::recycleAsymmetricAlgorithm(AsymmetricAlgorithm* toRecycle)
 // Recycle a hash algorithm instance -- override this function in the derived
 // class if you need to perform specific clean-up
 void CryptoFactory::recycleHashAlgorithm(HashAlgorithm* toRecycle)
+{
+	delete toRecycle;
+}
+
+// Recycle a MAC algorithm instance -- override this function in the derived
+// class if you need to perform specific clean-up
+void CryptoFactory::recycleMacAlgorithm(MacAlgorithm* toRecycle)
 {
 	delete toRecycle;
 }

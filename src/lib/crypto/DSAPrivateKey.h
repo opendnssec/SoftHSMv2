@@ -1,5 +1,3 @@
-/* $Id$ */
-
 /*
  * Copyright (c) 2010 SURFnet bv
  * All rights reserved.
@@ -56,20 +54,18 @@ public:
 	// Setters for the DSA private key components
 	virtual void setX(const ByteString& x);
 
-	// Setters for the DSA public key components
+	// Setters for the DSA domain parameters
 	virtual void setP(const ByteString& p);
 	virtual void setQ(const ByteString& q);
 	virtual void setG(const ByteString& g);
-	virtual void setY(const ByteString& y);
 
 	// Getters for the DSA private key components
 	virtual const ByteString& getX() const;
 
-	// Getters for the DSA public key components
+	// Getters for the DSA domain parameters
 	virtual const ByteString& getP() const;
 	virtual const ByteString& getQ() const;
 	virtual const ByteString& getG() const;
-	virtual const ByteString& getY() const;
 
 	// Serialisation
 	virtual ByteString serialise() const;
@@ -79,8 +75,8 @@ protected:
 	// Private components
 	ByteString x;
 
-	// Public components
-	ByteString p,q,g,y;
+	// Domain parameters
+	ByteString p,q,g;
 };
 
 #endif // !_SOFTHSM_V2_DSAPRIVATEKEY_H

@@ -1,5 +1,3 @@
-/* $Id$ */
-
 /*
  * Copyright (c) 2010 .SE (The Internet Infrastructure Foundation)
  * All rights reserved.
@@ -167,6 +165,10 @@ bool BotanRSA::signInit(PrivateKey* privateKey, const std::string mechanism)
 	else if (!lowerMechanism.compare("rsa-sha1-pkcs"))
 	{
 		emsa = "EMSA3(SHA-160)";
+	}
+	else if (!lowerMechanism.compare("rsa-sha224-pkcs"))
+	{
+		emsa = "EMSA3(SHA-224)";
 	}
 	else if (!lowerMechanism.compare("rsa-sha256-pkcs"))
 	{
@@ -392,6 +394,10 @@ bool BotanRSA::verifyInit(PublicKey* publicKey, const std::string mechanism)
 	else if (!lowerMechanism.compare("rsa-sha1-pkcs"))
 	{
 		emsa = "EMSA3(SHA-160)";
+	}
+	else if (!lowerMechanism.compare("rsa-sha224-pkcs"))
+	{
+		emsa = "EMSA3(SHA-224)";
 	}
 	else if (!lowerMechanism.compare("rsa-sha256-pkcs"))
 	{

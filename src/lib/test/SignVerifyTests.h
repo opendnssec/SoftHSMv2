@@ -1,5 +1,3 @@
-/* $Id$ */
-
 /*
  * Copyright (c) 2012 SURFnet
  * All rights reserved.
@@ -43,10 +41,12 @@ class SignVerifyTests : public CppUnit::TestFixture
 {
 	CPPUNIT_TEST_SUITE(SignVerifyTests);
 	CPPUNIT_TEST(testRsaSignVerify);
+	CPPUNIT_TEST(testHmacSignVerify);
 	CPPUNIT_TEST_SUITE_END();
 
 public:
 	void testRsaSignVerify();
+	void testHmacSignVerify();
 
 	void setUp();
 	void tearDown();
@@ -55,6 +55,8 @@ protected:
 	CK_RV generateRsaKeyPair(CK_SESSION_HANDLE hSession, CK_BBOOL bTokenPuk, CK_BBOOL bPrivatePuk, CK_BBOOL bTokenPrk, CK_BBOOL bPrivatePrk, CK_OBJECT_HANDLE &hPuk, CK_OBJECT_HANDLE &hPrk);
 	void rsaPkcsSignVerify(CK_MECHANISM_TYPE mechanismType, CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hPublicKey, CK_OBJECT_HANDLE hPrivateKey);
 	void digestRsaPkcsSignVerify(CK_MECHANISM_TYPE mechanismType, CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hPublicKey, CK_OBJECT_HANDLE hPrivateKey);
+	CK_RV generateKey(CK_SESSION_HANDLE hSession, CK_KEY_TYPE keyType, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_OBJECT_HANDLE &hKey);
+	void hmacSignVerify(CK_MECHANISM_TYPE mechanismType, CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hKey);
 };
 
 #endif // !_SOFTHSM_V2_SIGNVERIFYTESTS_H

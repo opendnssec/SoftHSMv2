@@ -1,5 +1,3 @@
-# $Id$
-
 MAINTAINERCLEANFILES =	$(srcdir)/Makefile.in
 
 AM_CPPFLAGS =			@CRYPTO_INCLUDES@

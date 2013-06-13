@@ -1,5 +1,3 @@
-/* $Id$ */
-
 /*
  * Copyright (c) 2010 SURFnet bv
  * All rights reserved.
@@ -43,13 +41,26 @@
 #include "OSSLSHA256.h"
 #include "OSSLSHA384.h"
 #include "OSSLSHA512.h"
+#include "OSSLHMAC.h"
 #include "OSSLRSA.h"
 #include "OSSLDSA.h"
+#include "OSSLDH.h"
+#ifdef WITH_ECC
+#include "OSSLECDH.h"
+#include "OSSLECDSA.h"
+#endif
+#ifdef WITH_GOST
+#include "OSSLGOSTR3411.h"
+#include "OSSLGOST.h"
+#endif
 
 #include <algorithm>
 #include <string.h>
 #include <openssl/ssl.h>
 #include <openssl/err.h>
+#ifdef WITH_GOST
+#include <openssl/objects.h>
+#endif
 
 // Initialise the one-and-only instance
 std::auto_ptr<OSSLCryptoFactory> OSSLCryptoFactory::instance(NULL); 
@@ -62,11 +73,69 @@ OSSLCryptoFactory::OSSLCryptoFactory()
 
 	// Initialise the one-and-only RNG
 	rng = new OSSLRNG();
+
+#ifdef WITH_GOST
+	// Load engines
+	ENGINE_load_builtin_engines();
+
+	// Initialise the GOST engine
+	eg = ENGINE_by_id("gost");
+	if (eg == NULL)
+	{
+		ERROR_MSG("can't get the GOST engine");
+		return;
+	}
+	if (ENGINE_init(eg) <= 0)
+	{
+		ENGINE_free(eg);
+		eg = NULL;
+		ERROR_MSG("can't initialize the GOST engine");
+		return;
+	}
+	// better than digest_gost
+	EVP_GOST_34_11 = ENGINE_get_digest(eg, NID_id_GostR3411_94);
+	if (EVP_GOST_34_11 == NULL)
+	{
+		ERROR_MSG("can't get the GOST digest");
+		goto err;
+	}
+	// from the openssl.cnf
+	if (ENGINE_register_pkey_asn1_meths(eg) <= 0)
+	{
+		ERROR_MSG("can't register ASN.1 for the GOST engine");
+		goto err;
+	}
+	if (ENGINE_ctrl_cmd_string(eg,
+				   "CRYPT_PARAMS",
+				   "id-Gost28147-89-CryptoPro-A-ParamSet",
+				   0) <= 0)
+	{
+		ERROR_MSG("can't set params of the GOST engine");
+		goto err;
+	}
+	return;
+
+err:
+	ENGINE_finish(eg);
+	ENGINE_free(eg);
+	eg = NULL;
+	return;
+#endif
 }
 
 // Destructor
 OSSLCryptoFactory::~OSSLCryptoFactory()
 {
+#ifdef WITH_GOST
+	// Finish the GOST engine
+	if (eg != NULL)
+	{
+		ENGINE_finish(eg);
+		ENGINE_free(eg);
+		eg = NULL;
+	}
+#endif
+
 	// Destroy the one-and-only RNG
 	delete rng;
 
@@ -126,6 +195,26 @@ AsymmetricAlgorithm* OSSLCryptoFactory::getAsymmetricAlgorithm(std::string algor
 	{
 		return new OSSLDSA();
 	}
+	else if (!lcAlgo.compare("dh"))
+	{
+		return new OSSLDH();
+	}
+#ifdef WITH_ECC
+	else if (!lcAlgo.compare("ecdh"))
+	{
+		return new OSSLECDH();
+	}
+	else if (!lcAlgo.compare("ecdsa"))
+	{
+		return new OSSLECDSA();
+	}
+#endif
+#ifdef WITH_GOST
+	else if (!lcAlgo.compare("gost"))
+	{
+		return new OSSLGOST();
+	}
+#endif
 	else
 	{
 		// No algorithm implementation is available
@@ -166,6 +255,61 @@ HashAlgorithm* OSSLCryptoFactory::getHashAlgorithm(std::string algorithm)
 	{
 		return new OSSLSHA512();
 	}
+#ifdef WITH_GOST
+	else if (!lcAlgo.compare("gost"))
+	{
+		return new OSSLGOSTR3411();
+	}
+#endif
+	else
+	{
+		// No algorithm implementation is available
+		ERROR_MSG("Unknown algorithm '%s'", algorithm.c_str());
+
+		return NULL;
+	}
+
+	// No algorithm implementation is available
+	return NULL;
+}
+
+// Create a concrete instance of a MAC algorithm
+MacAlgorithm* OSSLCryptoFactory::getMacAlgorithm(std::string algorithm)
+{
+	std::string lcAlgo;
+	lcAlgo.resize(algorithm.size());
+	std::transform(algorithm.begin(), algorithm.end(), lcAlgo.begin(), tolower);
+
+	if (!lcAlgo.compare("hmac-md5"))
+	{
+		return new OSSLHMACMD5();
+	}
+	else if (!lcAlgo.compare("hmac-sha1"))
+	{
+		return new OSSLHMACSHA1();
+	}
+	else if (!lcAlgo.compare("hmac-sha224"))
+	{
+		return new OSSLHMACSHA224();
+	}
+	else if (!lcAlgo.compare("hmac-sha256"))
+	{
+		return new OSSLHMACSHA256();
+	}
+	else if (!lcAlgo.compare("hmac-sha384"))
+	{
+		return new OSSLHMACSHA384();
+	}
+	else if (!lcAlgo.compare("hmac-sha512"))
+	{
+		return new OSSLHMACSHA512();
+	}
+#ifdef WITH_GOST
+	else if (!lcAlgo.compare("hmac-gost"))
+	{
+		return new OSSLHMACGOSTR3411();
+	}
+#endif
 	else
 	{
 		// No algorithm implementation is available

@@ -1,5 +1,3 @@
-/* $Id$ */
-
 /*
  * Copyright (c) 2010 .SE (The Internet Infrastructure Foundation)
  * All rights reserved.
@@ -92,7 +90,7 @@ CK_RV SessionManager::openSession
 	Session* session = new Session(slot, rwSession, pApplication, notify);
 
 	// First fill any empty spot in the list
-	for (int i = 0; i < sessions.size(); i++)
+	for (size_t i = 0; i < sessions.size(); i++)
 	{
 		if (sessions[i] != NULL)
 		{
@@ -132,7 +130,7 @@ CK_RV SessionManager::closeSession(CK_SESSION_HANDLE hSession)
 	// Check if this is the last session on the token
 	bool lastSession = true;
 	CK_ULONG slotID = sessions[sessionID]->getSlot()->getSlotID();
-	for (int i = 0; i < sessions.size(); i++)
+	for (size_t i = 0; i < sessions.size(); i++)
 	{
 		if (sessions[i] == NULL) continue;
 
