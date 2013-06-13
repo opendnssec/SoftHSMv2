@@ -648,7 +648,6 @@ bool P11ECPublicKeyObj::init(OSObject *osobject)
 	if (osobject == NULL) return false;
 
 	OSAttribute attrKeyType((unsigned long)CKK_EC);
-
 	osobject->setAttribute(CKA_KEY_TYPE, attrKeyType);
 
 	// Create parent
@@ -658,13 +657,11 @@ bool P11ECPublicKeyObj::init(OSObject *osobject)
 	P11Attribute* attrEcParams = new P11AttrEcParams(osobject,P11Attribute::ck3);
 	P11Attribute* attrEcPoint = new P11AttrEcPoint(osobject);
 
-
 	// Initialize the attributes
 	if
 	(
 		!attrEcParams->init() ||
 		!attrEcPoint->init()
-
 	)
 	{
 		ERROR_MSG("Could not initialize the attribute");
@@ -674,7 +671,6 @@ bool P11ECPublicKeyObj::init(OSObject *osobject)
 	// Add them to the map
 	attributes[attrEcParams->getType()] = attrEcParams;
 	attributes[attrEcPoint->getType()] = attrEcPoint;
-
 
 	initialized = true;
 	return true;
@@ -1007,7 +1003,6 @@ bool P11DHPrivateKeyObj::init(OSObject *osobject)
 	(
 		!attrPrime->init() ||
 		!attrBase->init() ||
-
 		!attrValue->init()
 	)
 	{
