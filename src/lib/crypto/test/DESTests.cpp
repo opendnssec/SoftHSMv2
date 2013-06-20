@@ -798,7 +798,11 @@ void DESTests::testCFB()
 
 void DESTests::writeTmpFile(ByteString& data)
 {
+#ifndef _WIN32
 	FILE* out = fopen("shsmv2-destest.tmp", "w");
+#else
+	FILE* out = fopen("shsmv2-destest.tmp", "wb");
+#endif
 	CPPUNIT_ASSERT(out != NULL);
 
 	CPPUNIT_ASSERT(fwrite(&data[0], 1, data.size(), out) == data.size());
@@ -811,7 +815,11 @@ void DESTests::readTmpFile(ByteString& data)
 
 	data.wipe();
 
+#ifndef _WIN32
 	FILE* in = fopen("shsmv2-destest-out.tmp", "r");
+#else
+	FILE* in = fopen("shsmv2-destest-out.tmp", "rb");
+#endif
 	CPPUNIT_ASSERT(in != NULL);
 
 	int read = 0;

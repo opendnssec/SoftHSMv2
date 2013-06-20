@@ -83,6 +83,8 @@ private:
 	// Thread specific RNG
 #ifdef HAVE_PTHREAD_H
 	std::map<pthread_t, RNG*> rngs;
+#elif _WIN32
+	std::map<DWORD, RNG*> rngs;
 #endif
         Mutex* rngsMutex;
 };

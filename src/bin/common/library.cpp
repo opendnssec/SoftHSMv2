@@ -50,11 +50,11 @@ CK_C_GetFunctionList loadLibrary(char* module, void** moduleHandle)
 	// Load PKCS #11 library
 	if (module)
 	{
-		HINSTANCE hDLL = LoadLibrary(_T(module));
+		hDLL = LoadLibraryA(module);
 	}
 	else
 	{
-		HINSTANCE hDLL = LoadLibrary(_T(DEFAULT_PKCS11_LIB));
+		hDLL = LoadLibraryA(DEFAULT_PKCS11_LIB);
 	}
 
 	if (hDLL == NULL)
@@ -64,8 +64,11 @@ CK_C_GetFunctionList loadLibrary(char* module, void** moduleHandle)
 	}
 
 	// Retrieve the entry point for C_GetFunctionList
-	pGetFunctionList = (CK_C_GetFunctionList) GetProcAddress(hDLL, _T("C_GetFunctionList"));
+	pGetFunctionList = (CK_C_GetFunctionList) GetProcAddress(hDLL, "C_GetFunctionList");
             
+	// Store the handle so we can FreeLibrary it later
+	*moduleHandle = hDLL;
+
 #elif defined(HAVE_DLOPEN)
 	void* pDynLib = NULL;
 
@@ -105,7 +108,7 @@ void unloadLibrary(void* moduleHandle)
 	if (moduleHandle)
 	{
 #if defined(HAVE_LOADLIBRARY)
-		// no idea
+		FreeLibrary((HMODULE) moduleHandle);
 #elif defined(HAVE_DLOPEN)
 		dlclose(moduleHandle);
 #endif

@@ -30,6 +30,7 @@
  Contains test cases to C_SeedRandom and C_GenerateRandom
  *****************************************************************************/
 
+#include <config.h>
 #include <stdlib.h>
 #include <string.h>
 #include <cppunit/extensions/HelperMacros.h>
@@ -42,7 +43,11 @@ void RandomTests::setUp()
 {
 //    printf("\nRandomTests\n");
 
+#ifndef _WIN32
 	setenv("SOFTHSM2_CONF", "./softhsm2.conf", 1);
+#else
+	setenv("SOFTHSM2_CONF", ".\\softhsm2.conf", 1);
+#endif
 
 	CK_UTF8CHAR pin[] = SLOT_0_SO1_PIN;
 	CK_ULONG pinLength = sizeof(pin) - 1;

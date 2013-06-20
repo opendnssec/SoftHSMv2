@@ -48,14 +48,16 @@ CPPUNIT_TEST_SUITE_REGISTRATION(OSTokenTests);
 
 void OSTokenTests::setUp()
 {
-	// FIXME: this only works on *NIX/BSD, not on other platforms
 	CPPUNIT_ASSERT(!system("mkdir testdir"));
 }
 
 void OSTokenTests::tearDown()
 {
-	// FIXME: this only works on *NIX/BSD, not on other platforms
+#ifndef _WIN32
 	CPPUNIT_ASSERT(!system("rm -rf testdir"));
+#else
+	CPPUNIT_ASSERT(!system("rmdir /s /q testdir 2> nul"));
+#endif
 }
 
 void OSTokenTests::testNewToken()
@@ -64,14 +66,18 @@ void OSTokenTests::testNewToken()
 	ByteString label = "40414243"; // ABCD
 	ByteString serial = "0102030405060708";
 
+#ifndef _WIN32
 	OSToken* newToken = OSToken::createToken("./testdir", "newToken", label, serial);
+#else
+	OSToken* newToken = OSToken::createToken(".\\testdir", "newToken", label, serial);
+#endif
 
 	CPPUNIT_ASSERT(newToken != NULL);
 
 	// Check the flags
 	CK_ULONG flags;
 	CPPUNIT_ASSERT(newToken->getTokenFlags(flags));
-	CPPUNIT_ASSERT(flags == CKF_RNG | CKF_LOGIN_REQUIRED | CKF_RESTORE_KEY_NOT_NEEDED | CKF_TOKEN_INITIALIZED | CKF_SO_PIN_LOCKED | CKF_SO_PIN_TO_BE_CHANGED);
+	CPPUNIT_ASSERT(flags == (CKF_RNG | CKF_LOGIN_REQUIRED | CKF_RESTORE_KEY_NOT_NEEDED | CKF_TOKEN_INITIALIZED | CKF_SO_PIN_LOCKED | CKF_SO_PIN_TO_BE_CHANGED));
 
 	// Set the SO PIN
 	ByteString soPIN = "3132333435363738"; // 12345678
@@ -84,12 +90,16 @@ void OSTokenTests::testNewToken()
 	CPPUNIT_ASSERT(newToken->setUserPIN(userPIN));
 
 	CPPUNIT_ASSERT(newToken->getTokenFlags(flags));
-	CPPUNIT_ASSERT(flags == CKF_RNG | CKF_LOGIN_REQUIRED | CKF_RESTORE_KEY_NOT_NEEDED | CKF_TOKEN_INITIALIZED | CKF_USER_PIN_INITIALIZED);
+	CPPUNIT_ASSERT(flags == (CKF_RNG | CKF_LOGIN_REQUIRED | CKF_RESTORE_KEY_NOT_NEEDED | CKF_TOKEN_INITIALIZED | CKF_USER_PIN_INITIALIZED));
 
 	delete newToken;
 
 	// Now reopen the newly created token
+#ifndef _WIN32
 	OSToken reopenedToken("./testdir/newToken");
+#else
+	OSToken reopenedToken(".\\testdir\\newToken");
+#endif
 
 	CPPUNIT_ASSERT(reopenedToken.isValid());
 
@@ -102,7 +112,7 @@ void OSTokenTests::testNewToken()
 
 	CPPUNIT_ASSERT(retrievedSOPIN == soPIN);
 	CPPUNIT_ASSERT(retrievedUserPIN == userPIN);
-	CPPUNIT_ASSERT(flags == CKF_RNG | CKF_LOGIN_REQUIRED | CKF_RESTORE_KEY_NOT_NEEDED | CKF_TOKEN_INITIALIZED | CKF_USER_PIN_INITIALIZED);
+	CPPUNIT_ASSERT(flags == (CKF_RNG | CKF_LOGIN_REQUIRED | CKF_RESTORE_KEY_NOT_NEEDED | CKF_TOKEN_INITIALIZED | CKF_USER_PIN_INITIALIZED));
 }
 
 void OSTokenTests::testExistingToken()
@@ -117,10 +127,18 @@ void OSTokenTests::testExistingToken()
 
 	{
 		// Create the token dir
+#ifndef _WIN32
 		CPPUNIT_ASSERT(!system("mkdir testdir/existingToken"));
+#else
+		CPPUNIT_ASSERT(!system("mkdir testdir\\existingToken"));
+#endif
 
 		// Create the token object
+#ifndef _WIN32
 		ObjectFile tokenObject(NULL, "./testdir/existingToken/tokenObject", true);
+#else
+		ObjectFile tokenObject(NULL, ".\\testdir\\existingToken\\tokenObject", true);
+#endif
 
 		OSAttribute labelAtt(label);
 		CPPUNIT_ASSERT(tokenObject.setAttribute(CKA_OS_TOKENLABEL, labelAtt));
@@ -135,9 +153,15 @@ void OSTokenTests::testExistingToken()
 		CPPUNIT_ASSERT(tokenObject.setAttribute(CKA_OS_TOKENFLAGS, flagsAtt));
 
 		// Create 3 objects
+#ifndef _WIN32
 		ObjectFile obj1(NULL, "./testdir/existingToken/1.object", true);
 		ObjectFile obj2(NULL, "./testdir/existingToken/2.object", true);
 		ObjectFile obj3(NULL, "./testdir/existingToken/3.object", true);
+#else
+		ObjectFile obj1(NULL, ".\\testdir\\existingToken\\1.object", true);
+		ObjectFile obj2(NULL, ".\\testdir\\existingToken\\2.object", true);
+		ObjectFile obj3(NULL, ".\\testdir\\existingToken\\3.object", true);
+#endif
 
 		OSAttribute id1Att(id1);
 		OSAttribute id2Att(id2);
@@ -149,7 +173,12 @@ void OSTokenTests::testExistingToken()
 	}
 
 	// Now open the token
+#ifndef _WIN32
 	OSToken existingToken("./testdir/existingToken");
+#else
+	OSToken existingToken(".\\testdir\\existingToken");
+#endif
+
 
 	CPPUNIT_ASSERT(existingToken.isValid());
 
@@ -167,7 +196,7 @@ void OSTokenTests::testExistingToken()
 	CPPUNIT_ASSERT(retrievedUserPIN == userPIN);
 	CPPUNIT_ASSERT(retrievedLabel == label);
 	CPPUNIT_ASSERT(retrievedSerial == serial);
-	CPPUNIT_ASSERT(flags == CKF_RNG | CKF_LOGIN_REQUIRED | CKF_RESTORE_KEY_NOT_NEEDED | CKF_TOKEN_INITIALIZED | CKF_USER_PIN_INITIALIZED);
+	CPPUNIT_ASSERT(flags == (CKF_RNG | CKF_LOGIN_REQUIRED | CKF_RESTORE_KEY_NOT_NEEDED | CKF_TOKEN_INITIALIZED | CKF_USER_PIN_INITIALIZED));
 
 	// Check that the token contains 3 objects
 	CPPUNIT_ASSERT(existingToken.getObjects().size() == 3);
@@ -206,7 +235,11 @@ void OSTokenTests::testExistingToken()
 
 void OSTokenTests::testNonExistentToken()
 {
+#ifndef _WIN32
 	OSToken doesntExist("./testdir/doesntExist");
+#else
+	OSToken doesntExist(".\\testdir\\doesntExist");
+#endif
 
 	CPPUNIT_ASSERT(!doesntExist.isValid());
 }
@@ -220,13 +253,21 @@ void OSTokenTests::testCreateDeleteObjects()
 	ByteString serial = "1234567890";
 
 	// Instantiate a new token
+#ifndef _WIN32
 	OSToken* testToken = OSToken::createToken("./testdir", "testToken", label, serial);
+#else
+	OSToken* testToken = OSToken::createToken(".\\testdir", "testToken", label, serial);
+#endif
 
 	CPPUNIT_ASSERT(testToken != NULL);
 	CPPUNIT_ASSERT(testToken->isValid());
 
 	// Open the same token
+#ifndef _WIN32
 	OSToken sameToken("./testdir/testToken");
+#else
+	OSToken sameToken(".\\testdir\\testToken");
+#endif
 
 	CPPUNIT_ASSERT(sameToken.isValid());
 
@@ -390,14 +431,18 @@ void OSTokenTests::testClearToken()
 	ByteString label = "40414243"; // ABCD
 	ByteString serial = "0102030405060708";
 
+#ifndef _WIN32
 	OSToken* newToken = OSToken::createToken("./testdir", "newToken", label, serial);
+#else
+	OSToken* newToken = OSToken::createToken(".\\testdir", "newToken", label, serial);
+#endif
 
 	CPPUNIT_ASSERT(newToken != NULL);
 
 	// Check the flags
 	CK_ULONG flags;
 	CPPUNIT_ASSERT(newToken->getTokenFlags(flags));
-	CPPUNIT_ASSERT(flags == CKF_RNG | CKF_LOGIN_REQUIRED | CKF_RESTORE_KEY_NOT_NEEDED | CKF_TOKEN_INITIALIZED | CKF_SO_PIN_LOCKED | CKF_SO_PIN_TO_BE_CHANGED);
+	CPPUNIT_ASSERT(flags == (CKF_RNG | CKF_LOGIN_REQUIRED | CKF_RESTORE_KEY_NOT_NEEDED | CKF_TOKEN_INITIALIZED | CKF_SO_PIN_LOCKED | CKF_SO_PIN_TO_BE_CHANGED));
 
 	// Set the SO PIN
 	ByteString soPIN = "3132333435363738"; // 12345678
@@ -410,12 +455,16 @@ void OSTokenTests::testClearToken()
 	CPPUNIT_ASSERT(newToken->setUserPIN(userPIN));
 
 	CPPUNIT_ASSERT(newToken->getTokenFlags(flags));
-	CPPUNIT_ASSERT(flags == CKF_RNG | CKF_LOGIN_REQUIRED | CKF_RESTORE_KEY_NOT_NEEDED | CKF_TOKEN_INITIALIZED | CKF_USER_PIN_INITIALIZED);
+	CPPUNIT_ASSERT(flags == (CKF_RNG | CKF_LOGIN_REQUIRED | CKF_RESTORE_KEY_NOT_NEEDED | CKF_TOKEN_INITIALIZED | CKF_USER_PIN_INITIALIZED));
 
 	delete newToken;
 
 	// Now reopen the newly created token
+#ifndef _WIN32
 	OSToken reopenedToken("./testdir/newToken");
+#else
+	OSToken reopenedToken(".\\testdir\\newToken");
+#endif
 
 	CPPUNIT_ASSERT(reopenedToken.isValid());
 
@@ -428,14 +477,18 @@ void OSTokenTests::testClearToken()
 
 	CPPUNIT_ASSERT(retrievedSOPIN == soPIN);
 	CPPUNIT_ASSERT(retrievedUserPIN == userPIN);
-	CPPUNIT_ASSERT(flags == CKF_RNG | CKF_LOGIN_REQUIRED | CKF_RESTORE_KEY_NOT_NEEDED | CKF_TOKEN_INITIALIZED | CKF_USER_PIN_INITIALIZED);
+	CPPUNIT_ASSERT(flags == (CKF_RNG | CKF_LOGIN_REQUIRED | CKF_RESTORE_KEY_NOT_NEEDED | CKF_TOKEN_INITIALIZED | CKF_USER_PIN_INITIALIZED));
 
 	// Now clear the token
 	CPPUNIT_ASSERT(reopenedToken.clearToken());
 	CPPUNIT_ASSERT(!reopenedToken.isValid());
 
 	// Try to open it once more
+#ifndef _WIN32
 	OSToken clearedToken("./testdir/newToken");
+#else
+	OSToken clearedToken(".\\testdir\\newToken");
+#endif
 
 	CPPUNIT_ASSERT(!clearedToken.isValid());
 }

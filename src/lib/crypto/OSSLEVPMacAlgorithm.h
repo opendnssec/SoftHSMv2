@@ -44,7 +44,9 @@ class OSSLEVPMacAlgorithm : public MacAlgorithm
 {
 public:
 	// Constructor
-	OSSLEVPMacAlgorithm() { };
+	OSSLEVPMacAlgorithm() {
+		HMAC_CTX_init(&curCTX);
+	};
 
 	// Destructor
 	~OSSLEVPMacAlgorithm();

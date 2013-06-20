@@ -47,24 +47,28 @@
 
 CPPUNIT_TEST_SUITE_REGISTRATION(SlotManagerTests);
 
-// FIXME: all pathnames in this file are *NIX/BSD specific
-
 void SlotManagerTests::setUp()
 {
-	// FIXME: this only works on *NIX/BSD, not on other platforms
 	CPPUNIT_ASSERT(!system("mkdir testdir"));
 }
 
 void SlotManagerTests::tearDown()
 {
-	// FIXME: this only works on *NIX/BSD, not on other platforms
+#ifndef _WIN32
 	CPPUNIT_ASSERT(!system("rm -rf testdir"));
+#else
+	CPPUNIT_ASSERT(!system("rmdir /s /q testdir 2> nul"));
+#endif
 }
 
 void SlotManagerTests::testNoExistingTokens()
 {
 	// Create an empty object store
+#ifndef _WIN32
 	ObjectStore store("./testdir");
+#else
+	ObjectStore store(".\\testdir");
+#endif
 
 	// Create the slot manager
 	SlotManager slotManager(&store);
@@ -103,7 +107,11 @@ void SlotManagerTests::testNoExistingTokens()
 void SlotManagerTests::testExistingTokens()
 {
 	// Create an empty object store
+#ifndef _WIN32
 	ObjectStore store("./testdir");
+#else
+	ObjectStore store(".\\testdir");
+#endif
 
 	// Create two tokens
 	ByteString label1 = "DEADBEEF";
@@ -178,7 +186,11 @@ void SlotManagerTests::testInitialiseTokenInLastSlot()
 {
 	{
 		// Create an empty object store
+#ifndef _WIN32
 		ObjectStore store("./testdir");
+#else
+		ObjectStore store(".\\testdir");
+#endif
 	
 		// Create the slot manager
 		SlotManager slotManager(&store);
@@ -233,7 +245,11 @@ void SlotManagerTests::testInitialiseTokenInLastSlot()
 	}
 
 	// Attach a fresh slot manager
+#ifndef _WIN32
 	ObjectStore store("./testdir");
+#else
+	ObjectStore store(".\\testdir");
+#endif
 	SlotManager slotManager(&store);
 
 	CPPUNIT_ASSERT(slotManager.getSlots().size() == 2);
@@ -285,7 +301,11 @@ void SlotManagerTests::testInitialiseTokenInLastSlot()
 void SlotManagerTests::testReinitialiseExistingToken()
 {
 	// Create an empty object store
+#ifndef _WIN32
 	ObjectStore store("./testdir");
+#else
+	ObjectStore store(".\\testdir");
+#endif
 
 	// Create two tokens
 	ByteString label1 = "DEADBEEF";

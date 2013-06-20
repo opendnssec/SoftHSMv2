@@ -46,7 +46,8 @@ ByteString::ByteString(const unsigned char* bytes, const size_t bytesLen)
 {
 	byteString.resize(bytesLen);
 
-	memcpy(&byteString[0], bytes, bytesLen);
+	if (bytesLen > 0)
+		memcpy(&byteString[0], bytes, bytesLen);
 }
 
 ByteString::ByteString(const char* hexString)
@@ -111,7 +112,8 @@ ByteString& ByteString::operator+=(const ByteString& append)
 
 	byteString.resize(newLen);
 
-	memcpy(&byteString[curLen], &append.byteString[0], toAdd);
+	if (toAdd > 0)
+		memcpy(&byteString[curLen], &append.byteString[0], toAdd);
 
 	return *this;
 }
@@ -297,7 +299,8 @@ void ByteString::wipe(const size_t newSize /* = 0 */)
 {
 	this->resize(newSize);
 
-	memset(&byteString[0], 0x00, byteString.size());
+	if (!byteString.empty())
+		memset(&byteString[0], 0x00, byteString.size());
 }
 
 // Comparison
@@ -306,6 +309,10 @@ bool ByteString::operator==(const ByteString& compareTo) const
 	if (compareTo.size() != this->size())
 	{
 		return false;
+	}
+	else if (this->size() == 0)
+	{
+		return true;
 	}
 
 	return (memcmp(&byteString[0], &compareTo.byteString[0], this->size()) == 0);
@@ -316,6 +323,10 @@ bool ByteString::operator!=(const ByteString& compareTo) const
 	if (compareTo.size() != this->size())
 	{
 		return true;
+	}
+	else if (this->size() == 0)
+	{
+		return false;
 	}
 
 	return (memcmp(&byteString[0], &compareTo.byteString[0], this->size()) != 0);

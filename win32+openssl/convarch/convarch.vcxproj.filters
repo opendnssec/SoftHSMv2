@@ -1,0 +1,650 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Common Header Files">
+      <UniqueIdentifier>{b657b1af-4cc4-4d97-ba6a-0a7231c5f243}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Common Source Files">
+      <UniqueIdentifier>{aacfc93a-d2e0-4935-aa15-ea0d3690fbcd}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Crypto Header Files">
+      <UniqueIdentifier>{6337c51f-53e3-440a-9ab9-40f0b9a4f26e}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Crypto Source Files">
+      <UniqueIdentifier>{8566a5d1-d688-41da-bbc3-3d860f2db764}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Data Mgr Header Files">
+      <UniqueIdentifier>{b427db7b-49c3-47b0-982a-7da01cf39c8e}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Data Mgr Source Files">
+      <UniqueIdentifier>{04a46825-a433-4b5c-9c3f-8c489978cb8a}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Handle Mgr Header Files">
+      <UniqueIdentifier>{9e67afe5-3252-4c46-a24f-096e4a35e174}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Handle Mgr Source Files">
+      <UniqueIdentifier>{b8a7e894-ebbe-43de-ad66-3c45d91aac8e}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Object Store Header Files">
+      <UniqueIdentifier>{0c47956d-aa5e-4c26-bee4-63ec89c0ab64}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Object Store Source Files">
+      <UniqueIdentifier>{45c69303-5073-4bde-8b63-2f2e2a688362}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Session Mgr Header Files">
+      <UniqueIdentifier>{d1a8b25d-8ebb-4a79-ae8c-70ef3c0bed5f}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Session Mgr Source Files">
+      <UniqueIdentifier>{cb379241-3d4b-4f7c-b7d1-c6c83d3a1b62}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Slot Mgr Header Files">
+      <UniqueIdentifier>{5420eba7-6b85-4daf-a916-c85421362984}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Slot Mgr Source Files">
+      <UniqueIdentifier>{3c9f55a5-d1a8-4716-a416-ec172a676e63}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Win32 Source Files">
+      <UniqueIdentifier>{63e3d8a2-0853-4f98-bcaa-de05da380d37}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Win32 Header Files">
+      <UniqueIdentifier>{59b2221a-36a3-4f2c-9883-6173599baf5a}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\src\lib\common\Configuration.h">
+      <Filter>Common Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\common\fatal.h">
+      <Filter>Common Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\common\HandleFactory.h">
+      <Filter>Common Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\common\IPCSignal.h">
+      <Filter>Common Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\common\log.h">
+      <Filter>Common Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\common\MutexFactory.h">
+      <Filter>Common Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\common\osmutex.h">
+      <Filter>Common Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\common\Semaphore.h">
+      <Filter>Common Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\common\Serialisable.h">
+      <Filter>Common Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\common\SimpleConfigLoader.h">
+      <Filter>Common Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\AESKey.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\AsymmetricAlgorithm.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\AsymmetricKeyPair.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\AsymmetricParameters.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\CryptoFactory.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\DESKey.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\DHParameters.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\DHPrivateKey.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\DHPublicKey.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\DSAParameters.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\DSAPublicKey.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\DSAPrivateKey.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\ECParameters.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\ECPrivateKey.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\ECPublicKey.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\GOSTPrivateKey.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\GOSTPublicKey.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\HashAlgorithm.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\MacAlgorithm.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\OSSLAES.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\OSSLCryptoFactory.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\OSSLDES.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\OSSLDH.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\OSSLDHKeyPair.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\OSSLDHPrivateKey.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\OSSLDSAPrivateKey.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\OSSLDHPublicKey.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\OSSLDSA.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\OSSLDSAKeyPair.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\OSSLDSAPublicKey.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\OSSLECDH.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\OSSLECDSA.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\OSSLECKeyPair.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\OSSLECPrivateKey.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\OSSLECPublicKey.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\OSSLEVPHashAlgorithm.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\OSSLEVPMacAlgorithm.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\OSSLEVPSymmetricAlgorithm.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\OSSLGOST.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\OSSLGOSTKeyPair.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\OSSLGOSTPrivateKey.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\OSSLGOSTPublicKey.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\OSSLGOSTR3411.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\OSSLHMAC.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\OSSLMD5.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\OSSLRNG.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\OSSLRSA.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\OSSLRSAKeyPair.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\OSSLRSAPrivateKey.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\OSSLRSAPublicKey.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\OSSLSHA1.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\OSSLSHA224.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\OSSLSHA256.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\OSSLSHA384.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\OSSLSHA512.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\OSSLUtil.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\PrivateKey.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\PublicKey.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\RNG.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\RSAParameters.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\RSAPrivateKey.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\RSAPublicKey.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\SymmetricAlgorithm.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\SymmetricKey.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\data_mgr\ByteString.h">
+      <Filter>Data Mgr Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\data_mgr\RFC4880.h">
+      <Filter>Data Mgr Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\data_mgr\salloc.h">
+      <Filter>Data Mgr Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\data_mgr\SecureAllocator.h">
+      <Filter>Data Mgr Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\data_mgr\SecureMemoryRegistry.h">
+      <Filter>Data Mgr Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\data_mgr\SecureDataManager.h">
+      <Filter>Data Mgr Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\handle_mgr\Handle.h">
+      <Filter>Handle Mgr Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\handle_mgr\HandleManager.h">
+      <Filter>Handle Mgr Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\object_store\Directory.h">
+      <Filter>Object Store Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\object_store\File.h">
+      <Filter>Object Store Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\object_store\FindOperation.h">
+      <Filter>Object Store Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\object_store\ObjectFile.h">
+      <Filter>Object Store Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\object_store\ObjectStore.h">
+      <Filter>Object Store Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\object_store\OSAttribute.h">
+      <Filter>Object Store Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\object_store\OSAttributes.h">
+      <Filter>Object Store Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\object_store\OSObject.h">
+      <Filter>Object Store Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\object_store\OSPathSep.h">
+      <Filter>Object Store Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\object_store\OSToken.h">
+      <Filter>Object Store Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\object_store\SessionObject.h">
+      <Filter>Object Store Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\object_store\SessionObjectStore.h">
+      <Filter>Object Store Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\object_store\UUID.h">
+      <Filter>Object Store Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\session_mgr\Session.h">
+      <Filter>Session Mgr Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\session_mgr\SessionManager.h">
+      <Filter>Session Mgr Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\slot_mgr\Slot.h">
+      <Filter>Slot Mgr Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\slot_mgr\SlotManager.h">
+      <Filter>Slot Mgr Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\slot_mgr\Token.h">
+      <Filter>Slot Mgr Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\win32\syslog.h">
+      <Filter>Win32 Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\src\lib\common\Configuration.cpp">
+      <Filter>Common Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\common\fatal.cpp">
+      <Filter>Common Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\common\IPCSignal.cpp">
+      <Filter>Common Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\common\log.cpp">
+      <Filter>Common Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\common\MutexFactory.cpp">
+      <Filter>Common Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\common\osmutex.cpp">
+      <Filter>Common Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\common\Semaphore.cpp">
+      <Filter>Common Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\common\SimpleConfigLoader.cpp">
+      <Filter>Common Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\AsymmetricAlgorithm.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\AsymmetricKeyPair.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\CryptoFactory.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\DESKey.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\DHParameters.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\DHPrivateKey.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\DHPublicKey.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\DSAParameters.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\DSAPrivateKey.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\DSAPublicKey.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\ECParameters.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\ECPrivateKey.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\ECPublicKey.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\GOSTPrivateKey.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\GOSTPublicKey.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\HashAlgorithm.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\MacAlgorithm.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\OSSLAES.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\OSSLCryptoFactory.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\OSSLDES.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\OSSLDH.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\OSSLDHKeyPair.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\OSSLDHPrivateKey.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\OSSLDHPublicKey.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\OSSLDSA.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\OSSLDSAKeyPair.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\OSSLDSAPrivateKey.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\OSSLDSAPublicKey.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\OSSLECDH.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\OSSLECDSA.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\OSSLECKeyPair.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\OSSLECPrivateKey.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\OSSLECPublicKey.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\OSSLEVPHashAlgorithm.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\OSSLEVPMacAlgorithm.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\OSSLEVPSymmetricAlgorithm.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\OSSLGOST.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\OSSLGOSTKeyPair.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\OSSLGOSTPrivateKey.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\OSSLGOSTPublicKey.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\OSSLGOSTR3411.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\OSSLHMAC.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\OSSLMD5.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\OSSLRNG.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\OSSLRSA.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\OSSLRSAKeyPair.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\OSSLRSAPrivateKey.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\OSSLSHA1.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\OSSLSHA224.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\OSSLSHA256.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\OSSLSHA384.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\OSSLSHA512.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\OSSLUtil.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\RSAParameters.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\RSAPrivateKey.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\RSAPublicKey.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\SymmetricAlgorithm.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\SymmetricKey.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\data_mgr\ByteString.cpp">
+      <Filter>Data Mgr Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\data_mgr\RFC4880.cpp">
+      <Filter>Data Mgr Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\data_mgr\salloc.cpp">
+      <Filter>Data Mgr Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\data_mgr\SecureDataManager.cpp">
+      <Filter>Data Mgr Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\data_mgr\SecureMemoryRegistry.cpp">
+      <Filter>Data Mgr Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\handle_mgr\Handle.cpp">
+      <Filter>Handle Mgr Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\handle_mgr\HandleManager.cpp">
+      <Filter>Handle Mgr Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\object_store\Directory.cpp">
+      <Filter>Object Store Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\object_store\File.cpp">
+      <Filter>Object Store Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\object_store\FindOperation.cpp">
+      <Filter>Object Store Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\object_store\ObjectFile.cpp">
+      <Filter>Object Store Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\object_store\ObjectStore.cpp">
+      <Filter>Object Store Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\object_store\OSAttribute.cpp">
+      <Filter>Object Store Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\object_store\OSToken.cpp">
+      <Filter>Object Store Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\object_store\SessionObject.cpp">
+      <Filter>Object Store Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\object_store\SessionObjectStore.cpp">
+      <Filter>Object Store Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\object_store\UUID.cpp">
+      <Filter>Object Store Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\session_mgr\Session.cpp">
+      <Filter>Session Mgr Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\session_mgr\SessionManager.cpp">
+      <Filter>Session Mgr Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\slot_mgr\Slot.cpp">
+      <Filter>Slot Mgr Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\slot_mgr\SlotManager.cpp">
+      <Filter>Slot Mgr Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\slot_mgr\Token.cpp">
+      <Filter>Slot Mgr Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\win32\syslog.cpp">
+      <Filter>Win32 Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\OSSLRSAPublicKey.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

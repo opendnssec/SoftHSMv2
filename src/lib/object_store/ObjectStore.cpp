@@ -38,6 +38,7 @@
 #include "ObjectStore.h"
 #include "Directory.h"
 #include "OSToken.h"
+#include "OSPathSep.h"
 #include "UUID.h"
 #include <stdio.h>
 
@@ -66,7 +67,7 @@ ObjectStore::ObjectStore(std::string storePath)
 	for (std::vector<std::string>::iterator i = dirs.begin(); i != dirs.end(); i++)
 	{
 		// Create a token instance
-		OSToken* token = new OSToken(storePath + "/" + *i);
+		OSToken* token = new OSToken(storePath + OS_PATHSEP + *i);
 
 		if (!token->isValid())
 		{

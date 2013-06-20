@@ -34,7 +34,9 @@
 #include "ObjectFile.h"
 #include "OSToken.h"
 #include "OSPathSep.h"
+#ifndef _WIN32
 #include <unistd.h>
+#endif
 #include <sys/types.h>
 #include <sys/stat.h>
 

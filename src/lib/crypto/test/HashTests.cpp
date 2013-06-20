@@ -72,7 +72,7 @@ void HashTests::testMD5()
 	writeTmpFile(b);
 
 	// Use OpenSSL externally to hash it
-	CPPUNIT_ASSERT(system("cat shsmv2-hashtest.tmp | openssl md5 -binary > shsmv2-hashtest-out.tmp") == 0);
+	CPPUNIT_ASSERT(system("openssl md5 -binary < shsmv2-hashtest.tmp > shsmv2-hashtest-out.tmp") == 0);
 
 	// Read the hash from file
 	readTmpFile(osslHash);
@@ -117,7 +117,7 @@ void HashTests::testSHA1()
 	writeTmpFile(b);
 
 	// Use OpenSSL externally to hash it
-	CPPUNIT_ASSERT(system("cat shsmv2-hashtest.tmp | openssl sha1 -binary > shsmv2-hashtest-out.tmp") == 0);
+	CPPUNIT_ASSERT(system("openssl sha1 -binary < shsmv2-hashtest.tmp > shsmv2-hashtest-out.tmp") == 0);
 
 	// Read the hash from file
 	readTmpFile(osslHash);
@@ -162,7 +162,7 @@ void HashTests::testSHA224()
 	writeTmpFile(b);
 
 	// Use OpenSSL externally to hash it
-	CPPUNIT_ASSERT(system("cat shsmv2-hashtest.tmp | openssl sha -sha224 -binary > shsmv2-hashtest-out.tmp") == 0);
+	CPPUNIT_ASSERT(system("openssl sha -sha224 -binary < shsmv2-hashtest.tmp > shsmv2-hashtest-out.tmp") == 0);
 
 	// Read the hash from file
 	readTmpFile(osslHash);
@@ -207,7 +207,7 @@ void HashTests::testSHA256()
 	writeTmpFile(b);
 
 	// Use OpenSSL externally to hash it
-	CPPUNIT_ASSERT(system("cat shsmv2-hashtest.tmp | openssl sha -sha256 -binary > shsmv2-hashtest-out.tmp") == 0);
+	CPPUNIT_ASSERT(system("openssl sha -sha256 -binary < shsmv2-hashtest.tmp > shsmv2-hashtest-out.tmp") == 0);
 
 	// Read the hash from file
 	readTmpFile(osslHash);
@@ -252,7 +252,7 @@ void HashTests::testSHA384()
 	writeTmpFile(b);
 
 	// Use OpenSSL externally to hash it
-	CPPUNIT_ASSERT(system("cat shsmv2-hashtest.tmp | openssl sha -sha384 -binary > shsmv2-hashtest-out.tmp") == 0);
+	CPPUNIT_ASSERT(system("openssl sha -sha384 -binary < shsmv2-hashtest.tmp > shsmv2-hashtest-out.tmp") == 0);
 
 	// Read the hash from file
 	readTmpFile(osslHash);
@@ -297,7 +297,7 @@ void HashTests::testSHA512()
 	writeTmpFile(b);
 
 	// Use OpenSSL externally to hash it
-	CPPUNIT_ASSERT(system("cat shsmv2-hashtest.tmp | openssl sha -sha512 -binary > shsmv2-hashtest-out.tmp") == 0);
+	CPPUNIT_ASSERT(system("openssl sha -sha512 -binary < shsmv2-hashtest.tmp > shsmv2-hashtest-out.tmp") == 0);
 
 	// Read the hash from file
 	readTmpFile(osslHash);
@@ -328,7 +328,11 @@ void HashTests::testSHA512()
 
 void HashTests::writeTmpFile(ByteString& data)
 {
+#ifndef _WIN32
 	FILE* out = fopen("shsmv2-hashtest.tmp", "w");
+#else
+	FILE* out = fopen("shsmv2-hashtest.tmp", "wb");
+#endif
 	CPPUNIT_ASSERT(out != NULL);
 
 	CPPUNIT_ASSERT(fwrite(&data[0], 1, data.size(), out) == data.size());
@@ -341,7 +345,11 @@ void HashTests::readTmpFile(ByteString& data)
 
 	data.wipe();
 
+#ifndef _WIN32
 	FILE* in = fopen("shsmv2-hashtest-out.tmp", "r");
+#else
+	FILE* in = fopen("shsmv2-hashtest-out.tmp", "rb");
+#endif
 	CPPUNIT_ASSERT(in != NULL);
 
 	int read = 0;

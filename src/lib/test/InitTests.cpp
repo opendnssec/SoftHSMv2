@@ -43,7 +43,11 @@ void InitTests::setUp()
 {
 //    printf("\nInitTests\n");
 
+#ifndef _WIN32
 	setenv("SOFTHSM2_CONF", "./softhsm2.conf", 1);
+#else
+	setenv("SOFTHSM2_CONF", ".\\softhsm2.conf", 1);
+#endif
 }
 
 void InitTests::tearDown()
@@ -73,6 +77,10 @@ void InitTests::testInit2()
 {
 	CK_C_INITIALIZE_ARGS InitArgs;
 	CK_RV rv;
+
+#ifdef CreateMutex
+#undef CreateMutex
+#endif
 
 	InitArgs.CreateMutex = NULL_PTR;
 	InitArgs.DestroyMutex = NULL_PTR;

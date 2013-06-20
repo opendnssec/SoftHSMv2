@@ -39,6 +39,7 @@
 
  *****************************************************************************/
 
+#include <config.h>
 #include <stdlib.h>
 #include <string.h>
 #include <cppunit/extensions/HelperMacros.h>
@@ -60,7 +61,11 @@ void SignVerifyTests::setUp()
 {
 //    printf("\nSignVerifyTests\n");
 
+#ifndef _WIN32
 	setenv("SOFTHSM2_CONF", "./softhsm2.conf", 1);
+#else
+	setenv("SOFTHSM2_CONF", ".\\softhsm2.conf", 1);
+#endif
 
 	CK_RV rv;
 	CK_UTF8CHAR pin[] = SLOT_0_USER1_PIN;
@@ -287,9 +292,14 @@ void SignVerifyTests::testRsaSignVerify()
 
 CK_RV SignVerifyTests::generateKey(CK_SESSION_HANDLE hSession, CK_KEY_TYPE keyType, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_OBJECT_HANDLE &hKey)
 {
+#ifndef WITH_BOTAN
+#define GEN_KEY_LEN	75
+#else
+#define GEN_KEY_LEN	55
+#endif
 	CK_RV rv;
 	CK_OBJECT_CLASS keyClass = CKO_SECRET_KEY;
-	CK_BYTE val[75];
+	CK_BYTE val[GEN_KEY_LEN];
 	//CK_BBOOL bFalse = CK_FALSE;
 	CK_BBOOL bTrue = CK_TRUE;
 	CK_ATTRIBUTE kAttribs[] = {
@@ -303,7 +313,7 @@ CK_RV SignVerifyTests::generateKey(CK_SESSION_HANDLE hSession, CK_KEY_TYPE keyTy
 		{ CKA_VALUE, &val[0], sizeof(val) }
 	};
 
-	rv = C_GenerateRandom(hSession, val, 75);
+	rv = C_GenerateRandom(hSession, val, GEN_KEY_LEN);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	hKey = CK_INVALID_HANDLE;
