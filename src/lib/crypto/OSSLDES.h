@@ -44,6 +44,9 @@ public:
 	// Destructor
 	virtual ~OSSLDES() { }
 
+	// Generate key
+	virtual bool generateKey(SymmetricKey& key, RNG* rng = NULL);
+
 	// Return the block size
 	virtual size_t getBlockSize() const;
 

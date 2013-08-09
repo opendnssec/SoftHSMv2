@@ -25,20 +25,16 @@
  */
 
 /*****************************************************************************
- EncryptDecryptTests.cpp
+ AsymEncryptDecryptTests.cpp
 
- Contains test cases for:
-	 C_EncryptInit
-	 C_Encrypt
-	 C_DecryptInit
-	 C_Decrypt
-
+ Contains test cases for C_EncryptInit, C_Encrypt, C_DecryptInit, C_Decrypt
+ using asymmetrical algorithms (i.e., RSA)
  *****************************************************************************/
 
 #include <stdlib.h>
 #include <string.h>
 #include <cppunit/extensions/HelperMacros.h>
-#include "EncryptDecryptTests.h"
+#include "AsymEncryptDecryptTests.h"
 #include "testconfig.h"
 
 // CKA_TOKEN
@@ -50,9 +46,9 @@ const CK_BBOOL IS_PRIVATE = CK_TRUE;
 const CK_BBOOL IS_PUBLIC = CK_FALSE;
 
 
-CPPUNIT_TEST_SUITE_REGISTRATION(EncryptDecryptTests);
+CPPUNIT_TEST_SUITE_REGISTRATION(AsymEncryptDecryptTests);
 
-void EncryptDecryptTests::setUp()
+void AsymEncryptDecryptTests::setUp()
 {
 //    printf("\nObjectTests\n");
 
@@ -88,12 +84,12 @@ void EncryptDecryptTests::setUp()
 	CPPUNIT_ASSERT(rv == CKR_OK);
 }
 
-void EncryptDecryptTests::tearDown()
+void AsymEncryptDecryptTests::tearDown()
 {
 	C_Finalize(NULL_PTR);
 }
 
-CK_RV EncryptDecryptTests::generateRsaKeyPair(CK_SESSION_HANDLE hSession, CK_BBOOL bTokenPuk, CK_BBOOL bPrivatePuk, CK_BBOOL bTokenPrk, CK_BBOOL bPrivatePrk, CK_OBJECT_HANDLE &hPuk, CK_OBJECT_HANDLE &hPrk)
+CK_RV AsymEncryptDecryptTests::generateRsaKeyPair(CK_SESSION_HANDLE hSession, CK_BBOOL bTokenPuk, CK_BBOOL bPrivatePuk, CK_BBOOL bTokenPrk, CK_BBOOL bPrivatePrk, CK_OBJECT_HANDLE &hPuk, CK_OBJECT_HANDLE &hPrk)
 {
 	CK_MECHANISM mechanism = { CKM_RSA_PKCS_KEY_PAIR_GEN, NULL_PTR, 0 };
 	CK_ULONG bits = 1536;
@@ -130,7 +126,7 @@ CK_RV EncryptDecryptTests::generateRsaKeyPair(CK_SESSION_HANDLE hSession, CK_BBO
 							 &hPuk, &hPrk);
 }
 
-void EncryptDecryptTests::rsaEncryptDecrypt(CK_MECHANISM_TYPE mechanismType, CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hPublicKey, CK_OBJECT_HANDLE hPrivateKey)
+void AsymEncryptDecryptTests::rsaEncryptDecrypt(CK_MECHANISM_TYPE mechanismType, CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hPublicKey, CK_OBJECT_HANDLE hPrivateKey)
 {
 	CK_MECHANISM mechanism = { mechanismType, NULL_PTR, 0 };
 	CK_RSA_PKCS_OAEP_PARAMS oaepParams = { CKM_SHA_1, CKG_MGF1_SHA1, 1, NULL_PTR, 0 };
@@ -164,7 +160,7 @@ void EncryptDecryptTests::rsaEncryptDecrypt(CK_MECHANISM_TYPE mechanismType, CK_
 	CPPUNIT_ASSERT(memcmp(plainText, &recoveredText[ulRecoveredTextLen-sizeof(plainText)], sizeof(plainText)) == 0);
 }
 
-void EncryptDecryptTests::testRsaEncryptDecrypt()
+void AsymEncryptDecryptTests::testRsaEncryptDecrypt()
 {
 	CK_RV rv;
 	CK_UTF8CHAR pin[] = SLOT_0_USER1_PIN;

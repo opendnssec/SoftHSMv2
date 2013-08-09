@@ -44,6 +44,7 @@
 BotanSymmetricAlgorithm::BotanSymmetricAlgorithm()
 {
 	cryption = NULL;
+	currentPaddingMode = "invalid";
 }
 
 // Destructor
@@ -54,10 +55,10 @@ BotanSymmetricAlgorithm::~BotanSymmetricAlgorithm()
 }
 
 // Encryption functions
-bool BotanSymmetricAlgorithm::encryptInit(const SymmetricKey* key, const std::string mode /* = "cbc" */, const ByteString& IV /* = ByteString()*/)
+bool BotanSymmetricAlgorithm::encryptInit(const SymmetricKey* key, const std::string mode /* = "cbc" */, const ByteString& IV /* = ByteString()*/, bool padding /* = true */)
 {
 	// Call the superclass initialiser
-	if (!SymmetricAlgorithm::encryptInit(key, mode, IV))
+	if (!SymmetricAlgorithm::encryptInit(key, mode, IV, padding))
 	{
 		return false;
 	}
@@ -82,6 +83,16 @@ bool BotanSymmetricAlgorithm::encryptInit(const SymmetricKey* key, const std::st
 	else
 	{
 		iv.wipe(getBlockSize());
+	}
+
+	// Set the padding mode (PCKS7 or NoPadding)
+	if (padding)
+	{
+		currentPaddingMode = "PKCS7";
+	}
+	else
+	{
+		currentPaddingMode = "NoPadding";
 	}
 
 	// Determine the cipher
@@ -223,10 +234,10 @@ bool BotanSymmetricAlgorithm::encryptFinal(ByteString& encryptedData)
 }
 
 // Decryption functions
-bool BotanSymmetricAlgorithm::decryptInit(const SymmetricKey* key, const std::string mode /* = "cbc" */, const ByteString& IV /* = ByteString() */)
+bool BotanSymmetricAlgorithm::decryptInit(const SymmetricKey* key, const std::string mode /* = "cbc" */, const ByteString& IV /* = ByteString() */, bool padding /* = true */)
 {
 	// Call the superclass initialiser
-	if (!SymmetricAlgorithm::decryptInit(key, mode, IV))
+	if (!SymmetricAlgorithm::decryptInit(key, mode, IV, padding))
 	{
 		return false;
 	}
@@ -251,6 +262,16 @@ bool BotanSymmetricAlgorithm::decryptInit(const SymmetricKey* key, const std::st
 	else
 	{
 		iv.wipe(getBlockSize());
+	}
+
+	// Set the padding mode (PCKS7 or NoPadding)
+	if (padding)
+	{
+		currentPaddingMode = "PKCS7";
+	}
+	else
+	{
+		currentPaddingMode = "NoPadding";
 	}
 
 	// Determine the cipher class

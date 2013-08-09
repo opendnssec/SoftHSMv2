@@ -33,6 +33,7 @@
 #include "config.h"
 #include "OSSLDES.h"
 #include <algorithm>
+#include "odd.h"
 
 const EVP_CIPHER* OSSLDES::getCipher() const
 {
@@ -107,6 +108,38 @@ const EVP_CIPHER* OSSLDES::getCipher() const
 	ERROR_MSG("Invalid DES cipher mode %s", currentCipherMode.c_str());
 
 	return NULL;
+}
+
+bool OSSLDES::generateKey(SymmetricKey& key, RNG* rng /* = NULL */)
+{
+	if (rng == NULL)
+	{
+		return false;
+	}
+
+	if (key.getBitLen() == 0)
+	{
+		return false;
+	}
+
+	ByteString keyBits;
+	
+	// don't count parity bit
+	if (!rng->generateRandom(keyBits, key.getBitLen()/7))
+	{
+		return false;
+	}
+
+	// fix the odd parity
+	size_t i;
+	for (i = 0; i < keyBits.size(); i++)
+	{
+		keyBits[i] = odd_parity[keyBits[i]];
+	}
+
+	key.setKeyBits(keyBits);
+
+	return true;
 }
 
 size_t OSSLDES::getBlockSize() const

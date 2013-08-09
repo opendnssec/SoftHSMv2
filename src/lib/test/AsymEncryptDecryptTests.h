@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010 SURFnet bv
+ * Copyright (c) 2012 SURFnet
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,62 +25,33 @@
  */
 
 /*****************************************************************************
- SymmetricKey.cpp
+ AsymEncryptDecryptTests.h
 
- Base class for symmetric key classes
+ Contains test cases for C_EncryptInit, C_Encrypt, C_DecryptInit, C_Decrypt
+ using asymmetrical algorithms (i.e., RSA)
  *****************************************************************************/
 
-#include "config.h"
-#include "ByteString.h"
-#include "Serialisable.h"
-#include "SymmetricKey.h"
+#ifndef _SOFTHSM_V2_ASYMENCRYPTDECRYPTTESTS_H
+#define _SOFTHSM_V2_ASYMENCRYPTDECRYPTTESTS_H
 
-// Base constructors
-SymmetricKey::SymmetricKey(size_t bitLen /* = 0 */)
+#include <cppunit/extensions/HelperMacros.h>
+#include "cryptoki.h"
+
+class AsymEncryptDecryptTests : public CppUnit::TestFixture
 {
-	this->bitLen = bitLen;
-}
+	CPPUNIT_TEST_SUITE(AsymEncryptDecryptTests);
+	CPPUNIT_TEST(testRsaEncryptDecrypt);
+	CPPUNIT_TEST_SUITE_END();
 
-SymmetricKey::SymmetricKey(const SymmetricKey& in)
-{
-	keyData = in.keyData;
-	bitLen = in.bitLen;
-}
+public:
+	void testRsaEncryptDecrypt();
 
-// Set the key
-bool SymmetricKey::setKeyBits(const ByteString& keybits)
-{
-	if ((bitLen > 0) && ((keybits.size() * 8) != bitLen))
-	{
-		return false;
-	}	
+	void setUp();
+	void tearDown();
 
-	keyData = keybits;
+protected:
+	CK_RV generateRsaKeyPair(CK_SESSION_HANDLE hSession, CK_BBOOL bTokenPuk, CK_BBOOL bPrivatePuk, CK_BBOOL bTokenPrk, CK_BBOOL bPrivatePrk, CK_OBJECT_HANDLE &hPuk, CK_OBJECT_HANDLE &hPrk);
+	void rsaEncryptDecrypt(CK_MECHANISM_TYPE mechanismType, CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hPublicKey, CK_OBJECT_HANDLE hPrivateKey);
+};
 
-	return true;
-}
-
-// Get the key
-const ByteString& SymmetricKey::getKeyBits() const
-{
-	return keyData;
-}
-
-// Serialisation
-ByteString SymmetricKey::serialise() const
-{
-	return keyData;
-}
-
-// Set the bit length
-void SymmetricKey::setBitLen(const size_t bitLen)
-{
-	this->bitLen = bitLen;
-}
-
-// Retrieve the bit length
-size_t SymmetricKey::getBitLen() const
-{
-	return bitLen;
-}
-
+#endif // !_SOFTHSM_V2_ASYMENCRYPTDECRYPTTESTS_H

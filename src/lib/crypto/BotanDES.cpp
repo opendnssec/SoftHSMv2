@@ -33,6 +33,7 @@
 #include "config.h"
 #include "BotanDES.h"
 #include <algorithm>
+#include "odd.h"
 
 std::string BotanDES::getCipher() const
 {
@@ -44,6 +45,15 @@ std::string BotanDES::getCipher() const
             (currentKey->getBitLen() != 168))
 	{
 		ERROR_MSG("Invalid DES currentKey length (%d bits)", currentKey->getBitLen());
+
+		return "";
+	}
+
+	// Check padding mode
+	if (!currentPaddingMode.compare("PKCS7") &&
+	    !currentPaddingMode.compare("NoPadding"))
+	{
+		ERROR_MSG("Invalid AES padding mode %s", currentPaddingMode.c_str());
 
 		return "";
 	}
@@ -60,11 +70,11 @@ std::string BotanDES::getCipher() const
 		switch(currentKey->getBitLen())
 		{
 			case 56:
-				return "DES/CBC/PKCS7";
+				return "DES/CBC/" + currentPaddingMode;
 			case 112:
-				return "TripleDES/CBC/PKCS7";
+				return "TripleDES/CBC/" + currentPaddingMode;
 			case 168:
-				return "TripleDES/CBC/PKCS7";
+				return "TripleDES/CBC/" + currentPaddingMode;
 		};
 	}
 	else if (!currentCipherMode.compare("ecb"))
@@ -72,11 +82,11 @@ std::string BotanDES::getCipher() const
 		switch(currentKey->getBitLen())
 		{
 			case 56:
-				return "DES/ECB/PKCS7";
+				return "DES/ECB/" + currentPaddingMode;
 			case 112:
-				return "TripleDES/ECB/PKCS7";
+				return "TripleDES/ECB/" + currentPaddingMode;
 			case 168:
-				return "TripleDES/ECB/PKCS7";
+				return "TripleDES/ECB/" + currentPaddingMode;
 		};
 	}
 	else if (!currentCipherMode.compare("ofb"))
@@ -107,6 +117,39 @@ std::string BotanDES::getCipher() const
 	ERROR_MSG("Invalid DES cipher mode %s", currentCipherMode.c_str());
 
 	return "";
+}
+
+bool BotanDES::generateKey(SymmetricKey& key, RNG* rng /* = NULL */)
+{
+	if (rng == NULL)
+	{
+		return false;
+	}
+
+	if (key.getBitLen() == 0)
+	{
+		return false;
+	}
+
+	ByteString keyBits;
+	
+	// don't count parity bit
+	if (!rng->generateRandom(keyBits, key.getBitLen()/7))
+	{
+		return false;
+	}
+
+	// fix the odd parity
+	size_t i;
+	for (i = 0; i < keyBits.size(); i++)
+	{
+		keyBits[i] = odd_parity[keyBits[i]];
+	}
+
+
+	key.setKeyBits(keyBits);
+
+	return true;
 }
 
 size_t BotanDES::getBlockSize() const

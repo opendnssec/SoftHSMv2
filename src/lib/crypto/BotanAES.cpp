@@ -48,17 +48,26 @@ std::string BotanAES::getCipher() const
 		return "";
 	}
 
+	// Check padding mode
+	if (!currentPaddingMode.compare("PKCS7") &&
+	    !currentPaddingMode.compare("NoPadding"))
+	{
+		ERROR_MSG("Invalid AES padding mode %s", currentPaddingMode.c_str());
+
+		return "";
+	}
+
 	// Determine the cipher mode
 	if (!currentCipherMode.compare("cbc"))
 	{
 		switch(currentKey->getBitLen())
 		{
 			case 128:
-				return "AES-128/CBC/PKCS7";
+				return "AES-128/CBC/" + currentPaddingMode;
 			case 192:
-				return "AES-192/CBC/PKCS7";
+				return "AES-192/CBC/" + currentPaddingMode;
 			case 256:
-				return "AES-256/CBC/PKCS7";
+				return "AES-256/CBC/" + currentPaddingMode;
 		};
 	}
 	else if (!currentCipherMode.compare("ecb"))
@@ -66,11 +75,11 @@ std::string BotanAES::getCipher() const
 		switch(currentKey->getBitLen())
 		{
 			case 128:
-				return "AES-128/ECB/PKCS7";
+				return "AES-128/ECB/" + currentPaddingMode;
 			case 192:
-				return "AES-192/ECB/PKCS7";
+				return "AES-192/ECB/" + currentPaddingMode;
 			case 256:
-				return "AES-256/ECB/PKCS7";
+				return "AES-256/ECB/" + currentPaddingMode;
 		};
 	}
 

@@ -186,6 +186,12 @@ private:
 	SessionManager* sessionManager;
 	HandleManager* handleManager;
 
+	// Encrypt/Decrypt variants
+	CK_RV SymEncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechanism, CK_OBJECT_HANDLE hKey);
+	CK_RV AsymEncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechanism, CK_OBJECT_HANDLE hKey);
+	CK_RV SymDecryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechanism, CK_OBJECT_HANDLE hKey);
+	CK_RV AsymDecryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechanism, CK_OBJECT_HANDLE hKey);
+
 	// Sign/Verify variants
 	CK_RV MacSignInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechanism, CK_OBJECT_HANDLE hKey);
 	CK_RV AsymSignInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechanism, CK_OBJECT_HANDLE hKey);
@@ -193,6 +199,42 @@ private:
 	CK_RV AsymVerifyInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechanism, CK_OBJECT_HANDLE hKey);
 
 	// Key generation
+	CK_RV generateDES
+	(
+		CK_SESSION_HANDLE hSession,
+		CK_ATTRIBUTE_PTR pTemplate,
+		CK_ULONG ulCount,
+		CK_OBJECT_HANDLE_PTR phKey,
+		CK_BBOOL isToken,
+		CK_BBOOL isPrivate
+	);
+	CK_RV generateDES2
+	(
+		CK_SESSION_HANDLE hSession,
+		CK_ATTRIBUTE_PTR pTemplate,
+		CK_ULONG ulCount,
+		CK_OBJECT_HANDLE_PTR phKey,
+		CK_BBOOL isToken,
+		CK_BBOOL isPrivate
+	);
+	CK_RV generateDES3
+	(
+		CK_SESSION_HANDLE hSession,
+		CK_ATTRIBUTE_PTR pTemplate,
+		CK_ULONG ulCount,
+		CK_OBJECT_HANDLE_PTR phKey,
+		CK_BBOOL isToken,
+		CK_BBOOL isPrivate
+	);
+	CK_RV generateAES
+	(
+		CK_SESSION_HANDLE hSession,
+		CK_ATTRIBUTE_PTR pTemplate,
+		CK_ULONG ulCount,
+		CK_OBJECT_HANDLE_PTR phKey,
+		CK_BBOOL isToken,
+		CK_BBOOL isPrivate
+	);
 	CK_RV generateRSA
 	(CK_SESSION_HANDLE hSession,
 		CK_ATTRIBUTE_PTR pPublicKeyTemplate,
