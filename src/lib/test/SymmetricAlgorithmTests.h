@@ -40,17 +40,24 @@ class SymmetricAlgorithmTests : public CppUnit::TestFixture
 {
 	CPPUNIT_TEST_SUITE(SymmetricAlgorithmTests);
 	CPPUNIT_TEST(testAesEncryptDecrypt);
+	CPPUNIT_TEST(testDesEncryptDecrypt);
 	CPPUNIT_TEST_SUITE_END();
 
 public:
 	void testAesEncryptDecrypt();
+	void testDesEncryptDecrypt();
 
 	void setUp();
 	void tearDown();
 
 protected:
 	CK_RV generateAesKey(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_OBJECT_HANDLE &hKey);
+	CK_RV generateDesKey(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_OBJECT_HANDLE &hKey);
+	CK_RV generateDes2Key(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_OBJECT_HANDLE &hKey);
+	CK_RV generateDes3Key(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_OBJECT_HANDLE &hKey);
 	void aesEncryptDecrypt(CK_MECHANISM_TYPE mechanismType, CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hKey);
+	void desEncryptDecrypt(CK_MECHANISM_TYPE mechanismType, CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hKey);
+	void des3EncryptDecrypt(CK_MECHANISM_TYPE mechanismType, CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hKey);
 };
 
 #endif // !_SOFTHSM_V2_SYMENCRYPTDECRYPTTESTS_H

@@ -108,6 +108,60 @@ CK_RV SymmetricAlgorithmTests::generateAesKey(CK_SESSION_HANDLE hSession, CK_BBO
 			     &hKey);
 }
 
+CK_RV SymmetricAlgorithmTests::generateDesKey(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_OBJECT_HANDLE &hKey)
+{
+	CK_MECHANISM mechanism = { CKM_DES_KEY_GEN, NULL_PTR, 0 };
+	CK_BBOOL bFalse = CK_FALSE;
+	CK_BBOOL bTrue = CK_TRUE;
+	CK_ATTRIBUTE keyAttribs[] = {
+		{ CKA_TOKEN, &bToken, sizeof(bToken) },
+		{ CKA_PRIVATE, &bPrivate, sizeof(bPrivate) },
+		{ CKA_ENCRYPT, &bTrue, sizeof(bTrue) },
+		{ CKA_DECRYPT, &bTrue, sizeof(bTrue) },
+	};
+
+	hKey = CK_INVALID_HANDLE;
+	return C_GenerateKey(hSession, &mechanism,
+			     keyAttribs, sizeof(keyAttribs)/sizeof(CK_ATTRIBUTE),
+			     &hKey);
+}
+
+CK_RV SymmetricAlgorithmTests::generateDes2Key(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_OBJECT_HANDLE &hKey)
+{
+	CK_MECHANISM mechanism = { CKM_DES2_KEY_GEN, NULL_PTR, 0 };
+	CK_BBOOL bFalse = CK_FALSE;
+	CK_BBOOL bTrue = CK_TRUE;
+	CK_ATTRIBUTE keyAttribs[] = {
+		{ CKA_TOKEN, &bToken, sizeof(bToken) },
+		{ CKA_PRIVATE, &bPrivate, sizeof(bPrivate) },
+		{ CKA_ENCRYPT, &bTrue, sizeof(bTrue) },
+		{ CKA_DECRYPT, &bTrue, sizeof(bTrue) },
+	};
+
+	hKey = CK_INVALID_HANDLE;
+	return C_GenerateKey(hSession, &mechanism,
+			     keyAttribs, sizeof(keyAttribs)/sizeof(CK_ATTRIBUTE),
+			     &hKey);
+}
+
+CK_RV SymmetricAlgorithmTests::generateDes3Key(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_OBJECT_HANDLE &hKey)
+{
+	CK_MECHANISM mechanism = { CKM_DES3_KEY_GEN, NULL_PTR, 0 };
+	CK_BBOOL bFalse = CK_FALSE;
+	CK_BBOOL bTrue = CK_TRUE;
+	CK_ATTRIBUTE keyAttribs[] = {
+		{ CKA_TOKEN, &bToken, sizeof(bToken) },
+		{ CKA_PRIVATE, &bPrivate, sizeof(bPrivate) },
+		{ CKA_ENCRYPT, &bTrue, sizeof(bTrue) },
+		{ CKA_DECRYPT, &bTrue, sizeof(bTrue) },
+	};
+
+	hKey = CK_INVALID_HANDLE;
+	return C_GenerateKey(hSession, &mechanism,
+			     keyAttribs, sizeof(keyAttribs)/sizeof(CK_ATTRIBUTE),
+			     &hKey);
+}
+
 void SymmetricAlgorithmTests::aesEncryptDecrypt(CK_MECHANISM_TYPE mechanismType, CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hKey)
 {
 	CK_MECHANISM mechanism = { mechanismType, NULL_PTR, 0 };
@@ -123,6 +177,88 @@ void SymmetricAlgorithmTests::aesEncryptDecrypt(CK_MECHANISM_TYPE mechanismType,
 	CPPUNIT_ASSERT(rv==CKR_OK);
 
 	if (mechanismType == CKM_AES_CBC)
+	{
+		rv = C_GenerateRandom(hSession, iv, sizeof(iv));
+		CPPUNIT_ASSERT(rv==CKR_OK);
+		mechanism.pParameter = iv;
+		mechanism.ulParameterLen = sizeof(iv);
+	}
+
+	rv = C_EncryptInit(hSession,&mechanism,hKey);
+	CPPUNIT_ASSERT(rv==CKR_OK);
+
+	ulCipherTextLen = sizeof(cipherText);
+	rv = C_Encrypt(hSession,plainText,sizeof(plainText),cipherText,&ulCipherTextLen);
+	CPPUNIT_ASSERT(rv==CKR_OK);
+	CPPUNIT_ASSERT(ulCipherTextLen==sizeof(plainText));
+
+	rv = C_DecryptInit(hSession,&mechanism,hKey);
+	CPPUNIT_ASSERT(rv==CKR_OK);
+
+	ulRecoveredTextLen = sizeof(recoveredText);
+	rv = C_Decrypt(hSession,cipherText,ulCipherTextLen,recoveredText,&ulRecoveredTextLen);
+	CPPUNIT_ASSERT(rv==CKR_OK);
+	CPPUNIT_ASSERT(ulRecoveredTextLen==sizeof(plainText));
+
+	CPPUNIT_ASSERT(memcmp(plainText, recoveredText, sizeof(plainText)) == 0);
+}
+
+void SymmetricAlgorithmTests::desEncryptDecrypt(CK_MECHANISM_TYPE mechanismType, CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hKey)
+{
+	CK_MECHANISM mechanism = { mechanismType, NULL_PTR, 0 };
+	CK_BYTE iv[8];
+	CK_BYTE plainText[256];
+	CK_BYTE cipherText[300];
+	CK_ULONG ulCipherTextLen;
+	CK_BYTE recoveredText[300];
+	CK_ULONG ulRecoveredTextLen;
+	CK_RV rv;
+
+	rv = C_GenerateRandom(hSession, plainText, sizeof(plainText));
+	CPPUNIT_ASSERT(rv==CKR_OK);
+
+	if (mechanismType == CKM_DES_CBC)
+	{
+		rv = C_GenerateRandom(hSession, iv, sizeof(iv));
+		CPPUNIT_ASSERT(rv==CKR_OK);
+		mechanism.pParameter = iv;
+		mechanism.ulParameterLen = sizeof(iv);
+	}
+
+	rv = C_EncryptInit(hSession,&mechanism,hKey);
+	CPPUNIT_ASSERT(rv==CKR_OK);
+
+	ulCipherTextLen = sizeof(cipherText);
+	rv = C_Encrypt(hSession,plainText,sizeof(plainText),cipherText,&ulCipherTextLen);
+	CPPUNIT_ASSERT(rv==CKR_OK);
+	CPPUNIT_ASSERT(ulCipherTextLen==sizeof(plainText));
+
+	rv = C_DecryptInit(hSession,&mechanism,hKey);
+	CPPUNIT_ASSERT(rv==CKR_OK);
+
+	ulRecoveredTextLen = sizeof(recoveredText);
+	rv = C_Decrypt(hSession,cipherText,ulCipherTextLen,recoveredText,&ulRecoveredTextLen);
+	CPPUNIT_ASSERT(rv==CKR_OK);
+	CPPUNIT_ASSERT(ulRecoveredTextLen==sizeof(plainText));
+
+	CPPUNIT_ASSERT(memcmp(plainText, recoveredText, sizeof(plainText)) == 0);
+}
+
+void SymmetricAlgorithmTests::des3EncryptDecrypt(CK_MECHANISM_TYPE mechanismType, CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hKey)
+{
+	CK_MECHANISM mechanism = { mechanismType, NULL_PTR, 0 };
+	CK_BYTE iv[8];
+	CK_BYTE plainText[256];
+	CK_BYTE cipherText[300];
+	CK_ULONG ulCipherTextLen;
+	CK_BYTE recoveredText[300];
+	CK_ULONG ulRecoveredTextLen;
+	CK_RV rv;
+
+	rv = C_GenerateRandom(hSession, plainText, sizeof(plainText));
+	CPPUNIT_ASSERT(rv==CKR_OK);
+
+	if (mechanismType == CKM_DES3_CBC)
 	{
 		rv = C_GenerateRandom(hSession, iv, sizeof(iv));
 		CPPUNIT_ASSERT(rv==CKR_OK);
@@ -190,4 +326,65 @@ void SymmetricAlgorithmTests::testAesEncryptDecrypt()
 
 	aesEncryptDecrypt(CKM_AES_ECB,hSessionRO,hKey);
 	aesEncryptDecrypt(CKM_AES_CBC,hSessionRO,hKey);
+}
+
+void SymmetricAlgorithmTests::testDesEncryptDecrypt()
+{
+	CK_RV rv;
+	CK_UTF8CHAR pin[] = SLOT_0_USER1_PIN;
+	CK_ULONG pinLength = sizeof(pin) - 1;
+	CK_UTF8CHAR sopin[] = SLOT_0_SO1_PIN;
+	CK_ULONG sopinLength = sizeof(sopin) - 1;
+	CK_SESSION_HANDLE hSessionRO;
+	CK_SESSION_HANDLE hSessionRW;
+
+	// Just make sure that we finalize any previous tests
+	C_Finalize(NULL_PTR);
+
+	// Open read-only session on when the token is not initialized should fail
+	rv = C_OpenSession(SLOT_INIT_TOKEN, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSessionRO);
+	CPPUNIT_ASSERT(rv == CKR_CRYPTOKI_NOT_INITIALIZED);
+
+	// Initialize the library and start the test.
+	rv = C_Initialize(NULL_PTR);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Open read-only session
+	rv = C_OpenSession(SLOT_INIT_TOKEN, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSessionRO);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Open read-write session
+	rv = C_OpenSession(SLOT_INIT_TOKEN, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSessionRW);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Login USER into the sessions so we can create a private objects
+	rv = C_Login(hSessionRO,CKU_USER,pin,pinLength);
+	CPPUNIT_ASSERT(rv==CKR_OK);
+
+	CK_OBJECT_HANDLE hKey = CK_INVALID_HANDLE;
+
+	// Generate all combinations of session/token keys.
+	rv = generateDesKey(hSessionRW,IN_SESSION,IS_PUBLIC,hKey);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	desEncryptDecrypt(CKM_DES_ECB,hSessionRO,hKey);
+	desEncryptDecrypt(CKM_DES_CBC,hSessionRO,hKey);
+
+	CK_OBJECT_HANDLE hKey2 = CK_INVALID_HANDLE;
+
+	// Generate all combinations of session/token keys.
+	rv = generateDes2Key(hSessionRW,IN_SESSION,IS_PUBLIC,hKey2);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	des3EncryptDecrypt(CKM_DES3_ECB,hSessionRO,hKey2);
+	des3EncryptDecrypt(CKM_DES3_CBC,hSessionRO,hKey2);
+
+	CK_OBJECT_HANDLE hKey3 = CK_INVALID_HANDLE;
+
+	// Generate all combinations of session/token keys.
+	rv = generateDes3Key(hSessionRW,IN_SESSION,IS_PUBLIC,hKey3);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	des3EncryptDecrypt(CKM_DES3_ECB,hSessionRO,hKey3);
+	des3EncryptDecrypt(CKM_DES3_CBC,hSessionRO,hKey3);
 }
