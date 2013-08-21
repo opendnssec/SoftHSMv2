@@ -51,7 +51,8 @@ bool BotanRNG::generateRandom(ByteString& data, const size_t len)
 {
 	data.wipe(len);
 
-	rng->randomize(&data[0], len);
+	if (len > 0)
+		rng->randomize(&data[0], len);
 
 	return true;
 }

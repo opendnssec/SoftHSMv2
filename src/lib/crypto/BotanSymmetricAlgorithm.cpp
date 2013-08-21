@@ -141,7 +141,8 @@ bool BotanSymmetricAlgorithm::encryptUpdate(const ByteString& data, ByteString& 
 	// Write data
 	try
 	{
-		cryption->write(data.const_byte_str(), data.size());
+		if (data.size() > 0)
+			cryption->write(data.const_byte_str(), data.size());
 	}
 	catch (...)
 	{
@@ -160,9 +161,10 @@ bool BotanSymmetricAlgorithm::encryptUpdate(const ByteString& data, ByteString& 
 	int bytesRead = 0;
 	try
 	{
-		int outLen = cryption->remaining();
+		size_t outLen = cryption->remaining();
 		encryptedData.resize(outLen);
-		bytesRead = cryption->read(&encryptedData[0], outLen);
+		if (outLen > 0)
+			bytesRead = cryption->read(&encryptedData[0], outLen);
 	}
 	catch (...)
 	{
@@ -198,9 +200,10 @@ bool BotanSymmetricAlgorithm::encryptFinal(ByteString& encryptedData)
 	try
 	{
 		cryption->end_msg();
-		int outLen = cryption->remaining();
+		size_t outLen = cryption->remaining();
 		encryptedData.resize(outLen);
-		bytesRead = cryption->read(&encryptedData[0], outLen);
+		if (outLen > 0)
+			bytesRead = cryption->read(&encryptedData[0], outLen);
 	}
 	catch (...)
 	{
@@ -310,7 +313,8 @@ bool BotanSymmetricAlgorithm::decryptUpdate(const ByteString& encryptedData, Byt
 	// Write data
 	try
 	{
-		cryption->write(encryptedData.const_byte_str(), encryptedData.size());
+		if (encryptedData.size() > 0)
+			cryption->write(encryptedData.const_byte_str(), encryptedData.size());
 	}
 	catch (...)
 	{
@@ -329,9 +333,10 @@ bool BotanSymmetricAlgorithm::decryptUpdate(const ByteString& encryptedData, Byt
 	int bytesRead = 0;
 	try
 	{
-		int outLen = cryption->remaining();
+		size_t outLen = cryption->remaining();
 		data.resize(outLen);
-		bytesRead = cryption->read(&data[0], outLen);
+		if (outLen > 0)
+			bytesRead = cryption->read(&data[0], outLen);
 	}
 	catch (...)
 	{
@@ -367,9 +372,10 @@ bool BotanSymmetricAlgorithm::decryptFinal(ByteString& data)
 	try
 	{
 		cryption->end_msg();
-		int outLen = cryption->remaining();
+		size_t outLen = cryption->remaining();
 		data.resize(outLen);
-		bytesRead = cryption->read(&data[0], outLen);
+		if (outLen > 0)
+			bytesRead = cryption->read(&data[0], outLen);
 	}
 	catch (...)
 	{

@@ -79,7 +79,7 @@ void MacTests::testHMACMD5()
 
 	// Use OpenSSL externally to mac it
 	char commandLine[2048];
-	sprintf(commandLine, "cat shsmv2-mactest.tmp | openssl dgst -hmac %s -md5 -binary > shsmv2-mactest-out.tmp", pk);
+	sprintf(commandLine, "openssl dgst -hmac %s -md5 -binary < shsmv2-mactest.tmp > shsmv2-mactest-out.tmp", pk);
 	CPPUNIT_ASSERT(system(commandLine) == 0);
 
 	// Read the MAC from file
@@ -132,7 +132,7 @@ void MacTests::testHMACSHA1()
 
 	// Use OpenSSL externally mac hash it
 	char commandLine[2048];
-	sprintf(commandLine, "cat shsmv2-mactest.tmp | openssl dgst -hmac %s -sha1 -binary > shsmv2-mactest-out.tmp", pk);
+	sprintf(commandLine, "openssl dgst -hmac %s -sha1 -binary < shsmv2-mactest.tmp > shsmv2-mactest-out.tmp", pk);
 	CPPUNIT_ASSERT(system(commandLine) == 0);
 
 	// Read the MAC from file
@@ -191,7 +191,7 @@ void MacTests::testHMACSHA224()
 
 	// Use OpenSSL externally to mac it
 	char commandLine[2048];
-	sprintf(commandLine, "cat shsmv2-mactest.tmp | openssl dgst -hmac %s -sha224 -binary > shsmv2-mactest-out.tmp", pk);
+	sprintf(commandLine, "openssl dgst -hmac %s -sha224 -binary < shsmv2-mactest.tmp > shsmv2-mactest-out.tmp", pk);
 	CPPUNIT_ASSERT(system(commandLine) == 0);
 
 	// Read the MAC from file
@@ -248,7 +248,7 @@ void MacTests::testHMACSHA256()
 
 	// Use OpenSSL externally to mac it
 	char commandLine[2048];
-	sprintf(commandLine, "cat shsmv2-mactest.tmp | openssl dgst -hmac %s -sha256 -binary > shsmv2-mactest-out.tmp", pk);
+	sprintf(commandLine, "openssl dgst -hmac %s -sha256 -binary < shsmv2-mactest.tmp > shsmv2-mactest-out.tmp", pk);
 	CPPUNIT_ASSERT(system(commandLine) == 0);
 
 	// Read the MAC from file
@@ -301,7 +301,7 @@ void MacTests::testHMACSHA384()
 
 	// Use OpenSSL externally to mac it
 	char commandLine[2048];
-	sprintf(commandLine, "cat shsmv2-mactest.tmp | openssl dgst -hmac %s -sha384 -binary > shsmv2-mactest-out.tmp", pk);
+	sprintf(commandLine, "openssl dgst -hmac %s -sha384 -binary < shsmv2-mactest.tmp > shsmv2-mactest-out.tmp", pk);
 	CPPUNIT_ASSERT(system(commandLine) == 0);
 
 	// Read the MAC from file
@@ -362,7 +362,7 @@ void MacTests::testHMACSHA512()
 
 	// Use OpenSSL externally to mac it
 	char commandLine[2048];
-	sprintf(commandLine, "cat shsmv2-mactest.tmp | openssl dgst -hmac %s -sha512 -binary > shsmv2-mactest-out.tmp", pk);
+	sprintf(commandLine, "openssl dgst -hmac %s -sha512 -binary < shsmv2-mactest.tmp > shsmv2-mactest-out.tmp", pk);
 	CPPUNIT_ASSERT(system(commandLine) == 0);
 
 	// Read the MAC from file
@@ -388,7 +388,11 @@ void MacTests::testHMACSHA512()
 
 void MacTests::writeTmpFile(ByteString& data)
 {
+#ifndef _WIN32
 	FILE* out = fopen("shsmv2-mactest.tmp", "w");
+#else
+	FILE* out = fopen("shsmv2-mactest.tmp", "wb");
+#endif
 	CPPUNIT_ASSERT(out != NULL);
 
 	CPPUNIT_ASSERT(fwrite(&data[0], 1, data.size(), out) == data.size());
@@ -401,7 +405,11 @@ void MacTests::readTmpFile(ByteString& data)
 
 	data.wipe();
 
+#ifndef _WIN32
 	FILE* in = fopen("shsmv2-mactest-out.tmp", "r");
+#else
+	FILE* in = fopen("shsmv2-mactest-out.tmp", "rb");
+#endif
 	CPPUNIT_ASSERT(in != NULL);
 
 	int read = 0;

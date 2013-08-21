@@ -32,12 +32,12 @@
  argument list as defined in stdarg (3).
  *****************************************************************************/
 
+#include "config.h"
 #include <stdarg.h>
 #include <syslog.h>
 #include <stdio.h>
 #include <sstream>
 #include <vector>
-#include "config.h"
 #include "log.h"
 
 void softHSMLog(const int loglevel, const char* functionName, const char* fileName, const int lineNo, const char* format, ...)

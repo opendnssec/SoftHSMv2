@@ -39,7 +39,9 @@ bool OSSLRNG::generateRandom(ByteString& data, const size_t len)
 {
 	data.wipe(len);
 
-	return RAND_bytes(&data[0], len);
+	if (len == 0)
+		return true;
+	return RAND_bytes(&data[0], len) == 1;
 }
 
 // Seed the random pool

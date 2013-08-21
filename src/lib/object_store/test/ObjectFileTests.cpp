@@ -30,6 +30,7 @@
  Contains test cases to test the object file implementation
  *****************************************************************************/
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <cppunit/extensions/HelperMacros.h>
@@ -38,6 +39,8 @@
 #include "File.h"
 #include "Directory.h"
 #include "OSAttribute.h"
+#include "CryptoFactory.h"
+#include "RNG.h"
 #include "cryptoki.h"
 
 CPPUNIT_TEST_SUITE_REGISTRATION(ObjectFileTests);
@@ -46,21 +49,27 @@ CPPUNIT_TEST_SUITE_REGISTRATION(ObjectFileTests);
 
 void ObjectFileTests::setUp()
 {
-	// FIXME: this only works on *NIX/BSD, not on other platforms
 	CPPUNIT_ASSERT(!system("mkdir testdir"));
 }
 
 void ObjectFileTests::tearDown()
 {
-	// FIXME: this only works on *NIX/BSD, not on other platforms
+#ifndef _WIN32
 	CPPUNIT_ASSERT(!system("rm -rf testdir"));
+#else
+	CPPUNIT_ASSERT(!system("rmdir /s /q testdir 2> nul"));
+#endif
 }
 
 void ObjectFileTests::testBoolAttr()
 {
 	// Create the test object
 	{
+#ifndef _WIN32
 		ObjectFile testObject(NULL, "testdir/testobject", true);
+#else
+		ObjectFile testObject(NULL, "testdir\\testobject", true);
+#endif
 
 		CPPUNIT_ASSERT(testObject.isValid());
 
@@ -85,7 +94,11 @@ void ObjectFileTests::testBoolAttr()
 
 	// Now read back the object
 	{
+#ifndef _WIN32
 		ObjectFile testObject(NULL, "testdir/testobject");
+#else
+		ObjectFile testObject(NULL, "testdir\\testobject");
+#endif
 
 		CPPUNIT_ASSERT(testObject.isValid());
 
@@ -122,7 +135,11 @@ void ObjectFileTests::testULongAttr()
 {
 	// Create the test object
 	{
+#ifndef _WIN32
 		ObjectFile testObject(NULL, "testdir/testobject", true);
+#else
+		ObjectFile testObject(NULL, "testdir\\testobject", true);
+#endif
 
 		CPPUNIT_ASSERT(testObject.isValid());
 
@@ -147,7 +164,11 @@ void ObjectFileTests::testULongAttr()
 
 	// Now read back the object
 	{
+#ifndef _WIN32
 		ObjectFile testObject(NULL, "testdir/testobject");
+#else
+		ObjectFile testObject(NULL, "testdir\\testobject");
+#endif
 
 		CPPUNIT_ASSERT(testObject.isValid());
 
@@ -189,7 +210,11 @@ void ObjectFileTests::testByteStrAttr()
 
 	// Create the test object
 	{
+#ifndef _WIN32
 		ObjectFile testObject(NULL, "testdir/testobject", true);
+#else
+		ObjectFile testObject(NULL, "testdir\\testobject", true);
+#endif
 
 		CPPUNIT_ASSERT(testObject.isValid());
 
@@ -208,7 +233,11 @@ void ObjectFileTests::testByteStrAttr()
 
 	// Now read back the object
 	{
+#ifndef _WIN32
 		ObjectFile testObject(NULL, "testdir/testobject");
+#else
+		ObjectFile testObject(NULL, "testdir\\testobject");
+#endif
 
 		CPPUNIT_ASSERT(testObject.isValid());
 
@@ -246,7 +275,11 @@ void ObjectFileTests::testMixedAttr()
 
 	// Create the test object
 	{
+#ifndef _WIN32
 		ObjectFile testObject(NULL, "testdir/testobject", true);
+#else
+		ObjectFile testObject(NULL, "testdir\\testobject", true);
+#endif
 
 		CPPUNIT_ASSERT(testObject.isValid());
 
@@ -264,7 +297,11 @@ void ObjectFileTests::testMixedAttr()
 
 	// Now read back the object
 	{
+#ifndef _WIN32
 		ObjectFile testObject(NULL, "testdir/testobject");
+#else
+		ObjectFile testObject(NULL, "testdir\\testobject");
+#endif
 
 		CPPUNIT_ASSERT(testObject.isValid());
 
@@ -290,7 +327,11 @@ void ObjectFileTests::testDoubleAttr()
 
 	// Create the test object
 	{
+#ifndef _WIN32
 		ObjectFile testObject(NULL, "testdir/testobject", true);
+#else
+		ObjectFile testObject(NULL, "testdir\\testobject", true);
+#endif
 
 		CPPUNIT_ASSERT(testObject.isValid());
 
@@ -308,7 +349,11 @@ void ObjectFileTests::testDoubleAttr()
 
 	// Now read back the object
 	{
+#ifndef _WIN32
 		ObjectFile testObject(NULL, "testdir/testobject");
+#else
+		ObjectFile testObject(NULL, "testdir\\testobject");
+#endif
 
 		CPPUNIT_ASSERT(testObject.isValid());
 
@@ -351,7 +396,11 @@ void ObjectFileTests::testDoubleAttr()
 
 	// Now re-read back the object
 	{
+#ifndef _WIN32
 		ObjectFile testObject(NULL, "testdir/testobject");
+#else
+		ObjectFile testObject(NULL, "testdir\\testobject");
+#endif
 
 		CPPUNIT_ASSERT(testObject.isValid());
 
@@ -380,7 +429,11 @@ void ObjectFileTests::testRefresh()
 
 	// Create the test object
 	{
+#ifndef _WIN32
 		ObjectFile testObject(NULL, "testdir/testobject", true);
+#else
+		ObjectFile testObject(NULL, "testdir\\testobject", true);
+#endif
 
 		CPPUNIT_ASSERT(testObject.isValid());
 
@@ -398,7 +451,11 @@ void ObjectFileTests::testRefresh()
 
 	// Now read back the object
 	{
+#ifndef _WIN32
 		ObjectFile testObject(NULL, "testdir/testobject");
+#else
+		ObjectFile testObject(NULL, "testdir\\testobject");
+#endif
 
 		CPPUNIT_ASSERT(testObject.isValid());
 
@@ -439,7 +496,11 @@ void ObjectFileTests::testRefresh()
 		CPPUNIT_ASSERT(testObject.getAttribute(CKA_VALUE_BITS)->getByteStringValue() == value3a);
 
 		// Open the object a second time
+#ifndef _WIN32
 		ObjectFile testObject2(NULL, "testdir/testobject");
+#else
+		ObjectFile testObject2(NULL, "testdir\\testobject");
+#endif
 
 		// Check the attributes on the second instance
 		CPPUNIT_ASSERT(testObject2.getAttribute(CKA_TOKEN)->isBooleanAttribute());
@@ -486,9 +547,24 @@ void ObjectFileTests::testRefresh()
 
 void ObjectFileTests::testCorruptFile()
 {
-	CPPUNIT_ASSERT(system("dd if=/dev/urandom of=testdir/testobject bs=13 count=24") != -1);
+#ifndef _WIN32
+	FILE* stream = fopen("testdir/testobject", "w");
+#else
+	FILE* stream = fopen("testdir\\testobject", "wb");
+#endif
+	RNG* rng = CryptoFactory::i()->getRNG();
+	ByteString randomData;
 
+	CPPUNIT_ASSERT(stream != NULL);
+	CPPUNIT_ASSERT(rng->generateRandom(randomData, 312));
+	CPPUNIT_ASSERT(fwrite(randomData.const_byte_str(), 1, randomData.size(), stream) == randomData.size());
+	CPPUNIT_ASSERT(!fclose(stream));
+
+#ifndef _WIN32
 	ObjectFile testObject(NULL, "testdir/testobject");
+#else
+	ObjectFile testObject(NULL, "testdir\\testobject");
+#endif
 
 	CPPUNIT_ASSERT(!testObject.isValid());
 }
@@ -496,7 +572,11 @@ void ObjectFileTests::testCorruptFile()
 void ObjectFileTests::testTransactions()
 {
 	// Create test object instance
+#ifndef _WIN32
 	ObjectFile testObject(NULL, "testdir/testobject", true);
+#else
+	ObjectFile testObject(NULL, "testdir\\testobject", true);
+#endif
 
 	CPPUNIT_ASSERT(testObject.isValid());
 
@@ -513,7 +593,11 @@ void ObjectFileTests::testTransactions()
 	CPPUNIT_ASSERT(testObject.setAttribute(CKA_VALUE_BITS, attr3));
 
 	// Create secondary instance for the same object
+#ifndef _WIN32
 	ObjectFile testObject2(NULL, "testdir/testobject");
+#else
+	ObjectFile testObject2(NULL, "testdir\\testobject");
+#endif
 
 	CPPUNIT_ASSERT(testObject2.isValid());
 
@@ -623,7 +707,11 @@ void ObjectFileTests::testTransactions()
 void ObjectFileTests::testDestroyObjectFails()
 {
 	// Create test object instance
+#ifndef _WIN32
 	ObjectFile testObject(NULL, "testdir/testobject", true);
+#else
+	ObjectFile testObject(NULL, "testdir\\testobject", true);
+#endif
 
 	CPPUNIT_ASSERT(testObject.isValid());
 

@@ -138,6 +138,104 @@ CK_RV OSUnlockMutex(CK_VOID_PTR mutex)
 	return CKR_OK;
 }
 
+#elif _WIN32
+
+CK_RV OSCreateMutex(CK_VOID_PTR_PTR newMutex)
+{
+	HANDLE hMutex;
+
+	hMutex = CreateMutex(NULL, FALSE, NULL);
+	if (hMutex == NULL)
+	{
+		DWORD rv = GetLastError();
+
+		ERROR_MSG("Failed to initialise WIN32 mutex (0x%08X)", rv);
+
+		return CKR_GENERAL_ERROR;
+	}
+
+	*newMutex = hMutex;
+
+	return CKR_OK;
+}
+
+CK_RV OSDestroyMutex(CK_VOID_PTR mutex)
+{
+	HANDLE hMutex = (HANDLE) mutex;
+
+	if (hMutex == NULL)
+	{
+		ERROR_MSG("Cannot destroy NULL mutex");
+
+		return CKR_ARGUMENTS_BAD;
+	}
+
+	if (CloseHandle(hMutex) == 0)
+	{
+		DWORD rv = GetLastError();
+
+		ERROR_MSG("Failed to destroy WIN32 mutex (0x%08X)", rv);
+
+		return CKR_GENERAL_ERROR;
+	}
+
+	return CKR_OK;
+}
+
+CK_RV OSLockMutex(CK_VOID_PTR mutex)
+{
+	DWORD rv;
+	HANDLE hMutex = (HANDLE) mutex;
+
+	if (hMutex == NULL)
+	{
+		ERROR_MSG("Cannot lock NULL mutex");
+
+		return CKR_ARGUMENTS_BAD;
+	}
+
+	rv = WaitForSingleObject(hMutex, INFINITE);
+	if (rv != WAIT_OBJECT_0)
+	{
+		// WAIT_ABANDONED 0x00000080
+		// WAIT_OBJECT_0  0x00000000
+		// WAIT_TIMEOUT   0x00000102
+		// WAIT_FAILED    0xFFFFFFFF
+
+		if (rv == WAIT_FAILED)
+			rv = GetLastError();
+
+		ERROR_MSG("Failed to lock WIN32 mutex 0x%08X (0x%08X)", hMutex, rv);
+
+		return CKR_GENERAL_ERROR;
+	}
+
+	return CKR_OK;
+}
+
+CK_RV OSUnlockMutex(CK_VOID_PTR mutex)
+{
+	HANDLE hMutex = (HANDLE) mutex;
+
+	if (hMutex == NULL)
+	{
+		ERROR_MSG("Cannot unlock NULL mutex");
+
+		return CKR_ARGUMENTS_BAD;
+	}
+
+	if (ReleaseMutex(hMutex) == 0)
+	{
+		DWORD rv = GetLastError();
+
+		ERROR_MSG("Failed to unlock WIN32 mutex 0x%08X (0x%08X)", hMutex, rv);
+
+		return CKR_GENERAL_ERROR;
+	}
+
+	return CKR_OK;
+}
+
 #else
 #error "There are no mutex implementations for your operating system yet"
 #endif

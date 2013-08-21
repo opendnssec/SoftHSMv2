@@ -1,0 +1,73 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Common Header Files">
+      <UniqueIdentifier>{21eda3a1-8da0-4a99-967c-f218e4eecd08}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Common Source Files">
+      <UniqueIdentifier>{fd946626-7e24-4f78-834b-a4c0ac6dc2f5}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Win32 Header Files">
+      <UniqueIdentifier>{f3a7acce-323d-4465-95bf-a326189dcdd5}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Win32 Source Files">
+      <UniqueIdentifier>{2b77905a-99da-49cf-9cac-aa72e7e3182b}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\src\bin\common\getpw.h">
+      <Filter>Common Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\bin\common\library.h">
+      <Filter>Common Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\bin\util\softhsm-util.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\bin\util\softhsm-util-ossl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\cryptoki_compat\pkcs11.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\bin\win32\getopt.h">
+      <Filter>Win32 Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\src\bin\common\getpw.cpp">
+      <Filter>Common Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\bin\common\library.cpp">
+      <Filter>Common Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\bin\util\softhsm-util.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\bin\util\softhsm-util-ossl.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\bin\win32\getopt.cpp">
+      <Filter>Win32 Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\bin\win32\getpassphase.cpp">
+      <Filter>Win32 Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

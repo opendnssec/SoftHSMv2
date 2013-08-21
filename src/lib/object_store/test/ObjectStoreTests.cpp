@@ -49,20 +49,26 @@ CPPUNIT_TEST_SUITE_REGISTRATION(ObjectStoreTests);
 
 void ObjectStoreTests::setUp()
 {
-	// FIXME: this only works on *NIX/BSD, not on other platforms
 	CPPUNIT_ASSERT(!system("mkdir testdir"));
 }
 
 void ObjectStoreTests::tearDown()
 {
-	// FIXME: this only works on *NIX/BSD, not on other platforms
+#ifndef _WIN32
 	CPPUNIT_ASSERT(!system("rm -rf testdir"));
+#else
+	CPPUNIT_ASSERT(!system("rmdir /s /q testdir 2> nul"));
+#endif
 }
 
 void ObjectStoreTests::testEmptyStore()
 {
 	// Create the store for an empty dir
+#ifndef _WIN32
 	ObjectStore store("./testdir");
+#else
+	ObjectStore store(".\\testdir");
+#endif
 
 	CPPUNIT_ASSERT(store.getTokenCount() == 0);
 }
@@ -74,7 +80,11 @@ void ObjectStoreTests::testNewTokens()
 
 	{
 		// Create an empty store
+#ifndef _WIN32
 		ObjectStore store("./testdir");
+#else
+		ObjectStore store(".\\testdir");
+#endif
 
 		CPPUNIT_ASSERT(store.getTokenCount() == 0);
 
@@ -94,7 +104,11 @@ void ObjectStoreTests::testNewTokens()
 	}
 
 	// Now reopen that same store
+#ifndef _WIN32
 	ObjectStore store("./testdir");
+#else
+	ObjectStore store(".\\testdir");
+#endif
 
 	CPPUNIT_ASSERT(store.getTokenCount() == 2);
 
@@ -126,8 +140,13 @@ void ObjectStoreTests::testExistingTokens()
 	ByteString serial1 = "0011001100110011";
 	ByteString serial2 = "2233223322332233";
 
+#ifndef _WIN32
 	OSToken* token1 = OSToken::createToken("./testdir", "token1", label1, serial1);
 	OSToken* token2 = OSToken::createToken("./testdir", "token2", label2, serial2);
+#else
+	OSToken* token1 = OSToken::createToken(".\\testdir", "token1", label1, serial1);
+	OSToken* token2 = OSToken::createToken(".\\testdir", "token2", label2, serial2);
+#endif
 
 	CPPUNIT_ASSERT((token1 != NULL) && (token2 != NULL));
 
@@ -135,7 +154,11 @@ void ObjectStoreTests::testExistingTokens()
 	delete token2;
 
 	// Now associate a store with the test directory
+#ifndef _WIN32
 	ObjectStore store("./testdir");
+#else
+	ObjectStore store(".\\testdir");
+#endif
 
 	CPPUNIT_ASSERT(store.getTokenCount() == 2);
 
@@ -169,8 +192,13 @@ void ObjectStoreTests::testDeleteToken()
 	ByteString serial1 = "0011001100110011";
 	ByteString serial2 = "2233223322332233";
 
+#ifndef _WIN32
 	OSToken* token1 = OSToken::createToken("./testdir", "token1", label1, serial1);
 	OSToken* token2 = OSToken::createToken("./testdir", "token2", label2, serial2);
+#else
+	OSToken* token1 = OSToken::createToken(".\\testdir", "token1", label1, serial1);
+	OSToken* token2 = OSToken::createToken(".\\testdir", "token2", label2, serial2);
+#endif
 
 	CPPUNIT_ASSERT((token1 != NULL) && (token2 != NULL));
 
@@ -178,7 +206,11 @@ void ObjectStoreTests::testDeleteToken()
 	delete token2;
 
 	// Now associate a store with the test directory
+#ifndef _WIN32
 	ObjectStore store("./testdir");
+#else
+	ObjectStore store(".\\testdir");
+#endif
 
 	CPPUNIT_ASSERT(store.getTokenCount() == 2);
 

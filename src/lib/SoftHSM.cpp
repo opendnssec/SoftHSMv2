@@ -1265,7 +1265,7 @@ CK_RV SoftHSM::C_SetAttributeValue(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE 
 		return rv;
 
 	// Ask the P11Object to save the template with attribute values.
-	return p11object->saveTemplate(token, isPrivate, pTemplate,ulCount,OBJECT_OP_SET);
+	return p11object->saveTemplate(token, isPrivate != CK_FALSE, pTemplate,ulCount,OBJECT_OP_SET);
 }
 
 // Initialise object search in the specified session using the specified attribute template as search parameters
@@ -1390,8 +1390,8 @@ CK_RV SoftHSM::C_FindObjectsInit(CK_SESSION_HANDLE hSession, CK_ATTRIBUTE_PTR pT
 		if (bAttrMatch)
 		{
 			CK_SLOT_ID slotID = slot->getSlotID();
-			CK_BBOOL isToken = (*it)->getAttribute(CKA_TOKEN)->getBooleanValue();
-			CK_BBOOL isPrivate = (*it)->getAttribute(CKA_PRIVATE)->getBooleanValue();
+			bool isToken = (*it)->getAttribute(CKA_TOKEN)->getBooleanValue();
+			bool isPrivate = (*it)->getAttribute(CKA_PRIVATE)->getBooleanValue();
 			// Create an object handle for every returned object.
 			CK_OBJECT_HANDLE hObject;
 			if (isToken)
@@ -5963,20 +5963,20 @@ CK_RV SoftHSM::CreateObject(CK_SESSION_HANDLE hSession, CK_ATTRIBUTE_PTR pTempla
 	}
 	else
 	{
-		object = sessionObjectStore->createObject(slot->getSlotID(), hSession, isPrivate);
+		object = sessionObjectStore->createObject(slot->getSlotID(), hSession, isPrivate != CK_FALSE);
 	}
 	if (object == NULL) return CKR_GENERAL_ERROR;
 
 	p11object->init(object);
 
-	rv = p11object->saveTemplate(token, isPrivate, pTemplate,ulCount,op);
+	rv = p11object->saveTemplate(token, isPrivate != CK_FALSE, pTemplate,ulCount,op);
 	if (rv != CKR_OK)
 		return rv;
 
 	if (isToken) {
-		*phObject = handleManager->addTokenObject(slot->getSlotID(), isPrivate, object);
+		*phObject = handleManager->addTokenObject(slot->getSlotID(), isPrivate != CK_FALSE, object);
 	} else {
-		*phObject = handleManager->addSessionObject(slot->getSlotID(), hSession, isPrivate, object);
+		*phObject = handleManager->addSessionObject(slot->getSlotID(), hSession, isPrivate != CK_FALSE, object);
 	}
 
 	return CKR_OK;

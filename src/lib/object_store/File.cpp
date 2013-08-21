@@ -36,7 +36,16 @@
 #include <string>
 #include <stdio.h>
 #include <string.h>
+#ifndef _WIN32
 #include <sys/file.h>
+#else
+#include <io.h>
+#define F_SETLK		12
+#define F_SETLKW	13
+#define F_RDLCK		1
+#define F_UNLCK		2
+#define F_WRLCK		3
+#endif
 #include <fcntl.h>
 #include <errno.h>
 
@@ -57,10 +66,17 @@ File::File(std::string path, bool forRead /* = true */, bool forWrite /* = false
 	{
 		std::string fileMode = "";
 
+#ifndef _WIN32
 		if (forRead && !forWrite) fileMode = "r";
 		if (!forRead && forWrite) fileMode = "w";
 		if (forRead && forWrite && !create) fileMode = "r+";
 		if (forRead && forWrite && create) fileMode = "w+";
+#else
+		if (forRead && !forWrite) fileMode = "rb";
+		if (!forRead && forWrite) fileMode = "wb";
+		if (forRead && forWrite && !create) fileMode = "rb+";
+		if (forRead && forWrite && create) fileMode = "wb+";
+#endif
 
 		// Open the stream
 		valid = ((stream = fopen(path.c_str(), fileMode.c_str())) != NULL);
@@ -139,6 +155,11 @@ bool File::readByteString(ByteString& value)
 
 	// Read the byte string from the file
 	value.resize(len);
+
+	if (len == 0)
+	{
+		return true;
+	}
 
 	if (fread(&value[0], 1, len, stream) != len)
 	{
@@ -282,6 +303,7 @@ bool File::seek(long offset /* = -1 */)
 // Lock the file
 bool File::lock(bool block /* = true */)
 {
+#ifndef _WIN32
 	struct flock fl;
 	fl.l_type = isWrite() ? F_WRLCK : F_RDLCK;
 	fl.l_whence = SEEK_SET;
@@ -296,6 +318,32 @@ bool File::lock(bool block /* = true */)
 		ERROR_MSG("Could not lock the file: %s", strerror(errno));
 		return false;
 	}
+#else
+	HANDLE hFile;
+	DWORD flags = 0;
+	OVERLAPPED o;
+
+	if (isWrite()) flags |= LOCKFILE_EXCLUSIVE_LOCK;
+	if (!block) flags |= LOCKFILE_FAIL_IMMEDIATELY;
+
+	if (locked || !valid) return false;
+
+	hFile = (HANDLE) _get_osfhandle(_fileno(stream));
+	if (hFile == INVALID_HANDLE_VALUE)
+	{
+		ERROR_MSG("Invalid handle");
+		return false;
+	}
+
+	memset(&o, 0, sizeof(o));
+	if (!LockFileEx(hFile, flags, 0, 1, 0, &o))
+	{
+		DWORD rv = GetLastError();
+
+		ERROR_MSG("Could not lock the file: 0x%08x", rv);
+		return false;
+	}
+#endif
 
 	locked = true;
 
@@ -305,6 +353,7 @@ bool File::lock(bool block /* = true */)
 // Unlock the file
 bool File::unlock()
 {
+#ifndef _WIN32
 	struct flock fl;
 	fl.l_type = F_UNLCK;
 	fl.l_whence = SEEK_SET;
@@ -321,6 +370,31 @@ bool File::unlock()
 		ERROR_MSG("Could not unlock the file: %s", strerror(errno));
 		return false;
 	}
+#else
+	HANDLE hFile;
+	OVERLAPPED o;
+
+	if (!locked || !valid) return false;
+
+	hFile = (HANDLE) _get_osfhandle(_fileno(stream));
+	if (hFile == INVALID_HANDLE_VALUE)
+	{
+		ERROR_MSG("Invalid handle");
+		return false;
+	}
+
+	memset(&o, 0, sizeof(o));
+	if (!UnlockFileEx(hFile, 0, 1, 0, &o))
+	{
+		DWORD rv = GetLastError();
+
+		valid = false;
+
+		ERROR_MSG("Could not unlock the file: 0x%08x", rv);
+		return  false;
+	}
+#endif
+			
 
 	locked = false;
 
