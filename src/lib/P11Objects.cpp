@@ -1149,6 +1149,7 @@ bool P11SecretKeyObj::init(OSObject *osobject)
 	P11Attribute* attrWrapWithTrusted = new P11AttrWrapWithTrusted(osobject);
 	P11Attribute* attrTrusted = new P11AttrTrusted(osobject);
 	P11Attribute* attrValue = new P11AttrValue(osobject,0);
+	P11Attribute* attrValueLen = new P11AttrValueLen(osobject,0);
 		// CKA_WRAP_TEMPLATE is not supported
 		// CKA_UNWRAP_TEMPLATE is not supported
 
@@ -1168,7 +1169,8 @@ bool P11SecretKeyObj::init(OSObject *osobject)
 		!attrCheckValue->init() ||
 		!attrWrapWithTrusted->init() ||
 		!attrTrusted->init() ||
-		!attrValue->init()
+		!attrValue->init() ||
+		!attrValueLen->init()
 	)
 	{
 		ERROR_MSG("Could not initialize the attribute");
@@ -1190,6 +1192,7 @@ bool P11SecretKeyObj::init(OSObject *osobject)
 	attributes[attrWrapWithTrusted->getType()] = attrWrapWithTrusted;
 	attributes[attrTrusted->getType()] = attrTrusted;
 	attributes[attrValue->getType()] = attrValue;
+	attributes[attrValueLen->getType()] = attrValueLen;
 
 	initialized = true;
 	return true;

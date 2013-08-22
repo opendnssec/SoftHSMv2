@@ -47,6 +47,7 @@ Session::Session(Slot* slot, bool isReadWrite, CK_VOID_PTR pApplication, CK_NOTI
 	digestOp = NULL;
 	macOp = NULL;
 	asymmetricCryptoOp = NULL;
+	symmetricCryptoOp = NULL;
 	publicKey = NULL;
 	privateKey = NULL;
 	symmetricKey = NULL;
@@ -66,6 +67,7 @@ Session::Session()
 	digestOp = NULL;
 	macOp = NULL;
 	asymmetricCryptoOp = NULL;
+	symmetricCryptoOp = NULL;
 	publicKey = NULL;
 	privateKey = NULL;
 	symmetricKey = NULL;
@@ -193,6 +195,16 @@ void Session::resetOp()
 		CryptoFactory::i()->recycleAsymmetricAlgorithm(asymmetricCryptoOp);
 		asymmetricCryptoOp = NULL;
 	}
+	else if (symmetricCryptoOp != NULL)
+	{
+		if (symmetricKey != NULL)
+		{
+			symmetricCryptoOp->recycleKey(symmetricKey);
+			symmetricKey = NULL;
+		}
+		CryptoFactory::i()->recycleSymmetricAlgorithm(symmetricCryptoOp);
+		symmetricCryptoOp = NULL;
+	}
 	else if (macOp != NULL)
 	{
 		if (symmetricKey != NULL)
@@ -270,6 +282,22 @@ void Session::setAsymmetricCryptoOp(AsymmetricAlgorithm *asymmetricCryptoOp)
 AsymmetricAlgorithm *Session::getAsymmetricCryptoOp()
 {
 	return asymmetricCryptoOp;
+}
+
+void Session::setSymmetricCryptoOp(SymmetricAlgorithm *symmetricCryptoOp)
+{
+	if (this->symmetricCryptoOp != NULL)
+	{
+		setSymmetricKey(NULL);
+		CryptoFactory::i()->recycleSymmetricAlgorithm(symmetricCryptoOp);
+	}
+
+	this->symmetricCryptoOp = symmetricCryptoOp;
+}
+
+SymmetricAlgorithm *Session::getSymmetricCryptoOp()
+{
+	return symmetricCryptoOp;
 }
 
 void Session::setMechanism(const char *mechanism)

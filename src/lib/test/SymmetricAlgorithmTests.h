@@ -25,32 +25,32 @@
  */
 
 /*****************************************************************************
- EncryptDecryptTests.h
+ SymmetricAlgorithmTests.h
 
- Contains test cases to C_EncryptInit, C_Encrypt, C_DecryptInit, C_Decrypt
+ Contains test cases for symmetrical algorithms (i.e., AES and DES)
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_ENCRYPTDECRYPTTESTS_H
-#define _SOFTHSM_V2_ENCRYPTDECRYPTTESTS_H
+#ifndef _SOFTHSM_V2_SYMENCRYPTDECRYPTTESTS_H
+#define _SOFTHSM_V2_SYMENCRYPTDECRYPTTESTS_H
 
 #include <cppunit/extensions/HelperMacros.h>
 #include "cryptoki.h"
 
-class EncryptDecryptTests : public CppUnit::TestFixture
+class SymmetricAlgorithmTests : public CppUnit::TestFixture
 {
-	CPPUNIT_TEST_SUITE(EncryptDecryptTests);
-	CPPUNIT_TEST(testRsaEncryptDecrypt);
+	CPPUNIT_TEST_SUITE(SymmetricAlgorithmTests);
+	CPPUNIT_TEST(testAesEncryptDecrypt);
 	CPPUNIT_TEST_SUITE_END();
 
 public:
-	void testRsaEncryptDecrypt();
+	void testAesEncryptDecrypt();
 
 	void setUp();
 	void tearDown();
 
 protected:
-	CK_RV generateRsaKeyPair(CK_SESSION_HANDLE hSession, CK_BBOOL bTokenPuk, CK_BBOOL bPrivatePuk, CK_BBOOL bTokenPrk, CK_BBOOL bPrivatePrk, CK_OBJECT_HANDLE &hPuk, CK_OBJECT_HANDLE &hPrk);
-	void rsaEncryptDecrypt(CK_MECHANISM_TYPE mechanismType, CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hPublicKey, CK_OBJECT_HANDLE hPrivateKey);
+	CK_RV generateAesKey(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_OBJECT_HANDLE &hKey);
+	void aesEncryptDecrypt(CK_MECHANISM_TYPE mechanismType, CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hKey);
 };
 
-#endif // !_SOFTHSM_V2_ENCRYPTDECRYPTTESTS_H
+#endif // !_SOFTHSM_V2_SYMENCRYPTDECRYPTTESTS_H

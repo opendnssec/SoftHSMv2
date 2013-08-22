@@ -90,9 +90,13 @@ public:
 	void setMacOp(MacAlgorithm* macOp);
 	MacAlgorithm* getMacOp();
 
-	// Asymetric Crypto
+	// Asymmetric Crypto
 	void setAsymmetricCryptoOp(AsymmetricAlgorithm* asymmetricCryptoOp);
 	AsymmetricAlgorithm* getAsymmetricCryptoOp();
+
+	// Symmetric Crypto
+	void setSymmetricCryptoOp(SymmetricAlgorithm* symmetricCryptoOp);
+	SymmetricAlgorithm* getSymmetricCryptoOp();
 
 	void setMechanism(const char *mechanism);
 	const char *getMechanism();
@@ -142,6 +146,10 @@ private:
 
 	// Asymmetric Crypto
 	AsymmetricAlgorithm* asymmetricCryptoOp;
+
+	// Symmetric Crypto
+	SymmetricAlgorithm* symmetricCryptoOp;
+
 	const char * mechanism;
 	bool allowMultiPartOp;
 	bool allowSinglePartOp;

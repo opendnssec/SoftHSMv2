@@ -52,10 +52,10 @@ OSSLEVPSymmetricAlgorithm::~OSSLEVPSymmetricAlgorithm()
 }
 
 // Encryption functions
-bool OSSLEVPSymmetricAlgorithm::encryptInit(const SymmetricKey* key, const std::string mode /* = "cbc" */, const ByteString& IV /* = ByteString()*/)
+bool OSSLEVPSymmetricAlgorithm::encryptInit(const SymmetricKey* key, const std::string mode /* = "cbc" */, const ByteString& IV /* = ByteString()*/, bool padding /* = true */)
 {
 	// Call the superclass initialiser
-	if (!SymmetricAlgorithm::encryptInit(key, mode, IV))
+	if (!SymmetricAlgorithm::encryptInit(key, mode, IV, padding))
 	{
 		return false;
 	}
@@ -123,6 +123,8 @@ bool OSSLEVPSymmetricAlgorithm::encryptInit(const SymmetricKey* key, const std::
 
 		return false;
 	}
+
+	EVP_CIPHER_CTX_set_padding(pCurCTX, padding ? 1 : 0);
 
 	return true;
 }
@@ -206,10 +208,10 @@ bool OSSLEVPSymmetricAlgorithm::encryptFinal(ByteString& encryptedData)
 }
 
 // Decryption functions
-bool OSSLEVPSymmetricAlgorithm::decryptInit(const SymmetricKey* key, const std::string mode /* = "cbc" */, const ByteString& IV /* = ByteString() */)
+bool OSSLEVPSymmetricAlgorithm::decryptInit(const SymmetricKey* key, const std::string mode /* = "cbc" */, const ByteString& IV /* = ByteString() */, bool padding /* = true */)
 {
 	// Call the superclass initialiser
-	if (!SymmetricAlgorithm::decryptInit(key, mode, IV))
+	if (!SymmetricAlgorithm::decryptInit(key, mode, IV, padding))
 	{
 		return false;
 	}
@@ -277,6 +279,8 @@ bool OSSLEVPSymmetricAlgorithm::decryptInit(const SymmetricKey* key, const std::
 
 		return false;
 	}
+
+	EVP_CIPHER_CTX_set_padding(pCurCTX, padding ? 1 : 0);
 
 	return true;
 }
