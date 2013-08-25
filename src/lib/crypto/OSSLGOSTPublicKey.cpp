@@ -83,6 +83,14 @@ void OSSLGOSTPublicKey::setFromOSSL(const EVP_PKEY* pkey)
 	i2d_PUBKEY((EVP_PKEY*) pkey, &p);
 	// can check: der is prefix + 64 bytes
 	setQ(der.substr(37));
+
+	ByteString ec;
+	const EC_KEY* eckey = (const EC_KEY*) EVP_PKEY_get0((EVP_PKEY*) pkey);
+	int nid = EC_GROUP_get_curve_name(EC_KEY_get0_group(eckey));
+	ec.resize(i2d_ASN1_OBJECT(OBJ_nid2obj(nid), NULL));
+	p = &ec[0];
+	i2d_ASN1_OBJECT(OBJ_nid2obj(nid), &p);
+	setEC(ec);
 }
 
 // Check if the key is of the given type
@@ -92,6 +100,11 @@ bool OSSLGOSTPublicKey::isOfType(const char* type)
 }
 
 // Setters for the GOST public key components
+void OSSLGOSTPublicKey::setEC(const ByteString& ec)
+{
+        GOSTPublicKey::setEC(ec);
+}
+
 void OSSLGOSTPublicKey::setQ(const ByteString& q)
 {
 	this->q = q;
@@ -114,18 +127,22 @@ void OSSLGOSTPublicKey::setQ(const ByteString& q)
 // Serialisation
 ByteString OSSLGOSTPublicKey::serialise() const
 {
-	return q.serialise();
+	return ec.serialise() +
+	       q.serialise();
 }
 
 bool OSSLGOSTPublicKey::deserialise(ByteString& serialised)
 {
+	ByteString dEC = ByteString::chainDeserialise(serialised);
 	ByteString dQ = ByteString::chainDeserialise(serialised);
 
-	if (dQ.size() == 0)
+	if ((dEC.size() == 0) ||
+	    (dQ.size() == 0))
 	{
 		return false;
 	}
 
+	setEC(dEC);
 	setQ(dQ);
 
 	return true;

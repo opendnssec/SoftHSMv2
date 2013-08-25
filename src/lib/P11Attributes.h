@@ -1106,9 +1106,6 @@ public:
 	// Constructor
 	P11AttrGostR3410Params(OSObject* osobject, CK_ULONG inchecks = 0) : P11Attribute(osobject) { type = CKA_GOSTR3410_PARAMS; checks = ck1|inchecks; }
 
-// id-GostR3410-2001-CryptoPro-A-ParamSet 1.2.643.2.2.35.1
-#define GostR3419_A_ParamSet	"06072a850302022301"
-
 protected:
 	// Set the default value of the attribute
 	virtual bool setDefault();
@@ -1123,9 +1120,6 @@ class P11AttrGostR3411Params : public P11Attribute
 public:
 	// Constructor
 	P11AttrGostR3411Params(OSObject* osobject, CK_ULONG inchecks = 0) : P11Attribute(osobject) { type = CKA_GOSTR3411_PARAMS; checks = ck1|ck8|inchecks; }
-
-// id-GostR3411-94-CryptoProParamSet 1.2.643.2.2.30.1
-#define GostR3411_ParamSet	"06072a850302021e01"
 
 protected:
 	// Set the default value of the attribute

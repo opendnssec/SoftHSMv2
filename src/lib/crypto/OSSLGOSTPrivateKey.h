@@ -60,6 +60,9 @@ public:
 	// Setters for the GOST private key components
 	virtual void setD(const ByteString& d);
 
+	// Setters for the GOST public key components
+	virtual void setEC(const ByteString& d);
+
 	// Serialisation
 	virtual ByteString serialise() const;
 	virtual bool deserialise(ByteString& serialised);

@@ -83,9 +83,13 @@ bool BotanGOST::signInit(PrivateKey* privateKey, const std::string mechanism)
 	std::transform(mechanism.begin(), mechanism.end(), lowerMechanism.begin(), tolower);
 	std::string emsa;
 
-	if (!lowerMechanism.compare("gost"))
+	if (!lowerMechanism.compare("gost-gost"))
 	{
 		emsa = "EMSA1(GOST-R-34.11-94)";
+	}
+	else if (!lowerMechanism.compare("gost"))
+	{
+		emsa = "Raw";
 	}
         else
         {
@@ -111,7 +115,7 @@ bool BotanGOST::signInit(PrivateKey* privateKey, const std::string mechanism)
 	}
 
 	try
-	{       
+	{
 		signer = new Botan::PK_Signer(*botanKey, emsa);
 		// Should we add DISABLE_FAULT_PROTECTION? Makes this operation faster.
 	}
@@ -213,9 +217,13 @@ bool BotanGOST::verifyInit(PublicKey* publicKey, const std::string mechanism)
 	std::transform(mechanism.begin(), mechanism.end(), lowerMechanism.begin(), tolower);
 	std::string emsa;
 
-	if (!lowerMechanism.compare("gost"))
+	if (!lowerMechanism.compare("gost-gost"))
 	{
 		emsa = "EMSA1(GOST-R-34.11-94)";
+	}
+	else if (!lowerMechanism.compare("gost"))
+	{
+		emsa = "Raw";
 	}
         else
         {

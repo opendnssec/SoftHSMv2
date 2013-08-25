@@ -58,6 +58,7 @@ public:
 	virtual unsigned long getOutputLength() const;
 
 	// Setters for the GOST public key components
+	virtual void setEC(const ByteString& ec);
 	virtual void setQ(const ByteString& q);
 
 	// Serialisation

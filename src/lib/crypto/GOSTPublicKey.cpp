@@ -56,8 +56,20 @@ void GOSTPublicKey::setQ(const ByteString& q)
 	this->q = q;
 }
 
+// Setters for the GOST public key components
+void GOSTPublicKey::setEC(const ByteString& ec)
+{
+	this->ec = ec;
+}
+
 // Getters for the GOST public key components
 const ByteString& GOSTPublicKey::getQ() const
 {
 	return q;
+}
+
+// Getters for the GOST public key components
+const ByteString& GOSTPublicKey::getEC() const
+{
+	return ec;
 }

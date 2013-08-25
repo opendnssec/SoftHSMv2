@@ -115,19 +115,13 @@ void BotanGOSTPrivateKey::setD(const ByteString& d)
 // Setters for the GOST public key components
 void BotanGOSTPrivateKey::setEC(const ByteString& ec)
 {
-	this->ec = ec;
+	GOSTPrivateKey::setEC(ec);
 
 	if (eckey)
 	{
 		delete eckey;
 		eckey = NULL;
 	}
-}
-
-// Getters for the GOST public key components
-const ByteString& BotanGOSTPrivateKey::getEC() const
-{
-	return ec;
 }
 
 // Serialisation

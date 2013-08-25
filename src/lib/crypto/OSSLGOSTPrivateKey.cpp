@@ -71,9 +71,16 @@ unsigned long OSSLGOSTPrivateKey::getOutputLength() const
 // Set from OpenSSL representation
 void OSSLGOSTPrivateKey::setFromOSSL(const EVP_PKEY* pkey)
 {
-	const EC_KEY* ec = (const EC_KEY*) EVP_PKEY_get0((EVP_PKEY*) pkey);
-	const BIGNUM* priv = EC_KEY_get0_private_key(ec);
+	const EC_KEY* eckey = (const EC_KEY*) EVP_PKEY_get0((EVP_PKEY*) pkey);
+	const BIGNUM* priv = EC_KEY_get0_private_key(eckey);
 	setD(OSSL::bn2ByteString(priv));
+
+	ByteString ec;
+	int nid = EC_GROUP_get_curve_name(EC_KEY_get0_group(eckey));
+	ec.resize(i2d_ASN1_OBJECT(OBJ_nid2obj(nid), NULL));
+	unsigned char *p = &ec[0];
+	i2d_ASN1_OBJECT(OBJ_nid2obj(nid), &p);
+	setEC(ec);
 }
 
 // Check if the key is of the given type
@@ -107,11 +114,18 @@ void OSSLGOSTPrivateKey::setD(const ByteString& d)
 		ERROR_MSG("EC_KEY_set_private_key failed");
 		return;
 	}
+	BN_clear_free((BIGNUM*)priv);
 
 #ifdef notyet
 	if (gost2001_compute_public(ec) <= 0)
 		ERROR_MSG("gost2001_compute_public failed");
 #endif		
+}
+
+// Setters for the GOST public key components
+void OSSLGOSTPrivateKey::setEC(const ByteString& ec)
+{
+        GOSTPrivateKey::setEC(ec);
 }
 
 // Retrieve the OpenSSL representation of the key
@@ -123,18 +137,22 @@ EVP_PKEY* OSSLGOSTPrivateKey::getOSSLKey()
 // Serialisation
 ByteString OSSLGOSTPrivateKey::serialise() const
 {
-	return d.serialise();
+	return ec.serialise() +
+	       d.serialise();
 }
 
 bool OSSLGOSTPrivateKey::deserialise(ByteString& serialised)
 {
+	ByteString dEC = ByteString::chainDeserialise(serialised);
 	ByteString dD = ByteString::chainDeserialise(serialised);
 
-	if (dD.size() == 0)
+	if ((dEC.size() == 0) ||
+	    (dD.size() == 0))
 	{
 		return false;
 	}
 
+	setEC(dEC);
 	setD(dD);
 
 	return true;

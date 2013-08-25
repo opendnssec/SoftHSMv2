@@ -56,8 +56,20 @@ void GOSTPrivateKey::setD(const ByteString& d)
 	this->d = d;
 }
 
+// Setters for the GOST public key components
+void GOSTPrivateKey::setEC(const ByteString& ec)
+{
+	this->ec = ec;
+}
+
 // Getters for the GOST private key components
 const ByteString& GOSTPrivateKey::getD() const
 {
 	return d;
+}
+
+// Getters for the GOST public key components
+const ByteString& GOSTPrivateKey::getEC() const
+{
+	return ec;
 }

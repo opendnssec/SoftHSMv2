@@ -100,7 +100,7 @@ bool BotanGOSTPublicKey::isOfType(const char* type)
 // Setters for the GOST public key components
 void BotanGOSTPublicKey::setEC(const ByteString& ec)
 {
-	this->ec = ec;
+	GOSTPublicKey::setEC(ec);
 
 	if (eckey)
 	{

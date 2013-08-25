@@ -74,10 +74,6 @@ public:
 	// Retrieve the Botan representation of the key
 	Botan::GOST_3410_PublicKey* getBotanKey();
 
-protected:
-	// Public components
-	ByteString ec;
-
 private:
 	// The internal Botan representation
 	Botan::GOST_3410_PublicKey* eckey;

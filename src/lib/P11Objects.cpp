@@ -766,16 +766,18 @@ bool P11GOSTPublicKeyObj::init(OSObject *osobject)
 	if (!P11PublicKeyObj::init(osobject)) return false;
 
 	// Create attributes
-	P11Attribute* attrValue = new P11AttrValue(osobject,P11Attribute::ck1);
-	P11Attribute* attrGostR3410Params = new P11AttrGostR3410Params(osobject,P11Attribute::ck3);
-	P11Attribute* attrGostR3411Params = new P11AttrGostR3411Params(osobject,P11Attribute::ck3);
+	P11Attribute* attrValue = new P11AttrValue(osobject,P11Attribute::ck1|P11Attribute::ck4);
+	P11Attribute* attrGostR3410Params = new P11AttrGostR3410Params(osobject,P11Attribute::ck1|P11Attribute::ck3);
+	P11Attribute* attrGostR3411Params = new P11AttrGostR3411Params(osobject,P11Attribute::ck1|P11Attribute::ck3|P11Attribute::ck8);
+	P11Attribute* attrGost28147Params = new P11AttrGost28147Params(osobject,P11Attribute::ck8);
 
 	// Initialize the attributes
 	if
 	(
 		!attrValue->init() ||
 		!attrGostR3410Params->init() ||
-		!attrGostR3411Params->init()
+		!attrGostR3411Params->init() ||
+		!attrGost28147Params->init()
 	)
 	{
 		ERROR_MSG("Could not initialize the attribute");
@@ -786,6 +788,7 @@ bool P11GOSTPublicKeyObj::init(OSObject *osobject)
 	attributes[attrValue->getType()] = attrValue;
 	attributes[attrGostR3410Params->getType()] = attrGostR3410Params;
 	attributes[attrGostR3411Params->getType()] = attrGostR3411Params;
+	attributes[attrGost28147Params->getType()] = attrGost28147Params;
 
 	initialized = true;
 	return true;
@@ -1083,15 +1086,17 @@ bool P11GOSTPrivateKeyObj::init(OSObject *osobject)
 
 	// Create attributes
 	P11Attribute* attrValue = new P11AttrValue(osobject,P11Attribute::ck1|P11Attribute::ck4|P11Attribute::ck6|P11Attribute::ck7);
-	P11Attribute* attrGostR3410Params = new P11AttrGostR3410Params(osobject,P11Attribute::ck4|P11Attribute::ck6);
-	P11Attribute* attrGostR3411Params = new P11AttrGostR3411Params(osobject,P11Attribute::ck4|P11Attribute::ck6);
+	P11Attribute* attrGostR3410Params = new P11AttrGostR3410Params(osobject,P11Attribute::ck1|P11Attribute::ck4|P11Attribute::ck6);
+	P11Attribute* attrGostR3411Params = new P11AttrGostR3411Params(osobject,P11Attribute::ck1|P11Attribute::ck4|P11Attribute::ck6|P11Attribute::ck8);
+	P11Attribute* attrGost28147Params = new P11AttrGost28147Params(osobject,P11Attribute::ck4|P11Attribute::ck6|P11Attribute::ck8);
 
 	// Initialize the attributes
 	if
 	(
 		!attrValue->init() ||
 		!attrGostR3410Params->init() ||
-		!attrGostR3411Params->init()
+		!attrGostR3411Params->init() ||
+		!attrGost28147Params->init()
 	)
 	{
 		ERROR_MSG("Could not initialize the attribute");
@@ -1102,6 +1107,7 @@ bool P11GOSTPrivateKeyObj::init(OSObject *osobject)
 	attributes[attrValue->getType()] = attrValue;
 	attributes[attrGostR3410Params->getType()] = attrGostR3410Params;
 	attributes[attrGostR3411Params->getType()] = attrGostR3411Params;
+	attributes[attrGost28147Params->getType()] = attrGost28147Params;
 
 	initialized = true;
 	return true;

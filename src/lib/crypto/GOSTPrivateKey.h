@@ -54,8 +54,14 @@ public:
 	// Setters for the GOST private key components
 	virtual void setD(const ByteString& d);
 
+	// Setters for the GOST public key components
+	virtual void setEC(const ByteString& ec);
+
 	// Getters for the GOST private key components
 	virtual const ByteString& getD() const;
+
+	// Getters for the GOST public key components
+	virtual const ByteString& getEC() const;
 
 	// Serialisation
 	virtual ByteString serialise() const = 0;
@@ -64,6 +70,9 @@ public:
 protected:
 	// Private components
 	ByteString d;
+
+	// Public components
+	ByteString ec;
 };
 
 #endif // !_SOFTHSM_V2_GOSTPRIVATEKEY_H

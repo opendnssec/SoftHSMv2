@@ -66,9 +66,6 @@ public:
 	// Setters for the GOST public key components
 	virtual void setEC(const ByteString& ec);
 
-	// Getters for the GOST public key components
-	virtual const ByteString& getEC() const;
-
 	// Serialisation
 	virtual ByteString serialise() const;
 	virtual bool deserialise(ByteString& serialised);
@@ -78,10 +75,6 @@ public:
 
 	// Retrieve the Botan representation of the key
 	Botan::GOST_3410_PrivateKey* getBotanKey();
-
-protected:
-	// Public components
-	ByteString ec;
 
 private:
 	// The internal Botan representation

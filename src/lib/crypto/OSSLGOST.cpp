@@ -52,6 +52,80 @@ OSSLGOST::~OSSLGOST()
 }
 
 // Signing functions
+bool OSSLGOST::sign(PrivateKey* privateKey, const ByteString& dataToSign, ByteString& signature, const std::string mechanism)
+{
+	std::string lowerMechanism;
+	lowerMechanism.resize(mechanism.size());
+	std::transform(mechanism.begin(), mechanism.end(), lowerMechanism.begin(), tolower);
+
+	if (!lowerMechanism.compare("gost"))
+	{
+		// Separate implementation for GOST signing without hash computation
+
+		// Check if the private key is the right type
+		if (!privateKey->isOfType(OSSLGOSTPrivateKey::type))
+		{
+			ERROR_MSG("Invalid key type supplied");
+
+			return false;
+		}
+
+		// In case of raw GOST, the length of the input data must be 32 bytes
+		if (dataToSign.size() != 32)
+		{
+			ERROR_MSG("Size of data to sign is not 32 bytes");
+
+			return false;
+		}
+
+		// Perform the signature operation
+		OSSLGOSTPrivateKey* osslKey = (OSSLGOSTPrivateKey*) privateKey;
+		EVP_PKEY* pkey = osslKey->getOSSLKey();
+		size_t outLen;
+
+		if (pkey == NULL)
+		{
+			ERROR_MSG("Could not get the OpenSSL private key");
+
+			return false;
+		}
+
+		signature.resize(EVP_PKEY_size(pkey));
+		outLen = signature.size();
+
+		EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new(pkey,NULL);
+		if (ctx == NULL)
+		{
+			ERROR_MSG("EVP_PKEY_CTX_new failed");
+			return false;
+		}
+
+		if (EVP_PKEY_sign_init(ctx) <= 0)
+		{
+			ERROR_MSG("EVP_PKEY_sign_init failed");
+			EVP_PKEY_CTX_free(ctx);
+			return false;
+		}
+
+		if (EVP_PKEY_sign(ctx, &signature[0], &outLen, dataToSign.const_byte_str(), dataToSign.size()) <= 0)
+		{
+			ERROR_MSG("An error occurred while performing a signature");
+			EVP_PKEY_CTX_free(ctx);
+			return false;
+		}
+
+		signature.resize(outLen);
+		EVP_PKEY_CTX_free(ctx);
+
+		return true;
+	}
+	else
+	{
+		// Call default implementation
+		return AsymmetricAlgorithm::sign(privateKey, dataToSign, signature, mechanism);
+	}
+}
+
 bool OSSLGOST::signInit(PrivateKey* privateKey, const std::string mechanism)
 {
 	if (!AsymmetricAlgorithm::signInit(privateKey, mechanism))
@@ -74,7 +148,7 @@ bool OSSLGOST::signInit(PrivateKey* privateKey, const std::string mechanism)
 	lowerMechanism.resize(mechanism.size());
 	std::transform(mechanism.begin(), mechanism.end(), lowerMechanism.begin(), tolower);
 
-	if (lowerMechanism.compare("gost"))
+	if (lowerMechanism.compare("gost-gost"))
 	{
 		ERROR_MSG("Invalid mechanism supplied (%s)", mechanism.c_str());
 
@@ -166,6 +240,68 @@ bool OSSLGOST::signFinal(ByteString& signature)
 }
 
 // Verification functions
+bool OSSLGOST::verify(PublicKey* publicKey, const ByteString& originalData, const ByteString& signature, const std::string mechanism)
+{
+	std::string lowerMechanism;
+	lowerMechanism.resize(mechanism.size());
+	std::transform(mechanism.begin(), mechanism.end(), lowerMechanism.begin(), tolower);
+
+	if (!lowerMechanism.compare("gost"))
+	{
+		// Separate implementation for GOST verification without hash computation
+
+		// Check if the private key is the right type
+		if (!publicKey->isOfType(OSSLGOSTPublicKey::type))
+		{
+			ERROR_MSG("Invalid key type supplied");
+
+			return false;
+		}
+
+		// Perform the verification operation
+		OSSLGOSTPublicKey* osslKey = (OSSLGOSTPublicKey*) publicKey;
+		EVP_PKEY* pkey = osslKey->getOSSLKey();
+		size_t outLen;
+
+		if (pkey == NULL)
+		{
+			ERROR_MSG("Could not get the OpenSSL public key");
+
+			return false;
+		}
+
+		EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new(pkey,NULL);
+		if (ctx == NULL)
+		{
+			ERROR_MSG("EVP_PKEY_CTX_new failed");
+			return false;
+		}
+
+		if (EVP_PKEY_verify_init(ctx) <= 0)
+		{
+			ERROR_MSG("EVP_PKEY_verify_init failed");
+			EVP_PKEY_CTX_free(ctx);
+			return false;
+		}
+
+		int ret = EVP_PKEY_verify(ctx, signature.const_byte_str(), signature.size(), originalData.const_byte_str(), originalData.size());
+		EVP_PKEY_CTX_free(ctx);
+		if (ret != 1)
+		{
+			if (ret < 0)
+				ERROR_MSG("GOST verify failed (0x%08X)", ERR_get_error());
+
+			return false;
+		}
+		return true;
+	}
+	else
+	{
+		// Call the generic function
+		return AsymmetricAlgorithm::verify(publicKey, originalData, signature, mechanism);
+	}
+}
+
 bool OSSLGOST::verifyInit(PublicKey* publicKey, const std::string mechanism)
 {
 	if (!AsymmetricAlgorithm::verifyInit(publicKey, mechanism))
@@ -188,7 +324,7 @@ bool OSSLGOST::verifyInit(PublicKey* publicKey, const std::string mechanism)
 	lowerMechanism.resize(mechanism.size());
 	std::transform(mechanism.begin(), mechanism.end(), lowerMechanism.begin(), tolower);
 
-	if (lowerMechanism.compare("gost"))
+	if (lowerMechanism.compare("gost-gost"))
 	{
 		ERROR_MSG("Invalid mechanism supplied (%s)", mechanism.c_str());
 

@@ -497,13 +497,13 @@ CK_RV SoftHSM::C_GetMechanismList(CK_SLOT_ID slotID, CK_MECHANISM_TYPE_PTR pMech
 	// A list with the supported mechanisms
 #ifdef WITH_ECC
 #ifdef WITH_GOST
-	CK_ULONG nrSupportedMechanisms = 50;
+	CK_ULONG nrSupportedMechanisms = 51;
 #else
 	CK_ULONG nrSupportedMechanisms = 46;
 #endif
 #else
 #ifdef WITH_GOST
-	CK_ULONG nrSupportedMechanisms = 47;
+	CK_ULONG nrSupportedMechanisms = 48;
 #else
 	CK_ULONG nrSupportedMechanisms = 43;
 #endif
@@ -562,6 +562,7 @@ CK_RV SoftHSM::C_GetMechanismList(CK_SLOT_ID slotID, CK_MECHANISM_TYPE_PTR pMech
 		CKM_GOSTR3411,
 		CKM_GOSTR3411_HMAC,
 		CKM_GOSTR3410_KEY_PAIR_GEN,
+		CKM_GOSTR3410,
 		CKM_GOSTR3410_WITH_GOSTR3411
 #endif
 	};
@@ -841,6 +842,12 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 			pInfo->ulMinKeySize = 0;
 			pInfo->ulMaxKeySize = 0;
 			pInfo->flags = CKF_GENERATE_KEY_PAIR;
+			break;
+		case CKM_GOSTR3410:
+			// Key size is not in use
+			pInfo->ulMinKeySize = 0;
+			pInfo->ulMaxKeySize = 0;
+			pInfo->flags = CKF_SIGN | CKF_VERIFY;
 			break;
 		case CKM_GOSTR3410_WITH_GOSTR3411:
 			// Key size is not in use
@@ -2282,8 +2289,12 @@ CK_RV SoftHSM::AsymSignInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechan
 			break;
 #endif
 #ifdef WITH_GOST
-		case CKM_GOSTR3410_WITH_GOSTR3411:
+		case CKM_GOSTR3410:
 			mechanism = "gost";
+			bAllowMultiPartOp = false;
+			break;
+		case CKM_GOSTR3410_WITH_GOSTR3411:
+			mechanism = "gost-gost";
 			bAllowMultiPartOp = true;
 			break;
 #endif
@@ -2964,8 +2975,12 @@ CK_RV SoftHSM::AsymVerifyInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 			break;
 #endif
 #ifdef WITH_GOST
-		case CKM_GOSTR3410_WITH_GOSTR3411:
+		case CKM_GOSTR3410:
 			mechanism = "gost";
+			bAllowMultiPartOp = false;
+			break;
+		case CKM_GOSTR3410_WITH_GOSTR3411:
+			mechanism = "gost-gost";
 			bAllowMultiPartOp = true;
 			break;
 #endif
@@ -5317,12 +5332,36 @@ CK_RV SoftHSM::generateGOST
 		return CKR_GENERAL_ERROR;
 
 	// Extract desired key information
-	//// TODO
-	ByteString params = GostR3419_A_ParamSet;
+	ByteString param_3410;
+	ByteString param_3411;
+	ByteString param_28147;
+	for (CK_ULONG i = 0; i < ulPublicKeyAttributeCount; i++)
+	{
+		switch (pPublicKeyTemplate[i].type)
+		{
+			case CKA_GOSTR3410_PARAMS:
+				param_3410 = ByteString((unsigned char*)pPublicKeyTemplate[i].pValue, pPublicKeyTemplate[i].ulValueLen);
+				break;
+			case CKA_GOSTR3411_PARAMS:
+				param_3411 = ByteString((unsigned char*)pPublicKeyTemplate[i].pValue, pPublicKeyTemplate[i].ulValueLen);
+				break;
+			case CKA_GOST28147_PARAMS:
+				param_28147 = ByteString((unsigned char*)pPublicKeyTemplate[i].pValue, pPublicKeyTemplate[i].ulValueLen);
+				break;
+			default:
+				break;
+		}
+	}
+
+	// The parameters must be specified to be able to generate a key pair.
+	if (param_3410.size() == 0 || param_3411.size() == 0) {
+		INFO_MSG("Missing parameter(s) in pPublicKeyTemplate");
+		return CKR_TEMPLATE_INCOMPLETE;
+	}
 
 	// Set the parameters
 	ECParameters p;
-	p.setEC(params);
+	p.setEC(param_3410);
 
 	// Generate key pair
 	AsymmetricKeyPair* kp = NULL;
@@ -5461,15 +5500,27 @@ CK_RV SoftHSM::generateGOST
 
 				// GOST Private Key Attributes
 				ByteString value;
+				ByteString param_a;
+				ByteString param_b;
+				ByteString param_c;
 				if (isPrivateKeyPrivate)
 				{
 					token->encrypt(priv->getD(), value);
+					token->encrypt(priv->getEC(), param_a);
+					token->encrypt(param_3411, param_b);
+					token->encrypt(param_28147, param_c);
 				}
 				else
 				{
 					value = priv->getD();
+					param_a = priv->getEC();
+					param_b = param_3411;
+					param_c = param_28147;
 				}
 				bOK = bOK && osobject->setAttribute(CKA_VALUE, value);
+				bOK = bOK && osobject->setAttribute(CKA_GOSTR3410_PARAMS, param_a);
+				bOK = bOK && osobject->setAttribute(CKA_GOSTR3411_PARAMS, param_b);
+				bOK = bOK && osobject->setAttribute(CKA_GOST28147_PARAMS, param_c);
 
 				if (bOK)
 					bOK = osobject->commitTransaction();
@@ -6298,19 +6349,23 @@ CK_RV SoftHSM::getGOSTPrivateKey(GOSTPrivateKey* privateKey, Token* token, OSObj
 
 	// GOST Private Key Attributes
 	ByteString value;
+	ByteString param;
 	if (isKeyPrivate)
 	{
 		bool bOK = true;
 		bOK = bOK && token->decrypt(key->getAttribute(CKA_VALUE)->getByteStringValue(), value);
+		bOK = bOK && token->decrypt(key->getAttribute(CKA_GOSTR3410_PARAMS)->getByteStringValue(), param);
 		if (!bOK)
 			return CKR_GENERAL_ERROR;
 	}
 	else
 	{
 		value = key->getAttribute(CKA_VALUE)->getByteStringValue();
+		value = key->getAttribute(CKA_GOSTR3410_PARAMS)->getByteStringValue();
 	}
 
 	privateKey->setD(value);
+	privateKey->setEC(param);
 
 	return CKR_OK;
 }
@@ -6327,19 +6382,23 @@ CK_RV SoftHSM::getGOSTPublicKey(GOSTPublicKey* publicKey, Token* token, OSObject
 
 	// GOST Public Key Attributes
 	ByteString point;
+	ByteString param;
 	if (isKeyPrivate)
 	{
 		bool bOK = true;
 		bOK = bOK && token->decrypt(key->getAttribute(CKA_VALUE)->getByteStringValue(), point);
+		bOK = bOK && token->decrypt(key->getAttribute(CKA_GOSTR3410_PARAMS)->getByteStringValue(), param);
 		if (!bOK)
 			return CKR_GENERAL_ERROR;
 	}
 	else
 	{
 		point = key->getAttribute(CKA_VALUE)->getByteStringValue();
+		param = key->getAttribute(CKA_GOSTR3410_PARAMS)->getByteStringValue();
 	}
 
 	publicKey->setQ(point);
+	publicKey->setEC(param);
 
 	return CKR_OK;
 }
