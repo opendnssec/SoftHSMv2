@@ -66,7 +66,6 @@ unsigned long BotanGOSTPublicKey::getOrderLength() const
 	{
 		Botan::EC_Group group = BotanUtil::byteString2ECGroup(this->ec);
 		return group.get_order().bytes();
-			
 	}
 	catch (...)
 	{
@@ -87,8 +86,18 @@ void BotanGOSTPublicKey::setFromBotan(const Botan::GOST_3410_PublicKey* eckey)
 {
 	ByteString ec = BotanUtil::ecGroup2ByteString(eckey->domain());
 	setEC(ec);
-	ByteString q = BotanUtil::ecPoint2ByteString(eckey->public_point());
-	setQ(q.substr(3));
+
+	ByteString q = BotanUtil::ecPoint2ByteString(eckey->public_point()).substr(3);
+
+	/* The points must be stored in little endian */
+	const size_t length = q.size() / 2;
+	for (size_t i = 0; i < (length / 2); i++)
+	{
+		std::swap(q[i], q[length-1-i]);
+		std::swap(q[length+i], q[2*length-1-i]);
+	}
+
+	setQ(q);
 }
 
 // Check if the key is of the given type
@@ -154,7 +163,7 @@ Botan::GOST_3410_PublicKey* BotanGOSTPublicKey::getBotanKey()
 
 	return eckey;
 }
- 
+
 // Create the Botan representation of the key
 void BotanGOSTPublicKey::createBotanKey()
 {
@@ -169,8 +178,17 @@ void BotanGOSTPublicKey::createBotanKey()
 
 		try
 		{
+			/* The points are stored in little endian */
+			ByteString bPoint = this->q;
+			const size_t length = bPoint.size() / 2;
+			for (size_t i = 0; i < (length / 2); i++)
+			{
+				std::swap(bPoint[i], bPoint[length-1-i]);
+				std::swap(bPoint[length+i], bPoint[2*length-1-i]);
+			}
+			ByteString p = "044104" + bPoint;
+
 			Botan::EC_Group group = BotanUtil::byteString2ECGroup(this->ec);
-			ByteString p = "044104" + this->q;
 			Botan::PointGFp point = BotanUtil::byteString2ECPoint(p, group);
 			eckey = new Botan::GOST_3410_PublicKey(group, point);
 		}

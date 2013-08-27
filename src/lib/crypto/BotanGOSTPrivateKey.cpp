@@ -68,7 +68,6 @@ unsigned long BotanGOSTPrivateKey::getOrderLength() const
 	{
 		Botan::EC_Group group = BotanUtil::byteString2ECGroup(this->ec);
 		return group.get_order().bytes();
-			
 	}
 	catch (...)
 	{
@@ -165,7 +164,7 @@ void BotanGOSTPrivateKey::createBotanKey()
 	if (this->ec.size() != 0 &&
 	    this->d.size() != 0)
 	{
-		if (eckey)   
+		if (eckey)
 		{
 			delete eckey;
 			eckey = NULL;

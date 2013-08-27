@@ -58,7 +58,7 @@ BotanGOST::~BotanGOST()
 	delete signer;
 	delete verifier;
 }
-	
+
 // Signing functions
 bool BotanGOST::signInit(PrivateKey* privateKey, const std::string mechanism)
 {
@@ -85,7 +85,7 @@ bool BotanGOST::signInit(PrivateKey* privateKey, const std::string mechanism)
 
 	if (!lowerMechanism.compare("gost-gost"))
 	{
-		emsa = "EMSA1(GOST-R-34.11-94)";
+		emsa = "EMSA1(GOST-34.11)";
 	}
 	else if (!lowerMechanism.compare("gost"))
 	{
@@ -219,7 +219,7 @@ bool BotanGOST::verifyInit(PublicKey* publicKey, const std::string mechanism)
 
 	if (!lowerMechanism.compare("gost-gost"))
 	{
-		emsa = "EMSA1(GOST-R-34.11-94)";
+		emsa = "EMSA1(GOST-34.11)";
 	}
 	else if (!lowerMechanism.compare("gost"))
 	{
