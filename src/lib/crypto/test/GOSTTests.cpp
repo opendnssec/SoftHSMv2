@@ -336,10 +336,10 @@ void GOSTTests::testSigningVerifying()
 
 	// Sign the data
 	ByteString sig;
-	CPPUNIT_ASSERT(gost->sign(kp->getPrivateKey(), dataToSign, sig, "gost"));
+	CPPUNIT_ASSERT(gost->sign(kp->getPrivateKey(), dataToSign, sig, "gost-gost"));
 
 	// And verify it
-	CPPUNIT_ASSERT(gost->verify(kp->getPublicKey(), dataToSign, sig, "gost"));
+	CPPUNIT_ASSERT(gost->verify(kp->getPublicKey(), dataToSign, sig, "gost-gost"));
 
 	gost->recycleKeyPair(kp);
 	gost->recycleParameters(p);
