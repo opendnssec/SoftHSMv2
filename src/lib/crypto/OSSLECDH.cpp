@@ -44,43 +44,43 @@
 #include <openssl/err.h>
 
 // Signing functions
-bool OSSLECDH::signInit(PrivateKey* privateKey, const std::string mechanism)
+bool OSSLECDH::signInit(PrivateKey* /*privateKey*/, const std::string /*mechanism*/)
 {
 	ERROR_MSG("ECDH does not support signing");
 
 	return false;
 }
 
-bool OSSLECDH::signUpdate(const ByteString& dataToSign)
+bool OSSLECDH::signUpdate(const ByteString& /*dataToSign*/)
 {
 	ERROR_MSG("ECDH does not support signing");
 
 	return false;
 }
 
-bool OSSLECDH::signFinal(ByteString& signature)
-{	
+bool OSSLECDH::signFinal(ByteString& /*signature*/)
+{
 	ERROR_MSG("ECDH does not support signing");
 
 	return false;
 }
 
 // Verification functions
-bool OSSLECDH::verifyInit(PublicKey* publicKey, const std::string mechanism)
+bool OSSLECDH::verifyInit(PublicKey* /*publicKey*/, const std::string /*mechanism*/)
 {
 	ERROR_MSG("ECDH does not support verifying");
 
 	return false;
 }
 
-bool OSSLECDH::verifyUpdate(const ByteString& originalData)
+bool OSSLECDH::verifyUpdate(const ByteString& /*originalData*/)
 {
 	ERROR_MSG("ECDH does not support verifying");
 
 	return false;
 }
 
-bool OSSLECDH::verifyFinal(const ByteString& signature)
+bool OSSLECDH::verifyFinal(const ByteString& /*signature*/)
 {
 	ERROR_MSG("ECDH does not support verifying");
 
@@ -88,7 +88,7 @@ bool OSSLECDH::verifyFinal(const ByteString& signature)
 }
 
 // Encryption functions
-bool OSSLECDH::encrypt(PublicKey* publicKey, const ByteString& data, ByteString& encryptedData, const std::string padding)
+bool OSSLECDH::encrypt(PublicKey* /*publicKey*/, const ByteString& /*data*/, ByteString& /*encryptedData*/, const std::string /*padding*/)
 {
 	ERROR_MSG("ECDH does not support encryption");
 
@@ -96,7 +96,7 @@ bool OSSLECDH::encrypt(PublicKey* publicKey, const ByteString& data, ByteString&
 }
 
 // Decryption functions
-bool OSSLECDH::decrypt(PrivateKey* privateKey, const ByteString& encryptedData, ByteString& data, const std::string padding)
+bool OSSLECDH::decrypt(PrivateKey* /*privateKey*/, const ByteString& /*encryptedData*/, ByteString& /*data*/, const std::string /*padding*/)
 {
 	ERROR_MSG("ECDH does not support decryption");
 
@@ -104,7 +104,7 @@ bool OSSLECDH::decrypt(PrivateKey* privateKey, const ByteString& encryptedData, 
 }
 
 // Key factory
-bool OSSLECDH::generateKeyPair(AsymmetricKeyPair** ppKeyPair, AsymmetricParameters* parameters, RNG* rng /* = NULL */)
+bool OSSLECDH::generateKeyPair(AsymmetricKeyPair** ppKeyPair, AsymmetricParameters* parameters, RNG* /*rng = NULL */)
 {
 	// Check parameters
 	if ((ppKeyPair == NULL) ||

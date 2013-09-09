@@ -43,7 +43,7 @@ public:
 	// Base constructors
 	AsymmetricParameters() { }
 
-	AsymmetricParameters(const AsymmetricParameters& in) { }
+	AsymmetricParameters(const AsymmetricParameters& /*in*/) { }
 
 	// Destructor
 	virtual ~AsymmetricParameters() { }

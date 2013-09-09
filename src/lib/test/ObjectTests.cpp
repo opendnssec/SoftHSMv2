@@ -151,7 +151,7 @@ void ObjectTests::checkCommonObjectAttributes(CK_SESSION_HANDLE hSession, CK_OBJ
 	CPPUNIT_ASSERT(obj_class == objClass);
 }
 
-void ObjectTests::checkCommonStorageObjectAttributes(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_BBOOL bModifiable, CK_UTF8CHAR_PTR pLabel, CK_ULONG ulLabelLen, CK_BBOOL bCopyable)
+void ObjectTests::checkCommonStorageObjectAttributes(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject, CK_BBOOL bToken, CK_BBOOL /*bPrivate*/, CK_BBOOL bModifiable, CK_UTF8CHAR_PTR pLabel, CK_ULONG ulLabelLen, CK_BBOOL bCopyable)
 {
 	CK_RV rv;
 
@@ -335,7 +335,7 @@ void ObjectTests::checkX509CertificateObjectAttributes(CK_SESSION_HANDLE hSessio
 	free(attribs[7].pValue);
 }
 
-void ObjectTests::checkCommonKeyAttributes(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject, CK_KEY_TYPE keyType, CK_BYTE_PTR pId, CK_ULONG ulIdLen, CK_DATE startDate, CK_ULONG ulStartDateLen, CK_DATE endDate, CK_ULONG ulEndDateLen, CK_BBOOL bDerive, CK_BBOOL bLocal, CK_MECHANISM_TYPE keyMechanismType, CK_MECHANISM_TYPE_PTR pAllowedMechanisms, CK_ULONG ulAllowedMechanismsLen)
+void ObjectTests::checkCommonKeyAttributes(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject, CK_KEY_TYPE keyType, CK_BYTE_PTR pId, CK_ULONG ulIdLen, CK_DATE startDate, CK_ULONG ulStartDateLen, CK_DATE endDate, CK_ULONG ulEndDateLen, CK_BBOOL bDerive, CK_BBOOL bLocal, CK_MECHANISM_TYPE keyMechanismType, CK_MECHANISM_TYPE_PTR /*pAllowedMechanisms*/, CK_ULONG /*ulAllowedMechanismsLen*/)
 {
 	CK_RV rv;
 
@@ -382,7 +382,7 @@ void ObjectTests::checkCommonKeyAttributes(CK_SESSION_HANDLE hSession, CK_OBJECT
 	free(attribs[0].pValue);
 }
 
-void ObjectTests::checkCommonPublicKeyAttributes(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject, CK_BYTE_PTR pSubject, CK_ULONG ulSubjectLen, CK_BBOOL bEncrypt, CK_BBOOL bVerify, CK_BBOOL bVerifyRecover, CK_BBOOL bWrap, CK_BBOOL bTrusted, CK_ATTRIBUTE_PTR pWrapTemplate, CK_ULONG ulWrapTemplateLen)
+void ObjectTests::checkCommonPublicKeyAttributes(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject, CK_BYTE_PTR pSubject, CK_ULONG ulSubjectLen, CK_BBOOL /*bEncrypt*/, CK_BBOOL /*bVerify*/, CK_BBOOL /*bVerifyRecover*/, CK_BBOOL /*bWrap*/, CK_BBOOL bTrusted, CK_ATTRIBUTE_PTR /*pWrapTemplate*/, CK_ULONG /*ulWrapTemplateLen*/)
 {
 	CK_RV rv;
 
@@ -423,7 +423,7 @@ void ObjectTests::checkCommonPublicKeyAttributes(CK_SESSION_HANDLE hSession, CK_
 	free(attribs[0].pValue);
 }
 
-void ObjectTests::checkCommonPrivateKeyAttributes(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject, CK_BYTE_PTR pSubject, CK_ULONG ulSubjectLen, CK_BBOOL bSensitive, CK_BBOOL bDecrypt, CK_BBOOL bSign, CK_BBOOL bSignRecover, CK_BBOOL bUnwrap, CK_BBOOL bExtractable, CK_BBOOL bAlwaysSensitive, CK_BBOOL bNeverExtractable, CK_BBOOL bWrapWithTrusted, CK_ATTRIBUTE_PTR pUnwrapTemplate, CK_ULONG ulUnwrapTemplateLen, CK_BBOOL bAlwaysAuthenticate)
+void ObjectTests::checkCommonPrivateKeyAttributes(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject, CK_BYTE_PTR pSubject, CK_ULONG ulSubjectLen, CK_BBOOL bSensitive, CK_BBOOL bDecrypt, CK_BBOOL bSign, CK_BBOOL bSignRecover, CK_BBOOL bUnwrap, CK_BBOOL bExtractable, CK_BBOOL bAlwaysSensitive, CK_BBOOL bNeverExtractable, CK_BBOOL bWrapWithTrusted, CK_ATTRIBUTE_PTR /*pUnwrapTemplate*/, CK_ULONG /*ulUnwrapTemplateLen*/, CK_BBOOL bAlwaysAuthenticate)
 {
 	CK_RV rv;
 
@@ -510,7 +510,7 @@ void ObjectTests::checkCommonRSAPublicKeyAttributes(CK_SESSION_HANDLE hSession, 
 	free(attribs[1].pValue);
 }
 
-void ObjectTests::checkCommonRSAPrivateKeyAttributes(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject, CK_BYTE_PTR pModulus, CK_ULONG ulModulusLen, CK_BYTE_PTR pPublicExponent, CK_ULONG ulPublicExponentLen, CK_BYTE_PTR pPrivateExponent, CK_ULONG ulPrivateExponentLen, CK_BYTE_PTR pPrime1, CK_ULONG ulPrime1Len, CK_BYTE_PTR pPrime2, CK_ULONG ulPrime2Len, CK_BYTE_PTR pExponent1, CK_ULONG ulExponent1Len, CK_BYTE_PTR pExponent2, CK_ULONG ulExponent2Len, CK_BYTE_PTR pCoefficient, CK_ULONG ulCoefficientLen)
+void ObjectTests::checkCommonRSAPrivateKeyAttributes(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject, CK_BYTE_PTR pModulus, CK_ULONG ulModulusLen, CK_BYTE_PTR /*pPublicExponent*/, CK_ULONG /*ulPublicExponentLen*/, CK_BYTE_PTR pPrivateExponent, CK_ULONG ulPrivateExponentLen, CK_BYTE_PTR /*pPrime1*/, CK_ULONG /*ulPrime1Len*/, CK_BYTE_PTR /*pPrime2*/, CK_ULONG /*ulPrime2Len*/, CK_BYTE_PTR /*pExponent1*/, CK_ULONG /*ulExponent1Len*/, CK_BYTE_PTR /*pExponent2*/, CK_ULONG /*ulExponent2Len*/, CK_BYTE_PTR /*pCoefficient*/, CK_ULONG /*ulCoefficientLen*/)
 {
 	CK_RV rv;
 
@@ -548,7 +548,6 @@ void ObjectTests::checkCommonRSAPrivateKeyAttributes(CK_SESSION_HANDLE hSession,
 
 CK_RV ObjectTests::createDataObjectMinimal(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_OBJECT_HANDLE &hObject)
 {
-	CK_RV rv;
 	CK_OBJECT_CLASS cClass = CKO_DATA;
 	CK_UTF8CHAR label[] = "A data object";
 	CK_ATTRIBUTE objTemplate[] = {
@@ -599,7 +598,7 @@ CK_RV ObjectTests::createDataObjectNormal(CK_SESSION_HANDLE hSession, CK_BBOOL b
 	return C_CreateObject(hSession, objTemplate, sizeof(objTemplate)/sizeof(CK_ATTRIBUTE),&hObject);
 }
 
-CK_RV ObjectTests::createCertificateObjectIncomplete(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_OBJECT_HANDLE &hObject)
+CK_RV ObjectTests::createCertificateObjectIncomplete(CK_SESSION_HANDLE hSession, CK_BBOOL /*bToken*/, CK_BBOOL /*bPrivate*/, CK_OBJECT_HANDLE &hObject)
 {
 	CK_OBJECT_CLASS cClass = CKO_CERTIFICATE;
 	CK_ATTRIBUTE objTemplate[] = {
@@ -611,7 +610,7 @@ CK_RV ObjectTests::createCertificateObjectIncomplete(CK_SESSION_HANDLE hSession,
 	return C_CreateObject(hSession, objTemplate, sizeof(objTemplate)/sizeof(CK_ATTRIBUTE),&hObject);
 }
 
-CK_RV ObjectTests::createCertificateObjectValue(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_OBJECT_HANDLE &hObject)
+CK_RV ObjectTests::createCertificateObjectValue(CK_SESSION_HANDLE hSession, CK_BBOOL /*bToken*/, CK_BBOOL /*bPrivate*/, CK_OBJECT_HANDLE &hObject)
 {
 	CK_OBJECT_CLASS cClass = CKO_CERTIFICATE;
 	CK_CERTIFICATE_TYPE cType = CKC_X_509;
@@ -873,8 +872,6 @@ void ObjectTests::testDestroyObject()
 	CK_RV rv;
 	CK_UTF8CHAR pin[] = SLOT_0_USER1_PIN;
 	CK_ULONG pinLength = sizeof(pin) - 1;
-	CK_UTF8CHAR sopin[] = SLOT_0_SO1_PIN;
-	CK_ULONG sopinLength = sizeof(sopin) - 1;
 	CK_SESSION_HANDLE hSessionRO;
 	CK_SESSION_HANDLE hSessionRW;
 	CK_OBJECT_HANDLE hObjectSessionPublic;
@@ -971,10 +968,6 @@ void ObjectTests::testDestroyObject()
 void ObjectTests::testGetAttributeValue()
 {
 	CK_RV rv;
-	CK_UTF8CHAR pin[] = SLOT_0_USER1_PIN;
-	CK_ULONG pinLength = sizeof(pin) - 1;
-	CK_UTF8CHAR sopin[] = SLOT_0_SO1_PIN;
-	CK_ULONG sopinLength = sizeof(sopin) - 1;
 	CK_SESSION_HANDLE hSessionRO;
 	CK_SESSION_HANDLE hSessionRW;
 	CK_OBJECT_HANDLE hObjectSessionPublic;
@@ -1076,8 +1069,6 @@ void ObjectTests::testSetAttributeValue()
 	CK_RV rv;
 	CK_UTF8CHAR pin[] = SLOT_0_USER1_PIN;
 	CK_ULONG pinLength = sizeof(pin) - 1;
-	CK_UTF8CHAR sopin[] = SLOT_0_SO1_PIN;
-	CK_ULONG sopinLength = sizeof(sopin) - 1;
 	CK_SESSION_HANDLE hSessionRO;
 	CK_SESSION_HANDLE hSessionRW;
 	CK_OBJECT_HANDLE hObjectSessionPublic;
@@ -1165,8 +1156,6 @@ void ObjectTests::testFindObjects()
 	CK_RV rv;
 	CK_UTF8CHAR pin[] = SLOT_0_USER1_PIN;
 	CK_ULONG pinLength = sizeof(pin) - 1;
-	CK_UTF8CHAR sopin[] = SLOT_0_SO1_PIN;
-	CK_ULONG sopinLength = sizeof(sopin) - 1;
 	CK_SESSION_HANDLE hSessionRO;
 	CK_SESSION_HANDLE hSessionRW;
 	CK_OBJECT_HANDLE hObjectSessionPublic;
@@ -1274,8 +1263,6 @@ void ObjectTests::testGenerateKeys()
 	CK_RV rv;
 	CK_UTF8CHAR pin[] = SLOT_0_USER1_PIN;
 	CK_ULONG pinLength = sizeof(pin) - 1;
-	CK_UTF8CHAR sopin[] = SLOT_0_SO1_PIN;
-	CK_ULONG sopinLength = sizeof(sopin) - 1;
 	CK_SESSION_HANDLE hSessionRO;
 	CK_SESSION_HANDLE hSessionRW;
 

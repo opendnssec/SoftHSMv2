@@ -80,12 +80,12 @@ bool OSAttribute::isByteStringAttribute() const
 }
 
 // Retrieve the attribute value
-const bool OSAttribute::getBooleanValue() const
+bool OSAttribute::getBooleanValue() const
 {
 	return boolValue;
 }
 
-const unsigned long OSAttribute::getUnsignedLongValue() const
+unsigned long OSAttribute::getUnsignedLongValue() const
 {
 	return ulongValue;
 }

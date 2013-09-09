@@ -875,7 +875,7 @@ bool OSSLRSA::decrypt(PrivateKey* privateKey, const ByteString& encryptedData, B
 }
 
 // Key factory
-bool OSSLRSA::generateKeyPair(AsymmetricKeyPair** ppKeyPair, AsymmetricParameters* parameters, RNG* rng /* = NULL */)
+bool OSSLRSA::generateKeyPair(AsymmetricKeyPair** ppKeyPair, AsymmetricParameters* parameters, RNG* /*rng = NULL */)
 {
 	// Check parameters
 	if ((ppKeyPair == NULL) ||

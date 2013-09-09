@@ -467,7 +467,7 @@ bool OSSLDSA::verifyFinal(const ByteString& signature)
 }
 
 // Encryption functions
-bool OSSLDSA::encrypt(PublicKey* publicKey, const ByteString& data, ByteString& encryptedData, const std::string padding)
+bool OSSLDSA::encrypt(PublicKey* /*publicKey*/, const ByteString& /*data*/, ByteString& /*encryptedData*/, const std::string /*padding*/)
 {
 	ERROR_MSG("DSA does not support encryption");
 
@@ -475,7 +475,7 @@ bool OSSLDSA::encrypt(PublicKey* publicKey, const ByteString& data, ByteString& 
 }
 
 // Decryption functions
-bool OSSLDSA::decrypt(PrivateKey* privateKey, const ByteString& encryptedData, ByteString& data, const std::string padding)
+bool OSSLDSA::decrypt(PrivateKey* /*privateKey*/, const ByteString& /*encryptedData*/, ByteString& /*data*/, const std::string /*padding*/)
 {
 	ERROR_MSG("DSA does not support decryption");
 
@@ -483,7 +483,7 @@ bool OSSLDSA::decrypt(PrivateKey* privateKey, const ByteString& encryptedData, B
 }
 
 // Key factory
-bool OSSLDSA::generateKeyPair(AsymmetricKeyPair** ppKeyPair, AsymmetricParameters* parameters, RNG* rng /* = NULL */)
+bool OSSLDSA::generateKeyPair(AsymmetricKeyPair** ppKeyPair, AsymmetricParameters* parameters, RNG* /*rng = NULL */)
 {
 	// Check parameters
 	if ((ppKeyPair == NULL) ||
@@ -548,7 +548,7 @@ unsigned long OSSLDSA::getMaxKeySize()
 	return OPENSSL_DSA_MAX_MODULUS_BITS;
 }
 
-bool OSSLDSA::generateParameters(AsymmetricParameters** ppParams, void* parameters /* = NULL */, RNG* rng /* = NULL*/)
+bool OSSLDSA::generateParameters(AsymmetricParameters** ppParams, void* parameters /* = NULL */, RNG* /*rng = NULL*/)
 {
 	if ((ppParams == NULL) || (parameters == NULL))
 	{

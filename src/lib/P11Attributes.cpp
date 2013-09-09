@@ -50,7 +50,7 @@ P11Attribute::~P11Attribute()
 {
 }
 
-CK_RV P11Attribute::updateAttr(Token *token, bool isPrivate, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op)
+CK_RV P11Attribute::updateAttr(Token *token, bool isPrivate, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int /*op*/)
 {
 	ByteString value;
 	if (isPrivate)
@@ -380,7 +380,7 @@ bool P11AttrClass::setDefault()
 }
 
 // Update the value if allowed
-CK_RV P11AttrClass::updateAttr(Token *token, bool isPrivate, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op)
+CK_RV P11AttrClass::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op)
 {
 	OSAttribute* attr = NULL;
 
@@ -422,7 +422,7 @@ bool P11AttrKeyType::setDefault()
 }
 
 // Update the value if allowed
-CK_RV P11AttrKeyType::updateAttr(Token *token, bool isPrivate, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op)
+CK_RV P11AttrKeyType::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op)
 {
 	OSAttribute* attr = NULL;
 
@@ -466,7 +466,7 @@ bool P11AttrCertificateType::setDefault()
 }
 
 // Update the value if allowed
-CK_RV P11AttrCertificateType::updateAttr(Token *token, bool isPrivate, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op)
+CK_RV P11AttrCertificateType::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op)
 {
 	OSAttribute* attr = NULL;
 
@@ -508,7 +508,7 @@ bool P11AttrToken::setDefault()
 }
 
 // Update the value if allowed
-CK_RV P11AttrToken::updateAttr(Token *token, bool isPrivate, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op)
+CK_RV P11AttrToken::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op)
 {
 	OSAttribute attrTrue(true);
 	OSAttribute attrFalse(false);
@@ -551,7 +551,7 @@ bool P11AttrPrivate::setDefault()
 }
 
 // Update the value if allowed
-CK_RV P11AttrPrivate::updateAttr(Token *token, bool isPrivate, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op)
+CK_RV P11AttrPrivate::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op)
 {
 	OSAttribute attrTrue(true);
 	OSAttribute attrFalse(false);
@@ -594,7 +594,7 @@ bool P11AttrModifiable::setDefault()
 }
 
 // Update the value if allowed
-CK_RV P11AttrModifiable::updateAttr(Token *token, bool isPrivate, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op)
+CK_RV P11AttrModifiable::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op)
 {
 	OSAttribute attrTrue(true);
 	OSAttribute attrFalse(false);
@@ -648,7 +648,7 @@ bool P11AttrCopyable::setDefault()
 }
 
 // Update the value if allowed
-CK_RV P11AttrCopyable::updateAttr(Token *token, bool isPrivate, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op)
+CK_RV P11AttrCopyable::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op)
 {
 	OSAttribute attrTrue(true);
 	OSAttribute attrFalse(false);
@@ -771,7 +771,7 @@ bool P11AttrTrusted::setDefault()
 }
 
 // Update the value if allowed
-CK_RV P11AttrTrusted::updateAttr(Token *token, bool isPrivate, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op)
+CK_RV P11AttrTrusted::updateAttr(Token *token, bool /*isPrivate*/, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int /*op*/)
 {
 	OSAttribute attrTrue(true);
 	OSAttribute attrFalse(false);
@@ -814,7 +814,7 @@ bool P11AttrCertificateCategory::setDefault()
 }
 
 // Update the value if allowed
-CK_RV P11AttrCertificateCategory::updateAttr(Token *token, bool isPrivate, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op)
+CK_RV P11AttrCertificateCategory::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op)
 {
 	// Attribute specific checks
 
@@ -846,7 +846,7 @@ bool P11AttrStartDate::setDefault()
 }
 
 // Update the value if allowed
-CK_RV P11AttrStartDate::updateAttr(Token *token, bool isPrivate, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op)
+CK_RV P11AttrStartDate::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int /*op*/)
 {
 	// Attribute specific checks
 
@@ -873,7 +873,7 @@ bool P11AttrEndDate::setDefault()
 }
 
 // Update the value if allowed
-CK_RV P11AttrEndDate::updateAttr(Token *token, bool isPrivate, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op)
+CK_RV P11AttrEndDate::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int /*op*/)
 {
 	// Attribute specific checks
 
@@ -944,7 +944,7 @@ bool P11AttrJavaMidpSecurityDomain::setDefault()
 }
 
 // Update the value if allowed
-CK_RV P11AttrJavaMidpSecurityDomain::updateAttr(Token *token, bool isPrivate, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op)
+CK_RV P11AttrJavaMidpSecurityDomain::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op)
 {
 	// Attribute specific checks
 
@@ -976,7 +976,7 @@ bool P11AttrNameHashAlgorithm::setDefault()
 }
 
 // Update the value if allowed
-CK_RV P11AttrNameHashAlgorithm::updateAttr(Token *token, bool isPrivate, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op)
+CK_RV P11AttrNameHashAlgorithm::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op)
 {
 	// Attribute specific checks
 
@@ -1008,7 +1008,7 @@ bool P11AttrDerive::setDefault()
 }
 
 // Update the value if allowed
-CK_RV P11AttrDerive::updateAttr(Token *token, bool isPrivate, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op)
+CK_RV P11AttrDerive::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int /*op*/)
 {
 	OSAttribute attrTrue(true);
 	OSAttribute attrFalse(false);
@@ -1046,7 +1046,7 @@ bool P11AttrEncrypt::setDefault()
 }
 
 // Update the value if allowed
-CK_RV P11AttrEncrypt::updateAttr(Token *token, bool isPrivate, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op)
+CK_RV P11AttrEncrypt::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int /*op*/)
 {
 	OSAttribute attrTrue(true);
 	OSAttribute attrFalse(false);
@@ -1084,7 +1084,7 @@ bool P11AttrVerify::setDefault()
 }
 
 // Update the value if allowed
-CK_RV P11AttrVerify::updateAttr(Token *token, bool isPrivate, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op)
+CK_RV P11AttrVerify::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int /*op*/)
 {
 	OSAttribute attrTrue(true);
 	OSAttribute attrFalse(false);
@@ -1122,7 +1122,7 @@ bool P11AttrVerifyRecover::setDefault()
 }
 
 // Update the value if allowed
-CK_RV P11AttrVerifyRecover::updateAttr(Token *token, bool isPrivate, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op)
+CK_RV P11AttrVerifyRecover::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int /*op*/)
 {
 	OSAttribute attrTrue(true);
 	OSAttribute attrFalse(false);
@@ -1160,7 +1160,7 @@ bool P11AttrWrap::setDefault()
 }
 
 // Update the value if allowed
-CK_RV P11AttrWrap::updateAttr(Token *token, bool isPrivate, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op)
+CK_RV P11AttrWrap::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int /*op*/)
 {
 	OSAttribute attrTrue(true);
 	OSAttribute attrFalse(false);
@@ -1198,7 +1198,7 @@ bool P11AttrDecrypt::setDefault()
 }
 
 // Update the value if allowed
-CK_RV P11AttrDecrypt::updateAttr(Token *token, bool isPrivate, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op)
+CK_RV P11AttrDecrypt::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int /*op*/)
 {
 	OSAttribute attrTrue(true);
 	OSAttribute attrFalse(false);
@@ -1236,7 +1236,7 @@ bool P11AttrSign::setDefault()
 }
 
 // Update the value if allowed
-CK_RV P11AttrSign::updateAttr(Token *token, bool isPrivate, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op)
+CK_RV P11AttrSign::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int /*op*/)
 {
 	OSAttribute attrTrue(true);
 	OSAttribute attrFalse(false);
@@ -1274,7 +1274,7 @@ bool P11AttrSignRecover::setDefault()
 }
 
 // Update the value if allowed
-CK_RV P11AttrSignRecover::updateAttr(Token *token, bool isPrivate, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op)
+CK_RV P11AttrSignRecover::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int /*op*/)
 {
 	OSAttribute attrTrue(true);
 	OSAttribute attrFalse(false);
@@ -1312,7 +1312,7 @@ bool P11AttrUnwrap::setDefault()
 }
 
 // Update the value if allowed
-CK_RV P11AttrUnwrap::updateAttr(Token *token, bool isPrivate, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op)
+CK_RV P11AttrUnwrap::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int /*op*/)
 {
 	OSAttribute attrTrue(true);
 	OSAttribute attrFalse(false);
@@ -1350,7 +1350,7 @@ bool P11AttrLocal::setDefault()
 }
 
 // Update the value if allowed
-CK_RV P11AttrLocal::updateAttr(Token *token, bool isPrivate, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op)
+CK_RV P11AttrLocal::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR /*pValue*/, CK_ULONG /*ulValueLen*/, int /*op*/)
 {
 	return CKR_ATTRIBUTE_READ_ONLY;
 }
@@ -1367,7 +1367,7 @@ bool P11AttrKeyGenMechanism::setDefault()
 }
 
 // Update the value if allowed
-CK_RV P11AttrKeyGenMechanism::updateAttr(Token *token, bool isPrivate, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op)
+CK_RV P11AttrKeyGenMechanism::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR /*pValue*/, CK_ULONG /*ulValueLen*/, int /*op*/)
 {
 	return CKR_ATTRIBUTE_READ_ONLY;
 }
@@ -1384,7 +1384,7 @@ bool P11AttrAlwaysSensitive::setDefault()
 }
 
 // Update the value if allowed
-CK_RV P11AttrAlwaysSensitive::updateAttr(Token *token, bool isPrivate, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op)
+CK_RV P11AttrAlwaysSensitive::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR /*pValue*/, CK_ULONG /*ulValueLen*/, int /*op*/)
 {
 	return CKR_ATTRIBUTE_READ_ONLY;
 }
@@ -1401,7 +1401,7 @@ bool P11AttrNeverExtractable::setDefault()
 }
 
 // Update the value if allowed
-CK_RV P11AttrNeverExtractable::updateAttr(Token *token, bool isPrivate, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op)
+CK_RV P11AttrNeverExtractable::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR /*pValue*/, CK_ULONG /*ulValueLen*/, int /*op*/)
 {
 	return CKR_ATTRIBUTE_READ_ONLY;
 }
@@ -1419,7 +1419,7 @@ bool P11AttrSensitive::setDefault()
 }
 
 // Update the value if allowed
-CK_RV P11AttrSensitive::updateAttr(Token *token, bool isPrivate, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op)
+CK_RV P11AttrSensitive::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op)
 {
 	OSAttribute attrTrue(true);
 	OSAttribute attrFalse(false);
@@ -1472,7 +1472,7 @@ bool P11AttrExtractable::setDefault()
 }
 
 // Update the value if allowed
-CK_RV P11AttrExtractable::updateAttr(Token *token, bool isPrivate, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op)
+CK_RV P11AttrExtractable::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op)
 {
 	OSAttribute attrTrue(true);
 	OSAttribute attrFalse(false);
@@ -1519,7 +1519,7 @@ bool P11AttrWrapWithTrusted::setDefault()
 }
 
 // Update the value if allowed
-CK_RV P11AttrWrapWithTrusted::updateAttr(Token *token, bool isPrivate, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op)
+CK_RV P11AttrWrapWithTrusted::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op)
 {
 	OSAttribute attrTrue(true);
 	OSAttribute attrFalse(false);
@@ -1565,7 +1565,7 @@ bool P11AttrAlwaysAuthenticate::setDefault()
 }
 
 // Update the value if allowed
-CK_RV P11AttrAlwaysAuthenticate::updateAttr(Token *token, bool isPrivate, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op)
+CK_RV P11AttrAlwaysAuthenticate::updateAttr(Token* /*token*/, bool isPrivate, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int /*op*/)
 {
 	OSAttribute attrTrue(true);
 	OSAttribute attrFalse(false);
@@ -1731,7 +1731,7 @@ bool P11AttrModulusBits::setDefault()
 }
 
 // Update the value if allowed
-CK_RV P11AttrModulusBits::updateAttr(Token *token, bool isPrivate, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op)
+CK_RV P11AttrModulusBits::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op)
 {
 	// Attribute specific checks
 
@@ -1797,7 +1797,7 @@ bool P11AttrPrimeBits::setDefault()
 }
 
 // Update the value if allowed
-CK_RV P11AttrPrimeBits::updateAttr(Token *token, bool isPrivate, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op)
+CK_RV P11AttrPrimeBits::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op)
 {
 	// Attribute specific checks
 

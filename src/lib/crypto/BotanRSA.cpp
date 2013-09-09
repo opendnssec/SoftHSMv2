@@ -686,7 +686,7 @@ bool BotanRSA::decrypt(PrivateKey* privateKey, const ByteString& encryptedData, 
 }
 
 // Key factory
-bool BotanRSA::generateKeyPair(AsymmetricKeyPair** ppKeyPair, AsymmetricParameters* parameters, RNG* rng /* = NULL */)
+bool BotanRSA::generateKeyPair(AsymmetricKeyPair** ppKeyPair, AsymmetricParameters* parameters, RNG* /*rng = NULL */)
 {
 	// Check parameters
 	if ((ppKeyPair == NULL) ||

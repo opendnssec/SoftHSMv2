@@ -322,7 +322,7 @@ bool BotanGOST::verifyFinal(const ByteString& signature)
 }
 
 // Encryption functions
-bool BotanGOST::encrypt(PublicKey* publicKey, const ByteString& data, ByteString& encryptedData, const std::string padding)
+bool BotanGOST::encrypt(PublicKey* /*publicKey*/, const ByteString& /*data*/, ByteString& /*encryptedData*/, const std::string /*padding*/)
 {
 	ERROR_MSG("GOST does not support encryption");
 
@@ -330,7 +330,7 @@ bool BotanGOST::encrypt(PublicKey* publicKey, const ByteString& data, ByteString
 }
 
 // Decryption functions
-bool BotanGOST::decrypt(PrivateKey* privateKey, const ByteString& encryptedData, ByteString& data, const std::string padding)
+bool BotanGOST::decrypt(PrivateKey* /*privateKey*/, const ByteString& /*encryptedData*/, ByteString& /*data*/, const std::string /*padding*/)
 {
 	ERROR_MSG("GOST does not support decryption");
 
@@ -338,7 +338,7 @@ bool BotanGOST::decrypt(PrivateKey* privateKey, const ByteString& encryptedData,
 }
 
 // Key factory
-bool BotanGOST::generateKeyPair(AsymmetricKeyPair** ppKeyPair, AsymmetricParameters* parameters, RNG* rng /* = NULL */)
+bool BotanGOST::generateKeyPair(AsymmetricKeyPair** ppKeyPair, AsymmetricParameters* parameters, RNG* /*rng = NULL */)
 {
 	// Check parameters
 	if ((ppKeyPair == NULL) ||

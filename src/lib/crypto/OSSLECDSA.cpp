@@ -91,21 +91,21 @@ bool OSSLECDSA::sign(PrivateKey* privateKey, const ByteString& dataToSign, ByteS
 	return true;
 }
 
-bool OSSLECDSA::signInit(PrivateKey* privateKey, const std::string mechanism)
+bool OSSLECDSA::signInit(PrivateKey* /*privateKey*/, const std::string /*mechanism*/)
 {
 	ERROR_MSG("ECDSA does not support multi part signing");
 
 	return false;
 }
 
-bool OSSLECDSA::signUpdate(const ByteString& dataToSign)
+bool OSSLECDSA::signUpdate(const ByteString& /*dataToSign*/)
 {
 	ERROR_MSG("ECDSA does not support multi part signing");
 
 	return false;
 }
 
-bool OSSLECDSA::signFinal(ByteString& signature)
+bool OSSLECDSA::signFinal(ByteString& /*signature*/)
 {
 	ERROR_MSG("ECDSA does not support multi part signing");
 
@@ -178,21 +178,21 @@ bool OSSLECDSA::verify(PublicKey* publicKey, const ByteString& originalData, con
 	return true;
 }
 
-bool OSSLECDSA::verifyInit(PublicKey* publicKey, const std::string mechanism)
+bool OSSLECDSA::verifyInit(PublicKey* /*publicKey*/, const std::string /*mechanism*/)
 {
 	ERROR_MSG("ECDSA does not support multi part verifying");
 
 	return false;
 }
 
-bool OSSLECDSA::verifyUpdate(const ByteString& originalData)
+bool OSSLECDSA::verifyUpdate(const ByteString& /*originalData*/)
 {
 	ERROR_MSG("ECDSA does not support multi part verifying");
 
 	return false;
 }
 
-bool OSSLECDSA::verifyFinal(const ByteString& signature)
+bool OSSLECDSA::verifyFinal(const ByteString& /*signature*/)
 {
 	ERROR_MSG("ECDSA does not support multi part verifying");
 
@@ -200,7 +200,7 @@ bool OSSLECDSA::verifyFinal(const ByteString& signature)
 }
 
 // Encryption functions
-bool OSSLECDSA::encrypt(PublicKey* publicKey, const ByteString& data, ByteString& encryptedData, const std::string padding)
+bool OSSLECDSA::encrypt(PublicKey* /*publicKey*/, const ByteString& /*data*/, ByteString& /*encryptedData*/, const std::string /*padding*/)
 {
 	ERROR_MSG("ECDSA does not support encryption");
 
@@ -208,7 +208,7 @@ bool OSSLECDSA::encrypt(PublicKey* publicKey, const ByteString& data, ByteString
 }
 
 // Decryption functions
-bool OSSLECDSA::decrypt(PrivateKey* privateKey, const ByteString& encryptedData, ByteString& data, const std::string padding)
+bool OSSLECDSA::decrypt(PrivateKey* /*privateKey*/, const ByteString& /*encryptedData*/, ByteString& /*data*/, const std::string /*padding*/)
 {
 	ERROR_MSG("ECDSA does not support decryption");
 
@@ -216,7 +216,7 @@ bool OSSLECDSA::decrypt(PrivateKey* privateKey, const ByteString& encryptedData,
 }
 
 // Key factory
-bool OSSLECDSA::generateKeyPair(AsymmetricKeyPair** ppKeyPair, AsymmetricParameters* parameters, RNG* rng /* = NULL */)
+bool OSSLECDSA::generateKeyPair(AsymmetricKeyPair** ppKeyPair, AsymmetricParameters* parameters, RNG* /*rng = NULL */)
 {
 	// Check parameters
 	if ((ppKeyPair == NULL) ||

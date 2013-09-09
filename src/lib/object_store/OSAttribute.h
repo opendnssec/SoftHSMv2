@@ -60,8 +60,8 @@ public:
 	bool isByteStringAttribute() const;
 
 	// Retrieve the attribute value
-	const bool getBooleanValue() const;
-	const unsigned long getUnsignedLongValue() const;
+	bool getBooleanValue() const;
+	unsigned long getUnsignedLongValue() const;
 	const ByteString& getByteStringValue() const;
 
 	// Set the attribute value

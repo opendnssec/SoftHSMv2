@@ -41,7 +41,7 @@ SymmetricAlgorithm::SymmetricAlgorithm()
 	currentOperation = NONE;
 }
 
-bool SymmetricAlgorithm::encryptInit(const SymmetricKey* key, const std::string mode /* = "CBC" */, const ByteString& IV /* = ByteString() */)
+bool SymmetricAlgorithm::encryptInit(const SymmetricKey* key, const std::string mode /* = "CBC" */, const ByteString& /*IV = ByteString() */)
 {
 	if ((key == NULL) || (currentOperation != NONE))
 	{
@@ -57,7 +57,7 @@ bool SymmetricAlgorithm::encryptInit(const SymmetricKey* key, const std::string 
 	return true;
 }
 
-bool SymmetricAlgorithm::encryptUpdate(const ByteString& data, ByteString& encryptedData)
+bool SymmetricAlgorithm::encryptUpdate(const ByteString& /*data*/, ByteString& /*encryptedData*/)
 {
 	if (currentOperation != ENCRYPT)
 	{
@@ -67,7 +67,7 @@ bool SymmetricAlgorithm::encryptUpdate(const ByteString& data, ByteString& encry
 	return true;
 }
 
-bool SymmetricAlgorithm::encryptFinal(ByteString& encryptedData)
+bool SymmetricAlgorithm::encryptFinal(ByteString& /*encryptedData*/)
 {
 	if (currentOperation != ENCRYPT)
 	{
@@ -79,7 +79,7 @@ bool SymmetricAlgorithm::encryptFinal(ByteString& encryptedData)
 	return true;
 }
 
-bool SymmetricAlgorithm::decryptInit(const SymmetricKey* key, const std::string mode /* = "CBC" */, const ByteString& IV /* = ByteString() */)
+bool SymmetricAlgorithm::decryptInit(const SymmetricKey* key, const std::string mode /* = "CBC" */, const ByteString& /*IV = ByteString() */)
 {
 	if ((key == NULL) || (currentOperation != NONE))
 	{
@@ -96,7 +96,7 @@ bool SymmetricAlgorithm::decryptInit(const SymmetricKey* key, const std::string 
 }
 
 
-bool SymmetricAlgorithm::decryptUpdate(const ByteString& encryptedData, ByteString& data)
+bool SymmetricAlgorithm::decryptUpdate(const ByteString& /*encryptedData*/, ByteString& /*data*/)
 {
 	if (currentOperation != DECRYPT)
 	{
@@ -106,7 +106,7 @@ bool SymmetricAlgorithm::decryptUpdate(const ByteString& encryptedData, ByteStri
 	return true;
 }
 
-bool SymmetricAlgorithm::decryptFinal(ByteString& data)
+bool SymmetricAlgorithm::decryptFinal(ByteString& /*data*/)
 {
 	if (currentOperation != DECRYPT)
 	{

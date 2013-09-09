@@ -211,7 +211,7 @@ std::string ByteString::hex_str() const
 }
 
 // Return the long value
-const unsigned long ByteString::long_val() const
+unsigned long ByteString::long_val() const
 {
 	// Convert the first 8 bytes of the string to an unsigned long value
 	unsigned long rv = 0;

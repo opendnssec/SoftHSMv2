@@ -47,6 +47,7 @@ void softHSMLog(const int loglevel, const char* functionName, const char* fileNa
 #ifdef SOFTHSM_LOG_FILE_AND_LINE
 	prepend << fileName << "(" << lineNo << ")";
 #ifndef SOFTHSM_LOG_FUNCTION_NAME
+	(void) functionName;
 	prepend << ":";
 #endif // !SOFTHSM_LOG_FUNCTION_NAME
 	prepend << " ";

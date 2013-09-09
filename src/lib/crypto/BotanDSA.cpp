@@ -492,7 +492,7 @@ bool BotanDSA::verifyFinal(const ByteString& signature)
 }
 
 // Encryption functions
-bool BotanDSA::encrypt(PublicKey* publicKey, const ByteString& data, ByteString& encryptedData, const std::string padding)
+bool BotanDSA::encrypt(PublicKey* /*publicKey*/, const ByteString& /*data*/, ByteString& /*encryptedData*/, const std::string /*padding*/)
 {
 	ERROR_MSG("DSA does not support encryption");
 
@@ -500,7 +500,7 @@ bool BotanDSA::encrypt(PublicKey* publicKey, const ByteString& data, ByteString&
 }
 
 // Decryption functions
-bool BotanDSA::decrypt(PrivateKey* privateKey, const ByteString& encryptedData, ByteString& data, const std::string padding)
+bool BotanDSA::decrypt(PrivateKey* /*privateKey*/, const ByteString& /*encryptedData*/, ByteString& /*data*/, const std::string /*padding*/)
 {
 	ERROR_MSG("DSA does not support decryption");
 
@@ -508,7 +508,7 @@ bool BotanDSA::decrypt(PrivateKey* privateKey, const ByteString& encryptedData, 
 }
 
 // Key factory
-bool BotanDSA::generateKeyPair(AsymmetricKeyPair** ppKeyPair, AsymmetricParameters* parameters, RNG* rng /* = NULL */)
+bool BotanDSA::generateKeyPair(AsymmetricKeyPair** ppKeyPair, AsymmetricParameters* parameters, RNG* /*rng = NULL */)
 {
 	// Check parameters
 	if ((ppKeyPair == NULL) ||
@@ -568,7 +568,7 @@ unsigned long BotanDSA::getMaxKeySize()
 	return 10000;
 }
 
-bool BotanDSA::generateParameters(AsymmetricParameters** ppParams, void* parameters /* = NULL */, RNG* rng /* = NULL*/)
+bool BotanDSA::generateParameters(AsymmetricParameters** ppParams, void* parameters /* = NULL */, RNG* /*rng = NULL*/)
 {
 	if ((ppParams == NULL) || (parameters == NULL))
 	{

@@ -83,7 +83,7 @@ public:
 	std::string hex_str() const;
 
 	// Return the long value
-	const unsigned long long_val() const;
+	unsigned long long_val() const;
 
 	// Cut of the first part of the string and convert it to a long value
 	unsigned long firstLong();

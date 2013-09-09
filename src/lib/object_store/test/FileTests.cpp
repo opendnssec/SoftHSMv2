@@ -47,6 +47,7 @@ void FileTests::setUp()
 {
 	// FIXME: this only works on *NIX/BSD, not on other platforms
 	int rv = system("rm -rf testdir");
+	(void) rv;
 	CPPUNIT_ASSERT(!system("mkdir testdir"));
 }
 

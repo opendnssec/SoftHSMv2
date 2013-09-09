@@ -49,7 +49,7 @@
 // UNLI = CKR_USER_NOT_LOGGED_IN
 
 // Can we do read operations?
-CK_RV haveRead(CK_STATE sessionState, CK_BBOOL isTokenObject, CK_BBOOL isPrivateObject)
+CK_RV haveRead(CK_STATE sessionState, CK_BBOOL /*isTokenObject*/, CK_BBOOL isPrivateObject)
 {
 	switch (sessionState)
 	{

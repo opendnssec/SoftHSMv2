@@ -53,7 +53,7 @@ bool MacAlgorithm::signInit(const SymmetricKey* key)
 	return true;
 }
 
-bool MacAlgorithm::signUpdate(const ByteString& dataToSign)
+bool MacAlgorithm::signUpdate(const ByteString& /*dataToSign*/)
 {
 	if (currentOperation != SIGN)
 	{
@@ -63,7 +63,7 @@ bool MacAlgorithm::signUpdate(const ByteString& dataToSign)
 	return true;
 }
 
-bool MacAlgorithm::signFinal(ByteString& signature)
+bool MacAlgorithm::signFinal(ByteString& /*signature*/)
 {
 	if (currentOperation != SIGN)
 	{
@@ -89,7 +89,7 @@ bool MacAlgorithm::verifyInit(const SymmetricKey* key)
 	return true;
 }
 
-bool MacAlgorithm::verifyUpdate(const ByteString& originalData)
+bool MacAlgorithm::verifyUpdate(const ByteString& /*originalData*/)
 {
 	if (currentOperation != VERIFY)
 	{
@@ -99,7 +99,7 @@ bool MacAlgorithm::verifyUpdate(const ByteString& originalData)
 	return true;
 }
 
-bool MacAlgorithm::verifyFinal(ByteString& signature)
+bool MacAlgorithm::verifyFinal(ByteString& /*signature*/)
 {
 	if (currentOperation != VERIFY)
 	{
@@ -122,7 +122,7 @@ unsigned long MacAlgorithm::getMaxKeySize()
 	return 0;
 }
 
-void MacAlgorithm::recycleKey(SymmetricKey* toRecycle)
+void MacAlgorithm::recycleKey(SymmetricKey* /*toRecycle*/)
 {
 	delete currentKey;
 }

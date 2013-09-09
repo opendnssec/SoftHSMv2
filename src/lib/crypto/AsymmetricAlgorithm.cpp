@@ -63,7 +63,7 @@ bool AsymmetricAlgorithm::signInit(PrivateKey* privateKey, const std::string mec
 	return true;
 }
 
-bool AsymmetricAlgorithm::signUpdate(const ByteString& dataToSign)
+bool AsymmetricAlgorithm::signUpdate(const ByteString& /*dataToSign*/)
 {
 	if (currentOperation != SIGN)
 	{
@@ -73,7 +73,7 @@ bool AsymmetricAlgorithm::signUpdate(const ByteString& dataToSign)
 	return true;
 }
 
-bool AsymmetricAlgorithm::signFinal(ByteString& signature)
+bool AsymmetricAlgorithm::signFinal(ByteString& /*signature*/)
 {
 	if (currentOperation != SIGN)
 	{
@@ -108,7 +108,7 @@ bool AsymmetricAlgorithm::verifyInit(PublicKey* publicKey, const std::string mec
 	return true;
 }
 
-bool AsymmetricAlgorithm::verifyUpdate(const ByteString& originalData)
+bool AsymmetricAlgorithm::verifyUpdate(const ByteString& /*originalData*/)
 {
 	if (currentOperation != VERIFY)
 	{
@@ -118,7 +118,7 @@ bool AsymmetricAlgorithm::verifyUpdate(const ByteString& originalData)
 	return true;
 }
 
-bool AsymmetricAlgorithm::verifyFinal(const ByteString& signature)
+bool AsymmetricAlgorithm::verifyFinal(const ByteString& /*signature*/)
 {
 	if (currentOperation != VERIFY)
 	{
@@ -132,17 +132,17 @@ bool AsymmetricAlgorithm::verifyFinal(const ByteString& signature)
 	return true;
 }
 
-bool AsymmetricAlgorithm::generateParameters(AsymmetricParameters** ppParams, void* parameters /* = NULL */, RNG* rng /* = NULL*/)
+bool AsymmetricAlgorithm::generateParameters(AsymmetricParameters** /*ppParams*/, void* /*parameters = NULL*/, RNG* /*rng = NULL*/)
 {
 	return false;
 }
 
-bool AsymmetricAlgorithm::deriveKey(SymmetricKey **ppSymmetricKey, PublicKey* publicKey, PrivateKey* privateKey)
+bool AsymmetricAlgorithm::deriveKey(SymmetricKey** /*ppSymmetricKey*/, PublicKey* /*publicKey*/, PrivateKey* /*privateKey*/)
 {
 	return false;
 }
 
-bool AsymmetricAlgorithm::reconstructParameters(AsymmetricParameters** ppParams, ByteString& serialisedData)
+bool AsymmetricAlgorithm::reconstructParameters(AsymmetricParameters** /*ppParams*/, ByteString& /*serialisedData*/)
 {
 	return false;
 }

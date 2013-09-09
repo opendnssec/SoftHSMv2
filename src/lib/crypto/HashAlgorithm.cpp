@@ -52,7 +52,7 @@ bool HashAlgorithm::hashInit()
 	return true;
 }
 
-bool HashAlgorithm::hashUpdate(const ByteString& data)
+bool HashAlgorithm::hashUpdate(const ByteString& /*data*/)
 {
 	if (currentOperation != HASHING)
 	{
@@ -62,7 +62,7 @@ bool HashAlgorithm::hashUpdate(const ByteString& data)
 	return true;
 }
 
-bool HashAlgorithm::hashFinal(ByteString& hashedData)
+bool HashAlgorithm::hashFinal(ByteString& /*hashedData*/)
 {
 	if (currentOperation != HASHING)
 	{
@@ -70,7 +70,7 @@ bool HashAlgorithm::hashFinal(ByteString& hashedData)
 	}
 
 	currentOperation = NONE;
-	
+
 	return true;
 }
 

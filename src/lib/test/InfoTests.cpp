@@ -282,7 +282,7 @@ void InfoTests::testGetMechanismInfo()
 	rv = C_GetMechanismInfo(SLOT_INIT_TOKEN, CKM_VENDOR_DEFINED, &info);
 	CPPUNIT_ASSERT(rv == CKR_MECHANISM_INVALID);
 
-	for (int i = 0; i < ulMechCount; i++)
+	for (unsigned int i = 0; i < ulMechCount; i++)
 	{
 		rv = C_GetMechanismInfo(SLOT_INIT_TOKEN, pMechanismList[i], &info);
 		CPPUNIT_ASSERT(rv == CKR_OK);

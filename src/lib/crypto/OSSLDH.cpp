@@ -43,21 +43,21 @@
 #include <openssl/err.h>
 
 // Signing functions
-bool OSSLDH::signInit(PrivateKey* privateKey, const std::string mechanism)
+bool OSSLDH::signInit(PrivateKey* /*privateKey*/, const std::string /*mechanism*/)
 {
 	ERROR_MSG("DH does not support signing");
 
 	return false;
 }
 
-bool OSSLDH::signUpdate(const ByteString& dataToSign)
+bool OSSLDH::signUpdate(const ByteString& /*dataToSign*/)
 {
 	ERROR_MSG("DH does not support signing");
 
 	return false;
 }
 
-bool OSSLDH::signFinal(ByteString& signature)
+bool OSSLDH::signFinal(ByteString& /*signature*/)
 {	
 	ERROR_MSG("DH does not support signing");
 
@@ -65,21 +65,21 @@ bool OSSLDH::signFinal(ByteString& signature)
 }
 
 // Verification functions
-bool OSSLDH::verifyInit(PublicKey* publicKey, const std::string mechanism)
+bool OSSLDH::verifyInit(PublicKey* /*publicKey*/, const std::string /*mechanism*/)
 {
 	ERROR_MSG("DH does not support verifying");
 
 	return false;
 }
 
-bool OSSLDH::verifyUpdate(const ByteString& originalData)
+bool OSSLDH::verifyUpdate(const ByteString& /*originalData*/)
 {
 	ERROR_MSG("DH does not support verifying");
 
 	return false;
 }
 
-bool OSSLDH::verifyFinal(const ByteString& signature)
+bool OSSLDH::verifyFinal(const ByteString& /*signature*/)
 {
 	ERROR_MSG("DH does not support verifying");
 
@@ -87,7 +87,7 @@ bool OSSLDH::verifyFinal(const ByteString& signature)
 }
 
 // Encryption functions
-bool OSSLDH::encrypt(PublicKey* publicKey, const ByteString& data, ByteString& encryptedData, const std::string padding)
+bool OSSLDH::encrypt(PublicKey* /*publicKey*/, const ByteString& /*data*/, ByteString& /*encryptedData*/, const std::string /*padding*/)
 {
 	ERROR_MSG("DH does not support encryption");
 
@@ -95,7 +95,7 @@ bool OSSLDH::encrypt(PublicKey* publicKey, const ByteString& data, ByteString& e
 }
 
 // Decryption functions
-bool OSSLDH::decrypt(PrivateKey* privateKey, const ByteString& encryptedData, ByteString& data, const std::string padding)
+bool OSSLDH::decrypt(PrivateKey* /*privateKey*/, const ByteString& /*encryptedData*/, ByteString& /*data*/, const std::string /*padding*/)
 {
 	ERROR_MSG("DH does not support decryption");
 
@@ -103,7 +103,7 @@ bool OSSLDH::decrypt(PrivateKey* privateKey, const ByteString& encryptedData, By
 }
 
 // Key factory
-bool OSSLDH::generateKeyPair(AsymmetricKeyPair** ppKeyPair, AsymmetricParameters* parameters, RNG* rng /* = NULL */)
+bool OSSLDH::generateKeyPair(AsymmetricKeyPair** ppKeyPair, AsymmetricParameters* parameters, RNG* /*rng = NULL */)
 {
 	// Check parameters
 	if ((ppKeyPair == NULL) ||
@@ -215,7 +215,7 @@ unsigned long OSSLDH::getMaxKeySize()
 	return OPENSSL_DH_MAX_MODULUS_BITS;
 }
 
-bool OSSLDH::generateParameters(AsymmetricParameters** ppParams, void* parameters /* = NULL */, RNG* rng /* = NULL*/)
+bool OSSLDH::generateParameters(AsymmetricParameters** ppParams, void* parameters /* = NULL */, RNG* /*rng = NULL*/)
 {
 	if ((ppParams == NULL) || (parameters == NULL))
 	{

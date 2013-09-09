@@ -261,7 +261,6 @@ bool OSSLGOST::verify(PublicKey* publicKey, const ByteString& originalData, cons
 		// Perform the verification operation
 		OSSLGOSTPublicKey* osslKey = (OSSLGOSTPublicKey*) publicKey;
 		EVP_PKEY* pkey = osslKey->getOSSLKey();
-		size_t outLen;
 
 		if (pkey == NULL)
 		{
@@ -410,7 +409,7 @@ bool OSSLGOST::verifyFinal(const ByteString& signature)
 }
 
 // Encryption functions
-bool OSSLGOST::encrypt(PublicKey* publicKey, const ByteString& data, ByteString& encryptedData, const std::string padding)
+bool OSSLGOST::encrypt(PublicKey* /*publicKey*/, const ByteString& /*data*/, ByteString& /*encryptedData*/, const std::string /*padding*/)
 {
 	ERROR_MSG("GOST does not support encryption");
 
@@ -418,7 +417,7 @@ bool OSSLGOST::encrypt(PublicKey* publicKey, const ByteString& data, ByteString&
 }
 
 // Decryption functions
-bool OSSLGOST::decrypt(PrivateKey* privateKey, const ByteString& encryptedData, ByteString& data, const std::string padding)
+bool OSSLGOST::decrypt(PrivateKey* /*privateKey*/, const ByteString& /*encryptedData*/, ByteString& /*data*/, const std::string /*padding*/)
 {
 	ERROR_MSG("GOST does not support decryption");
 
@@ -426,7 +425,7 @@ bool OSSLGOST::decrypt(PrivateKey* privateKey, const ByteString& encryptedData, 
 }
 
 // Key factory
-bool OSSLGOST::generateKeyPair(AsymmetricKeyPair** ppKeyPair, AsymmetricParameters* parameters, RNG* rng /* = NULL */)
+bool OSSLGOST::generateKeyPair(AsymmetricKeyPair** ppKeyPair, AsymmetricParameters* parameters, RNG* /*rng = NULL */)
 {
 	// Check parameters
 	if ((ppKeyPair == NULL) ||

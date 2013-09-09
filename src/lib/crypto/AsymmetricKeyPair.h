@@ -45,7 +45,7 @@ public:
 	// Base constructors
 	AsymmetricKeyPair() { }
 
-	AsymmetricKeyPair(const AsymmetricKeyPair& in) { }
+	AsymmetricKeyPair(const AsymmetricKeyPair& /*in*/) { }
 
 	// Destructor
 	virtual ~AsymmetricKeyPair() { }

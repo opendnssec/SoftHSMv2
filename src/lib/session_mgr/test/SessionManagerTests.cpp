@@ -49,9 +49,10 @@ void SessionManagerTests::tearDown()
 
 void SessionManagerTests::testOpenClose()
 {
-	CK_SESSION_HANDLE hSession;
-	CK_RV rv;
+	// TODO ???
 
+	// CK_SESSION_HANDLE hSession;
+	// CK_RV rv;
 	// rv = SessionManager::i()->openSession()
 	// CPPUNIT_ASSERT(rv == CKR_OK);
 }

@@ -45,21 +45,21 @@
 #include <botan/pubkey.h>
 
 // Signing functions
-bool BotanDH::signInit(PrivateKey* privateKey, const std::string mechanism)
+bool BotanDH::signInit(PrivateKey* /*privateKey*/, const std::string /*mechanism*/)
 {
 	ERROR_MSG("DH does not support signing");
 
 	return false;
 }
 
-bool BotanDH::signUpdate(const ByteString& dataToSign)
+bool BotanDH::signUpdate(const ByteString& /*dataToSign*/)
 {
 	ERROR_MSG("DH does not support signing");
 
 	return false;
 }
 
-bool BotanDH::signFinal(ByteString& signature)
+bool BotanDH::signFinal(ByteString& /*signature*/)
 {
 	ERROR_MSG("DH does not support signing");
 
@@ -67,21 +67,21 @@ bool BotanDH::signFinal(ByteString& signature)
 }
 
 // Verification functions
-bool BotanDH::verifyInit(PublicKey* publicKey, const std::string mechanism)
+bool BotanDH::verifyInit(PublicKey* /*publicKey*/, const std::string /*mechanism*/)
 {
 	ERROR_MSG("DH does not support verifying");
 
 	return false;
 }
 
-bool BotanDH::verifyUpdate(const ByteString& originalData)
+bool BotanDH::verifyUpdate(const ByteString& /*originalData*/)
 {
 	ERROR_MSG("DH does not support verifying");
 
 	return false;
 }
 
-bool BotanDH::verifyFinal(const ByteString& signature)
+bool BotanDH::verifyFinal(const ByteString& /*signature*/)
 {
 	ERROR_MSG("DH does not support verifying");
 
@@ -89,7 +89,7 @@ bool BotanDH::verifyFinal(const ByteString& signature)
 }
 
 // Encryption functions
-bool BotanDH::encrypt(PublicKey* publicKey, const ByteString& data, ByteString& encryptedData, const std::string padding)
+bool BotanDH::encrypt(PublicKey* /*publicKey*/, const ByteString& /*data*/, ByteString& /*encryptedData*/, const std::string /*padding*/)
 {
 	ERROR_MSG("DH does not support encryption");
 
@@ -97,7 +97,7 @@ bool BotanDH::encrypt(PublicKey* publicKey, const ByteString& data, ByteString& 
 }
 
 // Decryption functions
-bool BotanDH::decrypt(PrivateKey* privateKey, const ByteString& encryptedData, ByteString& data, const std::string padding)
+bool BotanDH::decrypt(PrivateKey* /*privateKey*/, const ByteString& /*encryptedData*/, ByteString& /*data*/, const std::string /*padding*/)
 {
 	ERROR_MSG("DH does not support decryption");
 
@@ -105,7 +105,7 @@ bool BotanDH::decrypt(PrivateKey* privateKey, const ByteString& encryptedData, B
 }
 
 // Key factory
-bool BotanDH::generateKeyPair(AsymmetricKeyPair** ppKeyPair, AsymmetricParameters* parameters, RNG* rng /* = NULL */)
+bool BotanDH::generateKeyPair(AsymmetricKeyPair** ppKeyPair, AsymmetricParameters* parameters, RNG* /*rng = NULL */)
 {
 	// Check parameters
 	if ((ppKeyPair == NULL) ||
@@ -218,7 +218,7 @@ unsigned long BotanDH::getMaxKeySize()
 	return 4096;
 }
 
-bool BotanDH::generateParameters(AsymmetricParameters** ppParams, void* parameters /* = NULL */, RNG* rng /* = NULL*/)
+bool BotanDH::generateParameters(AsymmetricParameters** ppParams, void* parameters /* = NULL */, RNG* /*rng = NULL*/)
 {
 	if ((ppParams == NULL) || (parameters == NULL))
 	{

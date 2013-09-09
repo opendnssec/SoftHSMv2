@@ -43,7 +43,7 @@ public:
 	// Base constructors
 	PublicKey() { }
 
-	PublicKey(const PublicKey& in) { }
+	PublicKey(const PublicKey& /*in*/) { }
 
 	// Destructor
 	virtual ~PublicKey() { }
