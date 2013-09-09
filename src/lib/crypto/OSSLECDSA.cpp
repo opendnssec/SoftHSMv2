@@ -78,12 +78,18 @@ bool OSSLECDSA::sign(PrivateKey* privateKey, const ByteString& dataToSign, ByteS
 	// Perform the signature operation
 	size_t len = pk->getOrderLength();
 	if (len == 0)
+	{
+		ERROR_MSG("Could not get the order length");
 		return false;
+	}
 	signature.resize(2 * len);
 	memset(&signature[0], 0, 2 * len);
 	ECDSA_SIG *sig = ECDSA_do_sign(dataToSign.const_byte_str(), dataToSign.size(), eckey);
 	if (sig == NULL)
+	{
+		ERROR_MSG("ECDSA sign failed (0x%08X)", ERR_get_error());
 		return false;
+	}
 	// Store the 2 values with padding
 	BN_bn2bin(sig->r, &signature[len - BN_num_bytes(sig->r)]);
 	BN_bn2bin(sig->s, &signature[2 * len - BN_num_bytes(sig->s)]);
@@ -146,12 +152,21 @@ bool OSSLECDSA::verify(PublicKey* publicKey, const ByteString& originalData, con
 	// Perform the verify operation
 	size_t len = pk->getOrderLength();
 	if (len == 0)
+	{
+		ERROR_MSG("Could not get the order length");
 		return false;
+	}
 	if (signature.size() != 2 * len)
+	{
+		ERROR_MSG("Invalid buffer length");
 		return false;
+	}
 	ECDSA_SIG* sig = ECDSA_SIG_new();
 	if (sig == NULL)
+	{
+		ERROR_MSG("Could not create an ECDSA_SIG object");
 		return false;
+	}
 	if (sig->r != NULL)
 		BN_clear_free(sig->r);
 	const unsigned char *s = signature.const_byte_str();
@@ -161,6 +176,7 @@ bool OSSLECDSA::verify(PublicKey* publicKey, const ByteString& originalData, con
 	sig->s = BN_bin2bn(s + len, len, NULL);
 	if (sig->r == NULL || sig->s == NULL)
 	{
+		ERROR_MSG("Could not add data to the ECDSA_SIG object");
 		ECDSA_SIG_free(sig);
 		return false;
 	}
