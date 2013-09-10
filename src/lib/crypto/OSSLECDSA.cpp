@@ -75,6 +75,9 @@ bool OSSLECDSA::sign(PrivateKey* privateKey, const ByteString& dataToSign, ByteS
 		return false;
 	}
 
+	// Use the OpenSSL implementation and not any engine
+	ECDSA_set_method(eckey, ECDSA_OpenSSL());
+
 	// Perform the signature operation
 	size_t len = pk->getOrderLength();
 	if (len == 0)
@@ -148,6 +151,9 @@ bool OSSLECDSA::verify(PublicKey* publicKey, const ByteString& originalData, con
 
 		return false;
 	}
+
+	// Use the OpenSSL implementation and not any engine
+	ECDSA_set_method(eckey, ECDSA_OpenSSL());
 
 	// Perform the verify operation
 	size_t len = pk->getOrderLength();

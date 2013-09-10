@@ -41,6 +41,9 @@
 OSSLDHPublicKey::OSSLDHPublicKey()
 {
 	dh = DH_new();
+
+	// Use the OpenSSL implementation and not any engine
+	DH_set_method(dh, DH_OpenSSL());
 }
 
 OSSLDHPublicKey::OSSLDHPublicKey(const DH* inDH)

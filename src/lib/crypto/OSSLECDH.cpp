@@ -179,6 +179,10 @@ bool OSSLECDH::deriveKey(SymmetricKey **ppSymmetricKey, PublicKey* publicKey, Pr
 		return false;
 	}
 
+	// Use the OpenSSL implementation and not any engine
+	ECDH_set_method(pub, ECDH_OpenSSL());
+	ECDH_set_method(priv, ECDH_OpenSSL());
+
 	// Derive the secret
 	ByteString secret;
 	secret.resize(((OSSLECPublicKey *)publicKey)->getOrderLength());;
