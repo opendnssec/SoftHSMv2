@@ -1751,7 +1751,7 @@ syslog_stop ()
 	fi
 	
 	if kill -TERM "$_SYSLOG_TRACE_PID" 2>/dev/null; then
-		wait "$_SYSLOG_TRACE_PID"
+		wait "$_SYSLOG_TRACE_PID" 2>/dev/null
 		unset _SYSLOG_TRACE_PID
 	fi
 	
@@ -1903,6 +1903,8 @@ syslog_grep_count ()
 	local count="$1"
 	local grep_string="$2"
 	local count_found
+	# create a non-local variable so the caller can get the actually value if they want
+	syslog_grep_count_variable=0
 	
 	if [ ! -f "_syslog.$BUILD_TAG" ]; then
 		echo "syslog_grep_count: No syslog file to grep from!" >&2
@@ -1911,6 +1913,7 @@ syslog_grep_count ()
 
 	echo "syslog_grep_count: greping syslog, should find $count of: $grep_string"
 	count_found=`$GREP -- "$grep_string" "_syslog.$BUILD_TAG" 2>/dev/null | wc -l 2>/dev/null`
+	syslog_grep_count_variable=$count_found
 	
 	if [ "$count_found" -eq "$count" ] 2>/dev/null; then
 		return 0
