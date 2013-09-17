@@ -1149,7 +1149,7 @@ class P11AttrValueLen : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrValueLen(OSObject* osobject, CK_ULONG inchecks) : P11Attribute(osobject) { type = CKA_VALUE_LEN; checks = ck2; }
+	P11AttrValueLen(OSObject* osobject, CK_ULONG inchecks = 0) : P11Attribute(osobject) { type = CKA_VALUE_LEN; checks = ck2|inchecks; }
 
 protected:
 	// Set the default value of the attribute

@@ -1854,10 +1854,6 @@ CK_RV SoftHSM::C_Encrypt(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pData, CK_ULONG
 	if (session->getOpType() != SESSION_OP_ENCRYPT)
 		return CKR_OPERATION_NOT_INITIALIZED;
 
-	AsymmetricAlgorithm* asymCrypto = session->getAsymmetricCryptoOp();
-	const char *mechanism = session->getMechanism();
-	PublicKey* publicKey = session->getPublicKey();
-
 	if (session->getSymmetricCryptoOp() != NULL)
 		return SymEncrypt(session, pData, ulDataLen,
 				  pEncryptedData, pulEncryptedDataLen);

@@ -1885,7 +1885,7 @@ bool P11AttrValueLen::setDefault()
 }
 
 // Update the value if allowed
-CK_RV P11AttrValueLen::updateAttr(Token *token, bool isPrivate, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op)
+CK_RV P11AttrValueLen::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op)
 {
 	// Attribute specific checks
 
