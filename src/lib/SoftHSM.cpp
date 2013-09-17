@@ -67,14 +67,17 @@
 
 #include <stdlib.h>
 
-static CK_RV newP11Object(CK_OBJECT_CLASS objClass, CK_KEY_TYPE keyType, std::auto_ptr< P11Object > &p11object)
+static CK_RV newP11Object(CK_OBJECT_CLASS objClass, CK_KEY_TYPE keyType, CK_CERTIFICATE_TYPE certType, std::auto_ptr< P11Object > &p11object)
 {
 	switch(objClass) {
 		case CKO_DATA:
 			p11object.reset( new P11DataObj);
 			break;
 		case CKO_CERTIFICATE:
-			p11object.reset( new P11X509CertificateObj );
+			if (certType == CKC_X_509)
+				p11object.reset( new P11X509CertificateObj );
+			else
+				return CKR_ATTRIBUTE_VALUE_INVALID;
 			break;
 		case CKO_PUBLIC_KEY:
 			if (keyType == CKK_RSA)
@@ -229,9 +232,12 @@ static CK_RV newP11Object(OSObject *object, std::auto_ptr< P11Object > &p11objec
 {
 	CK_OBJECT_CLASS objClass = object->getAttribute(CKA_CLASS)->getUnsignedLongValue();
 	CK_KEY_TYPE keyType = CKK_RSA;
+	CK_CERTIFICATE_TYPE certType = CKC_X_509;
 	if (object->attributeExists(CKA_KEY_TYPE))
 		keyType = object->getAttribute(CKA_KEY_TYPE)->getUnsignedLongValue();
-	CK_RV rv = newP11Object(objClass,keyType,p11object);
+	if (object->attributeExists(CKA_CERTIFICATE_TYPE))
+		certType = object->getAttribute(CKA_CERTIFICATE_TYPE)->getUnsignedLongValue();
+	CK_RV rv = newP11Object(objClass,keyType,certType,p11object);
 	if (rv != CKR_OK)
 		return rv;
 	if (!p11object->init(object))
@@ -7023,7 +7029,7 @@ CK_RV SoftHSM::CreateObject(CK_SESSION_HANDLE hSession, CK_ATTRIBUTE_PTR pTempla
 	}
 
 	std::auto_ptr< P11Object > p11object;
-	rv = newP11Object(objClass,keyType,p11object);
+	rv = newP11Object(objClass,keyType,certType,p11object);
 	if (rv != CKR_OK)
 		return rv;
 
