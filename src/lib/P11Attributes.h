@@ -1134,7 +1134,7 @@ class P11AttrGost28147Params : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrGost28147Params(OSObject* osobject, CK_ULONG inchecks = 0) : P11Attribute(osobject) { type = CKA_GOST28147_PARAMS; checks = ck8|inchecks; }
+	P11AttrGost28147Params(OSObject* osobject, CK_ULONG inchecks = 0) : P11Attribute(osobject) { type = CKA_GOST28147_PARAMS; checks = inchecks; }
 
 protected:
 	// Set the default value of the attribute
@@ -1149,7 +1149,7 @@ class P11AttrValueLen : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrValueLen(OSObject* osobject, CK_ULONG inchecks = 0) : P11Attribute(osobject) { type = CKA_VALUE_LEN; checks = ck2|inchecks; }
+	P11AttrValueLen(OSObject* osobject, CK_ULONG inchecks = 0) : P11Attribute(osobject) { type = CKA_VALUE_LEN; checks = ck2|ck3|inchecks; }
 
 protected:
 	// Set the default value of the attribute

@@ -107,21 +107,32 @@ static CK_RV newP11Object(CK_OBJECT_CLASS objClass, CK_KEY_TYPE keyType, std::au
 			break;
 		case CKO_SECRET_KEY:
 			if ((keyType == CKK_GENERIC_SECRET) ||
-			    (keyType == CKK_AES) ||
-			    (keyType == CKK_DES) ||
-			    (keyType == CKK_DES2) ||
-			    (keyType == CKK_DES3) ||
 			    (keyType == CKK_MD5_HMAC) ||
 			    (keyType == CKK_SHA_1_HMAC) ||
 			    (keyType == CKK_SHA224_HMAC) ||
 			    (keyType == CKK_SHA256_HMAC) ||
 			    (keyType == CKK_SHA384_HMAC) ||
-			    (keyType == CKK_SHA512_HMAC) ||
-			    (keyType == CKK_GOST28147))
+			    (keyType == CKK_SHA512_HMAC))
 			{
-				P11SecretKeyObj* key = new P11SecretKeyObj;
+				P11GenericSecretKeyObj* key = new P11GenericSecretKeyObj;
 				p11object.reset(key);
 				key->setKeyType(keyType);
+			}
+			else if (keyType == CKK_AES)
+			{
+				p11object.reset( new P11AESSecretKeyObj );
+			}
+			else if ((keyType == CKK_DES) ||
+				 (keyType == CKK_DES2) ||
+				 (keyType == CKK_DES3))
+			{
+				P11DESSecretKeyObj* key = new P11DESSecretKeyObj;
+				p11object.reset(key);
+				key->setKeyType(keyType);
+			}
+			else if (keyType == CKK_GOST28147)
+			{
+				p11object.reset( new P11GOSTSecretKeyObj );
 			}
 			else
 				return CKR_ATTRIBUTE_VALUE_INVALID;
