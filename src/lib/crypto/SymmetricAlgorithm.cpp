@@ -41,7 +41,7 @@ SymmetricAlgorithm::SymmetricAlgorithm()
 	currentOperation = NONE;
 }
 
-bool SymmetricAlgorithm::encryptInit(const SymmetricKey* key, const std::string mode /* = "CBC" */, const ByteString& /*IV = ByteString() */)
+bool SymmetricAlgorithm::encryptInit(const SymmetricKey* key, const std::string mode /* = "CBC" */, const ByteString& /*IV = ByteString() */, bool padding /* = true */)
 {
 	if ((key == NULL) || (currentOperation != NONE))
 	{
@@ -81,7 +81,7 @@ bool SymmetricAlgorithm::encryptFinal(ByteString& /*encryptedData*/)
 	return true;
 }
 
-bool SymmetricAlgorithm::decryptInit(const SymmetricKey* key, const std::string mode /* = "CBC" */, const ByteString& /*IV = ByteString() */)
+bool SymmetricAlgorithm::decryptInit(const SymmetricKey* key, const std::string mode /* = "CBC" */, const ByteString& /*IV = ByteString() */, bool padding /* = true */)
 {
 	if ((key == NULL) || (currentOperation != NONE))
 	{
