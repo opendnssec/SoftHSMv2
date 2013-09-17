@@ -61,7 +61,7 @@ bool DESKey::setKeyBits(const ByteString& keybits)
 		{
 			return false;
 		}
-	}	
+	}
 
 	keyData = keybits;
 

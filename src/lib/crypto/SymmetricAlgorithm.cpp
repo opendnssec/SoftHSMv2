@@ -141,15 +141,13 @@ bool SymmetricAlgorithm::generateKey(SymmetricKey& key, RNG* rng /* = NULL */)
 	}
 
 	ByteString keyBits;
-	
+
 	if (!rng->generateRandom(keyBits, key.getBitLen()/8))
 	{
 		return false;
 	}
 
-	key.setKeyBits(keyBits);
-
-	return true;
+	return key.setKeyBits(keyBits);
 }
 
 bool SymmetricAlgorithm::reconstructKey(SymmetricKey& key, const ByteString& serialisedData)

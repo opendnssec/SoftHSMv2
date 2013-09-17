@@ -40,7 +40,7 @@ std::string BotanDES::getCipher() const
 	if (currentKey == NULL) return "";
 
 	// Check currentKey bit length; 3DES only supports 56-bit, 112-bit or 168-bit keys 
-	if ((currentKey->getBitLen() != 56) && 
+	if ((currentKey->getBitLen() != 56) &&
 	    (currentKey->getBitLen() != 112) &&
             (currentKey->getBitLen() != 168))
 	{
@@ -132,7 +132,7 @@ bool BotanDES::generateKey(SymmetricKey& key, RNG* rng /* = NULL */)
 	}
 
 	ByteString keyBits;
-	
+
 	// don't count parity bit
 	if (!rng->generateRandom(keyBits, key.getBitLen()/7))
 	{
@@ -147,9 +147,7 @@ bool BotanDES::generateKey(SymmetricKey& key, RNG* rng /* = NULL */)
 	}
 
 
-	key.setKeyBits(keyBits);
-
-	return true;
+	return key.setKeyBits(keyBits);
 }
 
 size_t BotanDES::getBlockSize() const

@@ -53,7 +53,7 @@ bool SymmetricKey::setKeyBits(const ByteString& keybits)
 	if ((bitLen > 0) && ((keybits.size() * 8) != bitLen))
 	{
 		return false;
-	}	
+	}
 
 	keyData = keybits;
 
