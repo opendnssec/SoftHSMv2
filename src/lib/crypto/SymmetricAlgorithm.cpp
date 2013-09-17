@@ -75,6 +75,8 @@ bool SymmetricAlgorithm::encryptFinal(ByteString& /*encryptedData*/)
 	}
 
 	currentOperation = NONE;
+	currentKey = NULL;
+	currentCipherMode = "invalid";
 
 	return true;
 }
@@ -114,11 +116,18 @@ bool SymmetricAlgorithm::decryptFinal(ByteString& /*data*/)
 	}
 
 	currentOperation = NONE;
+	currentKey = NULL;
+	currentCipherMode = "invalid";
 
 	return true;
 }
 
 // Key factory
+void SymmetricAlgorithm::recycleKey(SymmetricKey* toRecycle)
+{
+	delete currentKey;
+}
+
 bool SymmetricAlgorithm::generateKey(SymmetricKey& key, RNG* rng /* = NULL */)
 {
 	if (rng == NULL)

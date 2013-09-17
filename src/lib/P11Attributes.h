@@ -1141,4 +1141,22 @@ protected:
 	virtual bool setDefault();
 };
 
+/*****************************************
+ * CKA_VALUE_LEN
+ *****************************************/
+
+class P11AttrValueLen : public P11Attribute
+{
+public:
+	// Constructor
+	P11AttrValueLen(OSObject* osobject, CK_ULONG inchecks) : P11Attribute(osobject) { type = CKA_VALUE_LEN; checks = ck2; }
+
+protected:
+	// Set the default value of the attribute
+	virtual bool setDefault();
+
+	// Update the value if allowed
+	virtual CK_RV updateAttr(Token *token, bool isPrivate, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op);
+};
+
 #endif // !_SOFTHSM_V2_P11ATTRIBUTES_H

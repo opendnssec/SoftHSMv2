@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010 SURFnet bv
+ * Copyright (c) 2012 SURFnet
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,62 +25,39 @@
  */
 
 /*****************************************************************************
- SymmetricKey.cpp
+ SymmetricAlgorithmTests.h
 
- Base class for symmetric key classes
+ Contains test cases for symmetrical algorithms (i.e., AES and DES)
  *****************************************************************************/
 
-#include "config.h"
-#include "ByteString.h"
-#include "Serialisable.h"
-#include "SymmetricKey.h"
+#ifndef _SOFTHSM_V2_SYMENCRYPTDECRYPTTESTS_H
+#define _SOFTHSM_V2_SYMENCRYPTDECRYPTTESTS_H
 
-// Base constructors
-SymmetricKey::SymmetricKey(size_t bitLen /* = 0 */)
+#include <cppunit/extensions/HelperMacros.h>
+#include "cryptoki.h"
+
+class SymmetricAlgorithmTests : public CppUnit::TestFixture
 {
-	this->bitLen = bitLen;
-}
+	CPPUNIT_TEST_SUITE(SymmetricAlgorithmTests);
+	CPPUNIT_TEST(testAesEncryptDecrypt);
+	CPPUNIT_TEST(testDesEncryptDecrypt);
+	CPPUNIT_TEST_SUITE_END();
 
-SymmetricKey::SymmetricKey(const SymmetricKey& in)
-{
-	keyData = in.keyData;
-	bitLen = in.bitLen;
-}
+public:
+	void testAesEncryptDecrypt();
+	void testDesEncryptDecrypt();
 
-// Set the key
-bool SymmetricKey::setKeyBits(const ByteString& keybits)
-{
-	if ((bitLen > 0) && ((keybits.size() * 8) != bitLen))
-	{
-		return false;
-	}	
+	void setUp();
+	void tearDown();
 
-	keyData = keybits;
+protected:
+	CK_RV generateAesKey(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_OBJECT_HANDLE &hKey);
+	CK_RV generateDesKey(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_OBJECT_HANDLE &hKey);
+	CK_RV generateDes2Key(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_OBJECT_HANDLE &hKey);
+	CK_RV generateDes3Key(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_OBJECT_HANDLE &hKey);
+	void aesEncryptDecrypt(CK_MECHANISM_TYPE mechanismType, CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hKey);
+	void desEncryptDecrypt(CK_MECHANISM_TYPE mechanismType, CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hKey);
+	void des3EncryptDecrypt(CK_MECHANISM_TYPE mechanismType, CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hKey);
+};
 
-	return true;
-}
-
-// Get the key
-const ByteString& SymmetricKey::getKeyBits() const
-{
-	return keyData;
-}
-
-// Serialisation
-ByteString SymmetricKey::serialise() const
-{
-	return keyData;
-}
-
-// Set the bit length
-void SymmetricKey::setBitLen(const size_t bitLen)
-{
-	this->bitLen = bitLen;
-}
-
-// Retrieve the bit length
-size_t SymmetricKey::getBitLen() const
-{
-	return bitLen;
-}
-
+#endif // !_SOFTHSM_V2_SYMENCRYPTDECRYPTTESTS_H

@@ -39,6 +39,9 @@
 #include "MutexFactory.h"
 #include "CryptoFactory.h"
 #include "AsymmetricAlgorithm.h"
+#include "SymmetricAlgorithm.h"
+#include "AESKey.h"
+#include "DESKey.h"
 #include "RNG.h"
 #include "RSAParameters.h"
 #include "RSAPublicKey.h"
@@ -104,6 +107,10 @@ static CK_RV newP11Object(CK_OBJECT_CLASS objClass, CK_KEY_TYPE keyType, std::au
 			break;
 		case CKO_SECRET_KEY:
 			if ((keyType == CKK_GENERIC_SECRET) ||
+			    (keyType == CKK_AES) ||
+			    (keyType == CKK_DES) ||
+			    (keyType == CKK_DES2) ||
+			    (keyType == CKK_DES3) ||
 			    (keyType == CKK_MD5_HMAC) ||
 			    (keyType == CKK_SHA_1_HMAC) ||
 			    (keyType == CKK_SHA224_HMAC) ||
@@ -1463,8 +1470,149 @@ CK_RV SoftHSM::C_FindObjectsFinal(CK_SESSION_HANDLE hSession)
 	return CKR_OK;
 }
 
-// Initialise encryption using the specified object and mechanism
-CK_RV SoftHSM::C_EncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechanism, CK_OBJECT_HANDLE hKey)
+// Encrypt*/Decrypt*() is for Symmetrical ciphers too
+static bool isSymMechanism(CK_MECHANISM_PTR pMechanism)
+{
+	if (pMechanism == NULL_PTR) return false;
+
+	switch(pMechanism->mechanism) {
+		case CKM_DES_ECB:
+		case CKM_DES_CBC:
+		case CKM_DES3_ECB:
+		case CKM_DES3_CBC:
+		case CKM_AES_ECB:
+		case CKM_AES_CBC:
+			return true;
+		default:
+			return false;
+	}
+}
+
+// SymAlgorithm version of C_EncryptInit
+CK_RV SoftHSM::SymEncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechanism, CK_OBJECT_HANDLE hKey)
+{
+	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
+
+	if (pMechanism == NULL_PTR) return CKR_ARGUMENTS_BAD;
+
+	// Get the session
+	Session* session = (Session*)handleManager->getSession(hSession);
+	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
+
+	// Check if we have another operation
+	if (session->getOpType() != SESSION_OP_NONE) return CKR_OPERATION_ACTIVE;
+
+	// Get the token
+	Token* token = session->getToken();
+	if (token == NULL) return CKR_GENERAL_ERROR;
+
+	// Check the key handle.
+	OSObject *key = (OSObject *)handleManager->getObject(hKey);
+	if (key == NULL_PTR) return CKR_OBJECT_HANDLE_INVALID;
+
+	// Check if key can be used for encryption
+        if (!key->attributeExists(CKA_ENCRYPT) || key->getAttribute(CKA_ENCRYPT)->getBooleanValue() == false)
+		return CKR_KEY_FUNCTION_NOT_PERMITTED;
+
+	// Get the symmetric algorithm matching the mechanism
+	SymmetricAlgorithm* cipher = NULL;
+	std::string mode;
+	ByteString iv;
+	size_t bb = 8;
+	switch(pMechanism->mechanism) {
+		case CKM_DES_ECB:
+			cipher = CryptoFactory::i()->getSymmetricAlgorithm("des");
+			mode = "ecb";
+			bb = 7;
+			break;
+		case CKM_DES_CBC:
+			cipher = CryptoFactory::i()->getSymmetricAlgorithm("des");
+			mode = "cbc";
+			if (pMechanism->pParameter == NULL_PTR ||
+			    pMechanism->ulParameterLen == 0)
+			{
+				DEBUG_MSG("CBC mode requires an init vector");
+				return CKR_ARGUMENTS_BAD;
+			}
+			iv.resize(pMechanism->ulParameterLen);
+			memcpy(&iv[0], pMechanism->pParameter, pMechanism->ulParameterLen);
+			bb = 7;
+			break;
+		case CKM_DES3_ECB:
+			cipher = CryptoFactory::i()->getSymmetricAlgorithm("3des");
+			mode = "ecb";
+			bb = 7;
+			break;
+		case CKM_DES3_CBC:
+			cipher = CryptoFactory::i()->getSymmetricAlgorithm("3des");
+			mode = "cbc";
+			if (pMechanism->pParameter == NULL_PTR ||
+			    pMechanism->ulParameterLen == 0)
+			{
+				DEBUG_MSG("CBC mode requires an init vector");
+				return CKR_ARGUMENTS_BAD;
+			}
+			iv.resize(pMechanism->ulParameterLen);
+			memcpy(&iv[0], pMechanism->pParameter, pMechanism->ulParameterLen);
+			bb = 7;
+			break;
+		case CKM_AES_ECB:
+			cipher = CryptoFactory::i()->getSymmetricAlgorithm("aes");
+			mode = "ecb";
+			break;
+		case CKM_AES_CBC:
+			cipher = CryptoFactory::i()->getSymmetricAlgorithm("aes");
+			mode = "cbc";
+			if (pMechanism->pParameter == NULL_PTR ||
+			    pMechanism->ulParameterLen == 0)
+			{
+				DEBUG_MSG("CBC mode requires an init vector");
+				return CKR_ARGUMENTS_BAD;
+			}
+			iv.resize(pMechanism->ulParameterLen);
+			memcpy(&iv[0], pMechanism->pParameter, pMechanism->ulParameterLen);
+			break;
+		default:
+			return CKR_MECHANISM_INVALID;
+	}
+	if (cipher == NULL) return CKR_MECHANISM_INVALID;
+
+	SymmetricKey* secretkey = new SymmetricKey();
+	if (secretkey == NULL)
+	{
+		CryptoFactory::i()->recycleSymmetricAlgorithm(cipher);
+		return CKR_HOST_MEMORY;
+	}
+
+	if (getSymmetricKey(secretkey, token, key) != CKR_OK)
+	{
+		cipher->recycleKey(secretkey);
+		CryptoFactory::i()->recycleSymmetricAlgorithm(cipher);
+		return CKR_GENERAL_ERROR;
+	}
+
+	// adjust key bit length
+	secretkey->setBitLen(secretkey->getKeyBits().size() * bb);
+
+	// Initialize encryption
+	if (!cipher->encryptInit(secretkey, mode, iv, false))
+	{
+		cipher->recycleKey(secretkey);
+		CryptoFactory::i()->recycleSymmetricAlgorithm(cipher);
+		return CKR_MECHANISM_INVALID;
+	}
+
+	session->setOpType(SESSION_OP_ENCRYPT);
+	session->setSymmetricCryptoOp(cipher);
+	session->setAllowMultiPartOp(false);
+	session->setAllowSinglePartOp(true);
+	session->setSymmetricKey(secretkey);
+
+	return CKR_OK;
+}
+
+// AsymAlgorithm version of C_EncryptInit
+CK_RV SoftHSM::AsymEncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechanism, CK_OBJECT_HANDLE hKey)
 {
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
 
@@ -1562,22 +1710,76 @@ CK_RV SoftHSM::C_EncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMecha
 	return CKR_OK;
 }
 
-// Perform a single operation encryption operation in the specified session
-CK_RV SoftHSM::C_Encrypt(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pData, CK_ULONG ulDataLen, CK_BYTE_PTR pEncryptedData, CK_ULONG_PTR pulEncryptedDataLen)
+// Initialise encryption using the specified object and mechanism
+CK_RV SoftHSM::C_EncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechanism, CK_OBJECT_HANDLE hKey)
 {
-	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
+	if (isSymMechanism(pMechanism))
+		return SymEncryptInit(hSession, pMechanism, hKey);
+	else
+		return AsymEncryptInit(hSession, pMechanism, hKey);
+}
 
-	if (pData == NULL_PTR) return CKR_ARGUMENTS_BAD;
-	if (pulEncryptedDataLen == NULL_PTR) return CKR_ARGUMENTS_BAD;
-
-	// Get the session
-	Session* session = (Session*)handleManager->getSession(hSession);
-	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
-
-	// Check if we are doing the correct operation
-	if (session->getOpType() != SESSION_OP_ENCRYPT)
+// SymAlgorithm version of C_Encrypt
+static CK_RV SymEncrypt(Session* session, CK_BYTE_PTR pData, CK_ULONG ulDataLen, CK_BYTE_PTR pEncryptedData, CK_ULONG_PTR pulEncryptedDataLen)
+{
+	SymmetricAlgorithm* cipher = session->getSymmetricCryptoOp();
+	if (cipher == NULL || !session->getAllowSinglePartOp())
+	{
+		session->resetOp();
 		return CKR_OPERATION_NOT_INITIALIZED;
+	}
 
+	// Check data size
+	if (ulDataLen % cipher->getBlockSize() != 0)
+	{
+		session->resetOp();
+		return CKR_DATA_LEN_RANGE;
+	}
+
+	if (pEncryptedData == NULL_PTR)
+	{
+		*pulEncryptedDataLen = ulDataLen;
+		return CKR_OK;
+	}
+
+	// Check buffer size
+	if (*pulEncryptedDataLen < ulDataLen)
+	{
+		*pulEncryptedDataLen = ulDataLen;
+		return CKR_BUFFER_TOO_SMALL;
+	}
+
+	// Get the data
+	ByteString data(pData, ulDataLen);
+	ByteString encryptedData;
+
+	// Encrypt the data
+	if (!cipher->encryptUpdate(data, encryptedData))
+	{
+		session->resetOp();
+		return CKR_GENERAL_ERROR;
+	}
+
+	// Finalize encryption
+	ByteString encryptedFinal;
+	if (!cipher->encryptFinal(encryptedFinal))
+	{
+		session->resetOp();
+		return CKR_GENERAL_ERROR;
+	}
+	encryptedData += encryptedFinal;
+	encryptedData.resize(ulDataLen);
+
+	memcpy(pEncryptedData, encryptedData.byte_str(), encryptedData.size());
+	*pulEncryptedDataLen = encryptedData.size();
+
+	session->resetOp();
+	return CKR_OK;
+}
+
+// AsymAlgorithm version of C_Encrypt
+static CK_RV AsymEncrypt(Session* session, CK_BYTE_PTR pData, CK_ULONG ulDataLen, CK_BYTE_PTR pEncryptedData, CK_ULONG_PTR pulEncryptedDataLen)
+{
 	AsymmetricAlgorithm* asymCrypto = session->getAsymmetricCryptoOp();
 	const char *mechanism = session->getMechanism();
 	PublicKey* publicKey = session->getPublicKey();
@@ -1636,6 +1838,34 @@ CK_RV SoftHSM::C_Encrypt(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pData, CK_ULONG
 	return CKR_OK;
 }
 
+// Perform a single operation encryption operation in the specified session
+CK_RV SoftHSM::C_Encrypt(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pData, CK_ULONG ulDataLen, CK_BYTE_PTR pEncryptedData, CK_ULONG_PTR pulEncryptedDataLen)
+{
+	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
+
+	if (pData == NULL_PTR) return CKR_ARGUMENTS_BAD;
+	if (pulEncryptedDataLen == NULL_PTR) return CKR_ARGUMENTS_BAD;
+
+	// Get the session
+	Session* session = (Session*)handleManager->getSession(hSession);
+	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
+
+	// Check if we are doing the correct operation
+	if (session->getOpType() != SESSION_OP_ENCRYPT)
+		return CKR_OPERATION_NOT_INITIALIZED;
+
+	AsymmetricAlgorithm* asymCrypto = session->getAsymmetricCryptoOp();
+	const char *mechanism = session->getMechanism();
+	PublicKey* publicKey = session->getPublicKey();
+
+	if (session->getSymmetricCryptoOp() != NULL)
+		return SymEncrypt(session, pData, ulDataLen,
+				  pEncryptedData, pulEncryptedDataLen);
+	else
+		return AsymEncrypt(session, pData, ulDataLen,
+				   pEncryptedData, pulEncryptedDataLen);
+}
+
 // Feed data to the running encryption operation in a session
 CK_RV SoftHSM::C_EncryptUpdate(CK_SESSION_HANDLE hSession, CK_BYTE_PTR /*pData*/, CK_ULONG /*ulDataLen*/, CK_BYTE_PTR /*pEncryptedData*/, CK_ULONG_PTR /*pulEncryptedDataLen*/)
 {
@@ -1664,8 +1894,131 @@ CK_RV SoftHSM::C_EncryptFinal(CK_SESSION_HANDLE hSession, CK_BYTE_PTR /*pEncrypt
 	return CKR_FUNCTION_NOT_SUPPORTED;
 }
 
-// Initialise decryption using the specified object
-CK_RV SoftHSM::C_DecryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechanism, CK_OBJECT_HANDLE hKey)
+// SymAlgorithm version of C_DecryptInit
+CK_RV SoftHSM::SymDecryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechanism, CK_OBJECT_HANDLE hKey)
+{
+	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
+
+	if (pMechanism == NULL_PTR) return CKR_ARGUMENTS_BAD;
+
+	// Get the session
+	Session* session = (Session*)handleManager->getSession(hSession);
+	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
+
+	// Get the token
+	Token* token = session->getToken();
+	if (token == NULL) return CKR_GENERAL_ERROR;
+
+	// Check if we have another operation
+	if (session->getOpType() != SESSION_OP_NONE) return CKR_OPERATION_ACTIVE;
+
+	// Check the key handle.
+	OSObject *key = (OSObject *)handleManager->getObject(hKey);
+	if (key == NULL_PTR) return CKR_OBJECT_HANDLE_INVALID;
+
+	// Check if key can be used for decryption
+        if (!key->attributeExists(CKA_DECRYPT) || key->getAttribute(CKA_DECRYPT)->getBooleanValue() == false)
+		return CKR_KEY_FUNCTION_NOT_PERMITTED;
+
+	// Get the symmetric algorithm matching the mechanism
+	SymmetricAlgorithm* cipher = NULL;
+	std::string mode;
+	ByteString iv;
+	size_t bb = 8;
+	switch(pMechanism->mechanism) {
+		case CKM_DES_ECB:
+			cipher = CryptoFactory::i()->getSymmetricAlgorithm("des");
+			mode = "ecb";
+			bb = 7;
+			break;
+		case CKM_DES_CBC:
+			cipher = CryptoFactory::i()->getSymmetricAlgorithm("des");
+			mode = "cbc";
+			if (pMechanism->pParameter == NULL_PTR ||
+			    pMechanism->ulParameterLen == 0)
+			{
+				DEBUG_MSG("CBC mode requires an init vector");
+				return CKR_ARGUMENTS_BAD;
+			}
+			iv.resize(pMechanism->ulParameterLen);
+			memcpy(&iv[0], pMechanism->pParameter, pMechanism->ulParameterLen);
+			bb = 7;
+			break;
+		case CKM_DES3_ECB:
+			cipher = CryptoFactory::i()->getSymmetricAlgorithm("3des");
+			mode = "ecb";
+			bb = 7;
+			break;
+		case CKM_DES3_CBC:
+			cipher = CryptoFactory::i()->getSymmetricAlgorithm("3des");
+			mode = "cbc";
+			if (pMechanism->pParameter == NULL_PTR ||
+			    pMechanism->ulParameterLen == 0)
+			{
+				DEBUG_MSG("CBC mode requires an init vector");
+				return CKR_ARGUMENTS_BAD;
+			}
+			iv.resize(pMechanism->ulParameterLen);
+			memcpy(&iv[0], pMechanism->pParameter, pMechanism->ulParameterLen);
+			bb = 7;
+			break;
+		case CKM_AES_ECB:
+			cipher = CryptoFactory::i()->getSymmetricAlgorithm("aes");
+			mode = "ecb";
+			break;
+		case CKM_AES_CBC:
+			cipher = CryptoFactory::i()->getSymmetricAlgorithm("aes");
+			mode = "cbc";
+			if (pMechanism->pParameter == NULL_PTR ||
+			    pMechanism->ulParameterLen == 0)
+			{
+				DEBUG_MSG("CBC mode requires an init vector");
+				return CKR_ARGUMENTS_BAD;
+			}
+			iv.resize(pMechanism->ulParameterLen);
+			memcpy(&iv[0], pMechanism->pParameter, pMechanism->ulParameterLen);
+			break;
+		default:
+			return CKR_MECHANISM_INVALID;
+	}
+	if (cipher == NULL) return CKR_MECHANISM_INVALID;
+
+	SymmetricKey* secretkey = new SymmetricKey();
+	if (secretkey == NULL)
+	{
+		CryptoFactory::i()->recycleSymmetricAlgorithm(cipher);
+		return CKR_HOST_MEMORY;
+	}
+
+	if (getSymmetricKey(secretkey, token, key) != CKR_OK)
+	{
+		cipher->recycleKey(secretkey);
+		CryptoFactory::i()->recycleSymmetricAlgorithm(cipher);
+		return CKR_GENERAL_ERROR;
+	}
+
+	// adjust key bit length
+	secretkey->setBitLen(secretkey->getKeyBits().size() * bb);
+
+	// Initialize decryption
+	if (!cipher->decryptInit(secretkey, mode, iv, false))
+	{
+		cipher->recycleKey(secretkey);
+		CryptoFactory::i()->recycleSymmetricAlgorithm(cipher);
+		return CKR_MECHANISM_INVALID;
+	}
+
+	session->setOpType(SESSION_OP_DECRYPT);
+	session->setSymmetricCryptoOp(cipher);
+	session->setAllowMultiPartOp(false);
+	session->setAllowSinglePartOp(true);
+	session->setSymmetricKey(secretkey);
+
+	return CKR_OK;
+}
+
+// AsymAlgorithm version of C_DecryptInit
+CK_RV SoftHSM::AsymDecryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechanism, CK_OBJECT_HANDLE hKey)
 {
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
 
@@ -1763,22 +2116,77 @@ CK_RV SoftHSM::C_DecryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMecha
 	return CKR_OK;
 }
 
-// Perform a single operation decryption in the given session
-CK_RV SoftHSM::C_Decrypt(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pEncryptedData, CK_ULONG ulEncryptedDataLen, CK_BYTE_PTR pData, CK_ULONG_PTR pulDataLen)
+// Initialise decryption using the specified object
+CK_RV SoftHSM::C_DecryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechanism, CK_OBJECT_HANDLE hKey)
 {
-	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
+	if (isSymMechanism(pMechanism))
+		return SymDecryptInit(hSession, pMechanism, hKey);
+	else
+		return AsymDecryptInit(hSession, pMechanism, hKey);
+}
 
-	if (pEncryptedData == NULL_PTR) return CKR_ARGUMENTS_BAD;
-	if (pulDataLen == NULL_PTR) return CKR_ARGUMENTS_BAD;
-
-	// Get the session
-	Session* session = (Session*)handleManager->getSession(hSession);
-	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
-
-	// Check if we are doing the correct operation
-	if (session->getOpType() != SESSION_OP_DECRYPT)
+// SymAlgorithm version of C_Decrypt
+static CK_RV SymDecrypt(Session* session, CK_BYTE_PTR pEncryptedData, CK_ULONG ulEncryptedDataLen, CK_BYTE_PTR pData, CK_ULONG_PTR pulDataLen)
+{
+	SymmetricAlgorithm* cipher = session->getSymmetricCryptoOp();
+	if (cipher == NULL || !session->getAllowSinglePartOp())
+	{
+		session->resetOp();
 		return CKR_OPERATION_NOT_INITIALIZED;
+	}
 
+	// Check encrypted size
+	if (ulEncryptedDataLen % cipher->getBlockSize() != 0)
+	{
+		session->resetOp();
+		return CKR_ENCRYPTED_DATA_LEN_RANGE;
+	}
+
+	if (pData == NULL_PTR)
+	{
+		*pulDataLen = ulEncryptedDataLen;
+		return CKR_OK;
+	}
+
+	// Check buffer size
+	if (*pulDataLen < ulEncryptedDataLen)
+	{
+		*pulDataLen = ulEncryptedDataLen;
+		return CKR_BUFFER_TOO_SMALL;
+	}
+
+	// Get the data
+	ByteString encryptedData(pEncryptedData, ulEncryptedDataLen);
+	ByteString data;
+
+	// Decrypt the data
+	if (!cipher->decryptUpdate(encryptedData,data))
+	{
+		session->resetOp();
+		return CKR_GENERAL_ERROR;
+	}
+
+	// Finalize decryption
+	ByteString dataFinal;
+	if (!cipher->decryptFinal(dataFinal))
+	{
+		session->resetOp();
+		return CKR_GENERAL_ERROR;
+	}
+	data += dataFinal;
+	data.resize(ulEncryptedDataLen);
+
+	memcpy(pData, data.byte_str(), data.size());
+	*pulDataLen = data.size();
+
+	session->resetOp();
+	return CKR_OK;
+
+}
+
+// AsymAlgorithm version of C_Decrypt
+static CK_RV AsymDecrypt(Session* session, CK_BYTE_PTR pEncryptedData, CK_ULONG ulEncryptedDataLen, CK_BYTE_PTR pData, CK_ULONG_PTR pulDataLen)
+{
 	AsymmetricAlgorithm* asymCrypto = session->getAsymmetricCryptoOp();
 	const char *mechanism = session->getMechanism();
 	PrivateKey* privateKey = session->getPrivateKey();
@@ -1827,6 +2235,30 @@ CK_RV SoftHSM::C_Decrypt(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pEncryptedData,
 	session->resetOp();
 	return CKR_OK;
 
+}
+
+// Perform a single operation decryption in the given session
+CK_RV SoftHSM::C_Decrypt(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pEncryptedData, CK_ULONG ulEncryptedDataLen, CK_BYTE_PTR pData, CK_ULONG_PTR pulDataLen)
+{
+	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
+
+	if (pEncryptedData == NULL_PTR) return CKR_ARGUMENTS_BAD;
+	if (pulDataLen == NULL_PTR) return CKR_ARGUMENTS_BAD;
+
+	// Get the session
+	Session* session = (Session*)handleManager->getSession(hSession);
+	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
+
+	// Check if we are doing the correct operation
+	if (session->getOpType() != SESSION_OP_DECRYPT)
+		return CKR_OPERATION_NOT_INITIALIZED;
+
+	if (session->getSymmetricCryptoOp() != NULL)
+		return SymDecrypt(session, pEncryptedData, ulEncryptedDataLen,
+				  pData, pulDataLen);
+	else
+		return AsymDecrypt(session, pEncryptedData, ulEncryptedDataLen,
+				   pData, pulDataLen);
 }
 
 // Feed data to the running decryption operation in a session
@@ -3475,6 +3907,7 @@ CK_RV SoftHSM::C_GenerateKey(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMecha
 	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
 
 	// Check the mechanism, only accept DSA and DH parameters
+	// and symmetric ciphers
 	CK_OBJECT_CLASS objClass;
 	CK_KEY_TYPE keyType;
 	switch (pMechanism->mechanism)
@@ -3486,6 +3919,22 @@ CK_RV SoftHSM::C_GenerateKey(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMecha
 		case CKM_DH_PKCS_PARAMETER_GEN:
 			objClass = CKO_DOMAIN_PARAMETERS;
 			keyType = CKK_DH;
+			break;
+		case CKM_DES_KEY_GEN:
+			objClass = CKO_SECRET_KEY;
+			keyType = CKK_DES;
+			break;
+		case CKM_DES2_KEY_GEN:
+			objClass = CKO_SECRET_KEY;
+			keyType = CKK_DES2;
+			break;
+		case CKM_DES3_KEY_GEN:
+			objClass = CKO_SECRET_KEY;
+			keyType = CKK_DES3;
+			break;
+		case CKM_AES_KEY_GEN:
+			objClass = CKO_SECRET_KEY;
+			keyType = CKK_AES;
 			break;
 		default:
 			return CKR_MECHANISM_INVALID;
@@ -3505,6 +3954,18 @@ CK_RV SoftHSM::C_GenerateKey(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMecha
 		return CKR_TEMPLATE_INCONSISTENT;
 	if (pMechanism->mechanism == CKM_DH_PKCS_PARAMETER_GEN &&
 	    (objClass != CKO_DOMAIN_PARAMETERS || keyType != CKK_DH))
+		return CKR_TEMPLATE_INCONSISTENT;
+	if (pMechanism->mechanism == CKM_DES_KEY_GEN &&
+	    (objClass != CKO_SECRET_KEY || keyType != CKK_DES))
+		return CKR_TEMPLATE_INCONSISTENT;
+	if (pMechanism->mechanism == CKM_DES2_KEY_GEN &&
+	    (objClass != CKO_SECRET_KEY || keyType != CKK_DES2))
+		return CKR_TEMPLATE_INCONSISTENT;
+	if (pMechanism->mechanism == CKM_DES3_KEY_GEN &&
+	    (objClass != CKO_SECRET_KEY || keyType != CKK_DES3))
+		return CKR_TEMPLATE_INCONSISTENT;
+	if (pMechanism->mechanism == CKM_AES_KEY_GEN &&
+	    (objClass != CKO_SECRET_KEY || keyType != CKK_AES))
 		return CKR_TEMPLATE_INCONSISTENT;
 
 	// Check authorization
@@ -3529,6 +3990,30 @@ CK_RV SoftHSM::C_GenerateKey(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMecha
 	if (pMechanism->mechanism == CKM_DH_PKCS_PARAMETER_GEN)
 	{
 		return this->generateDHParameters(hSession, pTemplate, ulCount, phKey, isToken, isPrivate);
+	}
+
+	// Generate DES secret key
+	if (pMechanism->mechanism == CKM_DES_KEY_GEN)
+	{
+		return this->generateDES(hSession, pTemplate, ulCount, phKey, isToken, isPrivate);
+	}
+
+	// Generate DES2 secret key
+	if (pMechanism->mechanism == CKM_DES2_KEY_GEN)
+	{
+		return this->generateDES2(hSession, pTemplate, ulCount, phKey, isToken, isPrivate);
+	}
+
+	// Generate DES3 secret key
+	if (pMechanism->mechanism == CKM_DES3_KEY_GEN)
+	{
+		return this->generateDES3(hSession, pTemplate, ulCount, phKey, isToken, isPrivate);
+	}
+
+	// Generate AES secret key
+	if (pMechanism->mechanism == CKM_AES_KEY_GEN)
+	{
+		return this->generateAES(hSession, pTemplate, ulCount, phKey, isToken, isPrivate);
 	}
 
 	return CKR_GENERAL_ERROR;
@@ -3920,6 +4405,535 @@ CK_RV SoftHSM::C_CancelFunction(CK_SESSION_HANDLE hSession)
 CK_RV SoftHSM::C_WaitForSlotEvent(CK_FLAGS /*flags*/, CK_SLOT_ID_PTR /*pSlot*/, CK_VOID_PTR /*pReserved*/)
 {
 	return CKR_FUNCTION_NOT_SUPPORTED;
+}
+
+// Generate an AES secret key
+CK_RV SoftHSM::generateAES
+(CK_SESSION_HANDLE hSession,
+	CK_ATTRIBUTE_PTR pTemplate,
+	CK_ULONG ulCount,
+	CK_OBJECT_HANDLE_PTR phKey,
+	CK_BBOOL isToken,
+	CK_BBOOL isPrivate)
+{
+	*phKey = CK_INVALID_HANDLE;
+
+	// Get the session
+	Session* session = (Session*)handleManager->getSession(hSession);
+	if (session == NULL)
+		return CKR_SESSION_HANDLE_INVALID;
+
+	// Get the token
+	Token* token = session->getToken();
+	if (token == NULL)
+		return CKR_GENERAL_ERROR;
+
+	// Extract desired parameter information
+	size_t keyLen = 0;
+	for (CK_ULONG i = 0; i < ulCount; i++)
+	{
+		switch (pTemplate[i].type)
+		{
+			case CKA_VALUE_LEN:
+				if (pTemplate[i].ulValueLen != sizeof(CK_ULONG))
+				{
+					INFO_MSG("CKA_VALUE_LEN does not have the size of CK_ULONG");
+					return CKR_TEMPLATE_INCOMPLETE;
+				}
+				keyLen = *(CK_ULONG*)pTemplate[i].pValue;
+				break;
+			default:
+				break;
+		}
+	}
+
+	// CKA_VALUE_LEN must be specified
+	if (keyLen == 0)
+	{
+		INFO_MSG("Missing CKA_VALUE_LEN in pTemplate");
+		return CKR_TEMPLATE_INCOMPLETE;
+	}
+
+	// keyLen must be 16, 24 or 32
+	if ((keyLen != 16) && (keyLen != 24) && (keyLen != 32))
+	{
+		INFO_MSG("bad AES key length");
+		return CKR_ATTRIBUTE_VALUE_INVALID;
+	}
+
+	// Generate the secret key
+	AESKey* key = new AESKey(keyLen * 8);
+	SymmetricAlgorithm* aes = CryptoFactory::i()->getSymmetricAlgorithm("AES");
+	if (aes == NULL) return CKR_GENERAL_ERROR;
+	RNG* rng = CryptoFactory::i()->getRNG();
+	if (rng == NULL) return CKR_GENERAL_ERROR;
+	if (!aes->generateKey(*key, rng))
+	{
+		ERROR_MSG("Could not generate AES secret key");
+		aes->recycleKey(key);
+		CryptoFactory::i()->recycleSymmetricAlgorithm(aes);
+		return CKR_GENERAL_ERROR;
+	}
+
+	CK_RV rv = CKR_OK;
+
+	// Create the secret key object using C_CreateObject
+	const CK_ULONG maxAttribs = 32;
+	CK_OBJECT_CLASS objClass = CKO_SECRET_KEY;
+	CK_KEY_TYPE keyType = CKK_AES;
+	CK_ATTRIBUTE keyAttribs[maxAttribs] = {
+		{ CKA_CLASS, &objClass, sizeof(objClass) },
+		{ CKA_TOKEN, &isToken, sizeof(isToken) },
+		{ CKA_PRIVATE, &isPrivate, sizeof(isPrivate) },
+		{ CKA_KEY_TYPE, &keyType, sizeof(keyType) },
+	};
+	CK_ULONG keyAttribsCount = 4;
+
+	// Add the additional
+	if (ulCount > (maxAttribs - keyAttribsCount))
+		rv = CKR_TEMPLATE_INCONSISTENT;
+	for (CK_ULONG i=0; i < ulCount && rv == CKR_OK; ++i)
+	{
+		switch (pTemplate[i].type)
+		{
+			case CKA_CLASS:
+			case CKA_TOKEN:
+			case CKA_PRIVATE:
+			case CKA_KEY_TYPE:
+				continue;
+		default:
+			keyAttribs[keyAttribsCount++] = pTemplate[i];
+		}
+	}
+
+	if (rv == CKR_OK)
+		rv = this->CreateObject(hSession, keyAttribs, keyAttribsCount, phKey,OBJECT_OP_GENERATE);
+
+	// Store the attributes that are being supplied
+	if (rv == CKR_OK)
+	{
+		OSObject* osobject = (OSObject*)handleManager->getObject(*phKey);
+		if (osobject->startTransaction()) {
+			bool bOK = true;
+
+			// Common Attributes
+			bOK = bOK && osobject->setAttribute(CKA_LOCAL,true);
+			CK_ULONG ulKeyGenMechanism = (CK_ULONG)CKM_AES_KEY_GEN;
+			bOK = bOK && osobject->setAttribute(CKA_KEY_GEN_MECHANISM,ulKeyGenMechanism);
+
+			// Common Secret Key Attributes
+			bool bAlwaysSensitive = osobject->getAttribute(CKA_SENSITIVE)->getBooleanValue();
+			bOK = bOK && osobject->setAttribute(CKA_ALWAYS_SENSITIVE,bAlwaysSensitive);
+			bool bNeverExtractable =  osobject->getAttribute(CKA_EXTRACTABLE)->getBooleanValue() == false;
+			bOK = bOK && osobject->setAttribute(CKA_NEVER_EXTRACTABLE, bNeverExtractable);
+
+			// AES Secret Key Attributes
+			ByteString value;
+			if (isPrivate)
+				token->encrypt(key->getKeyBits(), value);
+			else
+				value = key->getKeyBits();
+			bOK = bOK && osobject->setAttribute(CKA_VALUE, value);
+
+			if (bOK)
+				bOK = osobject->commitTransaction();
+			else
+				osobject->abortTransaction();
+
+			if (!bOK)
+				rv = CKR_FUNCTION_FAILED;
+		}
+	}
+
+	// Clean up
+	aes->recycleKey(key);
+	CryptoFactory::i()->recycleSymmetricAlgorithm(aes);
+
+	// Remove the key that may have been created already when the function fails.
+	if (rv != CKR_OK)
+	{
+		if (*phKey != CK_INVALID_HANDLE)
+		{
+			OSObject* key = (OSObject*)handleManager->getObject(*phKey);
+			handleManager->destroyObject(*phKey);
+			if (key) key->destroyObject();
+			*phKey = CK_INVALID_HANDLE;
+		}
+	}
+
+	return rv;
+}
+
+// Generate a DES secret key
+CK_RV SoftHSM::generateDES
+(CK_SESSION_HANDLE hSession,
+	CK_ATTRIBUTE_PTR pTemplate,
+	CK_ULONG ulCount,
+	CK_OBJECT_HANDLE_PTR phKey,
+	CK_BBOOL isToken,
+	CK_BBOOL isPrivate)
+{
+	*phKey = CK_INVALID_HANDLE;
+
+	// Get the session
+	Session* session = (Session*)handleManager->getSession(hSession);
+	if (session == NULL)
+		return CKR_SESSION_HANDLE_INVALID;
+
+	// Get the token
+	Token* token = session->getToken();
+	if (token == NULL)
+		return CKR_GENERAL_ERROR;
+
+	// Generate the secret key
+	DESKey* key = new DESKey(56);
+	SymmetricAlgorithm* des = CryptoFactory::i()->getSymmetricAlgorithm("DES");
+	if (des == NULL) return CKR_GENERAL_ERROR;
+	RNG* rng = CryptoFactory::i()->getRNG();
+	if (rng == NULL) return CKR_GENERAL_ERROR;
+	if (!des->generateKey(*key, rng))
+	{
+		ERROR_MSG("Could not generate DES secret key");
+		des->recycleKey(key);
+		CryptoFactory::i()->recycleSymmetricAlgorithm(des);
+		return CKR_GENERAL_ERROR;
+	}
+
+	CK_RV rv = CKR_OK;
+
+	// Create the secret key object using C_CreateObject
+	const CK_ULONG maxAttribs = 32;
+	CK_OBJECT_CLASS objClass = CKO_SECRET_KEY;
+	CK_KEY_TYPE keyType = CKK_DES;
+	CK_ATTRIBUTE keyAttribs[maxAttribs] = {
+		{ CKA_CLASS, &objClass, sizeof(objClass) },
+		{ CKA_TOKEN, &isToken, sizeof(isToken) },
+		{ CKA_PRIVATE, &isPrivate, sizeof(isPrivate) },
+		{ CKA_KEY_TYPE, &keyType, sizeof(keyType) },
+	};
+	CK_ULONG keyAttribsCount = 4;
+
+	// Add the additional
+	if (ulCount > (maxAttribs - keyAttribsCount))
+		rv = CKR_TEMPLATE_INCONSISTENT;
+	for (CK_ULONG i=0; i < ulCount && rv == CKR_OK; ++i)
+	{
+		switch (pTemplate[i].type)
+		{
+			case CKA_CLASS:
+			case CKA_TOKEN:
+			case CKA_PRIVATE:
+			case CKA_KEY_TYPE:
+				continue;
+		default:
+			keyAttribs[keyAttribsCount++] = pTemplate[i];
+		}
+	}
+
+	if (rv == CKR_OK)
+		rv = this->CreateObject(hSession, keyAttribs, keyAttribsCount, phKey,OBJECT_OP_GENERATE);
+
+	// Store the attributes that are being supplied
+	if (rv == CKR_OK)
+	{
+		OSObject* osobject = (OSObject*)handleManager->getObject(*phKey);
+		if (osobject->startTransaction()) {
+			bool bOK = true;
+
+			// Common Attributes
+			bOK = bOK && osobject->setAttribute(CKA_LOCAL,true);
+			CK_ULONG ulKeyGenMechanism = (CK_ULONG)CKM_DES_KEY_GEN;
+			bOK = bOK && osobject->setAttribute(CKA_KEY_GEN_MECHANISM,ulKeyGenMechanism);
+
+			// Common Secret Key Attributes
+			bool bAlwaysSensitive = osobject->getAttribute(CKA_SENSITIVE)->getBooleanValue();
+			bOK = bOK && osobject->setAttribute(CKA_ALWAYS_SENSITIVE,bAlwaysSensitive);
+			bool bNeverExtractable =  osobject->getAttribute(CKA_EXTRACTABLE)->getBooleanValue() == false;
+			bOK = bOK && osobject->setAttribute(CKA_NEVER_EXTRACTABLE, bNeverExtractable);
+
+			// DES Secret Key Attributes
+			ByteString value;
+			if (isPrivate)
+				token->encrypt(key->getKeyBits(), value);
+			else
+				value = key->getKeyBits();
+			bOK = bOK && osobject->setAttribute(CKA_VALUE, value);
+
+			if (bOK)
+				bOK = osobject->commitTransaction();
+			else
+				osobject->abortTransaction();
+
+			if (!bOK)
+				rv = CKR_FUNCTION_FAILED;
+		}
+	}
+
+	// Clean up
+	des->recycleKey(key);
+	CryptoFactory::i()->recycleSymmetricAlgorithm(des);
+
+	// Remove the key that may have been created already when the function fails.
+	if (rv != CKR_OK)
+	{
+		if (*phKey != CK_INVALID_HANDLE)
+		{
+			OSObject* key = (OSObject*)handleManager->getObject(*phKey);
+			handleManager->destroyObject(*phKey);
+			if (key) key->destroyObject();
+			*phKey = CK_INVALID_HANDLE;
+		}
+	}
+
+	return rv;
+}
+
+// Generate a DES2 secret key
+CK_RV SoftHSM::generateDES2
+(CK_SESSION_HANDLE hSession,
+	CK_ATTRIBUTE_PTR pTemplate,
+	CK_ULONG ulCount,
+	CK_OBJECT_HANDLE_PTR phKey,
+	CK_BBOOL isToken,
+	CK_BBOOL isPrivate)
+{
+	*phKey = CK_INVALID_HANDLE;
+
+	// Get the session
+	Session* session = (Session*)handleManager->getSession(hSession);
+	if (session == NULL)
+		return CKR_SESSION_HANDLE_INVALID;
+
+	// Get the token
+	Token* token = session->getToken();
+	if (token == NULL)
+		return CKR_GENERAL_ERROR;
+
+	// Generate the secret key
+	DESKey* key = new DESKey(112);
+	SymmetricAlgorithm* des = CryptoFactory::i()->getSymmetricAlgorithm("DES");
+	if (des == NULL) return CKR_GENERAL_ERROR;
+	RNG* rng = CryptoFactory::i()->getRNG();
+	if (rng == NULL) return CKR_GENERAL_ERROR;
+	if (!des->generateKey(*key, rng))
+	{
+		ERROR_MSG("Could not generate DES secret key");
+		des->recycleKey(key);
+		CryptoFactory::i()->recycleSymmetricAlgorithm(des);
+		return CKR_GENERAL_ERROR;
+	}
+
+	CK_RV rv = CKR_OK;
+
+	// Create the secret key object using C_CreateObject
+	const CK_ULONG maxAttribs = 32;
+	CK_OBJECT_CLASS objClass = CKO_SECRET_KEY;
+	CK_KEY_TYPE keyType = CKK_DES2;
+	CK_ATTRIBUTE keyAttribs[maxAttribs] = {
+		{ CKA_CLASS, &objClass, sizeof(objClass) },
+		{ CKA_TOKEN, &isToken, sizeof(isToken) },
+		{ CKA_PRIVATE, &isPrivate, sizeof(isPrivate) },
+		{ CKA_KEY_TYPE, &keyType, sizeof(keyType) },
+	};
+	CK_ULONG keyAttribsCount = 4;
+
+	// Add the additional
+	if (ulCount > (maxAttribs - keyAttribsCount))
+		rv = CKR_TEMPLATE_INCONSISTENT;
+	for (CK_ULONG i=0; i < ulCount && rv == CKR_OK; ++i)
+	{
+		switch (pTemplate[i].type)
+		{
+			case CKA_CLASS:
+			case CKA_TOKEN:
+			case CKA_PRIVATE:
+			case CKA_KEY_TYPE:
+				continue;
+		default:
+			keyAttribs[keyAttribsCount++] = pTemplate[i];
+		}
+	}
+
+	if (rv == CKR_OK)
+		rv = this->CreateObject(hSession, keyAttribs, keyAttribsCount, phKey,OBJECT_OP_GENERATE);
+
+	// Store the attributes that are being supplied
+	if (rv == CKR_OK)
+	{
+		OSObject* osobject = (OSObject*)handleManager->getObject(*phKey);
+		if (osobject->startTransaction()) {
+			bool bOK = true;
+
+			// Common Attributes
+			bOK = bOK && osobject->setAttribute(CKA_LOCAL,true);
+			CK_ULONG ulKeyGenMechanism = (CK_ULONG)CKM_DES2_KEY_GEN;
+			bOK = bOK && osobject->setAttribute(CKA_KEY_GEN_MECHANISM,ulKeyGenMechanism);
+
+			// Common Secret Key Attributes
+			bool bAlwaysSensitive = osobject->getAttribute(CKA_SENSITIVE)->getBooleanValue();
+			bOK = bOK && osobject->setAttribute(CKA_ALWAYS_SENSITIVE,bAlwaysSensitive);
+			bool bNeverExtractable =  osobject->getAttribute(CKA_EXTRACTABLE)->getBooleanValue() == false;
+			bOK = bOK && osobject->setAttribute(CKA_NEVER_EXTRACTABLE, bNeverExtractable);
+
+			// DES Secret Key Attributes
+			ByteString value;
+			if (isPrivate)
+				token->encrypt(key->getKeyBits(), value);
+			else
+				value = key->getKeyBits();
+			bOK = bOK && osobject->setAttribute(CKA_VALUE, value);
+
+			if (bOK)
+				bOK = osobject->commitTransaction();
+			else
+				osobject->abortTransaction();
+
+			if (!bOK)
+				rv = CKR_FUNCTION_FAILED;
+		}
+	}
+
+	// Clean up
+	des->recycleKey(key);
+	CryptoFactory::i()->recycleSymmetricAlgorithm(des);
+
+	// Remove the key that may have been created already when the function fails.
+	if (rv != CKR_OK)
+	{
+		if (*phKey != CK_INVALID_HANDLE)
+		{
+			OSObject* key = (OSObject*)handleManager->getObject(*phKey);
+			handleManager->destroyObject(*phKey);
+			if (key) key->destroyObject();
+			*phKey = CK_INVALID_HANDLE;
+		}
+	}
+
+	return rv;
+}
+
+// Generate a DES3 secret key
+CK_RV SoftHSM::generateDES3
+(CK_SESSION_HANDLE hSession,
+	CK_ATTRIBUTE_PTR pTemplate,
+	CK_ULONG ulCount,
+	CK_OBJECT_HANDLE_PTR phKey,
+	CK_BBOOL isToken,
+	CK_BBOOL isPrivate)
+{
+	*phKey = CK_INVALID_HANDLE;
+
+	// Get the session
+	Session* session = (Session*)handleManager->getSession(hSession);
+	if (session == NULL)
+		return CKR_SESSION_HANDLE_INVALID;
+
+	// Get the token
+	Token* token = session->getToken();
+	if (token == NULL)
+		return CKR_GENERAL_ERROR;
+
+	// Generate the secret key
+	DESKey* key = new DESKey(168);
+	SymmetricAlgorithm* des = CryptoFactory::i()->getSymmetricAlgorithm("DES");
+	if (des == NULL) return CKR_GENERAL_ERROR;
+	RNG* rng = CryptoFactory::i()->getRNG();
+	if (rng == NULL) return CKR_GENERAL_ERROR;
+	if (!des->generateKey(*key, rng))
+	{
+		ERROR_MSG("Could not generate DES secret key");
+		des->recycleKey(key);
+		CryptoFactory::i()->recycleSymmetricAlgorithm(des);
+		return CKR_GENERAL_ERROR;
+	}
+
+	CK_RV rv = CKR_OK;
+
+	// Create the secret key object using C_CreateObject
+	const CK_ULONG maxAttribs = 32;
+	CK_OBJECT_CLASS objClass = CKO_SECRET_KEY;
+	CK_KEY_TYPE keyType = CKK_DES3;
+	CK_ATTRIBUTE keyAttribs[maxAttribs] = {
+		{ CKA_CLASS, &objClass, sizeof(objClass) },
+		{ CKA_TOKEN, &isToken, sizeof(isToken) },
+		{ CKA_PRIVATE, &isPrivate, sizeof(isPrivate) },
+		{ CKA_KEY_TYPE, &keyType, sizeof(keyType) },
+	};
+	CK_ULONG keyAttribsCount = 4;
+
+	// Add the additional
+	if (ulCount > (maxAttribs - keyAttribsCount))
+		rv = CKR_TEMPLATE_INCONSISTENT;
+	for (CK_ULONG i=0; i < ulCount && rv == CKR_OK; ++i)
+	{
+		switch (pTemplate[i].type)
+		{
+			case CKA_CLASS:
+			case CKA_TOKEN:
+			case CKA_PRIVATE:
+			case CKA_KEY_TYPE:
+				continue;
+		default:
+			keyAttribs[keyAttribsCount++] = pTemplate[i];
+		}
+	}
+
+	if (rv == CKR_OK)
+		rv = this->CreateObject(hSession, keyAttribs, keyAttribsCount, phKey,OBJECT_OP_GENERATE);
+
+	// Store the attributes that are being supplied
+	if (rv == CKR_OK)
+	{
+		OSObject* osobject = (OSObject*)handleManager->getObject(*phKey);
+		if (osobject->startTransaction()) {
+			bool bOK = true;
+
+			// Common Attributes
+			bOK = bOK && osobject->setAttribute(CKA_LOCAL,true);
+			CK_ULONG ulKeyGenMechanism = (CK_ULONG)CKM_DES3_KEY_GEN;
+			bOK = bOK && osobject->setAttribute(CKA_KEY_GEN_MECHANISM,ulKeyGenMechanism);
+
+			// Common Secret Key Attributes
+			bool bAlwaysSensitive = osobject->getAttribute(CKA_SENSITIVE)->getBooleanValue();
+			bOK = bOK && osobject->setAttribute(CKA_ALWAYS_SENSITIVE,bAlwaysSensitive);
+			bool bNeverExtractable =  osobject->getAttribute(CKA_EXTRACTABLE)->getBooleanValue() == false;
+			bOK = bOK && osobject->setAttribute(CKA_NEVER_EXTRACTABLE, bNeverExtractable);
+
+			// DES Secret Key Attributes
+			ByteString value;
+			if (isPrivate)
+				token->encrypt(key->getKeyBits(), value);
+			else
+				value = key->getKeyBits();
+			bOK = bOK && osobject->setAttribute(CKA_VALUE, value);
+
+			if (bOK)
+				bOK = osobject->commitTransaction();
+			else
+				osobject->abortTransaction();
+
+			if (!bOK)
+				rv = CKR_FUNCTION_FAILED;
+		}
+	}
+
+	// Clean up
+	des->recycleKey(key);
+	CryptoFactory::i()->recycleSymmetricAlgorithm(des);
+
+	// Remove the key that may have been created already when the function fails.
+	if (rv != CKR_OK)
+	{
+		if (*phKey != CK_INVALID_HANDLE)
+		{
+			OSObject* key = (OSObject*)handleManager->getObject(*phKey);
+			handleManager->destroyObject(*phKey);
+			if (key) key->destroyObject();
+			*phKey = CK_INVALID_HANDLE;
+		}
+	}
+
+	return rv;
 }
 
 // Generate an RSA key pair

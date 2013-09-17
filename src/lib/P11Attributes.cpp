@@ -1873,3 +1873,36 @@ bool P11AttrGost28147Params::setDefault()
 	return osobject->setAttribute(type, attr);
 }
 
+/*****************************************
+ * CKA_VALUE_LEN
+ *****************************************/
+
+// Set default value
+bool P11AttrValueLen::setDefault()
+{
+	OSAttribute attr((unsigned long)0);
+	return osobject->setAttribute(type, attr);
+}
+
+// Update the value if allowed
+CK_RV P11AttrValueLen::updateAttr(Token *token, bool isPrivate, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op)
+{
+	// Attribute specific checks
+
+	if (op != OBJECT_OP_GENERATE)
+	{
+		return CKR_ATTRIBUTE_READ_ONLY;
+	}
+
+	if (ulValueLen != sizeof(CK_ULONG))
+	{
+		return CKR_ATTRIBUTE_VALUE_INVALID;
+	}
+
+	// Store data
+
+	osobject->setAttribute(type, *(CK_ULONG*)pValue);
+
+	return CKR_OK;
+}
+
