@@ -426,7 +426,11 @@ void AESTests::testECB()
 
 void AESTests::writeTmpFile(ByteString& data)
 {
+#ifndef _WIN32
 	FILE* out = fopen("shsmv2-aestest.tmp", "w");
+#else
+	FILE* out = fopen("shsmv2-aestest.tmp", "wb");
+#endif
 	CPPUNIT_ASSERT(out != NULL);
 
 	CPPUNIT_ASSERT(fwrite(&data[0], 1, data.size(), out) == data.size());
@@ -439,7 +443,11 @@ void AESTests::readTmpFile(ByteString& data)
 
 	data.wipe();
 
+#ifndef _WIN32
 	FILE* in = fopen("shsmv2-aestest-out.tmp", "r");
+#else
+	FILE* in = fopen("shsmv2-aestest-out.tmp", "rb");
+#endif
 	CPPUNIT_ASSERT(in != NULL);
 
 	int read = 0;

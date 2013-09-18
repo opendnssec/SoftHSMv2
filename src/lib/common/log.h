@@ -60,28 +60,44 @@
 
 /* Logging errors */
 #if SOFTLOGLEVEL >= SOFTERROR
+#ifndef _WIN32
 #define ERROR_MSG(...) softHSMLog(LOG_ERR, __func__, __FILE__, __LINE__, __VA_ARGS__);
+#else
+#define ERROR_MSG(...) softHSMLog(LOG_ERR, __FUNCTION__, __FILE__, __LINE__, __VA_ARGS__);
+#endif
 #else
 #define ERROR_MSG(...)
 #endif
 
 /* Logging warnings */
 #if SOFTLOGLEVEL >= SOFTWARNING
+#ifndef _WIN32
 #define WARNING_MSG(...) softHSMLog(LOG_WARNING, __func__, __FILE__, __LINE__, __VA_ARGS__);
+#else
+#define WARNING_MSG(...) softHSMLog(LOG_WARNING, __FUNCTION__, __FILE__, __LINE__, __VA_ARGS__);
+#endif
 #else
 #define WARNING_MSG(...)
 #endif
 
 /* Logging information */
 #if SOFTLOGLEVEL >= SOFTINFO
+#ifndef _WIN32
 #define INFO_MSG(...) softHSMLog(LOG_INFO, __func__, __FILE__, __LINE__, __VA_ARGS__);
+#else
+#define INFO_MSG(...) softHSMLog(LOG_INFO, __FUNCTION__, __FILE__, __LINE__, __VA_ARGS__);
+#endif
 #else
 #define INFO_MSG(...)
 #endif
 
 /* Logging debug information */
 #if SOFTLOGLEVEL >= SOFTDEBUG
+#ifndef _WIN32
 #define DEBUG_MSG(...) softHSMLog(LOG_DEBUG, __func__, __FILE__, __LINE__, __VA_ARGS__);
+#else
+#define DEBUG_MSG(...) softHSMLog(LOG_DEBUG, __FUNCTION__, __FILE__, __LINE__, __VA_ARGS__);
+#endif
 #else
 #define DEBUG_MSG(...)
 #endif

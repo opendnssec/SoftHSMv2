@@ -45,16 +45,23 @@ CPPUNIT_TEST_SUITE_REGISTRATION(FileTests);
 
 void FileTests::setUp()
 {
-	// FIXME: this only works on *NIX/BSD, not on other platforms
+#ifndef _WIN32
 	int rv = system("rm -rf testdir");
+#else
+	int rv = system("rmdir /s /q testdir 2> nul");
+#endif
 	(void) rv;
+
 	CPPUNIT_ASSERT(!system("mkdir testdir"));
 }
 
 void FileTests::tearDown()
 {
-	// FIXME: this only works on *NIX/BSD, not on other platforms
+#ifndef _WIN32
 	CPPUNIT_ASSERT(!system("rm -rf testdir"));
+#else
+	CPPUNIT_ASSERT(!system("rmdir /s /q testdir 2> nul"));
+#endif
 }
 
 void FileTests::testExistNotExist()
@@ -63,15 +70,27 @@ void FileTests::testExistNotExist()
 	CPPUNIT_ASSERT(!exists("nonExistentFile"));
 
 	// Attempt to open a file known not to exist
+#ifndef _WIN32
 	File doesntExist("testdir/nonExistentFile");
+#else
+	File doesntExist("testdir\\nonExistentFile");
+#endif
 
 	CPPUNIT_ASSERT(!doesntExist.isValid());
 
 	// Attempt to open a file known to exist
+#ifndef _WIN32
 	CPPUNIT_ASSERT(!system("echo someStuff > testdir/existingFile"));
+#else
+	CPPUNIT_ASSERT(!system("echo someStuff > testdir\\existingFile"));
+#endif
 	CPPUNIT_ASSERT(exists("existingFile"));
 
+#ifndef _WIN32
 	File exists("testdir/existingFile");
+#else
+	File exists("testdir\\existingFile");
+#endif
 
 	CPPUNIT_ASSERT(exists.isValid());
 }
@@ -83,13 +102,21 @@ void FileTests::testCreateNotCreate()
 	CPPUNIT_ASSERT(!exists("nonExistentFile2"));
 	
 	// Attempt to open a file known not to exist
+#ifndef _WIN32
 	File doesntExist("testdir/nonExistentFile", true, true, false);
+#else
+	File doesntExist("testdir\\nonExistentFile", true, true, false);
+#endif
 
 	CPPUNIT_ASSERT(!doesntExist.isValid());
 	CPPUNIT_ASSERT(!exists("nonExistentFile"));
 
 	// Attempt to open a file known not to exist in create mode
+#ifndef _WIN32
 	File willBeCreated("testdir/nonExistentFile2", true, true, true);
+#else
+	File willBeCreated("testdir\\nonExistentFile2", true, true, true);
+#endif
 
 	CPPUNIT_ASSERT(willBeCreated.isValid());
 	CPPUNIT_ASSERT(exists("nonExistentFile2"));
@@ -98,11 +125,20 @@ void FileTests::testCreateNotCreate()
 void FileTests::testLockUnlock()
 {
 	// Create pre-condition
+#ifndef _WIN32
 	CPPUNIT_ASSERT(!system("echo someStuff > testdir/existingFile"));
+#else
+	CPPUNIT_ASSERT(!system("echo someStuff > testdir\\existingFile"));
+#endif
 	CPPUNIT_ASSERT(exists("existingFile"));
 
+#ifndef _WIN32
 	File file1("testdir/existingFile");
 	File file2("testdir/existingFile");
+#else
+	File file1("testdir\\existingFile");
+	File file2("testdir\\existingFile");
+#endif
 
 	CPPUNIT_ASSERT(file1.lock(false));
 	CPPUNIT_ASSERT(!file1.lock(false));
@@ -129,7 +165,11 @@ void FileTests::testWriteRead()
 
 	// Create a file for writing
 	{
+#ifndef _WIN32
 		File newFile("testdir/newFile", false, true);
+#else
+		File newFile("testdir\\newFile", false, true);
+#endif
 
 		CPPUNIT_ASSERT(newFile.isValid());
 
@@ -151,7 +191,11 @@ void FileTests::testWriteRead()
 
 	// Read the created file back
 	{
+#ifndef _WIN32
 		File newFile("testdir/newFile");
+#else
+		File newFile("testdir\\newFile");
+#endif
 
 		CPPUNIT_ASSERT(newFile.isValid());
 
@@ -192,7 +236,11 @@ void FileTests::testSeek()
 
 	{
 		// Create the test file
+#ifndef _WIN32
 		File testFile("testdir/testFile", false, true, true);
+#else
+		File testFile("testdir\\testFile", false, true, true);
+#endif
 
 		CPPUNIT_ASSERT(testFile.isValid());
 
@@ -201,7 +249,11 @@ void FileTests::testSeek()
 	}
 
 	// Open the test file for reading
+#ifndef _WIN32
 	File testFile("testdir/testFile");
+#else
+	File testFile("testdir\\testFile");
+#endif
 
 	CPPUNIT_ASSERT(testFile.isValid());
 
@@ -252,7 +304,12 @@ void FileTests::testSeek()
 
 bool FileTests::exists(std::string name)
 {
+#ifndef _WIN32
 	Directory dir("./testdir");
+#else
+	Directory dir(".\\testdir");
+#endif
+
 
 	CPPUNIT_ASSERT(dir.isValid());
 

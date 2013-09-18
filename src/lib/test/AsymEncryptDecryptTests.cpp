@@ -31,6 +31,7 @@
  using asymmetrical algorithms (i.e., RSA)
  *****************************************************************************/
 
+#include <config.h>
 #include <stdlib.h>
 #include <string.h>
 #include <cppunit/extensions/HelperMacros.h>
@@ -52,7 +53,11 @@ void AsymEncryptDecryptTests::setUp()
 {
 //    printf("\nObjectTests\n");
 
+#ifndef _WIN32
 	setenv("SOFTHSM2_CONF", "./softhsm2.conf", 1);
+#else
+	setenv("SOFTHSM2_CONF", ".\\softhsm2.conf", 1);
+#endif
 
 	CK_RV rv;
 	CK_UTF8CHAR pin[] = SLOT_0_USER1_PIN;

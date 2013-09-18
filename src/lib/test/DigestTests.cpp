@@ -30,6 +30,7 @@
  Contains test cases to C_DigestInit, C_Digest, C_DigestUpdate, C_DigestFinal
  *****************************************************************************/
 
+#include <config.h>
 #include <stdlib.h>
 #include <string.h>
 #include <cppunit/extensions/HelperMacros.h>
@@ -42,7 +43,11 @@ void DigestTests::setUp()
 {
 //    printf("\nDigestTests\n");
 
+#ifndef _WIN32
 	setenv("SOFTHSM2_CONF", "./softhsm2.conf", 1);
+#else
+	setenv("SOFTHSM2_CONF", ".\\softhsm2.conf", 1);
+#endif
 
 	CK_UTF8CHAR pin[] = SLOT_0_SO1_PIN;
 	CK_ULONG pinLength = sizeof(pin) - 1;
@@ -66,7 +71,7 @@ void DigestTests::tearDown()
 void DigestTests::testDigestInit()
 {
 	CK_RV rv;
-	CK_SESSION_HANDLE hSession;
+	CK_SESSION_HANDLE hSession = CK_INVALID_HANDLE;
 	CK_MECHANISM mechanism = {
 		CKM_VENDOR_DEFINED, NULL_PTR, 0
 	};
@@ -103,7 +108,7 @@ void DigestTests::testDigestInit()
 void DigestTests::testDigest()
 {
 	CK_RV rv;
-	CK_SESSION_HANDLE hSession;
+	CK_SESSION_HANDLE hSession = CK_INVALID_HANDLE;
 	CK_MECHANISM mechanism = {
 		CKM_SHA512, NULL_PTR, 0
 	};
@@ -158,7 +163,7 @@ void DigestTests::testDigest()
 void DigestTests::testDigestUpdate()
 {
 	CK_RV rv;
-	CK_SESSION_HANDLE hSession;
+	CK_SESSION_HANDLE hSession = CK_INVALID_HANDLE;
 	CK_MECHANISM mechanism = {
 		CKM_SHA512, NULL_PTR, 0
 	};
@@ -195,7 +200,7 @@ void DigestTests::testDigestUpdate()
 void DigestTests::testDigestFinal()
 {
 	CK_RV rv;
-	CK_SESSION_HANDLE hSession;
+	CK_SESSION_HANDLE hSession = CK_INVALID_HANDLE;
 	CK_MECHANISM mechanism = {
 		CKM_SHA512, NULL_PTR, 0
 	};

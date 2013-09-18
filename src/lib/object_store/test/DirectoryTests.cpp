@@ -40,7 +40,7 @@ CPPUNIT_TEST_SUITE_REGISTRATION(DirectoryTests);
 
 void DirectoryTests::setUp()
 {
-	// FIXME: this only works on *NIX/BSD, not on other platforms
+#ifndef _WIN32
 	CPPUNIT_ASSERT(!system("mkdir testdir"));
 	CPPUNIT_ASSERT(!system("mkdir testdir/anotherdir"));
 	CPPUNIT_ASSERT(!system("mkdir testdir/anotherdir2"));
@@ -48,18 +48,33 @@ void DirectoryTests::setUp()
 	CPPUNIT_ASSERT(!system("echo someStuff > testdir/afile"));
 	CPPUNIT_ASSERT(!system("echo someOtherStuff > testdir/anotherFile"));
 	CPPUNIT_ASSERT(!system("echo justStuff > testdir/justaFile"));
+#else
+	CPPUNIT_ASSERT(!system("mkdir testdir"));
+	CPPUNIT_ASSERT(!system("mkdir testdir\\anotherdir"));
+	CPPUNIT_ASSERT(!system("mkdir testdir\\anotherdir2"));
+	CPPUNIT_ASSERT(!system("mkdir testdir\\anotherdir3"));
+	CPPUNIT_ASSERT(!system("echo someStuff > testdir\\afile"));
+	CPPUNIT_ASSERT(!system("echo someOtherStuff > testdir\\anotherFile"));
+	CPPUNIT_ASSERT(!system("echo justStuff > testdir\\justaFile"));
+#endif
 }
 
 void DirectoryTests::tearDown()
 {
-	// FIXME: this only works on *NIX/BSD, not on other platforms
+#ifndef _WIN32
 	CPPUNIT_ASSERT(!system("rm -rf testdir"));
+#else
+	CPPUNIT_ASSERT(!system("rmdir /s /q testdir 2> nul"));
+#endif
 }
 
 void DirectoryTests::testDirectory()
 {
-	// FIXME: Path separator is not platform independent
+#ifndef _WIN32
 	Directory testdir("./testdir");
+#else
+	Directory testdir(".\\testdir");
+#endif
 
 	CPPUNIT_ASSERT(testdir.isValid());
 

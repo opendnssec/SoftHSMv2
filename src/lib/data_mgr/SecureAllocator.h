@@ -39,7 +39,7 @@
 #include <limits>
 #include <stdlib.h>
 #include <string.h>
-#ifdef SENSITIVE_NON_PAGED
+#if defined(SENSITIVE_NON_PAGED) && !defined(_WIN32)
 #include <sys/mman.h>
 #endif // SENSITIVE_NON_PAGED
 #include "config.h"
@@ -96,7 +96,11 @@ public:
 	{
 #ifdef SENSITIVE_NON_PAGED
 		// Allocate memory on a page boundary
+#ifndef _WIN32
 		pointer r = (pointer) valloc(n * sizeof(T));
+#else
+		pointer r = (pointer) VirtualAlloc(NULL, n * sizeof(T), MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+#endif
 
 		if (r == NULL)
 		{
@@ -106,12 +110,20 @@ public:
 		}
 
 		// Lock the memory so it doesn't get swapped out
+#ifndef _WIN32
 		if (mlock((const void*) r, n * sizeof(T)) != 0)
+#else
+		if (VirtualLock((const void*) r, n * sizeof(T)) == 0)
+#endif
 		{
 			ERROR_MSG("Could not allocate non-paged memory for secure storage");
 
 			// Hmmm... best to not return any allocated space in this case
+#ifndef _WIN32
 			free(r);
+#else
+			VirtualFree((const void*) r, MEM_RELEASE);
+#endif
 
 			return NULL;
 		}
@@ -152,10 +164,17 @@ public:
 		SecureMemoryRegistry::i()->remove(p);
 
 #ifdef SENSITIVE_NON_PAGED
+#ifndef _WIN32
 		munlock((const void*) p, n * sizeof(T));
+#else
+		VirtualUnlock((const void*) p, n * sizeof(T));
+#endif
 
+#ifndef _WIN32
 		free(p);
 #else
+		VirtualFree((const void*) r, MEM_RELEASE);
+#endif
 		// Release the memory
 		::operator delete((void*) p);
 #endif // SENSITIVE_NON_PAGED

@@ -143,6 +143,13 @@ bool OSSLEVPSymmetricAlgorithm::encryptUpdate(const ByteString& data, ByteString
 		return false;
 	}
 
+	if (data.size() == 0)
+	{
+		encryptedData.resize(0);
+
+		return true;
+	}
+
 	// Prepare the output block
 	encryptedData.resize(data.size() + getBlockSize() - 1);
 

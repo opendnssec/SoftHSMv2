@@ -67,6 +67,7 @@
 
  *****************************************************************************/
 
+#include <config.h>
 #include <stdlib.h>
 #include <string.h>
 #include <cppunit/extensions/HelperMacros.h>
@@ -100,7 +101,11 @@ void ObjectTests::setUp()
 {
 //    printf("\nObjectTests\n");
 
+#ifndef _WIN32
 	setenv("SOFTHSM2_CONF", "./softhsm2.conf", 1);
+#else
+	setenv("SOFTHSM2_CONF", ".\\softhsm2.conf", 1);
+#endif
 
 	CK_RV rv;
 	CK_UTF8CHAR pin[] = SLOT_0_USER1_PIN;
@@ -1412,6 +1417,7 @@ void ObjectTests::testDefaultX509CertAttributes()
 	// Check attributes in X509 certificate object
 	checkCommonObjectAttributes(hSession, hObject, objClass);
 	checkCommonStorageObjectAttributes(hSession, hObject, CK_FALSE, CK_FALSE, CK_TRUE, NULL_PTR, 0, CK_TRUE);
+	memset(&emptyDate, 0, sizeof(emptyDate));
 	checkCommonCertificateObjectAttributes(hSession, hObject, CKC_X_509, CK_FALSE, 0, NULL_PTR, 0, emptyDate, 0, emptyDate, 0);
 	checkX509CertificateObjectAttributes(hSession, hObject, pSubject, sizeof(pSubject)-1, NULL_PTR, 0, NULL_PTR, 0, NULL_PTR, 0, pValue, sizeof(pValue)-1, NULL_PTR, 0, NULL_PTR, 0, NULL_PTR, 0, 0, CKM_SHA_1);
 }
@@ -1465,6 +1471,7 @@ void ObjectTests::testDefaultRSAPubAttributes()
 	// Check attributes in RSA public key object
 	checkCommonObjectAttributes(hSession, hObject, objClass);
 	checkCommonStorageObjectAttributes(hSession, hObject, CK_FALSE, CK_FALSE, CK_TRUE, NULL_PTR, 0, CK_TRUE);
+	memset(&emptyDate, 0, sizeof(emptyDate));
 	checkCommonKeyAttributes(hSession, hObject, objType, NULL_PTR, 0, emptyDate, 0, emptyDate, 0, CK_FALSE, CK_FALSE, CK_UNAVAILABLE_INFORMATION, NULL_PTR, 0);
 	checkCommonPublicKeyAttributes(hSession, hObject, NULL_PTR, 0, CK_TRUE, CK_TRUE, CK_TRUE, CK_TRUE, CK_FALSE, NULL_PTR, 0);
 	checkCommonRSAPublicKeyAttributes(hSession, hObject, pN, sizeof(pN), 512, pE, sizeof(pE));
@@ -1530,6 +1537,7 @@ void ObjectTests::testDefaultRSAPrivAttributes()
 	// Check attributes in RSA public key object
 	checkCommonObjectAttributes(hSession, hObject, objClass);
 	checkCommonStorageObjectAttributes(hSession, hObject, CK_FALSE, CK_FALSE, CK_TRUE, NULL_PTR, 0, CK_TRUE);
+	memset(&emptyDate, 0, sizeof(emptyDate));
 	checkCommonKeyAttributes(hSession, hObject, objType, NULL_PTR, 0, emptyDate, 0, emptyDate, 0, CK_FALSE, CK_FALSE, CK_UNAVAILABLE_INFORMATION, NULL_PTR, 0);
 	checkCommonPrivateKeyAttributes(hSession, hObject, NULL_PTR, 0, CK_FALSE, CK_TRUE, CK_TRUE, CK_TRUE, CK_TRUE, CK_TRUE, CK_FALSE, CK_FALSE, CK_FALSE, NULL_PTR, 0, CK_FALSE);
 	checkCommonRSAPrivateKeyAttributes(hSession, hObject, pN, sizeof(pN), NULL_PTR, 0, pD, sizeof(pD), NULL_PTR, 0, NULL_PTR, 0, NULL_PTR, 0, NULL_PTR, 0, NULL_PTR, 0);
