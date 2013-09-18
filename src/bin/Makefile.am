@@ -5,3 +5,6 @@ SUBDIRS = common keyconv util
 if BUILD_MIGRATE
 SUBDIRS += migrate
 endif
+
+EXTRA_DIST =	$(srcdir)/win32/*.cpp \
+		$(srcdir)/win32/*.h
