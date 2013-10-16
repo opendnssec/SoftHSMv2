@@ -33,13 +33,14 @@
 #include "config.h"
 #include "OSSLDES.h"
 #include <algorithm>
+#include "odd.h"
 
 const EVP_CIPHER* OSSLDES::getCipher() const
 {
 	if (currentKey == NULL) return NULL;
 
 	// Check currentKey bit length; 3DES only supports 56-bit, 112-bit or 168-bit keys 
-	if ((currentKey->getBitLen() != 56) && 
+	if ((currentKey->getBitLen() != 56) &&
 	    (currentKey->getBitLen() != 112) &&
             (currentKey->getBitLen() != 168))
 	{
@@ -107,6 +108,36 @@ const EVP_CIPHER* OSSLDES::getCipher() const
 	ERROR_MSG("Invalid DES cipher mode %s", currentCipherMode.c_str());
 
 	return NULL;
+}
+
+bool OSSLDES::generateKey(SymmetricKey& key, RNG* rng /* = NULL */)
+{
+	if (rng == NULL)
+	{
+		return false;
+	}
+
+	if (key.getBitLen() == 0)
+	{
+		return false;
+	}
+
+	ByteString keyBits;
+
+	// don't count parity bit
+	if (!rng->generateRandom(keyBits, key.getBitLen()/7))
+	{
+		return false;
+	}
+
+	// fix the odd parity
+	size_t i;
+	for (i = 0; i < keyBits.size(); i++)
+	{
+		keyBits[i] = odd_parity[keyBits[i]];
+	}
+
+	return key.setKeyBits(keyBits);
 }
 
 size_t OSSLDES::getBlockSize() const

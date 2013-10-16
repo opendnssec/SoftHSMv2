@@ -8,6 +8,7 @@ AM_CPPFLAGS = 			-I$(srcdir)/.. \
 check_PROGRAMS =		p11test
 
 p11test_SOURCES =		p11test.cpp \
+				SymmetricAlgorithmTests.cpp \
 				DigestTests.cpp \
 				InitTests.cpp \
 				InfoTests.cpp \
@@ -17,7 +18,7 @@ p11test_SOURCES =		p11test.cpp \
 				UserTests.cpp \
 				ObjectTests.cpp \
 				SignVerifyTests.cpp \
-				EncryptDecryptTests.cpp \
+				AsymEncryptDecryptTests.cpp \
 				../common/osmutex.cpp
 
 p11test_LDADD =			../libsofthsm.la 

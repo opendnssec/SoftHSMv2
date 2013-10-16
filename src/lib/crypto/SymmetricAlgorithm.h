@@ -48,16 +48,17 @@ public:
 	virtual ~SymmetricAlgorithm() { }
 
 	// Encryption functions
-	virtual bool encryptInit(const SymmetricKey* key, const std::string mode = "cbc", const ByteString& IV = ByteString());
+	virtual bool encryptInit(const SymmetricKey* key, const std::string mode = "cbc", const ByteString& IV = ByteString(), bool padding = true);
 	virtual bool encryptUpdate(const ByteString& data, ByteString& encryptedData);
 	virtual bool encryptFinal(ByteString& encryptedData);
 
 	// Decryption functions
-	virtual bool decryptInit(const SymmetricKey* key, const std::string mode = "cbc", const ByteString& IV = ByteString());
+	virtual bool decryptInit(const SymmetricKey* key, const std::string mode = "cbc", const ByteString& IV = ByteString(), bool padding = true);
 	virtual bool decryptUpdate(const ByteString& encryptedData, ByteString& data);
 	virtual bool decryptFinal(ByteString& data);
 
 	// Key factory
+	virtual void recycleKey(SymmetricKey* toRecycle);
 	virtual bool generateKey(SymmetricKey& key, RNG* rng = NULL);
 	virtual bool reconstructKey(SymmetricKey& key, const ByteString& serialisedData);
 

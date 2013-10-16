@@ -57,6 +57,9 @@ public:
 	// Serialisation
 	virtual ByteString serialise() const;
 
+	// Set the bit length
+	virtual void setBitLen(const size_t bitLen);
+
 	// Retrieve the bit length
 	virtual size_t getBitLen() const;
 

@@ -53,7 +53,7 @@ bool SymmetricKey::setKeyBits(const ByteString& keybits)
 	if ((bitLen > 0) && ((keybits.size() * 8) != bitLen))
 	{
 		return false;
-	}	
+	}
 
 	keyData = keybits;
 
@@ -70,6 +70,12 @@ const ByteString& SymmetricKey::getKeyBits() const
 ByteString SymmetricKey::serialise() const
 {
 	return keyData;
+}
+
+// Set the bit length
+void SymmetricKey::setBitLen(const size_t bitLen)
+{
+	this->bitLen = bitLen;
 }
 
 // Retrieve the bit length

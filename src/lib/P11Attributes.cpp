@@ -728,13 +728,49 @@ bool P11AttrID::setDefault()
 
 /*****************************************
  * CKA_VALUE
-  *****************************************/
+ *****************************************/
 
 // Set default value
 bool P11AttrValue::setDefault()
 {
 	OSAttribute attr(ByteString(""));
 	return osobject->setAttribute(type, attr);
+}
+
+// Update the value if allowed
+CK_RV P11AttrValue::updateAttr(Token *token, bool isPrivate, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op)
+{
+	ByteString plaintext((unsigned char*)pValue, ulValueLen);
+	ByteString value;
+
+	// Encrypt
+
+	if (isPrivate)
+	{
+		if (!token->encrypt(plaintext, value))
+			return CKR_GENERAL_ERROR;
+	}
+	else
+		value = plaintext;
+
+	// Attribute specific checks
+
+	if (value.size() < ulValueLen)
+		return CKR_GENERAL_ERROR;
+
+	// Store data
+
+	osobject->setAttribute(type, value);
+
+	// Set the CKA_VALUE_LEN during C_CreateObject
+
+	if (op == OBJECT_OP_CREATE && osobject->attributeExists(CKA_VALUE_LEN))
+	{
+		OSAttribute bytes((unsigned long)plaintext.size());
+		osobject->setAttribute(CKA_VALUE_LEN, bytes);
+	}
+
+	return CKR_OK;
 }
 
 /*****************************************
@@ -1632,8 +1668,9 @@ CK_RV P11AttrModulus::updateAttr(Token *token, bool isPrivate, CK_VOID_PTR pValu
 
 	osobject->setAttribute(type, value);
 
-	OSAttribute* attrClass = osobject->getAttribute(CKA_CLASS);
-	if (op == OBJECT_OP_CREATE && attrClass != NULL && attrClass->getUnsignedLongValue() == CKO_PUBLIC_KEY)
+	// Set the CKA_MODULUS_BITS during C_CreateObject
+
+	if (op == OBJECT_OP_CREATE && osobject->attributeExists(CKA_MODULUS_BITS))
 	{
 		OSAttribute bits((unsigned long)plaintext.bits());
 		osobject->setAttribute(CKA_MODULUS_BITS, bits);
@@ -1763,6 +1800,42 @@ bool P11AttrPrime::setDefault()
 	return osobject->setAttribute(type, attr);
 }
 
+// Update the value if allowed
+CK_RV P11AttrPrime::updateAttr(Token *token, bool isPrivate, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op)
+{
+	ByteString plaintext((unsigned char*)pValue, ulValueLen);
+	ByteString value;
+
+	// Encrypt
+
+	if (isPrivate)
+	{
+		if (!token->encrypt(plaintext, value))
+			return CKR_GENERAL_ERROR;
+	}
+	else
+		value = plaintext;
+
+	// Attribute specific checks
+
+	if (value.size() < ulValueLen)
+		return CKR_GENERAL_ERROR;
+
+	// Store data
+
+	osobject->setAttribute(type, value);
+
+	// Set the CKA_PRIME_BITS during C_CreateObject
+
+	if (op == OBJECT_OP_CREATE && osobject->attributeExists(CKA_PRIME_BITS))
+	{
+		OSAttribute bits((unsigned long)plaintext.bits());
+		osobject->setAttribute(CKA_PRIME_BITS, bits);
+	}
+
+	return CKR_OK;
+}
+
 /*****************************************
  * CKA_SUBPRIME
  *****************************************/
@@ -1871,5 +1944,38 @@ bool P11AttrGost28147Params::setDefault()
 {
 	OSAttribute attr(ByteString(""));
 	return osobject->setAttribute(type, attr);
+}
+
+/*****************************************
+ * CKA_VALUE_LEN
+ *****************************************/
+
+// Set default value
+bool P11AttrValueLen::setDefault()
+{
+	OSAttribute attr((unsigned long)0);
+	return osobject->setAttribute(type, attr);
+}
+
+// Update the value if allowed
+CK_RV P11AttrValueLen::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op)
+{
+	// Attribute specific checks
+
+	if (op != OBJECT_OP_GENERATE)
+	{
+		return CKR_ATTRIBUTE_READ_ONLY;
+	}
+
+	if (ulValueLen != sizeof(CK_ULONG))
+	{
+		return CKR_ATTRIBUTE_VALUE_INVALID;
+	}
+
+	// Store data
+
+	osobject->setAttribute(type, *(CK_ULONG*)pValue);
+
+	return CKR_OK;
 }
 

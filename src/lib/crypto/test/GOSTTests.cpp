@@ -91,7 +91,11 @@ void GOSTTests::testHash()
 	writeTmpFile(b);
 
 	// Use OpenSSL externally to hash it
-	CPPUNIT_ASSERT(system("cat gost-hashtest.tmp | openssl dgst -engine gost -md_gost94 -binary > gost-hashtest-out.tmp 2> /dev/null") == 0);
+#ifndef _WIN32
+	CPPUNIT_ASSERT(system("openssl dgst -engine gost -md_gost94 -binary < gost-hashtest.tmp > gost-hashtest-out.tmp 2> /dev/null") == 0);
+#else
+	CPPUNIT_ASSERT(system("openssl dgst -engine gost -md_gost94 -binary < gost-hashtest.tmp > gost-hashtest-out.tmp 2> nul") == 0);
+#endif
 
 	// Read the hash from file
 	readTmpFile(osslHash);
@@ -122,7 +126,11 @@ void GOSTTests::testHash()
 
 void GOSTTests::writeTmpFile(ByteString& data)
 {
+#ifndef _WIN32
 	FILE* out = fopen("gost-hashtest.tmp", "w");
+#else
+	FILE* out = fopen("gost-hashtest.tmp", "wb");
+#endif
 	CPPUNIT_ASSERT(out != NULL);
 
 	CPPUNIT_ASSERT(fwrite(&data[0], 1, data.size(), out) == data.size());
@@ -135,7 +143,11 @@ void GOSTTests::readTmpFile(ByteString& data)
 
 	data.wipe();
 
+#ifdef _WIN32
 	FILE* in = fopen("gost-hashtest-out.tmp", "r");
+#else
+	FILE* in = fopen("gost-hashtest-out.tmp", "rb");
+#endif
 	CPPUNIT_ASSERT(in != NULL);
 
 	int read = 0;

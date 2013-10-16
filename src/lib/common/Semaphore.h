@@ -34,7 +34,9 @@
 #define _SOFTHSM_V2_SEMAPHORE_H
 
 #include "config.h"
+#ifndef _WIN32
 #include <semaphore.h>
+#endif
 #include <string>
 
 class Semaphore
@@ -57,10 +59,19 @@ public:
 
 private:
 	// Constructor
+#ifndef _WIN32
 	Semaphore(sem_t* semaphore, std::string name);
+#else
+	Semaphore(HANDLE semaphore, std::string name);
+#endif
 
 	// The actual POSIX semaphore
+#ifndef _WIN32
 	sem_t* semaphore;
+#else
+	HANDLE semaphore;
+	CRITICAL_SECTION cs;
+#endif
 
 	// The name of the semaphore (needed to destroy it)
 	std::string name;

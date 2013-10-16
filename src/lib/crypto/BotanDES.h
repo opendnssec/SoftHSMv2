@@ -43,11 +43,14 @@ public:
 	// Destructor
 	virtual ~BotanDES() { }
 
+	// Generate key
+	virtual bool generateKey(SymmetricKey& key, RNG* rng = NULL);
+
 	// Return the block size
 	virtual size_t getBlockSize() const;
 
 protected:
-	// Return the right EVP cipher for the operation
+	// Return the right Botan cipher for the operation
 	virtual std::string getCipher() const;
 };
 

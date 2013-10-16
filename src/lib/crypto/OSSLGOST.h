@@ -40,6 +40,11 @@
 class OSSLGOST : public AsymmetricAlgorithm
 {
 public:
+	// Constructor
+	OSSLGOST() : AsymmetricAlgorithm() {
+		EVP_MD_CTX_init(&curCTX);
+	}
+
 	// Destructor
 	~OSSLGOST();
 

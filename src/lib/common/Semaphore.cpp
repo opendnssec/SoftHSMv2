@@ -39,7 +39,11 @@
 // Search/replace for "/" to "_"
 char replaceSlashByUnderscore(const char in)
 {
+#ifndef _WIN32
 	return ((in == '/') ? '_' : in);
+#else
+	return ((in == '\\') ? '_' : in);
+#endif
 }
 
 // Factory
@@ -56,7 +60,11 @@ Semaphore* Semaphore::create(int initialValue, const std::string name /* = "" */
 		semName = "/" + semName;
 	}
 
+#ifndef _WIN32
 	sem_t* semaphore = sem_open(semName.empty() ? NULL : semName.c_str(), O_CREAT, S_IRWXU|S_IRWXG|S_IRWXO, initialValue);
+#else
+	HANDLE semaphore = CreateSemaphoreA(NULL, initialValue, initialValue + 1, semName.c_str());
+#endif
 
 	if (semaphore == NULL)
 	{
@@ -67,15 +75,23 @@ Semaphore* Semaphore::create(int initialValue, const std::string name /* = "" */
 }
 
 // Constructor
+#ifndef _WIN32
 Semaphore::Semaphore(sem_t* semaphore, std::string name)
+#else
+Semaphore::Semaphore(HANDLE semaphore, std::string name)
+#endif
 {
 	this->semaphore = semaphore;
 	this->name = name;
+#ifdef _WIN32
+	InitializeCriticalSection(&cs);
+#endif
 }
 
 // Destructor
 Semaphore::~Semaphore()
 {
+#ifndef _WIN32
 	// Close the semaphore
 	sem_close(semaphore);
 
@@ -84,12 +100,20 @@ Semaphore::~Semaphore()
 	{
 		sem_unlink(name.c_str());
 	}
+#else
+	CloseHandle(semaphore);
+	DeleteCriticalSection(&cs);
+#endif
 }
 
 // Increment (unlock) the semaphore
 bool Semaphore::inc()
 {
+#ifndef _WIN32
 	return (sem_post(semaphore) != -1);
+#else
+	return (ReleaseSemaphore(semaphore, 1, NULL) != 0);
+#endif
 }
 
 // Decrement (lock) the semaphore
@@ -97,11 +121,19 @@ bool Semaphore::dec(bool wait /* = false */)
 {
 	if (wait)
 	{
+#ifndef _WIN32
 		return (sem_wait(semaphore) != -1);
+#else
+		return (WaitForSingleObject(semaphore, INFINITE) != 0);
+#endif
 	}
 	else
 	{
+#ifndef _WIN32
 		return (sem_trywait(semaphore) != -1);
+#else
+		return (WaitForSingleObject(semaphore, 0) != 0);
+#endif
 	}
 }
 
@@ -110,10 +142,22 @@ int Semaphore::getValue()
 {
 	int value = -1;
 
+#ifndef _WIN32
 	if (sem_getvalue(semaphore, &value) == -1)
 	{
 		return -1;
 	}
+#else
+	EnterCriticalSection(&cs);
+	if (WaitForSingleObject(semaphore, 0) == 0)
+	{
+		LONG prev;
+		ReleaseSemaphore(semaphore, 1, &prev);
+		value = prev + 1;
+	} else
+		value = 0;
+	LeaveCriticalSection(&cs);
+#endif
 
 	return value;
 }

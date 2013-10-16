@@ -80,6 +80,12 @@ BotanCryptoFactory::~BotanCryptoFactory()
 	{
 		delete (BotanRNG*)it->second;
 	}
+#elif _WIN32
+	std::map<DWORD,RNG*>::iterator it;
+	for (it=rngs.begin(); it != rngs.end(); it++)
+	{
+		delete (BotanRNG*)it->second;
+	}
 #endif
 
 	// TODO: We cannot do this because the MutexFactory is destroyed before the CryptoFactory
@@ -292,6 +298,20 @@ RNG* BotanCryptoFactory::getRNG(std::string name /* = "default" */)
 
 		// Find the RNG
 		std::map<pthread_t,RNG*>::iterator findIt;
+		findIt=rngs.find(threadID);
+		if (findIt != rngs.end())
+		{
+			return findIt->second;
+		}
+
+		threadRNG = new BotanRNG();
+		rngs[threadID] = threadRNG;
+#elif _WIN32
+		// Get thread ID
+		DWORD threadID = GetCurrentThreadId();
+
+		// Find the RNG
+		std::map<DWORD,RNG*>::iterator findIt;
 		findIt=rngs.find(threadID);
 		if (findIt != rngs.end())
 		{

@@ -36,7 +36,12 @@
 #include "log.h"
 #include <string>
 #include <vector>
+#ifndef _WIN32
 #include <dirent.h>
+#else
+#include <direct.h>
+#include <io.h>
+#endif
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
@@ -77,6 +82,7 @@ bool Directory::refresh()
 	subDirs.clear();
 	files.clear();
 
+#ifndef _WIN32
 	// Enumerate the directory
 	DIR* dir = opendir(path.c_str());
 
@@ -144,6 +150,48 @@ bool Directory::refresh()
 	// Close the directory
 	closedir(dir);
 
+#else
+	// Enumerate the directory
+	std::string pattern;
+	intptr_t h;
+	struct _finddata_t fi;
+
+	if ((path.back() == '/') || (path.back() == '\\'))
+		pattern = path + "*";
+	else
+		pattern = path + "/*";
+	memset(&fi, 0, sizeof(fi));
+	h = _findfirst(pattern.c_str(), &fi);
+	if (h == -1)
+	{
+		// empty directory
+		if (errno == ENOENT)
+			goto finished;
+
+		DEBUG_MSG("Failed to open directory %s", path.c_str());
+
+		return false;
+	}
+
+	// scan files & subdirs
+	do {
+		// Check if this is the . or .. entry
+		if (!strcmp(fi.name, ".") || !strcmp(fi.name, ".."))
+			continue;
+
+		if ((fi.attrib & _A_SUBDIR) == 0)
+			files.push_back(fi.name);
+		else
+			subDirs.push_back(fi.name);
+
+		memset(&fi, 0, sizeof(fi));
+	} while (_findnext(h, &fi) == 0);
+
+	(void) _findclose(h);
+
+    finished:
+#endif
+
 	valid = true;
 
 	return true;
@@ -154,14 +202,38 @@ bool Directory::mkdir(std::string name)
 {
 	std::string fullPath = path + OS_PATHSEP + name;
 
+#ifndef _WIN32
 	return (!::mkdir(fullPath.c_str(), S_IFDIR | S_IRWXU) && refresh());
+#else
+	return (!_mkdir(fullPath.c_str()) && refresh());
+#endif
 }
 
 // Delete a file or subdirectory in the directory
 bool Directory::remove(std::string name)
 {
+#ifndef _WIN32
 	std::string fullPath = path + OS_PATHSEP + name;
 
 	return (!::remove(fullPath.c_str()) && refresh());
+#else
+	std::string fullPath = path + OS_PATHSEP + name;
+	struct _stat filestat;
+
+	memset(&filestat, 0, sizeof(struct _stat));
+	if (_stat(fullPath.c_str(), &filestat) != 0)
+		return false;
+	if ((filestat.st_mode & _S_IFMT) == _S_IFDIR)
+	{
+		if (_rmdir(fullPath.c_str()) != 0)
+			return false;
+	}
+	else
+	{
+		if (_unlink(fullPath.c_str()) != 0)
+			return false;
+	}
+	return refresh();
+#endif
 }
 

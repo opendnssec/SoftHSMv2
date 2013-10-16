@@ -41,7 +41,7 @@ SymmetricAlgorithm::SymmetricAlgorithm()
 	currentOperation = NONE;
 }
 
-bool SymmetricAlgorithm::encryptInit(const SymmetricKey* key, const std::string mode /* = "CBC" */, const ByteString& /*IV = ByteString() */)
+bool SymmetricAlgorithm::encryptInit(const SymmetricKey* key, const std::string mode /* = "CBC" */, const ByteString& /*IV = ByteString() */, bool /*padding = true */)
 {
 	if ((key == NULL) || (currentOperation != NONE))
 	{
@@ -75,11 +75,13 @@ bool SymmetricAlgorithm::encryptFinal(ByteString& /*encryptedData*/)
 	}
 
 	currentOperation = NONE;
+	currentKey = NULL;
+	currentCipherMode = "invalid";
 
 	return true;
 }
 
-bool SymmetricAlgorithm::decryptInit(const SymmetricKey* key, const std::string mode /* = "CBC" */, const ByteString& /*IV = ByteString() */)
+bool SymmetricAlgorithm::decryptInit(const SymmetricKey* key, const std::string mode /* = "CBC" */, const ByteString& /*IV = ByteString() */, bool /*padding = true */)
 {
 	if ((key == NULL) || (currentOperation != NONE))
 	{
@@ -114,11 +116,18 @@ bool SymmetricAlgorithm::decryptFinal(ByteString& /*data*/)
 	}
 
 	currentOperation = NONE;
+	currentKey = NULL;
+	currentCipherMode = "invalid";
 
 	return true;
 }
 
 // Key factory
+void SymmetricAlgorithm::recycleKey(SymmetricKey* /*toRecycle*/)
+{
+	delete currentKey;
+}
+
 bool SymmetricAlgorithm::generateKey(SymmetricKey& key, RNG* rng /* = NULL */)
 {
 	if (rng == NULL)
@@ -132,15 +141,13 @@ bool SymmetricAlgorithm::generateKey(SymmetricKey& key, RNG* rng /* = NULL */)
 	}
 
 	ByteString keyBits;
-	
+
 	if (!rng->generateRandom(keyBits, key.getBitLen()/8))
 	{
 		return false;
 	}
 
-	key.setKeyBits(keyBits);
-
-	return true;
+	return key.setKeyBits(keyBits);
 }
 
 bool SymmetricAlgorithm::reconstructKey(SymmetricKey& key, const ByteString& serialisedData)

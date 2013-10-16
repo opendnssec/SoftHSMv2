@@ -34,7 +34,7 @@
 #include "log.h"
 #include "salloc.h"
 #include <limits>
-#ifdef SENSITIVE_NON_PAGED
+#if defined(SENSITIVE_NON_PAGED) && !defined(_WIN32)
 #include <sys/mman.h>
 #endif // SENSITIVE_NON_PAGED
 #include <string.h>
@@ -45,7 +45,11 @@ void* salloc(size_t len)
 {
 #ifdef SENSITIVE_NON_PAGED
 	// Allocate memory on a page boundary
+#ifndef _WIN32
 	void* ptr = (void*) valloc(len);
+#else
+	pointer r = (pointer) VirtualAlloc(NULL, n * sizeof(T), MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+#endif
 
 	if (ptr == NULL)
 	{
@@ -55,12 +59,20 @@ void* salloc(size_t len)
 	}
 
 	// Lock the memory so it doesn't get swapped out
+#ifndef _WIN32
 	if (mlock((const void*) ptr, len) != 0)
+#else
+	if (VirtualLock((const void*) r, n * sizeof(T)) == 0)
+#endif
 	{
 		ERROR_MSG("Could not allocate non-paged memory for secure storage");
 
 		// Hmmm... best to not return any allocated space in this case
+#ifndef _WIN32
 		free(ptr);
+#else
+		VirtualFree((const void*) pre, MEM_RELEASE);
+#endif
 
 		return NULL;
 	}
@@ -101,7 +113,12 @@ void sfree(void* ptr)
 	memset(ptr, 0x00, len);
 
 #ifdef SENSITIVE_NON_PAGED
+#ifndef _WIN32
 	munlock((const void*) ptr, len);
+#else
+	VirtualFree((const void*) pre, MEM_RELEASE);
+#endif
+
 #endif // SENSITIVE_NON_PAGED
 
 	free(ptr);

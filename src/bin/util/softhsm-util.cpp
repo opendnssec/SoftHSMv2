@@ -40,7 +40,9 @@
 #include <stdlib.h>
 #include <getopt.h>
 #include <string.h>
+#ifndef _WIN32
 #include <unistd.h>
+#endif
 #include <iostream>
 #include <fstream>
 

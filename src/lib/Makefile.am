@@ -45,4 +45,7 @@ SUBDIRS = 			common \
 				test
 
 EXTRA_DIST =			$(srcdir)/*.h \
-				$(srcdir)/cryptoki_compat/*.h
+				$(srcdir)/cryptoki_compat/*.h \
+				$(srcdir)/win32/*.cc \
+				$(srcdir)/win32/*.cpp \
+				$(srcdir)/win32/*.h

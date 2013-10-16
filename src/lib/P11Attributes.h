@@ -340,6 +340,9 @@ public:
 protected:
 	// Set the default value of the attribute
 	virtual bool setDefault();
+
+	// Update the value if allowed
+	virtual CK_RV updateAttr(Token *token, bool isPrivate, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op);
 };
 
 /*****************************************
@@ -1016,6 +1019,9 @@ public:
 protected:
 	// Set the default value of the attribute
 	virtual bool setDefault();
+
+	// Update the value if allowed
+	virtual CK_RV updateAttr(Token *token, bool isPrivate, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op);
 };
 
 /*****************************************
@@ -1134,11 +1140,29 @@ class P11AttrGost28147Params : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrGost28147Params(OSObject* osobject, CK_ULONG inchecks = 0) : P11Attribute(osobject) { type = CKA_GOST28147_PARAMS; checks = ck8|inchecks; }
+	P11AttrGost28147Params(OSObject* osobject, CK_ULONG inchecks = 0) : P11Attribute(osobject) { type = CKA_GOST28147_PARAMS; checks = inchecks; }
 
 protected:
 	// Set the default value of the attribute
 	virtual bool setDefault();
+};
+
+/*****************************************
+ * CKA_VALUE_LEN
+ *****************************************/
+
+class P11AttrValueLen : public P11Attribute
+{
+public:
+	// Constructor
+	P11AttrValueLen(OSObject* osobject, CK_ULONG inchecks = 0) : P11Attribute(osobject) { type = CKA_VALUE_LEN; size = sizeof(CK_ULONG); checks = ck2|ck3|inchecks; }
+
+protected:
+	// Set the default value of the attribute
+	virtual bool setDefault();
+
+	// Update the value if allowed
+	virtual CK_RV updateAttr(Token *token, bool isPrivate, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op);
 };
 
 #endif // !_SOFTHSM_V2_P11ATTRIBUTES_H

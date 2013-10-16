@@ -276,9 +276,20 @@ protected:
 
 class P11SecretKeyObj : public P11KeyObj
 {
-public:
+protected:
 	// Constructor
 	P11SecretKeyObj();
+
+	// Add attributes
+	virtual bool init(OSObject *osobject);
+	bool initialized;
+};
+
+class P11GenericSecretKeyObj : public P11SecretKeyObj
+{
+public:
+	// Constructor
+	P11GenericSecretKeyObj();
 
 	// Add attributes
 	virtual bool init(OSObject *osobject);
@@ -286,9 +297,54 @@ public:
 	// Better than multiply subclasses
 	virtual bool setKeyType(CK_KEY_TYPE keytype);
 	virtual CK_KEY_TYPE getKeyType();
+
 protected:
 	bool initialized;
 	CK_KEY_TYPE keytype;
+};
+
+class P11AESSecretKeyObj : public P11SecretKeyObj
+{
+public:
+	// Constructor
+	P11AESSecretKeyObj();
+
+	// Add attributes
+	virtual bool init(OSObject *osobject);
+
+protected:
+	bool initialized;
+};
+
+class P11DESSecretKeyObj : public P11SecretKeyObj
+{
+public:
+	// Constructor
+	P11DESSecretKeyObj();
+
+	// Add attributes
+	virtual bool init(OSObject *osobject);
+
+	// Better than multiply subclasses
+	virtual bool setKeyType(CK_KEY_TYPE keytype);
+	virtual CK_KEY_TYPE getKeyType();
+
+protected:
+	bool initialized;
+	CK_KEY_TYPE keytype;
+};
+
+class P11GOSTSecretKeyObj : public P11SecretKeyObj
+{
+public:
+	// Constructor
+	P11GOSTSecretKeyObj();
+
+	// Add attributes
+	virtual bool init(OSObject *osobject);
+
+protected:
+	bool initialized;
 };
 
 class P11DomainObj : public P11Object

@@ -25,20 +25,21 @@
  */
 
 /*****************************************************************************
- EncryptDecryptTests.h
+ AsymEncryptDecryptTests.h
 
- Contains test cases to C_EncryptInit, C_Encrypt, C_DecryptInit, C_Decrypt
+ Contains test cases for C_EncryptInit, C_Encrypt, C_DecryptInit, C_Decrypt
+ using asymmetrical algorithms (i.e., RSA)
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_ENCRYPTDECRYPTTESTS_H
-#define _SOFTHSM_V2_ENCRYPTDECRYPTTESTS_H
+#ifndef _SOFTHSM_V2_ASYMENCRYPTDECRYPTTESTS_H
+#define _SOFTHSM_V2_ASYMENCRYPTDECRYPTTESTS_H
 
 #include <cppunit/extensions/HelperMacros.h>
 #include "cryptoki.h"
 
-class EncryptDecryptTests : public CppUnit::TestFixture
+class AsymEncryptDecryptTests : public CppUnit::TestFixture
 {
-	CPPUNIT_TEST_SUITE(EncryptDecryptTests);
+	CPPUNIT_TEST_SUITE(AsymEncryptDecryptTests);
 	CPPUNIT_TEST(testRsaEncryptDecrypt);
 	CPPUNIT_TEST_SUITE_END();
 
@@ -53,4 +54,4 @@ protected:
 	void rsaEncryptDecrypt(CK_MECHANISM_TYPE mechanismType, CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hPublicKey, CK_OBJECT_HANDLE hPrivateKey);
 };
 
-#endif // !_SOFTHSM_V2_ENCRYPTDECRYPTTESTS_H
+#endif // !_SOFTHSM_V2_ASYMENCRYPTDECRYPTTESTS_H

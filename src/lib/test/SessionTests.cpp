@@ -31,6 +31,7 @@
  C_GetSessionInfo
  *****************************************************************************/
 
+#include <config.h>
 #include <stdlib.h>
 #include <string.h>
 #include <cppunit/extensions/HelperMacros.h>
@@ -43,7 +44,11 @@ void SessionTests::setUp()
 {
 //    printf("\nSessionTests\n");
 
+#ifndef _WIN32
 	setenv("SOFTHSM2_CONF", "./softhsm2.conf", 1);
+#else
+	setenv("SOFTHSM2_CONF", ".\\softhsm2.conf", 1);
+#endif
 
 	CK_UTF8CHAR pin[] = SLOT_0_SO1_PIN;
 	CK_ULONG pinLength = sizeof(pin) - 1;
@@ -66,7 +71,7 @@ void SessionTests::tearDown()
 
 void SessionTests::testOpenSession()
 {
-    CK_RV rv;
+	CK_RV rv;
 	CK_SESSION_HANDLE hSession;
 
     // Just make sure that we finalize any previous tests
@@ -99,8 +104,8 @@ void SessionTests::testOpenSession()
 
 void SessionTests::testCloseSession()
 {
-    CK_RV rv;
-	CK_SESSION_HANDLE hSession;
+	CK_RV rv;
+	CK_SESSION_HANDLE hSession = CK_INVALID_HANDLE;
 
 	// Just make sure that we finalize any previous tests
 	C_Finalize(NULL_PTR);
@@ -163,8 +168,8 @@ void SessionTests::testCloseAllSessions()
 
 void SessionTests::testGetSessionInfo()
 {
-    CK_RV rv;
-	CK_SESSION_HANDLE hSession;
+	CK_RV rv;
+	CK_SESSION_HANDLE hSession = CK_INVALID_HANDLE;
 	CK_SESSION_INFO info;
 
 	// Just make sure that we finalize any previous tests

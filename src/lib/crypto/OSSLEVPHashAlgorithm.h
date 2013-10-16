@@ -41,7 +41,9 @@ class OSSLEVPHashAlgorithm : public HashAlgorithm
 {
 public:
 	// Base constructors
-	OSSLEVPHashAlgorithm() : HashAlgorithm() { }
+	OSSLEVPHashAlgorithm() : HashAlgorithm() {
+		EVP_MD_CTX_init(&curCTX);
+	}
 
 	// Destructor
 	~OSSLEVPHashAlgorithm();
