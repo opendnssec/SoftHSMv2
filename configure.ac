@@ -49,6 +49,13 @@ AC_PROG_CXX
 ACX_PEDANTIC
 ACX_STRICT
 
+# Check for libraries (-ldl can be required by OpenSSL too)
+ACX_DLOPEN
+ACX_SEMAPHORE
+
+# Check for headers
+AC_CHECK_HEADERS([pthread.h])
+
 # What crypto backend to use and if we want to have support GOST
 ACX_CRYPTO_BACKEND
 
@@ -81,13 +88,6 @@ else
 	AC_MSG_RESULT(no)
 fi
 AM_CONDITIONAL([BUILD_MIGRATE], [test "x${build_migrate}" = "xyes"])
-
-# Check for libraries
-ACX_DLOPEN
-ACX_SEMAPHORE
-
-# Check for headers
-AC_CHECK_HEADERS([pthread.h])
 
 # Set full directory paths
 full_sysconfdir=`eval eval eval eval eval echo "${sysconfdir}" | sed "s#NONE#${prefix}#" | sed "s#NONE#${ac_default_prefix}#"`
