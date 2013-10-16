@@ -61,7 +61,10 @@ public:
 	// Create a new subdirectory
 	bool mkdir(std::string name);
 
-	// Delete a file or subdirectory in the directory
+	// Delete a subdirectory in the directory
+	bool rmdir(std::string name, bool doRefresh = false);
+
+	// Delete a file in the directory
 	bool remove(std::string name);
 
 private:

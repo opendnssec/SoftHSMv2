@@ -49,12 +49,6 @@
 #include <map>
 #include <list>
 #include <stdio.h>
-#ifndef _WIN32
-#include <unistd.h>
-#else
-#include <direct.h>
-#define rmdir _rmdir
-#endif
 
 // Constructor
 OSToken::OSToken(const std::string tokenPath)
@@ -92,7 +86,7 @@ OSToken::OSToken(const std::string tokenPath)
 
 	if (!tokenObject.isValid())
 	{
-		baseDir.remove(tokenDir);
+		baseDir.rmdir(tokenDir);
 
 		return NULL;
 	}
@@ -115,7 +109,7 @@ OSToken::OSToken(const std::string tokenPath)
 	    !tokenObject.setAttribute(CKA_OS_TOKENFLAGS, tokenFlags))
 	{
 		baseDir.remove(tokenDir + OS_PATHSEP + "tokenObject");
-		baseDir.remove(tokenDir);
+		baseDir.rmdir(tokenDir);
 
 		return NULL;
 	}
@@ -452,7 +446,7 @@ bool OSToken::clearToken()
 	}
 
 	// Now remove the token directory
-	if (rmdir(tokenPath.c_str()))
+	if (!tokenDir->rmdir(""))
 	{
 		ERROR_MSG("Failed to remove the token directory %s", tokenPath.c_str());
 

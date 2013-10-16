@@ -111,6 +111,7 @@ double pochisq(
 
     a = 0.5 * x;
     even = (2 * (df / 2)) == df;
+    y = 0.0;
     if (df > 1) {
     	y = ex(-a);
     }

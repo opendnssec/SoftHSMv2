@@ -92,7 +92,7 @@ CK_RV SymmetricAlgorithmTests::generateAesKey(CK_SESSION_HANDLE hSession, CK_BBO
 {
 	CK_MECHANISM mechanism = { CKM_AES_KEY_GEN, NULL_PTR, 0 };
 	CK_ULONG bytes = 16;
-	CK_BBOOL bFalse = CK_FALSE;
+	// CK_BBOOL bFalse = CK_FALSE;
 	CK_BBOOL bTrue = CK_TRUE;
 	CK_ATTRIBUTE keyAttribs[] = {
 		{ CKA_TOKEN, &bToken, sizeof(bToken) },
@@ -111,7 +111,7 @@ CK_RV SymmetricAlgorithmTests::generateAesKey(CK_SESSION_HANDLE hSession, CK_BBO
 CK_RV SymmetricAlgorithmTests::generateDesKey(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_OBJECT_HANDLE &hKey)
 {
 	CK_MECHANISM mechanism = { CKM_DES_KEY_GEN, NULL_PTR, 0 };
-	CK_BBOOL bFalse = CK_FALSE;
+	// CK_BBOOL bFalse = CK_FALSE;
 	CK_BBOOL bTrue = CK_TRUE;
 	CK_ATTRIBUTE keyAttribs[] = {
 		{ CKA_TOKEN, &bToken, sizeof(bToken) },
@@ -129,7 +129,7 @@ CK_RV SymmetricAlgorithmTests::generateDesKey(CK_SESSION_HANDLE hSession, CK_BBO
 CK_RV SymmetricAlgorithmTests::generateDes2Key(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_OBJECT_HANDLE &hKey)
 {
 	CK_MECHANISM mechanism = { CKM_DES2_KEY_GEN, NULL_PTR, 0 };
-	CK_BBOOL bFalse = CK_FALSE;
+	// CK_BBOOL bFalse = CK_FALSE;
 	CK_BBOOL bTrue = CK_TRUE;
 	CK_ATTRIBUTE keyAttribs[] = {
 		{ CKA_TOKEN, &bToken, sizeof(bToken) },
@@ -147,7 +147,7 @@ CK_RV SymmetricAlgorithmTests::generateDes2Key(CK_SESSION_HANDLE hSession, CK_BB
 CK_RV SymmetricAlgorithmTests::generateDes3Key(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_OBJECT_HANDLE &hKey)
 {
 	CK_MECHANISM mechanism = { CKM_DES3_KEY_GEN, NULL_PTR, 0 };
-	CK_BBOOL bFalse = CK_FALSE;
+	// CK_BBOOL bFalse = CK_FALSE;
 	CK_BBOOL bTrue = CK_TRUE;
 	CK_ATTRIBUTE keyAttribs[] = {
 		{ CKA_TOKEN, &bToken, sizeof(bToken) },
@@ -290,8 +290,8 @@ void SymmetricAlgorithmTests::testAesEncryptDecrypt()
 	CK_RV rv;
 	CK_UTF8CHAR pin[] = SLOT_0_USER1_PIN;
 	CK_ULONG pinLength = sizeof(pin) - 1;
-	CK_UTF8CHAR sopin[] = SLOT_0_SO1_PIN;
-	CK_ULONG sopinLength = sizeof(sopin) - 1;
+	// CK_UTF8CHAR sopin[] = SLOT_0_SO1_PIN;
+	// CK_ULONG sopinLength = sizeof(sopin) - 1;
 	CK_SESSION_HANDLE hSessionRO;
 	CK_SESSION_HANDLE hSessionRW;
 
@@ -333,8 +333,8 @@ void SymmetricAlgorithmTests::testDesEncryptDecrypt()
 	CK_RV rv;
 	CK_UTF8CHAR pin[] = SLOT_0_USER1_PIN;
 	CK_ULONG pinLength = sizeof(pin) - 1;
-	CK_UTF8CHAR sopin[] = SLOT_0_SO1_PIN;
-	CK_ULONG sopinLength = sizeof(sopin) - 1;
+	// CK_UTF8CHAR sopin[] = SLOT_0_SO1_PIN;
+	// CK_ULONG sopinLength = sizeof(sopin) - 1;
 	CK_SESSION_HANDLE hSessionRO;
 	CK_SESSION_HANDLE hSessionRW;
 
