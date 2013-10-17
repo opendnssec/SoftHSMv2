@@ -46,7 +46,7 @@
 #define BYTESTR_ATTR			0x3
 
 // Constructor
-ObjectFile::ObjectFile(OSToken* parent, std::string path, bool isNew /* = false */)
+ObjectFile::ObjectFile(OSToken* parent, std::string path, std::string lockpath, bool isNew /* = false */)
 {
 	this->path = path;
 	ipcSignal = IPCSignal::create(path);
@@ -55,6 +55,7 @@ ObjectFile::ObjectFile(OSToken* parent, std::string path, bool isNew /* = false 
 	token = parent;
 	inTransaction = false;
 	transactionLockFile = NULL;
+	this->lockpath = lockpath;
 
 	if (!valid) return;
 
@@ -301,11 +302,90 @@ void ObjectFile::refresh(bool isFirstTime /* = false */)
 	valid = true;
 }
 
+// Common write part in store()
+// called with objectFile locked and returns with objectFile unlocked
+bool ObjectFile::writeAttributes(File &objectFile)
+{
+	for (std::map<CK_ATTRIBUTE_TYPE, OSAttribute*>::iterator i = attributes.begin(); i != attributes.end(); i++)
+	{
+		if (i->second == NULL)
+		{
+			continue;
+		}
+
+		unsigned long p11AttrType = i->first;
+
+		if (!objectFile.writeULong(p11AttrType))
+		{
+			DEBUG_MSG("Failed to write PKCS #11 attribute type to object %s", path.c_str());
+
+			objectFile.unlock();
+
+			return false;
+		}
+
+		if (i->second->isBooleanAttribute())
+		{
+			unsigned long osAttrType = BOOLEAN_ATTR;
+			bool value = i->second->getBooleanValue();
+
+			if (!objectFile.writeULong(osAttrType) || !objectFile.writeBool(value))
+			{
+				DEBUG_MSG("Failed to write attribute to object %s", path.c_str());
+
+				objectFile.unlock();
+
+				return false;
+			}
+		}
+		else if (i->second->isUnsignedLongAttribute())
+		{
+			unsigned long osAttrType = ULONG_ATTR;
+			unsigned long value = i->second->getUnsignedLongValue();
+
+			if (!objectFile.writeULong(osAttrType) || !objectFile.writeULong(value))
+			{
+				DEBUG_MSG("Failed to write attribute to object %s", path.c_str());
+
+				objectFile.unlock();
+
+				return false;
+			}
+		}
+		else if (i->second->isByteStringAttribute())
+		{
+			unsigned long osAttrType = BYTESTR_ATTR;
+			const ByteString& value = i->second->getByteStringValue();
+
+			if (!objectFile.writeULong(osAttrType) || !objectFile.writeByteString(value))
+			{
+				DEBUG_MSG("Failed to write attribute to object %s", path.c_str());
+
+				objectFile.unlock();
+
+				return false;
+			}
+		}
+		else
+		{
+			DEBUG_MSG("Unknown attribute type for object %s", path.c_str());
+
+			objectFile.unlock();
+
+			return false;
+		}
+	}
+
+	objectFile.unlock();
+
+	return true;
+}
+
 // Write the object to background storage
-void ObjectFile::store()
+void ObjectFile::store(bool isCommit /* = false */)
 {
 	// Check if we're in the middle of a transaction
-	if (inTransaction)
+	if (!isCommit && inTransaction)
 	{
 		return;
 	}
@@ -330,89 +410,26 @@ void ObjectFile::store()
 
 	objectFile.lock();
 
-	MutexLocker lock(objectMutex);
+	if (!isCommit) {
+		MutexLocker lock(objectMutex);
+		File lockFile(lockpath, false, true, true);
 
-	for (std::map<CK_ATTRIBUTE_TYPE, OSAttribute*>::iterator i = attributes.begin(); i != attributes.end(); i++)
-	{
-		if (i->second == NULL)
+		if (!writeAttributes(objectFile))
 		{
-			continue;
-		}
-
-		unsigned long p11AttrType = i->first;
-
-		if (!objectFile.writeULong(p11AttrType))
-		{
-			DEBUG_MSG("Failed to write PKCS #11 attribute type to object %s", path.c_str());
-
 			valid = false;
-
-			objectFile.unlock();
-
-			return;
-		}
-
-		if (i->second->isBooleanAttribute())
-		{
-			unsigned long osAttrType = BOOLEAN_ATTR;
-			bool value = i->second->getBooleanValue();
-
-			if (!objectFile.writeULong(osAttrType) || !objectFile.writeBool(value))
-			{
-				DEBUG_MSG("Failed to write attribute to object %s", path.c_str());
-
-				valid = false;
-
-				objectFile.unlock();
-
-				return;
-			}
-		}
-		else if (i->second->isUnsignedLongAttribute())
-		{
-			unsigned long osAttrType = ULONG_ATTR;
-			unsigned long value = i->second->getUnsignedLongValue();
-
-			if (!objectFile.writeULong(osAttrType) || !objectFile.writeULong(value))
-			{
-				DEBUG_MSG("Failed to write attribute to object %s", path.c_str());
-
-				valid = false;
-
-				objectFile.unlock();
-
-				return;
-			}
-		}
-		else if (i->second->isByteStringAttribute())
-		{
-			unsigned long osAttrType = BYTESTR_ATTR;
-			const ByteString& value = i->second->getByteStringValue();
-
-			if (!objectFile.writeULong(osAttrType) || !objectFile.writeByteString(value))
-			{
-				DEBUG_MSG("Failed to write attribute to object %s", path.c_str());
-
-				valid = false;
-
-				objectFile.unlock();
-
-				return;
-			}
-		}
-		else
-		{
-			DEBUG_MSG("Unknown attribute type for object %s", path.c_str());
-
-			valid = false;
-
-			objectFile.unlock();
 
 			return;
 		}
 	}
+	else
+	{
+		if (!writeAttributes(objectFile))
+		{
+			valid = false;
 
-	objectFile.unlock();
+			return;
+		}
+	}
 
 	// Trigger the IPC signal
 	ipcSignal->trigger();
@@ -455,6 +472,20 @@ std::string ObjectFile::getFilename() const
 	}
 }
 
+// Returns the file name of the lock
+std::string ObjectFile::getLockname() const
+{
+	if ((lockpath.find_last_of(OS_PATHSEP) != std::string::npos) &&
+	    (lockpath.find_last_of(OS_PATHSEP) < lockpath.size()))
+	{
+		return lockpath.substr(lockpath.find_last_of(OS_PATHSEP) + 1);
+	}
+	else
+	{
+		return lockpath;
+	}
+}
+
 // Start an attribute set transaction; this method is used when - for
 // example - a key is generated and all its attributes need to be
 // persisted in one go.
@@ -462,6 +493,8 @@ std::string ObjectFile::getFilename() const
 // N.B.: Starting a transaction locks the object!
 bool ObjectFile::startTransaction()
 {
+	refresh();
+
 	MutexLocker lock(objectMutex);
 
 	if (inTransaction)
@@ -469,14 +502,14 @@ bool ObjectFile::startTransaction()
 		return false;
 	}
 
-	transactionLockFile = new File(path);
+	transactionLockFile = new File(lockpath, false, true, true);
 
 	if (!transactionLockFile->isValid() || !transactionLockFile->lock())
 	{
 		delete transactionLockFile;
 		transactionLockFile = NULL;
 
-		ERROR_MSG("Failed to lock file %s for attribute transaction", path.c_str());
+		ERROR_MSG("Failed to lock file %s for attribute transaction", lockpath.c_str());
 
 		return false;
 	}
@@ -489,34 +522,34 @@ bool ObjectFile::startTransaction()
 // Commit an attribute transaction
 bool ObjectFile::commitTransaction()
 {
-	{
-		MutexLocker lock(objectMutex);
+	MutexLocker lock(objectMutex);
 
-		if (!inTransaction)
-		{
-			return false;
-		}
+	if (!inTransaction)
+	{
+		return false;
+	}
 	
-		// Unlock the file; theoretically, this can mean that another instance
-		// of SoftHSM now gets the lock and writes back attributes that will be
-		// overwritten when this transaction is committed. The chances of this
-		// are deemed to be so small that we do nothing to prevent this...
-		if (transactionLockFile == NULL)
-		{
-			ERROR_MSG("Transaction lock file instance invalid!");
+	if (transactionLockFile == NULL)
+	{
+		ERROR_MSG("Transaction lock file instance invalid!");
 	
-			return false;
-		}
+		return false;
+	}
 	
-		transactionLockFile->unlock();
-	
-		delete transactionLockFile;
-		transactionLockFile = NULL;
-		inTransaction = false;
+	// Special store case
+	store(true);
+
+	if (!valid)
+	{
+		return false;
 	}
 
-	store();
+	transactionLockFile->unlock();
 	
+	delete transactionLockFile;
+	transactionLockFile = NULL;
+	inTransaction = false;
+
 	return true;
 }
 

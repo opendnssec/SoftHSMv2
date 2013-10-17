@@ -135,9 +135,9 @@ void OSTokenTests::testExistingToken()
 
 		// Create the token object
 #ifndef _WIN32
-		ObjectFile tokenObject(NULL, "./testdir/existingToken/tokenObject", true);
+		ObjectFile tokenObject(NULL, "./testdir/existingToken/token.object", "./testdir/existingToken/token.lock", true);
 #else
-		ObjectFile tokenObject(NULL, ".\\testdir\\existingToken\\tokenObject", true);
+		ObjectFile tokenObject(NULL, ".\\testdir\\existingToken\\token.object", ".\\testdir\\existingToken\\token.lock", true);
 #endif
 
 		OSAttribute labelAtt(label);
@@ -154,13 +154,13 @@ void OSTokenTests::testExistingToken()
 
 		// Create 3 objects
 #ifndef _WIN32
-		ObjectFile obj1(NULL, "./testdir/existingToken/1.object", true);
-		ObjectFile obj2(NULL, "./testdir/existingToken/2.object", true);
-		ObjectFile obj3(NULL, "./testdir/existingToken/3.object", true);
+		ObjectFile obj1(NULL, "./testdir/existingToken/1.object", "./testdir/existingToken/1.lock", true);
+		ObjectFile obj2(NULL, "./testdir/existingToken/2.object", "./testdir/existingToken/2.lock", true);
+		ObjectFile obj3(NULL, "./testdir/existingToken/3.object", "./testdir/existingToken/3.lock", true);
 #else
-		ObjectFile obj1(NULL, ".\\testdir\\existingToken\\1.object", true);
-		ObjectFile obj2(NULL, ".\\testdir\\existingToken\\2.object", true);
-		ObjectFile obj3(NULL, ".\\testdir\\existingToken\\3.object", true);
+		ObjectFile obj1(NULL, ".\\testdir\\existingToken\\1.object", ".\\testdir\\existingToken\\1.lock", true);
+		ObjectFile obj2(NULL, ".\\testdir\\existingToken\\2.object", ".\\testdir\\existingToken\\2.lock", true);
+		ObjectFile obj3(NULL, ".\\testdir\\existingToken\\3.object", ".\\testdir\\existingToken\\3.lock", true);
 #endif
 
 		OSAttribute id1Att(id1);

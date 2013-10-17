@@ -60,7 +60,7 @@
 OSToken::OSToken(const std::string tokenPath)
 {
 	tokenDir = new Directory(tokenPath);
-	tokenObject = new ObjectFile(this, tokenPath + OS_PATHSEP + "tokenObject");
+	tokenObject = new ObjectFile(this, tokenPath + OS_PATHSEP + "token.object", tokenPath + OS_PATHSEP + "token.lock");
 	sync = IPCSignal::create(tokenPath);
 	tokenMutex = MutexFactory::i()->getMutex();
 	this->tokenPath = tokenPath;
@@ -88,7 +88,7 @@ OSToken::OSToken(const std::string tokenPath)
 	}
 
 	// Create the token object
-	ObjectFile tokenObject(NULL, basePath + OS_PATHSEP + tokenDir + OS_PATHSEP + "tokenObject", true);
+	ObjectFile tokenObject(NULL, basePath + OS_PATHSEP + tokenDir + OS_PATHSEP + "token.object", basePath + OS_PATHSEP + tokenDir + OS_PATHSEP + "token.lock", true);
 
 	if (!tokenObject.isValid())
 	{
@@ -114,7 +114,8 @@ OSToken::OSToken(const std::string tokenPath)
 	    !tokenObject.setAttribute(CKA_OS_TOKENSERIAL, tokenSerial) ||
 	    !tokenObject.setAttribute(CKA_OS_TOKENFLAGS, tokenFlags))
 	{
-		baseDir.remove(tokenDir + OS_PATHSEP + "tokenObject");
+		baseDir.remove(tokenDir + OS_PATHSEP + "token.object");
+		baseDir.remove(tokenDir + OS_PATHSEP + "token.lock");
 		baseDir.remove(tokenDir);
 
 		return NULL;
@@ -345,10 +346,12 @@ ObjectFile* OSToken::createObject()
 	if (!valid) return NULL;
 
 	// Generate a name for the object
-	std::string objectPath = tokenPath + OS_PATHSEP + UUID::newUUID() + ".object";
+	std::string objectUUID = UUID::newUUID();
+	std::string objectPath = tokenPath + OS_PATHSEP + objectUUID + ".object";
+	std::string lockPath = tokenPath + OS_PATHSEP + objectUUID + ".lock";
 
 	// Create the new object file
-	ObjectFile* newObject = new ObjectFile(this, objectPath, true);
+	ObjectFile* newObject = new ObjectFile(this, objectPath, lockPath, true);
 
 	if (!newObject->isValid())
 	{
@@ -397,6 +400,17 @@ bool OSToken::deleteObject(ObjectFile* object)
 	if (!tokenDir->remove(objectFilename))
 	{
 		ERROR_MSG("Failed to delete object file %s", objectFilename.c_str());
+
+		return false;
+	}
+
+	// Retrieve the filename of the lock
+	std::string lockFilename = object->getLockname();
+
+	// Attempt to delete the lock
+	if (!tokenDir->remove(lockFilename))
+	{
+		ERROR_MSG("Failed to delete lock file %s", lockFilename.c_str());
 
 		return false;
 	}
@@ -491,7 +505,9 @@ bool OSToken::index(bool isFirstTime /* = false */)
 
 	for (std::vector<std::string>::iterator i = tokenFiles.begin(); i != tokenFiles.end(); i++)
 	{
-		if ((i->size() > 7) && (!(i->substr(i->size() - 7).compare(".object"))))
+		if ((i->size() > 7) &&
+		    (!(i->substr(i->size() - 7).compare(".object"))) &&
+		    (i->compare("token.object")))
 		{
 			newSet.insert(*i);
 		}
@@ -541,8 +557,17 @@ bool OSToken::index(bool isFirstTime /* = false */)
 	// Add new objects
 	for (std::set<std::string>::iterator i = addedFiles.begin(); i != addedFiles.end(); i++)
 	{
+		if ((i->find_last_of('.') == std::string::npos) ||
+		    (i->substr(i->find_last_of('.')) != ".object"))
+		{
+			continue;
+		}
+
+		std::string lockName(*i);
+		lockName.replace(lockName.find_last_of('.'), std::string::npos, ".lock");
+
 		// Create a new token object for the added file
-		ObjectFile* newObject = new ObjectFile(this, tokenPath + OS_PATHSEP + *i);
+		ObjectFile* newObject = new ObjectFile(this, tokenPath + OS_PATHSEP + *i, tokenPath + OS_PATHSEP + lockName);
 
 		DEBUG_MSG("(0x%08X) New object %s (0x%08X) added", this, newObject->getFilename().c_str(), newObject);
 

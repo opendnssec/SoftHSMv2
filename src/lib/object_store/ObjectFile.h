@@ -52,7 +52,7 @@ class ObjectFile : public OSObject
 {
 public:
 	// Constructor
-	ObjectFile(OSToken* parent, const std::string path, bool isNew = false);
+	ObjectFile(OSToken* parent, const std::string path, const std::string lockpath, bool isNew = false);
 
 	// Destructor
 	virtual ~ObjectFile();
@@ -76,6 +76,9 @@ public:
 
 	// Returns the file name of the object
 	std::string getFilename() const;
+
+	// Returns the file name of the lock
+	std::string getLockname() const;
 
 	// Start an attribute set transaction; this method is used when - for
 	// example - a key is generated and all its attributes need to be
@@ -102,7 +105,10 @@ private:
 	void refresh(bool isFirstTime = false);
 
 	// Write the object to background storage
-	void store();
+	void store(bool isCommit = false);
+
+	// Store subroutine
+	bool writeAttributes(File &objectFile);
 
 	// Discard the cached attributes
 	void discardAttributes();
@@ -129,6 +135,7 @@ private:
 	// Is the object undergoing an attribute transaction?
 	bool inTransaction;
 	File* transactionLockFile;
+	std::string lockpath;
 };
 
 #endif // !_SOFTHSM_V2_OBJECTFILE_H
