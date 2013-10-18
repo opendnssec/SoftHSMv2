@@ -9,6 +9,8 @@ compile
 py-compile
 confdefs.h
 config.*
+!win32+botan/config.h
+!win32+openssl/config.h
 configure
 conftest
 conftest.c

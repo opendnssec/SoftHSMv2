@@ -14,6 +14,7 @@ SUBDIRS = src
 EXTRA_DIST =	$(srcdir)/m4/*.m4 \
 		$(srcdir)/LICENSE \
 		$(srcdir)/README.md \
+		$(srcdir)/win32+botan/config.h \
 		$(srcdir)/win32+botan/convarch/convarch.vcxproj \
 		$(srcdir)/win32+botan/convarch/convarch.vcxproj.filters \
 		$(srcdir)/win32+botan/convarch/convarch.vcxproj.user \
