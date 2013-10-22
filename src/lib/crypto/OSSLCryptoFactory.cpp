@@ -31,6 +31,7 @@
  *****************************************************************************/
 
 #include "config.h"
+#include "MutexFactory.h"
 #include "OSSLCryptoFactory.h"
 #include "OSSLRNG.h"
 #include "OSSLAES.h"
@@ -54,6 +55,9 @@
 #include "OSSLGOST.h"
 #endif
 
+#ifdef HAVE_PTHREAD_H
+#include <pthread.h>
+#endif
 #include <algorithm>
 #include <string.h>
 #include <openssl/ssl.h>
@@ -65,9 +69,55 @@
 // Initialise the one-and-only instance
 std::auto_ptr<OSSLCryptoFactory> OSSLCryptoFactory::instance(NULL); 
 
+// Thread ID callback
+#ifdef HAVE_PTHREAD_H
+static unsigned long id_callback()
+{
+	return (unsigned long) pthread_self();
+}
+#endif
+
+static unsigned nlocks;
+static Mutex** locks;
+
+// Mutex callback
+void lock_callback(int mode, int n, const char* file, int line)
+{
+	if ((unsigned) n >= nlocks)
+	{
+		ERROR_MSG("out of range [0..%u[ lock %d at %s:%d",
+			  nlocks, n, file, line);
+
+		return;
+	}
+
+	Mutex* mtx = locks[(unsigned) n];
+
+	if (mode & CRYPTO_LOCK)
+	{
+		mtx->lock();
+	}
+	else
+	{
+		mtx->unlock();
+	}
+}
+
 // Constructor
 OSSLCryptoFactory::OSSLCryptoFactory()
 {
+	// Multi-thread support
+	nlocks = CRYPTO_num_locks();
+	locks = new Mutex*[nlocks];
+	for (unsigned i = 0; i < nlocks; i++)
+	{
+		locks[i] = MutexFactory::i()->getMutex();
+	}
+#ifdef HAVE_PTHREAD_H
+	CRYPTO_set_id_callback(id_callback);
+#endif
+	CRYPTO_set_locking_callback(lock_callback);
+
 	// Initialise OpenSSL
 	OpenSSL_add_all_algorithms();
 
@@ -143,6 +193,14 @@ OSSLCryptoFactory::~OSSLCryptoFactory()
 	ERR_remove_state(0);
 	EVP_cleanup();
 	CRYPTO_cleanup_all_ex_data();
+
+	// Recycle locks
+	CRYPTO_set_locking_callback(NULL);
+	for (unsigned i = 0; i < nlocks; i++)
+	{
+		MutexFactory::i()->recycleMutex(locks[i]);
+	}
+	delete[] locks;
 }
 
 // Return the one-and-only instance
