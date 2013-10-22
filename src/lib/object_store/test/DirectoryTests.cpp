@@ -171,7 +171,7 @@ void DirectoryTests::testDirectory()
 	CPPUNIT_ASSERT(dirSeen2[0] && dirSeen2[1] && dirSeen2[2] && dirSeen2[3]);
 
 	// Remove a directory
-	CPPUNIT_ASSERT(testdir.remove("anotherdir2"));
+	CPPUNIT_ASSERT(testdir.rmdir("anotherdir2", true));
 
 	subDirs = testdir.getSubDirs();
 

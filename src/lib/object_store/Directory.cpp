@@ -38,6 +38,7 @@
 #include <vector>
 #ifndef _WIN32
 #include <dirent.h>
+#include <unistd.h>
 #else
 #include <direct.h>
 #include <io.h>
@@ -209,31 +210,37 @@ bool Directory::mkdir(std::string name)
 #endif
 }
 
-// Delete a file or subdirectory in the directory
+// Delete a subdirectory in the directory
+bool Directory::rmdir(std::string name, bool doRefresh /* = false */)
+{
+	std::string fullPath;
+
+	if (name.empty())
+		fullPath = path;
+	else
+		fullPath = path + OS_PATHSEP + name;
+
+#ifndef _WIN32
+	if (::rmdir(fullPath.c_str()) != 0)
+		return false;
+#else
+	if (_rmdir(fullPath.c_str()) != 0)
+		return false;
+#endif
+	if (doRefresh)
+		return refresh();
+	return true;
+}
+
+// Delete a file in the directory
 bool Directory::remove(std::string name)
 {
-#ifndef _WIN32
 	std::string fullPath = path + OS_PATHSEP + name;
 
+#ifndef _WIN32
 	return (!::remove(fullPath.c_str()) && refresh());
 #else
-	std::string fullPath = path + OS_PATHSEP + name;
-	struct _stat filestat;
-
-	memset(&filestat, 0, sizeof(struct _stat));
-	if (_stat(fullPath.c_str(), &filestat) != 0)
-		return false;
-	if ((filestat.st_mode & _S_IFMT) == _S_IFDIR)
-	{
-		if (_rmdir(fullPath.c_str()) != 0)
-			return false;
-	}
-	else
-	{
-		if (_unlink(fullPath.c_str()) != 0)
-			return false;
-	}
-	return refresh();
+	return (!_unlink(fullPath.c_str()) && refresh());
 #endif
 }
 
