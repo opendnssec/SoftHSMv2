@@ -174,6 +174,7 @@ AC_CONFIG_FILES([
 	src/lib/test/tokens/dummy
 	src/bin/Makefile
 	src/bin/common/Makefile
+	src/bin/dump/Makefile
 	src/bin/keyconv/Makefile
 	src/bin/migrate/Makefile
 	src/bin/util/Makefile

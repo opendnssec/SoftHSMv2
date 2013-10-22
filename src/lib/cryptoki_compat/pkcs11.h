@@ -346,7 +346,7 @@ typedef unsigned long ck_object_class_t;
 #define CKO_DOMAIN_PARAMETERS	(6)
 #define CKO_MECHANISM		(7)
 #define CKO_OTP_KEY		(8)
-#define CKO_VENDOR_DEFINED	((unsigned long) (1 << 31))
+#define CKO_VENDOR_DEFINED	((unsigned long) (1ul << 31))
 
 
 typedef unsigned long ck_hw_feature_type_t;
@@ -354,7 +354,7 @@ typedef unsigned long ck_hw_feature_type_t;
 #define CKH_MONOTONIC_COUNTER	(1)
 #define CKH_CLOCK		(2)
 #define CKH_USER_INTERFACE	(3)
-#define CKH_VENDOR_DEFINED	((unsigned long) (1 << 31))
+#define CKH_VENDOR_DEFINED	((unsigned long) (1ul << 31))
 
 
 typedef unsigned long ck_key_type_t;
@@ -402,7 +402,7 @@ typedef unsigned long ck_key_type_t;
 #define CKK_GOSTR3410		(0x30)
 #define CKK_GOSTR3411		(0x31)
 #define CKK_GOST28147		(0x32)
-#define CKK_VENDOR_DEFINED	((unsigned long) (1 << 31))
+#define CKK_VENDOR_DEFINED	((unsigned long) (1ul << 31))
 
 
 typedef unsigned long ck_certificate_type_t;
@@ -410,7 +410,7 @@ typedef unsigned long ck_certificate_type_t;
 #define CKC_X_509		(0)
 #define CKC_X_509_ATTR_CERT	(1)
 #define CKC_WTLS		(2)
-#define CKC_VENDOR_DEFINED	((unsigned long) (1 << 31))
+#define CKC_VENDOR_DEFINED	((unsigned long) (1ul << 31))
 
 #define CK_OTP_FORMAT_DECIMAL		(0)
 #define CK_OTP_FORMAT_HEXADECIMAL	(1)
@@ -528,7 +528,7 @@ typedef unsigned long ck_attribute_type_t;
 #define CKA_UNWRAP_TEMPLATE		(CKF_ARRAY_ATTRIBUTE | 0x212)
 #define CKA_DERIVE_TEMPLATE		(CKF_ARRAY_ATTRIBUTE | 0x213)
 #define CKA_ALLOWED_MECHANISMS		(CKF_ARRAY_ATTRIBUTE | 0x600)
-#define CKA_VENDOR_DEFINED		((unsigned long) (1 << 31))
+#define CKA_VENDOR_DEFINED		((unsigned long) (1ul << 31))
 
 
 struct ck_attribute
@@ -850,7 +850,7 @@ typedef unsigned long ck_mechanism_type_t;
 #define CKM_AES_CFB128			(0x2107)
 #define CKM_RSA_PKCS_TPM_1_1		(0x4001)
 #define CKM_RSA_PKCS_OAEPTPM_1_1	(0x4002)
-#define CKM_VENDOR_DEFINED		((unsigned long) (1 << 31))
+#define CKM_VENDOR_DEFINED		((unsigned long) (1ul << 31))
 
 
 struct ck_mechanism
@@ -887,7 +887,7 @@ struct ck_mechanism_info
 #define CKF_EC_NAMEDCURVE	(1 << 23)
 #define CKF_EC_UNCOMPRESS	(1 << 24)
 #define CKF_EC_COMPRESS		(1 << 25)
-#define CKF_EXTENSION		((unsigned long) (1 << 31))
+#define CKF_EXTENSION		((unsigned long) (1ul << 31))
 
 
 /* The following MGFs are defined */
@@ -1476,7 +1476,7 @@ struct ck_c_initialize_args
 #define CKR_PIN_TOO_WEAK			(0x1b8)
 #define CKR_PUBLIC_KEY_INVALID			(0x1b9)
 #define CKR_FUNCTION_REJECTED			(0x200)
-#define CKR_VENDOR_DEFINED			((unsigned long) (1 << 31))
+#define CKR_VENDOR_DEFINED			((unsigned long) (1ul << 31))
 
 
 
