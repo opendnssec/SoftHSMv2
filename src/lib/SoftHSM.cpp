@@ -5042,9 +5042,6 @@ CK_RV SoftHSM::generateRSA
 		};
 		CK_ULONG publicKeyAttribsCount = 4;
 
-		// Put the generated key material in the attributes
-		publicKeyAttribs[publicKeyAttribsCount++] = bsAttribute(CKA_PUBLIC_EXPONENT, pub->getE());
-
 		// Add the additional
 		if (ulPublicKeyAttributeCount > (maxAttribs - publicKeyAttribsCount))
 			rv = CKR_TEMPLATE_INCONSISTENT;
@@ -5056,6 +5053,7 @@ CK_RV SoftHSM::generateRSA
 				case CKA_TOKEN:
 				case CKA_PRIVATE:
 				case CKA_KEY_TYPE:
+				case CKA_PUBLIC_EXPONENT:
 					continue;
 				default:
 					publicKeyAttribs[publicKeyAttribsCount++] = pPublicKeyTemplate[i];
@@ -5323,9 +5321,6 @@ CK_RV SoftHSM::generateDSA
 		};
 		CK_ULONG publicKeyAttribsCount = 4;
 
-		// Put the generated key material in the attributes
-		publicKeyAttribs[publicKeyAttribsCount++] = bsAttribute(CKA_VALUE, pub->getY());
-
 		// Add the additional
 		if (ulPublicKeyAttributeCount > (maxAttribs - publicKeyAttribsCount))
 			rv = CKR_TEMPLATE_INCONSISTENT;
@@ -5337,6 +5332,9 @@ CK_RV SoftHSM::generateDSA
 				case CKA_TOKEN:
 				case CKA_PRIVATE:
 				case CKA_KEY_TYPE:
+				case CKA_PRIME:
+				case CKA_SUBPRIME:
+				case CKA_BASE:
 					continue;
 				default:
 					publicKeyAttribs[publicKeyAttribsCount++] = pPublicKeyTemplate[i];
@@ -5768,6 +5766,7 @@ CK_RV SoftHSM::generateEC
 				case CKA_TOKEN:
 				case CKA_PRIVATE:
 				case CKA_KEY_TYPE:
+				case CKA_EC_PARAMS:
 					continue;
 				default:
 					publicKeyAttribs[publicKeyAttribsCount++] = pPublicKeyTemplate[i];
@@ -6006,9 +6005,6 @@ CK_RV SoftHSM::generateDH
 		};
 		CK_ULONG publicKeyAttribsCount = 4;
 
-		// Put the generated key material in the attributes
-		publicKeyAttribs[publicKeyAttribsCount++] = bsAttribute(CKA_VALUE, pub->getY());
-
 		// Add the additional
 		if (ulPublicKeyAttributeCount > (maxAttribs - publicKeyAttribsCount))
 			rv = CKR_TEMPLATE_INCONSISTENT;
@@ -6020,6 +6016,8 @@ CK_RV SoftHSM::generateDH
 				case CKA_TOKEN:
 				case CKA_PRIVATE:
 				case CKA_KEY_TYPE:
+				case CKA_PRIME:
+				case CKA_BASE:
 					continue;
 				default:
 					publicKeyAttribs[publicKeyAttribsCount++] = pPublicKeyTemplate[i];
