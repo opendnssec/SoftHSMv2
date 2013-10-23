@@ -39,8 +39,8 @@
 #include "OSAttribute.h"
 #include "ObjectFile.h"
 #include "Directory.h"
+#include "Generation.h"
 #include "UUID.h"
-#include "IPCSignal.h"
 #include "MutexFactory.h"
 #include "cryptoki.h"
 #include <string>
@@ -87,8 +87,8 @@ public:
 	// Retrieve objects
 	std::set<ObjectFile*> getObjects();
 
-    // Insert objects into the given set
-    void getObjects(std::set<OSObject*> &objects);
+	// Insert objects into the given set
+	void getObjects(std::set<OSObject*> &objects);
 
 	// Create a new object
 	ObjectFile* createObject();
@@ -139,8 +139,8 @@ private:
 	// The token object
 	ObjectFile* tokenObject;
 
-	// Inter-process synchronisation
-	IPCSignal* sync;
+	// Generation control
+	Generation* gen;
 
 	// The directory object for this token
 	Directory* tokenDir;

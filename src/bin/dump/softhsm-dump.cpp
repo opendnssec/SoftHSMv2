@@ -417,15 +417,27 @@ void corrupt(FILE* stream)
 // Core function
 void dump(FILE* stream)
 {
-	do
+	uint64_t gen;
+	if (!readULong(stream, gen))
+	{
+		if (feof(stream))
+		{
+			printf("empty file\n");
+		}
+		else
+		{
+			corrupt(stream);
+		}
+		return;
+	}
+	dumpULong(gen);
+	printf("generation %lu\n", (unsigned long) gen);
+
+	while (!feof(stream))
 	{
 		uint64_t p11type;
 		if (!readULong(stream, p11type))
 		{
-			if (feof(stream))
-			{
-				return;
-			}
 			corrupt(stream);
 			return;
 		}
@@ -567,7 +579,6 @@ void dump(FILE* stream)
 			return;
 		}
 	}
-	while (!feof(stream));
 }
 
 // Display the usage

@@ -51,7 +51,6 @@ ACX_STRICT
 
 # Check for libraries (-ldl can be required by OpenSSL too)
 ACX_DLOPEN
-ACX_SEMAPHORE
 
 # Check for headers
 AC_CHECK_HEADERS([pthread.h])

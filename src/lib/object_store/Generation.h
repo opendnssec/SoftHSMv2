@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010 SURFnet bv
+ * Copyright (c) 2013 SURFnet bv
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,57 +25,68 @@
  */
 
 /*****************************************************************************
- Semaphore.h
+ Generation.h
 
- This class implements an object version of POSIX semaphores
+ Helper for generation number handling.
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_SEMAPHORE_H
-#define _SOFTHSM_V2_SEMAPHORE_H
+#ifndef _SOFTHSM_V2_GENERATION_H
+#define _SOFTHSM_V2_GENERATION_H
 
 #include "config.h"
-#ifndef _WIN32
-#include <semaphore.h>
-#endif
 #include <string>
+#include "File.h"
+#include "MutexFactory.h"
 
-class Semaphore
+class Generation
 {
 public:
 	// Factory
-	static Semaphore* create(int initialValue, const std::string name = "");
+	static Generation* create(const std::string path, bool isToken = false);
 
 	// Destructor
-	virtual ~Semaphore();
+	virtual ~Generation();
 
-	// Increment (unlock) the semaphore
-	bool inc();
+	// Synchronize from locked disk file
+	bool sync(File &objectfile);
 
-	// Decrement (lock) the semaphore
-	bool dec(bool wait = false);
+	// Check if the target was updated
+	bool wasUpdated();
 
-	// Retrieve the value of the semaphore
-	int getValue();
+	// Note pending update
+	void update();
+
+	// Commit (for the token case)
+	void commit();
+
+	// Set the current value when read from disk
+	void set(unsigned long onDisk);
+
+	// Return new value
+	unsigned long get();
+
+	// Rollback (called when the new value failed to be written)
+	void rollback();
 
 private:
 	// Constructor
-#ifndef _WIN32
-	Semaphore(sem_t* semaphore, std::string name);
-#else
-	Semaphore(HANDLE semaphore, std::string name);
-#endif
+	Generation(const std::string path, bool isToken);
 
-	// The actual POSIX semaphore
-#ifndef _WIN32
-	sem_t* semaphore;
-#else
-	HANDLE semaphore;
-	CRITICAL_SECTION cs;
-#endif
+	// The file path
+	std::string path;
 
-	// The name of the semaphore (needed to destroy it)
-	std::string name;
+	// isToken
+	bool isToken;
+
+	// Pending update
+	bool pendingUpdate;
+
+	// Current value
+	unsigned long currentValue;
+
+	// For thread safeness
+	Mutex* genMutex;
 };
 
-#endif // !_SOFTHSM_V2_SEMAPHORE_H
+#endif // !_SOFTHSM_V2_GENERATION_H
 

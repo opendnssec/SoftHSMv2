@@ -42,7 +42,7 @@ class File
 {
 public:
 	// Constructor
-	File(std::string path, bool forRead = true, bool forWrite = false, bool create = false);
+	File(std::string path, bool forRead = true, bool forWrite = false, bool create = false, bool truncate = true);
 
 	// Destructor
 	virtual ~File();
@@ -55,6 +55,9 @@ public:
 
 	// Check if the file is writable
 	bool isWrite();
+
+	// Check if the file is empty
+	bool isEmpty();
 
 	// Check if the end-of-file was reached
 	bool isEOF();
@@ -85,6 +88,9 @@ public:
 
 	// Rewind the file
 	bool rewind();
+
+	// Truncate the file
+	bool truncate();
 
 	// Seek to the specified position relative to the start of the file; if no
 	// argument is specified this operation seeks to the end of the file

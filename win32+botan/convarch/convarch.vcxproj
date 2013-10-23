@@ -14,11 +14,9 @@
     <ClInclude Include="..\..\src\lib\common\Configuration.h" />
     <ClInclude Include="..\..\src\lib\common\fatal.h" />
     <ClInclude Include="..\..\src\lib\common\HandleFactory.h" />
-    <ClInclude Include="..\..\src\lib\common\IPCSignal.h" />
     <ClInclude Include="..\..\src\lib\common\log.h" />
     <ClInclude Include="..\..\src\lib\common\MutexFactory.h" />
     <ClInclude Include="..\..\src\lib\common\osmutex.h" />
-    <ClInclude Include="..\..\src\lib\common\Semaphore.h" />
     <ClInclude Include="..\..\src\lib\common\Serialisable.h" />
     <ClInclude Include="..\..\src\lib\common\SimpleConfigLoader.h" />
     <ClInclude Include="..\..\src\lib\crypto\AESKey.h" />
@@ -99,6 +97,7 @@
     <ClInclude Include="..\..\src\lib\object_store\Directory.h" />
     <ClInclude Include="..\..\src\lib\object_store\File.h" />
     <ClInclude Include="..\..\src\lib\object_store\FindOperation.h" />
+    <ClInclude Include="..\..\src\lib\object_store\Generation.h" />
     <ClInclude Include="..\..\src\lib\object_store\ObjectFile.h" />
     <ClInclude Include="..\..\src\lib\object_store\ObjectStore.h" />
     <ClInclude Include="..\..\src\lib\object_store\OSAttribute.h" />
@@ -119,11 +118,9 @@
   <ItemGroup>
     <ClCompile Include="..\..\src\lib\common\Configuration.cpp" />
     <ClCompile Include="..\..\src\lib\common\fatal.cpp" />
-    <ClCompile Include="..\..\src\lib\common\IPCSignal.cpp" />
     <ClCompile Include="..\..\src\lib\common\log.cpp" />
     <ClCompile Include="..\..\src\lib\common\MutexFactory.cpp" />
     <ClCompile Include="..\..\src\lib\common\osmutex.cpp" />
-    <ClCompile Include="..\..\src\lib\common\Semaphore.cpp" />
     <ClCompile Include="..\..\src\lib\common\SimpleConfigLoader.cpp" />
     <ClCompile Include="..\..\src\lib\crypto\AsymmetricAlgorithm.cpp" />
     <ClCompile Include="..\..\src\lib\crypto\AsymmetricKeyPair.cpp" />
@@ -197,6 +194,7 @@
     <ClCompile Include="..\..\src\lib\object_store\Directory.cpp" />
     <ClCompile Include="..\..\src\lib\object_store\File.cpp" />
     <ClCompile Include="..\..\src\lib\object_store\FindOperation.cpp" />
+    <ClCompile Include="..\..\src\lib\object_store\Generation.cpp" />
     <ClCompile Include="..\..\src\lib\object_store\ObjectFile.cpp" />
     <ClCompile Include="..\..\src\lib\object_store\ObjectStore.cpp" />
     <ClCompile Include="..\..\src\lib\object_store\OSAttribute.cpp" />

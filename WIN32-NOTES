@@ -63,10 +63,6 @@ threadID -> GetCurrentThreadId
 pthread_mutex -> Mutex
 (note CreateMutex is now defined by config.h)
 
-sem_* -> Semaphore
-(note getvalue doesn't exist with good reasons on WIN32, simulated
-inside a critical section)
-
 dirent & co -> _findfirst & co
 
 remove -> _rmdir or _unlink
