@@ -110,7 +110,7 @@ OSToken::OSToken(const std::string tokenPath)
 	{
 		baseDir.remove(tokenDir + OS_PATHSEP + "token.object");
 		baseDir.remove(tokenDir + OS_PATHSEP + "token.lock");
-		baseDir.remove(tokenDir);
+		baseDir.rmdir(tokenDir);
 
 		return NULL;
 	}
