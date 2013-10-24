@@ -245,11 +245,13 @@ static CK_RV newP11Object(OSObject *object, std::auto_ptr< P11Object > &p11objec
 	return CKR_OK;
 }
 
+#ifdef notyet
 static CK_ATTRIBUTE bsAttribute(CK_ATTRIBUTE_TYPE type, const ByteString &value)
 {
 	CK_ATTRIBUTE attr = {type, (CK_VOID_PTR)value.const_byte_str(), value.size() };
 	return attr;
 }
+#endif
 
 static void libcleanup()
 {

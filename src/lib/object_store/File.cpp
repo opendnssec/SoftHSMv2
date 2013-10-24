@@ -38,6 +38,7 @@
 #include <string.h>
 #ifndef _WIN32
 #include <sys/file.h>
+#include <unistd.h>
 #else
 #include <io.h>
 #define F_SETLK		12
@@ -46,13 +47,15 @@
 #define F_UNLCK		2
 #define F_WRLCK		3
 #endif
+#include <sys/stat.h>
 #include <fcntl.h>
 #include <errno.h>
 
 // Constructor
 //
 // N.B.: the create flag only has a function when a file is opened read/write
-File::File(std::string path, bool forRead /* = true */, bool forWrite /* = false */, bool create /* = false */)
+// N.B.: the truncate flag only has a function when the create one is true
+File::File(std::string path, bool forRead /* = true */, bool forWrite /* = false */, bool create /* = false */, bool truncate /* = true */)
 {
 	stream = NULL;
 
@@ -65,21 +68,51 @@ File::File(std::string path, bool forRead /* = true */, bool forWrite /* = false
 	if (forRead || forWrite)
 	{
 		std::string fileMode = "";
+		int flags, fd;
 
 #ifndef _WIN32
+		flags = 0;
+		if (forRead && !forWrite) flags |= O_RDONLY;
+		if (!forRead && forWrite) flags |= O_WRONLY | O_CREAT | O_TRUNC;
+		if (forRead && forWrite) flags |= O_RDWR;
+		if (forRead && forWrite && create) flags |= O_CREAT;
+		if (forRead && forWrite && create && truncate) flags |= O_TRUNC;
+		// Open the file
+		fd = open(path.c_str(), flags, 0777);
+		if (fd == -1)
+		{
+			valid = false;
+			return;
+		}
+
 		if (forRead && !forWrite) fileMode = "r";
 		if (!forRead && forWrite) fileMode = "w";
 		if (forRead && forWrite && !create) fileMode = "r+";
 		if (forRead && forWrite && create) fileMode = "w+";
+		// Open the stream
+		valid = ((stream = fdopen(fd, fileMode.c_str())) != NULL);
 #else
+		flags = _O_BINARY;
+		if (forRead && !forWrite) flags |= _O_RDONLY;
+		if (!forRead && forWrite) flags |= _O_WRONLY | _O_CREAT | _O_TRUNC;
+		if (forRead && forWrite) flags |= _O_RDWR;
+		if (forRead && forWrite && create) flags |= _O_CREAT;
+		if (forRead && forWrite && create && truncate) flags |= _O_TRUNC;
+		// Open the file
+		fd = _open(path.c_str(), flags, _S_IREAD | _S_IWRITE);
+		if (fd == -1)
+		{
+			valid = false;
+			return;
+		}
+
 		if (forRead && !forWrite) fileMode = "rb";
 		if (!forRead && forWrite) fileMode = "wb";
 		if (forRead && forWrite && !create) fileMode = "rb+";
 		if (forRead && forWrite && create) fileMode = "wb+";
-#endif
-
 		// Open the stream
-		valid = ((stream = fopen(path.c_str(), fileMode.c_str())) != NULL);
+		valid = ((stream = _fdopen(fd, fileMode.c_str())) != NULL);
+#endif
 	}
 }
 
@@ -113,6 +146,34 @@ bool File::isRead()
 bool File::isWrite()
 {
 	return isWritable;
+}
+
+// Check if the file is empty
+bool File::isEmpty()
+{
+#ifndef _WIN32
+	struct stat s;
+
+	if (fstat(fileno(stream), &s) != 0)
+	{
+		valid = false;
+
+		return false;
+	}
+
+	return (s.st_size == 0);
+#else
+	struct _stat s;
+
+	if (_fstat(_fileno(stream), &s) != 0)
+	{
+		valid = false;
+
+		return false;
+	}
+
+	return (s.st_size == 0);
+#endif
 }
 
 // Check if the end-of-file was reached
@@ -284,6 +345,18 @@ bool File::rewind()
 	::rewind(stream);
 
 	return true;
+}
+
+// Truncate the file
+bool File::truncate()
+{
+	if (!valid) return false;
+
+#ifndef _WIN32
+	return (::ftruncate(fileno(stream), 0) == 0);
+#else
+	return (_chsize(fileno(stream), 0) == 0);
+#endif
 }
 
 // Seek to the specified position relative to the start of the file; if no

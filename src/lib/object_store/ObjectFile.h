@@ -35,9 +35,9 @@
 
 #include "config.h"
 #include "File.h"
+#include "Generation.h"
 #include "ByteString.h"
 #include "OSAttribute.h"
-#include "IPCSignal.h"
 #include "MutexFactory.h"
 #include <string>
 #include <map>
@@ -116,9 +116,9 @@ private:
 	// The path to the file
 	std::string path;
 
-	// The IPC object that is used to signal changes in the object file
-	// to other SoftHSM instances
-	IPCSignal* ipcSignal;
+	// The Generation object that is used to detect changes in the
+        // object file from other SoftHSM instances
+	Generation* gen;
 
 	// The object's raw attributes
 	std::map<CK_ATTRIBUTE_TYPE, OSAttribute*> attributes;

@@ -11,10 +11,7 @@ libsofthsm_common_la_SOURCES =	Configuration.cpp \
 				log.cpp \
 				osmutex.cpp \
 				SimpleConfigLoader.cpp \
-				MutexFactory.cpp \
-				Semaphore.cpp \
-				IPCSignal.cpp
-libsofthsm_common_la_LIBADD =	@SEMAPHORE_LIB@
+				MutexFactory.cpp
 
 man_MANS =			softhsm2.conf.5
 

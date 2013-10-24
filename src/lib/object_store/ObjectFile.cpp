@@ -49,9 +49,9 @@
 ObjectFile::ObjectFile(OSToken* parent, std::string path, std::string lockpath, bool isNew /* = false */)
 {
 	this->path = path;
-	ipcSignal = IPCSignal::create(path);
+	gen = Generation::create(path);
 	objectMutex = MutexFactory::i()->getMutex();
-	valid = (ipcSignal != NULL) && (objectMutex != NULL);
+	valid = (gen != NULL) && (objectMutex != NULL);
 	token = parent;
 	inTransaction = false;
 	transactionLockFile = NULL;
@@ -80,9 +80,9 @@ ObjectFile::~ObjectFile()
 {
 	discardAttributes();
 
-	if (ipcSignal != NULL)
+	if (gen != NULL)
 	{
-		delete ipcSignal;
+		delete gen;
 	}
 
 	MutexFactory::i()->recycleMutex(objectMutex);
@@ -170,8 +170,8 @@ void ObjectFile::refresh(bool isFirstTime /* = false */)
 		token->index();
 	}
 
-	// Check the IPC signal
-	if (!isFirstTime && (!valid || !ipcSignal->wasTriggered()))
+	// Check the generation
+	if (!isFirstTime && (!valid || !gen->wasUpdated()))
 	{
 		return;
 	}
@@ -194,8 +194,29 @@ void ObjectFile::refresh(bool isFirstTime /* = false */)
 
 	MutexLocker lock(objectMutex);
 
+	// Read back the generation number
+	unsigned long curGen;
+
+	if (!objectFile.readULong(curGen))
+	{
+		if (!objectFile.isEOF())
+		{
+			DEBUG_MSG("Corrupt object file %s", path.c_str());
+
+			valid = false;
+
+			objectFile.unlock();
+
+			return;
+		}
+	}
+	else
+	{
+		gen->set(curGen);
+	}
+
 	// Read back the attributes
-	do
+	while (!objectFile.isEOF())
 	{
 		unsigned long p11AttrType;
 		unsigned long osAttrType;
@@ -295,7 +316,6 @@ void ObjectFile::refresh(bool isFirstTime /* = false */)
 			return;
 		}
 	}
-	while (!objectFile.isEOF());
 
 	objectFile.unlock();
 
@@ -306,6 +326,40 @@ void ObjectFile::refresh(bool isFirstTime /* = false */)
 // called with objectFile locked and returns with objectFile unlocked
 bool ObjectFile::writeAttributes(File &objectFile)
 {
+	if (!gen->sync(objectFile))
+	{
+		DEBUG_MSG("Failed to synchronize generation number from object %s", path.c_str());
+
+		objectFile.unlock();
+
+		return false;
+	}
+
+	if (!objectFile.truncate())
+	{
+		DEBUG_MSG("Failed to reset object %s", path.c_str());
+
+		objectFile.unlock();
+
+		return false;
+	}
+
+	gen->update();
+
+	unsigned long newGen = gen->get();
+
+	if (!objectFile.writeULong(newGen))
+	{
+		DEBUG_MSG("Failed to write new generation number to object %s", path.c_str());
+
+		gen->rollback();
+
+		objectFile.unlock();
+
+		return false;
+	}
+
+
 	for (std::map<CK_ATTRIBUTE_TYPE, OSAttribute*>::iterator i = attributes.begin(); i != attributes.end(); i++)
 	{
 		if (i->second == NULL)
@@ -397,7 +451,7 @@ void ObjectFile::store(bool isCommit /* = false */)
 		return;
 	}
 
-	File objectFile(path, false, true, true);
+	File objectFile(path, true, true, true, false);
 
 	if (!objectFile.isValid())
 	{
@@ -430,9 +484,6 @@ void ObjectFile::store(bool isCommit /* = false */)
 			return;
 		}
 	}
-
-	// Trigger the IPC signal
-	ipcSignal->trigger();
 
 	valid = true;
 }

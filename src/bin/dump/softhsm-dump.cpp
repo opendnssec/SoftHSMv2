@@ -417,15 +417,27 @@ void corrupt(FILE* stream)
 // Core function
 void dump(FILE* stream)
 {
-	do
+	uint64_t gen;
+	if (!readULong(stream, gen))
+	{
+		if (feof(stream))
+		{
+			printf("empty file\n");
+		}
+		else
+		{
+			corrupt(stream);
+		}
+		return;
+	}
+	dumpULong(gen);
+	printf("generation %lu\n", (unsigned long) gen);
+
+	while (!feof(stream))
 	{
 		uint64_t p11type;
 		if (!readULong(stream, p11type))
 		{
-			if (feof(stream))
-			{
-				return;
-			}
 			corrupt(stream);
 			return;
 		}
@@ -490,7 +502,7 @@ void dump(FILE* stream)
 			else switch ((unsigned long) p11type)
 			{
 			case CKA_CLASS:
-				if ((int64_t)((uint32_t)value) != value)
+				if ((uint64_t)((uint32_t)value) != value)
 				{
 					printf("overflow object class");
 					break;
@@ -498,7 +510,7 @@ void dump(FILE* stream)
 				dumpCKO((unsigned long) value, 48);
 				break;
 			case CKA_CERTIFICATE_TYPE:
-				if ((int64_t)((uint32_t)value) != value)
+				if ((uint64_t)((uint32_t)value) != value)
 				{
 					printf("overflow certificate type");
 					break;
@@ -506,7 +518,7 @@ void dump(FILE* stream)
 				dumpCKC((unsigned long) value, 48);
 				break;
 			case CKA_KEY_TYPE:
-				if ((int64_t)((uint32_t)value) != value)
+				if ((uint64_t)((uint32_t)value) != value)
 				{
 					printf("overflow key type");
 					break;
@@ -514,7 +526,7 @@ void dump(FILE* stream)
 				dumpCKK((unsigned long) value, 48);
 				break;
 			case CKA_KEY_GEN_MECHANISM:
-				if ((int64_t)((uint32_t)value) != value)
+				if ((uint64_t)((uint32_t)value) != value)
 				{
 					printf("overflow mechanism type");
 					break;
@@ -522,7 +534,7 @@ void dump(FILE* stream)
 				dumpCKM((unsigned long) value, 48);
 				break;
 			case CKA_HW_FEATURE_TYPE:
-				if ((int64_t)((uint32_t)value) != value)
+				if ((uint64_t)((uint32_t)value) != value)
 				{
 					printf("overflow hw feature type");
 					break;
@@ -567,7 +579,6 @@ void dump(FILE* stream)
 			return;
 		}
 	}
-	while (!feof(stream));
 }
 
 // Display the usage

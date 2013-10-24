@@ -11,6 +11,7 @@ libsofthsm_objectstore_la_SOURCES =	ObjectStore.cpp \
 					UUID.cpp \
 					Directory.cpp \
 					File.cpp \
+					Generation.cpp \
 					OSAttribute.cpp \
 					OSToken.cpp \
 					ObjectFile.cpp \

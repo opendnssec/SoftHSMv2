@@ -80,9 +80,6 @@
     <ClInclude Include="..\..\src\lib\common\HandleFactory.h">
       <Filter>Common Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\lib\common\IPCSignal.h">
-      <Filter>Common Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\lib\common\log.h">
       <Filter>Common Header Files</Filter>
     </ClInclude>
@@ -90,9 +87,6 @@
       <Filter>Common Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\lib\common\osmutex.h">
-      <Filter>Common Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\lib\common\Semaphore.h">
       <Filter>Common Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\lib\common\Serialisable.h">
@@ -326,6 +320,9 @@
     <ClInclude Include="..\..\src\lib\object_store\FindOperation.h">
       <Filter>Object Store Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\lib\object_store\Generation.h">
+      <Filter>Object Store Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\src\lib\object_store\ObjectFile.h">
       <Filter>Object Store Header Files</Filter>
     </ClInclude>
@@ -382,9 +379,6 @@
     <ClCompile Include="..\..\src\lib\common\fatal.cpp">
       <Filter>Common Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\lib\common\IPCSignal.cpp">
-      <Filter>Common Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\lib\common\log.cpp">
       <Filter>Common Source Files</Filter>
     </ClCompile>
@@ -392,9 +386,6 @@
       <Filter>Common Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\lib\common\osmutex.cpp">
-      <Filter>Common Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\lib\common\Semaphore.cpp">
       <Filter>Common Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\lib\common\SimpleConfigLoader.cpp">
@@ -602,6 +593,9 @@
       <Filter>Object Store Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\lib\object_store\FindOperation.cpp">
+      <Filter>Object Store Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\object_store\Generation.cpp">
       <Filter>Object Store Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\lib\object_store\ObjectFile.cpp">

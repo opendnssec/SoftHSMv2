@@ -38,8 +38,8 @@
 #include "OSAttribute.h"
 #include "ObjectFile.h"
 #include "Directory.h"
+#include "Generation.h"
 #include "UUID.h"
-#include "IPCSignal.h"
 #include "cryptoki.h"
 #include "OSToken.h"
 #include "OSPathSep.h"
@@ -54,11 +54,11 @@
 OSToken::OSToken(const std::string tokenPath)
 {
 	tokenDir = new Directory(tokenPath);
+	gen = Generation::create(tokenPath + OS_PATHSEP + "generation", true);
 	tokenObject = new ObjectFile(this, tokenPath + OS_PATHSEP + "token.object", tokenPath + OS_PATHSEP + "token.lock");
-	sync = IPCSignal::create(tokenPath);
 	tokenMutex = MutexFactory::i()->getMutex();
 	this->tokenPath = tokenPath;
-	valid = (sync != NULL) && (tokenMutex != NULL) && tokenDir->isValid() && tokenObject->isValid();
+	valid = (gen != NULL) && (tokenMutex != NULL) && tokenDir->isValid() && tokenObject->isValid();
 
 	DEBUG_MSG("Opened token %s", tokenPath.c_str());
 
@@ -133,7 +133,7 @@ OSToken::~OSToken()
 	}
 
 	delete tokenDir;
-	if (sync != NULL) delete sync;
+	if (gen != NULL) delete gen;
 	MutexFactory::i()->recycleMutex(tokenMutex);
 	delete tokenObject;
 }
@@ -365,7 +365,9 @@ ObjectFile* OSToken::createObject()
 
 	DEBUG_MSG("(0x%08X) Created new object %s (0x%08X)", this, objectPath.c_str(), newObject);
 
-	sync->trigger();
+	gen->update();
+
+	gen->commit();
 
 	return newObject;
 }
@@ -413,7 +415,9 @@ bool OSToken::deleteObject(ObjectFile* object)
 
 	DEBUG_MSG("Deleted object %s", objectFilename.c_str());
 
-	sync->trigger();
+	gen->update();
+
+	gen->commit();
 
 	return true;
 }
@@ -476,10 +480,13 @@ bool OSToken::clearToken()
 bool OSToken::index(bool isFirstTime /* = false */)
 {
 	// Check if re-indexing is required
-	if (!isFirstTime && (!valid || !sync->wasTriggered()))
+	if (!isFirstTime && (!valid || !gen->wasUpdated()))
 	{
 		return true;
 	}
+
+	// Don't readdir in parallel (lock in Directory?)
+	MutexLocker lock(tokenMutex);
 
 	// Check the integrity
 	if (!tokenDir->refresh() || !tokenObject->isValid())
@@ -546,7 +553,6 @@ bool OSToken::index(bool isFirstTime /* = false */)
 	DEBUG_MSG("Current directory set contains %d objects", currentFiles.size());
 
 	// Now update the set of objects
-	MutexLocker lock(tokenMutex);
 
 	// Add new objects
 	for (std::set<std::string>::iterator i = addedFiles.begin(); i != addedFiles.end(); i++)
