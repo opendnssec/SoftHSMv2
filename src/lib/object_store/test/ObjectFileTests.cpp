@@ -502,6 +502,8 @@ void ObjectFileTests::testRefresh()
 		ObjectFile testObject2(NULL, "testdir\\test.object", "testdir\\test.lock");
 #endif
 
+		CPPUNIT_ASSERT(testObject2.isValid());
+
 		// Check the attributes on the second instance
 		CPPUNIT_ASSERT(testObject2.getAttribute(CKA_TOKEN)->isBooleanAttribute());
 		CPPUNIT_ASSERT(testObject2.getAttribute(CKA_PRIME_BITS)->isUnsignedLongAttribute());
@@ -516,7 +518,7 @@ void ObjectFileTests::testRefresh()
 
 		OSAttribute attr4(id);
 
-		CPPUNIT_ASSERT(testObject.setAttribute(CKA_ID, attr4));
+		CPPUNIT_ASSERT(testObject2.setAttribute(CKA_ID, attr4));
 		
 		// Check the attribute
 		CPPUNIT_ASSERT(testObject2.attributeExists(CKA_ID));
@@ -524,6 +526,7 @@ void ObjectFileTests::testRefresh()
 		CPPUNIT_ASSERT(testObject2.getAttribute(CKA_ID)->getByteStringValue() == id);
 
 		// Now check that the first instance also knows about it
+		CPPUNIT_ASSERT(testObject.isValid());
 		CPPUNIT_ASSERT(testObject.attributeExists(CKA_ID));
 		CPPUNIT_ASSERT(testObject.getAttribute(CKA_ID)->isByteStringAttribute());
 		CPPUNIT_ASSERT(testObject.getAttribute(CKA_ID)->getByteStringValue() == id);
@@ -540,6 +543,7 @@ void ObjectFileTests::testRefresh()
 		CPPUNIT_ASSERT(testObject.getAttribute(CKA_PRIME_BITS)->getUnsignedLongValue() == value2a);
 
 		// Now check that the second instance also knows about the change
+		CPPUNIT_ASSERT(testObject2.isValid());
 		CPPUNIT_ASSERT(testObject2.getAttribute(CKA_PRIME_BITS)->isUnsignedLongAttribute());
 		CPPUNIT_ASSERT(testObject2.getAttribute(CKA_PRIME_BITS)->getUnsignedLongValue() == value2a);
 	}
@@ -637,6 +641,7 @@ void ObjectFileTests::testTransactions()
 	CPPUNIT_ASSERT(testObject.getAttribute(CKA_VALUE_BITS)->getByteStringValue() == value3a);
 
 	// Verify that they are unchanged on the other instance
+	CPPUNIT_ASSERT(testObject2.isValid());
 	CPPUNIT_ASSERT(testObject2.getAttribute(CKA_TOKEN)->isBooleanAttribute());
 	CPPUNIT_ASSERT(testObject2.getAttribute(CKA_PRIME_BITS)->isUnsignedLongAttribute());
 	CPPUNIT_ASSERT(testObject2.getAttribute(CKA_VALUE_BITS)->isByteStringAttribute());
@@ -649,6 +654,7 @@ void ObjectFileTests::testTransactions()
 	CPPUNIT_ASSERT(testObject.commitTransaction());
 
 	// Verify that they have now changed on the other instance
+	CPPUNIT_ASSERT(testObject2.isValid());
 	CPPUNIT_ASSERT(testObject2.getAttribute(CKA_TOKEN)->isBooleanAttribute());
 	CPPUNIT_ASSERT(testObject2.getAttribute(CKA_PRIME_BITS)->isUnsignedLongAttribute());
 	CPPUNIT_ASSERT(testObject2.getAttribute(CKA_VALUE_BITS)->isByteStringAttribute());
@@ -675,6 +681,7 @@ void ObjectFileTests::testTransactions()
 	CPPUNIT_ASSERT(testObject.getAttribute(CKA_VALUE_BITS)->getByteStringValue() == value3);
 
 	// Verify that they are unchanged on the other instance
+	CPPUNIT_ASSERT(testObject2.isValid());
 	CPPUNIT_ASSERT(testObject2.getAttribute(CKA_TOKEN)->isBooleanAttribute());
 	CPPUNIT_ASSERT(testObject2.getAttribute(CKA_PRIME_BITS)->isUnsignedLongAttribute());
 	CPPUNIT_ASSERT(testObject2.getAttribute(CKA_VALUE_BITS)->isByteStringAttribute());
@@ -695,6 +702,7 @@ void ObjectFileTests::testTransactions()
 	CPPUNIT_ASSERT(testObject.getAttribute(CKA_PRIME_BITS)->getUnsignedLongValue() == value2a);
 	CPPUNIT_ASSERT(testObject.getAttribute(CKA_VALUE_BITS)->getByteStringValue() == value3a);
 
+	CPPUNIT_ASSERT(testObject2.isValid());
 	CPPUNIT_ASSERT(testObject2.getAttribute(CKA_TOKEN)->isBooleanAttribute());
 	CPPUNIT_ASSERT(testObject2.getAttribute(CKA_PRIME_BITS)->isUnsignedLongAttribute());
 	CPPUNIT_ASSERT(testObject2.getAttribute(CKA_VALUE_BITS)->isByteStringAttribute());

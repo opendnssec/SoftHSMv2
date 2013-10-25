@@ -58,7 +58,7 @@ OSToken::OSToken(const std::string tokenPath)
 	tokenObject = new ObjectFile(this, tokenPath + OS_PATHSEP + "token.object", tokenPath + OS_PATHSEP + "token.lock");
 	tokenMutex = MutexFactory::i()->getMutex();
 	this->tokenPath = tokenPath;
-	valid = (gen != NULL) && (tokenMutex != NULL) && tokenDir->isValid() && tokenObject->isValid();
+	valid = (gen != NULL) && (tokenMutex != NULL) && tokenDir->isValid() && tokenObject->valid;
 
 	DEBUG_MSG("Opened token %s", tokenPath.c_str());
 
@@ -84,7 +84,7 @@ OSToken::OSToken(const std::string tokenPath)
 	// Create the token object
 	ObjectFile tokenObject(NULL, basePath + OS_PATHSEP + tokenDir + OS_PATHSEP + "token.object", basePath + OS_PATHSEP + tokenDir + OS_PATHSEP + "token.lock", true);
 
-	if (!tokenObject.isValid())
+	if (!tokenObject.valid)
 	{
 		baseDir.rmdir(tokenDir);
 
@@ -347,7 +347,7 @@ ObjectFile* OSToken::createObject()
 	// Create the new object file
 	ObjectFile* newObject = new ObjectFile(this, objectPath, lockPath, true);
 
-	if (!newObject->isValid())
+	if (!newObject->valid)
 	{
 		ERROR_MSG("Failed to create new object %s", objectPath.c_str());
 
@@ -485,11 +485,8 @@ bool OSToken::index(bool isFirstTime /* = false */)
 		return true;
 	}
 
-	// Don't readdir in parallel (lock in Directory?)
-	MutexLocker lock(tokenMutex);
-
 	// Check the integrity
-	if (!tokenDir->refresh() || !tokenObject->isValid())
+	if (!tokenDir->refresh() || !tokenObject->valid)
 	{
 		valid = false;
 
@@ -521,6 +518,9 @@ bool OSToken::index(bool isFirstTime /* = false */)
 	// Compute the changes compared to the last list of files
 	std::set<std::string> addedFiles;
 	std::set<std::string> removedFiles;
+
+	// No access to object mutable fields before
+	MutexLocker lock(tokenMutex);
 
 	if (!isFirstTime)
 	{

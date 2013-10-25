@@ -52,8 +52,15 @@
 Directory::Directory(std::string path)
 {
 	this->path = path;
+	dirMutex = MutexFactory::i()->getMutex();
 
-	valid = refresh();
+	valid = (dirMutex != NULL) && refresh();
+}
+
+// Destructor
+Directory::~Directory()
+{
+	MutexFactory::i()->recycleMutex(dirMutex);
 }
 
 // Check if the directory is valid
@@ -65,18 +72,29 @@ bool Directory::isValid()
 // Return a list of all files in a directory
 std::vector<std::string> Directory::getFiles()
 {
+	// Make sure that no other thread is in the process of changing
+	// the file list when we return it
+	MutexLocker lock(dirMutex);
+
 	return files;
 }
 
 // Return a list of all subdirectories in a directory
 std::vector<std::string> Directory::getSubDirs()
 {
+	// Make sure that no other thread is in the process of changing
+	// the subdirectory list when we return it
+	MutexLocker lock(dirMutex);
+
 	return subDirs;
 }
 
 // Refresh the directory listing
 bool Directory::refresh()
 {
+	// Prevent concurrent call until valid is reset
+	MutexLocker lock(dirMutex);
+
 	// Reset the state
 	valid = false;
 
