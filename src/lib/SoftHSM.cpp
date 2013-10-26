@@ -6778,6 +6778,26 @@ CK_RV SoftHSM::deriveDH
 			// Common Attributes
 			bOK = bOK && osobject->setAttribute(CKA_LOCAL,false);
 
+			// Common Secret Key Attributes
+			if (baseKey->attributeExists(CKA_ALWAYS_SENSITIVE) && baseKey->getAttribute(CKA_ALWAYS_SENSITIVE)->getBooleanValue())
+			{
+				bool bAlwaysSensitive = osobject->getAttribute(CKA_SENSITIVE)->getBooleanValue();
+				bOK = bOK && osobject->setAttribute(CKA_ALWAYS_SENSITIVE,bAlwaysSensitive);
+			}
+			else
+			{
+				bOK = bOK && osobject->setAttribute(CKA_ALWAYS_SENSITIVE,false);
+			}
+			if (!baseKey->attributeExists(CKA_NEVER_EXTRACTABLE) || baseKey->getAttribute(CKA_NEVER_EXTRACTABLE)->getBooleanValue())
+			{
+				bool bNeverExtractable = osobject->getAttribute(CKA_EXTRACTABLE)->getBooleanValue() == false;
+				bOK = bOK && osobject->setAttribute(CKA_NEVER_EXTRACTABLE,bNeverExtractable);
+			}
+			else
+			{
+				bOK = bOK && osobject->setAttribute(CKA_NEVER_EXTRACTABLE,false);
+			}
+
 			// Secret Attributes
 			ByteString value;
 			if (isPrivate)
@@ -6989,6 +7009,26 @@ CK_RV SoftHSM::deriveECDH
 
 			// Common Attributes
 			bOK = bOK && osobject->setAttribute(CKA_LOCAL,false);
+
+			// Common Secret Key Attributes
+			if (baseKey->attributeExists(CKA_ALWAYS_SENSITIVE) && baseKey->getAttribute(CKA_ALWAYS_SENSITIVE)->getBooleanValue())
+			{
+				bool bAlwaysSensitive = osobject->getAttribute(CKA_SENSITIVE)->getBooleanValue();
+				bOK = bOK && osobject->setAttribute(CKA_ALWAYS_SENSITIVE,bAlwaysSensitive);
+			}
+			else
+			{
+				bOK = bOK && osobject->setAttribute(CKA_ALWAYS_SENSITIVE,false);
+			}
+			if (!baseKey->attributeExists(CKA_NEVER_EXTRACTABLE) || baseKey->getAttribute(CKA_NEVER_EXTRACTABLE)->getBooleanValue())
+			{
+				bool bNeverExtractable = osobject->getAttribute(CKA_EXTRACTABLE)->getBooleanValue() == false;
+				bOK = bOK && osobject->setAttribute(CKA_NEVER_EXTRACTABLE,bNeverExtractable);
+			}
+			else
+			{
+				bOK = bOK && osobject->setAttribute(CKA_NEVER_EXTRACTABLE,false);
+			}
 
 			// Secret Attributes
 			ByteString value;
