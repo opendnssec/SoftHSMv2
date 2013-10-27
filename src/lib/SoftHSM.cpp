@@ -1161,15 +1161,175 @@ CK_RV SoftHSM::C_CreateObject(CK_SESSION_HANDLE hSession, CK_ATTRIBUTE_PTR pTemp
 }
 
 // Create a copy of the object with the specified handle
-CK_RV SoftHSM::C_CopyObject(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE /*hObject*/, CK_ATTRIBUTE_PTR /*pTemplate*/, CK_ULONG /*ulCount*/, CK_OBJECT_HANDLE_PTR /*phNewObject*/)
+CK_RV SoftHSM::C_CopyObject(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject, CK_ATTRIBUTE_PTR pTemplate, CK_ULONG ulCount, CK_OBJECT_HANDLE_PTR phNewObject)
 {
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
+
+	if (pTemplate == NULL_PTR) return CKR_ARGUMENTS_BAD;
+	if (phNewObject == NULL_PTR) return CKR_ARGUMENTS_BAD;
+	*phNewObject = CK_INVALID_HANDLE;
 
 	// Get the session
 	Session* session = (Session*)handleManager->getSession(hSession);
 	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
 
-	return CKR_FUNCTION_NOT_SUPPORTED;
+	// Get the slot
+	Slot* slot = session->getSlot();
+	if (slot == NULL_PTR) return CKR_GENERAL_ERROR;
+
+	// Get the token
+	Token* token = session->getToken();
+	if (token == NULL_PTR) return CKR_GENERAL_ERROR;
+
+	// Check the object handle.
+	OSObject *object = (OSObject *)handleManager->getObject(hObject);
+	if (object == NULL_PTR || !object->isValid()) return CKR_OBJECT_HANDLE_INVALID;
+
+	CK_BBOOL wasToken = object->getAttribute(CKA_TOKEN)->getBooleanValue();
+	CK_BBOOL wasPrivate = object->getAttribute(CKA_PRIVATE)->getBooleanValue();
+
+	// Check read user credentials
+	CK_RV rv = haveRead(session->getState(), wasToken, wasPrivate);
+	if (rv != CKR_OK)
+	{
+		if (rv == CKR_USER_NOT_LOGGED_IN)
+			INFO_MSG("User is not authorized");
+
+		return rv;
+	}
+
+	// Check if the object is copyable
+	CK_BBOOL isCopyable = true;
+	if (object->attributeExists(CKA_COPYABLE))
+		isCopyable = object->getAttribute(CKA_COPYABLE)->getBooleanValue();
+	if (!isCopyable) return CKR_COPY_PROHIBITED;
+
+	// Extract critical information from the template
+	CK_BBOOL isToken = wasToken;
+	CK_BBOOL isPrivate = wasPrivate;
+	
+	for (CK_ULONG i = 0; i < ulCount; i++)
+	{
+		if ((pTemplate[i].type == CKA_TOKEN) && (pTemplate[i].ulValueLen == sizeof(CK_BBOOL)))
+		{
+			isToken = *(CK_BBOOL*)pTemplate[i].pValue;
+			continue;
+		}
+		if ((pTemplate[i].type == CKA_PRIVATE) && (pTemplate[i].ulValueLen == sizeof(CK_BBOOL)))
+		{
+			isPrivate = *(CK_BBOOL*)pTemplate[i].pValue;
+			continue;
+		}
+	}
+
+	// Check privacy does not downgrade
+	if (wasPrivate && !isPrivate) return CKR_TEMPLATE_INCONSISTENT;
+
+	// Check write user credentials
+	rv = haveWrite(session->getState(), isToken, isPrivate);
+	if (rv != CKR_OK)
+	{
+		if (rv == CKR_USER_NOT_LOGGED_IN)
+			INFO_MSG("User is not authorized");
+		if (rv == CKR_SESSION_READ_ONLY)
+			INFO_MSG("Session is read-only");
+
+		return rv;
+	}
+
+	// Create the object in session or on the token
+	OSObject *newobject = NULL_PTR;
+	if (isToken)
+	{
+		newobject = (OSObject*) token->createObject();
+	}
+	else
+	{
+		newobject = sessionObjectStore->createObject(slot->getSlotID(), hSession, isPrivate);
+	}
+	if (newobject == NULL) return CKR_GENERAL_ERROR;
+
+	// Copy attributes from object class (CKA_CLASS=0 so the first)
+	if (!newobject->startTransaction())
+	{
+		newobject->destroyObject();
+		return CKR_FUNCTION_FAILED;
+	}
+
+	CK_ATTRIBUTE_TYPE attrType = CKA_CLASS;
+	do
+	{
+		OSAttribute* attr = object->getAttribute(attrType);
+		// Upgrade privacy has to encrypt byte strings
+		if (!wasPrivate && isPrivate &&
+		    attr->isByteStringAttribute() &&
+		    attr->getByteStringValue().size() != 0)
+		{
+			ByteString value;
+			if (!token->encrypt(attr->getByteStringValue(), value) ||
+			    !newobject->setAttribute(attrType, value))
+			{
+				rv = CKR_FUNCTION_FAILED;
+				break;
+			}
+				
+		}
+		else
+		{
+			if (!newobject->setAttribute(attrType, *attr))
+			{
+				rv = CKR_FUNCTION_FAILED;
+				break;
+			}
+		}
+		attrType = object->nextAttributeType(attrType);
+	}
+	while (attrType != CKA_CLASS);
+
+	if (rv != CKR_OK)
+	{
+		newobject->abortTransaction();
+	}
+	else if (!newobject->commitTransaction())
+	{
+		rv = CKR_FUNCTION_FAILED;
+	}
+
+	if (rv != CKR_OK)
+	{
+		newobject->destroyObject();
+		return rv;
+	}
+
+	// Get the new P11 object
+	std::auto_ptr< P11Object > newp11object;
+	rv = newP11Object(newobject,newp11object);
+	if (rv != CKR_OK)
+	{
+		newobject->destroyObject();
+		return rv;
+	}
+
+	// Apply the template
+	rv = newp11object->saveTemplate(token, isPrivate, pTemplate, ulCount, OBJECT_OP_COPY);
+
+	if (rv != CKR_OK)
+	{
+		newobject->destroyObject();
+		return rv;
+	}
+
+	// Set handle
+	if (isToken)
+	{
+		*phNewObject = handleManager->addTokenObject(slot->getSlotID(), isPrivate, newobject);
+	}
+	else
+	{
+		*phNewObject = handleManager->addSessionObject(slot->getSlotID(), hSession, isPrivate, newobject);
+	}
+
+	return CKR_OK;
 }
 
 // Destroy the specified object

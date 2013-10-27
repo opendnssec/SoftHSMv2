@@ -104,6 +104,29 @@ OSAttribute* ObjectFile::getAttribute(CK_ATTRIBUTE_TYPE type)
 	return attributes[type];
 }
 
+// Retrieve the next attribute type
+CK_ATTRIBUTE_TYPE ObjectFile::nextAttributeType(CK_ATTRIBUTE_TYPE type)
+{
+	MutexLocker lock(objectMutex);
+
+	std::map<CK_ATTRIBUTE_TYPE, OSAttribute*>::iterator n = attributes.upper_bound(type);
+
+	// skip null attributes
+	while ((n != attributes.end()) && (n->second == NULL))
+		++n;
+
+	
+	// return type or CKA_CLASS (= 0)
+	if (n == attributes.end())
+	{
+		return CKA_CLASS;
+	}
+	else
+	{
+		return n->first;
+	}
+}
+
 // Set the specified attribute
 bool ObjectFile::setAttribute(CK_ATTRIBUTE_TYPE type, const OSAttribute& attribute)
 {
