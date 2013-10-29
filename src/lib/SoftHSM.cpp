@@ -1161,15 +1161,175 @@ CK_RV SoftHSM::C_CreateObject(CK_SESSION_HANDLE hSession, CK_ATTRIBUTE_PTR pTemp
 }
 
 // Create a copy of the object with the specified handle
-CK_RV SoftHSM::C_CopyObject(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE /*hObject*/, CK_ATTRIBUTE_PTR /*pTemplate*/, CK_ULONG /*ulCount*/, CK_OBJECT_HANDLE_PTR /*phNewObject*/)
+CK_RV SoftHSM::C_CopyObject(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject, CK_ATTRIBUTE_PTR pTemplate, CK_ULONG ulCount, CK_OBJECT_HANDLE_PTR phNewObject)
 {
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
+
+	if (pTemplate == NULL_PTR) return CKR_ARGUMENTS_BAD;
+	if (phNewObject == NULL_PTR) return CKR_ARGUMENTS_BAD;
+	*phNewObject = CK_INVALID_HANDLE;
 
 	// Get the session
 	Session* session = (Session*)handleManager->getSession(hSession);
 	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
 
-	return CKR_FUNCTION_NOT_SUPPORTED;
+	// Get the slot
+	Slot* slot = session->getSlot();
+	if (slot == NULL_PTR) return CKR_GENERAL_ERROR;
+
+	// Get the token
+	Token* token = session->getToken();
+	if (token == NULL_PTR) return CKR_GENERAL_ERROR;
+
+	// Check the object handle.
+	OSObject *object = (OSObject *)handleManager->getObject(hObject);
+	if (object == NULL_PTR || !object->isValid()) return CKR_OBJECT_HANDLE_INVALID;
+
+	CK_BBOOL wasToken = object->getAttribute(CKA_TOKEN)->getBooleanValue();
+	CK_BBOOL wasPrivate = object->getAttribute(CKA_PRIVATE)->getBooleanValue();
+
+	// Check read user credentials
+	CK_RV rv = haveRead(session->getState(), wasToken, wasPrivate);
+	if (rv != CKR_OK)
+	{
+		if (rv == CKR_USER_NOT_LOGGED_IN)
+			INFO_MSG("User is not authorized");
+
+		return rv;
+	}
+
+	// Check if the object is copyable
+	CK_BBOOL isCopyable = true;
+	if (object->attributeExists(CKA_COPYABLE))
+		isCopyable = object->getAttribute(CKA_COPYABLE)->getBooleanValue();
+	if (!isCopyable) return CKR_COPY_PROHIBITED;
+
+	// Extract critical information from the template
+	CK_BBOOL isToken = wasToken;
+	CK_BBOOL isPrivate = wasPrivate;
+	
+	for (CK_ULONG i = 0; i < ulCount; i++)
+	{
+		if ((pTemplate[i].type == CKA_TOKEN) && (pTemplate[i].ulValueLen == sizeof(CK_BBOOL)))
+		{
+			isToken = *(CK_BBOOL*)pTemplate[i].pValue;
+			continue;
+		}
+		if ((pTemplate[i].type == CKA_PRIVATE) && (pTemplate[i].ulValueLen == sizeof(CK_BBOOL)))
+		{
+			isPrivate = *(CK_BBOOL*)pTemplate[i].pValue;
+			continue;
+		}
+	}
+
+	// Check privacy does not downgrade
+	if (wasPrivate && !isPrivate) return CKR_TEMPLATE_INCONSISTENT;
+
+	// Check write user credentials
+	rv = haveWrite(session->getState(), isToken, isPrivate);
+	if (rv != CKR_OK)
+	{
+		if (rv == CKR_USER_NOT_LOGGED_IN)
+			INFO_MSG("User is not authorized");
+		if (rv == CKR_SESSION_READ_ONLY)
+			INFO_MSG("Session is read-only");
+
+		return rv;
+	}
+
+	// Create the object in session or on the token
+	OSObject *newobject = NULL_PTR;
+	if (isToken)
+	{
+		newobject = (OSObject*) token->createObject();
+	}
+	else
+	{
+		newobject = sessionObjectStore->createObject(slot->getSlotID(), hSession, isPrivate);
+	}
+	if (newobject == NULL) return CKR_GENERAL_ERROR;
+
+	// Copy attributes from object class (CKA_CLASS=0 so the first)
+	if (!newobject->startTransaction())
+	{
+		newobject->destroyObject();
+		return CKR_FUNCTION_FAILED;
+	}
+
+	CK_ATTRIBUTE_TYPE attrType = CKA_CLASS;
+	do
+	{
+		OSAttribute* attr = object->getAttribute(attrType);
+		// Upgrade privacy has to encrypt byte strings
+		if (!wasPrivate && isPrivate &&
+		    attr->isByteStringAttribute() &&
+		    attr->getByteStringValue().size() != 0)
+		{
+			ByteString value;
+			if (!token->encrypt(attr->getByteStringValue(), value) ||
+			    !newobject->setAttribute(attrType, value))
+			{
+				rv = CKR_FUNCTION_FAILED;
+				break;
+			}
+				
+		}
+		else
+		{
+			if (!newobject->setAttribute(attrType, *attr))
+			{
+				rv = CKR_FUNCTION_FAILED;
+				break;
+			}
+		}
+		attrType = object->nextAttributeType(attrType);
+	}
+	while (attrType != CKA_CLASS);
+
+	if (rv != CKR_OK)
+	{
+		newobject->abortTransaction();
+	}
+	else if (!newobject->commitTransaction())
+	{
+		rv = CKR_FUNCTION_FAILED;
+	}
+
+	if (rv != CKR_OK)
+	{
+		newobject->destroyObject();
+		return rv;
+	}
+
+	// Get the new P11 object
+	std::auto_ptr< P11Object > newp11object;
+	rv = newP11Object(newobject,newp11object);
+	if (rv != CKR_OK)
+	{
+		newobject->destroyObject();
+		return rv;
+	}
+
+	// Apply the template
+	rv = newp11object->saveTemplate(token, isPrivate, pTemplate, ulCount, OBJECT_OP_COPY);
+
+	if (rv != CKR_OK)
+	{
+		newobject->destroyObject();
+		return rv;
+	}
+
+	// Set handle
+	if (isToken)
+	{
+		*phNewObject = handleManager->addTokenObject(slot->getSlotID(), isPrivate, newobject);
+	}
+	else
+	{
+		*phNewObject = handleManager->addSessionObject(slot->getSlotID(), hSession, isPrivate, newobject);
+	}
+
+	return CKR_OK;
 }
 
 // Destroy the specified object
@@ -1187,7 +1347,7 @@ CK_RV SoftHSM::C_DestroyObject(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObj
 
 	// Check the object handle.
 	OSObject *object = (OSObject *)handleManager->getObject(hObject);
-	if (object == NULL_PTR) return CKR_OBJECT_HANDLE_INVALID;
+	if (object == NULL_PTR || !object->isValid()) return CKR_OBJECT_HANDLE_INVALID;
 
 	CK_BBOOL isToken = object->getAttribute(CKA_TOKEN)->getBooleanValue();
 	CK_BBOOL isPrivate = object->getAttribute(CKA_PRIVATE)->getBooleanValue();
@@ -1243,7 +1403,7 @@ CK_RV SoftHSM::C_GetAttributeValue(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE 
 
 	// Check the object handle.
 	OSObject *object = (OSObject *)handleManager->getObject(hObject);
-	if (object == NULL_PTR) return CKR_OBJECT_HANDLE_INVALID;
+	if (object == NULL_PTR || !object->isValid()) return CKR_OBJECT_HANDLE_INVALID;
 
 	// Wrap a P11Object around the OSObject so we can access the attributes in the
 	// context of the object in which it is defined.
@@ -1273,7 +1433,7 @@ CK_RV SoftHSM::C_SetAttributeValue(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE 
 
 	// Check the object handle.
 	OSObject *object = (OSObject *)handleManager->getObject(hObject);
-	if (object == NULL_PTR) return CKR_OBJECT_HANDLE_INVALID;
+	if (object == NULL_PTR || !object->isValid()) return CKR_OBJECT_HANDLE_INVALID;
 
 	CK_BBOOL isToken = object->getAttribute(CKA_TOKEN)->getBooleanValue();
 	CK_BBOOL isPrivate = object->getAttribute(CKA_PRIVATE)->getBooleanValue();
@@ -1527,7 +1687,7 @@ CK_RV SoftHSM::SymEncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 
 	// Check the key handle.
 	OSObject *key = (OSObject *)handleManager->getObject(hKey);
-	if (key == NULL_PTR) return CKR_OBJECT_HANDLE_INVALID;
+	if (key == NULL_PTR || !key->isValid()) return CKR_OBJECT_HANDLE_INVALID;
 
 	// Check if key can be used for encryption
         if (!key->attributeExists(CKA_ENCRYPT) || key->getAttribute(CKA_ENCRYPT)->getBooleanValue() == false)
@@ -1650,7 +1810,7 @@ CK_RV SoftHSM::AsymEncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMec
 
 	// Check the key handle.
 	OSObject *key = (OSObject *)handleManager->getObject(hKey);
-	if (key == NULL_PTR) return CKR_OBJECT_HANDLE_INVALID;
+	if (key == NULL_PTR || !key->isValid()) return CKR_OBJECT_HANDLE_INVALID;
 
 	// Check if key can be used for encryption
         if (!key->attributeExists(CKA_ENCRYPT) || key->getAttribute(CKA_ENCRYPT)->getBooleanValue() == false)
@@ -1929,7 +2089,7 @@ CK_RV SoftHSM::SymDecryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 
 	// Check the key handle.
 	OSObject *key = (OSObject *)handleManager->getObject(hKey);
-	if (key == NULL_PTR) return CKR_OBJECT_HANDLE_INVALID;
+	if (key == NULL_PTR || !key->isValid()) return CKR_OBJECT_HANDLE_INVALID;
 
 	// Check if key can be used for decryption
         if (!key->attributeExists(CKA_DECRYPT) || key->getAttribute(CKA_DECRYPT)->getBooleanValue() == false)
@@ -2052,7 +2212,7 @@ CK_RV SoftHSM::AsymDecryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMec
 
 	// Check the key handle.
 	OSObject *key = (OSObject *)handleManager->getObject(hKey);
-	if (key == NULL_PTR) return CKR_OBJECT_HANDLE_INVALID;
+	if (key == NULL_PTR || !key->isValid()) return CKR_OBJECT_HANDLE_INVALID;
 
 	// Check if key can be used for decryption
         if (!key->attributeExists(CKA_DECRYPT) || key->getAttribute(CKA_DECRYPT)->getBooleanValue() == false)
@@ -2557,7 +2717,7 @@ CK_RV SoftHSM::MacSignInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechani
 
 	// Check the key handle.
 	OSObject *key = (OSObject *)handleManager->getObject(hKey);
-	if (key == NULL_PTR) return CKR_OBJECT_HANDLE_INVALID;
+	if (key == NULL_PTR || !key->isValid()) return CKR_OBJECT_HANDLE_INVALID;
 
 	// Check if key can be used for signing
         if (!key->attributeExists(CKA_SIGN) || key->getAttribute(CKA_SIGN)->getBooleanValue() == false)
@@ -2645,7 +2805,7 @@ CK_RV SoftHSM::AsymSignInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechan
 
 	// Check the key handle.
 	OSObject *key = (OSObject *)handleManager->getObject(hKey);
-	if (key == NULL_PTR) return CKR_OBJECT_HANDLE_INVALID;
+	if (key == NULL_PTR || !key->isValid()) return CKR_OBJECT_HANDLE_INVALID;
 
 	// Check if key can be used for signing
         if (!key->attributeExists(CKA_SIGN) || key->getAttribute(CKA_SIGN)->getBooleanValue() == false)
@@ -3243,7 +3403,7 @@ CK_RV SoftHSM::MacVerifyInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMecha
 
 	// Check the key handle.
 	OSObject *key = (OSObject *)handleManager->getObject(hKey);
-	if (key == NULL_PTR) return CKR_OBJECT_HANDLE_INVALID;
+	if (key == NULL_PTR || !key->isValid()) return CKR_OBJECT_HANDLE_INVALID;
 
 	// Check if key can be used for verifying
         if (!key->attributeExists(CKA_VERIFY) || key->getAttribute(CKA_VERIFY)->getBooleanValue() == false)
@@ -3331,7 +3491,7 @@ CK_RV SoftHSM::AsymVerifyInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 
 	// Check the key handle.
 	OSObject *key = (OSObject *)handleManager->getObject(hKey);
-	if (key == NULL_PTR) return CKR_OBJECT_HANDLE_INVALID;
+	if (key == NULL_PTR || !key->isValid()) return CKR_OBJECT_HANDLE_INVALID;
 
 	// Check if key can be used for verifying
         if (!key->attributeExists(CKA_VERIFY) || key->getAttribute(CKA_VERIFY)->getBooleanValue() == false)
@@ -4274,7 +4434,7 @@ CK_RV SoftHSM::C_DeriveKey
 
 	// Check the key handle.
 	OSObject *key = (OSObject *)handleManager->getObject(hBaseKey);
-	if (key == NULL_PTR) return CKR_OBJECT_HANDLE_INVALID;
+	if (key == NULL_PTR || !key->isValid()) return CKR_OBJECT_HANDLE_INVALID;
 
 	CK_BBOOL isKeyOnToken = key->getAttribute(CKA_TOKEN)->getBooleanValue();
 	CK_BBOOL isKeyPrivate = key->getAttribute(CKA_PRIVATE)->getBooleanValue();
@@ -4528,7 +4688,9 @@ CK_RV SoftHSM::generateAES
 	if (rv == CKR_OK)
 	{
 		OSObject* osobject = (OSObject*)handleManager->getObject(*phKey);
-		if (osobject->startTransaction()) {
+		if (osobject == NULL_PTR || !osobject->isValid()) {
+			rv = CKR_FUNCTION_FAILED;
+		} else if (osobject->startTransaction()) {
 			bool bOK = true;
 
 			// Common Attributes
@@ -4557,7 +4719,8 @@ CK_RV SoftHSM::generateAES
 
 			if (!bOK)
 				rv = CKR_FUNCTION_FAILED;
-		}
+		} else
+			rv = CKR_FUNCTION_FAILED;
 	}
 
 	// Clean up
@@ -4652,7 +4815,9 @@ CK_RV SoftHSM::generateDES
 	if (rv == CKR_OK)
 	{
 		OSObject* osobject = (OSObject*)handleManager->getObject(*phKey);
-		if (osobject->startTransaction()) {
+		if (osobject == NULL_PTR || !osobject->isValid()) {
+			rv = CKR_FUNCTION_FAILED;
+		} else if (osobject->startTransaction()) {
 			bool bOK = true;
 
 			// Common Attributes
@@ -4681,7 +4846,8 @@ CK_RV SoftHSM::generateDES
 
 			if (!bOK)
 				rv = CKR_FUNCTION_FAILED;
-		}
+		} else
+			rv = CKR_FUNCTION_FAILED;
 	}
 
 	// Clean up
@@ -4776,7 +4942,9 @@ CK_RV SoftHSM::generateDES2
 	if (rv == CKR_OK)
 	{
 		OSObject* osobject = (OSObject*)handleManager->getObject(*phKey);
-		if (osobject->startTransaction()) {
+		if (osobject == NULL_PTR || !osobject->isValid()) {
+			rv = CKR_FUNCTION_FAILED;
+		} else if (osobject->startTransaction()) {
 			bool bOK = true;
 
 			// Common Attributes
@@ -4805,7 +4973,8 @@ CK_RV SoftHSM::generateDES2
 
 			if (!bOK)
 				rv = CKR_FUNCTION_FAILED;
-		}
+		} else
+			rv = CKR_FUNCTION_FAILED;
 	}
 
 	// Clean up
@@ -4900,7 +5069,9 @@ CK_RV SoftHSM::generateDES3
 	if (rv == CKR_OK)
 	{
 		OSObject* osobject = (OSObject*)handleManager->getObject(*phKey);
-		if (osobject->startTransaction()) {
+		if (osobject == NULL_PTR || !osobject->isValid()) {
+			rv = CKR_FUNCTION_FAILED;
+		} else if (osobject->startTransaction()) {
 			bool bOK = true;
 
 			// Common Attributes
@@ -4929,7 +5100,8 @@ CK_RV SoftHSM::generateDES3
 
 			if (!bOK)
 				rv = CKR_FUNCTION_FAILED;
-		}
+		} else
+			rv = CKR_FUNCTION_FAILED;
 	}
 
 	// Clean up
@@ -5069,7 +5241,9 @@ CK_RV SoftHSM::generateRSA
 		if (rv == CKR_OK)
 		{
 			OSObject* osobject = (OSObject*)handleManager->getObject(*phPublicKey);
-			if (osobject->startTransaction()) {
+			if (osobject == NULL_PTR || !osobject->isValid()) {
+				rv = CKR_FUNCTION_FAILED;
+			} else if (osobject->startTransaction()) {
 				bool bOK = true;
 
 				// Common Key Attributes
@@ -5100,7 +5274,8 @@ CK_RV SoftHSM::generateRSA
 
 				if (!bOK)
 					rv = CKR_FUNCTION_FAILED;
-			}
+			} else
+				rv = CKR_FUNCTION_FAILED;
 		}
 	}
 
@@ -5140,7 +5315,9 @@ CK_RV SoftHSM::generateRSA
 		if (rv == CKR_OK)
 		{
 			OSObject* osobject = (OSObject*)handleManager->getObject(*phPrivateKey);
-			if (osobject->startTransaction()) {
+			if (osobject == NULL_PTR || !osobject->isValid()) {
+				rv = CKR_FUNCTION_FAILED;
+			} else if (osobject->startTransaction()) {
 				bool bOK = true;
 
 				// Common Key Attributes
@@ -5201,7 +5378,8 @@ CK_RV SoftHSM::generateRSA
 
 				if (!bOK)
 					rv = CKR_FUNCTION_FAILED;
-			}
+			} else
+				rv = CKR_FUNCTION_FAILED;
 		}
 	}
 
@@ -5350,7 +5528,9 @@ CK_RV SoftHSM::generateDSA
 		if (rv == CKR_OK)
 		{
 			OSObject* osobject = (OSObject*)handleManager->getObject(*phPublicKey);
-			if (osobject->startTransaction()) {
+			if (osobject == NULL_PTR || !osobject->isValid()) {
+				rv = CKR_FUNCTION_FAILED;
+			} else if (osobject->startTransaction()) {
 				bool bOK = true;
 
 				// Common Key Attributes
@@ -5389,7 +5569,8 @@ CK_RV SoftHSM::generateDSA
 
 				if (!bOK)
 					rv = CKR_FUNCTION_FAILED;
-			}
+			} else
+				rv = CKR_FUNCTION_FAILED;
 		}
 	}
 
@@ -5429,7 +5610,9 @@ CK_RV SoftHSM::generateDSA
 		if (rv == CKR_OK)
 		{
 			OSObject* osobject = (OSObject*)handleManager->getObject(*phPrivateKey);
-			if (osobject->startTransaction()) {
+			if (osobject == NULL_PTR || !osobject->isValid()) {
+				rv = CKR_FUNCTION_FAILED;
+			} else if (osobject->startTransaction()) {
 				bool bOK = true;
 
 				// Common Key Attributes
@@ -5474,7 +5657,8 @@ CK_RV SoftHSM::generateDSA
 
 				if (!bOK)
 					rv = CKR_FUNCTION_FAILED;
-			}
+			} else
+				rv = CKR_FUNCTION_FAILED;
 		}
 	}
 
@@ -5619,7 +5803,9 @@ CK_RV SoftHSM::generateDSAParameters
 	if (rv == CKR_OK)
 	{
 		OSObject* osobject = (OSObject*)handleManager->getObject(*phKey);
-		if (osobject->startTransaction()) {
+		if (osobject == NULL_PTR || !osobject->isValid()) {
+			rv = CKR_FUNCTION_FAILED;
+		} else if (osobject->startTransaction()) {
 			bool bOK = true;
 
 			// Common Attributes
@@ -5654,7 +5840,8 @@ CK_RV SoftHSM::generateDSAParameters
 
 			if (!bOK)
 				rv = CKR_FUNCTION_FAILED;
-		}
+		} else
+			rv = CKR_FUNCTION_FAILED;
 	}
 
 	// Clean up
@@ -5782,7 +5969,9 @@ CK_RV SoftHSM::generateEC
 		if (rv == CKR_OK)
 		{
 			OSObject* osobject = (OSObject*)handleManager->getObject(*phPublicKey);
-			if (osobject->startTransaction()) {
+			if (osobject == NULL_PTR || !osobject->isValid()) {
+				rv = CKR_FUNCTION_FAILED;
+			} else if (osobject->startTransaction()) {
 				bool bOK = true;
 
 				// Common Key Attributes
@@ -5813,7 +6002,8 @@ CK_RV SoftHSM::generateEC
 
 				if (!bOK)
 					rv = CKR_FUNCTION_FAILED;
-			}
+			} else
+				rv = CKR_FUNCTION_FAILED;
 		}
 	}
 
@@ -5853,7 +6043,9 @@ CK_RV SoftHSM::generateEC
 		if (rv == CKR_OK)
 		{
 			OSObject* osobject = (OSObject*)handleManager->getObject(*phPrivateKey);
-			if (osobject->startTransaction()) {
+			if (osobject == NULL_PTR || !osobject->isValid()) {
+				rv = CKR_FUNCTION_FAILED;
+			} else if (osobject->startTransaction()) {
 				bool bOK = true;
 
 				// Common Key Attributes
@@ -5890,7 +6082,8 @@ CK_RV SoftHSM::generateEC
 
 				if (!bOK)
 					rv = CKR_FUNCTION_FAILED;
-			}
+			} else
+				rv = CKR_FUNCTION_FAILED;
 		}
 	}
 
@@ -6033,7 +6226,9 @@ CK_RV SoftHSM::generateDH
 		if (rv == CKR_OK)
 		{
 			OSObject* osobject = (OSObject*)handleManager->getObject(*phPublicKey);
-			if (osobject->startTransaction()) {
+			if (osobject == NULL_PTR || !osobject->isValid()) {
+				rv = CKR_FUNCTION_FAILED;
+			} else if (osobject->startTransaction()) {
 				bool bOK = true;
 
 				// Common Key Attributes
@@ -6068,7 +6263,8 @@ CK_RV SoftHSM::generateDH
 
 				if (!bOK)
 					rv = CKR_FUNCTION_FAILED;
-			}
+			} else
+				rv = CKR_FUNCTION_FAILED;
 		}
 	}
 
@@ -6108,7 +6304,9 @@ CK_RV SoftHSM::generateDH
 		if (rv == CKR_OK)
 		{
 			OSObject* osobject = (OSObject*)handleManager->getObject(*phPrivateKey);
-			if (osobject->startTransaction()) {
+			if (osobject == NULL_PTR || !osobject->isValid()) {
+				rv = CKR_FUNCTION_FAILED;
+			} else if (osobject->startTransaction()) {
 				bool bOK = true;
 
 				// Common Key Attributes
@@ -6149,7 +6347,8 @@ CK_RV SoftHSM::generateDH
 
 				if (!bOK)
 					rv = CKR_FUNCTION_FAILED;
-			}
+			} else
+				rv = CKR_FUNCTION_FAILED;
 		}
 	}
 
@@ -6278,7 +6477,9 @@ CK_RV SoftHSM::generateDHParameters
 	if (rv == CKR_OK)
 	{
 		OSObject* osobject = (OSObject*)handleManager->getObject(*phKey);
-		if (osobject->startTransaction()) {
+		if (osobject == NULL_PTR || !osobject->isValid()) {
+			rv = CKR_FUNCTION_FAILED;
+		} else if (osobject->startTransaction()) {
 			bool bOK = true;
 
 			// Common Attributes
@@ -6309,7 +6510,8 @@ CK_RV SoftHSM::generateDHParameters
 
 			if (!bOK)
 				rv = CKR_FUNCTION_FAILED;
-		}
+		} else
+			rv = CKR_FUNCTION_FAILED;
 	}
 
 	// Clean up
@@ -6444,7 +6646,9 @@ CK_RV SoftHSM::generateGOST
 		if (rv == CKR_OK)
 		{
 			OSObject* osobject = (OSObject*)handleManager->getObject(*phPublicKey);
-			if (osobject->startTransaction()) {
+			if (osobject == NULL_PTR || !osobject->isValid()) {
+				rv = CKR_FUNCTION_FAILED;
+			} else if (osobject->startTransaction()) {
 				bool bOK = true;
 
 				// Common Key Attributes
@@ -6471,7 +6675,8 @@ CK_RV SoftHSM::generateGOST
 
 				if (!bOK)
 					rv = CKR_FUNCTION_FAILED;
-			}
+			} else
+				rv = CKR_FUNCTION_FAILED;
 		}
 	}
 
@@ -6511,7 +6716,9 @@ CK_RV SoftHSM::generateGOST
 		if (rv == CKR_OK)
 		{
 			OSObject* osobject = (OSObject*)handleManager->getObject(*phPrivateKey);
-			if (osobject->startTransaction()) {
+			if (osobject == NULL_PTR || !osobject->isValid()) {
+				rv = CKR_FUNCTION_FAILED;
+			} else if (osobject->startTransaction()) {
 				bool bOK = true;
 
 				// Common Key Attributes
@@ -6556,7 +6763,8 @@ CK_RV SoftHSM::generateGOST
 
 				if (!bOK)
 					rv = CKR_FUNCTION_FAILED;
-			}
+			} else
+				  rv = CKR_FUNCTION_FAILED;
 		}
 	}
 
@@ -6637,7 +6845,7 @@ CK_RV SoftHSM::deriveDH
 
 	// Get the base key handle
 	OSObject *baseKey = (OSObject *)handleManager->getObject(hBaseKey);
-	if (baseKey == NULL)
+	if (baseKey == NULL && !baseKey->isValid())
 		return CKR_KEY_HANDLE_INVALID;
 
 	// Get the DH algorithm handler
@@ -6722,11 +6930,33 @@ CK_RV SoftHSM::deriveDH
 	if (rv == CKR_OK)
 	{
 		OSObject* osobject = (OSObject*)handleManager->getObject(*phKey);
-		if (osobject->startTransaction()) {
+		if (osobject == NULL_PTR || !osobject->isValid()) {
+			rv = CKR_FUNCTION_FAILED;
+		} else if (osobject->startTransaction()) {
 			bool bOK = true;
 
 			// Common Attributes
 			bOK = bOK && osobject->setAttribute(CKA_LOCAL,false);
+
+			// Common Secret Key Attributes
+			if (baseKey->attributeExists(CKA_ALWAYS_SENSITIVE) && baseKey->getAttribute(CKA_ALWAYS_SENSITIVE)->getBooleanValue())
+			{
+				bool bAlwaysSensitive = osobject->getAttribute(CKA_SENSITIVE)->getBooleanValue();
+				bOK = bOK && osobject->setAttribute(CKA_ALWAYS_SENSITIVE,bAlwaysSensitive);
+			}
+			else
+			{
+				bOK = bOK && osobject->setAttribute(CKA_ALWAYS_SENSITIVE,false);
+			}
+			if (!baseKey->attributeExists(CKA_NEVER_EXTRACTABLE) || baseKey->getAttribute(CKA_NEVER_EXTRACTABLE)->getBooleanValue())
+			{
+				bool bNeverExtractable = osobject->getAttribute(CKA_EXTRACTABLE)->getBooleanValue() == false;
+				bOK = bOK && osobject->setAttribute(CKA_NEVER_EXTRACTABLE,bNeverExtractable);
+			}
+			else
+			{
+				bOK = bOK && osobject->setAttribute(CKA_NEVER_EXTRACTABLE,false);
+			}
 
 			// Secret Attributes
 			ByteString value;
@@ -6750,7 +6980,8 @@ CK_RV SoftHSM::deriveDH
 
 			if (!bOK)
 				rv = CKR_FUNCTION_FAILED;
-		}
+		} else
+			rv = CKR_FUNCTION_FAILED;
 	}
 
 	// Clean up
@@ -6844,7 +7075,7 @@ CK_RV SoftHSM::deriveECDH
 
 	// Get the base key handle
 	OSObject *baseKey = (OSObject *)handleManager->getObject(hBaseKey);
-	if (baseKey == NULL)
+	if (baseKey == NULL || !baseKey->isValid())
 		return CKR_KEY_HANDLE_INVALID;
 
 	// Get the ECDH algorithm handler
@@ -6931,11 +7162,33 @@ CK_RV SoftHSM::deriveECDH
 	if (rv == CKR_OK)
 	{
 		OSObject* osobject = (OSObject*)handleManager->getObject(*phKey);
-		if (osobject->startTransaction()) {
+		if (osobject == NULL_PTR || !osobject->isValid()) {
+			rv = CKR_FUNCTION_FAILED;
+		} else if (osobject->startTransaction()) {
 			bool bOK = true;
 
 			// Common Attributes
 			bOK = bOK && osobject->setAttribute(CKA_LOCAL,false);
+
+			// Common Secret Key Attributes
+			if (baseKey->attributeExists(CKA_ALWAYS_SENSITIVE) && baseKey->getAttribute(CKA_ALWAYS_SENSITIVE)->getBooleanValue())
+			{
+				bool bAlwaysSensitive = osobject->getAttribute(CKA_SENSITIVE)->getBooleanValue();
+				bOK = bOK && osobject->setAttribute(CKA_ALWAYS_SENSITIVE,bAlwaysSensitive);
+			}
+			else
+			{
+				bOK = bOK && osobject->setAttribute(CKA_ALWAYS_SENSITIVE,false);
+			}
+			if (!baseKey->attributeExists(CKA_NEVER_EXTRACTABLE) || baseKey->getAttribute(CKA_NEVER_EXTRACTABLE)->getBooleanValue())
+			{
+				bool bNeverExtractable = osobject->getAttribute(CKA_EXTRACTABLE)->getBooleanValue() == false;
+				bOK = bOK && osobject->setAttribute(CKA_NEVER_EXTRACTABLE,bNeverExtractable);
+			}
+			else
+			{
+				bOK = bOK && osobject->setAttribute(CKA_NEVER_EXTRACTABLE,false);
+			}
 
 			// Secret Attributes
 			ByteString value;
@@ -6959,7 +7212,8 @@ CK_RV SoftHSM::deriveECDH
 
 			if (!bOK)
 				rv = CKR_FUNCTION_FAILED;
-		}
+		} else
+			rv = CKR_FUNCTION_FAILED;
 	}
 
 	// Clean up

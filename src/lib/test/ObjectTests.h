@@ -27,9 +27,9 @@
 /*****************************************************************************
  ObjectTests.h
 
- Contains test cases to C_CreateObject, C_DestroyObject, C_GetAttributeValue,
- C_SetAttributeValue, C_FindObjectsInit, C_FindObjects, C_FindObjectsFinal,
- C_GenerateKeyPair
+ Contains test cases to C_CreateObject, C_CopyObject, C_DestroyObject,
+ C_GetAttributeValue, C_SetAttributeValue, C_FindObjectsInit,
+ C_FindObjects, C_FindObjectsFinal, C_GenerateKeyPair
  *****************************************************************************/
 
 #ifndef _SOFTHSM_V2_OBJECTTESTS_H
@@ -42,6 +42,7 @@ class ObjectTests : public CppUnit::TestFixture
 {
 	CPPUNIT_TEST_SUITE(ObjectTests);
 	CPPUNIT_TEST(testCreateObject);
+	CPPUNIT_TEST(testCopyObject);
 	CPPUNIT_TEST(testDestroyObject);
 	CPPUNIT_TEST(testGetAttributeValue);
 	CPPUNIT_TEST(testSetAttributeValue);
@@ -58,6 +59,7 @@ class ObjectTests : public CppUnit::TestFixture
 
 public:
 	void testCreateObject();
+	void testCopyObject();
 	void testDestroyObject();
 	void testGetAttributeValue();
 	void testSetAttributeValue();

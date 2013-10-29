@@ -34,6 +34,7 @@
 #define _SOFTHSM_V2_DIRECTORY_H
 
 #include "config.h"
+#include "MutexFactory.h"
 #include <string>
 #include <vector>
 
@@ -44,7 +45,7 @@ public:
 	Directory(std::string path);
 
 	// Destructor
-	virtual ~Directory() { }
+	virtual ~Directory();
 
 	// Check if the directory is valid
 	bool isValid();
@@ -79,6 +80,9 @@ private:
 
 	// All subdirectories in the directory
 	std::vector<std::string> subDirs;
+
+	// For thread safeness
+	Mutex* dirMutex;
 };
 
 #endif // !_SOFTHSM_V2_DIRECTORY_H

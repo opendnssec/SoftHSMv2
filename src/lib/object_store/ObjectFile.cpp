@@ -91,8 +91,6 @@ ObjectFile::~ObjectFile()
 // Check if the specified attribute exists
 bool ObjectFile::attributeExists(CK_ATTRIBUTE_TYPE type)
 {
-	refresh();
-
 	MutexLocker lock(objectMutex);
 
 	return valid && (attributes[type] != NULL);
@@ -101,18 +99,37 @@ bool ObjectFile::attributeExists(CK_ATTRIBUTE_TYPE type)
 // Retrieve the specified attribute
 OSAttribute* ObjectFile::getAttribute(CK_ATTRIBUTE_TYPE type)
 {
-	refresh();
-
 	MutexLocker lock(objectMutex);
 
 	return attributes[type];
 }
 
+// Retrieve the next attribute type
+CK_ATTRIBUTE_TYPE ObjectFile::nextAttributeType(CK_ATTRIBUTE_TYPE type)
+{
+	MutexLocker lock(objectMutex);
+
+	std::map<CK_ATTRIBUTE_TYPE, OSAttribute*>::iterator n = attributes.upper_bound(type);
+
+	// skip null attributes
+	while ((n != attributes.end()) && (n->second == NULL))
+		++n;
+
+	
+	// return type or CKA_CLASS (= 0)
+	if (n == attributes.end())
+	{
+		return CKA_CLASS;
+	}
+	else
+	{
+		return n->first;
+	}
+}
+
 // Set the specified attribute
 bool ObjectFile::setAttribute(CK_ATTRIBUTE_TYPE type, const OSAttribute& attribute)
 {
-	refresh();
-
 	if (!valid)
 	{
 		DEBUG_MSG("Cannot update invalid object %s", path.c_str());
@@ -135,12 +152,14 @@ bool ObjectFile::setAttribute(CK_ATTRIBUTE_TYPE type, const OSAttribute& attribu
 
 	store();
 
-	return isValid();
+	return valid;
 }
 
-// The validity state of the object
+// The validity state of the object (refresh from disk as a side effect)
 bool ObjectFile::isValid()
 {
+	refresh();
+
 	return valid;
 }
 
@@ -544,8 +563,6 @@ std::string ObjectFile::getLockname() const
 // N.B.: Starting a transaction locks the object!
 bool ObjectFile::startTransaction()
 {
-	refresh();
-
 	MutexLocker lock(objectMutex);
 
 	if (inTransaction)

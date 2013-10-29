@@ -63,10 +63,13 @@ public:
 	// Retrieve the specified attribute
 	virtual OSAttribute* getAttribute(CK_ATTRIBUTE_TYPE type);
 
+	// Retrieve the next attribute type
+	virtual CK_ATTRIBUTE_TYPE nextAttributeType(CK_ATTRIBUTE_TYPE type);
+
 	// Set the specified attribute
 	virtual bool setAttribute(CK_ATTRIBUTE_TYPE type, const OSAttribute& attribute);
 
-	// The validity state of the object
+	// The validity state of the object (refresh from disk as a side effect)
 	virtual bool isValid();
 
 	// Invalidate the object file externally; this method is normally
@@ -101,6 +104,9 @@ public:
 	virtual bool destroyObject();
 
 private:
+	// OSToken instances can read valid (vs calling IsValid() from index())
+	friend class OSToken;
+
 	// Refresh the object if necessary
 	void refresh(bool isFirstTime = false);
 

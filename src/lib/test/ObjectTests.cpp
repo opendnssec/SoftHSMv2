@@ -29,6 +29,7 @@
 
  Contains test cases for:
 	 C_CreateObject
+	 C_CopyObject
 	 C_DestroyObject
 	 C_GetAttributeValue
 	 C_SetAttributeValue
@@ -855,6 +856,122 @@ void ObjectTests::testCreateObject()
 	// Only public objects can be created unless the normal user is logged in.
 	rv = createDataObjectMinimal(hSession, ON_TOKEN, IS_PRIVATE, hObject);
 	CPPUNIT_ASSERT(rv == CKR_USER_NOT_LOGGED_IN);
+
+	// Close session
+	rv = C_CloseSession(hSession);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+}
+
+void ObjectTests::testCopyObject()
+{
+//    printf("\ntestCopyObject\n");
+
+	CK_RV rv;
+	CK_UTF8CHAR pin[] = SLOT_0_USER1_PIN;
+	CK_ULONG pinLength = sizeof(pin) - 1;
+	CK_SESSION_HANDLE hSession;
+	CK_OBJECT_HANDLE hObject;
+	CK_OBJECT_HANDLE hObject1;
+
+	// Just make sure that we finalize any previous tests
+	C_Finalize(NULL_PTR);
+
+	rv = C_Initialize(NULL_PTR);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Open read-only session and don't login
+	rv = C_OpenSession(SLOT_INIT_TOKEN, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSession);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Get a public session object
+	rv = createDataObjectMinimal(hSession, IN_SESSION, IS_PUBLIC, hObject);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Allowed to copy it
+	const char *pLabel = "Label modified via C_CopyObject";
+	CK_BBOOL bToken = CK_FALSE;
+	CK_BBOOL bPrivate = CK_FALSE;
+	CK_OBJECT_CLASS cClass = CKO_DATA;
+	CK_ATTRIBUTE attribs[] = {
+		{ CKA_LABEL, (CK_UTF8CHAR_PTR)pLabel, strlen(pLabel) },
+		{ CKA_TOKEN, &bToken, sizeof(bToken) },
+		{ CKA_PRIVATE, &bPrivate, sizeof(bPrivate) },
+		{ CKA_CLASS, &cClass, sizeof(cClass) }
+	};
+	rv = C_CopyObject(hSession, hObject, &attribs[0], 1, &hObject1);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	rv = C_DestroyObject(hSession, hObject1);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Still allowed when still session and public
+	rv = C_CopyObject(hSession, hObject, &attribs[0], 3, &hObject1);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	rv = C_DestroyObject(hSession, hObject1);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	
+	// Not allowed to overwrite an !ck8 attribute
+	rv = C_CopyObject(hSession, hObject, &attribs[0], 4, &hObject1);
+	CPPUNIT_ASSERT(rv == CKR_ATTRIBUTE_READ_ONLY);
+
+	// Not allowed to go on token
+	bToken = CK_TRUE;
+	rv = C_CopyObject(hSession, hObject, &attribs[0], 3, &hObject1);
+	bToken = CK_FALSE;
+	CPPUNIT_ASSERT(rv == CKR_SESSION_READ_ONLY);
+
+	// Not allowed to go to private
+	bPrivate = CK_TRUE;
+	rv = C_CopyObject(hSession, hObject, &attribs[0], 3, &hObject1);
+	bPrivate = CK_FALSE;
+	CPPUNIT_ASSERT(rv == CKR_USER_NOT_LOGGED_IN);
+
+	// Close session
+	rv = C_CloseSession(hSession);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Create a read-write session
+	rv = C_OpenSession(SLOT_INIT_TOKEN, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSession);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Login USER into the sessions so we can create a private object
+	rv = C_Login(hSession, CKU_USER, pin, pinLength);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Get a public session object
+	rv = createDataObjectNormal(hSession, IN_SESSION, IS_PUBLIC, hObject);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Allowed to go on token
+	bToken = CK_TRUE;
+	rv = C_CopyObject(hSession, hObject, &attribs[0], 3, &hObject1);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	rv = C_DestroyObject(hSession, hObject1);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Allowed to go to private
+	bPrivate = CK_TRUE;
+	rv = C_CopyObject(hSession, hObject, &attribs[0], 3, &hObject1);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	rv = C_DestroyObject(hSession, hObject1);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Not allowed to change a !ck8 parameter
+	CK_BYTE id[] = "Another object ID";
+	attribs[3].type = CKA_OBJECT_ID;
+	attribs[3].pValue = id;
+	attribs[3].ulValueLen = sizeof(id);
+	rv = C_CopyObject(hSession, hObject, &attribs[0], 4, &hObject1);
+	CPPUNIT_ASSERT(rv == CKR_ATTRIBUTE_READ_ONLY);
+
+	// Not allowed to downgrade privacy
+	rv = C_DestroyObject(hSession, hObject);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	rv = createDataObjectNormal(hSession, IN_SESSION, IS_PRIVATE, hObject);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	bToken = CK_FALSE;
+	bPrivate = CK_FALSE;
+	rv = C_CopyObject(hSession, hObject, &attribs[0], 3, &hObject1);
+	CPPUNIT_ASSERT(rv == CKR_TEMPLATE_INCONSISTENT);
 
 	// Close session
 	rv = C_CloseSession(hSession);

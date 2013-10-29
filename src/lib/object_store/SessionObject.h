@@ -60,6 +60,9 @@ public:
 	// Retrieve the specified attribute
 	virtual OSAttribute* getAttribute(CK_ATTRIBUTE_TYPE type);
 
+	// Retrieve the next attribute type
+	virtual CK_ATTRIBUTE_TYPE nextAttributeType(CK_ATTRIBUTE_TYPE type);
+
 	// Set the specified attribute
 	virtual bool setAttribute(CK_ATTRIBUTE_TYPE type, const OSAttribute& attribute);
 
