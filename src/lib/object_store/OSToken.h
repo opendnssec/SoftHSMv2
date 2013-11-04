@@ -64,52 +64,52 @@ public:
 	OSToken(const std::string tokenPath, const ByteString& label, const ByteString& serialNumber);
 
 	// Set the SO PIN
-	bool setSOPIN(const ByteString& soPINBlob);
+	virtual bool setSOPIN(const ByteString& soPINBlob);
 
 	// Get the SO PIN
-	bool getSOPIN(ByteString& soPINBlob);
+	virtual bool getSOPIN(ByteString& soPINBlob);
 
 	// Set the user PIN
-	bool setUserPIN(ByteString userPINBlob);
+	virtual bool setUserPIN(ByteString userPINBlob);
 
 	// Get the user PIN
-	bool getUserPIN(ByteString& userPINBlob);
+	virtual bool getUserPIN(ByteString& userPINBlob);
 
 	// Get the token flags
-	bool getTokenFlags(CK_ULONG& flags);
+	virtual bool getTokenFlags(CK_ULONG& flags);
 
 	// Set the token flags
-	bool setTokenFlags(const CK_ULONG flags);
+	virtual bool setTokenFlags(const CK_ULONG flags);
 
 	// Retrieve the token label
-	bool getTokenLabel(ByteString& label);
+	virtual bool getTokenLabel(ByteString& label);
 
 	// Retrieve the token serial
-	bool getTokenSerial(ByteString& serial);
+	virtual bool getTokenSerial(ByteString& serial);
 
 	// Retrieve objects
-	std::set<ObjectFile*> getObjects();
+	virtual std::set<ObjectFile*> getObjects();
 
 	// Insert objects into the given set
-	void getObjects(std::set<OSObject*> &objects);
+	virtual void getObjects(std::set<OSObject*> &objects);
 
 	// Create a new object
-	ObjectFile* createObject();
+	virtual ObjectFile* createObject();
 
 	// Delete an object
-	bool deleteObject(ObjectFile* object);
+	virtual bool deleteObject(ObjectFile* object);
 
 	// Destructor
 	virtual ~OSToken();
 
 	// Checks if the token is consistent
-	bool isValid();
+	virtual bool isValid();
 
 	// Invalidate the token (for instance if it is deleted)
-	void invalidate();
+	virtual void invalidate();
 
 	// Delete the token
-	bool clearToken();
+	virtual bool clearToken();
 
 private:
 	// ObjectFile instances can call the index() function
