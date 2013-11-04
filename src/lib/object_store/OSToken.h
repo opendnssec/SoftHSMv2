@@ -57,6 +57,9 @@ public:
 	// Create a new token
 	static OSToken* createToken(const std::string basePath, const std::string tokenDir, const ByteString& label, const ByteString& serial);
 
+	// Access an existing token
+	static OSToken* accessToken(const std::string &basePath, const std::string &tokenDir);
+	
 	// Constructor for new tokens
 	OSToken(const std::string tokenPath, const ByteString& label, const ByteString& serialNumber);
 

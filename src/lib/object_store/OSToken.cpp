@@ -120,6 +120,12 @@ OSToken::OSToken(const std::string tokenPath)
 	return new OSToken(basePath + OS_PATHSEP + tokenDir);
 }
 
+// Access an existing token
+/*static*/ OSToken *OSToken::accessToken(const std::string &basePath, const std::string &tokenDir)
+{
+	return new OSToken(basePath + OS_PATHSEP + tokenDir);
+}
+
 // Destructor
 OSToken::~OSToken()
 {
