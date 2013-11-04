@@ -64,7 +64,11 @@ public:
 	// N.B.: Starting a transaction locks the object!
 	//
 	// Function returns false in case a transaction is already in progress
-	virtual bool startTransaction() = 0;
+	enum Access {
+		ReadOnly,
+		ReadWrite
+	};
+	virtual bool startTransaction(Access access = ReadWrite) = 0;
 
 	// Commit an attribute transaction; returns false if no transaction is in progress
 	virtual bool commitTransaction() = 0;

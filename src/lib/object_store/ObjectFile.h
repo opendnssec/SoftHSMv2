@@ -90,7 +90,7 @@ public:
 	// N.B.: Starting a transaction locks the object!
 	//
 	// Function returns false in case a transaction is already in progress
-	virtual bool startTransaction();
+	virtual bool startTransaction(Access access);
 
 	// Commit an attribute transaction; returns false if no transaction is in progress
 	virtual bool commitTransaction();

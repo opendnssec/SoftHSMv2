@@ -624,7 +624,7 @@ void ObjectFileTests::testTransactions()
 	OSAttribute attr3a(value3a);
 
 	// Start transaction on object
-	CPPUNIT_ASSERT(testObject.startTransaction());
+	CPPUNIT_ASSERT(testObject.startTransaction(ObjectFile::ReadWrite));
 
 	// Change the attributes
 	CPPUNIT_ASSERT(testObject.setAttribute(CKA_TOKEN, attr1a));
@@ -664,7 +664,7 @@ void ObjectFileTests::testTransactions()
 	CPPUNIT_ASSERT(testObject2.getAttribute(CKA_VALUE_BITS)->getByteStringValue() == value3a);
 
 	// Start transaction on object
-	CPPUNIT_ASSERT(testObject.startTransaction());
+	CPPUNIT_ASSERT(testObject.startTransaction(ObjectFile::ReadWrite));
 
 	// Change the attributes
 	CPPUNIT_ASSERT(testObject.setAttribute(CKA_TOKEN, attr1));

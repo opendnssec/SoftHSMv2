@@ -85,7 +85,7 @@ public:
     bool removeOnTokenLogout(CK_SLOT_ID slotID);
 
 	// These functions are just stubs for session objects
-	virtual bool startTransaction();
+	virtual bool startTransaction(Access access);
 	virtual bool commitTransaction();
 	virtual bool abortTransaction();
 

@@ -561,7 +561,7 @@ std::string ObjectFile::getLockname() const
 // persisted in one go.
 //
 // N.B.: Starting a transaction locks the object!
-bool ObjectFile::startTransaction()
+bool ObjectFile::startTransaction(Access)
 {
 	MutexLocker lock(objectMutex);
 
