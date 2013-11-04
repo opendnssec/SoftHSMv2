@@ -36,6 +36,7 @@
 #define _SOFTHSM_V2_OSTOKEN_H
 
 #include "config.h"
+#include "ObjectStoreToken.h"
 #include "OSAttribute.h"
 #include "ObjectFile.h"
 #include "Directory.h"
@@ -48,7 +49,7 @@
 #include <map>
 #include <list>
 
-class OSToken
+class OSToken : public ObjectStoreToken
 {
 public:
 	// Constructor
@@ -88,16 +89,16 @@ public:
 	virtual bool getTokenSerial(ByteString& serial);
 
 	// Retrieve objects
-	virtual std::set<ObjectFile*> getObjects();
+	virtual std::set<OSObject*> getObjects();
 
 	// Insert objects into the given set
 	virtual void getObjects(std::set<OSObject*> &objects);
 
 	// Create a new object
-	virtual ObjectFile* createObject();
+	virtual OSObject* createObject();
 
 	// Delete an object
-	virtual bool deleteObject(ObjectFile* object);
+	virtual bool deleteObject(OSObject* object);
 
 	// Destructor
 	virtual ~OSToken();
@@ -125,7 +126,7 @@ private:
 	std::string tokenPath;
 
 	// The current objects of the token
-	std::set<ObjectFile*> objects;
+	std::set<OSObject*> objects;
 
 	// All the objects ever associated with this token
 	//
@@ -134,7 +135,7 @@ private:
 	// change, some objects may disappear but we cannot simply
 	// delete them since they may still be referenced from an
 	// object outside of this class.
-	std::set<ObjectFile*> allObjects;
+	std::set<OSObject*> allObjects;
 
 	// The current list of files
 	std::set<std::string> currentFiles;

@@ -17,7 +17,8 @@ libsofthsm_objectstore_la_SOURCES =	ObjectStore.cpp \
 					ObjectFile.cpp \
 					SessionObject.cpp \
 					SessionObjectStore.cpp \
-					FindOperation.cpp
+					FindOperation.cpp \
+					ObjectStoreToken.cpp
 
 SUBDIRS = 				test
 

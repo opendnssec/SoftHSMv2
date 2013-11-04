@@ -130,10 +130,10 @@ OSToken::OSToken(const std::string tokenPath)
 OSToken::~OSToken()
 {
 	// Clean up
-	std::set<ObjectFile*> cleanUp = allObjects;
+	std::set<OSObject*> cleanUp = allObjects;
 	allObjects.clear();
 
-	for (std::set<ObjectFile*>::iterator i = cleanUp.begin(); i != cleanUp.end(); i++)
+	for (std::set<OSObject*>::iterator i = cleanUp.begin(); i != cleanUp.end(); i++)
 	{
 		delete *i;
 	}
@@ -318,7 +318,7 @@ bool OSToken::setTokenFlags(const CK_ULONG flags)
 }
 
 // Retrieve objects
-std::set<ObjectFile*> OSToken::getObjects()
+std::set<OSObject*> OSToken::getObjects()
 {
 	index();
 
@@ -341,7 +341,7 @@ void OSToken::getObjects(std::set<OSObject*> &objects)
 }
 
 // Create a new object
-ObjectFile* OSToken::createObject()
+OSObject* OSToken::createObject()
 {
 	if (!valid) return NULL;
 
@@ -379,7 +379,7 @@ ObjectFile* OSToken::createObject()
 }
 
 // Delete an object
-bool OSToken::deleteObject(ObjectFile* object)
+bool OSToken::deleteObject(OSObject* object)
 {
 	if (!valid) return false;
 
@@ -392,11 +392,19 @@ bool OSToken::deleteObject(ObjectFile* object)
 
 	MutexLocker lock(tokenMutex);
 
+	ObjectFile* fileObject = dynamic_cast<ObjectFile*>(object);
+	if (fileObject == NULL)
+	{
+		ERROR_MSG("Object type not compatible with this token class 0x%08X", object);
+
+		return false;
+	}
+	
 	// Invalidate the object instance
-	object->invalidate();
+	fileObject->invalidate();
 
 	// Retrieve the filename of the object
-	std::string objectFilename = object->getFilename();
+	std::string objectFilename = fileObject->getFilename();
 
 	// Attempt to delete the file
 	if (!tokenDir->remove(objectFilename))
@@ -407,7 +415,7 @@ bool OSToken::deleteObject(ObjectFile* object)
 	}
 
 	// Retrieve the filename of the lock
-	std::string lockFilename = object->getLockname();
+	std::string lockFilename = fileObject->getLockname();
 
 	// Attempt to delete the lock
 	if (!tokenDir->remove(lockFilename))
@@ -582,21 +590,29 @@ bool OSToken::index(bool isFirstTime /* = false */)
 	}
 
 	// Remove deleted objects
-	std::set<ObjectFile*> newObjects;
+	std::set<OSObject*> newObjects;
 
-	for (std::set<ObjectFile*>::iterator i = objects.begin(); i != objects.end(); i++)
+	for (std::set<OSObject*>::iterator i = objects.begin(); i != objects.end(); i++)
 	{
-		DEBUG_MSG("Processing %s (0x%08X)", (*i)->getFilename().c_str(), *i);
-
-		if (removedFiles.find((*i)->getFilename()) == removedFiles.end())
+		ObjectFile* fileObject = dynamic_cast<ObjectFile*>((*i));
+		if (fileObject == NULL)
 		{
-			DEBUG_MSG("Adding object %s", (*i)->getFilename().c_str());
+			ERROR_MSG("Object type not compatible with this token class 0x%08X", (*i));
+	
+			return false;
+		}
+		
+		DEBUG_MSG("Processing %s (0x%08X)", fileObject->getFilename().c_str(), *i);
+
+		if (removedFiles.find(fileObject->getFilename()) == removedFiles.end())
+		{
+			DEBUG_MSG("Adding object %s", fileObject->getFilename().c_str());
 			// This object gets to stay in the set
 			newObjects.insert(*i);
 		}
 		else
 		{
-			(*i)->invalidate();
+			fileObject->invalidate();
 		}
 	}
 

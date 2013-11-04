@@ -31,6 +31,7 @@
 #include "OSAttribute.h"
 #include "ByteString.h"
 #include "SecureDataManager.h"
+#include <cstdio>
 
 #ifndef _WIN32
 #include <sys/time.h>
@@ -49,7 +50,7 @@ Token::Token()
 }
 
 // Constructor
-Token::Token(OSToken* token)
+Token::Token(ObjectStoreToken* token)
 {
 	tokenMutex = MutexFactory::i()->getMutex();
 
@@ -367,7 +368,7 @@ CK_RV Token::createToken(ObjectStore* objectStore, ByteString& soPIN, CK_UTF8CHA
 	ByteString labelByteStr((const unsigned char*) label, 32);
 
 	// Create the token
-	OSToken* newToken = objectStore->newToken(labelByteStr);
+	ObjectStoreToken* newToken = objectStore->newToken(labelByteStr);
 
 	if (newToken == NULL)
 	{
@@ -483,7 +484,7 @@ CK_RV Token::getTokenInfo(CK_TOKEN_INFO_PTR info)
 }
 
 // Create an object
-ObjectFile* Token::createObject()
+OSObject* Token::createObject()
 {
 	return token->createObject();
 }

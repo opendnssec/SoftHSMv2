@@ -35,7 +35,6 @@
 #include <cppunit/extensions/HelperMacros.h>
 #include "ObjectStoreTests.h"
 #include "ObjectStore.h"
-#include "OSToken.h"
 #include "ObjectFile.h"
 #include "File.h"
 #include "Directory.h"
@@ -89,14 +88,14 @@ void ObjectStoreTests::testNewTokens()
 		CPPUNIT_ASSERT(store.getTokenCount() == 0);
 
 		// Create a new token
-		OSToken* token1 = store.newToken(label1);
+		ObjectStoreToken* token1 = store.newToken(label1);
 
 		CPPUNIT_ASSERT(token1 != NULL);
 
 		CPPUNIT_ASSERT(store.getTokenCount() == 1);
 
 		// Create another new token
-		OSToken* token2 = store.newToken(label2);
+		ObjectStoreToken* token2 = store.newToken(label2);
 
 		CPPUNIT_ASSERT(token2 != NULL);
 
@@ -113,8 +112,8 @@ void ObjectStoreTests::testNewTokens()
 	CPPUNIT_ASSERT(store.getTokenCount() == 2);
 
 	// Retrieve both tokens and check that both are present
-	OSToken* token1 = store.getToken(0);
-	OSToken* token2 = store.getToken(1);
+	ObjectStoreToken* token1 = store.getToken(0);
+	ObjectStoreToken* token2 = store.getToken(1);
 
 	ByteString retrieveLabel1, retrieveLabel2;
 
@@ -141,11 +140,11 @@ void ObjectStoreTests::testExistingTokens()
 	ByteString serial2 = "2233223322332233";
 
 #ifndef _WIN32
-	OSToken* token1 = OSToken::createToken("./testdir", "token1", label1, serial1);
-	OSToken* token2 = OSToken::createToken("./testdir", "token2", label2, serial2);
+	ObjectStoreToken* token1 = ObjectStoreToken::createToken("./testdir", "token1", label1, serial1);
+	ObjectStoreToken* token2 = ObjectStoreToken::createToken("./testdir", "token2", label2, serial2);
 #else
-	OSToken* token1 = OSToken::createToken(".\\testdir", "token1", label1, serial1);
-	OSToken* token2 = OSToken::createToken(".\\testdir", "token2", label2, serial2);
+	ObjectStoreToken* token1 = ObjectStoreToken::createToken(".\\testdir", "token1", label1, serial1);
+	ObjectStoreToken* token2 = ObjectStoreToken::createToken(".\\testdir", "token2", label2, serial2);
 #endif
 
 	CPPUNIT_ASSERT((token1 != NULL) && (token2 != NULL));
@@ -163,8 +162,8 @@ void ObjectStoreTests::testExistingTokens()
 	CPPUNIT_ASSERT(store.getTokenCount() == 2);
 
 	// Retrieve both tokens and check that both are present
-	OSToken* retrieveToken1 = store.getToken(0);
-	OSToken* retrieveToken2 = store.getToken(1);
+	ObjectStoreToken* retrieveToken1 = store.getToken(0);
+	ObjectStoreToken* retrieveToken2 = store.getToken(1);
 
 	ByteString retrieveLabel1, retrieveLabel2, retrieveSerial1, retrieveSerial2;
 
@@ -193,11 +192,11 @@ void ObjectStoreTests::testDeleteToken()
 	ByteString serial2 = "2233223322332233";
 
 #ifndef _WIN32
-	OSToken* token1 = OSToken::createToken("./testdir", "token1", label1, serial1);
-	OSToken* token2 = OSToken::createToken("./testdir", "token2", label2, serial2);
+	ObjectStoreToken* token1 = ObjectStoreToken::createToken("./testdir", "token1", label1, serial1);
+	ObjectStoreToken* token2 = ObjectStoreToken::createToken("./testdir", "token2", label2, serial2);
 #else
-	OSToken* token1 = OSToken::createToken(".\\testdir", "token1", label1, serial1);
-	OSToken* token2 = OSToken::createToken(".\\testdir", "token2", label2, serial2);
+	ObjectStoreToken* token1 = ObjectStoreToken::createToken(".\\testdir", "token1", label1, serial1);
+	ObjectStoreToken* token2 = ObjectStoreToken::createToken(".\\testdir", "token2", label2, serial2);
 #endif
 
 	CPPUNIT_ASSERT((token1 != NULL) && (token2 != NULL));
@@ -215,8 +214,8 @@ void ObjectStoreTests::testDeleteToken()
 	CPPUNIT_ASSERT(store.getTokenCount() == 2);
 
 	// Retrieve both tokens and check that both are present
-	OSToken* retrieveToken1 = store.getToken(0);
-	OSToken* retrieveToken2 = store.getToken(1);
+	ObjectStoreToken* retrieveToken1 = store.getToken(0);
+	ObjectStoreToken* retrieveToken2 = store.getToken(1);
 
 	ByteString retrieveLabel1, retrieveLabel2, retrieveSerial1, retrieveSerial2;
 
@@ -240,7 +239,7 @@ void ObjectStoreTests::testDeleteToken()
 
 	CPPUNIT_ASSERT(store.getTokenCount() == 1);
 
-	OSToken* retrieveToken_ = store.getToken(0);
+	ObjectStoreToken* retrieveToken_ = store.getToken(0);
 
 	ByteString retrieveLabel_,retrieveSerial_;
 
@@ -254,15 +253,15 @@ void ObjectStoreTests::testDeleteToken()
 	ByteString label3 = "DEADC0FFEEBEEF";
 
 	// Create a new token
-	OSToken* tokenNew = store.newToken(label3);
+	ObjectStoreToken* tokenNew = store.newToken(label3);
 
 	CPPUNIT_ASSERT(tokenNew != NULL);
 
 	CPPUNIT_ASSERT(store.getTokenCount() == 2);
 
 	// Retrieve both tokens and check that both are present
-	OSToken* retrieveToken1_ = store.getToken(0);
-	OSToken* retrieveToken2_ = store.getToken(1);
+	ObjectStoreToken* retrieveToken1_ = store.getToken(0);
+	ObjectStoreToken* retrieveToken2_ = store.getToken(1);
 
 	CPPUNIT_ASSERT(retrieveToken1_ != NULL);
 	CPPUNIT_ASSERT(retrieveToken2_ != NULL);

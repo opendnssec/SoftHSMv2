@@ -36,7 +36,7 @@
 #include "config.h"
 #include "ByteString.h"
 #include "ObjectStore.h"
-#include "OSToken.h"
+#include "ObjectStoreToken.h"
 #include "SecureDataManager.h"
 #include "cryptoki.h"
 #include <string>
@@ -47,7 +47,7 @@ class Token
 public:
 	// Constructor
 	Token();
-	Token(OSToken* token);
+	Token(ObjectStoreToken *token);
 
 	// Destructor
 	virtual ~Token();
@@ -81,7 +81,7 @@ public:
 	CK_RV getTokenInfo(CK_TOKEN_INFO_PTR info);
 
 	// Create object
-	ObjectFile* createObject();
+	OSObject *createObject();
 
 	// Insert all token objects into the given set.
 	void getObjects(std::set<OSObject *> &objects);
@@ -97,7 +97,7 @@ private:
 	bool valid;
 
 	// A reference to the object store token
-	OSToken* token;
+	ObjectStoreToken* token;
 
 	// The secure data manager for this token
 	SecureDataManager* sdm;

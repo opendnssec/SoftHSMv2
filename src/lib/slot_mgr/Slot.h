@@ -36,7 +36,7 @@
 #include "config.h"
 #include "ByteString.h"
 #include "ObjectStore.h"
-#include "OSToken.h"
+#include "ObjectStoreToken.h"
 #include "Token.h"
 #include "cryptoki.h"
 #include <string>
@@ -46,7 +46,7 @@ class Slot
 {
 public:
 	// Constructor
-	Slot(ObjectStore* objectStore, size_t slotID, OSToken* token = NULL);
+	Slot(ObjectStore* objectStore, size_t slotID, ObjectStoreToken *token = NULL);
 
 	// Destructor
 	virtual ~Slot();

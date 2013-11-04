@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010 SURFnet bv
+ * Copyright (c) 2013 SURFnet bv
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,64 +25,25 @@
  */
 
 /*****************************************************************************
- ObjectStore.h
+ ObjectStoreToken.cpp
 
- The object store manages the separate tokens that the SoftHSM supports. Each
- token is organised as a directory containing files that are contain the
- token's objects. The object store is initialised with a root directory from
- which it enumerates the tokens.
+ The object store abstract token base class
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_OBJECTSTORE_H
-#define _SOFTHSM_V2_OBJECTSTORE_H
-
 #include "config.h"
-#include "ByteString.h"
 #include "ObjectStoreToken.h"
-#include "MutexFactory.h"
-#include <string>
-#include <vector>
 
-class ObjectStore
+// OSToken is a concrete implementation of ObjectStoreToken base class.
+#include "OSToken.h"
+
+// Create a new token
+/*static*/ ObjectStoreToken* ObjectStoreToken::createToken(const std::string basePath, const std::string tokenDir, const ByteString& label, const ByteString& serial)
 {
-public:
-	// Constructor
-	ObjectStore(std::string storePath);
+	return OSToken::createToken(basePath,tokenDir,label,serial);
+}
 
-	// Destructor
-	virtual ~ObjectStore();
-
-	// Return the number of tokens that is present
-	size_t getTokenCount();
-
-	// Return a pointer to the n-th token (counting starts at 0)
-	ObjectStoreToken* getToken(size_t whichToken);
-
-	// Create a new token
-	ObjectStoreToken* newToken(const ByteString& label);
-	
-	// Destroy a token
-	bool destroyToken(ObjectStoreToken* token);
-
-	// Check if the object store is valid
-	bool isValid();
-
-private:
-	// The tokens
-	std::vector<ObjectStoreToken*> tokens;
-
-	// All tokens
-	std::vector<ObjectStoreToken*> allTokens;
-
-	// The object store root directory
-	std::string storePath;
-
-	// The status
-	bool valid;
-
-	// Object store synchronisation
-	Mutex* storeMutex;
-};
-
-#endif // !_SOFTHSM_V2_OBJECTSTORE_H
-
+// Access an existing token
+/*static*/ ObjectStoreToken *ObjectStoreToken::accessToken(const std::string &basePath, const std::string &tokenDir)
+{
+	return OSToken::accessToken(basePath, tokenDir);
+}

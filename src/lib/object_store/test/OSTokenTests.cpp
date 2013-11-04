@@ -203,9 +203,9 @@ void OSTokenTests::testExistingToken()
 
 	// Check that all the tokens are presented
 	bool present[3] = { false, false, false };
-	std::set<ObjectFile*> objects = existingToken.getObjects();
+	std::set<OSObject*> objects = existingToken.getObjects();
 
-	for (std::set<ObjectFile*>::iterator i = objects.begin(); i != objects.end(); i++)
+	for (std::set<OSObject*>::iterator i = objects.begin(); i != objects.end(); i++)
 	{
 		ByteString retrievedId;
 
@@ -272,11 +272,11 @@ void OSTokenTests::testCreateDeleteObjects()
 	CPPUNIT_ASSERT(sameToken.isValid());
 
 	// Create 3 objects on the token
-	ObjectFile* obj1 = testToken->createObject();
+	OSObject* obj1 = testToken->createObject();
 	CPPUNIT_ASSERT(obj1 != NULL);
-	ObjectFile* obj2 = testToken->createObject();
+	OSObject* obj2 = testToken->createObject();
 	CPPUNIT_ASSERT(obj2 != NULL);
-	ObjectFile* obj3 = testToken->createObject();
+	OSObject* obj3 = testToken->createObject();
 	CPPUNIT_ASSERT(obj3 != NULL);
 
 	// Now set the IDs of the 3 objects
@@ -288,10 +288,10 @@ void OSTokenTests::testCreateDeleteObjects()
 	CPPUNIT_ASSERT(testToken->getObjects().size() == 3);
 
 	// Check that all three objects are distinct and present
-	std::set<ObjectFile*> objects = testToken->getObjects();
+	std::set<OSObject*> objects = testToken->getObjects();
 	bool present1[3] = { false, false, false };
 
-	for (std::set<ObjectFile*>::iterator i = objects.begin(); i != objects.end(); i++)
+	for (std::set<OSObject*>::iterator i = objects.begin(); i != objects.end(); i++)
 	{
 		ByteString retrievedId;
 
@@ -315,12 +315,12 @@ void OSTokenTests::testCreateDeleteObjects()
 	}
 
 	// Now check that the same objects are present in the other instance of the same token
-	std::set<ObjectFile*> otherObjects = sameToken.getObjects();
+	std::set<OSObject*> otherObjects = sameToken.getObjects();
 	CPPUNIT_ASSERT(otherObjects.size() == 3);
 
 	bool present2[3] = { false, false, false };
 
-	for (std::set<ObjectFile*>::iterator i = otherObjects.begin(); i != otherObjects.end(); i++)
+	for (std::set<OSObject*>::iterator i = otherObjects.begin(); i != otherObjects.end(); i++)
 	{
 		ByteString retrievedId;
 
@@ -344,7 +344,7 @@ void OSTokenTests::testCreateDeleteObjects()
 	}
 
 	// Now delete the second object
-	for (std::set<ObjectFile*>::iterator i = objects.begin(); i != objects.end(); i++)
+	for (std::set<OSObject*>::iterator i = objects.begin(); i != objects.end(); i++)
 	{
 		ByteString retrievedId;
 
@@ -366,7 +366,7 @@ void OSTokenTests::testCreateDeleteObjects()
 	objects = testToken->getObjects();
 	bool present3[2] = { false, false };
 
-	for (std::set<ObjectFile*>::iterator i = objects.begin(); i != objects.end(); i++)
+	for (std::set<OSObject*>::iterator i = objects.begin(); i != objects.end(); i++)
 	{
 		ByteString retrievedId;
 
@@ -396,7 +396,7 @@ void OSTokenTests::testCreateDeleteObjects()
 	otherObjects = sameToken.getObjects();
 	bool present4[2] = { false, false };
 
-	for (std::set<ObjectFile*>::iterator i = otherObjects.begin(); i != otherObjects.end(); i++)
+	for (std::set<OSObject*>::iterator i = otherObjects.begin(); i != otherObjects.end(); i++)
 	{
 		ByteString retrievedId;
 

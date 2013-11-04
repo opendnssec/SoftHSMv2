@@ -39,7 +39,7 @@
 #include <string.h>
 
 // Constructor
-Slot::Slot(ObjectStore* objectStore, size_t slotID, OSToken* token /* = NULL */)
+Slot::Slot(ObjectStore* objectStore, size_t slotID, ObjectStoreToken* token /* = NULL */)
 {
 	this->objectStore = objectStore;
 	this->slotID = slotID;

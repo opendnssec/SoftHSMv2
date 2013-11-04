@@ -37,7 +37,7 @@
 #include "log.h"
 #include "ObjectStore.h"
 #include "Directory.h"
-#include "OSToken.h"
+#include "ObjectStoreToken.h"
 #include "OSPathSep.h"
 #include "UUID.h"
 #include <stdio.h>
@@ -67,7 +67,7 @@ ObjectStore::ObjectStore(std::string storePath)
 	for (std::vector<std::string>::iterator i = dirs.begin(); i != dirs.end(); i++)
 	{
 		// Create a token instance
-		OSToken* token = OSToken::accessToken(storePath, *i);
+		ObjectStoreToken* token = ObjectStoreToken::accessToken(storePath, *i);
 
 		if (!token->isValid())
 		{
@@ -94,7 +94,7 @@ ObjectStore::~ObjectStore()
 		// Clean up
 		tokens.clear();
 
-		for (std::vector<OSToken*>::iterator i = allTokens.begin(); i != allTokens.end(); i++)
+		for (std::vector<ObjectStoreToken*>::iterator i = allTokens.begin(); i != allTokens.end(); i++)
 		{
 			delete *i;
 		}
@@ -118,7 +118,7 @@ size_t ObjectStore::getTokenCount()
 }
 
 // Return a pointer to the n-th token (counting starts at 0)
-OSToken* ObjectStore::getToken(size_t whichToken)
+ObjectStoreToken* ObjectStore::getToken(size_t whichToken)
 {
 	MutexLocker lock(storeMutex);
 
@@ -131,7 +131,7 @@ OSToken* ObjectStore::getToken(size_t whichToken)
 }
 
 // Create a new token
-OSToken* ObjectStore::newToken(const ByteString& label)
+ObjectStoreToken* ObjectStore::newToken(const ByteString& label)
 {
 	MutexLocker lock(storeMutex);
 
@@ -143,7 +143,7 @@ OSToken* ObjectStore::newToken(const ByteString& label)
 	ByteString serial((const unsigned char*) serialNumber.c_str(), serialNumber.size());
 
 	// Create the token
-	OSToken* newToken = OSToken::createToken(storePath, tokenUUID, label, serial);
+	ObjectStoreToken* newToken = ObjectStoreToken::createToken(storePath, tokenUUID, label, serial);
 
 	if (newToken != NULL)
 	{
@@ -155,12 +155,12 @@ OSToken* ObjectStore::newToken(const ByteString& label)
 }
 
 // Destroy a token
-bool ObjectStore::destroyToken(OSToken* token)
+bool ObjectStore::destroyToken(ObjectStoreToken *token)
 {
 	MutexLocker lock(storeMutex);
 
 	// Find the token
-	for (std::vector<OSToken*>::iterator i = tokens.begin(); i != tokens.end(); i++)
+	for (std::vector<ObjectStoreToken*>::iterator i = tokens.begin(); i != tokens.end(); i++)
 	{
 		if (*i == token)
 		{
