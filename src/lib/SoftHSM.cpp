@@ -402,7 +402,9 @@ CK_RV SoftHSM::C_Initialize(CK_VOID_PTR pInitArgs)
 
 	sessionObjectStore = new SessionObjectStore();
 
-
+	// Configure object store storage backend used by all tokens.
+	ObjectStoreToken::selectBackend(Configuration::i()->getString("objectstore.backend", DEFAULT_OBJECTSTORE_BACKEND));
+	
 	// Load the object store
 	objectStore = new ObjectStore(Configuration::i()->getString("directories.tokendir", DEFAULT_TOKENDIR));
 	if (!objectStore->isValid())

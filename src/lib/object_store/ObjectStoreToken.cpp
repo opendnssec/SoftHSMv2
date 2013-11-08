@@ -31,19 +31,46 @@
  *****************************************************************************/
 
 #include "config.h"
+#include "log.h"
 #include "ObjectStoreToken.h"
 
 // OSToken is a concrete implementation of ObjectStoreToken base class.
 #include "OSToken.h"
+// DBToken is a concrete implementation of ObjectSToreToken that stores the objects and attributes in an SQLite3 database.
+#include "DBToken.h"
+
+typedef ObjectStoreToken* (*CreateToken)(const std::string , const std::string , const ByteString& , const ByteString& );
+typedef ObjectStoreToken* (*AccessToken)(const std::string &, const std::string &);
+
+static CreateToken static_createToken = reinterpret_cast<CreateToken>(OSToken::createToken);
+static AccessToken static_accessToken = reinterpret_cast<AccessToken>(OSToken::accessToken);
 
 // Create a new token
-/*static*/ ObjectStoreToken* ObjectStoreToken::createToken(const std::string basePath, const std::string tokenDir, const ByteString& label, const ByteString& serial)
+/*static*/ void ObjectStoreToken::selectBackend(const std::string &backend)
 {
-	return OSToken::createToken(basePath,tokenDir,label,serial);
+	if (backend == "file")
+	{
+		static_createToken = reinterpret_cast<CreateToken>(OSToken::createToken);
+		static_accessToken = reinterpret_cast<AccessToken>(OSToken::accessToken);
+	}
+	else if (backend == "db") 
+	{
+		static_createToken = reinterpret_cast<CreateToken>(DBToken::createToken);
+		static_accessToken = reinterpret_cast<AccessToken>(DBToken::accessToken);
+	}
+	else
+	{
+		ERROR_MSG("Unknown objectstore.backend \"%s\", backend unchanged", backend.c_str());
+	}
+}
+
+ObjectStoreToken* ObjectStoreToken::createToken(const std::string basePath, const std::string tokenDir, const ByteString& label, const ByteString& serial)
+{
+	return static_createToken(basePath,tokenDir,label,serial);
 }
 
 // Access an existing token
 /*static*/ ObjectStoreToken *ObjectStoreToken::accessToken(const std::string &basePath, const std::string &tokenDir)
 {
-	return OSToken::accessToken(basePath, tokenDir);
+	return static_accessToken(basePath, tokenDir);
 }
