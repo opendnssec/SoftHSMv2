@@ -136,6 +136,11 @@ AC_DEFINE_UNQUOTED(
 	[The default location of the token directory]
 )
 AC_DEFINE_UNQUOTED(
+	[DEFAULT_OBJECTSTORE_BACKEND],
+	["file"],
+	[Default storage backend for token objects]
+)
+AC_DEFINE_UNQUOTED(
 	[DEFAULT_PKCS11_LIB],
 	["$full_libdir/libsofthsm.so"],
 	[The default PKCS#11 library]

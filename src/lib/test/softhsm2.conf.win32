@@ -1,3 +1,4 @@
 # SoftHSM v2 configuration file
 
 directories.tokendir = .\tokens
+objectstore.backend = file

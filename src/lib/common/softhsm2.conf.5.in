@@ -1,4 +1,4 @@
-.TH softhsm2.conf 5 "22 October 2012" "SoftHSM"
+.TH softhsm2.conf 5 "5 November 2013" "SoftHSM"
 .SH NAME
 softhsm2.conf \- SoftHSM configuration file
 .SH SYNOPSIS
@@ -33,6 +33,16 @@ The location where SoftHSM can store the tokens.
 .RS
 .nf
 directories.tokendir = @softhsmtokendir@
+.fi
+.RE
+.LP
+.SH OBJECTSTORE.BACKEND
+The backend to use by SoftHSM to store token objects. Either "file" or "db" is supported.
+In order to use the "db" backend, the SoftHSM build needs to be configured with "configure --with-objectstore-backend-db"
+.LP
+.RS
+.nf
+objectstore.backend = file
 .fi
 .RE
 .LP
