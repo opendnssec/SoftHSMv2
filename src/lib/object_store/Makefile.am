@@ -4,7 +4,8 @@ AM_CPPFLAGS =				-I$(srcdir)/../cryptoki_compat \
 					-I$(srcdir)/../crypto \
 					-I$(srcdir)/../data_mgr \
 					-I$(srcdir)/../common \
-					-I$(srcdir)/..
+					-I$(srcdir)/.. \
+					@SQLITE3_INCLUDES@
 
 noinst_LTLIBRARIES =			libsofthsm_objectstore.la
 libsofthsm_objectstore_la_SOURCES =	ObjectStore.cpp \
@@ -18,7 +19,12 @@ libsofthsm_objectstore_la_SOURCES =	ObjectStore.cpp \
 					SessionObject.cpp \
 					SessionObjectStore.cpp \
 					FindOperation.cpp \
-					ObjectStoreToken.cpp
+					ObjectStoreToken.cpp \
+					DB.cpp \
+					DBObject.cpp \
+					DBToken.cpp
+
+libsofthsm_objectstore_la_LDFLAGS =	@SQLITE3_LIBS@
 
 SUBDIRS = 				test
 
