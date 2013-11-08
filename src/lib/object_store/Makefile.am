@@ -24,6 +24,12 @@ libsofthsm_objectstore_la_SOURCES =	ObjectStore.cpp \
 					DBObject.cpp \
 					DBToken.cpp
 
+#if BUILD_OBJECTSTORE_BACKEND_DB
+#libsofthsm_objectstore_la_SOURCES +=	DB.cpp \
+#					DBObject.cpp \
+#					DBToken.cpp
+#endif
+
 libsofthsm_objectstore_la_LDFLAGS =	@SQLITE3_LIBS@
 
 SUBDIRS = 				test
