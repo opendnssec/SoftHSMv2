@@ -98,6 +98,11 @@ AC_ARG_WITH([objectstore-backend-db],
 AC_MSG_CHECKING(if building database object store backend)
 if test "x${build_objectstore_backend_db}" = "xyes"; then
 	AC_MSG_RESULT(yes)
+	AC_DEFINE_UNQUOTED(
+		[HAVE_OBJECTSTORE_BACKEND_DB],
+		[1],
+		[Build with object store database backend.]
+	)
 else
 	AC_MSG_RESULT(no)
 fi

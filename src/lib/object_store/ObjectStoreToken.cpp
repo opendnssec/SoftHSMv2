@@ -36,8 +36,11 @@
 
 // OSToken is a concrete implementation of ObjectStoreToken base class.
 #include "OSToken.h"
+
+#if HAVE_OBJECTSTORE_BACKEND_DB
 // DBToken is a concrete implementation of ObjectSToreToken that stores the objects and attributes in an SQLite3 database.
 #include "DBToken.h"
+#endif
 
 typedef ObjectStoreToken* (*CreateToken)(const std::string , const std::string , const ByteString& , const ByteString& );
 typedef ObjectStoreToken* (*AccessToken)(const std::string &, const std::string &);
@@ -53,11 +56,13 @@ static AccessToken static_accessToken = reinterpret_cast<AccessToken>(OSToken::a
 		static_createToken = reinterpret_cast<CreateToken>(OSToken::createToken);
 		static_accessToken = reinterpret_cast<AccessToken>(OSToken::accessToken);
 	}
+#if HAVE_OBJECTSTORE_BACKEND_DB
 	else if (backend == "db") 
 	{
 		static_createToken = reinterpret_cast<CreateToken>(DBToken::createToken);
 		static_accessToken = reinterpret_cast<AccessToken>(DBToken::accessToken);
 	}
+#endif
 	else
 	{
 		ERROR_MSG("Unknown objectstore.backend \"%s\", backend unchanged", backend.c_str());

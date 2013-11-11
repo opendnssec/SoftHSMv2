@@ -19,16 +19,13 @@ libsofthsm_objectstore_la_SOURCES =	ObjectStore.cpp \
 					SessionObject.cpp \
 					SessionObjectStore.cpp \
 					FindOperation.cpp \
-					ObjectStoreToken.cpp \
-					DB.cpp \
+					ObjectStoreToken.cpp
+
+if BUILD_OBJECTSTORE_BACKEND_DB
+libsofthsm_objectstore_la_SOURCES +=	DB.cpp \
 					DBObject.cpp \
 					DBToken.cpp
-
-#if BUILD_OBJECTSTORE_BACKEND_DB
-#libsofthsm_objectstore_la_SOURCES +=	DB.cpp \
-#					DBObject.cpp \
-#					DBToken.cpp
-#endif
+endif
 
 libsofthsm_objectstore_la_LDFLAGS =	@SQLITE3_LIBS@
 
