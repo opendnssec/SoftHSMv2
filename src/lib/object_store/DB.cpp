@@ -40,6 +40,7 @@
 
 #include "DB.h"
 
+#if HAVE_SQL_TRACE
 static void xTrace(void*connectionLabel,const char*zSql)
 {
 	const char *label = static_cast<const char *>(connectionLabel);
@@ -48,6 +49,7 @@ static void xTrace(void*connectionLabel,const char*zSql)
 	else
 		std::cout << std::endl << zSql ;
 }
+#endif
 
 // Call once at process startup
 void DB::initialize()
@@ -135,7 +137,7 @@ static time_t sqlite3_gmtime(struct tm *tm)
 	// The POSIX epoch is defined as the moment in time at midnight Coordinated
 	// Universal Time (UTC) of Thursday, January 1, 1970. A time_t value is
 	// the number of seconds elapsed since epoch.
-	struct tm ref_tm = {0};
+	struct tm ref_tm = {0,0,0,0,0,0,0,0,0,0,0};
 	ref_tm.tm_year = 70; // Years since 1900;
 	ref_tm.tm_mday = 10; // 10th
 
@@ -408,13 +410,13 @@ bool DB::Bindings::bindInt64(int index, long long value)
 	return true;
 }
 
-bool DB::Bindings::bindNull(int index)
-{
-#if 0
-	int sqlite3_bind_null(sqlite3_stmt*, int);
-#endif
-	return false;
-}
+//bool DB::Bindings::bindNull(int index)
+//{
+//#if 0
+//	int sqlite3_bind_null(sqlite3_stmt*, int);
+//#endif
+//	return false;
+//}
 
 bool DB::Bindings::bindText(int index, const char *value, int n, void (*destruct)(void *))
 {
@@ -429,13 +431,13 @@ bool DB::Bindings::bindText(int index, const char *value, int n, void (*destruct
 	return true;
 }
 
-bool DB::Bindings::bindZeroBlob(int index, int n)
-{
-#if 0
-	int sqlite3_bind_zeroblob(sqlite3_stmt*, int, int n);
-#endif
-	return false;
-}
+//bool DB::Bindings::bindZeroBlob(int index, int n)
+//{
+//#if 0
+//	int sqlite3_bind_zeroblob(sqlite3_stmt*, int, int n);
+//#endif
+//	return false;
+//}
 
 /**************************
  * Result
@@ -492,7 +494,7 @@ time_t DB::Result::getDatetime(unsigned int fieldidx)
 //		printf("datetime:%s\n",value);
 
 	unsigned long years,mons,days,hours,mins,secs;
-	struct tm gm_tm = {0};
+	struct tm gm_tm = {0,0,0,0,0,0,0,0,0,0,0};
 	gm_tm.tm_isdst = 0; // Tell mktime not to take dst into account.
 	gm_tm.tm_year = 70; // 1970
 	gm_tm.tm_mday = 1; // 1th day of the month
@@ -764,7 +766,11 @@ DB::Statement DB::Connection::prepare(const std::string &format, ...){
 	va_start(args, format);
 	int cneeded = vsnprintf(statement,sizeof(statement),format.c_str(),args);
 	va_end(args);
-	if (cneeded>=sizeof(statement)) {
+	if (cneeded<0) {
+		DB::logError("Connection::prepare: vsnprintf encoding error");
+		return Statement();	
+	}
+	if (((size_t)cneeded)>=sizeof(statement)) {
 		// long form
 		pstatement = new char[cneeded+1];
 		if (!pstatement) {
@@ -817,7 +823,11 @@ bool DB::Connection::execute(DB::Statement &statement)
 	return statement.step()==Statement::ReturnCodeDone;
 }
 
-bool DB::Connection::connect(const char *connectionLabel)
+bool DB::Connection::connect(const char *
+#if HAVE_SQL_TRACE
+							 connectionLabel
+#endif
+							 )
 {
 	int rv = sqlite3_open_v2(_dbpath.c_str(),
 							 &_db,

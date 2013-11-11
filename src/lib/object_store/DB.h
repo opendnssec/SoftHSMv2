@@ -112,9 +112,9 @@ public:
 	bool bindDouble(int index, double value);
 	bool bindInt(int index, int value);
 	bool bindInt64(int index, long long value );
-	bool bindNull(int index);
+	//bool bindNull(int index);
 	bool bindText(int index, const char *value, int n, void(*destruct)(void*));
-	bool bindZeroBlob(int index, int n);
+	//bool bindZeroBlob(int index, int n);
 };
 
 // Responsible for providing access to the result set of a query.
@@ -177,8 +177,8 @@ public:
 	// Set the busy timeout that the database layer will wait for a database lock to become available.
 	bool setBusyTimeout(int ms);
 private:
-	std::string _dbpath;
 	std::string _dbdir;
+	std::string _dbpath;
 	sqlite3 *_db;
 
 	Connection(const std::string &dbdir, const std::string &dbname);
