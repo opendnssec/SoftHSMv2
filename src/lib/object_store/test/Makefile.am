@@ -22,6 +22,10 @@ objstoretest_SOURCES =		objstoretest.cpp \
 				SessionObjectTests.cpp \
 				SessionObjectStoreTests.cpp
 
+if BUILD_OBJECTSTORE_BACKEND_DB
+objstoretest_SOURCES +=		DBTests.cpp
+endif
+
 objstoretest_LDADD =		../../libsofthsm_convarch.la 
 
 objstoretest_LDFLAGS = 		@CRYPTO_LIBS@ -no-install `cppunit-config --libs` -pthread
