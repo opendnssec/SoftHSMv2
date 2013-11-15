@@ -23,7 +23,8 @@ objstoretest_SOURCES =		objstoretest.cpp \
 				SessionObjectStoreTests.cpp
 
 if BUILD_OBJECTSTORE_BACKEND_DB
-objstoretest_SOURCES +=		DBTests.cpp
+objstoretest_SOURCES +=		DBTests.cpp \
+				DBObjectTests.cpp
 endif
 
 objstoretest_LDADD =		../../libsofthsm_convarch.la 
