@@ -37,7 +37,7 @@
 
 CPPUNIT_TEST_SUITE_REGISTRATION(test_a_db);
 
-int dummy_print(const char *, va_list )
+static int dummy_print(const char *, va_list )
 {
 	return 0;
 }
