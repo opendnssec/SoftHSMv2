@@ -42,7 +42,7 @@ class test_a_dbtoken : public CppUnit::TestFixture
 	CPPUNIT_TEST(should_be_creatable);
 	CPPUNIT_TEST(should_support_pin_setting_getting);
 	CPPUNIT_TEST(should_allow_object_enumeration);
-	CPPUNIT_TEST(should_fail_top_open_nonexistant_tokens);
+	CPPUNIT_TEST(should_fail_to_open_nonexistant_tokens);
 	CPPUNIT_TEST(support_create_delete_objects);
 	CPPUNIT_TEST(support_clearing_a_token);
 	CPPUNIT_TEST_SUITE_END();
@@ -54,7 +54,7 @@ public:
 	void should_be_creatable();
 	void should_support_pin_setting_getting();
 	void should_allow_object_enumeration();
-	void should_fail_top_open_nonexistant_tokens();
+	void should_fail_to_open_nonexistant_tokens();
 	void support_create_delete_objects();
 	void support_clearing_a_token();
 

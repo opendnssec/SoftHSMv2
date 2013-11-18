@@ -223,7 +223,7 @@ void test_a_dbtoken::should_allow_object_enumeration()
 	CPPUNIT_ASSERT(present[2]);
 }
 
-void test_a_dbtoken::should_fail_top_open_nonexistant_tokens()
+void test_a_dbtoken::should_fail_to_open_nonexistant_tokens()
 {
 	DBToken doesntExist("./testdir","doesntExist");
 
