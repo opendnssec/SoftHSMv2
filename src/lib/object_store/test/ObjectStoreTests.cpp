@@ -35,7 +35,6 @@
 #include <cppunit/extensions/HelperMacros.h>
 #include "ObjectStoreTests.h"
 #include "ObjectStore.h"
-#include "ObjectFile.h"
 #include "File.h"
 #include "Directory.h"
 #include "OSAttribute.h"
