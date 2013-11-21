@@ -45,12 +45,11 @@ CPPUNIT_TEST_SUITE_REGISTRATION(test_a_newly_created_object_store);
 
 void test_a_newly_created_object_store::setUp()
 {
-	// FIXME: this only works on *NIX/BSD, not on other platforms
-	CPPUNIT_ASSERT_EQUAL(system("rm -rf testdir && mkdir testdir"), 0);
+	CPPUNIT_ASSERT(!system("mkdir testdir"));
 
 	ObjectStoreToken::selectBackend("db");
 
-	store = new ObjectStore("./testdir");
+	store = new ObjectStore("testdir");
 	nulltoken = NULL;
 	label1 = "DEADC0FFEE";
 	label2 = "DEADBEEF";}
@@ -60,9 +59,12 @@ void test_a_newly_created_object_store::tearDown()
 	delete store;
 
 	ObjectStoreToken::selectBackend("file");
-	
-	// FIXME: this only works on *NIX/BSD, not on other platforms
-	CPPUNIT_ASSERT_EQUAL(system("rm -rf testdir"), 0);
+
+#ifndef _WIN32
+	CPPUNIT_ASSERT(!system("rm -rf testdir"));
+#else
+	CPPUNIT_ASSERT(!system("rmdir /s /q testdir 2> nul"));
+#endif
 }
 
 

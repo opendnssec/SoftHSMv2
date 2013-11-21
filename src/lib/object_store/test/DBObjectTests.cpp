@@ -46,9 +46,8 @@ CPPUNIT_TEST_SUITE_REGISTRATION(test_a_dbobject);
 
 void test_a_dbobject::setUp()
 {
-	// FIXME: this only works on *NIX/BSD, not on other platforms
-	CPPUNIT_ASSERT_EQUAL(system("rm -rf testdir && mkdir testdir"), 0);
-	connection = DB::Connection::Create("./testdir","TestToken");
+	CPPUNIT_ASSERT(!system("mkdir testdir"));
+	connection = DB::Connection::Create("testdir","TestToken");
 	CPPUNIT_ASSERT(connection != NULL);
 	CPPUNIT_ASSERT(connection->connect("<1>"));
 	connection->setBusyTimeout(10);
@@ -58,7 +57,7 @@ void test_a_dbobject::setUp()
 	CPPUNIT_ASSERT(testObject.createTables());
 	CPPUNIT_ASSERT(testObject.commitTransaction());
 
-	connection2 = DB::Connection::Create("./testdir","TestToken");
+	connection2 = DB::Connection::Create("testdir","TestToken");
 	CPPUNIT_ASSERT(connection2 != NULL);
 	CPPUNIT_ASSERT(connection2->connect("<2>"));
 	connection2->setBusyTimeout(10);
@@ -74,8 +73,11 @@ void test_a_dbobject::tearDown()
 	connection2->close();
 	delete connection2;
 
-	// FIXME: this only works on *NIX/BSD, not on other platforms
-	CPPUNIT_ASSERT_EQUAL(system("rm -rf testdir"), 0);
+#ifndef _WIN32
+	CPPUNIT_ASSERT(!system("rm -rf testdir"));
+#else
+	CPPUNIT_ASSERT(!system("rmdir /s /q testdir 2> nul"));
+#endif
 }
 
 void test_a_dbobject::should_be_insertable()

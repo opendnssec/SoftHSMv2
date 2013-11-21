@@ -51,14 +51,16 @@ static int dummy_print(const char *, va_list )
 
 void test_a_dbtoken::setUp()
 {
-	// FIXME: this only works on *NIX/BSD, not on other platforms
-	CPPUNIT_ASSERT_EQUAL(system("rm -rf testdir && mkdir testdir"), 0);
+	CPPUNIT_ASSERT(!system("mkdir testdir"));
 }
 
 void test_a_dbtoken::tearDown()
 {
-	// FIXME: this only works on *NIX/BSD, not on other platforms
-	CPPUNIT_ASSERT_EQUAL(system("rm -rf testdir"), 0);
+#ifndef _WIN32
+	CPPUNIT_ASSERT(!system("rm -rf testdir"));
+#else
+	CPPUNIT_ASSERT(!system("rmdir /s /q testdir 2> nul"));
+#endif
 }
 
 void test_a_dbtoken::should_be_creatable()
@@ -66,7 +68,7 @@ void test_a_dbtoken::should_be_creatable()
 	ByteString label = "40414243"; // ABCD
 	ByteString serial = "0102030405060708";
 
-	ObjectStoreToken* newToken = new DBToken("./testdir", "newToken", label, serial);
+	ObjectStoreToken* newToken = new DBToken("testdir", "newToken", label, serial);
 
 	CPPUNIT_ASSERT(newToken != NULL);
 
@@ -81,7 +83,7 @@ void test_a_dbtoken::should_support_pin_setting_getting()
 	ByteString label = "40414243"; // ABCD
 	ByteString serial = "0102030405060708";
 
-	ObjectStoreToken* newToken = new DBToken("./testdir", "newToken", label, serial);
+	ObjectStoreToken* newToken = new DBToken("testdir", "newToken", label, serial);
 
 	CPPUNIT_ASSERT(newToken != NULL);
 
@@ -108,7 +110,7 @@ void test_a_dbtoken::should_support_pin_setting_getting()
 	delete newToken;
 
 	// Now reopen the newly created token
-	DBToken reopenedToken("./testdir","newToken");
+	DBToken reopenedToken("testdir","newToken");
 
 	CPPUNIT_ASSERT(reopenedToken.isValid());
 
@@ -134,7 +136,7 @@ void test_a_dbtoken::should_allow_object_enumeration()
 
 	{
 		// Instantiate a new token
-		ObjectStoreToken* newToken = new DBToken("./testdir", "existingToken", label, serial);
+		ObjectStoreToken* newToken = new DBToken("testdir", "existingToken", label, serial);
 		CPPUNIT_ASSERT(newToken != NULL);
 		CPPUNIT_ASSERT(newToken->isValid());
 		CPPUNIT_ASSERT(newToken->setSOPIN(soPIN));
@@ -168,7 +170,7 @@ void test_a_dbtoken::should_allow_object_enumeration()
 	}
 
 	// Now open the token
-	DBToken existingToken("./testdir","existingToken");
+	DBToken existingToken("testdir","existingToken");
 
 	CPPUNIT_ASSERT(existingToken.isValid());
 
@@ -225,7 +227,7 @@ void test_a_dbtoken::should_allow_object_enumeration()
 
 void test_a_dbtoken::should_fail_to_open_nonexistant_tokens()
 {
-	DBToken doesntExist("./testdir","doesntExist");
+	DBToken doesntExist("testdir","doesntExist");
 
 	CPPUNIT_ASSERT(!doesntExist.isValid());
 }
@@ -239,12 +241,12 @@ void test_a_dbtoken::support_create_delete_objects()
 	ByteString serial = "1234567890";
 
 	// Instantiate a new token
-	ObjectStoreToken* testToken = new DBToken("./testdir", "testToken", label, serial);
+	ObjectStoreToken* testToken = new DBToken("testdir", "testToken", label, serial);
 	CPPUNIT_ASSERT(testToken != NULL);
 	CPPUNIT_ASSERT(testToken->isValid());
 
 	// Open the same token
-	DBToken sameToken("./testdir","testToken");
+	DBToken sameToken("testdir","testToken");
 	CPPUNIT_ASSERT(sameToken.isValid());
 
 	// Create 3 objects on the token
@@ -407,7 +409,7 @@ void test_a_dbtoken::support_clearing_a_token()
 	ByteString label = "40414243"; // ABCD
 	ByteString serial = "0102030405060708";
 
-	ObjectStoreToken* newToken = new DBToken("./testdir", "newToken", label, serial);
+	ObjectStoreToken* newToken = new DBToken("testdir", "newToken", label, serial);
 
 	CPPUNIT_ASSERT(newToken != NULL);
 	CPPUNIT_ASSERT(newToken->isValid());
@@ -436,11 +438,11 @@ void test_a_dbtoken::support_clearing_a_token()
 
 #if 1
 	// Reopen the newly created token and keep a reference around.
-	DBToken referencingToken("./testdir", "newToken");
+	DBToken referencingToken("testdir", "newToken");
 	CPPUNIT_ASSERT(referencingToken.isValid());
 #endif
 	// Now reopen the newly created token
-	DBToken reopenedToken("./testdir","newToken");
+	DBToken reopenedToken("testdir","newToken");
 
 	CPPUNIT_ASSERT(reopenedToken.isValid());
 
@@ -462,7 +464,7 @@ void test_a_dbtoken::support_clearing_a_token()
 	DB::LogErrorHandler eh = DB::setLogErrorHandler(dummy_print);
 
 	// Try to open it once more and make sure it has been deleted.
-	DBToken clearedToken("./testdir","newToken");
+	DBToken clearedToken("testdir","newToken");
 	CPPUNIT_ASSERT(!clearedToken.isValid());
 
 #if 1
