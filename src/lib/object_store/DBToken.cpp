@@ -625,6 +625,8 @@ void DBToken::getObjects(std::set<OSObject*> &objects)
 {
 	if (_connection == NULL) return;
 
+	if (!_connection->beginTransactionRO()) return;
+	
 	DB::Statement statement = _connection->prepare("select id from object limit -1 offset 1");
 
 	DB::Result result = _connection->perform(statement);
@@ -649,6 +651,8 @@ void DBToken::getObjects(std::set<OSObject*> &objects)
 			}
 		} while (result.nextRow());
 	}
+	
+	_connection->endTransactionRO();
 }
 
 // Create a new object

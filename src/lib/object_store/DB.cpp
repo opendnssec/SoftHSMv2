@@ -904,6 +904,12 @@ bool DB::Connection::beginTransactionRO()
 	return statement.step()==Statement::ReturnCodeDone;
 }
 
+bool DB::Connection::endTransactionRO()
+{
+	Statement statement = prepare("end");
+	return statement.step()==Statement::ReturnCodeDone;
+}
+
 bool DB::Connection::beginTransactionRW()
 {
 	Statement statement = prepare("begin immediate");

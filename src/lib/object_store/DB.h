@@ -169,8 +169,9 @@ public:
 	long long lastInsertRowId();
 
 	bool inTransaction();
-	bool beginTransactionRW();
 	bool beginTransactionRO();
+	bool endTransactionRO();
+	bool beginTransactionRW();
 	bool commitTransaction();
 	bool rollbackTransaction();
 
