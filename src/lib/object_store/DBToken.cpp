@@ -659,14 +659,14 @@ OSObject *DBToken::createObject()
 	DBObject *newObject = new DBObject(_connection, this);
 	if (newObject == NULL)
 	{
-		ERROR_MSG("");
+		ERROR_MSG("Failed to create an object: out of memory");
 		return NULL;
 	}
 
 	if (!newObject->startTransaction(DBObject::ReadWrite))
 	{
 		delete newObject;
-		ERROR_MSG("");
+		ERROR_MSG("Unable to start a transaction in token database at \"%s\"", _connection->dbpath().c_str());
 		return NULL;
 	}
 
@@ -674,7 +674,7 @@ OSObject *DBToken::createObject()
 	{
 		newObject->abortTransaction();
 		delete newObject;
-		ERROR_MSG("");
+		ERROR_MSG("Unable to insert an object into token database at \"%s\"", _connection->dbpath().c_str());
 		return NULL;
 	}
 
@@ -682,7 +682,7 @@ OSObject *DBToken::createObject()
 	{
 		newObject->abortTransaction();
 		delete newObject;
-		ERROR_MSG("");
+		ERROR_MSG("Object that was inserted in not valid");
 		return NULL;
 	}
 
@@ -690,7 +690,7 @@ OSObject *DBToken::createObject()
 	{
 		newObject->abortTransaction();
 		delete newObject;
-		ERROR_MSG("");
+		ERROR_MSG("Unable to commit a created object to token database at \"%s\"", _connection->dbpath().c_str());
 		return NULL;
 	}
 
