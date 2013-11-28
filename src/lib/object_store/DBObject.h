@@ -127,13 +127,16 @@ private:
 
 	std::map<CK_ATTRIBUTE_TYPE,OSAttribute*> _attributes;
 
+public:
 	enum AttributeKind {
 		akUnknown,
 		akBoolean,
 		akInteger,
 		akBinary
 	};
-	AttributeKind findAttribute(CK_ATTRIBUTE_TYPE type, long long objectId);
+
+private:
+	AttributeKind findAttribute(CK_ATTRIBUTE_TYPE type);
 };
 
 #endif // !_SOFTHSM_V2_DBOBJECT_H

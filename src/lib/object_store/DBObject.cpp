@@ -329,7 +329,7 @@ long long DBObject::objectId()
 	return _objectId;
 }
 
-DBObject::AttributeKind DBObject::findAttribute(CK_ATTRIBUTE_TYPE type, long long objectId)
+DBObject::AttributeKind DBObject::findAttribute(CK_ATTRIBUTE_TYPE type)
 {
 	// We currently search all attribute_xxxxx tables for a match on type and object_id.
 	// Because it is fixed for predefined types what underlying type an attribute is, we
@@ -343,7 +343,7 @@ DBObject::AttributeKind DBObject::findAttribute(CK_ATTRIBUTE_TYPE type, long lon
 	statement = _connection->prepare(
 		"select value from attribute_boolean where type=%d and object_id=%lld",
 		type,
-		objectId);
+		_objectId);
 	if (!statement.isValid())
 	{
 		return akUnknown;
@@ -359,7 +359,7 @@ DBObject::AttributeKind DBObject::findAttribute(CK_ATTRIBUTE_TYPE type, long lon
 	statement = _connection->prepare(
 		"select value from attribute_integer where type=%d and object_id=%lld",
 		type,
-		objectId);
+		_objectId);
 	if (!statement.isValid())
 	{
 		return akUnknown;
@@ -375,7 +375,7 @@ DBObject::AttributeKind DBObject::findAttribute(CK_ATTRIBUTE_TYPE type, long lon
 	statement = _connection->prepare(
 		"select value from attribute_blob where type=%d and object_id=%lld",
 		type,
-		objectId);
+		_objectId);
 	if (!statement.isValid())
 	{
 		return akUnknown;
@@ -406,7 +406,7 @@ bool DBObject::attributeExists(CK_ATTRIBUTE_TYPE type)
 		return false;
 	}
 
-	return findAttribute(type,_objectId) != akUnknown;
+	return findAttribute(type) != akUnknown;
 }
 
 // Retrieve the specified attribute
@@ -527,7 +527,7 @@ bool DBObject::setAttribute(CK_ATTRIBUTE_TYPE type, const OSAttribute& attribute
 		return false;
 	}
 
-	AttributeKind ak = findAttribute(type,_objectId);
+	AttributeKind ak = findAttribute(type);
 	DB::Statement statement;
 
 	// Update and existing attribute...
