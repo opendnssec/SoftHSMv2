@@ -768,8 +768,8 @@ bool P11GOSTPublicKeyObj::init(OSObject *osobject)
 
 	// Create attributes
 	P11Attribute* attrValue = new P11AttrValue(osobject,P11Attribute::ck1|P11Attribute::ck4);
-	P11Attribute* attrGostR3410Params = new P11AttrGostR3410Params(osobject,P11Attribute::ck1|P11Attribute::ck3);
-	P11Attribute* attrGostR3411Params = new P11AttrGostR3411Params(osobject,P11Attribute::ck1|P11Attribute::ck3|P11Attribute::ck8);
+	P11Attribute* attrGostR3410Params = new P11AttrGostR3410Params(osobject,P11Attribute::ck3);
+	P11Attribute* attrGostR3411Params = new P11AttrGostR3411Params(osobject,P11Attribute::ck3);
 	P11Attribute* attrGost28147Params = new P11AttrGost28147Params(osobject,P11Attribute::ck8);
 
 	// Initialize the attributes
@@ -1087,8 +1087,8 @@ bool P11GOSTPrivateKeyObj::init(OSObject *osobject)
 
 	// Create attributes
 	P11Attribute* attrValue = new P11AttrValue(osobject,P11Attribute::ck1|P11Attribute::ck4|P11Attribute::ck6|P11Attribute::ck7);
-	P11Attribute* attrGostR3410Params = new P11AttrGostR3410Params(osobject,P11Attribute::ck1|P11Attribute::ck4|P11Attribute::ck6);
-	P11Attribute* attrGostR3411Params = new P11AttrGostR3411Params(osobject,P11Attribute::ck1|P11Attribute::ck4|P11Attribute::ck6|P11Attribute::ck8);
+	P11Attribute* attrGostR3410Params = new P11AttrGostR3410Params(osobject,P11Attribute::ck4|P11Attribute::ck6);
+	P11Attribute* attrGostR3411Params = new P11AttrGostR3411Params(osobject,P11Attribute::ck4|P11Attribute::ck6);
 	P11Attribute* attrGost28147Params = new P11AttrGost28147Params(osobject,P11Attribute::ck4|P11Attribute::ck6|P11Attribute::ck8);
 
 	// Initialize the attributes
