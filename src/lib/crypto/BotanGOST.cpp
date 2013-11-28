@@ -167,7 +167,11 @@ bool BotanGOST::signFinal(ByteString& signature)
 	}
 
 	// Perform the signature operation
+#if BOTAN_VERSION_MINOR == 11
+	std::vector<Botan::byte> signResult;
+#else
 	Botan::SecureVector<Botan::byte> signResult;
+#endif
 	try
 	{
 		BotanRNG* rng = (BotanRNG*)BotanCryptoFactory::i()->getRNG();
@@ -185,7 +189,11 @@ bool BotanGOST::signFinal(ByteString& signature)
 
 	// Return the result
 	signature.resize(signResult.size());
+#if BOTAN_VERSION_MINOR == 11
+	memcpy(&signature[0], signResult.data(), signResult.size());
+#else
 	memcpy(&signature[0], signResult.begin(), signResult.size());
+#endif
 
 	delete signer;
 	signer = NULL;

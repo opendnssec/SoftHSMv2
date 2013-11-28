@@ -18,8 +18,13 @@ AC_DEFUN([ACX_BOTAN_ECC],[
 				const Botan::OID oid(Botan::OIDS::lookup(name));
 				const Botan::EC_Group ecg(oid);
 				try {
+#if BOTAN_VERSION_MINOR == 11
+					const std::vector<Botan::byte> der =
+					    ecg.DER_encode(Botan::EC_DOMPAR_ENC_OID);
+#else
 					const Botan::SecureVector<Botan::byte> der =
 					    ecg.DER_encode(Botan::EC_DOMPAR_ENC_OID);
+#endif
 				} catch(...) {
 					return 1;
 				}

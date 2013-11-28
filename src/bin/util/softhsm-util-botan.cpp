@@ -45,6 +45,7 @@
 #include <botan/auto_rng.h>
 #include <botan/pkcs8.h>
 #include <botan/bigint.h>
+#include <botan/libstate.h>
 
 bool was_initialized = false;
 

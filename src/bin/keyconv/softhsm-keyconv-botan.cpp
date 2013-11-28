@@ -102,7 +102,7 @@ int save_rsa_pkcs8(char* out_path, char* file_pin, key_material_t* pkey)
 	}
 
 	std::ofstream priv_file(out_path);
-	if (priv_file == NULL)
+	if (!priv_file.is_open())
 	{
 		fprintf(stderr, "ERROR: Could not open file for output.\n");
 		delete rng;
@@ -118,7 +118,11 @@ int save_rsa_pkcs8(char* out_path, char* file_pin, key_material_t* pkey)
 		}
 		else
 		{
+#if BOTAN_VERSION_MINOR == 11
+			priv_file << Botan::PKCS8::PEM_encode(*priv_key, *rng, file_pin, std::chrono::milliseconds(300), "PBE-PKCS5v15(MD5,DES/CBC)");
+#else
 			priv_file << Botan::PKCS8::PEM_encode(*priv_key, *rng, file_pin, "PBE-PKCS5v15(MD5,DES/CBC)");
+#endif
 		}
 
 		printf("The key has been written to %s\n", out_path);
@@ -178,7 +182,7 @@ int save_dsa_pkcs8(char* out_path, char* file_pin, key_material_t* pkey)
 	}
 
 	std::ofstream priv_file(out_path);
-	if (priv_file == NULL)
+	if (!priv_file.is_open())
 	{
 		fprintf(stderr, "ERROR: Could not open file for output.\n");
 		delete rng;
@@ -194,7 +198,11 @@ int save_dsa_pkcs8(char* out_path, char* file_pin, key_material_t* pkey)
 		}
 		else
 		{
+#if BOTAN_VERSION_MINOR == 11
+			priv_file << Botan::PKCS8::PEM_encode(*priv_key, *rng, file_pin, std::chrono::milliseconds(300), "PBE-PKCS5v15(MD5,DES/CBC)");
+#else
 			priv_file << Botan::PKCS8::PEM_encode(*priv_key, *rng, file_pin, "PBE-PKCS5v15(MD5,DES/CBC)");
+#endif
 		}
 
 		printf("The key has been written to %s\n", out_path);

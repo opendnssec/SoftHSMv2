@@ -8,12 +8,18 @@ AC_DEFUN([ACX_BOTAN],[
 			BOTAN_PATH="/usr/local"
 		])
 
+	BOTAN_VERSION_MINOR=10
 	AC_MSG_CHECKING(what are the Botan includes)
-	BOTAN_INCLUDES="-I$BOTAN_PATH/include/botan-1.10"
+	AC_CHECK_FILE($BOTAN_PATH/include/botan-1.10/botan/init.h,
+		      BOTAN_VERSION_MINOR=10,
+		      AC_CHECK_FILE($BOTAN_PATH/include/botan-1.11/botan/init.h,
+				    BOTAN_VERSION_MINOR=11,
+				    AC_MSG_ERROR([Cannot find Botan includes])))
+	BOTAN_INCLUDES="-I$BOTAN_PATH/include/botan-1.$BOTAN_VERSION_MINOR"
 	AC_MSG_RESULT($BOTAN_INCLUDES)
 
 	AC_MSG_CHECKING(what are the Botan libs)
-	BOTAN_LIBS="-L$BOTAN_PATH/lib -lbotan-1.10"
+	BOTAN_LIBS="-L$BOTAN_PATH/lib -lbotan-1.$BOTAN_VERSION_MINOR"
 	AC_MSG_RESULT($BOTAN_LIBS)
 
 	tmp_CPPFLAGS=$CPPFLAGS
@@ -49,4 +55,5 @@ AC_DEFUN([ACX_BOTAN],[
 
 	AC_SUBST(BOTAN_INCLUDES)
 	AC_SUBST(BOTAN_LIBS)
+	AC_SUBST(BOTAN_VERSION_MINOR)
 ])
