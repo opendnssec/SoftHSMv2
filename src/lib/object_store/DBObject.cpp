@@ -545,6 +545,7 @@ bool DBObject::setAttribute(CK_ATTRIBUTE_TYPE type, const OSAttribute& attribute
 				ERROR_MSG("Failed to update boolean attribute %d for object %lld",type,_objectId);
 				return false;
 			}
+			*_attributes[type] = attribute;
 			return true;
 
 		case akInteger:
@@ -560,6 +561,7 @@ bool DBObject::setAttribute(CK_ATTRIBUTE_TYPE type, const OSAttribute& attribute
 				ERROR_MSG("Failed to update integer attribute %d for object %lld",type,_objectId);
 				return false;
 			}
+			*_attributes[type] = attribute;
 			return true;
 
 
@@ -577,11 +579,12 @@ bool DBObject::setAttribute(CK_ATTRIBUTE_TYPE type, const OSAttribute& attribute
 				ERROR_MSG("Failed to update blob attribute %d for object %lld",type,_objectId);
 				return false;
 			}
+			*_attributes[type] = attribute;
 			return true;
 	}
 
 
-	// Insert the attribute, because it is currently uknown
+	// Insert the attribute, because it is currently unknown
 	if (attribute.isBooleanAttribute())
 	{
 		// Could not update it, so we need to insert it.
@@ -596,11 +599,11 @@ bool DBObject::setAttribute(CK_ATTRIBUTE_TYPE type, const OSAttribute& attribute
 			ERROR_MSG("Failed to insert boolean attribute %d for object %lld",type,_objectId);
 			return false;
 		}
-
+		_attributes[type] = new OSAttribute(attribute);
 		return true;
 	}
 
-	// Insert the attribute, because it is currently uknown
+	// Insert the attribute, because it is currently unknown
 	if (attribute.isUnsignedLongAttribute())
 	{
 		// Could not update it, so we need to insert it.
@@ -616,11 +619,12 @@ bool DBObject::setAttribute(CK_ATTRIBUTE_TYPE type, const OSAttribute& attribute
 			return false;
 		}
 
+		_attributes[type] = new OSAttribute(attribute);
 		return true;
 	}
 
 
-	// Insert the attribute, because it is currently uknown
+	// Insert the attribute, because it is currently unknown
 	if (attribute.isByteStringAttribute())
 	{
 		// Could not update it, so we need to insert it.
@@ -637,6 +641,7 @@ bool DBObject::setAttribute(CK_ATTRIBUTE_TYPE type, const OSAttribute& attribute
 			return false;
 		}
 
+		_attributes[type] = new OSAttribute(attribute);
 		return true;
 	}
 
