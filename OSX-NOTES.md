@@ -65,21 +65,17 @@ After changing this we can configure the build.
 
 ## Configuring the build
 
+Start by installing autoconf in the source directory by executing the autogen.sh script.
+
+	$ sh ./autogen.sh
+
+If all went well a configure script should have been generated.
 To find out the options available for building issue the following command:
 
 	$ ./configure --help
 
-In the example below I will enable the optional objectstore database backend.
+In the example below I will enable the optional token object store database backend.
 
-The idea behind storing token objects in a database is that it has advantages
-when a large number (> 100K) of keys are stored in a token. A database allows for
-selectively querying and loading in only a subset of the keys into memory.
-The file based storage backend reads in the complete contents of the token.
-
-Also because the database is only a single file, we should not hit any system limitations
-w.r.t. the number of files that can be stored in a file system.
-
-	$ sh ./autogen.sh
 	$ ./configure --with-objectstore-backend-db --with-openssl=/usr/local/opt/openssl --with-sqlite3=/usr/local/opt/sqlite
 
 Now if for some reason the compilers are not found, do the following at the command line.
@@ -105,14 +101,10 @@ To try a specific test, e.g. to check just the PKCS#11 test cases use the follow
 
 	$ make -C src/lib/test check
 
-To use a SQLite3 database, as a storage backend, do the following:
-
-	$ mkdir src/lib/test/tokens-db
-
 Then change src/lib/test/softhsm2.conf so it contains the following lines.
 
 	# SoftHSM v2 configuration file
-	directories.tokendir = ./tokens-db
+	directories.tokendir = ./tokens
 	objectstore.backend = db
 
 We are now ready to run the tests again.
@@ -120,29 +112,20 @@ We are now ready to run the tests again.
 	$ make -C src/lib/test check
 
 Because the object store backend was changed from file to db we have used sqlite for
-storing the token objects.
-
-Verify this by looking in the sub-folders of src/lib/test/tokens-db
+storing the token objects. Verify this by looking in the sub-folders of src/lib/test/tokens
 There you should find a database file named sqlite3.db
-
-Note that if the test fails for the db backend, this may be caused by the "generation file"
-which is part of the file backend being present somewhere in the tokens folder.
-Issue the following commands to solve this.
-
-	$ make -C src/lib/test clean
-	$ make -C src/lib/test check
-
-Or alternatively to remove all tokens currently present in the source tree issue the
-following commands:
-
-	$ rm -rf src/lib/test/tokens
-	$ git checkout src/lib/test/tokens/dummy.in
-	$ rm -rf src/lib/test/tokens-db
 
 ## Performance
 
 The file backend currently exhibits the best performance. It is normally at least twice
 as fast as the database backend.
+
+The idea behind storing token objects in a database is that it has advantages
+when a large number (> 100K) of keys are stored in a token. A database allows for
+selectively querying and loading in only a subset of the keys into memory.
+The file based storage backend reads in the complete contents of the token.
+Also because the database is only a single file, we should not hit any system limitations
+w.r.t. the number of files that can be stored in a file system.
 
 The database backend uses transactions to write changes to the token database.
 For modifiable attributes this will require a round trip to the database every time an
