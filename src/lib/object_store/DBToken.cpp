@@ -769,21 +769,29 @@ bool DBToken::clearToken()
 	delete _connection;
 	_connection = NULL;
 
-	// Now remove the token file
-	if (remove(tokenPath.c_str()))
+	// Remove all files from the token directory, even ones not placed there by us.
+	Directory dir(tokenDir);
+	std::vector<std::string> tokenFiles = dir.getFiles();
+
+	for (std::vector<std::string>::iterator i = tokenFiles.begin(); i != tokenFiles.end(); i++)
 	{
-		ERROR_MSG("Failed to remove the token database at \"%s\"", tokenPath.c_str());
-		return false;
+		if (!dir.remove(*i))
+		{
+			ERROR_MSG("Failed to remove \"%s\" from token directory \"%s\"", i->c_str(), tokenDir.c_str());
+
+			return false;
+		}
 	}
 
 	// Now remove the token directory
-	if (remove(tokenDir.c_str()))
+	if (!dir.rmdir(""))
 	{
-		ERROR_MSG("Failed to remove the token directory at \"%s\"", tokenDir.c_str());
+		ERROR_MSG("Failed to remove the token directory \"%s\"", tokenDir.c_str());
+
 		return false;
 	}
 
-	DEBUG_MSG("Token instance %s was succesfully cleared", tokenPath.c_str());
+	DEBUG_MSG("Token instance %s was succesfully cleared", tokenDir.c_str());
 
 	return true;
 }
