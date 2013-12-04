@@ -1247,7 +1247,7 @@ CK_RV SoftHSM::C_CopyObject(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject
 	}
 	else
 	{
-		newobject = sessionObjectStore->createObject(slot->getSlotID(), hSession, isPrivate);
+		newobject = sessionObjectStore->createObject(slot->getSlotID(), hSession, isPrivate != CK_FALSE);
 	}
 	if (newobject == NULL) return CKR_GENERAL_ERROR;
 
@@ -1313,7 +1313,7 @@ CK_RV SoftHSM::C_CopyObject(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject
 	}
 
 	// Apply the template
-	rv = newp11object->saveTemplate(token, isPrivate, pTemplate, ulCount, OBJECT_OP_COPY);
+	rv = newp11object->saveTemplate(token, isPrivate != CK_FALSE, pTemplate, ulCount, OBJECT_OP_COPY);
 
 	if (rv != CKR_OK)
 	{
@@ -1324,11 +1324,11 @@ CK_RV SoftHSM::C_CopyObject(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject
 	// Set handle
 	if (isToken)
 	{
-		*phNewObject = handleManager->addTokenObject(slot->getSlotID(), isPrivate, newobject);
+		*phNewObject = handleManager->addTokenObject(slot->getSlotID(), isPrivate != CK_FALSE, newobject);
 	}
 	else
 	{
-		*phNewObject = handleManager->addSessionObject(slot->getSlotID(), hSession, isPrivate, newobject);
+		*phNewObject = handleManager->addSessionObject(slot->getSlotID(), hSession, isPrivate != CK_FALSE, newobject);
 	}
 
 	return CKR_OK;

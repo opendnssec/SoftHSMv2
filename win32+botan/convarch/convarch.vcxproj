@@ -100,6 +100,7 @@
     <ClInclude Include="..\..\src\lib\object_store\Generation.h" />
     <ClInclude Include="..\..\src\lib\object_store\ObjectFile.h" />
     <ClInclude Include="..\..\src\lib\object_store\ObjectStore.h" />
+    <ClInclude Include="..\..\src\lib\object_store\ObjectStoreToken.h" />
     <ClInclude Include="..\..\src\lib\object_store\OSAttribute.h" />
     <ClInclude Include="..\..\src\lib\object_store\OSAttributes.h" />
     <ClInclude Include="..\..\src\lib\object_store\OSObject.h" />
@@ -197,6 +198,7 @@
     <ClCompile Include="..\..\src\lib\object_store\Generation.cpp" />
     <ClCompile Include="..\..\src\lib\object_store\ObjectFile.cpp" />
     <ClCompile Include="..\..\src\lib\object_store\ObjectStore.cpp" />
+    <ClCompile Include="..\..\src\lib\object_store\ObjectStoreToken.cpp" />
     <ClCompile Include="..\..\src\lib\object_store\OSAttribute.cpp" />
     <ClCompile Include="..\..\src\lib\object_store\OSToken.cpp" />
     <ClCompile Include="..\..\src\lib\object_store\SessionObject.cpp" />

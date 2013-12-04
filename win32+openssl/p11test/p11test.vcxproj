@@ -105,17 +105,18 @@ copy ..\..\src\lib\test\tokens\dummy.in  ..\..\"win32+openssl"\p11test\tokens\du
     <ClInclude Include="..\..\src\lib\P11Attributes.h" />
     <ClInclude Include="..\..\src\lib\P11Objects.h" />
     <ClInclude Include="..\..\src\lib\SoftHSM.h" />
+    <ClInclude Include="..\..\src\lib\test\AsymEncryptDecryptTests.h" />
     <ClInclude Include="..\..\src\lib\test\DigestTests.h" />
-    <ClInclude Include="..\..\src\lib\test\EncryptDecryptTests.h" />
     <ClInclude Include="..\..\src\lib\test\InfoTests.h" />
     <ClInclude Include="..\..\src\lib\test\InitTests.h" />
     <ClInclude Include="..\..\src\lib\test\ObjectTests.h" />
     <ClInclude Include="..\..\src\lib\test\RandomTests.h" />
     <ClInclude Include="..\..\src\lib\test\SessionTests.h" />
     <ClInclude Include="..\..\src\lib\test\SignVerifyTests.h" />
-    <ClInclude Include="..\..\src\lib\test\testconfig.h" />
+    <ClInclude Include="..\..\src\lib\test\SymmetricAlgorithmTests.h" />
     <ClInclude Include="..\..\src\lib\test\TokenTests.h" />
     <ClInclude Include="..\..\src\lib\test\UserTests.h" />
+    <ClInclude Include="..\..\src\lib\test\testconfig.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\lib\access.cpp" />
@@ -124,8 +125,8 @@ copy ..\..\src\lib\test\tokens\dummy.in  ..\..\"win32+openssl"\p11test\tokens\du
     <ClCompile Include="..\..\src\lib\P11Attributes.cpp" />
     <ClCompile Include="..\..\src\lib\P11Objects.cpp" />
     <ClCompile Include="..\..\src\lib\SoftHSM.cpp" />
+    <ClCompile Include="..\..\src\lib\test\AsymEncryptDecryptTests.cpp" />
     <ClCompile Include="..\..\src\lib\test\DigestTests.cpp" />
-    <ClCompile Include="..\..\src\lib\test\EncryptDecryptTests.cpp" />
     <ClCompile Include="..\..\src\lib\test\InfoTests.cpp" />
     <ClCompile Include="..\..\src\lib\test\InitTests.cpp" />
     <ClCompile Include="..\..\src\lib\test\ObjectTests.cpp" />
@@ -133,6 +134,7 @@ copy ..\..\src\lib\test\tokens\dummy.in  ..\..\"win32+openssl"\p11test\tokens\du
     <ClCompile Include="..\..\src\lib\test\RandomTests.cpp" />
     <ClCompile Include="..\..\src\lib\test\SessionTests.cpp" />
     <ClCompile Include="..\..\src\lib\test\SignVerifyTests.cpp" />
+    <ClCompile Include="..\..\src\lib\test\SymmetricAlgorithmTests.cpp" />
     <ClCompile Include="..\..\src\lib\test\TokenTests.cpp" />
     <ClCompile Include="..\..\src\lib\test\UserTests.cpp" />
     <ClCompile Include="..\..\src\lib\win32\setenv.cpp" />
