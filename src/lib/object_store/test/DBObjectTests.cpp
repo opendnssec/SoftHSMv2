@@ -244,7 +244,7 @@ void test_a_dbobject_with_an_object::should_store_binary_attributes()
 {
 	ByteString value1 = "010203040506070809";
 	ByteString value2 = "ABABABABABABABABABABABABABABABABAB";
-	ByteString value3 = "BDEBDBEDBBDBEBDEBE792759537328";
+	unsigned long value3 = 0xBDED;
 	ByteString value4 = "98A7E5D798A7E5D798A7E5D798A7E5D798A7E5D798A7E5D7";
 	ByteString value5 = "ABCDABCDABCDABCDABCDABCDABCDABCD";
 
@@ -282,13 +282,13 @@ void test_a_dbobject_with_an_object::should_store_binary_attributes()
 
 		CPPUNIT_ASSERT(testObject.getAttribute(CKA_MODULUS)->isByteStringAttribute());
 		CPPUNIT_ASSERT(testObject.getAttribute(CKA_COEFFICIENT)->isByteStringAttribute());
-		CPPUNIT_ASSERT(testObject.getAttribute(CKA_VALUE_BITS)->isByteStringAttribute());
+		CPPUNIT_ASSERT(testObject.getAttribute(CKA_VALUE_BITS)->isUnsignedLongAttribute());
 		CPPUNIT_ASSERT(testObject.getAttribute(CKA_PUBLIC_EXPONENT)->isByteStringAttribute());
 		CPPUNIT_ASSERT(testObject.getAttribute(CKA_SUBJECT)->isByteStringAttribute());
 
 		CPPUNIT_ASSERT(testObject.getAttribute(CKA_MODULUS)->getByteStringValue() == value1);
 		CPPUNIT_ASSERT(testObject.getAttribute(CKA_COEFFICIENT)->getByteStringValue() == value2);
-		CPPUNIT_ASSERT(testObject.getAttribute(CKA_VALUE_BITS)->getByteStringValue() == value3); 
+		CPPUNIT_ASSERT(testObject.getAttribute(CKA_VALUE_BITS)->getUnsignedLongValue() == value3); 
 		CPPUNIT_ASSERT(testObject.getAttribute(CKA_PUBLIC_EXPONENT)->getByteStringValue() == value4);
 		CPPUNIT_ASSERT(testObject.getAttribute(CKA_SUBJECT)->getByteStringValue() == value5);
 
@@ -303,16 +303,15 @@ void test_a_dbobject_with_an_object::should_store_binary_attributes()
 
 void test_a_dbobject_with_an_object::should_store_mixed_attributes()
 {
-	ByteString value3 = "BDEBDBEDBBDBEBDEBE792759537328";
+	bool value1 = true;
+	unsigned long value2 = 0x87654321;
+	unsigned long value3 = 0xBDEBDBED;
 
 	// Create the test object
 	{
 		DBObject testObject(connection);
 		CPPUNIT_ASSERT(testObject.find(1));
 		CPPUNIT_ASSERT(testObject.isValid());
-
-		bool value1 = true;
-		unsigned long value2 = 0x87654321;
 
 		OSAttribute attr1(value1);
 		OSAttribute attr2(value2);
@@ -336,27 +335,29 @@ void test_a_dbobject_with_an_object::should_store_mixed_attributes()
 
 		CPPUNIT_ASSERT(testObject.getAttribute(CKA_TOKEN)->isBooleanAttribute());
 		CPPUNIT_ASSERT(testObject.getAttribute(CKA_PRIME_BITS)->isUnsignedLongAttribute());
-		CPPUNIT_ASSERT(testObject.getAttribute(CKA_VALUE_BITS)->isByteStringAttribute());
+		CPPUNIT_ASSERT(testObject.getAttribute(CKA_VALUE_BITS)->isUnsignedLongAttribute());
 
 		CPPUNIT_ASSERT(testObject.getAttribute(CKA_TOKEN)->getBooleanValue());
-		CPPUNIT_ASSERT_EQUAL(testObject.getAttribute(CKA_PRIME_BITS)->getUnsignedLongValue(), (unsigned long)0x87654321);
-		CPPUNIT_ASSERT(testObject.getAttribute(CKA_VALUE_BITS)->getByteStringValue() == value3);
+		CPPUNIT_ASSERT_EQUAL(testObject.getAttribute(CKA_PRIME_BITS)->getUnsignedLongValue(), value2);
+		CPPUNIT_ASSERT(testObject.getAttribute(CKA_VALUE_BITS)->getUnsignedLongValue() == value3);
 	}
 }
 
 void test_a_dbobject_with_an_object::should_store_double_attributes()
 {
-	ByteString value3 = "BDEBDBEDBBDBEBDEBE792759537328";
-	ByteString value3a = "466487346943785684957634";
+	
+	bool value1 = true;
+	bool value1a = false;
+	unsigned long value2 = 0x87654321;
+	unsigned long value2a = 0x76767676;
+	unsigned long value3 = 0xBDEBDBED;
+	unsigned long value3a = 0x46648734;
 
 	// Create the test object
 	{
 		DBObject testObject(connection);
 		CPPUNIT_ASSERT(testObject.find(1));
 		CPPUNIT_ASSERT(testObject.isValid());
-
-		bool value1 = true;
-		unsigned long value2 = 0x87654321;
 
 		OSAttribute attr1(value1);
 		OSAttribute attr2(value2);
@@ -380,17 +381,14 @@ void test_a_dbobject_with_an_object::should_store_double_attributes()
 
 		CPPUNIT_ASSERT(testObject.getAttribute(CKA_TOKEN)->isBooleanAttribute());
 		CPPUNIT_ASSERT(testObject.getAttribute(CKA_PRIME_BITS)->isUnsignedLongAttribute());
-		CPPUNIT_ASSERT(testObject.getAttribute(CKA_VALUE_BITS)->isByteStringAttribute());
+		CPPUNIT_ASSERT(testObject.getAttribute(CKA_VALUE_BITS)->isUnsignedLongAttribute());
 
 		CPPUNIT_ASSERT(testObject.getAttribute(CKA_TOKEN)->getBooleanValue());
-		CPPUNIT_ASSERT_EQUAL(testObject.getAttribute(CKA_PRIME_BITS)->getUnsignedLongValue(), (unsigned long)0x87654321);
-		CPPUNIT_ASSERT(testObject.getAttribute(CKA_VALUE_BITS)->getByteStringValue() == value3);
+		CPPUNIT_ASSERT_EQUAL(testObject.getAttribute(CKA_PRIME_BITS)->getUnsignedLongValue(), value2);
+		CPPUNIT_ASSERT(testObject.getAttribute(CKA_VALUE_BITS)->getUnsignedLongValue() == value3);
 
-		bool value1 = false;
-		unsigned long value2 = 0x76767676;
-
-		OSAttribute attr1(value1);
-		OSAttribute attr2(value2);
+		OSAttribute attr1(value1a);
+		OSAttribute attr2(value2a);
 		OSAttribute attr3(value3a);
 
 		// Change the attributes
@@ -403,11 +401,11 @@ void test_a_dbobject_with_an_object::should_store_double_attributes()
 		// Check the attributes
 		CPPUNIT_ASSERT(testObject.getAttribute(CKA_TOKEN)->isBooleanAttribute());
 		CPPUNIT_ASSERT(testObject.getAttribute(CKA_PRIME_BITS)->isUnsignedLongAttribute());
-		CPPUNIT_ASSERT(testObject.getAttribute(CKA_VALUE_BITS)->isByteStringAttribute());
+		CPPUNIT_ASSERT(testObject.getAttribute(CKA_VALUE_BITS)->isUnsignedLongAttribute());
 
-		CPPUNIT_ASSERT(testObject.getAttribute(CKA_TOKEN)->getBooleanValue() == value1);
-		CPPUNIT_ASSERT(testObject.getAttribute(CKA_PRIME_BITS)->getUnsignedLongValue() == value2);
-		CPPUNIT_ASSERT(testObject.getAttribute(CKA_VALUE_BITS)->getByteStringValue() == value3a);
+		CPPUNIT_ASSERT(testObject.getAttribute(CKA_TOKEN)->getBooleanValue() == value1a);
+		CPPUNIT_ASSERT(testObject.getAttribute(CKA_PRIME_BITS)->getUnsignedLongValue() == value2a);
+		CPPUNIT_ASSERT(testObject.getAttribute(CKA_VALUE_BITS)->getUnsignedLongValue() == value3a);
 	}
 
 	// Now re-read back the object
@@ -423,21 +421,24 @@ void test_a_dbobject_with_an_object::should_store_double_attributes()
 
 		CPPUNIT_ASSERT(testObject.getAttribute(CKA_TOKEN)->isBooleanAttribute());
 		CPPUNIT_ASSERT(testObject.getAttribute(CKA_PRIME_BITS)->isUnsignedLongAttribute());
-		CPPUNIT_ASSERT(testObject.getAttribute(CKA_VALUE_BITS)->isByteStringAttribute());
+		CPPUNIT_ASSERT(testObject.getAttribute(CKA_VALUE_BITS)->isUnsignedLongAttribute());
 
-		bool value1 = false;
-		unsigned long value2 = 0x76767676;
-
-		CPPUNIT_ASSERT(testObject.getAttribute(CKA_TOKEN)->getBooleanValue() == value1);
-		CPPUNIT_ASSERT(testObject.getAttribute(CKA_PRIME_BITS)->getUnsignedLongValue() == value2);
-		CPPUNIT_ASSERT(testObject.getAttribute(CKA_VALUE_BITS)->getByteStringValue() == value3a);
+		CPPUNIT_ASSERT(testObject.getAttribute(CKA_TOKEN)->getBooleanValue() == value1a);
+		CPPUNIT_ASSERT(testObject.getAttribute(CKA_PRIME_BITS)->getUnsignedLongValue() == value2a);
+		CPPUNIT_ASSERT(testObject.getAttribute(CKA_VALUE_BITS)->getUnsignedLongValue() == value3a);
 	}
 }
 
 void test_a_dbobject_with_an_object::can_refresh_attributes()
 {
+	bool value1 = true;
+	bool value1a = false;
+	unsigned long value2 = 0x87654321;
+	unsigned long value2a = 0x76767676;
+	unsigned long value2b = 0x89898989;
 	ByteString value3 = "BDEBDBEDBBDBEBDEBE792759537328";
 	ByteString value3a = "466487346943785684957634";
+	ByteString value4 = "0102010201020102010201020102010201020102";	
 
 	// Create the test object
 	{
@@ -445,16 +446,13 @@ void test_a_dbobject_with_an_object::can_refresh_attributes()
 		CPPUNIT_ASSERT(testObject.find(1));
 		CPPUNIT_ASSERT(testObject.isValid());
 
-		bool value1 = true;
-		unsigned long value2 = 0x87654321;
-
 		OSAttribute attr1(value1);
 		OSAttribute attr2(value2);
 		OSAttribute attr3(value3);
 
 		CPPUNIT_ASSERT(testObject.setAttribute(CKA_TOKEN, attr1));
 		CPPUNIT_ASSERT(testObject.setAttribute(CKA_PRIME_BITS, attr2));
-		CPPUNIT_ASSERT(testObject.setAttribute(CKA_VALUE_BITS, attr3));
+		CPPUNIT_ASSERT(testObject.setAttribute(CKA_SUBJECT, attr3));
 	}
 
 	// Now read back the object
@@ -465,22 +463,19 @@ void test_a_dbobject_with_an_object::can_refresh_attributes()
 
 		CPPUNIT_ASSERT(testObject.attributeExists(CKA_TOKEN));
 		CPPUNIT_ASSERT(testObject.attributeExists(CKA_PRIME_BITS));
-		CPPUNIT_ASSERT(testObject.attributeExists(CKA_VALUE_BITS));
+		CPPUNIT_ASSERT(testObject.attributeExists(CKA_SUBJECT));
 		CPPUNIT_ASSERT(!testObject.attributeExists(CKA_ID));
 
 		CPPUNIT_ASSERT(testObject.getAttribute(CKA_TOKEN)->isBooleanAttribute());
 		CPPUNIT_ASSERT(testObject.getAttribute(CKA_PRIME_BITS)->isUnsignedLongAttribute());
-		CPPUNIT_ASSERT(testObject.getAttribute(CKA_VALUE_BITS)->isByteStringAttribute());
+		CPPUNIT_ASSERT(testObject.getAttribute(CKA_SUBJECT)->isByteStringAttribute());
 
 		CPPUNIT_ASSERT(testObject.getAttribute(CKA_TOKEN)->getBooleanValue());
-		CPPUNIT_ASSERT_EQUAL(testObject.getAttribute(CKA_PRIME_BITS)->getUnsignedLongValue(), (unsigned long)0x87654321);
-		CPPUNIT_ASSERT(testObject.getAttribute(CKA_VALUE_BITS)->getByteStringValue() == value3);
+		CPPUNIT_ASSERT_EQUAL(testObject.getAttribute(CKA_PRIME_BITS)->getUnsignedLongValue(), value2);
+		CPPUNIT_ASSERT(testObject.getAttribute(CKA_SUBJECT)->getByteStringValue() == value3);
 
-		bool value1 = false;
-		unsigned long value2 = 0x76767676;
-
-		OSAttribute attr1(value1);
-		OSAttribute attr2(value2);
+		OSAttribute attr1(value1a);
+		OSAttribute attr2(value2a);
 		OSAttribute attr3(value3a);
 
 		// Change the attributes
@@ -488,16 +483,16 @@ void test_a_dbobject_with_an_object::can_refresh_attributes()
 
 		CPPUNIT_ASSERT(testObject.setAttribute(CKA_TOKEN, attr1));
 		CPPUNIT_ASSERT(testObject.setAttribute(CKA_PRIME_BITS, attr2));
-		CPPUNIT_ASSERT(testObject.setAttribute(CKA_VALUE_BITS, attr3));
+		CPPUNIT_ASSERT(testObject.setAttribute(CKA_SUBJECT, attr3));
 
 		// Check the attributes
 		CPPUNIT_ASSERT(testObject.getAttribute(CKA_TOKEN)->isBooleanAttribute());
 		CPPUNIT_ASSERT(testObject.getAttribute(CKA_PRIME_BITS)->isUnsignedLongAttribute());
-		CPPUNIT_ASSERT(testObject.getAttribute(CKA_VALUE_BITS)->isByteStringAttribute());
+		CPPUNIT_ASSERT(testObject.getAttribute(CKA_SUBJECT)->isByteStringAttribute());
 
-		CPPUNIT_ASSERT(testObject.getAttribute(CKA_TOKEN)->getBooleanValue() == value1);
-		CPPUNIT_ASSERT(testObject.getAttribute(CKA_PRIME_BITS)->getUnsignedLongValue() == value2);
-		CPPUNIT_ASSERT(testObject.getAttribute(CKA_VALUE_BITS)->getByteStringValue() == value3a);
+		CPPUNIT_ASSERT(testObject.getAttribute(CKA_TOKEN)->getBooleanValue() == value1a);
+		CPPUNIT_ASSERT(testObject.getAttribute(CKA_PRIME_BITS)->getUnsignedLongValue() == value2a);
+		CPPUNIT_ASSERT(testObject.getAttribute(CKA_SUBJECT)->getByteStringValue() == value3a);
 
 		// Open the object a second time
 		DBObject testObject2(connection);
@@ -507,43 +502,43 @@ void test_a_dbobject_with_an_object::can_refresh_attributes()
 		// Check the attributes on the second instance
 		CPPUNIT_ASSERT(testObject2.getAttribute(CKA_TOKEN)->isBooleanAttribute());
 		CPPUNIT_ASSERT(testObject2.getAttribute(CKA_PRIME_BITS)->isUnsignedLongAttribute());
-		CPPUNIT_ASSERT(testObject2.getAttribute(CKA_VALUE_BITS)->isByteStringAttribute());
+		CPPUNIT_ASSERT(testObject2.getAttribute(CKA_SUBJECT)->isByteStringAttribute());
 
-		CPPUNIT_ASSERT(testObject2.getAttribute(CKA_TOKEN)->getBooleanValue() == value1);
-		CPPUNIT_ASSERT(testObject2.getAttribute(CKA_PRIME_BITS)->getUnsignedLongValue() == value2);
-		CPPUNIT_ASSERT(testObject2.getAttribute(CKA_VALUE_BITS)->getByteStringValue() == value3a);
+		CPPUNIT_ASSERT(testObject2.getAttribute(CKA_TOKEN)->getBooleanValue() == value1a);
+		CPPUNIT_ASSERT(testObject2.getAttribute(CKA_PRIME_BITS)->getUnsignedLongValue() == value2a);
+		CPPUNIT_ASSERT(testObject2.getAttribute(CKA_SUBJECT)->getByteStringValue() == value3a);
 
 		// Add an attribute on the second object
-		ByteString id = "0102010201020102010201020102010201020102";
-
-		OSAttribute attr4(id);
+		OSAttribute attr4(value4);
 
 		CPPUNIT_ASSERT(testObject.setAttribute(CKA_ID, attr4));
 
 		// Check the attribute
 		CPPUNIT_ASSERT(testObject2.attributeExists(CKA_ID));
 		CPPUNIT_ASSERT(testObject2.getAttribute(CKA_ID)->isByteStringAttribute());
-		CPPUNIT_ASSERT(testObject2.getAttribute(CKA_ID)->getByteStringValue() == id);
+		CPPUNIT_ASSERT(testObject2.getAttribute(CKA_ID)->getByteStringValue() == value4);
 
 		// Now check that the first instance also knows about it
 		CPPUNIT_ASSERT(testObject.attributeExists(CKA_ID));
 		CPPUNIT_ASSERT(testObject.getAttribute(CKA_ID)->isByteStringAttribute());
-		CPPUNIT_ASSERT(testObject.getAttribute(CKA_ID)->getByteStringValue() == id);
+		CPPUNIT_ASSERT(testObject.getAttribute(CKA_ID)->getByteStringValue() == value4);
 
 		// Now change another attribute
-		unsigned long value2a = 0x89898989;
+		OSAttribute attr2b(value2b);
 
-		OSAttribute attr2a(value2a);
-
-		CPPUNIT_ASSERT(testObject.setAttribute(CKA_PRIME_BITS, attr2a));
+		CPPUNIT_ASSERT(testObject.setAttribute(CKA_PRIME_BITS, attr2b));
 
 		// Check the attribute
 		CPPUNIT_ASSERT(testObject.getAttribute(CKA_PRIME_BITS)->isUnsignedLongAttribute());
-		CPPUNIT_ASSERT(testObject.getAttribute(CKA_PRIME_BITS)->getUnsignedLongValue() == value2a);
+		CPPUNIT_ASSERT(testObject.getAttribute(CKA_PRIME_BITS)->getUnsignedLongValue() == value2b);
 
 		// Now check that the second instance also knows about the change
 		CPPUNIT_ASSERT(testObject2.getAttribute(CKA_PRIME_BITS)->isUnsignedLongAttribute());
-		CPPUNIT_ASSERT(testObject2.getAttribute(CKA_PRIME_BITS)->getUnsignedLongValue() == value2a);
+		
+		// Note that the CKA_PRIME_BITS attribute cannot officially be modified.
+		// We optimize inside DBObject to only propagate to the database modifiable attributes.
+		// Therefore we don't expect changes to CKA_PRIME_BITS to propagate to testObject2.
+		CPPUNIT_ASSERT(testObject2.getAttribute(CKA_PRIME_BITS)->getUnsignedLongValue() != value2b);
 	}
 }
 
@@ -562,44 +557,52 @@ void test_a_dbobject_with_an_object::should_use_transactions()
 {
 	DBObject testObject(connection);
 	CPPUNIT_ASSERT(testObject.find(1));
-
 	CPPUNIT_ASSERT(testObject.isValid());
 
 	bool value1 = true;
 	unsigned long value2 = 0x87654321;
-	ByteString value3 = "BDEBDBEDBBDBEBDEBE792759537328";
+	unsigned long value3 = 0xBDEBDBED;
+	ByteString value4 = "AAAAAAAAAAAAAAAFFFFFFFFFFFFFFF";
 
 	OSAttribute attr1(value1);
 	OSAttribute attr2(value2);
 	OSAttribute attr3(value3);
+	OSAttribute attr4(value4);
 
 	CPPUNIT_ASSERT(testObject.setAttribute(CKA_TOKEN, attr1));
 	CPPUNIT_ASSERT(testObject.setAttribute(CKA_PRIME_BITS, attr2));
 	CPPUNIT_ASSERT(testObject.setAttribute(CKA_VALUE_BITS, attr3));
+	CPPUNIT_ASSERT(testObject.setAttribute(CKA_ID, attr4));
 
-	// Create secondary instance for the same object
+	// Create secondary instance for the same object.
+	// This needs to have a different connection to the database to simulate
+	// another process accessing the data.
 	DBObject testObject2(connection2);
 	CPPUNIT_ASSERT(testObject2.find(1));
-
 	CPPUNIT_ASSERT(testObject2.isValid());
 
 	// Check that it has the same attributes
 	CPPUNIT_ASSERT(testObject2.getAttribute(CKA_TOKEN)->isBooleanAttribute());
 	CPPUNIT_ASSERT(testObject2.getAttribute(CKA_PRIME_BITS)->isUnsignedLongAttribute());
-	CPPUNIT_ASSERT(testObject2.getAttribute(CKA_VALUE_BITS)->isByteStringAttribute());
+	CPPUNIT_ASSERT(testObject2.getAttribute(CKA_VALUE_BITS)->isUnsignedLongAttribute());
+	CPPUNIT_ASSERT(testObject2.getAttribute(CKA_ID)->isByteStringAttribute());
 
+	// Check that the attributes have the same values as set on testObject.
 	CPPUNIT_ASSERT(testObject2.getAttribute(CKA_TOKEN)->getBooleanValue() == value1);
 	CPPUNIT_ASSERT(testObject2.getAttribute(CKA_PRIME_BITS)->getUnsignedLongValue() == value2);
-	CPPUNIT_ASSERT(testObject2.getAttribute(CKA_VALUE_BITS)->getByteStringValue() == value3);
+	CPPUNIT_ASSERT(testObject2.getAttribute(CKA_VALUE_BITS)->getUnsignedLongValue() == value3);
+	CPPUNIT_ASSERT(testObject2.getAttribute(CKA_ID)->getByteStringValue() == value4);
 
 	// New values
 	bool value1a = false;
 	unsigned long value2a = 0x12345678;
-	ByteString value3a = "ABABABABABABABABABABABABABABAB";
+	unsigned long value3a = 0xABABABAB;
+	ByteString value4a = "EDEDEDEDEDEDEDEDEDEDEDEDEDEDED";
 
 	OSAttribute attr1a(value1a);
 	OSAttribute attr2a(value2a);
 	OSAttribute attr3a(value3a);
+	OSAttribute attr4a(value4a);
 
 	// Start transaction on object
 	CPPUNIT_ASSERT(testObject.startTransaction(DBObject::ReadWrite));
@@ -608,37 +611,48 @@ void test_a_dbobject_with_an_object::should_use_transactions()
 	CPPUNIT_ASSERT(testObject.setAttribute(CKA_TOKEN, attr1a));
 	CPPUNIT_ASSERT(testObject.setAttribute(CKA_PRIME_BITS, attr2a));
 	CPPUNIT_ASSERT(testObject.setAttribute(CKA_VALUE_BITS, attr3a));
+	CPPUNIT_ASSERT(testObject.setAttribute(CKA_ID, attr4a));
 
 	// Verify that the attributes were set
 	CPPUNIT_ASSERT(testObject.getAttribute(CKA_TOKEN)->isBooleanAttribute());
 	CPPUNIT_ASSERT(testObject.getAttribute(CKA_PRIME_BITS)->isUnsignedLongAttribute());
-	CPPUNIT_ASSERT(testObject.getAttribute(CKA_VALUE_BITS)->isByteStringAttribute());
+	CPPUNIT_ASSERT(testObject.getAttribute(CKA_VALUE_BITS)->isUnsignedLongAttribute());
+	CPPUNIT_ASSERT(testObject.getAttribute(CKA_ID)->isByteStringAttribute());
 
 	CPPUNIT_ASSERT(testObject.getAttribute(CKA_TOKEN)->getBooleanValue() == value1a);
 	CPPUNIT_ASSERT(testObject.getAttribute(CKA_PRIME_BITS)->getUnsignedLongValue() == value2a);
-	CPPUNIT_ASSERT(testObject.getAttribute(CKA_VALUE_BITS)->getByteStringValue() == value3a);
+	CPPUNIT_ASSERT(testObject.getAttribute(CKA_VALUE_BITS)->getUnsignedLongValue() == value3a);
+	CPPUNIT_ASSERT(testObject.getAttribute(CKA_ID)->getByteStringValue() == value4a);
 
 	// Verify that they are unchanged on the other instance
 	CPPUNIT_ASSERT(testObject2.getAttribute(CKA_TOKEN)->isBooleanAttribute());
 	CPPUNIT_ASSERT(testObject2.getAttribute(CKA_PRIME_BITS)->isUnsignedLongAttribute());
-	CPPUNIT_ASSERT(testObject2.getAttribute(CKA_VALUE_BITS)->isByteStringAttribute());
+	CPPUNIT_ASSERT(testObject2.getAttribute(CKA_VALUE_BITS)->isUnsignedLongAttribute());
+	CPPUNIT_ASSERT(testObject2.getAttribute(CKA_ID)->isByteStringAttribute());
 
 	CPPUNIT_ASSERT(testObject2.getAttribute(CKA_TOKEN)->getBooleanValue() == value1);
 	CPPUNIT_ASSERT(testObject2.getAttribute(CKA_PRIME_BITS)->getUnsignedLongValue() == value2);
-	CPPUNIT_ASSERT(testObject2.getAttribute(CKA_VALUE_BITS)->getByteStringValue() == value3);
-
+	CPPUNIT_ASSERT(testObject2.getAttribute(CKA_VALUE_BITS)->getUnsignedLongValue() == value3);
+	CPPUNIT_ASSERT(testObject2.getAttribute(CKA_ID)->getByteStringValue() == value4);
+	
 	// Commit the transaction
 	CPPUNIT_ASSERT(testObject.commitTransaction());
 
-	// Verify that they have now changed on the other instance
+	// Verify that non-modifiable attributes did not propagate but modifiable attributes 
+	// have now changed on the other instance
 	CPPUNIT_ASSERT(testObject2.getAttribute(CKA_TOKEN)->isBooleanAttribute());
 	CPPUNIT_ASSERT(testObject2.getAttribute(CKA_PRIME_BITS)->isUnsignedLongAttribute());
-	CPPUNIT_ASSERT(testObject2.getAttribute(CKA_VALUE_BITS)->isByteStringAttribute());
+	CPPUNIT_ASSERT(testObject2.getAttribute(CKA_VALUE_BITS)->isUnsignedLongAttribute());
+	CPPUNIT_ASSERT(testObject2.getAttribute(CKA_ID)->isByteStringAttribute());
 
-	CPPUNIT_ASSERT(testObject2.getAttribute(CKA_TOKEN)->getBooleanValue() == value1a);
-	CPPUNIT_ASSERT(testObject2.getAttribute(CKA_PRIME_BITS)->getUnsignedLongValue() == value2a);
-	CPPUNIT_ASSERT(testObject2.getAttribute(CKA_VALUE_BITS)->getByteStringValue() == value3a);
-
+	// NOTE: 3 attributes below cannot be modified after creation and therefore are not required to propagate.
+	CPPUNIT_ASSERT(testObject2.getAttribute(CKA_TOKEN)->getBooleanValue() != value1a);
+	CPPUNIT_ASSERT(testObject2.getAttribute(CKA_PRIME_BITS)->getUnsignedLongValue() != value2a);
+	CPPUNIT_ASSERT(testObject2.getAttribute(CKA_VALUE_BITS)->getUnsignedLongValue() != value3a);
+	
+	// CKA_ID attribute can be modified after creation and therefore should have propagated.
+	CPPUNIT_ASSERT(testObject2.getAttribute(CKA_ID)->getByteStringValue() == value4a);
+	
 	// Start transaction on object
 	CPPUNIT_ASSERT(testObject.startTransaction(DBObject::ReadWrite));
 
@@ -646,44 +660,63 @@ void test_a_dbobject_with_an_object::should_use_transactions()
 	CPPUNIT_ASSERT(testObject.setAttribute(CKA_TOKEN, attr1));
 	CPPUNIT_ASSERT(testObject.setAttribute(CKA_PRIME_BITS, attr2));
 	CPPUNIT_ASSERT(testObject.setAttribute(CKA_VALUE_BITS, attr3));
-
+	CPPUNIT_ASSERT(testObject.setAttribute(CKA_ID, attr4));
+	
 	// Verify that the attributes were set
 	CPPUNIT_ASSERT(testObject.getAttribute(CKA_TOKEN)->isBooleanAttribute());
 	CPPUNIT_ASSERT(testObject.getAttribute(CKA_PRIME_BITS)->isUnsignedLongAttribute());
-	CPPUNIT_ASSERT(testObject.getAttribute(CKA_VALUE_BITS)->isByteStringAttribute());
+	CPPUNIT_ASSERT(testObject.getAttribute(CKA_VALUE_BITS)->isUnsignedLongAttribute());
+	CPPUNIT_ASSERT(testObject.getAttribute(CKA_ID)->isByteStringAttribute());
 
 	CPPUNIT_ASSERT(testObject.getAttribute(CKA_TOKEN)->getBooleanValue() == value1);
 	CPPUNIT_ASSERT(testObject.getAttribute(CKA_PRIME_BITS)->getUnsignedLongValue() == value2);
-	CPPUNIT_ASSERT(testObject.getAttribute(CKA_VALUE_BITS)->getByteStringValue() == value3);
-
+	CPPUNIT_ASSERT(testObject.getAttribute(CKA_VALUE_BITS)->getUnsignedLongValue() == value3);
+	CPPUNIT_ASSERT(testObject.getAttribute(CKA_ID)->getByteStringValue() == value4);
+	
+	// Create a fresh third instance for the same object to force the data to be retrieved from the database.
+	DBObject testObject3(connection2);
+	CPPUNIT_ASSERT(testObject3.find(1));
+	CPPUNIT_ASSERT(testObject3.isValid());
+	
 	// Verify that they are unchanged on the other instance, while the transaction is still in progress.
-	CPPUNIT_ASSERT(testObject2.getAttribute(CKA_TOKEN)->isBooleanAttribute());
-	CPPUNIT_ASSERT(testObject2.getAttribute(CKA_PRIME_BITS)->isUnsignedLongAttribute());
-	CPPUNIT_ASSERT(testObject2.getAttribute(CKA_VALUE_BITS)->isByteStringAttribute());
-
-	CPPUNIT_ASSERT(testObject2.getAttribute(CKA_TOKEN)->getBooleanValue() == value1a);
-	CPPUNIT_ASSERT(testObject2.getAttribute(CKA_PRIME_BITS)->getUnsignedLongValue() == value2a);
-	CPPUNIT_ASSERT(testObject2.getAttribute(CKA_VALUE_BITS)->getByteStringValue() == value3a);
+	CPPUNIT_ASSERT(testObject3.getAttribute(CKA_TOKEN)->isBooleanAttribute());
+	CPPUNIT_ASSERT(testObject3.getAttribute(CKA_PRIME_BITS)->isUnsignedLongAttribute());
+	CPPUNIT_ASSERT(testObject3.getAttribute(CKA_VALUE_BITS)->isUnsignedLongAttribute());
+	CPPUNIT_ASSERT(testObject3.getAttribute(CKA_ID)->isByteStringAttribute());
+	
+	// Verify that the attributes from the database are still hodling the same value as when the transaction started.
+	CPPUNIT_ASSERT(testObject3.getAttribute(CKA_TOKEN)->getBooleanValue() == value1a);
+	CPPUNIT_ASSERT(testObject3.getAttribute(CKA_PRIME_BITS)->getUnsignedLongValue() == value2a);
+	CPPUNIT_ASSERT(testObject3.getAttribute(CKA_VALUE_BITS)->getUnsignedLongValue() == value3a);
+	CPPUNIT_ASSERT(testObject3.getAttribute(CKA_ID)->getByteStringValue() == value4a);
 
 	// Abort the transaction
 	CPPUNIT_ASSERT(testObject.abortTransaction());
 
-	// Verify that they are unchanged on both instances
+	// Verify that after aborting the transaction the values in testObject have reverted back to their
+	// original state.
 	CPPUNIT_ASSERT(testObject.getAttribute(CKA_TOKEN)->isBooleanAttribute());
 	CPPUNIT_ASSERT(testObject.getAttribute(CKA_PRIME_BITS)->isUnsignedLongAttribute());
-	CPPUNIT_ASSERT(testObject.getAttribute(CKA_VALUE_BITS)->isByteStringAttribute());
+	CPPUNIT_ASSERT(testObject.getAttribute(CKA_VALUE_BITS)->isUnsignedLongAttribute());
+	CPPUNIT_ASSERT(testObject.getAttribute(CKA_ID)->isByteStringAttribute());
 
+	// After aborting a transaction the testObject should be back to pre transaction state.
 	CPPUNIT_ASSERT(testObject.getAttribute(CKA_TOKEN)->getBooleanValue() == value1a);
 	CPPUNIT_ASSERT(testObject.getAttribute(CKA_PRIME_BITS)->getUnsignedLongValue() == value2a);
-	CPPUNIT_ASSERT(testObject.getAttribute(CKA_VALUE_BITS)->getByteStringValue() == value3a);
+	CPPUNIT_ASSERT(testObject.getAttribute(CKA_VALUE_BITS)->getUnsignedLongValue() == value3a);
+	CPPUNIT_ASSERT(testObject.getAttribute(CKA_ID)->getByteStringValue() == value4a);
 
-	CPPUNIT_ASSERT(testObject2.getAttribute(CKA_TOKEN)->isBooleanAttribute());
-	CPPUNIT_ASSERT(testObject2.getAttribute(CKA_PRIME_BITS)->isUnsignedLongAttribute());
-	CPPUNIT_ASSERT(testObject2.getAttribute(CKA_VALUE_BITS)->isByteStringAttribute());
+	// Verify that testObject3 still has the original values.
+	CPPUNIT_ASSERT(testObject3.getAttribute(CKA_TOKEN)->isBooleanAttribute());
+	CPPUNIT_ASSERT(testObject3.getAttribute(CKA_PRIME_BITS)->isUnsignedLongAttribute());
+	CPPUNIT_ASSERT(testObject3.getAttribute(CKA_VALUE_BITS)->isUnsignedLongAttribute());
+	CPPUNIT_ASSERT(testObject3.getAttribute(CKA_ID)->isByteStringAttribute());
 
-	CPPUNIT_ASSERT(testObject2.getAttribute(CKA_TOKEN)->getBooleanValue() == value1a);
-	CPPUNIT_ASSERT(testObject2.getAttribute(CKA_PRIME_BITS)->getUnsignedLongValue() == value2a);
-	CPPUNIT_ASSERT(testObject2.getAttribute(CKA_VALUE_BITS)->getByteStringValue() == value3a);
+	// Verify that testObject3 still has the original values.
+	CPPUNIT_ASSERT(testObject3.getAttribute(CKA_TOKEN)->getBooleanValue() == value1a);
+	CPPUNIT_ASSERT(testObject3.getAttribute(CKA_PRIME_BITS)->getUnsignedLongValue() == value2a);
+	CPPUNIT_ASSERT(testObject3.getAttribute(CKA_VALUE_BITS)->getUnsignedLongValue() == value3a);
+	CPPUNIT_ASSERT(testObject3.getAttribute(CKA_ID)->getByteStringValue() == value4a);
 }
 
 void test_a_dbobject_with_an_object::should_fail_to_delete()
