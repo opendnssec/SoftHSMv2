@@ -58,7 +58,7 @@ public:
 
 	// Will drop any internal references to the connection
 	void dropConnection();
-
+	
 	// create tables to support storage of attributes for the object.
 	bool createTables();
 
@@ -126,17 +126,9 @@ private:
 	long long _objectId;
 
 	std::map<CK_ATTRIBUTE_TYPE,OSAttribute*> _attributes;
+	std::map<CK_ATTRIBUTE_TYPE,OSAttribute*> *_transaction;
 
-public:
-	enum AttributeKind {
-		akUnknown,
-		akBoolean,
-		akInteger,
-		akBinary
-	};
-
-private:
-	AttributeKind findAttribute(CK_ATTRIBUTE_TYPE type);
+	OSAttribute *accessAttribute(CK_ATTRIBUTE_TYPE type);
 };
 
 #endif // !_SOFTHSM_V2_DBOBJECT_H

@@ -34,6 +34,7 @@
 #include "DBObject.h"
 #include "OSPathSep.h"
 #include "DB.h"
+#include "OSAttributes.h"
 
 #include <unistd.h>
 #include <sys/types.h>
@@ -44,13 +45,13 @@
 
 // Create an object that can access a record, but don't do anything yet.
 DBObject::DBObject(DB::Connection *connection, ObjectStoreToken *token)
-	: _mutex(MutexFactory::i()->getMutex()), _connection(connection), _token(token), _objectId(0)
+	: _mutex(MutexFactory::i()->getMutex()), _connection(connection), _token(token), _objectId(0), _transaction(NULL)
 {
 
 }
 
 DBObject::DBObject(DB::Connection *connection, ObjectStoreToken *token, long long objectId)
-	: _mutex(MutexFactory::i()->getMutex()), _connection(connection), _token(token), _objectId(objectId)
+	: _mutex(MutexFactory::i()->getMutex()), _connection(connection), _token(token), _objectId(objectId), _transaction(NULL)
 {
 }
 
@@ -60,6 +61,14 @@ DBObject::~DBObject()
 	for (std::map<CK_ATTRIBUTE_TYPE,OSAttribute*>::iterator it = _attributes.begin(); it!=_attributes.end(); ++it) {
 		delete it->second;
 		it->second = NULL;
+	}
+	if (_transaction)
+	{
+		for (std::map<CK_ATTRIBUTE_TYPE,OSAttribute*>::iterator it = _transaction->begin(); it!=_transaction->end(); ++it) {
+			delete it->second;
+			it->second = NULL;
+		}
+		delete _transaction;
 	}
 	MutexFactory::i()->recycleMutex(_mutex);
 }
@@ -329,65 +338,307 @@ long long DBObject::objectId()
 	return _objectId;
 }
 
-DBObject::AttributeKind DBObject::findAttribute(CK_ATTRIBUTE_TYPE type)
+static bool isModifiable(CK_ATTRIBUTE_TYPE type)
 {
-	// We currently search all attribute_xxxxx tables for a match on type and object_id.
-	// Because it is fixed for predefined types what underlying type an attribute is, we
-	// should be able to optimize this once we create a mapping of CK_ATTRIBUTE_TYPE to
-	// attribute table in the DB.
-
-	DB::Statement statement;
-	DB::Result result;
-
-	// try to find the attribute in the boolean
-	statement = _connection->prepare(
-		"select value from attribute_boolean where type=%d and object_id=%lld",
-		type,
-		_objectId);
-	if (!statement.isValid())
-	{
-		return akUnknown;
+	switch (type) {
+	case CKA_LABEL:
+	case CKA_ID:
+	case CKA_ISSUER:
+	case CKA_SERIAL_NUMBER:
+	case CKA_DERIVE:
+	case CKA_ENCRYPT:
+	case CKA_VERIFY:
+	case CKA_VERIFY_RECOVER:
+	case CKA_WRAP:
+	case CKA_DECRYPT:
+	case CKA_SIGN:
+	case CKA_SIGN_RECOVER:
+	case CKA_UNWRAP:
+	case CKA_SENSITIVE:
+	case CKA_EXTRACTABLE:
+	case CKA_GOSTR3411_PARAMS:
+	case CKA_SUBJECT:
+	case CKA_GOST28147_PARAMS:
+	case CKA_OS_TOKENFLAGS:
+	case CKA_OS_SOPIN:
+	case CKA_OS_USERPIN:
+		return true;
+	default:
+		return false;
 	}
+}
 
-	result = _connection->perform(statement);
-	if (result.isValid())
-	{
-		return akBoolean;
+enum AttributeKind {
+	akUnknown,
+	akBoolean,
+	akInteger,
+	akBinary,
+	akArray
+};
+
+static AttributeKind attributeKind(CK_ATTRIBUTE_TYPE type)
+{
+	switch (type) {
+	case CKA_CLASS: return akInteger;
+	case CKA_TOKEN: return akBoolean;
+	case CKA_PRIVATE: return akBoolean;
+	case CKA_LABEL: return akBinary;
+	case CKA_APPLICATION: return akBinary;
+	case CKA_VALUE: return akBinary;
+	case CKA_OBJECT_ID: return akBinary;
+	case CKA_CERTIFICATE_TYPE: return akInteger;
+	case CKA_ISSUER: return akBinary;
+	case CKA_SERIAL_NUMBER: return akBinary;
+	case CKA_AC_ISSUER: return akBinary;
+	case CKA_OWNER: return akBinary;
+	case CKA_ATTR_TYPES: return akBinary;
+	case CKA_TRUSTED: return akBoolean;
+	case CKA_CERTIFICATE_CATEGORY: return akInteger;
+	case CKA_JAVA_MIDP_SECURITY_DOMAIN: return akInteger;
+	case CKA_URL: return akBinary;
+	case CKA_HASH_OF_SUBJECT_PUBLIC_KEY: return akBinary;
+	case CKA_HASH_OF_ISSUER_PUBLIC_KEY: return akBinary;
+	case CKA_NAME_HASH_ALGORITHM: return akInteger;
+	case CKA_CHECK_VALUE: return akBinary;
+	case CKA_KEY_TYPE: return akInteger;
+	case CKA_SUBJECT: return akBinary;
+	case CKA_ID: return akBinary;
+	case CKA_SENSITIVE: return akBoolean;
+	case CKA_ENCRYPT: return akBoolean;
+	case CKA_DECRYPT: return akBoolean;
+	case CKA_WRAP: return akBoolean;
+	case CKA_UNWRAP: return akBoolean;
+	case CKA_SIGN: return akBoolean;
+	case CKA_SIGN_RECOVER: return akBoolean;
+	case CKA_VERIFY: return akBoolean;
+	case CKA_VERIFY_RECOVER: return akBoolean;
+	case CKA_DERIVE: return akBoolean;
+	case CKA_START_DATE: return akBinary;
+	case CKA_END_DATE: return akBinary;
+	case CKA_MODULUS: return akBinary;
+	case CKA_MODULUS_BITS: return akInteger;
+	case CKA_PUBLIC_EXPONENT: return akBinary;
+	case CKA_PRIVATE_EXPONENT: return akBinary;
+	case CKA_PRIME_1: return akBinary;
+	case CKA_PRIME_2: return akBinary;
+	case CKA_EXPONENT_1: return akBinary;
+	case CKA_EXPONENT_2: return akBinary;
+	case CKA_COEFFICIENT: return akBinary;
+	case CKA_PRIME: return akBinary;
+	case CKA_SUBPRIME: return akBinary;
+	case CKA_BASE: return akBinary;
+	case CKA_PRIME_BITS: return akInteger;
+	case CKA_SUBPRIME_BITS: return akInteger;
+	case CKA_VALUE_BITS: return akInteger;
+	case CKA_VALUE_LEN: return akInteger;
+	case CKA_EXTRACTABLE: return akBoolean;
+	case CKA_LOCAL: return akBoolean;
+	case CKA_NEVER_EXTRACTABLE: return akBoolean;
+	case CKA_ALWAYS_SENSITIVE: return akBoolean;
+	case CKA_KEY_GEN_MECHANISM: return akInteger;
+	case CKA_MODIFIABLE: return akBoolean;
+	case CKA_COPYABLE: return akBoolean;
+	case CKA_ECDSA_PARAMS: return akBinary;
+	case CKA_EC_POINT: return akBinary;
+	case CKA_SECONDARY_AUTH: return akBoolean; 
+	case CKA_AUTH_PIN_FLAGS: return akInteger;
+	case CKA_ALWAYS_AUTHENTICATE: return akBoolean;
+	case CKA_WRAP_WITH_TRUSTED: return akBoolean;
+/*
+	case CKA_OTP_FORMAT:
+	case CKA_OTP_LENGTH:
+	case CKA_OTP_TIME_INTERVAL:
+	case CKA_OTP_USER_FRIENDLY_MODE:
+	case CKA_OTP_CHALLENGE_REQUIREMENT:
+	case CKA_OTP_TIME_REQUIREMENT:
+	case CKA_OTP_COUNTER_REQUIREMENT:
+	case CKA_OTP_PIN_REQUIREMENT:
+	case CKA_OTP_COUNTER:
+	case CKA_OTP_TIME:
+	case CKA_OTP_USER_IDENTIFIER:
+	case CKA_OTP_SERVICE_IDENTIFIER:
+	case CKA_OTP_SERVICE_LOGO:
+	case CKA_OTP_SERVICE_LOGO_TYPE:
+*/
+	case CKA_GOSTR3410_PARAMS: return akBinary;
+	case CKA_GOSTR3411_PARAMS: return akBinary;
+	case CKA_GOST28147_PARAMS: return akBinary;
+/*
+	case CKA_HW_FEATURE_TYPE:
+	case CKA_RESET_ON_INIT:
+	case CKA_HAS_RESET:
+	case CKA_PIXEL_X:
+	case CKA_PIXEL_Y:
+	case CKA_RESOLUTION:
+	case CKA_CHAR_ROWS:
+	case CKA_CHAR_COLUMNS:
+	case CKA_COLOR:
+	case CKA_BITS_PER_PIXEL:
+	case CKA_CHAR_SETS:
+	case CKA_ENCODING_METHODS:
+	case CKA_MIME_TYPES:
+	case CKA_MECHANISM_TYPE:
+	case CKA_REQUIRED_CMS_ATTRIBUTES:
+	case CKA_DEFAULT_CMS_ATTRIBUTES:
+	case CKA_SUPPORTED_CMS_ATTRIBUTES:
+*/		
+	case CKA_WRAP_TEMPLATE: return akArray;
+	case CKA_UNWRAP_TEMPLATE: return akArray;
+	case CKA_DERIVE_TEMPLATE: return akArray;
+	case CKA_ALLOWED_MECHANISMS: return akArray;
+		
+	case CKA_OS_TOKENLABEL: return akBinary;
+	case CKA_OS_TOKENSERIAL: return akBinary;
+	case CKA_OS_TOKENFLAGS: return akInteger;
+	case CKA_OS_SOPIN: return akBinary;
+	case CKA_OS_USERPIN: return akBinary;
+
+	default: return akUnknown;
 	}
+}
 
-	// try to find the attribute in the boolean
-	statement = _connection->prepare(
-		"select value from attribute_integer where type=%d and object_id=%lld",
-		type,
-		_objectId);
-	if (!statement.isValid())
+OSAttribute *DBObject::accessAttribute(CK_ATTRIBUTE_TYPE type)
+{
+	switch (attributeKind(type))
 	{
-		return akUnknown;
-	}
+		case akUnknown:
+			return NULL;
+		case akBoolean:
+		{
+			// try to find the attribute in the boolean attribute table
+			DB::Statement statement = _connection->prepare(
+				"select value from attribute_boolean where type=%d and object_id=%lld",
+				type,
+				_objectId);
+			if (!statement.isValid())
+			{
+				return NULL;
+			}
+			DB::Result result = _connection->perform(statement);
+			if (!result.isValid())
+			{
+				return NULL;
+			}
+			// Store the attribute in the transaction when it is active.
+			std::map<CK_ATTRIBUTE_TYPE,OSAttribute*> *attrs = &_attributes;			
+			if (_transaction)
+				attrs = _transaction;
 
-	result = _connection->perform(statement);
-	if (result.isValid())
-	{
-		return akInteger;
-	}
+			bool value = result.getInt(1) != 0;
+			std::map<CK_ATTRIBUTE_TYPE,OSAttribute*>::iterator it =	 attrs->find(type);
+			OSAttribute *attr;
+			if (it != attrs->end())
+			{
+				if (it->second == NULL)
+				{
+					ERROR_MSG("Expected attribute value pointer to be valid.");
+					return NULL;
+				}
+				
+				if (!it->second->isBooleanAttribute())
+				{
+					ERROR_MSG("Trying to change the type of an attribute to boolean.");
+					return NULL;
+				}
+				it->second->setBooleanValue(value);
+				attr = it->second;
+			}
+			else
+			{
+				attr = new OSAttribute(value);
+				(*attrs)[type] = attr;
+			}
+			return attr;
+		}
+		case akInteger:
+		{
+			// try to find the attribute in the integer attribute table
+			DB::Statement statement = _connection->prepare(
+				"select value from attribute_integer where type=%d and object_id=%lld",
+				type,
+				_objectId);
+			if (!statement.isValid())
+			{
+				return NULL;
+			}
+			DB::Result result = _connection->perform(statement);
+			if (!result.isValid())
+			{
+				return NULL;
+			}
+			// Store the attribute in the transaction when it is active.
+			std::map<CK_ATTRIBUTE_TYPE,OSAttribute*> *attrs = &_attributes;			
+			if (_transaction)
+				attrs = _transaction;
+			
+			unsigned long value = result.getULongLong(1);
+			std::map<CK_ATTRIBUTE_TYPE,OSAttribute*>::iterator it =	 attrs->find(type);
+			OSAttribute *attr;
+			if (it != attrs->end())
+			{
+				if (!it->second->isUnsignedLongAttribute())
+				{
+					ERROR_MSG("Trying to change the type of an attribute to unsigned long.");
+					return NULL;
+				}
+				it->second->setUnsignedLongValue(value);
+				attr = it->second;
+			}
+			else
+			{
+				attr = new OSAttribute(value);
+				(*attrs)[type] = attr;
+			}
+			return attr;
+		}
+		case akBinary:
+		{
+			// try to find the attribute in the integer attribute table
+			DB::Statement statement = _connection->prepare(
+				"select value from attribute_blob where type=%d and object_id=%lld",
+				type,
+				_objectId);
+			if (!statement.isValid())
+			{
+				return NULL;
+			}
+			DB::Result result = _connection->perform(statement);
+			if (!result.isValid())
+			{
+				return NULL;
+			}
+			// Store the attribute in the transaction when it is active.
+			std::map<CK_ATTRIBUTE_TYPE,OSAttribute*> *attrs = &_attributes;			
+			if (_transaction)
+				attrs = _transaction;
 
-	// try to find the attribute in the boolean
-	statement = _connection->prepare(
-		"select value from attribute_blob where type=%d and object_id=%lld",
-		type,
-		_objectId);
-	if (!statement.isValid())
-	{
-		return akUnknown;
+			const unsigned char *value = result.getBinary(1);
+			size_t size = result.getFieldLength(1);
+			std::map<CK_ATTRIBUTE_TYPE,OSAttribute*>::iterator it =	 attrs->find(type);
+			OSAttribute *attr;
+			if (it != attrs->end())
+			{
+				if (!it->second->isByteStringAttribute())
+				{
+					ERROR_MSG("Trying to change the type of an attribute to binary.");
+					return NULL;
+				}
+				it->second->setByteStringValue(ByteString(value,size));
+				attr = it->second;
+			}
+			else
+			{
+				attr = new OSAttribute(ByteString(value,size));
+				(*attrs)[type] = attr;
+				return attr;
+			}
+			return attr;
+		}
+		case akArray:
+			return NULL;
 	}
-
-	result = _connection->perform(statement);
-	if (result.isValid())
-	{
-		return akBinary;
-	}
-
-	return akUnknown;
+	
+	return NULL;
 }
 
 // Check if the specified attribute exists
@@ -400,13 +651,27 @@ bool DBObject::attributeExists(CK_ATTRIBUTE_TYPE type)
 		ERROR_MSG("Object is not connected to the database.");
 		return false;
 	}
+
 	if (_objectId == 0)
 	{
 		ERROR_MSG("Cannot access invalid object.");
 		return false;
 	}
 
-	return findAttribute(type) != akUnknown;
+	if (_transaction)
+	{
+		std::map<CK_ATTRIBUTE_TYPE,OSAttribute*>::iterator it =	 _transaction->find(type);
+		if (it != _transaction->end())
+			return true;
+	}
+		
+	std::map<CK_ATTRIBUTE_TYPE,OSAttribute*>::iterator it =	 _attributes.find(type);
+	if (it != _attributes.end())
+	{
+		return true;
+	}
+
+	return accessAttribute(type) != NULL;
 }
 
 // Retrieve the specified attribute
@@ -417,82 +682,37 @@ OSAttribute* DBObject::getAttribute(CK_ATTRIBUTE_TYPE type)
 	if (_connection == NULL)
 	{
 		ERROR_MSG("Object is not connected to the database.");
-		return false;
+		return NULL;
 	}
+
 	if (_objectId == 0)
 	{
 		ERROR_MSG("Cannot read from invalid object.");
-		return false;
+		return NULL;
 	}
 
-	// try to find the attribute in the boolean attribute table
-	DB::Statement statement = _connection->prepare(
-		"select value from attribute_boolean where type=%d and object_id=%lld",
-		type,
-		_objectId);
-	if (statement.isValid())
+	// If a transaction is in progress, we can just return the attribute from the transaction.
+	if (_transaction)
 	{
-		DB::Result result = _connection->perform(statement);
-		if (result.isValid())
+		std::map<CK_ATTRIBUTE_TYPE,OSAttribute*>::iterator it =	 _transaction->find(type);
+		if (it != _transaction->end())
+			return it->second;
+	}
+
+	// If the attribute exists and is non-modifiable then return a previously retrieved attribute value.
+	if (!isModifiable(type))
+	{
+		std::map<CK_ATTRIBUTE_TYPE,OSAttribute*>::iterator it =	 _attributes.find(type);
+		if (it != _attributes.end())
 		{
-			bool value = result.getInt(1) != 0;
-
-			if (_attributes[type] && _attributes[type]->isBooleanAttribute())
-				_attributes[type]->setBooleanValue(value);
-			else
-				_attributes[type] = new OSAttribute(value);
-
-			return _attributes[type];
+			return it->second;
 		}
 	}
 
-	// try to find the attribute in the integer attribute table
-	statement = _connection->prepare(
-		"select value from attribute_integer where type=%d and object_id=%lld",
-		type,
-		_objectId);
-	if (statement.isValid())
-	{
-		DB::Result result = _connection->perform(statement);
-		if (result.isValid())
-		{
-			unsigned long long value = result.getULongLong(1);
-			if (_attributes[type] && _attributes[type]->isUnsignedLongAttribute())
-				_attributes[type]->setUnsignedLongValue(value);
-			else
-				_attributes[type] = new OSAttribute(static_cast<unsigned long>(value));
-
-			return _attributes[type];
-		}
-	}
-
-	// try to find the attribute in the integer attribute table
-	statement = _connection->prepare(
-		"select value from attribute_blob where type=%d and object_id=%lld",
-		type,
-		_objectId);
-	if (statement.isValid())
-	{
-		DB::Result result = _connection->perform(statement);
-		if (result.isValid())
-		{
-			const unsigned char *value = result.getBinary(1);
-			size_t size = result.getFieldLength(1);
-			if (_attributes[type] && _attributes[type]->isByteStringAttribute())
-				_attributes[type]->setByteStringValue(ByteString(value, size));
-			else
-				_attributes[type] = new OSAttribute(ByteString(value, size));
-
-			return _attributes[type];
-		}
-	}
-
-	// access integers
-	// access binary
-	return NULL;
+	return accessAttribute(type);
 }
 
-CK_ATTRIBUTE_TYPE DBObject::nextAttributeType(CK_ATTRIBUTE_TYPE type)
+CK_ATTRIBUTE_TYPE DBObject::nextAttributeType(CK_ATTRIBUTE_TYPE)
 {
 	MutexLocker lock(_mutex);
 
@@ -507,13 +727,16 @@ CK_ATTRIBUTE_TYPE DBObject::nextAttributeType(CK_ATTRIBUTE_TYPE type)
 		return false;
 	}
 	
-	// Fixme, implement for C_CopyObject
+	// FIXME: implement for C_CopyObject
 	return CKA_CLASS;
 }
 
 // Set the specified attribute
 bool DBObject::setAttribute(CK_ATTRIBUTE_TYPE type, const OSAttribute& attribute)
 {
+	// Retrieve and existing attribute if it exists or NULL if it doesn't
+	OSAttribute *attr = getAttribute(type);
+	
 	MutexLocker lock(_mutex);
 
 	if (_connection == NULL)
@@ -527,63 +750,69 @@ bool DBObject::setAttribute(CK_ATTRIBUTE_TYPE type, const OSAttribute& attribute
 		return false;
 	}
 
-	AttributeKind ak = findAttribute(type);
-	DB::Statement statement;
-
 	// Update and existing attribute...
-	switch (ak) {
-		case akBoolean:
+	if (attr)
+	{
+		DB::Statement statement;
+		if (attr->isBooleanAttribute())
+		{
 			// update boolean attribute
 			statement = _connection->prepare(
 					"update attribute_boolean set value=%d where type=%d and object_id=%lld",
 					attribute.getBooleanValue() ? 1 : 0,
 					type,
 					_objectId);
-
+		}
+		else
+		{
+			if (attr->isUnsignedLongAttribute())
+			{
+				// update integer attribute
+				statement = _connection->prepare(
+						"update attribute_integer set value=%lld where type=%d and object_id=%lld",
+						static_cast<long long>(attribute.getUnsignedLongValue()),
+						type,
+						_objectId);
+			
+			}
+			else	
+			{
+				if (attr->isByteStringAttribute())
+				{
+					// update binary attribute
+					statement = _connection->prepare(
+							"update attribute_blob set value=? where type=%d and object_id=%lld",
+							type,
+							_objectId);
+				}
+				DB::Bindings(statement).bindBlob(1, attribute.getByteStringValue().const_byte_str(), attribute.getByteStringValue().size(),NULL);
+			}
+		}			
+		
+		// Statement is valid when a prepared statement has been attached to it.
+		if (statement.isValid())
+		{
 			if (!_connection->execute(statement))
 			{
-				ERROR_MSG("Failed to update boolean attribute %d for object %lld",type,_objectId);
+				ERROR_MSG("Failed to update attribute %d for object %lld",type,_objectId);
 				return false;
 			}
-			*_attributes[type] = attribute;
-			return true;
 
-		case akInteger:
-			// update integer attribute
-			statement = _connection->prepare(
-					"update attribute_integer set value=%lld where type=%d and object_id=%lld",
-					static_cast<long long>(attribute.getUnsignedLongValue()),
-					type,
-					_objectId);
-
-			if (!_connection->execute(statement))
+			if (_transaction)	
 			{
-				ERROR_MSG("Failed to update integer attribute %d for object %lld",type,_objectId);
-				return false;
-			}
-			*_attributes[type] = attribute;
+				std::map<CK_ATTRIBUTE_TYPE,OSAttribute*>::iterator it =	 _transaction->find(type);
+				if (it != _transaction->end())
+					*it->second = attribute;
+				else
+					(*_transaction)[type] = new OSAttribute(attribute);	
+			} else
+				*attr = attribute;
 			return true;
-
-
-		case akBinary:
-			// update binary attribute
-			statement = _connection->prepare(
-					"update attribute_blob set value=? where type=%d and object_id=%lld",
-					type,
-					_objectId);
-
-			DB::Bindings(statement).bindBlob(1, attribute.getByteStringValue().const_byte_str(), attribute.getByteStringValue().size(),NULL);
-
-			if (!_connection->execute(statement))
-			{
-				ERROR_MSG("Failed to update blob attribute %d for object %lld",type,_objectId);
-				return false;
-			}
-			*_attributes[type] = attribute;
-			return true;
+		}
 	}
 
-
+	DB::Statement statement;
+	
 	// Insert the attribute, because it is currently unknown
 	if (attribute.isBooleanAttribute())
 	{
@@ -594,54 +823,50 @@ bool DBObject::setAttribute(CK_ATTRIBUTE_TYPE type, const OSAttribute& attribute
 					type,
 					_objectId);
 
-		if (!_connection->execute(statement))
+	}
+	else
+	{
+		// Insert the attribute, because it is currently unknown
+		if (attribute.isUnsignedLongAttribute())
 		{
-			ERROR_MSG("Failed to insert boolean attribute %d for object %lld",type,_objectId);
-			return false;
+			// Could not update it, so we need to insert it.
+			statement = _connection->prepare(
+						"insert into attribute_integer (value,type,object_id) values (%lld,%d,%lld)",
+						static_cast<long long>(attribute.getUnsignedLongValue()),
+						type,
+						_objectId);
+	
 		}
-		_attributes[type] = new OSAttribute(attribute);
-		return true;
+		else
+		{
+			// Insert the attribute, because it is currently unknown
+			if (attribute.isByteStringAttribute())
+			{
+				// Could not update it, so we need to insert it.
+				statement = _connection->prepare(
+							"insert into attribute_blob (value,type,object_id) values (?,%d,%lld)",
+							type,
+							_objectId);
+		
+				DB::Bindings(statement).bindBlob(1, attribute.getByteStringValue().const_byte_str(), attribute.getByteStringValue().size(),NULL);
+			}
+		}
+		
 	}
 
-	// Insert the attribute, because it is currently unknown
-	if (attribute.isUnsignedLongAttribute())
+	// Statement is valid when a prepared statement has been attached to it.
+	if (statement.isValid())
 	{
-		// Could not update it, so we need to insert it.
-		statement = _connection->prepare(
-					"insert into attribute_integer (value,type,object_id) values (%lld,%d,%lld)",
-					static_cast<long long>(attribute.getUnsignedLongValue()),
-					type,
-					_objectId);
-
 		if (!_connection->execute(statement))
 		{
-			ERROR_MSG("Failed to insert integer attribute %d for object %lld",type,_objectId);
+			ERROR_MSG("Failed to insert attribute %d for object %lld",type,_objectId);
 			return false;
 		}
-
-		_attributes[type] = new OSAttribute(attribute);
-		return true;
-	}
-
-
-	// Insert the attribute, because it is currently unknown
-	if (attribute.isByteStringAttribute())
-	{
-		// Could not update it, so we need to insert it.
-		statement = _connection->prepare(
-					"insert into attribute_blob (value,type,object_id) values (?,%d,%lld)",
-					type,
-					_objectId);
-
-		DB::Bindings(statement).bindBlob(1, attribute.getByteStringValue().const_byte_str(), attribute.getByteStringValue().size(),NULL);
-
-		if (!_connection->execute(statement))
-		{
-			ERROR_MSG("Failed to insert blob attribute %d for object %lld",type,_objectId);
-			return false;
-		}
-
-		_attributes[type] = new OSAttribute(attribute);
+	
+		if (_transaction)
+			(*_transaction)[type] = new OSAttribute(attribute);
+		else
+			_attributes[type] = new OSAttribute(attribute);
 		return true;
 	}
 
@@ -671,12 +896,26 @@ bool DBObject::startTransaction(Access access)
 		return false;
 	}
 
-	if (_connection->inTransaction())
+	if (_transaction)
 	{
-		return false;
+		ERROR_MSG("Transaction is already active.");
+		return false;	
 	}
 
-	// Always start a transaction that can be used for both reading and writing.
+	_transaction = new std::map<CK_ATTRIBUTE_TYPE,OSAttribute*>;
+	if (_transaction == NULL)
+	{
+		ERROR_MSG("Not enough memory to start transaction.");
+		return false;	
+	}
+	
+	if (_connection->inTransaction())
+	{
+		ERROR_MSG("Transaction in database is already active.");
+		return false;
+	}
+	
+	// Ask the connection to start the transaction.
 	if (access == ReadWrite)
 		return _connection->beginTransactionRW();
 	else
@@ -694,7 +933,34 @@ bool DBObject::commitTransaction()
 		return false;
 	}
 
-	return _connection->commitTransaction();
+	if (_transaction == NULL)
+	{
+		ERROR_MSG("No transaction active.");
+		return false;
+	}
+	
+	if (!_connection->commitTransaction())
+	{
+		return false;
+	}
+	
+	// Copy the values from the internally stored transaction to the _attributes field.
+	for (std::map<CK_ATTRIBUTE_TYPE,OSAttribute*>::iterator it = _transaction->begin(); it!=_transaction->end(); ++it) {
+		std::map<CK_ATTRIBUTE_TYPE,OSAttribute*>::iterator attr_it = _attributes.find(it->first);
+		if (attr_it == _attributes.end())
+		{
+			_attributes[it->first] = it->second;
+		}
+		else
+		{
+			*attr_it->second = *it->second;
+			delete it->second;
+		}
+		it->second = NULL;
+	}
+	delete _transaction;
+	_transaction = NULL;
+	return true;
 }
 
 // Abort an attribute transaction; loads back the previous version of the object from disk
@@ -708,6 +974,17 @@ bool DBObject::abortTransaction()
 		return false;
 	}
 
+	// Forget the atributes that were set during the transaction.
+	if (_transaction)
+	{
+		for (std::map<CK_ATTRIBUTE_TYPE,OSAttribute*>::iterator it = _transaction->begin(); it!=_transaction->end(); ++it) {
+			delete it->second;
+			it->second = NULL;
+		}
+		delete _transaction;
+		_transaction = NULL;
+	}
+	
 	return _connection->rollbackTransaction();
 }
 
