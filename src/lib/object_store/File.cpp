@@ -78,7 +78,7 @@ File::File(std::string path, bool forRead /* = true */, bool forWrite /* = false
 		if (forRead && forWrite && create) flags |= O_CREAT;
 		if (forRead && forWrite && create && truncate) flags |= O_TRUNC;
 		// Open the file
-		fd = open(path.c_str(), flags, 0777);
+		fd = open(path.c_str(), flags, 0600);
 		if (fd == -1)
 		{
 			valid = false;
