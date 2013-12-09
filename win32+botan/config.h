@@ -1,5 +1,8 @@
 /* config.h for WIN32 */
 
+/* Default storage backend for token objects */
+#define DEFAULT_OBJECTSTORE_BACKEND "file"
+
 /* The default PKCS#11 library */
 #define DEFAULT_PKCS11_LIB "softhsm2.dll"
 

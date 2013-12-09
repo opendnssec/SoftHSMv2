@@ -329,6 +329,9 @@
     <ClInclude Include="..\..\src\lib\object_store\ObjectStore.h">
       <Filter>Object Store Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\lib\object_store\ObjectStoreToken.h">
+      <Filter>Object Store Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\src\lib\object_store\OSAttribute.h">
       <Filter>Object Store Header Files</Filter>
     </ClInclude>
@@ -602,6 +605,9 @@
       <Filter>Object Store Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\lib\object_store\ObjectStore.cpp">
+      <Filter>Object Store Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\object_store\ObjectStoreToken.cpp">
       <Filter>Object Store Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\lib\object_store\OSAttribute.cpp">

@@ -30,6 +30,7 @@
  Contains test cases for symmetrical algorithms (i.e., AES and DES)
  *****************************************************************************/
 
+#include <config.h>
 #include <stdlib.h>
 #include <string.h>
 #include <cppunit/extensions/HelperMacros.h>

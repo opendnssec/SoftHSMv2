@@ -31,10 +31,10 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\src\lib\test\DigestTests.h">
+    <ClInclude Include="..\..\src\lib\test\AsymEncryptDecryptTests.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\lib\test\EncryptDecryptTests.h">
+    <ClInclude Include="..\..\src\lib\test\DigestTests.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\lib\test\InfoTests.h">
@@ -53,6 +53,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\lib\test\SignVerifyTests.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\test\SymmetricAlgorithmTests.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\lib\test\testconfig.h">
@@ -87,10 +90,10 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\src\lib\test\DigestTests.cpp">
+    <ClCompile Include="..\..\src\lib\test\AsymEncryptDecryptTests.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\lib\test\EncryptDecryptTests.cpp">
+    <ClCompile Include="..\..\src\lib\test\DigestTests.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\lib\test\InfoTests.cpp">
@@ -109,6 +112,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\lib\test\SignVerifyTests.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\test\SymmetricAlgorithmTests.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\lib\test\TokenTests.cpp">
