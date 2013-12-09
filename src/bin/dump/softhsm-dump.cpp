@@ -36,6 +36,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <map>
+#include <string>
 #include <stdexcept>
 #include <vector>
 #include "tables.h"

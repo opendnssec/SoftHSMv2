@@ -134,7 +134,11 @@ bool BotanMacAlgorithm::signFinal(ByteString& signature)
 	}
 
 	// Perform the signature operation
+#if BOTAN_VERSION_MINOR == 11
+	Botan::secure_vector<Botan::byte> signResult;
+#else
 	Botan::SecureVector<Botan::byte> signResult;
+#endif
 	try
 	{
 		signResult = hmac->final();
@@ -151,7 +155,11 @@ bool BotanMacAlgorithm::signFinal(ByteString& signature)
 
 	// Return the result
 	signature.resize(signResult.size());
+#if BOTAN_VERSION_MINOR == 11
+	memcpy(&signature[0], signResult.data(), signResult.size());
+#else
 	memcpy(&signature[0], signResult.begin(), signResult.size());
+#endif
 
 	delete hmac;
 	hmac = NULL;
@@ -241,7 +249,11 @@ bool BotanMacAlgorithm::verifyFinal(ByteString& signature)
 	}
 
 	// Perform the verify operation
+#if BOTAN_VERSION_MINOR == 11
+	Botan::secure_vector<Botan::byte> macResult;
+#else
 	Botan::SecureVector<Botan::byte> macResult;
+#endif
 	try
 	{
 		macResult = hmac->final();
@@ -269,5 +281,9 @@ bool BotanMacAlgorithm::verifyFinal(ByteString& signature)
 	delete hmac;
 	hmac = NULL;
 
+#if BOTAN_VERSION_MINOR == 11
+	return memcmp(&signature[0], macResult.data(), macResult.size()) == 0;
+#else
 	return memcmp(&signature[0], macResult.begin(), macResult.size()) == 0;
+#endif
 }

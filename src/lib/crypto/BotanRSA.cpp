@@ -109,7 +109,11 @@ std::string mechanism)
 	}
 
 	// Perform the signature operation
+#if BOTAN_VERSION_MINOR == 11
+	std::vector<Botan::byte> signResult;
+#else
 	Botan::SecureVector<Botan::byte> signResult;
+#endif
 	try
 	{
 		BotanRNG* rng = (BotanRNG*)BotanCryptoFactory::i()->getRNG();
@@ -127,7 +131,11 @@ std::string mechanism)
 
 	// Return the result
 	signature.resize(signResult.size());
+#if BOTAN_VERSION_MINOR == 11
+	memcpy(&signature[0], signResult.data(), signResult.size());
+#else
 	memcpy(&signature[0], signResult.begin(), signResult.size());
+#endif
 
 	delete signer;
 	signer = NULL;
@@ -262,7 +270,11 @@ bool BotanRSA::signFinal(ByteString& signature)
 	}
 
 	// Perform the signature operation
+#if BOTAN_VERSION_MINOR == 11
+	std::vector<Botan::byte> signResult;
+#else
 	Botan::SecureVector<Botan::byte> signResult;
+#endif
 	try
 	{
 		BotanRNG* rng = (BotanRNG*)BotanCryptoFactory::i()->getRNG();
@@ -280,7 +292,11 @@ bool BotanRSA::signFinal(ByteString& signature)
 
 	// Return the result
 	signature.resize(signResult.size());
+#if BOTAN_VERSION_MINOR == 11
+	memcpy(&signature[0], signResult.data(), signResult.size());
+#else
 	memcpy(&signature[0], signResult.begin(), signResult.size());
+#endif
 
 	delete signer;
 	signer = NULL;
@@ -569,7 +585,11 @@ bool BotanRSA::encrypt(PublicKey* publicKey, const ByteString& data, ByteString&
 	}
 
 	// Perform the encryption operation
+#if BOTAN_VERSION_MINOR == 11
+	std::vector<Botan::byte> encResult;
+#else
 	Botan::SecureVector<Botan::byte> encResult;
+#endif
 	try
 	{
 		BotanRNG* rng = (BotanRNG*)BotanCryptoFactory::i()->getRNG();
@@ -586,7 +606,11 @@ bool BotanRSA::encrypt(PublicKey* publicKey, const ByteString& data, ByteString&
 
 	// Return the result
 	encryptedData.resize(encResult.size());
+#if BOTAN_VERSION_MINOR == 11
+	memcpy(&encryptedData[0], encResult.data(), encResult.size());
+#else
 	memcpy(&encryptedData[0], encResult.begin(), encResult.size());
+#endif
 
 	delete encryptor;
 
@@ -651,7 +675,11 @@ bool BotanRSA::decrypt(PrivateKey* privateKey, const ByteString& encryptedData, 
 	}
 
 	// Perform the decryption operation
+#if BOTAN_VERSION_MINOR == 11
+	Botan::secure_vector<Botan::byte> decResult;
+#else
 	Botan::SecureVector<Botan::byte> decResult;
+#endif
 	try
 	{
 		decResult = decryptor->decrypt(encryptedData.const_byte_str(), encryptedData.size());
@@ -672,12 +700,20 @@ bool BotanRSA::decrypt(PrivateKey* privateKey, const ByteString& encryptedData, 
 		int modSize = pk->getN().size();
 		int decSize = decResult.size();
 		data.resize(modSize);
+#if BOTAN_VERSION_MINOR == 11
+		memcpy(&data[0] + modSize - decSize, decResult.data(), decSize);
+#else
 		memcpy(&data[0] + modSize - decSize, decResult.begin(), decSize);
+#endif
 	}
 	else
 	{
 		data.resize(decResult.size());
+#if BOTAN_VERSION_MINOR == 11
+		memcpy(&data[0], decResult.data(), decResult.size());
+#else
 		memcpy(&data[0], decResult.begin(), decResult.size());
+#endif
 	}
 
 	delete decryptor;
