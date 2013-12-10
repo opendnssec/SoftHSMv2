@@ -42,6 +42,8 @@
 #include <string.h>
 #ifndef _WIN32
 #include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #endif
 #include <iostream>
 #include <fstream>
@@ -144,6 +146,10 @@ int main(int argc, char* argv[])
 
 	moduleHandle = NULL;
 	p11 = NULL;
+
+#ifndef _WIN32
+	umask(077);
+#endif
 
 	while ((opt = getopt_long(argc, argv, "hv", long_options, &option_index)) != -1)
 	{
