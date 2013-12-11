@@ -92,7 +92,11 @@ extern "C" {
 
 #else
 
+#if defined(CRYPTOKI_VISIBILITY) && defined(CRYPTOKI_EXPORTS)
+#define CK_SPEC __attribute__((visibility("default")))
+#else
 #define CK_SPEC
+#endif
 
 #endif
 

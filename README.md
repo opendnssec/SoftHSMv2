@@ -49,18 +49,22 @@ Configure the installation/compilation scripts:
 Options:
 
 	--disable-non-paged-memory
-	                        Disable non-paged memory for secure storage
-	                        (default enabled)
-	--enable-ecc            Enable support for ECC (default enabled)
+				Disable non-paged memory for secure storage
+				(default enabled)
+	--disable-ecc		Enable support for ECC (default enabled)
 	--enable-gost		Enable support for GOST (default disabled)
-	--with-crypto-backend   Select crypto backend (openssl|botan)
-	--with-openssl=PATH     Specify prefix of path of OpenSSL
-	--with-botan=PATH       Specify prefix of path of Botan
-	--with-loglevel=INT     The log level. 0=No log 1=Error 2=Warning 3=Info
-	                        4=Debug (default INT=3)
-	--with-migrate          Build the migration tool. Used when migrating
-	                        a SoftHSM v1 token database. Requires SQLite3.
-	--with-sqlite3=PATH     Specify prefix of path of SQLite3
+	--enable-visibility	Enable -fvisibility=hidden GCC flags so
+				only the PKCS#11 C_* entry points are kept
+	--with-crypto-backend	Select crypto backend (openssl|botan)
+	--with-openssl=PATH	Specify prefix of path of OpenSSL
+	--with-botan=PATH	Specify prefix of path of Botan
+	--with-loglevel=INT	The log level. 0=No log 1=Error 2=Warning
+				3=Info 4=Debug (default INT=3)
+	--with-migrate		Build the migration tool. Used when migrating
+				a SoftHSM v1 token database. Requires SQLite3
+	--with-objectstore-backend-db
+				Build with database object store (SQLite3)
+	--with-sqlite3=PATH	Specify prefix of path of SQLite3
 
 For more options:
 

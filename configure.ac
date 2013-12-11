@@ -117,6 +117,9 @@ else
 	AC_MSG_RESULT(no)
 fi
 
+# Set visibility flags so only PKCS#11 entry points are exported
+ACX_VISIBILITY
+
 # Set full directory paths
 full_sysconfdir=`eval eval eval eval eval echo "${sysconfdir}" | sed "s#NONE#${prefix}#" | sed "s#NONE#${ac_default_prefix}#"`
 full_localstatedir=`eval eval eval eval eval echo "${localstatedir}" | sed "s#NONE#${prefix}#" | sed "s#NONE#${ac_default_prefix}#"`
