@@ -33,6 +33,7 @@
 #include "config.h"
 #include "BotanAES.h"
 #include <algorithm>
+#include <botan/libstate.h>
 #include <botan/rfc3394.h>
 
 // Wrap/Unwrap keys
@@ -68,14 +69,14 @@ bool BotanAES::wrapKey(const SymmetricKey* key, const std::string mode, const By
 #if BOTAN_VERSION_MINOR == 11
 		Botan::secure_vector<Botan::byte> data(in.size());
 		memcpy(data.data(), in.const_byte_str(), in.size());
-		Botan::SecureVector<Botan::byte> wrapped;
+		Botan::secure_vector<Botan::byte> wrapped;
 #else
-		Botan::MemoryRegion<Botan::byte> data(in.size());
+		Botan::MemoryVector<Botan::byte> data(in.size());
 		memcpy(data.begin(), in.const_byte_str(), in.size());
 		Botan::SecureVector<Botan::byte> wrapped;
 #endif
 		Botan::SymmetricKey botanKey = Botan::SymmetricKey(key->getKeyBits().const_byte_str(), key->getKeyBits().size());
-		Algorithm_Factory& af = global_state().algorithm_factory();
+		Botan::Algorithm_Factory& af = Botan::global_state().algorithm_factory();
 		try
 		{
 			wrapped = Botan::rfc3394_keywrap(data, botanKey, af);
@@ -104,7 +105,7 @@ bool BotanAES::wrapKey(const SymmetricKey* key, const std::string mode, const By
 	}
 	else
 	{
-		ERROR_MSG("unknown AES key wrap mode %s", mode.const_byte_str());
+		ERROR_MSG("unknown AES key wrap mode %s", mode.c_str());
 
 		return false;
 	}
@@ -142,14 +143,14 @@ bool BotanAES::unwrapKey(const SymmetricKey* key, const std::string mode, const 
 #if BOTAN_VERSION_MINOR == 11
 		Botan::secure_vector<Botan::byte> wrapped(in.size());
 		memcpy(wrapped.data(), in.const_byte_str(), in.size());
-		Botan::SecureVector<Botan::byte> unwrapped;
+		Botan::secure_vector<Botan::byte> unwrapped;
 #else
-		Botan::MemoryRegion<Botan::byte> wrapped(in.size());
+		Botan::MemoryVector<Botan::byte> wrapped(in.size());
 		memcpy(wrapped.begin(), in.const_byte_str(), in.size());
 		Botan::SecureVector<Botan::byte> unwrapped;
 #endif
 		Botan::SymmetricKey botanKey = Botan::SymmetricKey(key->getKeyBits().const_byte_str(), key->getKeyBits().size());
-		Algorithm_Factory& af = global_state().algorithm_factory();
+		Botan::Algorithm_Factory& af = Botan::global_state().algorithm_factory();
 		try
 		{
 			unwrapped = Botan::rfc3394_keyunwrap(wrapped, botanKey, af);
@@ -178,7 +179,7 @@ bool BotanAES::unwrapKey(const SymmetricKey* key, const std::string mode, const 
 	}
 	else
 	{
-		ERROR_MSG("unknown AES key wrap mode %s", mode.const_byte_str());
+		ERROR_MSG("unknown AES key wrap mode %s", mode.c_str());
 
 		return false;
 	}
