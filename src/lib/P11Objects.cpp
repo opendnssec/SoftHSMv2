@@ -528,7 +528,7 @@ bool P11PublicKeyObj::init(OSObject *osobject)
 	P11Attribute* attrVerifyRecover = new P11AttrVerifyRecover(osobject);
 	P11Attribute* attrWrap = new P11AttrWrap(osobject);
 	P11Attribute* attrTrusted = new P11AttrTrusted(osobject);
-		// CKA_WRAP_TEMPLATE is not supported
+	P11Attribute* attrWrapTemplate = new P11AttrWrapTemplate(osobject);
 
 	// Initialize the attributes
 	if
@@ -538,7 +538,8 @@ bool P11PublicKeyObj::init(OSObject *osobject)
 		!attrVerify->init() ||
 		!attrVerifyRecover->init() ||
 		!attrWrap->init() ||
-		!attrTrusted->init()
+		!attrTrusted->init() ||
+		!attrWrapTemplate->init()
 	)
 	{
 		ERROR_MSG("Could not initialize the attribute");
@@ -552,6 +553,7 @@ bool P11PublicKeyObj::init(OSObject *osobject)
 	attributes[attrVerifyRecover->getType()] = attrVerifyRecover;
 	attributes[attrWrap->getType()] = attrWrap;
 	attributes[attrTrusted->getType()] = attrTrusted;
+	attributes[attrWrapTemplate->getType()] = attrWrapTemplate;
 
 	initialized = true;
 	return true;
@@ -826,7 +828,7 @@ bool P11PrivateKeyObj::init(OSObject *osobject)
 	P11Attribute* attrAlwaysSensitive = new P11AttrAlwaysSensitive(osobject);
 	P11Attribute* attrNeverExtractable = new P11AttrNeverExtractable(osobject);
 	P11Attribute* attrWrapWithTrusted = new P11AttrWrapWithTrusted(osobject);
-		// CKA_UNWRAP_TEMPLATE is not supported
+	P11Attribute* attrUnwrapTemplate = new P11AttrUnwrapTemplate(osobject);
 	P11Attribute* attrAlwaysAuthenticate = new P11AttrAlwaysAuthenticate(osobject);
 
 	// Initialize the attributes
@@ -842,6 +844,7 @@ bool P11PrivateKeyObj::init(OSObject *osobject)
 		!attrAlwaysSensitive->init() ||
 		!attrNeverExtractable->init() ||
 		!attrWrapWithTrusted->init() ||
+		!attrUnwrapTemplate->init() ||
 		!attrAlwaysAuthenticate->init()
 	)
 	{
@@ -860,6 +863,7 @@ bool P11PrivateKeyObj::init(OSObject *osobject)
 	attributes[attrAlwaysSensitive->getType()] = attrAlwaysSensitive;
 	attributes[attrNeverExtractable->getType()] = attrNeverExtractable;
 	attributes[attrWrapWithTrusted->getType()] = attrWrapWithTrusted;
+	attributes[attrUnwrapTemplate->getType()] = attrUnwrapTemplate;
 	attributes[attrAlwaysAuthenticate->getType()] = attrAlwaysAuthenticate;
 
 	initialized = true;
@@ -1150,8 +1154,8 @@ bool P11SecretKeyObj::init(OSObject *osobject)
 	P11Attribute* attrCheckValue = new P11AttrCheckValue(osobject);
 	P11Attribute* attrWrapWithTrusted = new P11AttrWrapWithTrusted(osobject);
 	P11Attribute* attrTrusted = new P11AttrTrusted(osobject);
-	// CKA_WRAP_TEMPLATE is not supported
-	// CKA_UNWRAP_TEMPLATE is not supported
+	P11Attribute* attrWrapTemplate = new P11AttrWrapTemplate(osobject);
+	P11Attribute* attrUnwrapTemplate = new P11AttrUnwrapTemplate(osobject);
 
 	// Initialize the attributes
 	if
@@ -1168,7 +1172,9 @@ bool P11SecretKeyObj::init(OSObject *osobject)
 		!attrNeverExtractable->init() ||
 		!attrCheckValue->init() ||
 		!attrWrapWithTrusted->init() ||
-		!attrTrusted->init()
+		!attrTrusted->init() ||
+		!attrWrapTemplate->init() ||
+		!attrUnwrapTemplate->init()
 	)
 	{
 		ERROR_MSG("Could not initialize the attribute");
@@ -1189,6 +1195,8 @@ bool P11SecretKeyObj::init(OSObject *osobject)
 	attributes[attrCheckValue->getType()] = attrCheckValue;
 	attributes[attrWrapWithTrusted->getType()] = attrWrapWithTrusted;
 	attributes[attrTrusted->getType()] = attrTrusted;
+	attributes[attrWrapTemplate->getType()] = attrWrapTemplate;
+	attributes[attrUnwrapTemplate->getType()] = attrUnwrapTemplate;
 
 	initialized = true;
 	return true;

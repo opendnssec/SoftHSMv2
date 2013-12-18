@@ -118,6 +118,102 @@ CK_ATTRIBUTE_TYPE P11Attribute::getType()
 	return type;
 }
 
+// Retrieve a template array
+static CK_RV retrieveArray(CK_ATTRIBUTE_PTR pTemplate, const std::map<CK_ATTRIBUTE_TYPE,OSAttribute>& array)
+{
+	size_t nullcnt = 0;
+
+	for (size_t i = 0; i < array.size(); ++i)
+	{
+		if (pTemplate[i].pValue == NULL_PTR)
+			++nullcnt;
+	}
+
+	// Caller wants type & size
+	if (nullcnt == array.size())
+	{
+		std::map<CK_ATTRIBUTE_TYPE,OSAttribute>::const_iterator a = array.begin();
+		for (size_t i = 0; i < array.size(); ++i, ++a)
+		{
+			pTemplate[i].type = a->first;
+			const OSAttribute& attr = a->second;
+			if (attr.isBooleanAttribute())
+			{
+				pTemplate[i].ulValueLen = sizeof(CK_BBOOL);
+			}
+			else if (attr.isUnsignedLongAttribute())
+			{
+				pTemplate[i].ulValueLen = sizeof(CK_ULONG);
+			}
+			else if (attr.isByteStringAttribute())
+			{
+				pTemplate[i].ulValueLen = attr.getByteStringValue().size();
+			}
+			else
+			{
+				// Impossible
+				ERROR_MSG("Internal error: bad attribute in array");
+
+				return CKR_GENERAL_ERROR;
+			}
+		}
+
+		return CKR_OK;
+	}
+
+	// Callers wants to get values
+	for (size_t i = 0; i < array.size(); ++i)
+	{
+		std::map<CK_ATTRIBUTE_TYPE,OSAttribute>::const_iterator a = array.find(pTemplate[i].type);
+		if (a == array.end())
+		{
+			pTemplate[i].ulValueLen = (CK_ULONG)-1;
+			return CKR_ATTRIBUTE_TYPE_INVALID;
+		}
+		const OSAttribute& attr = a->second;
+		if (attr.isBooleanAttribute())
+		{
+			if (pTemplate[i].ulValueLen < sizeof(CK_BBOOL))
+			{
+				pTemplate[i].ulValueLen = (CK_ULONG)-1;
+				return CKR_BUFFER_TOO_SMALL;
+			}
+			pTemplate[i].ulValueLen = sizeof(CK_BBOOL);
+			*(CK_BBOOL*)pTemplate[i].pValue = attr.getBooleanValue() ? CK_TRUE : CK_FALSE;
+		}
+		else if (attr.isUnsignedLongAttribute())
+		{
+			if (pTemplate[i].ulValueLen < sizeof(CK_ULONG))
+			{
+				pTemplate[i].ulValueLen= (CK_ULONG)-1;
+				return CKR_BUFFER_TOO_SMALL;
+			}
+			pTemplate[i].ulValueLen = sizeof(CK_ULONG);
+			*(CK_ULONG_PTR)pTemplate[i].pValue= attr.getUnsignedLongValue();
+		}
+		else if (attr.isByteStringAttribute())
+		{
+			ByteString value = attr.getByteStringValue();
+			if (pTemplate[i].ulValueLen < value.size())
+			{
+				pTemplate[i].ulValueLen= (CK_ULONG)-1;
+				return CKR_BUFFER_TOO_SMALL;
+			}
+			pTemplate[i].ulValueLen = value.size();
+			memcpy(pTemplate[i].pValue, value.const_byte_str(), value.size());
+		}
+		else
+		{
+			// Impossible
+			ERROR_MSG("Internal error: bad attribute in array");
+
+			return CKR_GENERAL_ERROR;
+		}
+	}
+
+	return CKR_OK;
+}
+
 // Retrieve the value if allowed
 CK_RV P11Attribute::retrieve(Token *token, bool isPrivate, CK_VOID_PTR pValue, CK_ULONG_PTR pulValueLen)
 {
@@ -163,24 +259,31 @@ CK_RV P11Attribute::retrieve(Token *token, bool isPrivate, CK_VOID_PTR pValue, C
 		}
 
 		// Lower level attribute has to be variable sized.
-		if (!attr->isByteStringAttribute()) {
+		if (attr->isByteStringAttribute())
+		{
+			if (isPrivate && attr->getByteStringValue().size() != 0)
+			{
+				ByteString value;
+				if (!token->decrypt(attr->getByteStringValue(),value))
+				{
+					ERROR_MSG("Internal error: failed to decrypt private attribute value");
+					return CKR_GENERAL_ERROR;
+				}
+				attrSize = value.size();
+			}
+			else
+				attrSize = attr->getByteStringValue().size();
+		}
+		else if (attr->isArrayAttribute())
+		{
+			attrSize = attr->getArrayValue().size() * sizeof(CK_ATTRIBUTE);
+		}
+		else
+		{
 			// Should be impossible.
 			ERROR_MSG("Internal error: attribute has fixed size");
 			return CKR_GENERAL_ERROR;
 		}
-
-		if (isPrivate && attr->getByteStringValue().size() != 0)
-		{
-			ByteString value;
-			if (!token->decrypt(attr->getByteStringValue(),value))
-			{
-				ERROR_MSG("Internal error: failed to decrypt private attribute value");
-				return CKR_GENERAL_ERROR;
-			}
-			attrSize = value.size();
-		}
-		else
-			attrSize = attr->getByteStringValue().size();
 	}
 
 	// [PKCS#11 v2.3 pg.131 C_GetAttributeValue]
@@ -201,6 +304,7 @@ CK_RV P11Attribute::retrieve(Token *token, bool isPrivate, CK_VOID_PTR pValue, C
 	// attribute.
 	if (*pulValueLen >= attrSize) {
 		// Only copy when there is actually something to copy
+		CK_RV rv = CKR_OK;
 		if (attrSize > 0) {
 			// Retrieve the attribute when this was not already done.
 			if (attr == NULL_PTR) {
@@ -215,18 +319,22 @@ CK_RV P11Attribute::retrieve(Token *token, bool isPrivate, CK_VOID_PTR pValue, C
 				// Get the unsigned long or boolean value.
 				if (attr->isUnsignedLongAttribute()) {
 					*(CK_ULONG_PTR)pValue = attr->getUnsignedLongValue();
-				} else {
-					if (attr->isBooleanAttribute()) {
-						*(CK_BBOOL*)pValue = attr->getBooleanValue() ? CK_TRUE : CK_FALSE;
-					} else {
-						// Should be impossible.
-						ERROR_MSG("Internal error: attribute has variable size");
-						return CKR_GENERAL_ERROR;
-					}
+				}
+				else if (attr->isBooleanAttribute())
+				{
+					*(CK_BBOOL*)pValue = attr->getBooleanValue() ? CK_TRUE : CK_FALSE;
+				}
+				else
+				{
+					// Should be impossible.
+					ERROR_MSG("Internal error: attribute has variable size");
+					return CKR_GENERAL_ERROR;
 				}
 
-			} else {
-				// attr is alread retrieved and verified to be a ByteString.
+			}
+			else if (attr->isByteStringAttribute())
+			{
+				// attr is already retrieved and verified to be a ByteString.
 				if (isPrivate)
 				{
 					ByteString value;
@@ -244,9 +352,15 @@ CK_RV P11Attribute::retrieve(Token *token, bool isPrivate, CK_VOID_PTR pValue, C
 					memcpy(pValue,attrPtr,attrSize);
 				}
 			}
+			else
+			{
+				// attr is already retrieved and verified to be an Array
+				rv = retrieveArray((CK_ATTRIBUTE_PTR)pValue, attr->getArrayValue());
+					
+			}
 		}
 		*pulValueLen = attrSize;
-		return CKR_OK;
+		return rv;
 	}
 
 	// [PKCS#11 v2.3 pg.131]
@@ -1975,6 +2089,78 @@ CK_RV P11AttrValueLen::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_
 	// Store data
 
 	osobject->setAttribute(type, *(CK_ULONG*)pValue);
+
+	return CKR_OK;
+}
+
+/*****************************************
+ * CKA_WRAP_TEMPLATE
+ *****************************************/
+
+// Set default value
+bool P11AttrWrapTemplate::setDefault()
+{
+	std::map<CK_ATTRIBUTE_TYPE,OSAttribute> empty;
+	OSAttribute attr(empty);
+	return osobject->setAttribute(type, attr);
+}
+
+// Update the value
+CK_RV P11AttrWrapTemplate::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int /*op*/)
+{
+	// Attribute specific checks
+	if ((ulValueLen % sizeof(CK_ATTRIBUTE)) != 0)
+	{
+		return CKR_ATTRIBUTE_VALUE_INVALID;
+	}
+
+	// Fill the template vector with elements
+	CK_ATTRIBUTE_PTR attr = (CK_ATTRIBUTE_PTR) pValue;
+	std::map<CK_ATTRIBUTE_TYPE,OSAttribute> data;
+	for (size_t i = 0; i < ulValueLen / sizeof(CK_ATTRIBUTE); ++i, ++attr)
+	{
+		ByteString elem = ByteString((unsigned char*)attr->pValue, attr->ulValueLen);
+		data.insert(std::pair<CK_ATTRIBUTE_TYPE,OSAttribute> (attr->type, elem));
+	}
+
+	// Store data
+	osobject->setAttribute(type, data);
+
+	return CKR_OK;
+}
+
+/*****************************************
+ * CKA_UNWRAP_TEMPLATE
+ *****************************************/
+
+// Set default value
+bool P11AttrUnwrapTemplate::setDefault()
+{
+	std::map<CK_ATTRIBUTE_TYPE,OSAttribute> empty;
+	OSAttribute attr(empty);
+	return osobject->setAttribute(type, attr);
+}
+
+// Update the value
+CK_RV P11AttrUnwrapTemplate::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int /*op*/)
+{
+	// Attribute specific checks
+	if ((ulValueLen % sizeof(CK_ATTRIBUTE)) != 0)
+	{
+		return CKR_ATTRIBUTE_VALUE_INVALID;
+	}
+
+	// Fill the template vector with elements
+	CK_ATTRIBUTE_PTR attr = (CK_ATTRIBUTE_PTR) pValue;
+	std::map<CK_ATTRIBUTE_TYPE,OSAttribute> data;
+	for (size_t i = 0; i < ulValueLen / sizeof(CK_ATTRIBUTE); ++i, ++attr)
+	{
+		ByteString elem = ByteString((unsigned char*)attr->pValue, attr->ulValueLen);
+		data.insert(std::pair<CK_ATTRIBUTE_TYPE,OSAttribute> (attr->type, elem));
+	}
+
+	// Store data
+	osobject->setAttribute(type, data);
 
 	return CKR_OK;
 }

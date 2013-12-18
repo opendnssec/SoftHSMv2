@@ -1165,4 +1165,40 @@ protected:
 	virtual CK_RV updateAttr(Token *token, bool isPrivate, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op);
 };
 
+/*****************************************
+ * CKA_WRAP_TEMPLATE
+ *****************************************/
+
+class P11AttrWrapTemplate : public P11Attribute
+{
+public:
+	// Constructor
+	P11AttrWrapTemplate(OSObject* osobject) : P11Attribute(osobject) { type = CKA_WRAP_TEMPLATE; checks = ck8; }
+
+protected:
+	// Set the default value of the attribute
+	virtual bool setDefault();
+
+	// Update the value if allowed
+	virtual CK_RV updateAttr(Token *token, bool isPrivate, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op);
+};
+
+/*****************************************
+ * CKA_UNWRAP_TEMPLATE
+ *****************************************/
+
+class P11AttrUnwrapTemplate : public P11Attribute
+{
+public:
+	// Constructor
+	P11AttrUnwrapTemplate(OSObject* osobject) : P11Attribute(osobject) { type = CKA_UNWRAP_TEMPLATE; checks = ck8; }
+
+protected:
+	// Set the default value of the attribute
+	virtual bool setDefault();
+
+	// Update the value if allowed
+	virtual CK_RV updateAttr(Token *token, bool isPrivate, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op);
+};
+
 #endif // !_SOFTHSM_V2_P11ATTRIBUTES_H

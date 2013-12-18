@@ -55,6 +55,7 @@ class ObjectTests : public CppUnit::TestFixture
 	CPPUNIT_TEST(testAlwaysNeverAttribute);
 	CPPUNIT_TEST(testSensitiveAttributes);
 	CPPUNIT_TEST(testGetInvalidAttribute);
+	CPPUNIT_TEST(testArrayAttribute);
 	CPPUNIT_TEST_SUITE_END();
 
 public:
@@ -72,6 +73,7 @@ public:
 	void testAlwaysNeverAttribute();
 	void testSensitiveAttributes();
 	void testGetInvalidAttribute();
+	void testArrayAttribute();
 
 	void setUp();
 	void tearDown();

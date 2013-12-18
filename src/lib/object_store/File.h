@@ -34,7 +34,7 @@
 #define _SOFTHSM_V2_FILE_H
 
 #include "config.h"
-#include "ByteString.h"
+#include "OSAttribute.h"
 #include <stdio.h>
 #include <string>
 
@@ -74,6 +74,9 @@ public:
 	// Read a boolean value; warning: not thread safe without locking!
 	bool readBool(bool& value);
 
+	// Read an array value; warning: not thread safe without locking!
+	bool readArray(std::map<CK_ATTRIBUTE_TYPE,OSAttribute>& value);
+
 	// Write an unsigned long value; warning: not thread safe without locking!
 	bool writeULong(const unsigned long value);
 
@@ -85,6 +88,9 @@ public:
 
 	// Write a boolean value; warning: not thread safe without locking!
 	bool writeBool(const bool value);
+
+	// Write an array value; warning: not thread safe without locking!
+	bool writeArray(const std::map<CK_ATTRIBUTE_TYPE,OSAttribute>& value);
 
 	// Rewind the file
 	bool rewind();

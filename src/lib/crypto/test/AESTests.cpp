@@ -424,6 +424,29 @@ void AESTests::testECB()
 	}
 }
 
+void AESTests::testWrap()
+{
+	char testKeK[33] = "000102030405060708090A0B0C0D0E0F";
+	char testKey[33] = "00112233445566778899AABBCCDDEEFF";
+
+	ByteString kekData(testKeK);
+	ByteString keyData(testKey);
+	ByteString wrapped;
+
+	AESKey aesKeK(128);
+	CPPUNIT_ASSERT(aesKeK.setKeyBits(kekData));
+
+	CPPUNIT_ASSERT(aes->wrapKey(&aesKeK, "aes-keywrap", keyData, wrapped));
+	CPPUNIT_ASSERT(wrapped.size() == keyData.size() + 8);
+
+	ByteString expected("1FA68B0A8112B447AEF34BD8FB5A7B829D3E862371D2CFE5");
+	CPPUNIT_ASSERT(wrapped == expected);
+
+	ByteString unwrapped;
+	CPPUNIT_ASSERT(aes->unwrapKey(&aesKeK, "aes-keywrap", wrapped, unwrapped));
+	CPPUNIT_ASSERT(unwrapped == keyData);
+}
+
 void AESTests::writeTmpFile(ByteString& data)
 {
 #ifndef _WIN32

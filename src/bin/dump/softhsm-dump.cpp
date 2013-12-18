@@ -45,9 +45,21 @@
 #define BOOLEAN_ATTR		0x1
 #define ULONG_ATTR		0x2
 #define BYTES_ATTR		0x3
+#define ARRAY_ATTR		0x4
 
 // Maximum byte string length (1Gib)
 #define MAX_BYTES		0x3fffffff
+
+// Attribute (in an array)
+struct Attribute
+{
+	uint64_t type;
+	uint64_t kind;
+
+	uint8_t boolValue;
+	uint64_t ulongValue;
+	std::vector<uint8_t> bytestrValue;
+};
 
 // Read a boolean (in fact unsigned 8 bit long) value
 bool readBool(FILE* stream, uint8_t& value)
@@ -105,6 +117,110 @@ bool readBytes(FILE* stream, std::vector<uint8_t>& value)
 		(void) fsetpos(stream, &pos);
 		return false;
 	}
+	return true;
+}
+
+// Read an array (aka Attribute vector) value
+bool readArray(FILE* stream, uint64_t len, std::vector<Attribute>& value)
+{
+	fpos_t pos;
+	if (fgetpos(stream, &pos) != 0)
+	{
+		return false;
+	}
+	while (len != 0)
+	{
+		Attribute attr;
+
+		if (len < 8)
+		{
+			(void) fsetpos(stream, &pos);
+			return false;
+		}
+		if (!readULong(stream, attr.type))
+		{
+			(void) fsetpos(stream, &pos);
+			return false;
+		}
+		len -= 8;
+
+		if (len < 8)
+		{
+			(void) fsetpos(stream, &pos);
+			return false;
+		}
+		if (!readULong(stream, attr.kind))
+		{
+			(void) fsetpos(stream, &pos);
+			return false;
+		}
+		len -= 8;
+
+		if (attr.kind == BOOLEAN_ATTR)
+		{
+			if (len < 1)
+			{
+				(void) fsetpos(stream, &pos);
+				return false;
+			}
+			len -= 1;
+			if (!readBool(stream, attr.boolValue))
+			{
+				(void) fsetpos(stream, &pos);
+				return false;
+			}
+		}
+		else if (attr.kind == ULONG_ATTR)
+		{
+			if (len < 8)
+			{
+				(void) fsetpos(stream, &pos);
+				return false;
+			}
+			if (!readULong(stream, attr.ulongValue))
+			{
+				(void) fsetpos(stream, &pos);
+				return false;
+			}
+			len -= 8;
+		}
+		else if (attr.kind == BYTES_ATTR)
+		{
+			uint64_t size;
+			if (len < 8)
+			{
+				(void) fsetpos(stream, &pos);
+				return false;
+			}
+			if (!readULong(stream, size))
+			{
+				(void) fsetpos(stream, &pos);
+				return false;
+			}
+			len -= 8;
+
+			if (len < size)
+			{
+				(void) fsetpos(stream, &pos);
+				return false;
+			}
+			attr.bytestrValue.resize(size);
+			if (!readBytes(stream, attr.bytestrValue))
+			{
+				(void) fsetpos(stream, &pos);
+				return false;
+			}
+			len -= size;
+		}
+		else
+		{
+			(void) fsetpos(stream, &pos);
+			return false;
+		}
+
+		value.push_back(attr);
+	}
+
 	return true;
 }
 
@@ -294,10 +410,69 @@ void dumpCKC(unsigned long cka, int size)
 	}
 }
 
-// Dump a boolean (in fact unsigned 8 bit long) value
-void dumpBool(uint8_t value)
+// Dump a PKCS#11 integer type
+void dumpCKx(uint64_t cka, uint64_t value, int size)
 {
-	printf("%02hhx                      ", value);
+	if ((uint32_t)value == (uint32_t)~0)
+	{
+		printf("CK_UNAVAILABLE_INFORMATION");
+		return;
+	}
+
+	switch ((unsigned long) cka)
+	{
+	case CKA_CLASS:
+		if ((uint64_t)((uint32_t)value) != value)
+		{
+			printf("overflow object class");
+			break;
+		}
+		dumpCKO((unsigned long) value, size);
+		break;
+	case CKA_CERTIFICATE_TYPE:
+		if ((uint64_t)((uint32_t)value) != value)
+		{
+			printf("overflow certificate type");
+			break;
+		}
+		dumpCKC((unsigned long) value, size);
+		break;
+	case CKA_KEY_TYPE:
+		if ((uint64_t)((uint32_t)value) != value)
+		{
+			printf("overflow key type");
+			break;
+		}
+		dumpCKK((unsigned long) value, size);
+		break;
+	case CKA_KEY_GEN_MECHANISM:
+		if ((uint64_t)((uint32_t)value) != value)
+		{
+			printf("overflow mechanism type");
+			break;
+		}
+		dumpCKM((unsigned long) value, size);
+		break;
+	case CKA_HW_FEATURE_TYPE:
+		if ((uint64_t)((uint32_t)value) != value)
+		{
+			printf("overflow hw feature type");
+			break;
+		}
+		dumpCKH((unsigned long) value, size);
+		break;
+	default:
+		printf("CK_ULONG %lu(0x%lx)",
+		       (unsigned long) value,
+		       (unsigned long) value);
+		break;
+	}
+}
+
+// Dump a boolean (in fact unsigned 8 bit long) value
+void dumpBool(uint8_t value, bool inArray = false)
+{
+	printf("%02hhx                      %s", value, inArray ? " " : "");
 	switch (value)
 	{
 	case 0:
@@ -313,7 +488,7 @@ void dumpBool(uint8_t value)
 }
 
 // Dump an unsigned 64 bit long vaue
-void dumpULong(uint64_t value)
+void dumpULong(uint64_t value, bool inArray = false)
 {
 	for (int i = 56; i >= 0; i -= 8)
 	{
@@ -321,10 +496,14 @@ void dumpULong(uint64_t value)
 		v = (value >> i) & 0xff;
 		printf("%02hhx ", v);
 	}
+	if (inArray)
+	{
+		printf(" ");
+	}
 }
 
 // Dump a byte string (aka uint8_t vector) value
-void dumpBytes(std::vector<uint8_t> value)
+void dumpBytes(const std::vector<uint8_t>& value, bool inArray = false)
 {
 	size_t len = value.size();
 	size_t i = 0;
@@ -333,6 +512,10 @@ void dumpBytes(std::vector<uint8_t> value)
 		for (size_t j = 0; j < 8; j++)
 		{
 			printf("%02hhx ", value[i + j]);
+		}
+		if (inArray)
+		{
+			printf(" ");
 		}
 		printf("<");
 		for (size_t j = 0; j < 8; j++)
@@ -364,6 +547,10 @@ void dumpBytes(std::vector<uint8_t> value)
 	{
 		printf("   ");
 	}
+	if (inArray)
+	{
+		printf(" ");
+	}
 	printf("<");
 	for (size_t j = 0; j < len; j++)
 	{
@@ -382,6 +569,53 @@ void dumpBytes(std::vector<uint8_t> value)
 		printf(" ");
 	}
 	printf(">\n");
+}
+
+// Dump an array (in fact an Attribute vector) value
+void dumpArray(const std::vector<Attribute>& value)
+{
+	for (std::vector<Attribute>::const_iterator attr = value.begin();
+	     attr != value.end();
+	     ++attr)
+	{
+		dumpULong(attr->type, true);
+		if ((uint64_t)((uint32_t)attr->type) != attr->type)
+		{
+			printf("overflow attribute type\n");
+		}
+		else
+		{
+			dumpCKA((unsigned long) attr->type, 47);
+			printf("\n");
+		}
+
+		dumpULong(attr->kind, true);
+		if (attr->kind == BOOLEAN_ATTR)
+		{
+			printf("boolean attribute\n");
+			dumpBool(attr->boolValue, true);
+			printf("\n");
+		}
+		else if (attr->kind == ULONG_ATTR)
+		{
+			printf("unsigned long attribute\n");
+			dumpULong(attr->ulongValue, true);
+			dumpCKx(attr->type, attr->ulongValue, 47);
+			printf("\n");
+		}
+		else if (attr->kind == BYTES_ATTR)
+		{
+			printf("byte string attribute\n");
+			uint32_t size = attr->bytestrValue.size();
+			dumpULong(size, true);
+			printf("(length %lu)\n", (unsigned long) size);
+			dumpBytes(attr->bytestrValue, true);
+		}
+		else
+		{
+			printf("unknown attribute format\n");
+		}
+	}
 }
 
 // Error case
@@ -471,6 +705,9 @@ void dump(FILE* stream)
 		case BYTES_ATTR:
 			printf("byte string attribute\n");
 			break;
+		case ARRAY_ATTR:
+			printf("attribute array attribute\n");
+			break;
 		default:
 			printf("unknown attribute format\n");
 			break;
@@ -496,58 +733,7 @@ void dump(FILE* stream)
 				return;
 			}
 			dumpULong(value);
-			if ((uint32_t)value == (uint32_t)~0)
-			{
-				printf("CK_UNAVAILABLE_INFORMATION");
-			}
-			else switch ((unsigned long) p11type)
-			{
-			case CKA_CLASS:
-				if ((uint64_t)((uint32_t)value) != value)
-				{
-					printf("overflow object class");
-					break;
-				}
-				dumpCKO((unsigned long) value, 48);
-				break;
-			case CKA_CERTIFICATE_TYPE:
-				if ((uint64_t)((uint32_t)value) != value)
-				{
-					printf("overflow certificate type");
-					break;
-				}
-				dumpCKC((unsigned long) value, 48);
-				break;
-			case CKA_KEY_TYPE:
-				if ((uint64_t)((uint32_t)value) != value)
-				{
-					printf("overflow key type");
-					break;
-				}
-				dumpCKK((unsigned long) value, 48);
-				break;
-			case CKA_KEY_GEN_MECHANISM:
-				if ((uint64_t)((uint32_t)value) != value)
-				{
-					printf("overflow mechanism type");
-					break;
-				}
-				dumpCKM((unsigned long) value, 48);
-				break;
-			case CKA_HW_FEATURE_TYPE:
-				if ((uint64_t)((uint32_t)value) != value)
-				{
-					printf("overflow hw feature type");
-					break;
-				}
-				dumpCKH((unsigned long) value, 48);
-				break;
-			default:
-				printf("CK_ULONG %lu(0x%lx)",
-				       (unsigned long) value,
-				       (unsigned long) value);
-				break;
-			}
+			dumpCKx(p11type, value, 48);
 			printf("\n");
 		}
 		else if (disktype == BYTES_ATTR)
@@ -573,6 +759,30 @@ void dump(FILE* stream)
 				return;
 			}
 			dumpBytes(value);
+		}
+		else if (disktype == ARRAY_ATTR)
+		{
+			uint64_t len;
+			if (!readULong(stream, len))
+			{
+				corrupt(stream);
+				return;
+			}
+			dumpULong(len);
+			if (len > MAX_BYTES)
+			{
+				printf("overflow length...\n");
+				return;
+			}
+			printf("(length %lu)\n", (unsigned long) len);
+
+			std::vector<Attribute> value;
+			if (!readArray(stream, len, value))
+			{
+				corrupt(stream);
+				return;
+			}
+			dumpArray(value);
 		}
 		else
 		{

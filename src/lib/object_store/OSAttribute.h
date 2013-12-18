@@ -35,6 +35,7 @@
 
 #include "config.h"
 #include "ByteString.h"
+#include <map>
 
 class OSAttribute
 {
@@ -51,6 +52,9 @@ public:
 	// Constructor for a byte string type attribute
 	OSAttribute(const ByteString& value);
 
+	// Constructor for an array type attribute
+	OSAttribute(const std::map<CK_ATTRIBUTE_TYPE,OSAttribute>& value);
+
 	// Destructor
 	virtual ~OSAttribute() { }
 
@@ -58,16 +62,19 @@ public:
 	bool isBooleanAttribute() const;
 	bool isUnsignedLongAttribute() const;
 	bool isByteStringAttribute() const;
+	bool isArrayAttribute() const;
 
 	// Retrieve the attribute value
 	bool getBooleanValue() const;
 	unsigned long getUnsignedLongValue() const;
 	const ByteString& getByteStringValue() const;
+	const std::map<CK_ATTRIBUTE_TYPE,OSAttribute>& getArrayValue() const;
 
 	// Set the attribute value
 	void setBooleanValue(const bool value);
 	void setUnsignedLongValue(const unsigned long value);
 	void setByteStringValue(const ByteString& value);
+	void setArrayValue(const std::map<CK_ATTRIBUTE_TYPE,OSAttribute>& value);
 
 private:
 	// The attribute type
@@ -75,7 +82,8 @@ private:
 	{
 		BOOL,
 		ULONG,
-		BYTESTR
+		BYTESTR,
+		ARRAY
 	}
 	attributeType;
 
@@ -83,6 +91,7 @@ private:
 	bool boolValue;
 	unsigned long ulongValue;
 	ByteString byteStrValue;
+	std::map<CK_ATTRIBUTE_TYPE,OSAttribute> arrayValue;
 };
 
 #endif // !_SOFTHSM_V2_OSATTRIBUTE_H

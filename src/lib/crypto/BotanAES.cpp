@@ -33,6 +33,156 @@
 #include "config.h"
 #include "BotanAES.h"
 #include <algorithm>
+#include <botan/rfc3394.h>
+
+// Wrap/Unwrap keys
+bool BotanAES::wrapKey(const SymmetricKey* key, const std::string mode, const ByteString& in, ByteString& out)
+{
+	// Check key bit length; AES only supports 128, 192 or 256 bit keys
+	if ((key->getBitLen() != 128) &&
+	    (key->getBitLen() != 192) &&
+	    (key->getBitLen() != 256))
+	{
+		ERROR_MSG("Invalid AES key length (%d bits)", key->getBitLen());
+
+		return false;
+	}
+
+	// Determine the wrapping mode
+	if (!mode.compare("aes-keywrap"))
+	{
+		// RFC 3394 AES key wrap
+		if (in.size() < 16)
+		{
+			ERROR_MSG("key data to wrap too small");
+
+			return false;
+		}
+		if ((in.size() % 8) != 0)
+		{
+			ERROR_MSG("key data to wrap not aligned");
+
+			return false;
+		}
+
+#if BOTAN_VERSION_MINOR == 11
+		Botan::secure_vector<Botan::byte> data(in.size());
+		memcpy(data.data(), in.const_byte_str(), in.size());
+		Botan::SecureVector<Botan::byte> wrapped;
+#else
+		Botan::MemoryRegion<Botan::byte> data(in.size());
+		memcpy(data.begin(), in.const_byte_str(), in.size());
+		Botan::SecureVector<Botan::byte> wrapped;
+#endif
+		Botan::SymmetricKey botanKey = Botan::SymmetricKey(key->getKeyBits().const_byte_str(), key->getKeyBits().size());
+		Algorithm_Factory& af = global_state().algorithm_factory();
+		try
+		{
+			wrapped = Botan::rfc3394_keywrap(data, botanKey, af);
+		}
+		catch (...)
+		{
+			ERROR_MSG("AES key wrap failed");
+
+			return false;
+		}
+		out.resize(wrapped.size());
+#if BOTAN_VERSION_MINOR == 11
+		memcpy(&out[0], wrapped.data(), out.size());
+#else
+		memcpy(&out[0], wrapped.begin(), out.size());
+#endif
+
+		return  true;
+	}
+	else if (!mode.compare("aes-keywrap-pad"))
+	{
+		// RFC 5649 AES key wrap with padding
+		// TODO
+
+		return false;
+	}
+	else
+	{
+		ERROR_MSG("unknown AES key wrap mode %s", mode.const_byte_str());
+
+		return false;
+	}
+}
+
+bool BotanAES::unwrapKey(const SymmetricKey* key, const std::string mode, const ByteString& in, ByteString& out)
+{
+	// Check key bit length; AES only supports 128, 192 or 256 bit keys
+	if ((key->getBitLen() != 128) &&
+	    (key->getBitLen() != 192) &&
+	    (key->getBitLen() != 256))
+	{
+		ERROR_MSG("Invalid AES key length (%d bits)", key->getBitLen());
+
+		return false;
+	}
+
+	// Determine the unwrapping mode
+	if (!mode.compare("aes-keywrap"))
+	{
+		// RFC 3394 AES key wrap
+		if (in.size() < 24)
+		{
+			ERROR_MSG("key data to unwrap too small");
+
+			return false;
+		}
+		if ((in.size() % 8) != 0)
+		{
+			ERROR_MSG("key data to unwrap not aligned");
+
+			return false;
+		}
+
+#if BOTAN_VERSION_MINOR == 11
+		Botan::secure_vector<Botan::byte> wrapped(in.size());
+		memcpy(wrapped.data(), in.const_byte_str(), in.size());
+		Botan::SecureVector<Botan::byte> unwrapped;
+#else
+		Botan::MemoryRegion<Botan::byte> wrapped(in.size());
+		memcpy(wrapped.begin(), in.const_byte_str(), in.size());
+		Botan::SecureVector<Botan::byte> unwrapped;
+#endif
+		Botan::SymmetricKey botanKey = Botan::SymmetricKey(key->getKeyBits().const_byte_str(), key->getKeyBits().size());
+		Algorithm_Factory& af = global_state().algorithm_factory();
+		try
+		{
+			unwrapped = Botan::rfc3394_keyunwrap(wrapped, botanKey, af);
+		}
+		catch (...)
+		{
+			ERROR_MSG("AES key unwrap failed");
+
+			return false;
+		}
+		out.resize(unwrapped.size());
+#if BOTAN_VERSION_MINOR == 11
+		memcpy(&out[0], unwrapped.data(), out.size());
+#else
+		memcpy(&out[0], unwrapped.begin(), out.size());
+#endif
+
+		return  true;
+	}
+	else if (!mode.compare("aes-keywrap-pad"))
+	{
+		// RFC 5649 AES key wrap with padding
+		// TODO
+
+		return false;
+	}
+	else
+	{
+		ERROR_MSG("unknown AES key wrap mode %s", mode.const_byte_str());
+
+		return false;
+	}
+}
 
 std::string BotanAES::getCipher() const
 {

@@ -43,6 +43,11 @@ public:
 	// Destructor
 	virtual ~BotanDES() { }
 
+	// Wrap/Unwrap keys
+	virtual bool wrapKey(const SymmetricKey* key, const std::string mode, const ByteString& in, ByteString& out);
+
+	virtual bool unwrapKey(const SymmetricKey* key, const std::string mode, const ByteString& in, ByteString& out);
+
 	// Generate key
 	virtual bool generateKey(SymmetricKey& key, RNG* rng = NULL);
 

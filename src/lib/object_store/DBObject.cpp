@@ -127,17 +127,31 @@ bool DBObject::createTables()
 		return false;
 	}
 
-	// attribute_blob
-	DB::Statement cr_attr_blob = _connection->prepare(
-		"create table attribute_blob ("
+	// attribute_binary
+	DB::Statement cr_attr_binary = _connection->prepare(
+		"create table attribute_binary ("
 		"value blob,"
 		"type integer,"
 		"object_id integer references object(id) on delete cascade,"
 		"id integer primary key autoincrement)"
 		);
-	if (!_connection->execute(cr_attr_blob))
+	if (!_connection->execute(cr_attr_binary))
 	{
-		ERROR_MSG("Failed to create \"attribute_blob\" table");
+		ERROR_MSG("Failed to create \"attribute_binary\" table");
+		return false;
+	}
+
+	// attribute_array
+	DB::Statement cr_attr_array = _connection->prepare(
+		"create table attribute_array ("
+		"value blob,"
+		"type integer,"
+		"object_id integer references object(id) on delete cascade,"
+		"id integer primary key autoincrement)"
+		);
+	if (!_connection->execute(cr_attr_array))
+	{
+		ERROR_MSG("Failed to create \"attribute_array\" table");
 		return false;
 	}
 
@@ -220,11 +234,19 @@ bool DBObject::dropTables()
 		return false;
 	}
 
-	// attribute_blob
-	DB::Statement dr_attr_blob = _connection->prepare("drop table attribute_blob");
-	if (!_connection->execute(dr_attr_blob))
+	// attribute_binary
+	DB::Statement dr_attr_binary = _connection->prepare("drop table attribute_binary");
+	if (!_connection->execute(dr_attr_binary))
 	{
-		ERROR_MSG("Failed to drop \"attribute_blob\" table");
+		ERROR_MSG("Failed to drop \"attribute_binary\" table");
+		return false;
+	}
+
+	// attribute_array
+	DB::Statement dr_attr_array = _connection->prepare("drop table attribute_array");
+	if (!_connection->execute(dr_attr_array))
+	{
+		ERROR_MSG("Failed to drop \"attribute_array\" table");
 		return false;
 	}
 
@@ -497,6 +519,144 @@ static AttributeKind attributeKind(CK_ATTRIBUTE_TYPE type)
 	}
 }
 
+static bool decodeArray(std::map<CK_ATTRIBUTE_TYPE,OSAttribute>& array, const unsigned char *binary, size_t size)
+{
+	for (size_t pos = 0; pos < size; )
+	{
+		// finished?
+		if (pos == size) break;
+
+		CK_ATTRIBUTE_TYPE attrType;
+		if (pos + sizeof(attrType) > size)
+		{
+			goto overrun;
+		}
+		memcpy(&attrType, binary + pos, sizeof(attrType));
+		pos += sizeof(attrType);
+
+		AttributeKind attrKind;
+		if (pos + sizeof(AttributeKind) > size)
+		{
+			goto overrun;
+		}
+		memcpy(&attrKind, binary + pos, sizeof(attrKind));
+		pos += sizeof(attrKind);
+
+		// Verify using attributeKind()?
+
+		switch (attrKind)
+		{
+			case akBoolean:
+			{
+				bool value;
+				if (pos + sizeof(value) > size)
+				{
+					goto overrun;
+				}
+				memcpy(&value, binary + pos, sizeof(value));
+				pos += sizeof(value);
+
+				array.insert(std::pair<CK_ATTRIBUTE_TYPE,OSAttribute> (attrType, value));
+			}
+			break;
+
+			case akInteger:
+			{
+				unsigned long value;
+				if (pos + sizeof(value) > size)
+				{
+					goto overrun;
+				}
+				memcpy(&value, binary + pos, sizeof(value));
+				pos += sizeof(value);
+
+				array.insert(std::pair<CK_ATTRIBUTE_TYPE,OSAttribute> (attrType, value));
+			}
+			break;
+
+			case akBinary:
+			{
+				ByteString value;
+				unsigned long len;
+				if (pos + sizeof(len) > size)
+				{
+					goto overrun;
+				}
+				memcpy(&len, binary + pos, sizeof(len));
+				pos += sizeof(len);
+
+				if (pos + len > size)
+				{
+					goto overrun;
+				}
+				value.resize(len);
+				memcpy(&value[0], binary + pos, len);
+				pos += len;
+
+				array.insert(std::pair<CK_ATTRIBUTE_TYPE,OSAttribute> (attrType, value));
+			}
+			break;
+
+			default:
+			ERROR_MSG("unsupported attribute kind in array");
+
+			return false;
+		}
+	}
+
+	return true;
+
+overrun:
+	ERROR_MSG("array template overrun");
+
+	return false;
+}
+
+static bool encodeArray(ByteString& value, const std::map<CK_ATTRIBUTE_TYPE,OSAttribute>& attributes)
+{
+	for (std::map<CK_ATTRIBUTE_TYPE,OSAttribute>::const_iterator i = attributes.begin(); i != attributes.end(); ++i)
+	{
+		CK_ATTRIBUTE_TYPE attrType = i->first;
+		value += ByteString((unsigned char*) &attrType, sizeof(attrType));
+
+		OSAttribute attr = i->second;
+		if (attr.isBooleanAttribute())
+		{
+			AttributeKind attrKind = akBoolean;
+			value += ByteString((unsigned char*) &attrKind, sizeof(attrKind));
+
+			bool val = attr.getBooleanValue();
+			value += ByteString((unsigned char*) &val, sizeof(val));
+		}
+		else if (attr.isUnsignedLongAttribute())
+		{
+			AttributeKind attrKind = akInteger;
+			value += ByteString((unsigned char*) &attrKind, sizeof(attrKind));
+
+			unsigned long val = attr.getUnsignedLongValue();
+			value += ByteString((unsigned char*) &val, sizeof(val));
+		}
+		else if (attr.isByteStringAttribute())
+		{
+			AttributeKind attrKind = akBinary;
+			value += ByteString((unsigned char*) &attrKind, sizeof(attrKind));
+
+			ByteString val = attr.getByteStringValue();
+			unsigned long len = val.size();
+			value += ByteString((unsigned char*) &len, sizeof(len));
+			value += val;
+		}
+		else
+		{
+			ERROR_MSG("unsupported attribute kind for array");
+
+			return false;
+		}
+	}
+
+	return true;
+}
+
 OSAttribute *DBObject::accessAttribute(CK_ATTRIBUTE_TYPE type)
 {
 	switch (attributeKind(type))
@@ -593,9 +753,9 @@ OSAttribute *DBObject::accessAttribute(CK_ATTRIBUTE_TYPE type)
 		}
 		case akBinary:
 		{
-			// try to find the attribute in the integer attribute table
+			// try to find the attribute in the binary attribute table
 			DB::Statement statement = _connection->prepare(
-				"select value from attribute_blob where type=%d and object_id=%lld",
+				"select value from attribute_binary where type=%d and object_id=%lld",
 				type,
 				_objectId);
 			if (!statement.isValid())
@@ -635,7 +795,58 @@ OSAttribute *DBObject::accessAttribute(CK_ATTRIBUTE_TYPE type)
 			return attr;
 		}
 		case akArray:
-			return NULL;
+		{
+			// try to find the attribute in the array attribute table
+			DB::Statement statement = _connection->prepare(
+				"select value from attribute_array where type=%d and object_id=%lld",
+				type,
+				_objectId);
+			if (!statement.isValid())
+			{
+				return NULL;
+			}
+			DB::Result result = _connection->perform(statement);
+			if (!result.isValid())
+			{
+				return NULL;
+			}
+			// Store the attribute in the transaction when it is active.
+			std::map<CK_ATTRIBUTE_TYPE,OSAttribute*> *attrs = &_attributes;			
+			if (_transaction)
+				attrs = _transaction;
+
+			const unsigned char *binary = result.getBinary(1);
+			size_t size = result.getFieldLength(1);
+			std::map<CK_ATTRIBUTE_TYPE,OSAttribute*>::iterator it =	 attrs->find(type);
+			OSAttribute *attr;
+			if (it != attrs->end())
+			{
+				if (!it->second->isArrayAttribute())
+				{
+					ERROR_MSG("Trying to change the type of an attribute to array.");
+					return NULL;
+				}
+				std::map<CK_ATTRIBUTE_TYPE,OSAttribute> value;
+				if (!decodeArray(value,binary,size))
+				{
+					return NULL;
+				}
+				it->second->setArrayValue(value);
+				attr = it->second;
+			}
+			else
+			{
+				std::map<CK_ATTRIBUTE_TYPE,OSAttribute> value;
+				if (!decodeArray(value,binary,size))
+				{
+					return NULL;
+				}
+				attr = new OSAttribute(value);
+				(*attrs)[type] = attr;
+				return attr;
+			}
+			return attr;
+		}
 	}
 	
 	return NULL;
@@ -750,10 +961,11 @@ bool DBObject::setAttribute(CK_ATTRIBUTE_TYPE type, const OSAttribute& attribute
 		return false;
 	}
 
-	// Update and existing attribute...
+	// Update an existing attribute...
 	if (attr)
 	{
 		DB::Statement statement;
+		bool bindByteString = true;
 		if (attr->isBooleanAttribute())
 		{
 			// update boolean attribute
@@ -762,31 +974,47 @@ bool DBObject::setAttribute(CK_ATTRIBUTE_TYPE type, const OSAttribute& attribute
 					attribute.getBooleanValue() ? 1 : 0,
 					type,
 					_objectId);
+			bindByteString = false;
 		}
-		else
+		else if (attr->isUnsignedLongAttribute())
 		{
-			if (attr->isUnsignedLongAttribute())
+			// update integer attribute
+			statement = _connection->prepare(
+					"update attribute_integer set value=%lld where type=%d and object_id=%lld",
+					static_cast<long long>(attribute.getUnsignedLongValue()),
+					type,
+					_objectId);
+			bindByteString = false;
+		}
+		else if (attr->isByteStringAttribute())
+		{
+			// update binary attribute
+			statement = _connection->prepare(
+					"update attribute_binary set value=? where type=%d and object_id=%lld",
+					type,
+					_objectId);
+			//bindByteString = true;
+		}
+		else if (attr->isArrayAttribute())
+		{
+			// update array attribute
+			ByteString value;
+			if (!encodeArray(value, attribute.getArrayValue()))
 			{
-				// update integer attribute
-				statement = _connection->prepare(
-						"update attribute_integer set value=%lld where type=%d and object_id=%lld",
-						static_cast<long long>(attribute.getUnsignedLongValue()),
-						type,
-						_objectId);
-			
+				return false;
 			}
-			else	
-			{
-				if (attr->isByteStringAttribute())
-				{
-					// update binary attribute
-					statement = _connection->prepare(
-							"update attribute_blob set value=? where type=%d and object_id=%lld",
-							type,
-							_objectId);
-				}
-				DB::Bindings(statement).bindBlob(1, attribute.getByteStringValue().const_byte_str(), attribute.getByteStringValue().size(),NULL);
-			}
+
+			statement = _connection->prepare(
+					"update attribute_array set value=? where type=%d and object_id=%lld",
+					type,
+					_objectId);
+			DB::Bindings(statement).bindBlob(1, value.const_byte_str(), value.size(), SQLITE_TRANSIENT);
+			bindByteString = false;
+		}
+
+		if (bindByteString)
+		{
+			DB::Bindings(statement).bindBlob(1, attribute.getByteStringValue().const_byte_str(), attribute.getByteStringValue().size(), SQLITE_STATIC);
 		}			
 		
 		// Statement is valid when a prepared statement has been attached to it.
@@ -824,34 +1052,39 @@ bool DBObject::setAttribute(CK_ATTRIBUTE_TYPE type, const OSAttribute& attribute
 					_objectId);
 
 	}
-	else
+	else if (attribute.isUnsignedLongAttribute())
 	{
-		// Insert the attribute, because it is currently unknown
-		if (attribute.isUnsignedLongAttribute())
-		{
-			// Could not update it, so we need to insert it.
-			statement = _connection->prepare(
-						"insert into attribute_integer (value,type,object_id) values (%lld,%d,%lld)",
-						static_cast<long long>(attribute.getUnsignedLongValue()),
-						type,
-						_objectId);
-	
-		}
-		else
-		{
-			// Insert the attribute, because it is currently unknown
-			if (attribute.isByteStringAttribute())
-			{
-				// Could not update it, so we need to insert it.
-				statement = _connection->prepare(
-							"insert into attribute_blob (value,type,object_id) values (?,%d,%lld)",
-							type,
-							_objectId);
+		// Could not update it, so we need to insert it.
+		statement = _connection->prepare(
+					"insert into attribute_integer (value,type,object_id) values (%lld,%d,%lld)",
+					static_cast<long long>(attribute.getUnsignedLongValue()),
+					type,
+					_objectId);
+	}
+	else if (attribute.isByteStringAttribute())
+	{
+		// Could not update it, so we need to insert it.
+		statement = _connection->prepare(
+					"insert into attribute_binary (value,type,object_id) values (?,%d,%lld)",
+					type,
+					_objectId);
 		
-				DB::Bindings(statement).bindBlob(1, attribute.getByteStringValue().const_byte_str(), attribute.getByteStringValue().size(),NULL);
-			}
+		DB::Bindings(statement).bindBlob(1, attribute.getByteStringValue().const_byte_str(), attribute.getByteStringValue().size(), SQLITE_STATIC);
+	}
+	else if (attribute.isArrayAttribute())
+	{
+		// Could not update it, so we need to insert it.
+		ByteString value;
+		if (!encodeArray(value, attribute.getArrayValue()))
+		{
+			return false;
 		}
-		
+
+		statement = _connection->prepare(
+				"insert into attribute_array (value,type,object_id) values (?,%d,%lld)",
+				type,
+				_objectId);
+		DB::Bindings(statement).bindBlob(1, value.const_byte_str(), value.size(), SQLITE_TRANSIENT);
 	}
 
 	// Statement is valid when a prepared statement has been attached to it.
