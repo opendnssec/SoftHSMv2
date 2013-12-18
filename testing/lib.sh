@@ -608,17 +608,11 @@ check_if_built ()
 	
 	local name_tag="$1"
 	
-	if [ -f "$WORKSPACE/.$name_tag.build" ]; then
-		local build_rev=`cat "$WORKSPACE/.$name_tag.build" 2>/dev/null`
+	if [ -f "$INSTALL_ROOT/.$name_tag.build" ]; then
+		local build_rev=`cat "$INSTALL_ROOT/.$name_tag.build" 2>/dev/null`
 		
 		if [ "$REVISION" = "$build_rev" ]; then
-			if [ -f "$INSTALL_ROOT/.$name_tag.build" ]; then
-				local build_rev=`cat "$INSTALL_ROOT/.$name_tag.build" 2>/dev/null`
-				
-				if [ "$REVISION" = "$build_rev" ]; then
-					return 0
-				fi
-			fi
+			return 0
 		fi
 	fi
 	
@@ -664,20 +658,6 @@ set_build_ok ()
 		exit 1
 	fi
 
-	echo "$REVISION" > "$WORKSPACE/.$name_tag.build"
-
-	if [ -f "$WORKSPACE/.$name_tag.build" ]; then
-		local build_rev=`cat "$WORKSPACE/.$name_tag.build" 2>/dev/null`
-		
-		if [ "$REVISION" != "$build_rev" ]; then
-			echo "set_build_ok: Can't tag build file $WORKSPACE/.$name_tag.build !" >&2
-			return 1
-		fi
-	else
-		echo "set_build_ok: Can't tag build file $WORKSPACE/.$name_tag.build !" >&2
-		return 1
-	fi
-
 	echo "$REVISION" > "$INSTALL_ROOT/.$name_tag.build"
 
 	if [ -f "$INSTALL_ROOT/.$name_tag.build" ]; then
@@ -710,20 +690,14 @@ check_if_tested ()
 	
 	local name_tag="$1"
 	
-	if [ -f "$WORKSPACE/.$name_tag.test" ]; then
-		local build_rev=`cat "$WORKSPACE/.$name_tag.test" 2>/dev/null`
+	if [ -f "$INSTALL_ROOT/.$name_tag.test" ]; then
+		local build_rev=`cat "$INSTALL_ROOT/.$name_tag.test" 2>/dev/null`
 		
 		if [ "$REVISION" = "$build_rev" ]; then
-			if [ -f "$INSTALL_ROOT/.$name_tag.test" ]; then
-				local build_rev=`cat "$INSTALL_ROOT/.$name_tag.test" 2>/dev/null`
-				
-				if [ "$REVISION" = "$build_rev" ]; then
-				    if [ -f junit.xml ]; then
-				        touch junit.xml
-				    fi
-					return 0
-				fi
-			fi
+		    if [ -f junit.xml ]; then
+		        touch junit.xml
+		    fi
+			return 0
 		fi
 	fi
 	
@@ -844,20 +818,6 @@ set_test_ok ()
 	if [ -f "$INSTALL_ROOT/.$name_tag.ok.test" ]; then
 		echo "set_test_ok: Test already mark ok, this should not happend. Did you forget to start_test?" >&2
 		exit 1
-	fi
-
-	echo "$REVISION" > "$WORKSPACE/.$name_tag.test"
-
-	if [ -f "$WORKSPACE/.$name_tag.test" ]; then
-		local test_rev=`cat "$WORKSPACE/.$name_tag.test" 2>/dev/null`
-		
-		if [ "$REVISION" != "$test_rev" ]; then
-			echo "set_test_ok: Can't tag test file $WORKSPACE/.$name_tag.test !" >&2
-			return 1
-		fi
-	else
-		echo "set_test_ok: Can't tag test file $WORKSPACE/.$name_tag.test !" >&2
-		return 1
 	fi
 
 	echo "$REVISION" > "$INSTALL_ROOT/.$name_tag.test"
