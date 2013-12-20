@@ -100,6 +100,8 @@ CK_RV SymmetricAlgorithmTests::generateAesKey(CK_SESSION_HANDLE hSession, CK_BBO
 		{ CKA_PRIVATE, &bPrivate, sizeof(bPrivate) },
 		{ CKA_ENCRYPT, &bTrue, sizeof(bTrue) },
 		{ CKA_DECRYPT, &bTrue, sizeof(bTrue) },
+		{ CKA_WRAP, &bTrue, sizeof(bTrue) },
+		{ CKA_UNWRAP, &bTrue, sizeof(bTrue) },
 		{ CKA_VALUE_LEN, &bytes, sizeof(bytes) },
 	};
 
@@ -286,6 +288,67 @@ void SymmetricAlgorithmTests::des3EncryptDecrypt(CK_MECHANISM_TYPE mechanismType
 	CPPUNIT_ASSERT(memcmp(plainText, recoveredText, sizeof(plainText)) == 0);
 }
 
+void SymmetricAlgorithmTests::aesWrapUnwrap(CK_MECHANISM_TYPE mechanismType, CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hKey)
+{
+	CK_MECHANISM mechanism = { mechanismType, NULL_PTR, 0 };
+	CK_BBOOL bFalse = CK_FALSE;
+	CK_BBOOL bTrue = CK_TRUE;
+	CK_OBJECT_CLASS secretClass = CKO_SECRET_KEY;
+	CK_KEY_TYPE genKeyType = CKK_GENERIC_SECRET;
+	CK_BYTE keyPtr[128];
+	CK_ATTRIBUTE attribs[] = {
+		{ CKA_EXTRACTABLE, &bFalse, sizeof(bFalse) },
+		{ CKA_CLASS, &secretClass, sizeof(secretClass) },
+		{ CKA_KEY_TYPE, &genKeyType, sizeof(genKeyType) },
+		{ CKA_TOKEN, &bFalse, sizeof(bFalse) },
+		{ CKA_PRIVATE, &bTrue, sizeof(bTrue) },
+		{ CKA_SENSITIVE, &bFalse, sizeof(bFalse) },
+		{ CKA_VALUE, keyPtr, sizeof(keyPtr) }
+	};
+	CK_OBJECT_HANDLE hSecret;
+	CK_RV rv;
+
+	rv = C_GenerateRandom(hSession, keyPtr, sizeof(keyPtr));
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	hSecret = CK_INVALID_HANDLE;
+	rv = C_CreateObject(hSession, attribs, sizeof(attribs)/sizeof(CK_ATTRIBUTE), &hSecret);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	CPPUNIT_ASSERT(hSecret != CK_INVALID_HANDLE);
+
+	CK_BYTE_PTR wrappedPtr = NULL_PTR;
+	CK_ULONG wrappedLen = 0UL;
+	rv = C_WrapKey(hSession, &mechanism, hKey, hSecret, wrappedPtr, &wrappedLen);
+	CPPUNIT_ASSERT(rv == CKR_KEY_UNEXTRACTABLE);
+	rv = C_DestroyObject(hSession, hSecret);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	attribs[0].pValue = &bTrue;
+
+	hSecret = CK_INVALID_HANDLE;
+	rv = C_CreateObject(hSession, attribs, sizeof(attribs)/sizeof(CK_ATTRIBUTE), &hSecret);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	CPPUNIT_ASSERT(hSecret != CK_INVALID_HANDLE);
+
+	rv = C_WrapKey(hSession, &mechanism, hKey, hSecret, wrappedPtr, &wrappedLen);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	CPPUNIT_ASSERT(wrappedLen == sizeof(keyPtr) + 8);
+	wrappedPtr = (CK_BYTE_PTR) malloc(wrappedLen);
+	CPPUNIT_ASSERT(wrappedPtr != NULL_PTR);
+	rv = C_WrapKey(hSession, &mechanism, hKey, hSecret, wrappedPtr, &wrappedLen);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	CPPUNIT_ASSERT(wrappedLen == sizeof(keyPtr) + 8);
+
+	///// TODO
+
+	free(wrappedPtr);
+	rv = C_DestroyObject(hSession, hSecret);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	rv = C_CloseSession(hSession);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+}
+
 void SymmetricAlgorithmTests::testAesEncryptDecrypt()
 {
 	CK_RV rv;
@@ -327,6 +390,39 @@ void SymmetricAlgorithmTests::testAesEncryptDecrypt()
 
 	aesEncryptDecrypt(CKM_AES_ECB,hSessionRO,hKey);
 	aesEncryptDecrypt(CKM_AES_CBC,hSessionRO,hKey);
+}
+
+void SymmetricAlgorithmTests::testAesWrapUnwrap()
+{
+	CK_RV rv;
+	CK_UTF8CHAR pin[] = SLOT_0_USER1_PIN;
+	CK_ULONG pinLength = sizeof(pin) - 1;
+	// CK_UTF8CHAR sopin[] = SLOT_0_SO1_PIN;
+	// CK_ULONG sopinLength = sizeof(sopin) - 1;
+	CK_SESSION_HANDLE hSession;
+
+	// Just make sure that we finalize any previous tests
+	C_Finalize(NULL_PTR);
+
+	// Initialize the library and start the test.
+	rv = C_Initialize(NULL_PTR);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Open session
+	rv = C_OpenSession(SLOT_INIT_TOKEN, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSession);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Login USER into the session so we can create a private object
+	rv = C_Login(hSession,CKU_USER,pin,pinLength);
+	CPPUNIT_ASSERT(rv==CKR_OK);
+
+	CK_OBJECT_HANDLE hKey = CK_INVALID_HANDLE;
+
+	// Generate a wrapping session public key
+	rv = generateAesKey(hSession,IN_SESSION,IS_PUBLIC,hKey);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	aesWrapUnwrap(CKM_AES_KEY_WRAP, hSession, hKey);
 }
 
 void SymmetricAlgorithmTests::testDesEncryptDecrypt()
