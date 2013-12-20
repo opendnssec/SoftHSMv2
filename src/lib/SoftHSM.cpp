@@ -4387,6 +4387,10 @@ CK_RV SoftHSM::C_WrapKey
 #ifdef notyet
 		case CKM_AES_KEY_WRAP_PAD:
 #endif
+			// Does not handle optional init vector
+			if (pMechanism->pParameter != NULL_PTR ||
+                            pMechanism->ulParameterLen != 0)
+				return CKR_ARGUMENTS_BAD;
 			break;
 		default:
 			return CKR_MECHANISM_INVALID;
@@ -4451,10 +4455,9 @@ CK_RV SoftHSM::C_WrapKey
 		return CKR_KEY_UNEXTRACTABLE;
 	if ((key->attributeExists(CKA_WRAP_WITH_TRUSTED) && key->getAttribute(CKA_WRAP_WITH_TRUSTED)->getBooleanValue()) && (!wrapKey->attributeExists(CKA_TRUSTED) || wrapKey->getAttribute(CKA_TRUSTED)->getBooleanValue() == false))
 		return CKR_KEY_NOT_WRAPPABLE;
-#ifndef ALLOW_SENSIBLE_WRAP
+	// If a sensible key may be wrapped, it may be unwrapped as not sensible
 	if (key->attributeExists(CKA_SENSITIVE) && key->getAttribute(CKA_SENSITIVE)->getBooleanValue())
 		return CKR_KEY_NOT_WRAPPABLE;
-#endif
 
 	// Check the class and type or simply the existence of a value?
 	// Improve this!
@@ -4472,49 +4475,8 @@ CK_RV SoftHSM::C_WrapKey
 		{
 			if (!key->attributeExists(it->first))
 				return CKR_KEY_NOT_WRAPPABLE;
-			const OSAttribute *attr = key->getAttribute(it->first);
-			if (attr->isBooleanAttribute())
-			{
-				if (it->second.isBooleanAttribute())
-				{
-					if (attr->getBooleanValue() != it->second.getBooleanValue())
-						return CKR_KEY_NOT_WRAPPABLE;
-				}
-				else if (it->second.isByteStringAttribute())
-				{
-					const ByteString value = it->second.getByteStringValue();
-					if (value.size() != sizeof(bool))
-						return CKR_KEY_NOT_WRAPPABLE;
-					if (attr->getBooleanValue() != (*(CK_BBOOL*)value.const_byte_str() != CK_FALSE))
-						return CKR_KEY_NOT_WRAPPABLE;
-				}
-				else
-					return CKR_KEY_NOT_WRAPPABLE;
-			}
-			else if (attr->isUnsignedLongAttribute())
-			{
-				if (it->second.isUnsignedLongAttribute())
-				{
-					if (attr->getUnsignedLongValue() != it->second.getUnsignedLongValue())
-						return CKR_KEY_NOT_WRAPPABLE;
-				}
-				else if (it->second.isByteStringAttribute())
-				{
-					const ByteString value = it->second.getByteStringValue();
-					if (value.size() != sizeof(CK_ULONG))
-						return CKR_KEY_NOT_WRAPPABLE;
-					if (attr->getUnsignedLongValue() != *(CK_ULONG*)value.const_byte_str())
-						return CKR_KEY_NOT_WRAPPABLE;
-				}
-				else
-					return CKR_KEY_NOT_WRAPPABLE;
-			}
-			else if (attr->isBooleanAttribute() && it->second.isByteStringAttribute())
-			{
-				if (attr->getByteStringValue() != it->second.getByteStringValue())
-					return CKR_KEY_NOT_WRAPPABLE;
-			}
-			else
+			ByteString v1, v2;
+			if (!key->getAttribute(it->first)->peekValue(v1) || !it->second.peekValue(v2) || (v1 != v2))
 				return CKR_KEY_NOT_WRAPPABLE;
 		}
 	}
@@ -4616,16 +4578,17 @@ CK_RV SoftHSM::C_UnwrapKey
 	CK_SESSION_HANDLE hSession,
 	CK_MECHANISM_PTR pMechanism,
 	CK_OBJECT_HANDLE hUnwrappingKey,
-	CK_BYTE_PTR /*pWrappedKey*/,
-	CK_ULONG /*ulWrappedKeyLen*/,
+	CK_BYTE_PTR pWrappedKey,
+	CK_ULONG ulWrappedKeyLen,
 	CK_ATTRIBUTE_PTR pTemplate,
-	CK_ULONG /*ulCount*/,
+	CK_ULONG ulCount,
 	CK_OBJECT_HANDLE_PTR hKey
 )
 {
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
 
 	if (pMechanism == NULL_PTR) return CKR_ARGUMENTS_BAD;
+	if (pWrappedKey == NULL_PTR) return CKR_ARGUMENTS_BAD;
 	if (pTemplate == NULL_PTR) return CKR_ARGUMENTS_BAD;
 	if (hKey == NULL_PTR) return CKR_ARGUMENTS_BAD;
 
@@ -4637,8 +4600,19 @@ CK_RV SoftHSM::C_UnwrapKey
 	switch(pMechanism->mechanism)
 	{
 		case CKM_AES_KEY_WRAP:
+			if ((ulWrappedKeyLen < 24) || ((ulWrappedKeyLen % 8) != 0))
+				return CKR_WRAPPED_KEY_LEN_RANGE;
+			// Does not handle optional init vector
+			if (pMechanism->pParameter != NULL_PTR ||
+                            pMechanism->ulParameterLen != 0)
+				return CKR_ARGUMENTS_BAD;
+			break;
 #ifdef notyet
 		case CKM_AES_KEY_WRAP_PAD:
+			// Does not handle optional init vector
+			if (pMechanism->pParameter != NULL_PTR ||
+                            pMechanism->ulParameterLen != 0)
+				return CKR_ARGUMENTS_BAD;
 #endif
 			break;
 		default:
@@ -4650,14 +4624,14 @@ CK_RV SoftHSM::C_UnwrapKey
 	if (token == NULL) return CKR_GENERAL_ERROR;
 
 	// Check the unwrapping key handle.
-	OSObject *wrapKey = (OSObject *)handleManager->getObject(hUnwrappingKey);
-	if (wrapKey == NULL_PTR || !wrapKey->isValid()) return CKR_UNWRAPPING_KEY_HANDLE_INVALID;
+	OSObject *unwrapKey = (OSObject *)handleManager->getObject(hUnwrappingKey);
+	if (unwrapKey == NULL_PTR || !unwrapKey->isValid()) return CKR_UNWRAPPING_KEY_HANDLE_INVALID;
 
-	CK_BBOOL isWrapKeyOnToken = wrapKey->getAttribute(CKA_TOKEN)->getBooleanValue();
-	CK_BBOOL isWrapKeyPrivate = wrapKey->getAttribute(CKA_PRIVATE)->getBooleanValue();
+	CK_BBOOL isUnwrapKeyOnToken = unwrapKey->getAttribute(CKA_TOKEN)->getBooleanValue();
+	CK_BBOOL isUnwrapKeyPrivate = unwrapKey->getAttribute(CKA_PRIVATE)->getBooleanValue();
 
 	// Check user credentials
-	CK_RV rv = haveWrite(session->getState(), isWrapKeyOnToken, isWrapKeyPrivate);
+	CK_RV rv = haveWrite(session->getState(), isUnwrapKeyOnToken, isUnwrapKeyPrivate);
 	if (rv != CKR_OK)
 	{
 		if (rv == CKR_USER_NOT_LOGGED_IN)
@@ -4669,20 +4643,202 @@ CK_RV SoftHSM::C_UnwrapKey
 	}
 
 	// Check unwrapping key class and type
-	if (wrapKey->getAttribute(CKA_CLASS)->getUnsignedLongValue() != CKO_SECRET_KEY)
+	if (unwrapKey->getAttribute(CKA_CLASS)->getUnsignedLongValue() != CKO_SECRET_KEY)
 		return CKR_UNWRAPPING_KEY_TYPE_INCONSISTENT;
-	if (pMechanism->mechanism == CKM_AES_KEY_WRAP && wrapKey->getAttribute(CKA_KEY_TYPE)->getUnsignedLongValue() != CKK_AES)
+	if (pMechanism->mechanism == CKM_AES_KEY_WRAP && unwrapKey->getAttribute(CKA_KEY_TYPE)->getUnsignedLongValue() != CKK_AES)
 		return CKR_UNWRAPPING_KEY_TYPE_INCONSISTENT;
-	if (pMechanism->mechanism == CKM_AES_KEY_WRAP_PAD && wrapKey->getAttribute(CKA_KEY_TYPE)->getUnsignedLongValue() != CKK_AES)
+	if (pMechanism->mechanism == CKM_AES_KEY_WRAP_PAD && unwrapKey->getAttribute(CKA_KEY_TYPE)->getUnsignedLongValue() != CKK_AES)
 		return CKR_UNWRAPPING_KEY_TYPE_INCONSISTENT;
 
 	// Check if the unwrapping key can be used for unwrapping
-	if (!wrapKey->attributeExists(CKA_UNWRAP) || wrapKey->getAttribute(CKA_UNWRAP)->getBooleanValue() == false)
+	if (!unwrapKey->attributeExists(CKA_UNWRAP) || unwrapKey->getAttribute(CKA_UNWRAP)->getBooleanValue() == false)
 		return CKR_KEY_FUNCTION_NOT_PERMITTED;
 
-	////// TODO
+	// Extract information from the template that is needed to create the object.
 
-	return CKR_FUNCTION_NOT_SUPPORTED;
+	CK_OBJECT_CLASS objClass;
+	CK_KEY_TYPE keyType;
+	CK_BBOOL isOnToken = CK_FALSE;
+	CK_BBOOL isPrivate = CK_TRUE;
+	CK_CERTIFICATE_TYPE dummy;
+	extractObjectInformation(pTemplate, ulCount, objClass, keyType, dummy, isOnToken, isPrivate);
+
+	// Report errors and/or unexpected usage.
+	if (objClass != CKO_SECRET_KEY)
+		return CKR_TEMPLATE_INCONSISTENT;
+	// Key type will be handled at object creation
+
+	// Check authorization
+	rv = haveWrite(session->getState(), isOnToken, isPrivate);
+	if (rv != CKR_OK)
+	{
+		if (rv == CKR_USER_NOT_LOGGED_IN)
+			INFO_MSG("User is not authorized");
+		if (rv == CKR_SESSION_READ_ONLY)
+			INFO_MSG("Session is read-only");
+
+		return rv;
+	}
+
+	// Build unwrapped key template
+	const CK_ULONG maxAttribs = 32;
+	CK_ATTRIBUTE secretAttribs[maxAttribs] = {
+		{ CKA_CLASS, &objClass, sizeof(objClass) },
+		{ CKA_TOKEN, &isOnToken, sizeof(isOnToken) },
+		{ CKA_PRIVATE, &isPrivate, sizeof(isPrivate) },
+		{ CKA_KEY_TYPE, &keyType, sizeof(keyType) }
+	};
+	CK_ULONG secretAttribsCount = 4;
+
+	// Add the additional
+	if (ulCount > (maxAttribs - secretAttribsCount))
+		return CKR_TEMPLATE_INCONSISTENT;
+	for (CK_ULONG i = 0; i < ulCount && rv == CKR_OK; ++i)
+	{
+		switch (pTemplate[i].type)
+		{
+			case CKA_CLASS:
+			case CKA_TOKEN:
+			case CKA_PRIVATE:
+			case CKA_KEY_TYPE:
+				continue;
+			default:
+				secretAttribs[secretAttribsCount++] = pTemplate[i];
+		}
+	}
+
+	// Apply the unwrap template
+	if (unwrapKey->attributeExists(CKA_UNWRAP_TEMPLATE) && unwrapKey->getAttribute(CKA_UNWRAP_TEMPLATE)->isArrayAttribute())
+	{
+		typedef std::map<CK_ATTRIBUTE_TYPE,OSAttribute> array_type;
+
+		const array_type& array = unwrapKey->getAttribute(CKA_UNWRAP_TEMPLATE)->getArrayValue();
+
+		for (array_type::const_iterator it = array.begin(); it != array.end(); ++it)
+		{
+			CK_ATTRIBUTE* attr = NULL;
+			for (CK_ULONG i = 0; i < secretAttribsCount; ++i)
+			{
+				if (it->first == secretAttribs[i].type)
+				{
+					if (attr != NULL)
+						return CKR_TEMPLATE_INCONSISTENT;
+					attr = &secretAttribs[i];
+					ByteString value;
+					it->second.peekValue(value);
+					if (attr->ulValueLen != value.size())
+						return CKR_TEMPLATE_INCONSISTENT;
+					if (memcmp(attr->pValue, value.const_byte_str(), value.size()) != 0)
+						return CKR_TEMPLATE_INCONSISTENT;
+				}
+			}
+			if (attr == NULL)
+				return CKR_TEMPLATE_INCONSISTENT;
+		}
+	}
+
+	*hKey = CK_INVALID_HANDLE;
+
+	// Get the symmetric algorithm matching the mechanism
+	SymmetricAlgorithm* cipher = NULL;
+	std::string mode;
+	size_t bb = 8;
+	switch(pMechanism->mechanism) {
+		case CKM_AES_KEY_WRAP:
+			cipher = CryptoFactory::i()->getSymmetricAlgorithm("aes");
+			mode = "aes-keywrap";
+			break;
+		case CKM_AES_KEY_WRAP_PAD:
+			cipher = CryptoFactory::i()->getSymmetricAlgorithm("aes");
+			mode = "aes-keywrap-pad";
+			break;
+		default:
+			return CKR_MECHANISM_INVALID;
+	}
+	if (cipher == NULL) return CKR_MECHANISM_INVALID;
+
+	SymmetricKey* unwrappingkey = new SymmetricKey();
+	if (unwrappingkey == NULL)
+	{
+		CryptoFactory::i()->recycleSymmetricAlgorithm(cipher);
+		return CKR_HOST_MEMORY;
+	}
+
+	if (getSymmetricKey(unwrappingkey, token, unwrapKey) != CKR_OK)
+	{
+		cipher->recycleKey(unwrappingkey);
+		CryptoFactory::i()->recycleSymmetricAlgorithm(cipher);
+		return CKR_GENERAL_ERROR;
+	}
+
+	// adjust key bit length
+	unwrappingkey->setBitLen(unwrappingkey->getKeyBits().size() * bb);
+
+	// Unwrap the key
+	ByteString wrapped(pWrappedKey, ulWrappedKeyLen);
+	ByteString keydata;
+	rv = CKR_OK;
+	if (!cipher->unwrapKey(unwrappingkey, mode, wrapped, keydata))
+		rv = CKR_GENERAL_ERROR;
+	cipher->recycleKey(unwrappingkey);
+	CryptoFactory::i()->recycleSymmetricAlgorithm(cipher);
+	if (rv != CKR_OK)
+		return rv;
+
+	// Create the secret object using C_CreateObject
+	rv = this->CreateObject(hSession, secretAttribs, secretAttribsCount, hKey, OBJECT_OP_GENERATE);
+
+	// Store the attributes that are being supplied
+	if (rv == CKR_OK)
+	{
+		OSObject* osobject = (OSObject*)handleManager->getObject(*hKey);
+		if (osobject == NULL_PTR || !osobject->isValid())
+			rv = CKR_FUNCTION_FAILED;
+		if (osobject->startTransaction())
+		{
+			bool bOK = true;
+
+			// Common Attributes
+			bOK = bOK && osobject->setAttribute(CKA_LOCAL, false);
+
+			// Common Secret Key Attributes
+			bOK = bOK && osobject->setAttribute(CKA_ALWAYS_SENSITIVE, false);
+			bOK = bOK && osobject->setAttribute(CKA_NEVER_EXTRACTABLE, false);
+
+			// Secret Attributes
+			ByteString value;
+			if (isPrivate)
+				token->encrypt(keydata, value);
+			else
+				value = keydata;
+			bOK = bOK && osobject->setAttribute(CKA_VALUE, value);
+
+			if (bOK)
+				bOK = osobject->commitTransaction();
+			else
+				osobject->abortTransaction();
+
+			if (!bOK)
+				rv = CKR_FUNCTION_FAILED;
+		}
+		else
+			rv = CKR_FUNCTION_FAILED;
+	}
+
+	// Remove secret that may have been created already when the function fails.
+	if (rv != CKR_OK)
+	{
+		if (*hKey != CK_INVALID_HANDLE)
+		{
+			OSObject* obj = (OSObject*)handleManager->getObject(*hKey);
+			handleManager->destroyObject(*hKey);
+			if (obj) obj->destroyObject();
+			*hKey = CK_INVALID_HANDLE;
+		}
+
+	}
+
+	return rv;
 }
 
 // Derive a key from the specified base key

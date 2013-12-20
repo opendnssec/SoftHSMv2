@@ -339,7 +339,21 @@ void SymmetricAlgorithmTests::aesWrapUnwrap(CK_MECHANISM_TYPE mechanismType, CK_
 	CPPUNIT_ASSERT(rv == CKR_OK);
 	CPPUNIT_ASSERT(wrappedLen == sizeof(keyPtr) + 8);
 
-	///// TODO
+	CK_ATTRIBUTE nattribs[] = {
+		{ CKA_CLASS, &secretClass, sizeof(secretClass) },
+		{ CKA_KEY_TYPE, &genKeyType, sizeof(genKeyType) },
+		{ CKA_TOKEN, &bFalse, sizeof(bFalse) },
+		{ CKA_PRIVATE, &bTrue, sizeof(bTrue) },
+		{ CKA_ENCRYPT, &bFalse, sizeof(bFalse) },
+		{ CKA_DECRYPT, &bTrue, sizeof(bTrue) },
+		{ CKA_SIGN, &bFalse,sizeof(bFalse) },
+		{ CKA_VERIFY, &bTrue, sizeof(bTrue) }
+	};
+	CK_OBJECT_HANDLE hNew;
+
+	hNew = CK_INVALID_HANDLE;
+	rv = C_UnwrapKey(hSession, &mechanism, hKey, wrappedPtr, wrappedLen, nattribs, sizeof(nattribs)/sizeof(CK_ATTRIBUTE), &hNew);
+	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	free(wrappedPtr);
 	rv = C_DestroyObject(hSession, hSecret);

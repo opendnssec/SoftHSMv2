@@ -2118,9 +2118,72 @@ CK_RV P11AttrWrapTemplate::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_V
 	CK_ATTRIBUTE_PTR attr = (CK_ATTRIBUTE_PTR) pValue;
 	std::map<CK_ATTRIBUTE_TYPE,OSAttribute> data;
 	for (size_t i = 0; i < ulValueLen / sizeof(CK_ATTRIBUTE); ++i, ++attr)
+	// Specialization for known attributes
+	switch (attr->type)
 	{
-		ByteString elem = ByteString((unsigned char*)attr->pValue, attr->ulValueLen);
-		data.insert(std::pair<CK_ATTRIBUTE_TYPE,OSAttribute> (attr->type, elem));
+	case CKA_TOKEN:
+	case CKA_PRIVATE:
+	case CKA_MODIFIABLE:
+	case CKA_COPYABLE:
+	case CKA_TRUSTED:
+	case CKA_ENCRYPT:
+	case CKA_DECRYPT:
+	case CKA_SIGN:
+	case CKA_SIGN_RECOVER:
+	case CKA_VERIFY:
+	case CKA_VERIFY_RECOVER:
+	case CKA_WRAP:
+	case CKA_UNWRAP:
+	case CKA_DERIVE:
+	case CKA_LOCAL:
+	case CKA_ALWAYS_SENSITIVE:
+	case CKA_SENSITIVE:
+	case CKA_NEVER_EXTRACTABLE:
+	case CKA_EXTRACTABLE:
+	case CKA_WRAP_WITH_TRUSTED:
+	case CKA_SECONDARY_AUTH:
+	case CKA_ALWAYS_AUTHENTICATE:
+		{
+			// CK_BBOOL
+			if (attr->ulValueLen != sizeof(CK_BBOOL))
+				return CKR_ATTRIBUTE_VALUE_INVALID;
+			bool elem = (*(CK_BBOOL*)attr->pValue != CK_FALSE);
+			data.insert(std::pair<CK_ATTRIBUTE_TYPE,OSAttribute> (attr->type, elem));
+		}
+		break;
+
+	case CKA_CLASS:
+	case CKA_KEY_TYPE:
+	case CKA_CERTIFICATE_TYPE:
+	case CKA_CERTIFICATE_CATEGORY:
+	case CKA_JAVA_MIDP_SECURITY_DOMAIN:
+	case CKA_NAME_HASH_ALGORITHM:
+	case CKA_KEY_GEN_MECHANISM:
+	case CKA_MODULUS_BITS:
+	case CKA_PRIME_BITS:
+	case CKA_SUBPRIME_BITS:
+	case CKA_VALUE_BITS:
+	case CKA_VALUE_LEN:
+	case CKA_AUTH_PIN_FLAGS:
+		{
+			// CK_ULONG
+			if (attr->ulValueLen != sizeof(CK_ULONG))
+				return CKR_ATTRIBUTE_VALUE_INVALID;
+			unsigned long elem = *(CK_ULONG*)attr->pValue;
+			data.insert(std::pair<CK_ATTRIBUTE_TYPE,OSAttribute> (attr->type, elem));
+		}
+		break;
+
+	case CKA_WRAP_TEMPLATE:
+	case CKA_UNWRAP_TEMPLATE:
+		return CKR_ATTRIBUTE_VALUE_INVALID;
+
+	default:
+		{
+			// CK_BYTE
+			ByteString elem = ByteString((unsigned char*)attr->pValue, attr->ulValueLen);
+			data.insert(std::pair<CK_ATTRIBUTE_TYPE,OSAttribute> (attr->type, elem));
+		}
 	}
 
 	// Store data
@@ -2154,9 +2217,72 @@ CK_RV P11AttrUnwrapTemplate::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK
 	CK_ATTRIBUTE_PTR attr = (CK_ATTRIBUTE_PTR) pValue;
 	std::map<CK_ATTRIBUTE_TYPE,OSAttribute> data;
 	for (size_t i = 0; i < ulValueLen / sizeof(CK_ATTRIBUTE); ++i, ++attr)
+	// Specialization for known attributes
+	switch (attr->type)
 	{
-		ByteString elem = ByteString((unsigned char*)attr->pValue, attr->ulValueLen);
-		data.insert(std::pair<CK_ATTRIBUTE_TYPE,OSAttribute> (attr->type, elem));
+	case CKA_TOKEN:
+	case CKA_PRIVATE:
+	case CKA_MODIFIABLE:
+	case CKA_COPYABLE:
+	case CKA_TRUSTED:
+	case CKA_ENCRYPT:
+	case CKA_DECRYPT:
+	case CKA_SIGN:
+	case CKA_SIGN_RECOVER:
+	case CKA_VERIFY:
+	case CKA_VERIFY_RECOVER:
+	case CKA_WRAP:
+	case CKA_UNWRAP:
+	case CKA_DERIVE:
+	case CKA_LOCAL:
+	case CKA_ALWAYS_SENSITIVE:
+	case CKA_SENSITIVE:
+	case CKA_NEVER_EXTRACTABLE:
+	case CKA_EXTRACTABLE:
+	case CKA_WRAP_WITH_TRUSTED:
+	case CKA_SECONDARY_AUTH:
+	case CKA_ALWAYS_AUTHENTICATE:
+		{
+			// CK_BBOOL
+			if (attr->ulValueLen != sizeof(CK_BBOOL))
+				return CKR_ATTRIBUTE_VALUE_INVALID;
+			bool elem = (*(CK_BBOOL*)attr->pValue != CK_FALSE);
+			data.insert(std::pair<CK_ATTRIBUTE_TYPE,OSAttribute> (attr->type, elem));
+		}
+		break;
+
+	case CKA_CLASS:
+	case CKA_KEY_TYPE:
+	case CKA_CERTIFICATE_TYPE:
+	case CKA_CERTIFICATE_CATEGORY:
+	case CKA_JAVA_MIDP_SECURITY_DOMAIN:
+	case CKA_NAME_HASH_ALGORITHM:
+	case CKA_KEY_GEN_MECHANISM:
+	case CKA_MODULUS_BITS:
+	case CKA_PRIME_BITS:
+	case CKA_SUBPRIME_BITS:
+	case CKA_VALUE_BITS:
+	case CKA_VALUE_LEN:
+	case CKA_AUTH_PIN_FLAGS:
+		{
+			// CK_ULONG
+			if (attr->ulValueLen != sizeof(CK_ULONG))
+				return CKR_ATTRIBUTE_VALUE_INVALID;
+			unsigned long elem = *(CK_ULONG*)attr->pValue;
+			data.insert(std::pair<CK_ATTRIBUTE_TYPE,OSAttribute> (attr->type, elem));
+		}
+		break;
+
+	case CKA_WRAP_TEMPLATE:
+	case CKA_UNWRAP_TEMPLATE:
+		return CKR_ATTRIBUTE_VALUE_INVALID;
+
+	default:
+		{
+			// CK_BYTE
+			ByteString elem = ByteString((unsigned char*)attr->pValue, attr->ulValueLen);
+			data.insert(std::pair<CK_ATTRIBUTE_TYPE,OSAttribute> (attr->type, elem));
+		}
 	}
 
 	// Store data
@@ -2164,4 +2290,3 @@ CK_RV P11AttrUnwrapTemplate::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK
 
 	return CKR_OK;
 }
-

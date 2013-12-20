@@ -133,3 +133,29 @@ void OSAttribute::setArrayValue(const std::map<CK_ATTRIBUTE_TYPE,OSAttribute>& v
 {
 	arrayValue = value;
 }
+
+// Helper for template (aka array) matching
+
+bool OSAttribute::peekValue(ByteString& value) const
+{
+	switch (attributeType)
+	{
+		case BOOL:
+			value.resize(sizeof(boolValue));
+			memcpy(&value[0], &boolValue, value.size());
+			return true;
+
+		case ULONG:
+			value.resize(sizeof(ulongValue));
+			memcpy(&value[0], &ulongValue, value.size());
+			return true;
+
+		case BYTESTR:
+			value.resize(byteStrValue.size());
+			memcpy(&value[0], byteStrValue.const_byte_str(), value.size());
+			return true;
+
+		default:
+			return false;
+	}
+}

@@ -76,6 +76,9 @@ public:
 	void setByteStringValue(const ByteString& value);
 	void setArrayValue(const std::map<CK_ATTRIBUTE_TYPE,OSAttribute>& value);
 
+	// Helper for template (aka array) matching
+	bool peekValue(ByteString& value) const;
+
 private:
 	// The attribute type
 	enum
