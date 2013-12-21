@@ -4407,7 +4407,7 @@ CK_RV SoftHSM::C_WrapKey
 	CK_BBOOL isWrapKeyOnToken = wrapKey->getAttribute(CKA_TOKEN)->getBooleanValue();
 	CK_BBOOL isWrapKeyPrivate = wrapKey->getAttribute(CKA_PRIVATE)->getBooleanValue();
 
-	// Check user credentials
+	// Check user credentials for the wrapping key
 	CK_RV rv = haveWrite(session->getState(), isWrapKeyOnToken, isWrapKeyPrivate);
 	if (rv != CKR_OK)
 	{
@@ -4438,8 +4438,8 @@ CK_RV SoftHSM::C_WrapKey
 	CK_BBOOL isKeyOnToken = key->getAttribute(CKA_TOKEN)->getBooleanValue();
 	CK_BBOOL isKeyPrivate = key->getAttribute(CKA_PRIVATE)->getBooleanValue();
 
-	// Check user credentials
-	rv = haveWrite(session->getState(), isKeyOnToken, isKeyPrivate);
+	// Check user credentials for the to be wrapped key
+	rv = haveRead(session->getState(), isKeyOnToken, isKeyPrivate);
 	if (rv != CKR_OK)
 	{
 		if (rv == CKR_USER_NOT_LOGGED_IN)
@@ -4459,8 +4459,8 @@ CK_RV SoftHSM::C_WrapKey
 	if (key->attributeExists(CKA_SENSITIVE) && key->getAttribute(CKA_SENSITIVE)->getBooleanValue())
 		return CKR_KEY_NOT_WRAPPABLE;
 
-	// Check the class and type or simply the existence of a value?
-	// Improve this!
+	// Check the class and type or simply the existence of a value attribute?
+	// Improve this! (note 12.6 says BER of PKCS#8 PrivateKeyInfo)
 	if (!key->attributeExists(CKA_VALUE))
 		return CKR_KEY_NOT_WRAPPABLE;
 
