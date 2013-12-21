@@ -2615,7 +2615,7 @@ CK_RV SoftHSM::C_DigestUpdate(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pPart, CK_
 }
 
 // Update a running digest operation by digesting a secret key with the specified handle
-CK_RV SoftHSM::C_DigestKey(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE /*hObject*/)
+CK_RV SoftHSM::C_DigestKey(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject)
 {
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
 
@@ -2623,7 +2623,58 @@ CK_RV SoftHSM::C_DigestKey(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE /*hObjec
 	Session* session = (Session*)handleManager->getSession(hSession);
 	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
 
-	return CKR_FUNCTION_NOT_SUPPORTED;
+	// Check if we are doing the correct operation
+	if (session->getOpType() != SESSION_OP_DIGEST) return CKR_OPERATION_NOT_INITIALIZED;
+
+	// Get the token
+	Token* token = session->getToken();
+	if (token == NULL) return CKR_GENERAL_ERROR;
+
+	// Check the key handle.
+	OSObject *key = (OSObject *)handleManager->getObject(hObject);
+	if (key == NULL_PTR || !key->isValid()) return CKR_KEY_HANDLE_INVALID;
+
+	CK_BBOOL isOnToken = key->getAttribute(CKA_TOKEN)->getBooleanValue();
+	CK_BBOOL isPrivate = key->getAttribute(CKA_PRIVATE)->getBooleanValue();
+
+	// Check read user credentials
+	CK_RV rv = haveRead(session->getState(), isOnToken, isPrivate);
+	if (rv != CKR_OK)
+	{
+		if (rv == CKR_USER_NOT_LOGGED_IN)
+			INFO_MSG("User is not authorized");
+
+		return rv;
+	}
+
+	// Parano...
+	if (!key->attributeExists(CKA_EXTRACTABLE) || key->getAttribute(CKA_EXTRACTABLE)->getBooleanValue() == false)
+		return CKR_KEY_INDIGESTIBLE;
+	if (key->attributeExists(CKA_SENSITIVE) && key->getAttribute(CKA_SENSITIVE)->getBooleanValue())
+		return CKR_KEY_INDIGESTIBLE;
+
+	// Get value
+	if (!key->attributeExists(CKA_VALUE))
+		return CKR_KEY_INDIGESTIBLE;
+	ByteString keybits;
+	if (isPrivate)
+	{
+		if (!token->decrypt(key->getAttribute(CKA_VALUE)->getByteStringValue(), keybits))
+			return CKR_GENERAL_ERROR;
+	}
+	else
+	{
+		keybits = key->getAttribute(CKA_VALUE)->getByteStringValue();
+	}
+
+	// Digest the value
+	if (session->getDigestOp()->hashUpdate(keybits) == false)
+	{
+		session->resetOp();
+		return CKR_GENERAL_ERROR;
+	}
+
+	return CKR_OK;
 }
 
 // Finalise the digest operation in the specified session and return the digest

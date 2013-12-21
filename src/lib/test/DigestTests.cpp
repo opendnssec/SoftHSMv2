@@ -197,6 +197,64 @@ void DigestTests::testDigestUpdate()
 	CPPUNIT_ASSERT(rv == CKR_OK);
 }
 
+void DigestTests::testDigestKey()
+{
+	CK_RV rv;
+	CK_SESSION_HANDLE hSession = CK_INVALID_HANDLE;
+	CK_MECHANISM mechanism = {
+		CKM_SHA512, NULL_PTR, 0
+	};
+	CK_BYTE data[] = {"Text to digest"};
+
+	// Just make sure that we finalize any previous tests
+	C_Finalize(NULL_PTR);
+
+	rv = C_DigestKey(hSession, (CK_OBJECT_HANDLE)123UL);
+	CPPUNIT_ASSERT(rv == CKR_CRYPTOKI_NOT_INITIALIZED);
+
+	rv = C_Initialize(NULL_PTR);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	rv = C_OpenSession(SLOT_INIT_TOKEN, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSession);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Create the generic secret key to digest
+	CK_BBOOL bFalse = CK_FALSE;
+	CK_BBOOL bTrue = CK_TRUE;
+	CK_OBJECT_CLASS secretClass = CKO_SECRET_KEY;
+	CK_KEY_TYPE genKeyType = CKK_GENERIC_SECRET;
+	CK_ATTRIBUTE attribs[] = {
+		{ CKA_CLASS, &secretClass, sizeof(secretClass) },
+		{ CKA_KEY_TYPE, &genKeyType, sizeof(genKeyType) },
+		{ CKA_TOKEN, &bFalse, sizeof(bFalse) },
+		{ CKA_PRIVATE, &bFalse, sizeof(bFalse) },
+		{ CKA_EXTRACTABLE, &bTrue, sizeof(bTrue) },
+		{ CKA_SENSITIVE, &bFalse, sizeof(bFalse) },
+		{ CKA_VALUE, data, sizeof(data) - 1 }
+	};
+	CK_OBJECT_HANDLE hKey;
+
+	hKey = CK_INVALID_HANDLE;
+	rv = C_CreateObject(hSession, attribs, sizeof(attribs)/sizeof(CK_ATTRIBUTE), &hKey);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	CPPUNIT_ASSERT(hKey != CK_INVALID_HANDLE);
+
+	rv = C_DigestKey(CK_INVALID_HANDLE, hKey);
+	CPPUNIT_ASSERT(rv == CKR_SESSION_HANDLE_INVALID);
+	
+	rv = C_DigestKey(hSession, hKey);
+	CPPUNIT_ASSERT(rv == CKR_OPERATION_NOT_INITIALIZED);
+
+	rv = C_DigestInit(hSession, &mechanism);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	rv = C_DigestKey(hSession, CK_INVALID_HANDLE);
+	CPPUNIT_ASSERT(rv == CKR_KEY_HANDLE_INVALID);
+
+	rv = C_DigestKey(hSession, hKey);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+}
+
 void DigestTests::testDigestFinal()
 {
 	CK_RV rv;
