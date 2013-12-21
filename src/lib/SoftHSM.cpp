@@ -1377,15 +1377,27 @@ CK_RV SoftHSM::C_DestroyObject(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObj
 }
 
 // Determine the size of the specified object
-CK_RV SoftHSM::C_GetObjectSize(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE /*hObject*/, CK_ULONG_PTR /*pulSize*/)
+CK_RV SoftHSM::C_GetObjectSize(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject, CK_ULONG_PTR pulSize)
 {
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
+
+	if (pulSize == NULL) return CKR_ARGUMENTS_BAD;
 
 	// Get the session
 	Session* session = (Session*)handleManager->getSession(hSession);
 	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
 
-	return CKR_FUNCTION_NOT_SUPPORTED;
+	// Get the token
+	Token* token = session->getToken();
+	if (token == NULL_PTR) return CKR_GENERAL_ERROR;
+
+	// Check the object handle.
+	OSObject *object = (OSObject *)handleManager->getObject(hObject);
+	if (object == NULL_PTR || !object->isValid()) return CKR_OBJECT_HANDLE_INVALID;
+
+	*pulSize = CK_UNAVAILABLE_INFORMATION;
+
+	return CKR_OK;
 }
 
 // Retrieve the specified attributes for the given object
