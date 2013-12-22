@@ -96,13 +96,41 @@ bool BotanAES::wrapKey(const SymmetricKey* key, const std::string mode, const By
 
 		return  true;
 	}
+#ifdef HAVE_AES_KEY_WRAP_PAD
 	else if (!mode.compare("aes-keywrap-pad"))
 	{
-		// RFC 5649 AES key wrap with padding
-		// TODO
+		// RFC 5649 AES key wrap with pad
+#if BOTAN_VERSION_MINOR == 11
+		Botan::secure_vector<Botan::byte> data(in.size());
+		memcpy(data.data(), in.const_byte_str(), in.size());
+		Botan::secure_vector<Botan::byte> wrapped;
+#else
+		Botan::MemoryVector<Botan::byte> data(in.size());
+		memcpy(data.begin(), in.const_byte_str(), in.size());
+		Botan::SecureVector<Botan::byte> wrapped;
+#endif
+		Botan::SymmetricKey botanKey = Botan::SymmetricKey(key->getKeyBits().const_byte_str(), key->getKeyBits().size());
+		Botan::Algorithm_Factory& af = Botan::global_state().algorithm_factory();
+		try
+		{
+			wrapped = Botan::rfc5649_keywrap(data, botanKey, af);
+		}
+		catch (...)
+		{
+			ERROR_MSG("AES key wrap failed");
 
-		return false;
+			return false;
+		}
+		out.resize(wrapped.size());
+#if BOTAN_VERSION_MINOR == 11
+		memcpy(&out[0], wrapped.data(), out.size());
+#else
+		memcpy(&out[0], wrapped.begin(), out.size());
+#endif
+
+		return  true;
 	}
+#endif
 	else
 	{
 		ERROR_MSG("unknown AES key wrap mode %s", mode.c_str());
@@ -170,13 +198,54 @@ bool BotanAES::unwrapKey(const SymmetricKey* key, const std::string mode, const 
 
 		return  true;
 	}
+#ifdef HAVE_AES_KEY_WRAP_PAD
 	else if (!mode.compare("aes-keywrap-pad"))
 	{
-		// RFC 5649 AES key wrap with padding
-		// TODO
+		// RFC 5649 AES key wrap with wrap
+		if (in.size() < 16)
+		{
+			ERROR_MSG("key data to unwrap too small");
 
-		return false;
+			return false;
+		}
+		if ((in.size() % 8) != 0)
+		{
+			ERROR_MSG("key data to unwrap not aligned");
+
+			return false;
+		}
+
+#if BOTAN_VERSION_MINOR == 11
+		Botan::secure_vector<Botan::byte> wrapped(in.size());
+		memcpy(wrapped.data(), in.const_byte_str(), in.size());
+		Botan::secure_vector<Botan::byte> unwrapped;
+#else
+		Botan::MemoryVector<Botan::byte> wrapped(in.size());
+		memcpy(wrapped.begin(), in.const_byte_str(), in.size());
+		Botan::SecureVector<Botan::byte> unwrapped;
+#endif
+		Botan::SymmetricKey botanKey = Botan::SymmetricKey(key->getKeyBits().const_byte_str(), key->getKeyBits().size());
+		Botan::Algorithm_Factory& af = Botan::global_state().algorithm_factory();
+		try
+		{
+			unwrapped = Botan::rfc5649_keyunwrap(wrapped, botanKey, af);
+		}
+		catch (...)
+		{
+			ERROR_MSG("AES key unwrap failed");
+
+			return false;
+		}
+		out.resize(unwrapped.size());
+#if BOTAN_VERSION_MINOR == 11
+		memcpy(&out[0], unwrapped.data(), out.size());
+#else
+		memcpy(&out[0], unwrapped.begin(), out.size());
+#endif
+
+		return  true;
 	}
+#endif
 	else
 	{
 		ERROR_MSG("unknown AES key wrap mode %s", mode.c_str());

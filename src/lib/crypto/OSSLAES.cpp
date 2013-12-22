@@ -85,13 +85,30 @@ bool OSSLAES::wrapKey(const SymmetricKey* key, const std::string mode, const Byt
 
 		return  true;
 	}
+#ifdef HAVE_AES_KEY_WRAP_PAD
 	else if (!mode.compare("aes-keywrap-pad"))
 	{
-		// RFC 5649 AES key wrap with padding
-		// TODO
+		// RFC 5649 AES key wrap with pad
+		AES_KEY aesKey;
+		if (AES_set_encrypt_key(key->getKeyBits().const_byte_str(),
+					key->getBitLen(), &aesKey))
+		{
+			ERROR_MSG("fail to setup AES wrapping key");
 
-		return false;
+			return false;
+		}
+		out.resize(in.size() + 8);
+		if (AES_wrap_key_withpad(&aesKey, NULL, &out[0], in.const_byte_str(), in.size()) != (int)out.size())
+		{
+			ERROR_MSG("AES key wrap failed");
+
+			out.wipe();
+			return false;
+		}
+
+		return  true;
 	}
+#endif
 	else
 	{
 		ERROR_MSG("unknown AES key wrap mode %s", mode.c_str());
@@ -148,13 +165,44 @@ bool OSSLAES::unwrapKey(const SymmetricKey* key, const std::string mode, const B
 
 		return  true;
 	}
+#ifdef HAVE_AES_KEY_WRAP_PAD
 	else if (!mode.compare("aes-keywrap-pad"))
 	{
-		// RFC 5649 AES key wrap with padding
-		// TODO
+		// RFC 5649 AES key wrap with pad
+		if (in.size() < 16)
+		{
+			ERROR_MSG("key data to unwrap too small");
 
-		return false;
+			return false;
+		}
+		if ((in.size() % 8) != 0)
+		{
+			ERROR_MSG("key data to unwrap not aligned");
+
+			return false;
+		}
+
+		AES_KEY aesKey;
+		if (AES_set_decrypt_key(key->getKeyBits().const_byte_str(),
+					key->getBitLen(), &aesKey))
+		{
+			ERROR_MSG("fail to setup AES unwrapping key");
+
+			return false;
+		}
+		int ret = AES_unwrap_key(&aesKey, NULL, &out[0], in.const_byte_str(), in.size());
+		if (ret <= 0)
+		{
+			ERROR_MSG("AES key unwrap failed");
+
+			out.wipe();
+			return false;
+		}
+		out.resize(ret);
+
+		return  true;
 	}
+#endif
 	else
 	{
 		ERROR_MSG("unknown AES key wrap mode %s", mode.c_str());

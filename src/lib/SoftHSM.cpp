@@ -523,18 +523,15 @@ CK_RV SoftHSM::C_GetTokenInfo(CK_SLOT_ID slotID, CK_TOKEN_INFO_PTR pInfo)
 CK_RV SoftHSM::C_GetMechanismList(CK_SLOT_ID slotID, CK_MECHANISM_TYPE_PTR pMechanismList, CK_ULONG_PTR pulCount)
 {
 	// A list with the supported mechanisms
-#ifdef WITH_ECC
-#ifdef WITH_GOST
-	CK_ULONG nrSupportedMechanisms = 52;
-#else
-	CK_ULONG nrSupportedMechanisms = 47;
-#endif
-#else
-#ifdef WITH_GOST
-	CK_ULONG nrSupportedMechanisms = 49;
-#else
 	CK_ULONG nrSupportedMechanisms = 44;
+#ifdef WITH_ECC
+	nrSupportedMechanisms += 3;
 #endif
+#ifdef WITH_GOST
+	nrSupportedMechanisms += 5;
+#endif
+#ifdef HAVE_AES_KEY_WRAP_PAD
+	nrSupportedMechanisms += 1;
 #endif
 	CK_MECHANISM_TYPE supportedMechanisms[] =
 	{
@@ -571,6 +568,9 @@ CK_RV SoftHSM::C_GetMechanismList(CK_SLOT_ID slotID, CK_MECHANISM_TYPE_PTR pMech
 		CKM_AES_ECB,
 		CKM_AES_CBC,
 		CKM_AES_KEY_WRAP,
+#ifdef HAVE_AES_KEY_WRAP_PAD
+		CKM_AES_KEY_WRAP_PAD,
+#endif
 		CKM_DSA_PARAMETER_GEN,
 		CKM_DSA_KEY_PAIR_GEN,
 		CKM_DSA,
@@ -802,9 +802,16 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 			break;
 		case CKM_AES_KEY_WRAP:
 			pInfo->ulMinKeySize = 16;
-			pInfo->ulMaxKeySize = 0x1000000;
+			pInfo->ulMaxKeySize = 0x80000000;
 			pInfo->flags = CKF_WRAP | CKF_UNWRAP;
 			break;
+#ifdef HAVE_AES_KEY_WRAP_PAD
+		case CKM_AES_KEY_WRAP_PAD:
+			pInfo->ulMinKeySize = 1;
+			pInfo->ulMaxKeySize = 0x80000000;
+			pInfo->flags = CKF_WRAP | CKF_UNWRAP;
+			break;
+#endif
 		case CKM_DSA_PARAMETER_GEN:
 			pInfo->ulMinKeySize = dsaMinSize;
 			pInfo->ulMaxKeySize = dsaMaxSize;
@@ -4384,7 +4391,7 @@ CK_RV SoftHSM::C_WrapKey
 	switch(pMechanism->mechanism)
 	{
 		case CKM_AES_KEY_WRAP:
-#ifdef notyet
+#ifdef HAVE_AES_KEY_WRAP_PAD
 		case CKM_AES_KEY_WRAP_PAD:
 #endif
 			// Does not handle optional init vector
@@ -4517,6 +4524,7 @@ CK_RV SoftHSM::C_WrapKey
 			cipher = CryptoFactory::i()->getSymmetricAlgorithm("aes");
 			mode = "aes-keywrap";
 			break;
+#ifdef HAVE_AES_KEY_WRAP_PAD
 		case CKM_AES_KEY_WRAP_PAD:
 			wrappedlen = ((wrappedlen + 7) / 8 + 1) * 8;
 			if (pWrappedKey == NULL_PTR)
@@ -4532,6 +4540,7 @@ CK_RV SoftHSM::C_WrapKey
 			cipher = CryptoFactory::i()->getSymmetricAlgorithm("aes");
 			mode = "aes-keywrap-pad";
 			break;
+#endif
 		default:
 			return CKR_MECHANISM_INVALID;
 	}
@@ -4607,14 +4616,16 @@ CK_RV SoftHSM::C_UnwrapKey
                             pMechanism->ulParameterLen != 0)
 				return CKR_ARGUMENTS_BAD;
 			break;
-#ifdef notyet
+#ifdef HAVE_AES_KEY_WRAP_PAD
 		case CKM_AES_KEY_WRAP_PAD:
+			if ((ulWrappedKeyLen < 16) || ((ulWrappedKeyLen % 8) != 0))
+				return CKR_WRAPPED_KEY_LEN_RANGE;
 			// Does not handle optional init vector
 			if (pMechanism->pParameter != NULL_PTR ||
                             pMechanism->ulParameterLen != 0)
 				return CKR_ARGUMENTS_BAD;
-#endif
 			break;
+#endif
 		default:
 			return CKR_MECHANISM_INVALID;
 	}
@@ -4748,10 +4759,12 @@ CK_RV SoftHSM::C_UnwrapKey
 			cipher = CryptoFactory::i()->getSymmetricAlgorithm("aes");
 			mode = "aes-keywrap";
 			break;
+#ifdef HAVE_AES_KEY_WRAP_PAD
 		case CKM_AES_KEY_WRAP_PAD:
 			cipher = CryptoFactory::i()->getSymmetricAlgorithm("aes");
 			mode = "aes-keywrap-pad";
 			break;
+#endif
 		default:
 			return CKR_MECHANISM_INVALID;
 	}
