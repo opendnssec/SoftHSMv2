@@ -97,14 +97,16 @@ bool OSSLAES::wrapKey(const SymmetricKey* key, const std::string mode, const Byt
 
 			return false;
 		}
-		out.resize(in.size() + 8);
-		if (AES_wrap_key_withpad(&aesKey, NULL, &out[0], in.const_byte_str(), in.size()) != (int)out.size())
+		out.resize(in.size() + 16);
+		int ret = AES_wrap_key_withpad(&aesKey, NULL, &out[0], in.const_byte_str(), in.size());
+		if (ret <= 0)
 		{
 			ERROR_MSG("AES key wrap failed");
 
 			out.wipe();
 			return false;
 		}
+		out.resize(ret);
 
 		return  true;
 	}
@@ -190,7 +192,8 @@ bool OSSLAES::unwrapKey(const SymmetricKey* key, const std::string mode, const B
 
 			return false;
 		}
-		int ret = AES_unwrap_key(&aesKey, NULL, &out[0], in.const_byte_str(), in.size());
+		out.resize(in.size() - 8);
+		int ret = AES_unwrap_key_withpad(&aesKey, NULL, &out[0], in.const_byte_str(), in.size());
 		if (ret <= 0)
 		{
 			ERROR_MSG("AES key unwrap failed");

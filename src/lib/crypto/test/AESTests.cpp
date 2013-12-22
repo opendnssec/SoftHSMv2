@@ -445,6 +445,17 @@ void AESTests::testWrap()
 	ByteString unwrapped;
 	CPPUNIT_ASSERT(aes->unwrapKey(&aesKeK, "aes-keywrap", wrapped, unwrapped));
 	CPPUNIT_ASSERT(unwrapped == keyData);
+
+#ifdef HAVE_AES_KEY_WRAP_PAD
+	keyData.resize(20);
+	ByteString padwrapped;
+	CPPUNIT_ASSERT(aes->wrapKey(&aesKeK, "aes-keywrap-pad", keyData, padwrapped));
+	CPPUNIT_ASSERT(padwrapped.size() == 32);
+
+	ByteString padunwrapped;
+	CPPUNIT_ASSERT(aes->unwrapKey(&aesKeK, "aes-keywrap-pad", padwrapped, padunwrapped));
+	CPPUNIT_ASSERT(padunwrapped == keyData);
+#endif
 }
 
 void AESTests::writeTmpFile(ByteString& data)

@@ -16,8 +16,8 @@ AC_DEFUN([ACX_BOTAN_RFC5649],[
 			{
 				using namespace Botan;
 
-				SecureVector<byte> key("");
-				SymmetricKey kek("");
+				SecureVector<byte> key(10);
+				SymmetricKey kek("AABB");
 				Algorithm_Factory& af = global_state().algorithm_factory();
 				SecureVector<byte> x = rfc5649_keywrap(key, kek, af);
 				return 1;
