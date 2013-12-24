@@ -1173,7 +1173,7 @@ class P11AttrWrapTemplate : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrWrapTemplate(OSObject* osobject) : P11Attribute(osobject) { type = CKA_WRAP_TEMPLATE; checks = ck8; }
+	P11AttrWrapTemplate(OSObject* osobject) : P11Attribute(osobject) { type = CKA_WRAP_TEMPLATE; checks = 0; }
 
 protected:
 	// Set the default value of the attribute
@@ -1191,7 +1191,7 @@ class P11AttrUnwrapTemplate : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrUnwrapTemplate(OSObject* osobject) : P11Attribute(osobject) { type = CKA_UNWRAP_TEMPLATE; checks = ck8; }
+	P11AttrUnwrapTemplate(OSObject* osobject) : P11Attribute(osobject) { type = CKA_UNWRAP_TEMPLATE; checks = 0; }
 
 protected:
 	// Set the default value of the attribute

@@ -41,6 +41,7 @@ class DHTests : public CppUnit::TestFixture
 	CPPUNIT_TEST_SUITE(DHTests);
 	CPPUNIT_TEST(testKeyGeneration);
 	CPPUNIT_TEST(testSerialisation);
+	CPPUNIT_TEST(testPKCS8);
 	CPPUNIT_TEST(testDerivation);
 	CPPUNIT_TEST(testDeriveKnownVector);
 	CPPUNIT_TEST_SUITE_END();
@@ -48,6 +49,7 @@ class DHTests : public CppUnit::TestFixture
 public:
 	void testKeyGeneration();
 	void testSerialisation();
+	void testPKCS8();
 	void testDerivation();
 	void testDeriveKnownVector();
 

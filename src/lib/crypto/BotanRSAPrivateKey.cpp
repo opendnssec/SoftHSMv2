@@ -37,6 +37,10 @@
 #include "BotanRNG.h"
 #include "BotanCryptoFactory.h"
 #include <string.h>
+#include <botan/pkcs8.h>
+#include <botan/pkcs8.h>
+#include <botan/der_enc.h>
+#include <botan/oids.h>
 
 // Constructors
 BotanRSAPrivateKey::BotanRSAPrivateKey()
@@ -176,6 +180,62 @@ void BotanRSAPrivateKey::setE(const ByteString& e)
 		delete rsa;
 		rsa = NULL;
 	}
+}
+
+// Encode into PKCS#8 DER
+ByteString BotanRSAPrivateKey::PKCS8Encode()
+{
+	ByteString der;
+	createBotanKey();
+	if (rsa == NULL) return der;
+	const Botan::SecureVector<Botan::byte> ber = Botan::PKCS8::BER_encode(*rsa);
+	der.resize(ber.size());
+	memcpy(&der[0], ber.begin(), ber.size());
+	return der;
+}
+
+// Decode from PKCS#8 BER
+bool BotanRSAPrivateKey::PKCS8Decode(const ByteString& ber)
+{
+	Botan::DataSource_Memory source(ber.const_byte_str(), ber.size());
+	if (source.end_of_data()) return false;
+	Botan::SecureVector<Botan::byte> keydata;
+	Botan::AlgorithmIdentifier alg_id;
+	Botan::RSA_PrivateKey* key = NULL;
+	try
+	{
+
+		Botan::BER_Decoder(source)
+		.start_cons(Botan::SEQUENCE)
+			.decode_and_check<size_t>(0, "Unknown PKCS #8 version number")
+			.decode(alg_id)
+			.decode(keydata, Botan::OCTET_STRING)
+			.discard_remaining()
+		.end_cons();
+		if (keydata.empty())
+			throw Botan::Decoding_Error("PKCS #8 private key decoding failed");
+		if (Botan::OIDS::lookup(alg_id.oid).compare("RSA"))
+		{
+			ERROR_MSG("Decoded private key not RSA");
+
+			return false;
+		}
+		BotanRNG* rng = (BotanRNG*)BotanCryptoFactory::i()->getRNG();
+		key = new Botan::RSA_PrivateKey(alg_id, keydata, *rng->getRNG());
+		if (key == NULL) return false;
+
+		setFromBotan(key);
+
+		delete key;
+	}
+	catch (std::exception& e)
+	{
+		ERROR_MSG("Decode failed on %s", e.what());
+
+		return false;
+	}
+
+	return true;
 }
 
 // Retrieve the Botan representation of the key

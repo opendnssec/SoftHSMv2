@@ -60,6 +60,12 @@ public:
 
 	// Serialisation
 	virtual ByteString serialise() const = 0;
+
+	// Encode into PKCS#8 DER
+	virtual ByteString PKCS8Encode() = 0;
+
+	// Decode from PKCS#8 BER
+	virtual bool PKCS8Decode(const ByteString& ber) = 0;
 };
 
 #endif // !_SOFTHSM_V2_PRIVATEKEY_H

@@ -38,6 +38,10 @@
 #include "BotanRNG.h"
 #include "BotanUtil.h"
 #include <string.h>
+#include <botan/pkcs8.h>
+#include <botan/der_enc.h>
+#include <botan/asn1_oid.h>
+#include <botan/oids.h>
 
 // Constructors
 BotanECDSAPrivateKey::BotanECDSAPrivateKey()
@@ -105,7 +109,6 @@ void BotanECDSAPrivateKey::setD(const ByteString& d)
 	}
 }
 
-
 // Setters for the ECDSA public key components
 void BotanECDSAPrivateKey::setEC(const ByteString& ec)
 {
@@ -116,6 +119,71 @@ void BotanECDSAPrivateKey::setEC(const ByteString& ec)
 		delete eckey;
 		eckey = NULL;
 	}
+}
+
+// Encode into PKCS#8 DER
+ByteString BotanECDSAPrivateKey::PKCS8Encode()
+{
+	ByteString der;
+	createBotanKey();
+	if (eckey == NULL) return der;
+	// Force EC_DOMPAR_ENC_OID
+	const size_t PKCS8_VERSION = 0;
+	const Botan::MemoryVector<Botan::byte> parameters = eckey->domain().DER_encode(Botan::EC_DOMPAR_ENC_OID);
+	const Botan::AlgorithmIdentifier alg_id(eckey->get_oid(), parameters);
+	const Botan::SecureVector<Botan::byte> ber =
+		Botan::DER_Encoder()
+		.start_cons(Botan::SEQUENCE)
+		    .encode(PKCS8_VERSION)
+		    .encode(alg_id)
+		    .encode(eckey->pkcs8_private_key(), Botan::OCTET_STRING)
+		.end_cons()
+	    .get_contents();
+	der.resize(ber.size());
+	memcpy(&der[0], ber.begin(), ber.size());
+	return der;
+}
+
+// Decode from PKCS#8 BER
+bool BotanECDSAPrivateKey::PKCS8Decode(const ByteString& ber)
+{
+	Botan::DataSource_Memory source(ber.const_byte_str(), ber.size());
+	if (source.end_of_data()) return false;
+	Botan::SecureVector<Botan::byte> keydata;
+	Botan::AlgorithmIdentifier alg_id;
+	Botan::ECDSA_PrivateKey* key = NULL;
+	try
+	{
+		Botan::BER_Decoder(source)
+		.start_cons(Botan::SEQUENCE)
+			.decode_and_check<size_t>(0, "Unknown PKCS #8 version number")
+			.decode(alg_id)
+			.decode(keydata, Botan::OCTET_STRING)
+			.discard_remaining()
+		.end_cons();
+		if (keydata.empty())
+			throw Botan::Decoding_Error("PKCS #8 private key decoding failed");
+		if (Botan::OIDS::lookup(alg_id.oid).compare("ECDSA"))
+		{
+			ERROR_MSG("Decoded private key not ECDSA");
+
+			return false;
+		}
+		key = new Botan::ECDSA_PrivateKey(alg_id, keydata);
+		if (key == NULL) return false;
+
+		setFromBotan(key);
+
+		delete key;
+	}
+	catch (std::exception& e)
+	{
+		ERROR_MSG("Decode failed on %s", e.what());
+
+		return false;
+	}
+
+	return true;
 }
 
 // Retrieve the Botan representation of the key

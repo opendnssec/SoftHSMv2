@@ -147,6 +147,20 @@ bool BotanGOSTPrivateKey::deserialise(ByteString& serialised)
 	return true;
 }
 
+// Encode into PKCS#8 DER
+ByteString BotanGOSTPrivateKey::PKCS8Encode()
+{
+	ByteString der;
+	// TODO
+	return der;
+}
+
+// Decode from PKCS#8 BER
+bool BotanGOSTPrivateKey::PKCS8Decode(const ByteString& ber)
+{
+	return false;
+}
+
 // Retrieve the Botan representation of the key
 Botan::GOST_3410_PrivateKey* BotanGOSTPrivateKey::getBotanKey()
 {

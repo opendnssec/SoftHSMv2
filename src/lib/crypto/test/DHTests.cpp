@@ -104,7 +104,11 @@ void DHTests::testSerialisation()
 
 	//CPPUNIT_ASSERT(dh->generateParameters(ap, (void*) 1024));
 	// changed for 512-bit for speed...
+#ifndef WITH_BOTAN
 	CPPUNIT_ASSERT(dh->generateParameters(ap, (void*) 1024));
+#else
+	CPPUNIT_ASSERT(dh->generateParameters(ap, (void*) 512));
+#endif
 
 	// Serialise the parameters
 	ByteString serialisedParams = p->serialise();
@@ -153,6 +157,41 @@ void DHTests::testSerialisation()
 	dh->recycleParameters(dP);
 	dh->recycleKeyPair(kp);
 	dh->recycleKeyPair(dKP);
+}
+
+void DHTests::testPKCS8()
+{
+	// Generate 1024-bit parameters for testing
+	AsymmetricParameters* p;
+
+	CPPUNIT_ASSERT(dh->generateParameters(&p, (void*) 1024));
+
+	// Generate a key-pair
+	AsymmetricKeyPair* kp;
+
+	CPPUNIT_ASSERT(dh->generateKeyPair(&kp, p));
+	CPPUNIT_ASSERT(kp != NULL);
+
+	DHPrivateKey* priv = (DHPrivateKey*) kp->getPrivateKey();
+	CPPUNIT_ASSERT(priv != NULL);
+
+	// Encode and decode the private key
+	ByteString pkcs8 = priv->PKCS8Encode();
+	CPPUNIT_ASSERT(pkcs8.size() != 0);
+
+	DHPrivateKey* dPriv = (DHPrivateKey*) dh->newPrivateKey();
+	CPPUNIT_ASSERT(dPriv != NULL);
+
+	CPPUNIT_ASSERT(dPriv->PKCS8Decode(pkcs8));
+
+
+	CPPUNIT_ASSERT(priv->getP() == dPriv->getP());
+	CPPUNIT_ASSERT(priv->getG() == dPriv->getG());
+	CPPUNIT_ASSERT(priv->getX() == dPriv->getX());
+
+	dh->recycleParameters(p);
+	dh->recycleKeyPair(kp);
+	dh->recyclePrivateKey(dPriv);
 }
 
 void DHTests::testDerivation()

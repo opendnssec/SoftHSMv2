@@ -41,6 +41,7 @@ class RSATests : public CppUnit::TestFixture
 	CPPUNIT_TEST_SUITE(RSATests);
 	CPPUNIT_TEST(testKeyGeneration);
 	CPPUNIT_TEST(testSerialisation);
+	CPPUNIT_TEST(testPKCS8);
 	CPPUNIT_TEST(testSigningVerifying);
 	CPPUNIT_TEST(testSignVerifyKnownVector);
 	CPPUNIT_TEST(testEncryptDecrypt);
@@ -49,6 +50,7 @@ class RSATests : public CppUnit::TestFixture
 public:
 	void testKeyGeneration();
 	void testSerialisation();
+	void testPKCS8();
 	void testSigningVerifying();
 	void testSignVerifyKnownVector();
 	void testEncryptDecrypt();

@@ -62,6 +62,12 @@ public:
 	virtual void setQ(const ByteString& q);
 	virtual void setG(const ByteString& g);
 
+	// Encode into PKCS#8 DER
+	virtual ByteString PKCS8Encode();
+
+	// Decode from PKCS#8 BER
+	virtual bool PKCS8Decode(const ByteString& ber);
+
 	// Set from OpenSSL representation
 	virtual void setFromOSSL(const DSA* dsa);
 
