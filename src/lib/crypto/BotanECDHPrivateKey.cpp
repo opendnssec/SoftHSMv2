@@ -166,7 +166,8 @@ bool BotanECDHPrivateKey::PKCS8Decode(const ByteString& ber)
 		.end_cons();
 		if (keydata.empty())
 			throw Botan::Decoding_Error("PKCS #8 private key decoding failed");
-		if (alg_id.oid != oid)
+		// Botan defines == but not != ?!
+		if (!(alg_id.oid == oid))
 		{
 			ERROR_MSG("Decoded private key not ECDH");
 
