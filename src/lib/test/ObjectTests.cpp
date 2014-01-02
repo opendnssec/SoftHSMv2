@@ -1091,6 +1091,42 @@ void ObjectTests::testDestroyObject()
 	CPPUNIT_ASSERT(rv == CKR_OK);
 }
 
+void ObjectTests::testGetObjectSize()
+{
+	CK_RV rv;
+	CK_SESSION_HANDLE hSession;
+	CK_OBJECT_HANDLE hObject;
+
+	// Just make sure that we finalize any previous tests
+	C_Finalize(NULL_PTR);
+
+	// Open read-only session on when the token is not initialized should fail
+	rv = C_OpenSession(SLOT_INIT_TOKEN, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSession);
+	CPPUNIT_ASSERT(rv == CKR_CRYPTOKI_NOT_INITIALIZED);
+
+	// Initialize the library and start the test.
+	rv = C_Initialize(NULL_PTR);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Open a session
+	rv = C_OpenSession(SLOT_INIT_TOKEN, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSession);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Get an object
+	rv = createDataObjectMinimal(hSession, IN_SESSION, IS_PUBLIC, hObject);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Get the object size
+	CK_ULONG objectSize;
+	rv = C_GetObjectSize(hSession, hObject, &objectSize);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	CPPUNIT_ASSERT(objectSize == CK_UNAVAILABLE_INFORMATION);
+
+	// Close session
+	rv = C_CloseSession(hSession);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+}
+
 void ObjectTests::testGetAttributeValue()
 {
 	CK_RV rv;

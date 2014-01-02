@@ -44,6 +44,7 @@ class ObjectTests : public CppUnit::TestFixture
 	CPPUNIT_TEST(testCreateObject);
 	CPPUNIT_TEST(testCopyObject);
 	CPPUNIT_TEST(testDestroyObject);
+	CPPUNIT_TEST(testGetObjectSize);
 	CPPUNIT_TEST(testGetAttributeValue);
 	CPPUNIT_TEST(testSetAttributeValue);
 	CPPUNIT_TEST(testFindObjects);
@@ -62,6 +63,7 @@ public:
 	void testCreateObject();
 	void testCopyObject();
 	void testDestroyObject();
+	void testGetObjectSize();
 	void testGetAttributeValue();
 	void testSetAttributeValue();
 	void testFindObjects();
