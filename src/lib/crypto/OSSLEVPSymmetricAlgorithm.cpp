@@ -29,7 +29,7 @@
 /*****************************************************************************
  OSSLEVPSymmetricAlgorithm.cpp
 
- OpenSSL AES implementation
+ OpenSSL symmetric algorithm implementation
  *****************************************************************************/
 
 #include "config.h"

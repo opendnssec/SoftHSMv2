@@ -404,7 +404,7 @@ int openP11(char* slot, char* userPIN, CK_SESSION_HANDLE* hSession)
 int db2session(sqlite3* db, CK_SESSION_HANDLE hSession, int noPublicKey)
 {
 	CK_ULONG objectCount;
-	int i, result = 0, rv;
+	int result = 0, rv;
 	CK_OBJECT_HANDLE* objects = NULL;
 	CK_OBJECT_CLASS ckClass;
 
@@ -417,7 +417,7 @@ int db2session(sqlite3* db, CK_SESSION_HANDLE hSession, int noPublicKey)
 	}
 
 	// Loop over all objects
-	for (i = 0; i < objectCount; i++)
+	for (unsigned i = 0; i < objectCount; i++)
 	{
 		ckClass = getObjectClass(objects[i]);
 
@@ -529,7 +529,7 @@ CK_OBJECT_CLASS getObjectClass(CK_OBJECT_HANDLE objectRef)
 }
 
 // Get all object IDs
-CK_OBJECT_HANDLE* getObjects(sqlite3* db, CK_ULONG* objectCount)
+CK_OBJECT_HANDLE* getObjects(sqlite3* /*db*/, CK_ULONG* objectCount)
 {
 	CK_ULONG objectsInDB;
 	CK_ULONG counter = 0;
@@ -593,7 +593,7 @@ CK_OBJECT_HANDLE* getObjects(sqlite3* db, CK_ULONG* objectCount)
 }
 
 // Extract the information about the public RSA key and save it in the token
-int dbRSAPub2session(sqlite3* db, CK_OBJECT_HANDLE objectID, CK_SESSION_HANDLE hSession)
+int dbRSAPub2session(sqlite3* /*db*/, CK_OBJECT_HANDLE objectID, CK_SESSION_HANDLE hSession)
 {
 	int result = 0;
 	int i;
@@ -648,7 +648,7 @@ int dbRSAPub2session(sqlite3* db, CK_OBJECT_HANDLE objectID, CK_SESSION_HANDLE h
 }
 
 // Extract the information about the private RSA key and save it in the token
-int dbRSAPriv2session(sqlite3* db, CK_OBJECT_HANDLE objectID, CK_SESSION_HANDLE hSession)
+int dbRSAPriv2session(sqlite3* /*db*/, CK_OBJECT_HANDLE objectID, CK_SESSION_HANDLE hSession)
 {
 	int result = 0;
 	int i;

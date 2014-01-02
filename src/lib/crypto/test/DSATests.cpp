@@ -74,7 +74,9 @@ void DSATests::testKeyGeneration()
 	keySizes.push_back(768);
 	keySizes.push_back(1024);
 	keySizes.push_back(1536);
+#ifndef WITH_BOTAN
 	keySizes.push_back(2048);
+#endif
 
 	for (std::vector<size_t>::iterator k = keySizes.begin(); k != keySizes.end(); k++)
 	{
@@ -158,6 +160,41 @@ void DSATests::testSerialisation()
 	dsa->recycleKeyPair(dKP);
 }
 
+void DSATests::testPKCS8()
+{
+	// Generate 1024-bit parameters for testing
+	AsymmetricParameters* p;
+
+	CPPUNIT_ASSERT(dsa->generateParameters(&p, (void*) 1024));
+
+	// Generate a key-pair
+	AsymmetricKeyPair* kp;
+
+	CPPUNIT_ASSERT(dsa->generateKeyPair(&kp, p));
+	CPPUNIT_ASSERT(kp != NULL);
+
+	DSAPrivateKey* priv = (DSAPrivateKey*) kp->getPrivateKey();
+	CPPUNIT_ASSERT(priv != NULL);
+
+	// Encode and decode the private key
+	ByteString pkcs8 = priv->PKCS8Encode();
+	CPPUNIT_ASSERT(pkcs8.size() != 0);
+
+	DSAPrivateKey* dPriv = (DSAPrivateKey*) dsa->newPrivateKey();
+	CPPUNIT_ASSERT(dPriv != NULL);
+
+	CPPUNIT_ASSERT(dPriv->PKCS8Decode(pkcs8));
+
+	CPPUNIT_ASSERT(priv->getP() == dPriv->getP());
+	CPPUNIT_ASSERT(priv->getQ() == dPriv->getQ());
+	CPPUNIT_ASSERT(priv->getG() == dPriv->getG());
+	CPPUNIT_ASSERT(priv->getX() == dPriv->getX());
+
+	dsa->recycleParameters(p);
+	dsa->recycleKeyPair(kp);
+	dsa->recyclePrivateKey(dPriv);
+}
+
 void DSATests::testSigningVerifying()
 {
 	AsymmetricKeyPair* kp;
@@ -168,7 +205,9 @@ void DSATests::testSigningVerifying()
 	keySizes.push_back(768);
 	keySizes.push_back(1024);
 	keySizes.push_back(1536);
+#ifndef WITH_BOTAN
 	keySizes.push_back(2048);
+#endif
 
 	// Mechanisms to test
 	std::vector<const char*> mechanisms;

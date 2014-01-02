@@ -27,7 +27,7 @@
 /*****************************************************************************
  OSSLEVPSymmetricAlgorithm.h
 
- OpenSSL AES implementation
+ OpenSSL symmetric algorithm implementation
  *****************************************************************************/
 
 #ifndef _SOFTHSM_V2_OSSLEVPSYMMETRICALGORITHM_H

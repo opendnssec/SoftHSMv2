@@ -210,6 +210,49 @@ void SessionObjectTests::testByteStrAttr()
 	CPPUNIT_ASSERT(testObject.getAttribute(CKA_ISSUER)->getByteStringValue() == value6);
 }
 
+void SessionObjectTests::testArrayAttr()
+{
+	SessionObject testObject(NULL, 1, 1);
+
+	CPPUNIT_ASSERT(testObject.isValid());
+
+	bool value1 = true;
+	unsigned long value2 = 0x87654321;
+	ByteString value3 = "BDEBDBEDBBDBEBDEBE792759537328";
+
+	OSAttribute attr1(value1);
+	OSAttribute attr2(value2);
+	OSAttribute attr3(value3);
+
+	std::map<CK_ATTRIBUTE_TYPE,OSAttribute> mattr;
+	mattr.insert(std::pair<CK_ATTRIBUTE_TYPE,OSAttribute> (CKA_TOKEN, attr1));
+	mattr.insert(std::pair<CK_ATTRIBUTE_TYPE,OSAttribute> (CKA_PRIME_BITS, attr2));
+	mattr.insert(std::pair<CK_ATTRIBUTE_TYPE,OSAttribute> (CKA_VALUE_BITS, attr3));
+	OSAttribute attra(mattr);
+
+	CPPUNIT_ASSERT(testObject.setAttribute(CKA_WRAP_TEMPLATE, attra));
+
+	CPPUNIT_ASSERT(testObject.isValid());
+
+	CPPUNIT_ASSERT(testObject.attributeExists(CKA_WRAP_TEMPLATE));
+	CPPUNIT_ASSERT(!testObject.attributeExists(CKA_UNWRAP_TEMPLATE));
+
+	CPPUNIT_ASSERT(testObject.getAttribute(CKA_WRAP_TEMPLATE)->isArrayAttribute());
+
+	std::map<CK_ATTRIBUTE_TYPE,OSAttribute> mattrb = testObject.getAttribute(CKA_WRAP_TEMPLATE)->getArrayValue();
+	CPPUNIT_ASSERT(mattrb.size() == 3);
+	CPPUNIT_ASSERT(mattrb.find(CKA_TOKEN) != mattrb.end());
+	CPPUNIT_ASSERT(mattrb.at(CKA_TOKEN).isBooleanAttribute());
+	CPPUNIT_ASSERT(mattrb.at(CKA_TOKEN).getBooleanValue() == true);
+	CPPUNIT_ASSERT(mattrb.find(CKA_PRIME_BITS) != mattrb.end());
+	CPPUNIT_ASSERT(mattrb.at(CKA_PRIME_BITS).isUnsignedLongAttribute());
+	CPPUNIT_ASSERT(mattrb.at(CKA_PRIME_BITS).getUnsignedLongValue() == 0x87654321);
+	CPPUNIT_ASSERT(mattrb.find(CKA_VALUE_BITS) != mattrb.end());
+	CPPUNIT_ASSERT(mattrb.at(CKA_VALUE_BITS).isByteStringAttribute());
+	CPPUNIT_ASSERT(mattrb.at(CKA_VALUE_BITS).getByteStringValue() == value3);
+
+}
+
 void SessionObjectTests::testMixedAttr()
 {
 	ByteString value3 = "BDEBDBEDBBDBEBDEBE792759537328";

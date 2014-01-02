@@ -388,7 +388,7 @@ void ObjectTests::checkCommonKeyAttributes(CK_SESSION_HANDLE hSession, CK_OBJECT
 	free(attribs[0].pValue);
 }
 
-void ObjectTests::checkCommonPublicKeyAttributes(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject, CK_BYTE_PTR pSubject, CK_ULONG ulSubjectLen, CK_BBOOL /*bEncrypt*/, CK_BBOOL /*bVerify*/, CK_BBOOL /*bVerifyRecover*/, CK_BBOOL /*bWrap*/, CK_BBOOL bTrusted, CK_ATTRIBUTE_PTR /*pWrapTemplate*/, CK_ULONG /*ulWrapTemplateLen*/)
+void ObjectTests::checkCommonPublicKeyAttributes(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject, CK_BYTE_PTR pSubject, CK_ULONG ulSubjectLen, CK_BBOOL /*bEncrypt*/, CK_BBOOL /*bVerify*/, CK_BBOOL /*bVerifyRecover*/, CK_BBOOL /*bWrap*/, CK_BBOOL bTrusted, CK_ATTRIBUTE_PTR pWrapTemplate, CK_ULONG ulWrapTemplateLen)
 {
 	CK_RV rv;
 
@@ -397,15 +397,15 @@ void ObjectTests::checkCommonPublicKeyAttributes(CK_SESSION_HANDLE hSession, CK_
 	CK_BBOOL obj_verify_recover = CK_FALSE;
 	CK_BBOOL obj_wrap = CK_FALSE;
 	CK_BBOOL obj_trusted = CK_FALSE;
+	CK_LONG len_wrap_template = ulWrapTemplateLen;
 	CK_ATTRIBUTE attribs[] = {
 		{ CKA_SUBJECT, NULL_PTR, 0 },
 		{ CKA_ENCRYPT, &obj_encrypt, sizeof(obj_encrypt) },
 		{ CKA_VERIFY, &obj_verify, sizeof(obj_verify) },
 		{ CKA_VERIFY_RECOVER, &obj_verify_recover, sizeof(obj_verify_recover) },
 		{ CKA_WRAP, &obj_wrap, sizeof(obj_wrap) },
-		{ CKA_TRUSTED, &obj_trusted, sizeof(obj_trusted) }
-		/* Not supported
-		{ CKA_WRAP_TEMPLATE, NULL_PTR, 0 } */
+		{ CKA_TRUSTED, &obj_trusted, sizeof(obj_trusted) },
+		{ CKA_WRAP_TEMPLATE, pWrapTemplate, ulWrapTemplateLen }
 	};
 
 	// Get length
@@ -414,7 +414,7 @@ void ObjectTests::checkCommonPublicKeyAttributes(CK_SESSION_HANDLE hSession, CK_
 	attribs[0].pValue = (CK_VOID_PTR)malloc(attribs[0].ulValueLen);
 
 	// Check values
-	rv = C_GetAttributeValue(hSession, hObject, &attribs[0], 6);
+	rv = C_GetAttributeValue(hSession, hObject, &attribs[0], 7);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 	CPPUNIT_ASSERT(attribs[0].ulValueLen == ulSubjectLen);
 	/* Default is token-specifict
@@ -423,13 +423,15 @@ void ObjectTests::checkCommonPublicKeyAttributes(CK_SESSION_HANDLE hSession, CK_
 	CPPUNIT_ASSERT(obj_verify_recover == bVerifyRecover);
 	CPPUNIT_ASSERT(obj_wrap == bWrap); */
 	CPPUNIT_ASSERT(obj_trusted == bTrusted);
+	len_wrap_template = attribs[6].ulValueLen;
+	CPPUNIT_ASSERT(len_wrap_template == 0);
 	if (ulSubjectLen > 0)
 		CPPUNIT_ASSERT(memcmp(attribs[0].pValue, pSubject, ulSubjectLen) == 0);
 
 	free(attribs[0].pValue);
 }
 
-void ObjectTests::checkCommonPrivateKeyAttributes(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject, CK_BYTE_PTR pSubject, CK_ULONG ulSubjectLen, CK_BBOOL bSensitive, CK_BBOOL bDecrypt, CK_BBOOL bSign, CK_BBOOL bSignRecover, CK_BBOOL bUnwrap, CK_BBOOL bExtractable, CK_BBOOL bAlwaysSensitive, CK_BBOOL bNeverExtractable, CK_BBOOL bWrapWithTrusted, CK_ATTRIBUTE_PTR /*pUnwrapTemplate*/, CK_ULONG /*ulUnwrapTemplateLen*/, CK_BBOOL bAlwaysAuthenticate)
+void ObjectTests::checkCommonPrivateKeyAttributes(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject, CK_BYTE_PTR pSubject, CK_ULONG ulSubjectLen, CK_BBOOL bSensitive, CK_BBOOL bDecrypt, CK_BBOOL bSign, CK_BBOOL bSignRecover, CK_BBOOL bUnwrap, CK_BBOOL bExtractable, CK_BBOOL bAlwaysSensitive, CK_BBOOL bNeverExtractable, CK_BBOOL bWrapWithTrusted, CK_ATTRIBUTE_PTR pUnwrapTemplate, CK_ULONG ulUnwrapTemplateLen, CK_BBOOL bAlwaysAuthenticate)
 {
 	CK_RV rv;
 
@@ -443,6 +445,7 @@ void ObjectTests::checkCommonPrivateKeyAttributes(CK_SESSION_HANDLE hSession, CK
 	CK_BBOOL obj_never_extractable = CK_FALSE;
 	CK_BBOOL obj_wrap_with_trusted = CK_FALSE;
 	CK_BBOOL obj_always_authenticate = CK_FALSE;
+	CK_LONG len_unwrap_template = ulUnwrapTemplateLen;
 	CK_ATTRIBUTE attribs[] = {
 		{ CKA_SUBJECT, NULL_PTR, 0 },
 		{ CKA_SENSITIVE, &obj_sensitive, sizeof(obj_sensitive) },
@@ -454,8 +457,7 @@ void ObjectTests::checkCommonPrivateKeyAttributes(CK_SESSION_HANDLE hSession, CK
 		{ CKA_ALWAYS_SENSITIVE, &obj_always_sensitive, sizeof(obj_always_sensitive) },
 		{ CKA_NEVER_EXTRACTABLE, &obj_never_extractable, sizeof(obj_never_extractable) },
 		{ CKA_WRAP_WITH_TRUSTED, &obj_wrap_with_trusted, sizeof(obj_wrap_with_trusted) },
-		/* Not supported
-		{ CKA_UNWRAP_TEMPLATE, NULL_PTR, 0 }, */
+		{ CKA_UNWRAP_TEMPLATE, pUnwrapTemplate, ulUnwrapTemplateLen },
 		{ CKA_ALWAYS_AUTHENTICATE, &obj_always_authenticate, sizeof(obj_always_authenticate) }
 	};
 
@@ -465,7 +467,7 @@ void ObjectTests::checkCommonPrivateKeyAttributes(CK_SESSION_HANDLE hSession, CK
 	attribs[0].pValue = (CK_VOID_PTR)malloc(attribs[0].ulValueLen);
 
 	// Check values
-	rv = C_GetAttributeValue(hSession, hObject, &attribs[0], 11);
+	rv = C_GetAttributeValue(hSession, hObject, &attribs[0], 12);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 	CPPUNIT_ASSERT(attribs[0].ulValueLen == ulSubjectLen);
 	CPPUNIT_ASSERT(obj_sensitive == bSensitive);
@@ -478,6 +480,8 @@ void ObjectTests::checkCommonPrivateKeyAttributes(CK_SESSION_HANDLE hSession, CK
 	CPPUNIT_ASSERT(obj_never_extractable == bNeverExtractable);
 	CPPUNIT_ASSERT(obj_wrap_with_trusted == bWrapWithTrusted);
 	CPPUNIT_ASSERT(obj_always_authenticate == bAlwaysAuthenticate);
+	len_unwrap_template = attribs[10].ulValueLen;
+	CPPUNIT_ASSERT(len_unwrap_template == 0);
 	if (ulSubjectLen > 0)
 		CPPUNIT_ASSERT(memcmp(attribs[0].pValue, pSubject, ulSubjectLen) == 0);
 
@@ -1825,4 +1829,110 @@ void ObjectTests::testGetInvalidAttribute()
 	// Check value
 	rv = C_GetAttributeValue(hSession, hObject, getTemplate, 1);
 	CPPUNIT_ASSERT(rv == CKR_ATTRIBUTE_TYPE_INVALID);
+}
+
+void ObjectTests::testArrayAttribute()
+{
+	CK_RV rv;
+	CK_UTF8CHAR pin[] = SLOT_0_USER1_PIN;
+	CK_ULONG pinLength = sizeof(pin) - 1;
+	CK_SESSION_HANDLE hSession;
+	CK_OBJECT_HANDLE hObject = CK_INVALID_HANDLE;
+        CK_BYTE pE[] = { 0x01, 0x00, 0x01 };
+
+	// Wrap template
+	CK_KEY_TYPE wrapType = CKK_SHA256_HMAC;;
+	CK_ATTRIBUTE wrapTemplate[] = {
+		{ CKA_KEY_TYPE, &wrapType, sizeof(wrapType) },
+		{ CKA_PUBLIC_EXPONENT, pE, sizeof(pE) }
+	};
+
+	// Minimal public key object
+	CK_OBJECT_CLASS objClass = CKO_PUBLIC_KEY;
+	CK_KEY_TYPE objType = CKK_RSA;
+	CK_BYTE pN[] = { 0xC6, 0x47, 0xDD, 0x74, 0x3B, 0xCB, 0xDC, 0x6F, 0xCE, 0xA7,
+			 0xF0, 0x5F, 0x29, 0x4B, 0x27, 0x00, 0xCC, 0x92, 0xE9, 0x20,
+			 0x8A, 0x2C, 0x87, 0x36, 0x47, 0x24, 0xB0, 0xD5, 0x7D, 0xB0,
+			 0x92, 0x01, 0xA0, 0xA3, 0x55, 0x2E, 0x3F, 0xFE, 0xA7, 0x4C,
+			 0x4B, 0x3F, 0x9D, 0x4E, 0xCB, 0x78, 0x12, 0xA9, 0x42, 0xAD,
+			 0x51, 0x1F, 0x3B, 0xBD, 0x3D, 0x6A, 0xE5, 0x38, 0xB7, 0x45,
+			 0x65, 0x50, 0x30, 0x35 };
+	CK_ATTRIBUTE objTemplate[] = {
+		{ CKA_CLASS, &objClass, sizeof(objClass) },
+		{ CKA_KEY_TYPE, &objType, sizeof(objType) },
+		{ CKA_MODULUS, pN, sizeof(pN) },
+		{ CKA_PUBLIC_EXPONENT, pE, sizeof(pE) },
+		{ CKA_WRAP_TEMPLATE, wrapTemplate, sizeof(wrapTemplate) }
+	};
+
+	// Just make sure that we finalize any previous tests
+	C_Finalize(NULL_PTR);
+
+	// Initialize the library and start the test.
+	rv = C_Initialize(NULL_PTR);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Open read-write session
+	rv = C_OpenSession(SLOT_INIT_TOKEN, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSession);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Login USER into the sessions so we can create a private objects
+	rv = C_Login(hSession, CKU_USER, pin, pinLength);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Create minimal RSA public key object
+	rv = C_CreateObject(hSession, objTemplate, sizeof(objTemplate)/sizeof(CK_ATTRIBUTE), &hObject);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	CK_ATTRIBUTE wrapAttribs[] = {
+		{ 0, NULL_PTR, 0 },
+		{ 0, NULL_PTR, 0 }
+	};
+	CK_ATTRIBUTE wrapAttrib = { CKA_WRAP_TEMPLATE, NULL_PTR, 0 };
+
+	// Get number of elements
+	rv = C_GetAttributeValue(hSession, hObject, &wrapAttrib, 1);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	CPPUNIT_ASSERT(wrapAttrib.ulValueLen == 2 * sizeof(CK_ATTRIBUTE));
+
+	// Get element types and sizes
+	wrapAttrib.pValue = wrapAttribs;
+	rv = C_GetAttributeValue(hSession, hObject, &wrapAttrib, 1);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	CPPUNIT_ASSERT(wrapAttrib.ulValueLen == 2 * sizeof(CK_ATTRIBUTE));
+	if (wrapAttribs[0].type == CKA_KEY_TYPE)
+	{
+		CPPUNIT_ASSERT(wrapAttribs[0].ulValueLen == sizeof(CK_KEY_TYPE));
+		CPPUNIT_ASSERT(wrapAttribs[1].type == CKA_PUBLIC_EXPONENT);
+		CPPUNIT_ASSERT(wrapAttribs[1].ulValueLen == sizeof(pE));
+	}
+	else
+	{
+		CPPUNIT_ASSERT(wrapAttribs[0].type == CKA_PUBLIC_EXPONENT);
+		CPPUNIT_ASSERT(wrapAttribs[0].ulValueLen == sizeof(pE));
+		CPPUNIT_ASSERT(wrapAttribs[1].type == CKA_KEY_TYPE);
+		CPPUNIT_ASSERT(wrapAttribs[1].ulValueLen == sizeof(CK_KEY_TYPE));
+	}
+
+	// Get values
+	wrapAttribs[0].pValue = (CK_VOID_PTR)malloc(wrapAttribs[0].ulValueLen);
+	wrapAttribs[1].pValue = (CK_VOID_PTR)malloc(wrapAttribs[1].ulValueLen);
+	rv = C_GetAttributeValue(hSession, hObject, &wrapAttrib, 1);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	if (wrapAttribs[0].type == CKA_KEY_TYPE)
+	{
+		CK_KEY_TYPE kt = *(CK_KEY_TYPE*) wrapAttribs[0].pValue;
+		CPPUNIT_ASSERT(kt == CKK_SHA256_HMAC);
+		CPPUNIT_ASSERT(memcmp(wrapAttribs[1].pValue, pE, sizeof(pE)) == 0);
+	}
+	else
+	{
+		CPPUNIT_ASSERT(memcmp(wrapAttribs[0].pValue, pE, sizeof(pE)) == 0);
+		CK_KEY_TYPE kt = *(CK_KEY_TYPE*) wrapAttribs[1].pValue;
+		CPPUNIT_ASSERT(kt == CKK_SHA256_HMAC);
+
+	}
+
+	free(wrapAttribs[0].pValue);
+	free(wrapAttribs[1].pValue);
 }

@@ -70,6 +70,12 @@ public:
 	virtual ByteString serialise() const;
 	virtual bool deserialise(ByteString& serialised);
 
+	// Encode into PKCS#8 DER
+	virtual ByteString PKCS8Encode();
+
+	// Decode from PKCS#8 BER
+	virtual bool PKCS8Decode(const ByteString& ber);
+
 	// Set from Botan representation
 	virtual void setFromBotan(const Botan::GOST_3410_PrivateKey* eckey);
 

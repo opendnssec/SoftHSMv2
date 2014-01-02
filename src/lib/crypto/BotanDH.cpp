@@ -124,17 +124,17 @@ bool BotanDH::generateKeyPair(AsymmetricKeyPair** ppKeyPair, AsymmetricParameter
 	DHParameters* params = (DHParameters*) parameters;
 
 	// Generate the key-pair
-	Botan::DH_PrivateKey* dh = NULL;
+	BotanDH_PrivateKey* dh = NULL;
 	try
 	{
 		BotanRNG* rng = (BotanRNG*)BotanCryptoFactory::i()->getRNG();
-		dh = new Botan::DH_PrivateKey(*rng->getRNG(),
+		dh = new BotanDH_PrivateKey(*rng->getRNG(),
 					Botan::DL_Group(BotanUtil::byteString2bigInt(params->getP()),
 					BotanUtil::byteString2bigInt(params->getG())));
 	}
-	catch (...)
+	catch (std::exception& e)
 	{
-		ERROR_MSG("DH key generation failed");
+		ERROR_MSG("DH key generation failed with %s", e.what());
 
 		return false;
 	}
@@ -165,8 +165,8 @@ bool BotanDH::deriveKey(SymmetricKey **ppSymmetricKey, PublicKey* publicKey, Pri
 
 	// Get keys
 	Botan::DH_PublicKey* pub = ((BotanDHPublicKey*) publicKey)->getBotanKey();
-	Botan::DH_PrivateKey* priv = ((BotanDHPrivateKey*) privateKey)->getBotanKey();
-	if (pub == NULL || priv == NULL)
+	BotanDH_PrivateKey* priv = ((BotanDHPrivateKey*) privateKey)->getBotanKey();
+	if (pub == NULL || priv == NULL || priv->impl == NULL)
 	{
 		ERROR_MSG("Failed to get Botan DH keys");
 
@@ -177,12 +177,12 @@ bool BotanDH::deriveKey(SymmetricKey **ppSymmetricKey, PublicKey* publicKey, Pri
 	Botan::SymmetricKey sk;
 	try
 	{
-		Botan::PK_Key_Agreement ka(*priv, "Raw");
+		Botan::PK_Key_Agreement ka(*priv->impl, "Raw");
 		sk = ka.derive_key(0, pub->public_value());
 	}
-	catch (...)
+	catch (std::exception& e)
 	{
-		ERROR_MSG("Botan DH key agreement failed");
+		ERROR_MSG("Botan DH key agreement failed: %s", e.what());
 
 		return false;
 	}

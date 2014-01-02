@@ -34,7 +34,6 @@
 
 #include "config.h"
 #include "OSSLEVPMacAlgorithm.h"
-#include "salloc.h"
 
 // Destructor
 OSSLEVPMacAlgorithm::~OSSLEVPMacAlgorithm()

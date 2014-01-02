@@ -186,6 +186,43 @@ void RSATests::testSerialisation()
 	rsa->recyclePrivateKey(desPriv);
 }
 
+void RSATests::testPKCS8()
+{
+	// Generate a 1024-bit key-pair for testing
+	AsymmetricKeyPair* kp;
+	RSAParameters p;
+
+	p.setE("010001");
+	p.setBitLength(1024);
+
+	CPPUNIT_ASSERT(rsa->generateKeyPair(&kp, &p));
+	CPPUNIT_ASSERT(kp != NULL);
+
+	RSAPrivateKey* priv = (RSAPrivateKey*) kp->getPrivateKey();
+	CPPUNIT_ASSERT(priv != NULL);
+
+	// Encode and decode the private key
+	ByteString pkcs8 = priv->PKCS8Encode();
+	CPPUNIT_ASSERT(pkcs8.size() != 0);
+
+	RSAPrivateKey* dPriv = (RSAPrivateKey*) rsa->newPrivateKey();
+	CPPUNIT_ASSERT(dPriv != NULL);
+
+	CPPUNIT_ASSERT(dPriv->PKCS8Decode(pkcs8));
+
+	CPPUNIT_ASSERT(priv->getP() == dPriv->getP());
+	CPPUNIT_ASSERT(priv->getQ() == dPriv->getQ());
+	CPPUNIT_ASSERT(priv->getPQ() == dPriv->getPQ());
+	CPPUNIT_ASSERT(priv->getDP1() == dPriv->getDP1());
+	CPPUNIT_ASSERT(priv->getDQ1() == dPriv->getDQ1());
+	CPPUNIT_ASSERT(priv->getD() == dPriv->getD());
+	CPPUNIT_ASSERT(priv->getN() == dPriv->getN());
+	CPPUNIT_ASSERT(priv->getE() == dPriv->getE());
+
+	rsa->recycleKeyPair(kp);
+	rsa->recyclePrivateKey(dPriv);
+}
+
 void RSATests::testSigningVerifying()
 {
 	AsymmetricKeyPair* kp;

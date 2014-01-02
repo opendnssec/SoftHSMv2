@@ -37,13 +37,34 @@
 #include "DHPrivateKey.h"
 #include <botan/dh.h>
 
+// Derived from the DH_PrivateKey class
+class BotanDH_PrivateKey : public Botan::DH_PublicKey,
+			   public virtual Botan::DL_Scheme_PrivateKey
+{
+public:
+	Botan::MemoryVector<Botan::byte> public_value() const;
+
+	// Constructors
+	BotanDH_PrivateKey(const Botan::AlgorithmIdentifier& alg_id,
+			   const Botan::MemoryRegion<Botan::byte>& key_bits,
+			   Botan::RandomNumberGenerator& rng);
+
+	BotanDH_PrivateKey(Botan::RandomNumberGenerator& rng,
+			   const Botan::DL_Group& grp,
+			   const Botan::BigInt& x = 0);
+
+	~BotanDH_PrivateKey();
+
+	Botan::DH_PrivateKey* impl;
+};
+
 class BotanDHPrivateKey : public DHPrivateKey
 {
 public:
 	// Constructors
 	BotanDHPrivateKey();
 
-	BotanDHPrivateKey(const Botan::DH_PrivateKey* inDH);
+	BotanDHPrivateKey(const BotanDH_PrivateKey* inDH);
 	
 	// Destructor
 	virtual ~BotanDHPrivateKey();
@@ -61,15 +82,21 @@ public:
 	virtual void setP(const ByteString& p);
 	virtual void setG(const ByteString& g);
 
+	// Encode into PKCS#8 DER
+	virtual ByteString PKCS8Encode();
+
+	// Decode from PKCS#8 BER
+	virtual bool PKCS8Decode(const ByteString& ber);
+
 	// Set from Botan representation
-	virtual void setFromBotan(const Botan::DH_PrivateKey* dh);
+	virtual void setFromBotan(const BotanDH_PrivateKey* dh);
 
 	// Retrieve the Botan representation of the key
-	Botan::DH_PrivateKey* getBotanKey();
+	BotanDH_PrivateKey* getBotanKey();
 
 private:
 	// The internal Botan representation
-	Botan::DH_PrivateKey* dh;
+	BotanDH_PrivateKey* dh;
 
 	// Create the Botan representation of the key
 	void createBotanKey();

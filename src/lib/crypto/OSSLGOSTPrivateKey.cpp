@@ -157,4 +157,18 @@ bool OSSLGOSTPrivateKey::deserialise(ByteString& serialised)
 
 	return true;
 }
+
+// Encode into PKCS#8 DER
+ByteString OSSLGOSTPrivateKey::PKCS8Encode()
+{
+	ByteString der;
+	// TODO
+	return der;
+}
+
+// Decode from PKCS#8 BER
+bool OSSLGOSTPrivateKey::PKCS8Decode(const ByteString& ber)
+{
+	return false;
+}
 #endif
