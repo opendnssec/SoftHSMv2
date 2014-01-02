@@ -42,6 +42,7 @@ class DigestTests : public CppUnit::TestFixture
 	CPPUNIT_TEST(testDigestInit);
 	CPPUNIT_TEST(testDigest);
 	CPPUNIT_TEST(testDigestUpdate);
+	CPPUNIT_TEST(testDigestKey);
 	CPPUNIT_TEST(testDigestFinal);
 	CPPUNIT_TEST(testDigestAll);
 	CPPUNIT_TEST_SUITE_END();
@@ -50,6 +51,7 @@ public:
 	void testDigestInit();
 	void testDigest();
 	void testDigestUpdate();
+	void testDigestKey();
 	void testDigestFinal();
 	void testDigestAll();
 
