@@ -175,6 +175,7 @@ public:
 #else
 		VirtualFree((const void*) r, MEM_RELEASE);
 #endif
+#else
 		// Release the memory
 		::operator delete((void*) p);
 #endif // SENSITIVE_NON_PAGED

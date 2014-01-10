@@ -658,7 +658,7 @@ void DBToken::getObjects(std::set<OSObject*> &objects)
 // Create a new object
 OSObject *DBToken::createObject()
 {
-	if (_connection == NULL) return false;
+	if (_connection == NULL) return NULL;
 
 	DBObject *newObject = new DBObject(_connection, this);
 	if (newObject == NULL)

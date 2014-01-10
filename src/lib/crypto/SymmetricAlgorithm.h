@@ -57,6 +57,11 @@ public:
 	virtual bool decryptUpdate(const ByteString& encryptedData, ByteString& data);
 	virtual bool decryptFinal(ByteString& data);
 
+	// Wrap/Unwrap keys
+	virtual bool wrapKey(const SymmetricKey* key, const std::string mode, const ByteString& in, ByteString& out) = 0;
+
+	virtual bool unwrapKey(const SymmetricKey* key, const std::string mode, const ByteString& in, ByteString& out) = 0;
+
 	// Key factory
 	virtual void recycleKey(SymmetricKey* toRecycle);
 	virtual bool generateKey(SymmetricKey& key, RNG* rng = NULL);

@@ -100,6 +100,8 @@ CK_RV SymmetricAlgorithmTests::generateAesKey(CK_SESSION_HANDLE hSession, CK_BBO
 		{ CKA_PRIVATE, &bPrivate, sizeof(bPrivate) },
 		{ CKA_ENCRYPT, &bTrue, sizeof(bTrue) },
 		{ CKA_DECRYPT, &bTrue, sizeof(bTrue) },
+		{ CKA_WRAP, &bTrue, sizeof(bTrue) },
+		{ CKA_UNWRAP, &bTrue, sizeof(bTrue) },
 		{ CKA_VALUE_LEN, &bytes, sizeof(bytes) },
 	};
 
@@ -286,6 +288,213 @@ void SymmetricAlgorithmTests::des3EncryptDecrypt(CK_MECHANISM_TYPE mechanismType
 	CPPUNIT_ASSERT(memcmp(plainText, recoveredText, sizeof(plainText)) == 0);
 }
 
+#ifdef HAVE_AES_KEY_WRAP_PAD
+CK_RV SymmetricAlgorithmTests::generateRsaPrivateKey(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_OBJECT_HANDLE &hKey)
+{
+	CK_MECHANISM mechanism = { CKM_RSA_PKCS_KEY_PAIR_GEN, NULL_PTR, 0 };
+	CK_ULONG bits = 1536;
+	CK_BYTE pubExp[] = {0x01, 0x00, 0x01};
+	CK_BYTE subject[] = { 0x12, 0x34 }; // dummy
+	CK_BYTE id[] = { 123 } ; // dummy
+	CK_BBOOL bFalse = CK_FALSE;
+	CK_BBOOL bTrue = CK_TRUE;
+	CK_ATTRIBUTE pubAttribs[] = {
+		{ CKA_TOKEN, &bToken, sizeof(bToken) },
+		{ CKA_PRIVATE, &bPrivate, sizeof(bPrivate) },
+		{ CKA_ENCRYPT, &bFalse, sizeof(bFalse) },
+		{ CKA_VERIFY, &bTrue, sizeof(bTrue) },
+		{ CKA_WRAP, &bFalse, sizeof(bFalse) },
+		{ CKA_MODULUS_BITS, &bits, sizeof(bits) },
+		{ CKA_PUBLIC_EXPONENT, &pubExp[0], sizeof(pubExp) }
+	};
+	CK_ATTRIBUTE privAttribs[] = {
+		{ CKA_TOKEN, &bToken, sizeof(bToken) },
+		{ CKA_PRIVATE, &bPrivate, sizeof(bPrivate) },
+		{ CKA_SUBJECT, &subject[0], sizeof(subject) },
+		{ CKA_ID, &id[0], sizeof(id) },
+		{ CKA_SENSITIVE, &bTrue, sizeof(bTrue) },
+		{ CKA_DECRYPT, &bFalse, sizeof(bFalse) },
+		{ CKA_SIGN, &bTrue, sizeof(bTrue) },
+		{ CKA_UNWRAP, &bFalse, sizeof(bFalse) },
+		{ CKA_SENSITIVE, &bFalse, sizeof(bFalse) },
+		{ CKA_EXTRACTABLE, &bTrue, sizeof(bTrue) }
+	};
+
+	CK_OBJECT_HANDLE hPub = CK_INVALID_HANDLE;
+	hKey = CK_INVALID_HANDLE;
+	CK_RV rv;
+	rv = C_GenerateKeyPair(hSession, &mechanism,
+			       pubAttribs, sizeof(pubAttribs)/sizeof(CK_ATTRIBUTE),
+			       privAttribs, sizeof(privAttribs)/sizeof(CK_ATTRIBUTE),
+			       &hPub, &hKey);
+	if (hPub != CK_INVALID_HANDLE)
+	{
+		C_DestroyObject(hSession, hPub);
+	}
+	return rv;
+}
+#endif
+
+void SymmetricAlgorithmTests::aesWrapUnwrap(CK_MECHANISM_TYPE mechanismType, CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hKey)
+{
+	CK_MECHANISM mechanism = { mechanismType, NULL_PTR, 0 };
+	CK_BBOOL bFalse = CK_FALSE;
+	CK_BBOOL bTrue = CK_TRUE;
+	CK_OBJECT_CLASS secretClass = CKO_SECRET_KEY;
+	CK_KEY_TYPE genKeyType = CKK_GENERIC_SECRET;
+	CK_BYTE keyPtr[128];
+	CK_ULONG keyLen =
+		mechanismType == CKM_AES_KEY_WRAP_PAD ? 125UL : 128UL;
+	CK_ATTRIBUTE attribs[] = {
+		{ CKA_EXTRACTABLE, &bFalse, sizeof(bFalse) },
+		{ CKA_CLASS, &secretClass, sizeof(secretClass) },
+		{ CKA_KEY_TYPE, &genKeyType, sizeof(genKeyType) },
+		{ CKA_TOKEN, &bFalse, sizeof(bFalse) },
+		{ CKA_PRIVATE, &bTrue, sizeof(bTrue) },
+		{ CKA_SENSITIVE, &bFalse, sizeof(bFalse) },
+		{ CKA_VALUE, keyPtr, keyLen }
+	};
+	CK_OBJECT_HANDLE hSecret;
+	CK_RV rv;
+
+	rv = C_GenerateRandom(hSession, keyPtr, keyLen);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	hSecret = CK_INVALID_HANDLE;
+	rv = C_CreateObject(hSession, attribs, sizeof(attribs)/sizeof(CK_ATTRIBUTE), &hSecret);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	CPPUNIT_ASSERT(hSecret != CK_INVALID_HANDLE);
+
+	CK_BYTE_PTR wrappedPtr = NULL_PTR;
+	CK_ULONG wrappedLen = 0UL;
+	CK_ULONG rndKeyLen = keyLen;
+	if (mechanismType == CKM_AES_KEY_WRAP_PAD)
+		rndKeyLen =  (keyLen + 7) & ~7;
+	rv = C_WrapKey(hSession, &mechanism, hKey, hSecret, wrappedPtr, &wrappedLen);
+	CPPUNIT_ASSERT(rv == CKR_KEY_UNEXTRACTABLE);
+	rv = C_DestroyObject(hSession, hSecret);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	attribs[0].pValue = &bTrue;
+
+	hSecret = CK_INVALID_HANDLE;
+	rv = C_CreateObject(hSession, attribs, sizeof(attribs)/sizeof(CK_ATTRIBUTE), &hSecret);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	CPPUNIT_ASSERT(hSecret != CK_INVALID_HANDLE);
+
+	rv = C_WrapKey(hSession, &mechanism, hKey, hSecret, wrappedPtr, &wrappedLen);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	CPPUNIT_ASSERT(wrappedLen == rndKeyLen + 8);
+	wrappedPtr = (CK_BYTE_PTR) malloc(wrappedLen);
+	CPPUNIT_ASSERT(wrappedPtr != NULL_PTR);
+	rv = C_WrapKey(hSession, &mechanism, hKey, hSecret, wrappedPtr, &wrappedLen);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	CPPUNIT_ASSERT(wrappedLen == rndKeyLen + 8);
+
+	CK_ATTRIBUTE nattribs[] = {
+		{ CKA_CLASS, &secretClass, sizeof(secretClass) },
+		{ CKA_KEY_TYPE, &genKeyType, sizeof(genKeyType) },
+		{ CKA_TOKEN, &bFalse, sizeof(bFalse) },
+		{ CKA_PRIVATE, &bTrue, sizeof(bTrue) },
+		{ CKA_ENCRYPT, &bFalse, sizeof(bFalse) },
+		{ CKA_DECRYPT, &bTrue, sizeof(bTrue) },
+		{ CKA_SIGN, &bFalse,sizeof(bFalse) },
+		{ CKA_VERIFY, &bTrue, sizeof(bTrue) }
+	};
+	CK_OBJECT_HANDLE hNew;
+
+	hNew = CK_INVALID_HANDLE;
+	rv = C_UnwrapKey(hSession, &mechanism, hKey, wrappedPtr, wrappedLen, nattribs, sizeof(nattribs)/sizeof(CK_ATTRIBUTE), &hNew);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	CPPUNIT_ASSERT(hNew != CK_INVALID_HANDLE);
+
+	free(wrappedPtr);
+	wrappedPtr = NULL_PTR;
+	rv = C_DestroyObject(hSession, hSecret);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+#ifdef HAVE_AES_KEY_WRAP_PAD
+	if (mechanismType != CKM_AES_KEY_WRAP_PAD) return;
+
+	CK_OBJECT_HANDLE hRsa;
+	hRsa = CK_INVALID_HANDLE;
+	rv = generateRsaPrivateKey(hSession, CK_TRUE, CK_TRUE, hRsa);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	CPPUNIT_ASSERT(hRsa != CK_INVALID_HANDLE);
+
+	CK_OBJECT_CLASS privateClass = CKO_PRIVATE_KEY;
+	CK_KEY_TYPE rsaKeyType = CKK_RSA;
+	CK_BYTE_PTR p2Ptr = NULL_PTR;
+	CK_ULONG p2Len = 0UL;
+	CK_ATTRIBUTE rsaAttribs[] = {
+		{ CKA_CLASS, &privateClass, sizeof(privateClass) },
+		{ CKA_KEY_TYPE, &rsaKeyType, sizeof(rsaKeyType) },
+		{ CKA_PRIME_2, NULL_PTR, 0UL }
+	};
+
+	rv = C_GetAttributeValue(hSession, hRsa, rsaAttribs, sizeof(rsaAttribs)/sizeof(CK_ATTRIBUTE));
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	CPPUNIT_ASSERT(rsaAttribs[0].ulValueLen == sizeof(CK_OBJECT_CLASS));
+	CPPUNIT_ASSERT(*(CK_OBJECT_CLASS*)rsaAttribs[0].pValue == CKO_PRIVATE_KEY);
+	CPPUNIT_ASSERT(rsaAttribs[1].ulValueLen == sizeof(CK_KEY_TYPE));
+	CPPUNIT_ASSERT(*(CK_KEY_TYPE*)rsaAttribs[1].pValue == CKK_RSA);
+
+	p2Len = rsaAttribs[2].ulValueLen;
+	p2Ptr = (CK_BYTE_PTR) malloc(2 * p2Len);
+	CPPUNIT_ASSERT(p2Ptr != NULL_PTR);
+	rsaAttribs[2].pValue = p2Ptr;
+	rsaAttribs[2].ulValueLen = p2Len;
+
+	rv = C_GetAttributeValue(hSession, hRsa, rsaAttribs, sizeof(rsaAttribs)/sizeof(CK_ATTRIBUTE));
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	CPPUNIT_ASSERT(rsaAttribs[2].ulValueLen == p2Len);
+
+	rv = C_WrapKey(hSession, &mechanism, hKey, hRsa, wrappedPtr, &wrappedLen);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	wrappedPtr = (CK_BYTE_PTR) malloc(wrappedLen);
+	CPPUNIT_ASSERT(wrappedPtr != NULL_PTR);
+	rv = C_WrapKey(hSession, &mechanism, hKey, hRsa, wrappedPtr, &wrappedLen);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	rv = C_DestroyObject(hSession, hRsa);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	CK_ATTRIBUTE nRsaAttribs[] = {
+		{ CKA_CLASS, &privateClass, sizeof(privateClass) },
+		{ CKA_KEY_TYPE, &rsaKeyType, sizeof(rsaKeyType) },
+		{ CKA_TOKEN, &bFalse, sizeof(bFalse) },
+		{ CKA_PRIVATE, &bTrue, sizeof(bTrue) },
+		{ CKA_DECRYPT, &bTrue, sizeof(bTrue) },
+		{ CKA_SIGN, &bFalse,sizeof(bFalse) },
+		{ CKA_UNWRAP, &bTrue, sizeof(bTrue) },
+		{ CKA_SENSITIVE, &bFalse, sizeof(bFalse) },
+		{ CKA_EXTRACTABLE, &bTrue, sizeof(bTrue) }
+	};
+
+	hRsa = CK_INVALID_HANDLE;
+	rv = C_UnwrapKey(hSession, &mechanism, hKey, wrappedPtr, wrappedLen, nRsaAttribs, sizeof(nRsaAttribs)/sizeof(CK_ATTRIBUTE), &hRsa);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	CPPUNIT_ASSERT(hRsa != CK_INVALID_HANDLE);
+
+	rsaAttribs[2].pValue = p2Ptr + p2Len;
+	rv = C_GetAttributeValue(hSession, hRsa, rsaAttribs, sizeof(rsaAttribs)/sizeof(CK_ATTRIBUTE));
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	CPPUNIT_ASSERT(rsaAttribs[0].ulValueLen == sizeof(CK_OBJECT_CLASS));
+	CPPUNIT_ASSERT(*(CK_OBJECT_CLASS*)rsaAttribs[0].pValue == CKO_PRIVATE_KEY);
+	CPPUNIT_ASSERT(rsaAttribs[1].ulValueLen == sizeof(CK_KEY_TYPE));
+	CPPUNIT_ASSERT(*(CK_KEY_TYPE*)rsaAttribs[1].pValue == CKK_RSA);
+	CPPUNIT_ASSERT(rsaAttribs[2].ulValueLen == p2Len);
+	CPPUNIT_ASSERT(memcmp(p2Ptr, p2Ptr + p2Len, p2Len) == 0);
+
+	free(wrappedPtr);
+	free(p2Ptr);
+	rv = C_DestroyObject(hSession, hRsa);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+#endif
+}
+
 void SymmetricAlgorithmTests::testAesEncryptDecrypt()
 {
 	CK_RV rv;
@@ -327,6 +536,42 @@ void SymmetricAlgorithmTests::testAesEncryptDecrypt()
 
 	aesEncryptDecrypt(CKM_AES_ECB,hSessionRO,hKey);
 	aesEncryptDecrypt(CKM_AES_CBC,hSessionRO,hKey);
+}
+
+void SymmetricAlgorithmTests::testAesWrapUnwrap()
+{
+	CK_RV rv;
+	CK_UTF8CHAR pin[] = SLOT_0_USER1_PIN;
+	CK_ULONG pinLength = sizeof(pin) - 1;
+	// CK_UTF8CHAR sopin[] = SLOT_0_SO1_PIN;
+	// CK_ULONG sopinLength = sizeof(sopin) - 1;
+	CK_SESSION_HANDLE hSession;
+
+	// Just make sure that we finalize any previous tests
+	C_Finalize(NULL_PTR);
+
+	// Initialize the library and start the test.
+	rv = C_Initialize(NULL_PTR);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Open session
+	rv = C_OpenSession(SLOT_INIT_TOKEN, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSession);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Login USER into the session so we can create a private object
+	rv = C_Login(hSession,CKU_USER,pin,pinLength);
+	CPPUNIT_ASSERT(rv==CKR_OK);
+
+	CK_OBJECT_HANDLE hKey = CK_INVALID_HANDLE;
+
+	// Generate a wrapping session public key
+	rv = generateAesKey(hSession,IN_SESSION,IS_PUBLIC,hKey);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	aesWrapUnwrap(CKM_AES_KEY_WRAP, hSession, hKey);
+#ifdef HAVE_AES_KEY_WRAP_PAD
+	aesWrapUnwrap(CKM_AES_KEY_WRAP_PAD, hSession, hKey);
+#endif
 }
 
 void SymmetricAlgorithmTests::testDesEncryptDecrypt()

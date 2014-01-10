@@ -1,0 +1,340 @@
+--- src/constructs/rfc3394/rfc3394.h-dist	2013-11-10 17:06:11.000000000 +0100
++++ src/constructs/rfc3394/rfc3394.h	2013-12-22 02:14:50.000000000 +0100
+@@ -27,6 +27,13 @@
+                                              const SymmetricKey& kek,
+                                              Algorithm_Factory& af);
+ 
++/* overload with an extra initial value */
++
++SecureVector<byte> BOTAN_DLL rfc3394_keywrap(const MemoryRegion<byte>& key,
++					     const byte iv[8],
++                                             const SymmetricKey& kek,
++                                             Algorithm_Factory& af);
++
+ /**
+ * Decrypt a key under a key encryption key using the algorithm
+ * described in RFC 3394
+@@ -40,6 +47,47 @@
+                                                const SymmetricKey& kek,
+                                                Algorithm_Factory& af);
+ 
++/* overload with an extra initial value */
++
++SecureVector<byte> BOTAN_DLL rfc3394_keyunwrap(const MemoryRegion<byte>& key,
++					       const byte iv[8],
++                                               const SymmetricKey& kek,
++                                               Algorithm_Factory& af);
++
++/* overload with an extra initial value and integrity check value */
++
++SecureVector<byte> BOTAN_DLL rfc3394_keyunwrap(const MemoryRegion<byte>& key,
++					       const byte iv[8],
++					       byte icv[8],
++                                               const SymmetricKey& kek,
++                                               Algorithm_Factory& af);
++
++/**
++* Pad and encrypt a key under a key encryption key using the algorithm
++* described in RFC 5649
++*
++* @param key the plaintext key to encrypt
++* @param kek the key encryption key
++* @param af an algorithm factory
++* @return key encrypted under kek
++*/
++SecureVector<byte> BOTAN_DLL rfc5649_keywrap(const MemoryRegion<byte>& key,
++                                             const SymmetricKey& kek,
++                                             Algorithm_Factory& af);
++
++/**
++* Decrypt and unpad a key under a key encryption key using the algorithm
++* described in RFC 5649
++*
++* @param key the encrypted key to decrypt
++* @param kek the key encryption key
++* @param af an algorithm factory
++* @return key decrypted under kek
++*/
++SecureVector<byte> BOTAN_DLL rfc5649_keyunwrap(const MemoryRegion<byte>& key,
++                                               const SymmetricKey& kek,
++                                               Algorithm_Factory& af);
++
+ }
+ 
+ #endif
+--- src/constructs/rfc3394/rfc3394.cpp-dist	2013-11-10 17:06:11.000000000 +0100
++++ src/constructs/rfc3394/rfc3394.cpp	2013-12-22 03:46:13.000000000 +0100
+@@ -30,12 +30,35 @@
+       throw std::invalid_argument("Bad KEK length for NIST keywrap");
+    }
+ 
++BlockCipher* make_aesp(size_t keylength,
++                       Algorithm_Factory& af)
++   {
++   if(keylength == 16)
++      return af.make_block_cipher("AES-128");
++   else if(keylength == 24)
++      return af.make_block_cipher("AES-192");
++   else if(keylength == 32)
++      return af.make_block_cipher("AES-256");
++   else
++      throw std::invalid_argument("Bad KEK length for NIST keywrap with pad");
++   }
+ }
+ 
+ SecureVector<byte> rfc3394_keywrap(const MemoryRegion<byte>& key,
+                                    const SymmetricKey& kek,
+                                    Algorithm_Factory& af)
+    {
++   byte iv[8];
++   for(size_t i = 0; i != 8; ++i)
++      iv[i] = 0xA6;
++   return rfc3394_keywrap(key, iv, kek, af);
++   }
++
++SecureVector<byte> rfc3394_keywrap(const MemoryRegion<byte>& key,
++				   const byte iv[8],
++                                   const SymmetricKey& kek,
++                                   Algorithm_Factory& af)
++   {
+    if(key.size() % 8 != 0)
+       throw std::invalid_argument("Bad input key size for NIST key wrap");
+ 
+@@ -48,7 +71,7 @@
+    SecureVector<byte> A(16);
+ 
+    for(size_t i = 0; i != 8; ++i)
+-      A[i] = 0xA6;
++      A[i] = iv[i];
+ 
+    copy_mem(&R[8], key.begin(), key.size());
+ 
+@@ -78,6 +101,29 @@
+                                      const SymmetricKey& kek,
+                                      Algorithm_Factory& af)
+    {
++   byte iv[8];
++   for(size_t i = 0; i != 8; ++i)
++      iv[i] = 0xA6;
++   return rfc3394_keyunwrap(key, iv, kek, af);
++   }
++
++SecureVector<byte> rfc3394_keyunwrap(const MemoryRegion<byte>& key,
++				     const byte iv[8],
++                                     const SymmetricKey& kek,
++                                     Algorithm_Factory& af)
++   {
++   byte icv[8];
++   for(size_t i = 0; i != 8; ++i)
++      icv[i] = iv[i];
++   return rfc3394_keyunwrap(key, iv, icv, kek, af);
++   }
++
++SecureVector<byte> rfc3394_keyunwrap(const MemoryRegion<byte>& key,
++				     const byte iv[8],
++				     byte icv[8],
++                                     const SymmetricKey& kek,
++                                     Algorithm_Factory& af)
++   {
+    if(key.size() < 16 || key.size() % 8 != 0)
+       throw std::invalid_argument("Bad input key size for NIST key unwrap");
+ 
+@@ -113,10 +159,107 @@
+          }
+       }
+ 
+-   if(load_be<u64bit>(&A[0], 0) != 0xA6A6A6A6A6A6A6A6)
+-      throw Integrity_Failure("NIST key unwrap failed");
++   if(load_be<u64bit>(iv, 0) == load_be<u64bit>(icv, 0))
++      {
++      if(load_be<u64bit>(&A[0], 0) != load_be<u64bit>(iv, 0))
++          throw Integrity_Failure("NIST key unwrap failed");
++      }
++   else
++      store_be(load_be<u64bit>(&A[0], 0), icv);
+ 
+    return R;
+    }
+ 
++SecureVector<byte> rfc5649_keywrap(const MemoryRegion<byte>& key,
++                                   const SymmetricKey& kek,
++                                   Algorithm_Factory& af)
++   {
++   const size_t len = key.size() +
++      (key.size() % 8 == 0 ? 0 : (8 - key.size() % 8));
++
++   u32bit aivh = 0xA65959A6;
++   byte ivh[4] = { 0 };
++   store_be(aivh, ivh);
++   u32bit mli = key.size();
++   byte ivl[4] = { 0 };
++   store_be(mli, ivl);
++
++   if(len == 8)
++      {
++      std::auto_ptr<BlockCipher> aes(make_aesp(kek.length(), af));
++      aes->set_key(kek);
++
++      SecureVector<byte> buf(16);
++      copy_mem(&buf[0], ivh, 4);
++      copy_mem(&buf[4], ivl, 4);
++      copy_mem(&buf[8], key.begin(), key.size());
++
++      aes->encrypt(&buf[0]);
++
++      return buf;
++      }
++   else
++      {
++      MemoryVector<byte> buf(len);
++      copy_mem(&buf[0], key.begin(), key.size());
++      byte iv[8] = { 0 };
++      copy_mem(iv, ivh, 4);
++      copy_mem(&iv[4], ivl, 4);
++      return rfc3394_keywrap(buf, iv, kek, af);
++      }
++   }       
++
++SecureVector<byte> rfc5649_keyunwrap(const MemoryRegion<byte>& key,
++                                     const SymmetricKey& kek,
++                                     Algorithm_Factory& af)
++   {
++   if(key.size() < 16 || key.size() % 8 != 0)
++      throw std::invalid_argument("Bad input key size for NIST key unwrap with pad");
++
++   byte iv[8] = { 0 };
++   SecureVector<byte> out;
++
++   if(key.size() == 16)
++      {
++      std::auto_ptr<BlockCipher> aes(make_aesp(kek.length(), af));
++      aes->set_key(kek);
++
++      SecureVector<byte> buf(key);
++
++      aes->decrypt(&buf[0]);
++
++      copy_mem(iv, buf.begin(), 8);
++      out.resize(8);
++      copy_mem(&out[0], &buf[8], 8);
++      }
++   else
++      {
++      byte dummy[8] = { 1 };
++      try
++         {
++         out = rfc3394_keyunwrap(key, dummy, iv, kek, af);
++         }
++      catch(...)
++         {
++         throw Integrity_Failure("NIST key unwrap with pad failed");
++         } 
++      }
++
++   if(load_be<u32bit>(&iv[0], 0) != 0xA65959A6)
++      throw Integrity_Failure("NIST key unwrap with pad failed");
++
++   u32bit mli = load_be<u32bit>(iv, 1);
++   if(mli > out.size() || mli <= out.size() - 8)
++      throw Integrity_Failure("NIST key unwrap with pad failed");
++
++   size_t padlen = out.size() - mli;
++   byte zero[8] = { 0 };
++   clear_mem(zero, 8);
++   if(padlen && !same_mem(zero, &out[mli], padlen))
++      throw Integrity_Failure("NIST key unwrap with pad failed");
++
++   out.resize(mli);
++   return out;
++   }
++
+ }
+--- src/constructs/rfc3394/info.txt-dist	2013-11-10 17:06:11.000000000 +0100
++++ src/constructs/rfc3394/info.txt	2013-12-22 00:42:08.000000000 +0100
+@@ -1 +1,2 @@
+ define RFC3394_KEYWRAP
++define RFC5649_KEYWRAP
+--- checks/validate.cpp-dist	2013-11-10 17:06:11.000000000 +0100
++++ checks/validate.cpp	2013-12-22 02:15:12.000000000 +0100
+@@ -180,6 +180,68 @@
+    return ok;
+    }
+ 
++bool keywrap_withpad_test(const char* key_str,
++                          const char* expected_str,
++                          const char* kek_str)
++   {
++   std::cout << '.' << std::flush;
++
++   bool ok = true;
++
++#if defined(BOTAN_HAS_RFC5649_KEYWRAP)
++   try
++      {
++      SymmetricKey key(key_str);
++      SymmetricKey expected(expected_str);
++      SymmetricKey kek(kek_str);
++
++      Algorithm_Factory& af = global_state().algorithm_factory();
++
++      SecureVector<byte> enc = rfc5649_keywrap(key.bits_of(), kek, af);
++
++      if(enc != expected.bits_of())
++         {
++         std::cout << "NIST key wrap encryption failure: "
++                   << hex_encode(enc) << " != " << hex_encode(expected.bits_of()) << "\n";
++         ok = false;
++         }
++
++      SecureVector<byte> dec = rfc5649_keyunwrap(expected.bits_of(), kek, af);
++
++      if(dec != key.bits_of())
++         {
++         std::cout << "NIST key wrap decryption failure: "
++                   << hex_encode(dec) << " != " << hex_encode(key.bits_of()) << "\n";
++         ok = false;
++         }
++      }
++   catch(std::exception& e)
++      {
++      std::cout << e.what() << "\n";
++      }
++#endif
++
++   return ok;
++   }
++
++bool test_keywrap_withpad()
++   {
++   std::cout << "Testing NIST keywrap with pad: " << std::flush;
++
++   bool ok = true;
++
++   ok &= keywrap_withpad_test("C37B7E6492584340BED12207808941155068F738",
++			      "138BDEAA9B8FA7FC61F97742E72248EE5AE6AE5360D1AE6A5F54F373FA543B6A",
++			      "5840DF6E29B02AF1AB493B705BF16EA1AE8338F4DCC176A8");
++
++   ok &= keywrap_withpad_test("466f7250617369",
++			      "AFBEB0F07DFBF5419200F2CCB50BB24F",
++			      "5840DF6E29B02AF1AB493B705BF16EA1AE8338F4DCC176A8");
++
++   std::cout << "\n";
++   return ok;
++   }
++
+ bool test_bcrypt(RandomNumberGenerator& rng)
+    {
+ #if defined(BOTAN_HAS_BCRYPT)
+@@ -410,6 +472,12 @@
+       errors++;
+       }
+ 
++   if(should_pass && !test_keywrap_withpad())
++      {
++      std::cout << "NIST keywrap with pad tests failed" << std::endl;
++      errors++;
++      }
++
+    if(should_pass && !test_cryptobox(rng))
+       {
+       std::cout << "Cryptobox tests failed" << std::endl;

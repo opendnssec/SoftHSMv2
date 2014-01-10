@@ -148,6 +148,38 @@ void ECDHTests::testSerialisation()
 	ecdh->recycleKeyPair(dKP);
 }
 
+void ECDHTests::testPKCS8()
+{
+	// Get prime256v1 domain parameters
+	ECParameters* p = new ECParameters;
+	p->setEC(ByteString("06082a8648ce3d030107"));
+
+	// Generate a key-pair
+	AsymmetricKeyPair* kp;
+
+	CPPUNIT_ASSERT(ecdh->generateKeyPair(&kp, p));
+	CPPUNIT_ASSERT(kp != NULL);
+
+	ECPrivateKey* priv = (ECPrivateKey*) kp->getPrivateKey();
+	CPPUNIT_ASSERT(priv != NULL);
+
+	// Encode and decode the private key
+	ByteString pkcs8 = priv->PKCS8Encode();
+	CPPUNIT_ASSERT(pkcs8.size() != 0);
+
+	ECPrivateKey* dPriv = (ECPrivateKey*) ecdh->newPrivateKey();
+	CPPUNIT_ASSERT(dPriv != NULL);
+
+	CPPUNIT_ASSERT(dPriv->PKCS8Decode(pkcs8));
+
+	CPPUNIT_ASSERT(priv->getEC() == dPriv->getEC());
+	CPPUNIT_ASSERT(priv->getD() == dPriv->getD());
+
+	ecdh->recycleParameters(p);
+	ecdh->recycleKeyPair(kp);
+	ecdh->recyclePrivateKey(dPriv);
+}
+
 void ECDHTests::testDerivation()
 {
 	AsymmetricKeyPair* kpa;

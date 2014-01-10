@@ -35,6 +35,20 @@
 #include <algorithm>
 #include "odd.h"
 
+bool OSSLDES::wrapKey(const SymmetricKey* /*key*/, const std::string /*mode*/, const ByteString& /*in*/, ByteString& /*out*/)
+{
+	ERROR_MSG("DES does not support key wrapping");
+
+	return false;
+}
+
+bool OSSLDES::unwrapKey(const SymmetricKey* /*key*/, const std::string /*mode*/, const ByteString& /*in*/, ByteString& /*out*/)
+{
+	ERROR_MSG("DES does not support key unwrapping");
+
+	return false;
+}
+
 const EVP_CIPHER* OSSLDES::getCipher() const
 {
 	if (currentKey == NULL) return NULL;

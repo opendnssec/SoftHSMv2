@@ -35,6 +35,7 @@
 #include "OSSLDHPrivateKey.h"
 #include "OSSLUtil.h"
 #include <openssl/bn.h>
+#include <openssl/x509.h>
 #include <string.h>
 
 // Constructors
@@ -115,6 +116,54 @@ void OSSLDHPrivateKey::setG(const ByteString& g)
 	}
 
 	dh->g = OSSL::byteString2bn(g);
+}
+
+// Encode into PKCS#8 DER
+ByteString OSSLDHPrivateKey::PKCS8Encode()
+{
+	ByteString der;
+	if (dh == NULL) return der;
+	EVP_PKEY* pkey = EVP_PKEY_new();
+	if (pkey == NULL) return der;
+	if (!EVP_PKEY_set1_DH(pkey, dh))
+	{
+		EVP_PKEY_free(pkey);
+		return der;
+	}
+	PKCS8_PRIV_KEY_INFO* p8inf = EVP_PKEY2PKCS8(pkey);
+	EVP_PKEY_free(pkey);
+	if (p8inf == NULL) return der;
+	int len = i2d_PKCS8_PRIV_KEY_INFO(p8inf, NULL);
+	if (len < 0)
+	{
+		PKCS8_PRIV_KEY_INFO_free(p8inf);
+		return der;
+	}
+	der.resize(len);
+	unsigned char* p = &der[0];
+	int len2 = i2d_PKCS8_PRIV_KEY_INFO(p8inf, &p);
+	PKCS8_PRIV_KEY_INFO_free(p8inf);
+	if (len2 != len) der.wipe();
+	return der;
+}
+
+// Decode from PKCS#8 BER
+bool OSSLDHPrivateKey::PKCS8Decode(const ByteString& ber)
+{
+	int len = ber.size();
+	if (len <= 0) return false;
+	const unsigned char* p = ber.const_byte_str();
+	PKCS8_PRIV_KEY_INFO* p8 = d2i_PKCS8_PRIV_KEY_INFO(NULL, &p, len);
+	if (p8 == NULL) return false;
+	EVP_PKEY* pkey = EVP_PKCS82PKEY(p8);
+	PKCS8_PRIV_KEY_INFO_free(p8);
+	if (pkey == NULL) return false;
+	DH* key = EVP_PKEY_get1_DH(pkey);
+	EVP_PKEY_free(pkey);
+	if (key == NULL) return false;
+	setFromOSSL(key);
+	DH_free(key);
+	return true;
 }
 
 // Retrieve the OpenSSL representation of the key

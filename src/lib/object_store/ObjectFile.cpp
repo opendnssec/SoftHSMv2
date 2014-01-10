@@ -44,6 +44,7 @@
 #define BOOLEAN_ATTR			0x1
 #define ULONG_ATTR			0x2
 #define BYTESTR_ATTR			0x3
+#define ARRAY_ATTR			0x4
 
 // Constructor
 ObjectFile::ObjectFile(OSToken* parent, std::string path, std::string lockpath, bool isNew /* = false */)
@@ -326,6 +327,26 @@ void ObjectFile::refresh(bool isFirstTime /* = false */)
 			
 			attributes[p11AttrType] = new OSAttribute(value);
 		}
+		else if (osAttrType == ARRAY_ATTR)
+		{
+			std::map<CK_ATTRIBUTE_TYPE,OSAttribute> value;
+
+			if (!objectFile.readArray(value))
+			{
+				DEBUG_MSG("Corrupt object file %s", path.c_str());
+
+				valid = false;
+
+				return;
+			}
+
+			if (attributes[p11AttrType] != NULL)
+			{
+				delete attributes[p11AttrType];
+			}
+
+			attributes[p11AttrType] = new OSAttribute(value);
+		}
 		else
 		{
 			DEBUG_MSG("Corrupt object file %s with unknown attribute of type %d", path.c_str(), osAttrType);
@@ -431,6 +452,20 @@ bool ObjectFile::writeAttributes(File &objectFile)
 			const ByteString& value = i->second->getByteStringValue();
 
 			if (!objectFile.writeULong(osAttrType) || !objectFile.writeByteString(value))
+			{
+				DEBUG_MSG("Failed to write attribute to object %s", path.c_str());
+
+				objectFile.unlock();
+
+				return false;
+			}
+		}
+		else if (i->second->isArrayAttribute())
+		{
+			unsigned long osAttrType = ARRAY_ATTR;
+			const std::map<CK_ATTRIBUTE_TYPE,OSAttribute>& value = i->second->getArrayValue();
+
+			if (!objectFile.writeULong(osAttrType) || !objectFile.writeArray(value))
 			{
 				DEBUG_MSG("Failed to write attribute to object %s", path.c_str());
 

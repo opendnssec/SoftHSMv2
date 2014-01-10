@@ -40,6 +40,7 @@ OSAttribute::OSAttribute(const OSAttribute& in)
 	this->boolValue = in.boolValue;
 	this->ulongValue = in.ulongValue;
 	this->byteStrValue = in.byteStrValue;
+	this->arrayValue = in.arrayValue;
 }
 
 // Constructor for a boolean type attribute
@@ -63,6 +64,13 @@ OSAttribute::OSAttribute(const ByteString& value)
 	attributeType = BYTESTR;
 }
 
+// Constructor for an array type attribute
+OSAttribute::OSAttribute(const std::map<CK_ATTRIBUTE_TYPE,OSAttribute>& value)
+{
+	arrayValue = value;
+	attributeType = ARRAY;
+}
+
 // Check the attribute type
 bool OSAttribute::isBooleanAttribute() const
 {
@@ -77,6 +85,11 @@ bool OSAttribute::isUnsignedLongAttribute() const
 bool OSAttribute::isByteStringAttribute() const
 {
 	return (attributeType == BYTESTR);
+}
+
+bool OSAttribute::isArrayAttribute() const
+{
+	return (attributeType == ARRAY);
 }
 
 // Retrieve the attribute value
@@ -95,6 +108,11 @@ const ByteString& OSAttribute::getByteStringValue() const
 	return byteStrValue;
 }
 
+const std::map<CK_ATTRIBUTE_TYPE,OSAttribute>& OSAttribute::getArrayValue() const
+{
+	return arrayValue;
+}
+
 // Set the attribute value
 void OSAttribute::setBooleanValue(const bool value)
 {
@@ -111,3 +129,33 @@ void OSAttribute::setByteStringValue(const ByteString& value)
 	byteStrValue = value;
 }
 
+void OSAttribute::setArrayValue(const std::map<CK_ATTRIBUTE_TYPE,OSAttribute>& value)
+{
+	arrayValue = value;
+}
+
+// Helper for template (aka array) matching
+
+bool OSAttribute::peekValue(ByteString& value) const
+{
+	switch (attributeType)
+	{
+		case BOOL:
+			value.resize(sizeof(boolValue));
+			memcpy(&value[0], &boolValue, value.size());
+			return true;
+
+		case ULONG:
+			value.resize(sizeof(ulongValue));
+			memcpy(&value[0], &ulongValue, value.size());
+			return true;
+
+		case BYTESTR:
+			value.resize(byteStrValue.size());
+			memcpy(&value[0], byteStrValue.const_byte_str(), value.size());
+			return true;
+
+		default:
+			return false;
+	}
+}

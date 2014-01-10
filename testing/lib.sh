@@ -501,6 +501,17 @@ setup_install_root ()
 	return 1
 }
 
+detect_revision ()
+{
+	if [ -z "$REVISION" ]; then
+		if [ -n "$SVN_REVISION" ]; then
+			REVISION="$SVN_REVISION"
+		elif [ -n "$GIT_COMMIT" ]; then
+			REVISION="$GIT_COMMIT"
+		fi
+	fi
+}
+	
 detect_distribution ()
 {
 	DISTRIBUTION="UNKNOWN"
@@ -550,6 +561,7 @@ init ()
 	unset POST_TEST
 	
 	find_grep || exit 1
+	detect_revision
 	detect_distribution
 	find_jenkins_workspace_root || exit 1
 	setup_install_root || exit 1
@@ -589,24 +601,18 @@ check_if_built ()
 		exit 1
 	fi
 	
-	if [ -z "$SVN_REVISION" ]; then
-		echo "check_if_built: No SVN_REVISION is set, can't check if build is ok!" >&2
+	if [ -z "$REVISION" ]; then
+		echo "check_if_built: No REVISION is set, can't check if build is ok!" >&2
 		exit 1
 	fi
 	
 	local name_tag="$1"
 	
-	if [ -f "$WORKSPACE/.$name_tag.build" ]; then
-		local build_svn_rev=`cat "$WORKSPACE/.$name_tag.build" 2>/dev/null`
+	if [ -f "$INSTALL_ROOT/.$name_tag.build" ]; then
+		local build_rev=`cat "$INSTALL_ROOT/.$name_tag.build" 2>/dev/null`
 		
-		if [ "$SVN_REVISION" = "$build_svn_rev" ]; then
-			if [ -f "$INSTALL_ROOT/.$name_tag.build" ]; then
-				local build_svn_rev=`cat "$INSTALL_ROOT/.$name_tag.build" 2>/dev/null`
-				
-				if [ "$SVN_REVISION" = "$build_svn_rev" ]; then
-					return 0
-				fi
-			fi
+		if [ "$REVISION" = "$build_rev" ]; then
+			return 0
 		fi
 	fi
 	
@@ -640,8 +646,8 @@ set_build_ok ()
 		exit 1
 	fi
 	
-	if [ -z "$SVN_REVISION" ]; then
-		echo "set_build_ok: No SVN_REVISION is set, can't check if build is ok!" >&2
+	if [ -z "$REVISION" ]; then
+		echo "set_build_ok: No REVISION is set, can't check if build is ok!" >&2
 		exit 1
 	fi
 	
@@ -652,26 +658,12 @@ set_build_ok ()
 		exit 1
 	fi
 
-	echo "$SVN_REVISION" > "$WORKSPACE/.$name_tag.build"
-
-	if [ -f "$WORKSPACE/.$name_tag.build" ]; then
-		local build_svn_rev=`cat "$WORKSPACE/.$name_tag.build" 2>/dev/null`
-		
-		if [ "$SVN_REVISION" != "$build_svn_rev" ]; then
-			echo "set_build_ok: Can't tag build file $WORKSPACE/.$name_tag.build !" >&2
-			return 1
-		fi
-	else
-		echo "set_build_ok: Can't tag build file $WORKSPACE/.$name_tag.build !" >&2
-		return 1
-	fi
-
-	echo "$SVN_REVISION" > "$INSTALL_ROOT/.$name_tag.build"
+	echo "$REVISION" > "$INSTALL_ROOT/.$name_tag.build"
 
 	if [ -f "$INSTALL_ROOT/.$name_tag.build" ]; then
-		local build_svn_rev=`cat "$INSTALL_ROOT/.$name_tag.build" 2>/dev/null`
+		local build_rev=`cat "$INSTALL_ROOT/.$name_tag.build" 2>/dev/null`
 		
-		if [ "$SVN_REVISION" = "$build_svn_rev" ]; then
+		if [ "$REVISION" = "$build_rev" ]; then
 			if ! touch "$INSTALL_ROOT/.$name_tag.ok" 2>/dev/null; then
 				echo "set_build_ok: Can't tag build ok $INSTALL_ROOT/.$name_tag.ok !" >&2
 				return 1
@@ -691,27 +683,21 @@ check_if_tested ()
 		exit 1
 	fi
 	
-	if [ -z "$SVN_REVISION" ]; then
-		echo "check_if_tested: No SVN_REVISION is set, can't check if test is ok!" >&2
+	if [ -z "$REVISION" ]; then
+		echo "check_if_tested: No REVISION is set, can't check if test is ok!" >&2
 		exit 1
 	fi
 	
 	local name_tag="$1"
 	
-	if [ -f "$WORKSPACE/.$name_tag.test" ]; then
-		local build_svn_rev=`cat "$WORKSPACE/.$name_tag.test" 2>/dev/null`
+	if [ -f "$INSTALL_ROOT/.$name_tag.test" ]; then
+		local build_rev=`cat "$INSTALL_ROOT/.$name_tag.test" 2>/dev/null`
 		
-		if [ "$SVN_REVISION" = "$build_svn_rev" ]; then
-			if [ -f "$INSTALL_ROOT/.$name_tag.test" ]; then
-				local build_svn_rev=`cat "$INSTALL_ROOT/.$name_tag.test" 2>/dev/null`
-				
-				if [ "$SVN_REVISION" = "$build_svn_rev" ]; then
-				    if [ -f junit.xml ]; then
-				        touch junit.xml
-				    fi
-					return 0
-				fi
-			fi
+		if [ "$REVISION" = "$build_rev" ]; then
+		    if [ -f junit.xml ]; then
+		        touch junit.xml
+		    fi
+			return 0
 		fi
 	fi
 	
@@ -822,8 +808,8 @@ set_test_ok ()
 		exit 1
 	fi
 	
-	if [ -z "$SVN_REVISION" ]; then
-		echo "set_test_ok: No SVN_REVISION is set, can't check if test is ok!" >&2
+	if [ -z "$REVISION" ]; then
+		echo "set_test_ok: No REVISION is set, can't check if test is ok!" >&2
 		exit 1
 	fi
 	
@@ -834,26 +820,12 @@ set_test_ok ()
 		exit 1
 	fi
 
-	echo "$SVN_REVISION" > "$WORKSPACE/.$name_tag.test"
-
-	if [ -f "$WORKSPACE/.$name_tag.test" ]; then
-		local test_svn_rev=`cat "$WORKSPACE/.$name_tag.test" 2>/dev/null`
-		
-		if [ "$SVN_REVISION" != "$test_svn_rev" ]; then
-			echo "set_test_ok: Can't tag test file $WORKSPACE/.$name_tag.test !" >&2
-			return 1
-		fi
-	else
-		echo "set_test_ok: Can't tag test file $WORKSPACE/.$name_tag.test !" >&2
-		return 1
-	fi
-
-	echo "$SVN_REVISION" > "$INSTALL_ROOT/.$name_tag.test"
+	echo "$REVISION" > "$INSTALL_ROOT/.$name_tag.test"
 
 	if [ -f "$INSTALL_ROOT/.$name_tag.test" ]; then
-		local test_svn_rev=`cat "$INSTALL_ROOT/.$name_tag.test" 2>/dev/null`
+		local test_rev=`cat "$INSTALL_ROOT/.$name_tag.test" 2>/dev/null`
 		
-		if [ "$SVN_REVISION" = "$test_svn_rev" ]; then
+		if [ "$REVISION" = "$test_rev" ]; then
 			if ! touch "$INSTALL_ROOT/.$name_tag.ok.test" 2>/dev/null; then
 				echo "set_test_ok: Can't tag test ok $INSTALL_ROOT/.$name_tag.ok.test !" >&2
 				return 1
@@ -886,14 +858,14 @@ require ()
 		exit 1
 	fi
 	
-	local require_svn_rev=`cat "$INSTALL_ROOT/.$name_tag.build" 2>/dev/null`
+	local require_rev=`cat "$INSTALL_ROOT/.$name_tag.build" 2>/dev/null`
 
-	if [ -z "$require_svn_rev" ]; then
+	if [ -z "$require_rev" ]; then
 		echo "require: There is no build version for $name_tag!" >&2
 		exit 1
 	fi
 	
-	export SVN_REVISION="$SVN_REVISION-$name_tag:$require_svn_rev"
+	export REVISION="$REVISION-$name_tag:$require_rev"
 }
 
 check_hash ()
@@ -1751,7 +1723,7 @@ syslog_stop ()
 	fi
 	
 	if kill -TERM "$_SYSLOG_TRACE_PID" 2>/dev/null; then
-		wait "$_SYSLOG_TRACE_PID"
+		wait "$_SYSLOG_TRACE_PID" 2>/dev/null
 		unset _SYSLOG_TRACE_PID
 	fi
 	
@@ -1903,6 +1875,8 @@ syslog_grep_count ()
 	local count="$1"
 	local grep_string="$2"
 	local count_found
+	# create a non-local variable so the caller can get the actually value if they want
+	syslog_grep_count_variable=0
 	
 	if [ ! -f "_syslog.$BUILD_TAG" ]; then
 		echo "syslog_grep_count: No syslog file to grep from!" >&2
@@ -1911,6 +1885,7 @@ syslog_grep_count ()
 
 	echo "syslog_grep_count: greping syslog, should find $count of: $grep_string"
 	count_found=`$GREP -- "$grep_string" "_syslog.$BUILD_TAG" 2>/dev/null | wc -l 2>/dev/null`
+	syslog_grep_count_variable=$count_found
 	
 	if [ "$count_found" -eq "$count" ] 2>/dev/null; then
 		return 0

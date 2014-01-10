@@ -6,9 +6,9 @@
  * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
+ *    notice, this vector of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
+ *    notice, this vector of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
@@ -50,6 +50,14 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <errno.h>
+
+enum AttributeKind {
+	akUnknown,
+	akBoolean,
+	akInteger,
+	akBinary,
+	akArray
+};
 
 // Constructor
 //
@@ -248,6 +256,104 @@ bool File::readBool(bool& value)
 	return true;
 }
 
+// Read an array value; warning: not thread safe without locking!
+bool File::readArray(std::map<CK_ATTRIBUTE_TYPE,OSAttribute>& value)
+{
+	if (!valid) return false;
+
+	// Retrieve the length to read from the file
+	unsigned long len;
+
+	if (!readULong(len))
+	{
+		return false;
+	}
+
+	while (len != 0)
+	{
+		unsigned long attrType;
+		if (!readULong(attrType))
+		{
+			return false;
+		}
+		if (8 > len)
+		{
+			return false;
+		}
+		len -= 8;
+
+		unsigned long attrKind;
+		if (!readULong(attrKind))
+		{
+			return false;
+		}
+		if (8 > len)
+		{
+			return false;
+		}
+		len -= 8;
+
+		switch (attrKind)
+		{
+			case akBoolean:
+			{
+				bool val;
+				if (!readBool(val))
+				{
+					return false;
+				}
+				if (1 > len)
+				{
+					return false;
+				}
+				len -= 1;
+
+				value.insert(std::pair<CK_ATTRIBUTE_TYPE,OSAttribute> (attrType, val));
+			}
+			break;
+
+			case akInteger:
+			{
+				unsigned long val;
+				if (!readULong(val))
+				{
+					return false;
+				}
+				if (8 > len)
+				{
+					return false;
+				}
+				len -= 8;
+
+				value.insert(std::pair<CK_ATTRIBUTE_TYPE,OSAttribute> (attrType, val));
+			}
+			break;
+
+			case akBinary:
+			{
+				ByteString val;
+				if (!readByteString(val))
+				{
+					return false;
+				}
+				if (8 + val.size() > len)
+				{
+					return false;
+				}
+				len -= 8 + val.size();
+
+				value.insert(std::pair<CK_ATTRIBUTE_TYPE,OSAttribute> (attrType, val));
+			}
+			break;
+
+			default:
+				return false;
+		}
+	}
+
+	return true;
+}
+
 // Read a string value; warning: not thread safe without locking!
 bool File::readString(std::string& value)
 {
@@ -316,6 +422,101 @@ bool File::writeString(const std::string& value)
 	    (fwrite(&value[0], 1, value.size(), stream) != value.size()))
 	{
 		return false;
+	}
+
+	return true;
+}
+
+// Write an array value; warning: not thread safe without locking!
+bool File::writeArray(const std::map<CK_ATTRIBUTE_TYPE,OSAttribute>& value)
+{
+	if (!valid) return false;
+
+	// compute length
+	unsigned long len = 0;
+	for (std::map<CK_ATTRIBUTE_TYPE,OSAttribute>::const_iterator i = value.begin(); i != value.end(); ++i)
+	{
+		OSAttribute attr = i->second;
+		// count attribute type and kind
+		len += 8 + 8;
+
+		if (attr.isBooleanAttribute())
+		{
+			len += 1;
+		}
+		else if (attr.isUnsignedLongAttribute())
+		{
+			len += 8;
+		}
+		else if (attr.isByteStringAttribute())
+		{
+			ByteString val = attr.getByteStringValue();
+			len += 8 + val.size();
+		}
+		else
+		{
+			return false;
+		}
+	}
+
+	// write length
+	if (!writeULong(len))
+	{
+		return false;
+	}
+
+	// write each attribute
+	for (std::map<CK_ATTRIBUTE_TYPE,OSAttribute>::const_iterator i = value.begin(); i != value.end(); ++i)
+	{
+		OSAttribute attr = i->second;
+		unsigned long attrType = (unsigned long) i->first;
+		if (!writeULong(attrType))
+		{
+			return false;
+		}
+
+		if (attr.isBooleanAttribute())
+		{
+			unsigned long attrKind = akBoolean;
+			if (!writeULong(attrKind))
+			{
+				return false;
+			}
+
+			bool val = attr.getBooleanValue();
+			if (!writeBool(val))
+			{
+				return false;
+			}
+		}
+		else if (attr.isUnsignedLongAttribute())
+		{
+			unsigned long attrKind = akInteger;
+			if (!writeULong(attrKind))
+			{
+				return false;
+			}
+
+			unsigned long val = attr.getUnsignedLongValue();
+			if (!writeULong(val))
+			{
+				return false;
+			}
+		}
+		else if (attr.isByteStringAttribute())
+		{
+			unsigned long attrKind = akBinary;
+			if (!writeULong(attrKind))
+			{
+				return false;
+			}
+
+			ByteString val = attr.getByteStringValue();
+			if (!writeByteString(val))
+			{
+				return false;
+			}
+		}
 	}
 
 	return true;

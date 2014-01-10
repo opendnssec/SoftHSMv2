@@ -42,6 +42,9 @@
 class OSObject
 {
 public:
+	// Destructor
+	virtual ~OSObject() { }
+
 	// Check if the specified attribute exists
 	virtual bool attributeExists(CK_ATTRIBUTE_TYPE type) = 0;
 

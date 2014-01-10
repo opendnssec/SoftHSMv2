@@ -44,6 +44,7 @@ class ObjectTests : public CppUnit::TestFixture
 	CPPUNIT_TEST(testCreateObject);
 	CPPUNIT_TEST(testCopyObject);
 	CPPUNIT_TEST(testDestroyObject);
+	CPPUNIT_TEST(testGetObjectSize);
 	CPPUNIT_TEST(testGetAttributeValue);
 	CPPUNIT_TEST(testSetAttributeValue);
 	CPPUNIT_TEST(testFindObjects);
@@ -55,12 +56,14 @@ class ObjectTests : public CppUnit::TestFixture
 	CPPUNIT_TEST(testAlwaysNeverAttribute);
 	CPPUNIT_TEST(testSensitiveAttributes);
 	CPPUNIT_TEST(testGetInvalidAttribute);
+	CPPUNIT_TEST(testArrayAttribute);
 	CPPUNIT_TEST_SUITE_END();
 
 public:
 	void testCreateObject();
 	void testCopyObject();
 	void testDestroyObject();
+	void testGetObjectSize();
 	void testGetAttributeValue();
 	void testSetAttributeValue();
 	void testFindObjects();
@@ -72,6 +75,7 @@ public:
 	void testAlwaysNeverAttribute();
 	void testSensitiveAttributes();
 	void testGetInvalidAttribute();
+	void testArrayAttribute();
 
 	void setUp();
 	void tearDown();

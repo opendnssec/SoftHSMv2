@@ -37,6 +37,39 @@
 #include "BotanRNG.h"
 #include "BotanUtil.h"
 #include <string.h>
+#include <botan/pkcs8.h>
+#include <botan/der_enc.h>
+#include <botan/oids.h>
+
+Botan::MemoryVector<Botan::byte> BotanDH_PrivateKey::public_value() const
+{
+	return this->impl->public_value();
+}
+
+// Redefine of DH_PrivateKey constructor with the correct format
+BotanDH_PrivateKey::BotanDH_PrivateKey(
+			const Botan::AlgorithmIdentifier& alg_id,
+			const Botan::MemoryRegion<Botan::byte>& key_bits,
+			Botan::RandomNumberGenerator& rng) :
+	Botan::DL_Scheme_PrivateKey(alg_id, key_bits, Botan::DL_Group::PKCS3_DH_PARAMETERS)
+{
+	impl = new Botan::DH_PrivateKey(rng, group, x);
+}
+
+BotanDH_PrivateKey::BotanDH_PrivateKey(Botan::RandomNumberGenerator& rng,
+				       const Botan::DL_Group& grp,
+				       const Botan::BigInt& x_arg)
+{
+	impl = new Botan::DH_PrivateKey(rng, grp, x_arg);
+	group = grp;
+	x = x_arg;
+	y = impl->get_y();
+}
+
+BotanDH_PrivateKey::~BotanDH_PrivateKey()
+{
+	delete impl;
+}
 
 // Constructors
 BotanDHPrivateKey::BotanDHPrivateKey()
@@ -44,7 +77,7 @@ BotanDHPrivateKey::BotanDHPrivateKey()
 	dh = NULL;
 }
 
-BotanDHPrivateKey::BotanDHPrivateKey(const Botan::DH_PrivateKey* inDH)
+BotanDHPrivateKey::BotanDHPrivateKey(const BotanDH_PrivateKey* inDH)
 {
 	BotanDHPrivateKey();
 
@@ -61,13 +94,13 @@ BotanDHPrivateKey::~BotanDHPrivateKey()
 /*static*/ const char* BotanDHPrivateKey::type = "Botan DH Private Key";
 
 // Set from Botan representation
-void BotanDHPrivateKey::setFromBotan(const Botan::DH_PrivateKey* dh)
+void BotanDHPrivateKey::setFromBotan(const BotanDH_PrivateKey* dh)
 {
-	ByteString p = BotanUtil::bigInt2ByteString(dh->group_p());
+	ByteString p = BotanUtil::bigInt2ByteString(dh->impl->group_p());
 	setP(p);
-	ByteString g = BotanUtil::bigInt2ByteString(dh->group_g());
+	ByteString g = BotanUtil::bigInt2ByteString(dh->impl->group_g());
 	setG(g);
-	ByteString x = BotanUtil::bigInt2ByteString(dh->get_x());
+	ByteString x = BotanUtil::bigInt2ByteString(dh->impl->get_x());
 	setX(x);
 }
 
@@ -88,7 +121,6 @@ void BotanDHPrivateKey::setX(const ByteString& x)
 		dh = NULL;
 	}
 }
-
 
 // Setters for the DH public key components
 void BotanDHPrivateKey::setP(const ByteString& p)
@@ -113,8 +145,75 @@ void BotanDHPrivateKey::setG(const ByteString& g)
 	}
 }
 
+// Encode into PKCS#8 DER
+ByteString BotanDHPrivateKey::PKCS8Encode()
+{
+	ByteString der;
+	createBotanKey();
+	if (dh == NULL) return der;
+	// Force PKCS3_DH_PARAMETERS for p, g and no q.
+	const size_t PKCS8_VERSION = 0;
+	const Botan::MemoryVector<Botan::byte> parameters = dh->impl->get_domain().DER_encode(Botan::DL_Group::PKCS3_DH_PARAMETERS);
+	const Botan::AlgorithmIdentifier alg_id(dh->impl->get_oid(), parameters);
+	const Botan::SecureVector<Botan::byte> ber =
+		Botan::DER_Encoder()
+		.start_cons(Botan::SEQUENCE)
+		    .encode(PKCS8_VERSION)
+		    .encode(alg_id)
+		    .encode(dh->impl->pkcs8_private_key(), Botan::OCTET_STRING)
+		.end_cons()
+	    .get_contents();
+	der.resize(ber.size());
+	memcpy(&der[0], ber.begin(), ber.size());
+	return der;
+}
+
+// Decode from PKCS#8 BER
+bool BotanDHPrivateKey::PKCS8Decode(const ByteString& ber)
+{
+	Botan::DataSource_Memory source(ber.const_byte_str(), ber.size());
+	if (source.end_of_data()) return false;
+	Botan::SecureVector<Botan::byte> keydata;
+	Botan::AlgorithmIdentifier alg_id;
+	BotanDH_PrivateKey* key = NULL;
+	try
+	{
+
+		Botan::BER_Decoder(source)
+		.start_cons(Botan::SEQUENCE)
+			.decode_and_check<size_t>(0, "Unknown PKCS #8 version number")
+			.decode(alg_id)
+			.decode(keydata, Botan::OCTET_STRING)
+			.discard_remaining()
+		.end_cons();
+		if (keydata.empty())
+			throw Botan::Decoding_Error("PKCS #8 private key decoding failed");
+		if (Botan::OIDS::lookup(alg_id.oid).compare("DH"))
+		{
+			ERROR_MSG("Decoded private key not DH");
+
+			return false;
+		}
+		BotanRNG* rng = (BotanRNG*)BotanCryptoFactory::i()->getRNG();
+		key = new BotanDH_PrivateKey(alg_id, keydata, *rng->getRNG());
+		if (key == NULL) return false;
+
+		setFromBotan(key);
+
+		delete key;
+	}
+	catch (std::exception& e)
+	{
+		ERROR_MSG("Decode failed on %s", e.what());
+
+		return false;
+	}
+
+	return true;
+}
+
 // Retrieve the Botan representation of the key
-Botan::DH_PrivateKey* BotanDHPrivateKey::getBotanKey()
+BotanDH_PrivateKey* BotanDHPrivateKey::getBotanKey()
 {
 	if (!dh)
 	{
@@ -141,10 +240,10 @@ void BotanDHPrivateKey::createBotanKey()
 		try
 		{
 			BotanRNG* rng = (BotanRNG*)BotanCryptoFactory::i()->getRNG();
-			dh = new Botan::DH_PrivateKey(*rng->getRNG(),
-						      Botan::DL_Group(BotanUtil::byteString2bigInt(this->p),
-						      BotanUtil::byteString2bigInt(this->g)),
-						      BotanUtil::byteString2bigInt(this->x));
+			dh = new BotanDH_PrivateKey(*rng->getRNG(),
+				Botan::DL_Group(BotanUtil::byteString2bigInt(this->p),
+						BotanUtil::byteString2bigInt(this->g)),
+				BotanUtil::byteString2bigInt(this->x));
 		}
 		catch (...)
 		{
