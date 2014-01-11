@@ -111,6 +111,19 @@ protected:
 	bool initialized;
 };
 
+class P11OpenPGPPublicKeyObj : public P11CertificateObj
+{
+public:
+	// Constructor
+	P11OpenPGPPublicKeyObj();
+
+	// Add attributes
+	virtual bool init(OSObject *osobject);
+
+protected:
+	bool initialized;
+};
+
 class P11KeyObj : public P11Object
 {
 protected:

@@ -445,6 +445,65 @@ bool P11X509CertificateObj::init(OSObject *osobject)
 }
 
 // Constructor
+P11OpenPGPPublicKeyObj::P11OpenPGPPublicKeyObj()
+{
+	initialized = false;
+}
+
+// Add attributes
+bool P11OpenPGPPublicKeyObj::init(OSObject *osobject)
+{
+	if (initialized) return true;
+	if (osobject == NULL) return false;
+
+	// Set default values for attributes that will be introduced in the parent
+	OSAttribute *attrCertType = osobject->getAttribute(CKA_CERTIFICATE_TYPE);
+	if (attrCertType == NULL || attrCertType->getUnsignedLongValue() != CKC_OPENPGP) {
+		OSAttribute setCertType((unsigned long)CKC_OPENPGP);
+		osobject->setAttribute(CKA_CERTIFICATE_TYPE, setCertType);
+	}
+
+	// Create parent
+	if (!P11CertificateObj::init(osobject)) return false;
+
+	// Create attributes
+	P11Attribute* attrSubject = new P11AttrSubject(osobject,P11Attribute::ck1);
+	P11Attribute* attrID = new P11AttrID(osobject);
+	P11Attribute* attrIssuer = new P11AttrIssuer(osobject);
+	P11Attribute* attrSerialNumber = new P11AttrSerialNumber(osobject);
+	P11Attribute* attrValue = new P11AttrValue(osobject,P11Attribute::ck1|P11Attribute::ck14);
+	P11Attribute* attrURL = new P11AttrURL(osobject);
+	P11Attribute* attrNameHashAlgorithm = new P11AttrNameHashAlgorithm(osobject);
+
+	// Initialize the attributes
+	if
+	(
+		!attrSubject->init() ||
+		!attrID->init() ||
+		!attrIssuer->init() ||
+		!attrSerialNumber->init() ||
+		!attrValue->init() ||
+		!attrURL->init() ||
+		!attrNameHashAlgorithm->init()
+	)
+	{
+		ERROR_MSG("Could not initialize the attribute");
+		return false;
+	}
+
+	// Add them to the map
+	attributes[attrSubject->getType()] = attrSubject;
+	attributes[attrID->getType()] = attrID;
+	attributes[attrIssuer->getType()] = attrIssuer;
+	attributes[attrSerialNumber->getType()] = attrSerialNumber;
+	attributes[attrValue->getType()] = attrValue;
+	attributes[attrURL->getType()] = attrURL;
+	attributes[attrNameHashAlgorithm->getType()] = attrNameHashAlgorithm;
+
+	return true;
+}
+
+// Constructor
 P11KeyObj::P11KeyObj()
 {
 	initialized = false;

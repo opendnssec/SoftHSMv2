@@ -76,6 +76,8 @@ static CK_RV newP11Object(CK_OBJECT_CLASS objClass, CK_KEY_TYPE keyType, CK_CERT
 		case CKO_CERTIFICATE:
 			if (certType == CKC_X_509)
 				p11object.reset( new P11X509CertificateObj );
+			else if (certType == CKC_OPENPGP)
+				p11object.reset( new P11OpenPGPPublicKeyObj );
 			else
 				return CKR_ATTRIBUTE_VALUE_INVALID;
 			break;

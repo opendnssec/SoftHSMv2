@@ -526,6 +526,7 @@ void fill_CKC_table(std::map<unsigned long, std::string> &t)
 	t[CKC_X_509] = "CKC_X_509";
 	t[CKC_X_509_ATTR_CERT] = "CKC_X_509_ATTR_CERT";
 	t[CKC_WTLS] = "CKC_WTLS";
+	t[CKC_OPENPGP] = "CKC_OPENPGP";
 }
 
 #endif // !_SOFTHSM_V2_TABLES_H
