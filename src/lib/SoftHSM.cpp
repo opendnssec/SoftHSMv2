@@ -8248,7 +8248,7 @@ CK_RV SoftHSM::getGOSTPrivateKey(GOSTPrivateKey* privateKey, Token* token, OSObj
 	else
 	{
 		value = key->getAttribute(CKA_VALUE)->getByteStringValue();
-		value = key->getAttribute(CKA_GOSTR3410_PARAMS)->getByteStringValue();
+		param = key->getAttribute(CKA_GOSTR3410_PARAMS)->getByteStringValue();
 	}
 
 	privateKey->setD(value);
