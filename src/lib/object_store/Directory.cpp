@@ -117,6 +117,8 @@ bool Directory::refresh()
 
 	while ((entry = readdir(dir)) != NULL)
 	{
+		bool pushed = false;
+
 		// Check if this is the . or .. entry
 		if (!strcmp(entry->d_name, ".") || !strcmp(entry->d_name, ".."))
 		{
@@ -133,37 +135,39 @@ bool Directory::refresh()
 		case DT_DIR:
 			// This is a directory
 			subDirs.push_back(name);
+			pushed = true;
 			break;
 		case DT_REG:
 			// This is a regular file
 			files.push_back(name);
+			pushed = true;
 			break;
 		default:
-			DEBUG_MSG("File not used %s", name.c_str());
 			break;
 		}
-#else
-		// The entry type has to be determined using lstat
-		struct stat entryStatus;
+#endif
+		if (!pushed) {
+			// The entry type has to be determined using lstat
+			struct stat entryStatus;
 
-		std::string fullPath = path + OS_PATHSEP + name;
+			std::string fullPath = path + OS_PATHSEP + name;
 
-		if (!lstat(fullPath.c_str(), &entryStatus))
-		{
-			if (S_ISDIR(entryStatus.st_mode))
+			if (!lstat(fullPath.c_str(), &entryStatus))
 			{
-				subDirs.push_back(name);
-			}
-			else if (S_ISREG(entryStatus.st_mode))
-			{
-				files.push_back(name);
-			}
-			else
-			{
-				DEBUG_MSG("File not used %s", name.c_str());
+				if (S_ISDIR(entryStatus.st_mode))
+				{
+					subDirs.push_back(name);
+				}
+				else if (S_ISREG(entryStatus.st_mode))
+				{
+					files.push_back(name);
+				}
+				else
+				{
+					DEBUG_MSG("File not used %s", name.c_str());
+				}
 			}
 		}
-#endif
 	}
 
 	// Close the directory
