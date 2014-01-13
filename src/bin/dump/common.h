@@ -25,9 +25,9 @@
  */
 
 /*****************************************************************************
- softhsm-dump.cpp
+ common.h
 
- This program can be used for dumping SoftHSM v2 object files.
+ Common definitions for SoftHSMv2 dump.
  *****************************************************************************/
 
 #include <config.h>
@@ -40,189 +40,6 @@
 #include <stdexcept>
 #include <vector>
 #include "tables.h"
-
-// Attribute types on disk
-#define BOOLEAN_ATTR		0x1
-#define ULONG_ATTR		0x2
-#define BYTES_ATTR		0x3
-#define ARRAY_ATTR		0x4
-
-// Maximum byte string length (1Gib)
-#define MAX_BYTES		0x3fffffff
-
-// Attribute (in an array)
-struct Attribute
-{
-	uint64_t type;
-	uint64_t kind;
-
-	uint8_t boolValue;
-	uint64_t ulongValue;
-	std::vector<uint8_t> bytestrValue;
-};
-
-// Read a boolean (in fact unsigned 8 bit long) value
-bool readBool(FILE* stream, uint8_t& value)
-{
-	value = 0;
-	fpos_t pos;
-	if (fgetpos(stream, &pos) != 0)
-	{
-		return false;
-	}
-	uint8_t v;
-	if (fread(&v, 1, 1, stream) != 1)
-	{
-		(void) fsetpos(stream, &pos);
-		return false;
-	}
-	value = v;
-	return true;
-}
-
-// Read an unsigned 64 bit long value
-bool readULong(FILE* stream, uint64_t& value)
-{
-	value = 0;
-	fpos_t pos;
-	if (fgetpos(stream, &pos) != 0)
-	{
-		return false;
-	}
-	uint8_t v[8];
-	if (fread(v, 1, 8, stream) != 8)
-	{
-		(void) fsetpos(stream, &pos);
-		return false;
-	}
-	for (size_t i = 0; i < 8; i++)
-	{
-		value <<= 8;
-		value += v[i];
-	}
-	return true;
-}
-
-// Read a byte string (aka uint8_t vector) value
-bool readBytes(FILE* stream, std::vector<uint8_t>& value)
-{
-	size_t len = value.size();
-	fpos_t pos;
-	if (fgetpos(stream, &pos) != 0)
-	{
-		return false;
-	}
-	if (fread(&value[0], 1, len, stream) != len)
-	{
-		(void) fsetpos(stream, &pos);
-		return false;
-	}
-	return true;
-}
-
-// Read an array (aka Attribute vector) value
-bool readArray(FILE* stream, uint64_t len, std::vector<Attribute>& value)
-{
-	fpos_t pos;
-	if (fgetpos(stream, &pos) != 0)
-	{
-		return false;
-	}
-	while (len != 0)
-	{
-		Attribute attr;
-
-		if (len < 8)
-		{
-			(void) fsetpos(stream, &pos);
-			return false;
-		}
-		if (!readULong(stream, attr.type))
-		{
-			(void) fsetpos(stream, &pos);
-			return false;
-		}
-		len -= 8;
-
-		if (len < 8)
-		{
-			(void) fsetpos(stream, &pos);
-			return false;
-		}
-		if (!readULong(stream, attr.kind))
-		{
-			(void) fsetpos(stream, &pos);
-			return false;
-		}
-		len -= 8;
-
-		if (attr.kind == BOOLEAN_ATTR)
-		{
-			if (len < 1)
-			{
-				(void) fsetpos(stream, &pos);
-				return false;
-			}
-			len -= 1;
-			if (!readBool(stream, attr.boolValue))
-			{
-				(void) fsetpos(stream, &pos);
-				return false;
-			}
-		}
-		else if (attr.kind == ULONG_ATTR)
-		{
-			if (len < 8)
-			{
-				(void) fsetpos(stream, &pos);
-				return false;
-			}
-			if (!readULong(stream, attr.ulongValue))
-			{
-				(void) fsetpos(stream, &pos);
-				return false;
-			}
-			len -= 8;
-		}
-		else if (attr.kind == BYTES_ATTR)
-		{
-			uint64_t size;
-			if (len < 8)
-			{
-				(void) fsetpos(stream, &pos);
-				return false;
-			}
-			if (!readULong(stream, size))
-			{
-				(void) fsetpos(stream, &pos);
-				return false;
-			}
-			len -= 8;
-
-			if (len < size)
-			{
-				(void) fsetpos(stream, &pos);
-				return false;
-			}
-			attr.bytestrValue.resize(size);
-			if (!readBytes(stream, attr.bytestrValue))
-			{
-				(void) fsetpos(stream, &pos);
-				return false;
-			}
-			len -= size;
-		}
-		else
-		{
-			(void) fsetpos(stream, &pos);
-			return false;
-		}
-
-		value.push_back(attr);
-	}
-
-	return true;
-}
 
 // Table of attribute types
 std::map<unsigned long, std::string> CKA_table;
@@ -469,7 +286,7 @@ void dumpCKx(uint64_t cka, uint64_t value, int size)
 	}
 }
 
-// Dump a boolean (in fact unsigned 8 bit long) value
+// Dump a boolean (in fact unsigned 8 bit long) value, true is 0xff
 void dumpBool(uint8_t value, bool inArray = false)
 {
 	printf("%02hhx                      %s", value, inArray ? " " : "");
@@ -487,7 +304,25 @@ void dumpBool(uint8_t value, bool inArray = false)
 	}
 }
 
-// Dump an unsigned 64 bit long vaue
+// Dump a boolean (in fact unsigned 8 bit long) value, true is 1
+void dumpBool1(uint8_t value, bool inArray = false)
+{
+	printf("%02hhx                      %s", value, inArray ? " " : "");
+	switch (value)
+	{
+	case 0:
+		printf("FALSE");
+		break;
+	case 1:
+		printf("TRUE");
+		break;
+	default:
+		printf("(invalid) TRUE");
+		break;
+	}
+}
+
+// Dump an unsigned 64 bit long value
 void dumpULong(uint64_t value, bool inArray = false)
 {
 	for (int i = 56; i >= 0; i -= 8)
@@ -496,6 +331,22 @@ void dumpULong(uint64_t value, bool inArray = false)
 		v = (value >> i) & 0xff;
 		printf("%02hhx ", v);
 	}
+	if (inArray)
+	{
+		printf(" ");
+	}
+}
+
+// Dump an unsigned 32 bit long value
+void dumpU32(uint32_t value, bool inArray = false)
+{
+	for (int i = 24; i >= 0; i -= 8)
+	{
+		uint8_t v;
+		v = (value >> i) & 0xff;
+		printf("%02hhx ", v);
+	}
+	printf("            ");
 	if (inArray)
 	{
 		printf(" ");
@@ -571,253 +422,64 @@ void dumpBytes(const std::vector<uint8_t>& value, bool inArray = false)
 	printf(">\n");
 }
 
-// Dump an array (in fact an Attribute vector) value
-void dumpArray(const std::vector<Attribute>& value)
+// Attribute (in an array) template
+template<typename T, typename K, typename I>
+class AttributeTK
 {
-	for (std::vector<Attribute>::const_iterator attr = value.begin();
-	     attr != value.end();
-	     ++attr)
-	{
-		dumpULong(attr->type, true);
-		if ((uint64_t)((uint32_t)attr->type) != attr->type)
+public:
+	T type;
+	K kind;
+
+	uint8_t boolValue;
+	I ulongValue;
+	std::vector<uint8_t> bytestrValue;
+
+	// Dump an array (in fact an Attribute vector) value
+	void dumpType() const;
+	void dumpKind() const;
+	void dumpBoolValue() const;
+	void dumpULongValue(I value) const;
+	bool isBoolean() const;
+	bool isInteger() const;
+	bool isBinary() const;
+	void dump() const {
+		dumpType();
+		if ((sizeof(type) > 4) &&
+		    ((uint64_t)((uint32_t)type) != type))
 		{
 			printf("overflow attribute type\n");
 		}
 		else
 		{
-			dumpCKA((unsigned long) attr->type, 47);
+			dumpCKA((unsigned long) type, 47);
 			printf("\n");
 		}
 
-		dumpULong(attr->kind, true);
-		if (attr->kind == BOOLEAN_ATTR)
+		dumpKind();
+		if (isBoolean())
 		{
 			printf("boolean attribute\n");
-			dumpBool(attr->boolValue, true);
+			dumpBoolValue();
 			printf("\n");
 		}
-		else if (attr->kind == ULONG_ATTR)
+		else if (isInteger())
 		{
 			printf("unsigned long attribute\n");
-			dumpULong(attr->ulongValue, true);
-			dumpCKx(attr->type, attr->ulongValue, 47);
+			dumpULongValue(ulongValue);
+			dumpCKx(type, ulongValue, 47);
 			printf("\n");
 		}
-		else if (attr->kind == BYTES_ATTR)
+		else if (isBinary())
 		{
 			printf("byte string attribute\n");
-			uint32_t size = attr->bytestrValue.size();
-			dumpULong(size, true);
+			I size = bytestrValue.size();
+			dumpULongValue(size);
 			printf("(length %lu)\n", (unsigned long) size);
-			dumpBytes(attr->bytestrValue, true);
+			dumpBytes(bytestrValue, true);
 		}
 		else
 		{
 			printf("unknown attribute format\n");
 		}
 	}
-}
-
-// Error case
-void corrupt(FILE* stream)
-{
-	uint8_t v;
-	for (size_t i = 0; i < 8; i++)
-	{
-		if (fread(&v, 1, 1, stream) != 1)
-		{
-			if (ferror(stream))
-			{
-				printf("get an error...\n");
-			}
-			return;
-		}
-		if (i != 0)
-		{
-			printf(" ");
-		}
-		printf("%02hhx", v);
-	}
-	if (fread(&v, 1, 1, stream) != 1)
-	{
-		if (ferror(stream))
-		{
-			printf("\nget an error...\n");
-		}
-		return;
-	}
-	printf("...\n");
-}
-
-// Core function
-void dump(FILE* stream)
-{
-	uint64_t gen;
-	if (!readULong(stream, gen))
-	{
-		if (feof(stream))
-		{
-			printf("empty file\n");
-		}
-		else
-		{
-			corrupt(stream);
-		}
-		return;
-	}
-	dumpULong(gen);
-	printf("generation %lu\n", (unsigned long) gen);
-
-	while (!feof(stream))
-	{
-		uint64_t p11type;
-		if (!readULong(stream, p11type))
-		{
-			corrupt(stream);
-			return;
-		}
-		dumpULong(p11type);
-		if ((uint64_t)((uint32_t)p11type) != p11type)
-		{
-			printf("overflow attribute type\n");
-		}
-		else
-		{
-			dumpCKA((unsigned long) p11type, 48);
-			printf("\n");
-		}
-
-		uint64_t disktype;
-		if (!readULong(stream, disktype))
-		{
-			corrupt(stream);
-			return;
-		}
-		dumpULong(disktype);
-		switch (disktype)
-		{
-		case BOOLEAN_ATTR:
-			printf("boolean attribute\n");
-			break;
-		case ULONG_ATTR:
-			printf("unsigned long attribute\n");
-			break;
-		case BYTES_ATTR:
-			printf("byte string attribute\n");
-			break;
-		case ARRAY_ATTR:
-			printf("attribute array attribute\n");
-			break;
-		default:
-			printf("unknown attribute format\n");
-			break;
-		}
-
-		if (disktype == BOOLEAN_ATTR)
-		{
-			uint8_t value;
-			if (!readBool(stream, value))
-			{
-				corrupt(stream);
-				return;
-			}
-			dumpBool(value);
-			printf("\n");
-		}
-		else if (disktype == ULONG_ATTR)
-		{
-			uint64_t value;
-			if (!readULong(stream, value))
-			{
-				corrupt(stream);
-				return;
-			}
-			dumpULong(value);
-			dumpCKx(p11type, value, 48);
-			printf("\n");
-		}
-		else if (disktype == BYTES_ATTR)
-		{
-			uint64_t len;
-			if (!readULong(stream, len))
-			{
-				corrupt(stream);
-				return;
-			}
-			dumpULong(len);
-			if (len > MAX_BYTES)
-			{
-				printf("overflow length...\n");
-				return;
-			}
-			printf("(length %lu)\n", (unsigned long) len);
-
-			std::vector<uint8_t> value((size_t) len);
-			if (!readBytes(stream, value))
-			{
-				corrupt(stream);
-				return;
-			}
-			dumpBytes(value);
-		}
-		else if (disktype == ARRAY_ATTR)
-		{
-			uint64_t len;
-			if (!readULong(stream, len))
-			{
-				corrupt(stream);
-				return;
-			}
-			dumpULong(len);
-			if (len > MAX_BYTES)
-			{
-				printf("overflow length...\n");
-				return;
-			}
-			printf("(length %lu)\n", (unsigned long) len);
-
-			std::vector<Attribute> value;
-			if (!readArray(stream, len, value))
-			{
-				corrupt(stream);
-				return;
-			}
-			dumpArray(value);
-		}
-		else
-		{
-			corrupt(stream);
-			return;
-		}
-	}
-}
-
-// Display the usage
-void usage()
-{
-	printf("SoftHSM dump tool. From SoftHSM v2 object file.\n");
-	printf("Usage: softhsm-dump path\n");
-}
-
-// The main function
-int main(int argc, char* argv[])
-{
-	FILE* stream;
-
-	if (argc != 2)
-	{
-		usage();
-		exit(0);
-	}
-
-	stream = fopen(argv[1], "r");
-	if (stream == NULL)
-	{
-		fprintf(stderr, "can't open object file %s\n", argv[1]);
-		exit(0);
-	}
-
-	printf("Dump of object file \"%s\"\n", argv[1]);
-	dump(stream);
-	exit(1);
-}
+};
