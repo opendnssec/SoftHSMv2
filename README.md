@@ -32,7 +32,7 @@ SoftHSM depends on a cryptographic library, Botan or OpenSSL.
 Minimum required versions:
 
 - Botan 1.10.0 
-- OpenSSL 0.9.8
+- OpenSSL 1.0.0
 
 There is a migration tool for converting token databases from SoftHSMv1 into
 the new type of tokens. If this tool is built, then SQLite3 is required (>=

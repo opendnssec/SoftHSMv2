@@ -667,7 +667,7 @@ OSAttribute *DBObject::accessAttribute(CK_ATTRIBUTE_TYPE type)
 		{
 			// try to find the attribute in the boolean attribute table
 			DB::Statement statement = _connection->prepare(
-				"select value from attribute_boolean where type=%d and object_id=%lld",
+				"select value from attribute_boolean where type=%lu and object_id=%lld",
 				type,
 				_objectId);
 			if (!statement.isValid())
@@ -714,7 +714,7 @@ OSAttribute *DBObject::accessAttribute(CK_ATTRIBUTE_TYPE type)
 		{
 			// try to find the attribute in the integer attribute table
 			DB::Statement statement = _connection->prepare(
-				"select value from attribute_integer where type=%d and object_id=%lld",
+				"select value from attribute_integer where type=%lu and object_id=%lld",
 				type,
 				_objectId);
 			if (!statement.isValid())
@@ -755,7 +755,7 @@ OSAttribute *DBObject::accessAttribute(CK_ATTRIBUTE_TYPE type)
 		{
 			// try to find the attribute in the binary attribute table
 			DB::Statement statement = _connection->prepare(
-				"select value from attribute_binary where type=%d and object_id=%lld",
+				"select value from attribute_binary where type=%lu and object_id=%lld",
 				type,
 				_objectId);
 			if (!statement.isValid())
@@ -798,7 +798,7 @@ OSAttribute *DBObject::accessAttribute(CK_ATTRIBUTE_TYPE type)
 		{
 			// try to find the attribute in the array attribute table
 			DB::Statement statement = _connection->prepare(
-				"select value from attribute_array where type=%d and object_id=%lld",
+				"select value from attribute_array where type=%lu and object_id=%lld",
 				type,
 				_objectId);
 			if (!statement.isValid())
@@ -970,7 +970,7 @@ bool DBObject::setAttribute(CK_ATTRIBUTE_TYPE type, const OSAttribute& attribute
 		{
 			// update boolean attribute
 			statement = _connection->prepare(
-					"update attribute_boolean set value=%d where type=%d and object_id=%lld",
+					"update attribute_boolean set value=%d where type=%lu and object_id=%lld",
 					attribute.getBooleanValue() ? 1 : 0,
 					type,
 					_objectId);
@@ -980,7 +980,7 @@ bool DBObject::setAttribute(CK_ATTRIBUTE_TYPE type, const OSAttribute& attribute
 		{
 			// update integer attribute
 			statement = _connection->prepare(
-					"update attribute_integer set value=%lld where type=%d and object_id=%lld",
+					"update attribute_integer set value=%lld where type=%lu and object_id=%lld",
 					static_cast<long long>(attribute.getUnsignedLongValue()),
 					type,
 					_objectId);
@@ -990,7 +990,7 @@ bool DBObject::setAttribute(CK_ATTRIBUTE_TYPE type, const OSAttribute& attribute
 		{
 			// update binary attribute
 			statement = _connection->prepare(
-					"update attribute_binary set value=? where type=%d and object_id=%lld",
+					"update attribute_binary set value=? where type=%lu and object_id=%lld",
 					type,
 					_objectId);
 			//bindByteString = true;
@@ -1005,7 +1005,7 @@ bool DBObject::setAttribute(CK_ATTRIBUTE_TYPE type, const OSAttribute& attribute
 			}
 
 			statement = _connection->prepare(
-					"update attribute_array set value=? where type=%d and object_id=%lld",
+					"update attribute_array set value=? where type=%lu and object_id=%lld",
 					type,
 					_objectId);
 			DB::Bindings(statement).bindBlob(1, value.const_byte_str(), value.size(), SQLITE_TRANSIENT);
@@ -1022,7 +1022,7 @@ bool DBObject::setAttribute(CK_ATTRIBUTE_TYPE type, const OSAttribute& attribute
 		{
 			if (!_connection->execute(statement))
 			{
-				ERROR_MSG("Failed to update attribute %d for object %lld",type,_objectId);
+				ERROR_MSG("Failed to update attribute %lu for object %lld",type,_objectId);
 				return false;
 			}
 
@@ -1046,7 +1046,7 @@ bool DBObject::setAttribute(CK_ATTRIBUTE_TYPE type, const OSAttribute& attribute
 	{
 		// Could not update it, so we need to insert it.
 		statement = _connection->prepare(
-					"insert into attribute_boolean (value,type,object_id) values (%d,%d,%lld)",
+					"insert into attribute_boolean (value,type,object_id) values (%d,%lu,%lld)",
 					attribute.getBooleanValue() ? 1 : 0,
 					type,
 					_objectId);
@@ -1056,7 +1056,7 @@ bool DBObject::setAttribute(CK_ATTRIBUTE_TYPE type, const OSAttribute& attribute
 	{
 		// Could not update it, so we need to insert it.
 		statement = _connection->prepare(
-					"insert into attribute_integer (value,type,object_id) values (%lld,%d,%lld)",
+					"insert into attribute_integer (value,type,object_id) values (%lld,%lu,%lld)",
 					static_cast<long long>(attribute.getUnsignedLongValue()),
 					type,
 					_objectId);
@@ -1065,7 +1065,7 @@ bool DBObject::setAttribute(CK_ATTRIBUTE_TYPE type, const OSAttribute& attribute
 	{
 		// Could not update it, so we need to insert it.
 		statement = _connection->prepare(
-					"insert into attribute_binary (value,type,object_id) values (?,%d,%lld)",
+					"insert into attribute_binary (value,type,object_id) values (?,%lu,%lld)",
 					type,
 					_objectId);
 		
@@ -1081,7 +1081,7 @@ bool DBObject::setAttribute(CK_ATTRIBUTE_TYPE type, const OSAttribute& attribute
 		}
 
 		statement = _connection->prepare(
-				"insert into attribute_array (value,type,object_id) values (?,%d,%lld)",
+				"insert into attribute_array (value,type,object_id) values (?,%lu,%lld)",
 				type,
 				_objectId);
 		DB::Bindings(statement).bindBlob(1, value.const_byte_str(), value.size(), SQLITE_TRANSIENT);
@@ -1092,7 +1092,7 @@ bool DBObject::setAttribute(CK_ATTRIBUTE_TYPE type, const OSAttribute& attribute
 	{
 		if (!_connection->execute(statement))
 		{
-			ERROR_MSG("Failed to insert attribute %d for object %lld",type,_objectId);
+			ERROR_MSG("Failed to insert attribute %lu for object %lld",type,_objectId);
 			return false;
 		}
 	
