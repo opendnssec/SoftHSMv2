@@ -37,6 +37,7 @@
 #include "Configuration.h"
 #include "SimpleConfigLoader.h"
 #include "MutexFactory.h"
+#include "SecureMemoryRegistry.h"
 #include "CryptoFactory.h"
 #include "AsymmetricAlgorithm.h"
 #include "SymmetricAlgorithm.h"
@@ -394,6 +395,18 @@ CK_RV SoftHSM::C_Initialize(CK_VOID_PTR pInitArgs)
 		MutexFactory::i()->disable();
 	}
 
+	// Initiate SecureMemoryRegistry
+	if (SecureMemoryRegistry::i == NULL)
+	{
+		return CKR_GENERAL_ERROR;
+	}
+
+	// Build the CryptoFactory
+	if (CryptoFactory::i() == NULL)
+	{
+		return CKR_GENERAL_ERROR;
+	}
+
 	// (Re)load the configuration
 	if (!Configuration::i()->reload(SimpleConfigLoader::i()))
 	{
@@ -412,6 +425,8 @@ CK_RV SoftHSM::C_Initialize(CK_VOID_PTR pInitArgs)
 		ERROR_MSG("Could not load the object store");
 		delete objectStore;
 		objectStore = NULL;
+		delete sessionObjectStore;
+		sessionObjectStore = NULL;
 		return CKR_GENERAL_ERROR;
 	}
 
@@ -449,6 +464,10 @@ CK_RV SoftHSM::C_Finalize(CK_VOID_PTR pReserved)
 	slotManager = NULL;
 	if (objectStore != NULL) delete objectStore;
 	objectStore = NULL;
+	if (sessionObjectStore != NULL) delete sessionObjectStore;
+	sessionObjectStore = NULL;
+	CryptoFactory::reset();
+	SecureMemoryRegistry::reset();
 
 	// TODO: What should we finalize?
 

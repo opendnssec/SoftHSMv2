@@ -88,8 +88,8 @@ BotanCryptoFactory::~BotanCryptoFactory()
 	}
 #endif
 
-	// TODO: We cannot do this because the MutexFactory is destroyed before the CryptoFactory
-	// MutexFactory::i()->recycleMutex(rngsMutex);
+	// Delete the mutex
+	MutexFactory::i()->recycleMutex(rngsMutex);
 
 	// Deinitialize the Botan crypto lib
 	Botan::LibraryInitializer::deinitialize();
@@ -104,6 +104,12 @@ BotanCryptoFactory* BotanCryptoFactory::i()
 	}
 
 	return instance.get();
+}
+
+// This will destroy the one-and-only instance.
+void BotanCryptoFactory::reset()
+{
+	instance.reset();
 }
 
 // Create a concrete instance of a symmetric algorithm
