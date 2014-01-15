@@ -45,6 +45,12 @@ CryptoFactory* CryptoFactory::i()
 	return OSSLCryptoFactory::i();
 }
 
+// This will destroy the one-and-only instance.
+void CryptoFactory::reset()
+{
+	OSSLCryptoFactory::reset();
+}
+
 #elif defined(WITH_BOTAN)
 
 #include "BotanCryptoFactory.h"
@@ -53,6 +59,12 @@ CryptoFactory* CryptoFactory::i()
 CryptoFactory* CryptoFactory::i()
 {
 	return BotanCryptoFactory::i();
+}
+
+// This will destroy the one-and-only instance.
+void CryptoFactory::reset()
+{
+	BotanCryptoFactory::reset();
 }
 
 #else

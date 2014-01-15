@@ -49,6 +49,8 @@ public:
 
 	static SecureMemoryRegistry* i();
 
+	static void reset();
+
 	void add(void* pointer, size_t blocksize);
 
 	size_t remove(void* pointer);
@@ -56,7 +58,7 @@ public:
 	void wipe();
 
 private:
-	static SecureMemoryRegistry* instance;
+	static std::auto_ptr<SecureMemoryRegistry> instance;
 
 	std::map<void*, size_t> registry;
 

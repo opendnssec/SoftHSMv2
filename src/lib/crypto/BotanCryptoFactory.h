@@ -55,6 +55,9 @@ public:
 	// Return the one-and-only instance
 	static BotanCryptoFactory* i();
 
+	// This will destroy the one-and-only instance.
+	static void reset();
+
 	// Create a concrete instance of a symmetric algorithm
 	SymmetricAlgorithm* getSymmetricAlgorithm(std::string algorithm);
 
