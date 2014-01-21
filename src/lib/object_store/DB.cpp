@@ -37,6 +37,8 @@
 #include <cstdio>
 #include <iostream>
 #include <sqlite3.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 #include "DB.h"
 
@@ -829,12 +831,18 @@ bool DB::Connection::connect(const char *
 #endif
 							 )
 {
+	// Circumvent the sqlite3 reliance on umask to enforce secure permissions
+	mode_t saved_umask = umask(S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
+
 	int rv = sqlite3_open_v2(_dbpath.c_str(),
 							 &_db,
 							 SQLITE_OPEN_READWRITE
 							 | SQLITE_OPEN_CREATE
 							 | SQLITE_OPEN_FULLMUTEX,
 							 NULL);
+	// Restore umask to avoid side effects
+	(void) umask(saved_umask);
+
 	if (rv != SQLITE_OK) {
 		reportErrorDB(_db);
 		return false;
