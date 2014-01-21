@@ -38,7 +38,13 @@
 #include <string.h>
 
 // the 37 bytes of prefix
-const ByteString gost_prefix = "3063301c06062a8503020213301206072a85030202230106072a850302021e010343000440";
+const unsigned char gost_prefix[] = {
+	0x30, 0x63, 0x30, 0x1c, 0x06, 0x06, 0x2a, 0x85,
+	0x03, 0x02, 0x02, 0x13, 0x30, 0x12, 0x06, 0x07,
+	0x2a, 0x85, 0x03, 0x02, 0x02, 0x23, 0x01, 0x06,
+	0x07, 0x2a, 0x85, 0x03, 0x02, 0x02, 0x1e, 0x01,
+	0x03, 0x43, 0x00, 0x04, 0x40
+};
 
 // Constructors
 OSSLGOSTPublicKey::OSSLGOSTPublicKey()
@@ -117,7 +123,7 @@ void OSSLGOSTPublicKey::setQ(const ByteString& q)
 
 	ByteString der;
 	der.resize(37 + 64);
-	memcpy(&der[0], gost_prefix.const_byte_str(), 37);
+	memcpy(&der[0], gost_prefix, 37);
 	memcpy(&der[37], q.const_byte_str(), 64);
 	const unsigned char *p = &der[0];
 	if (d2i_PUBKEY(&pkey, &p, (long) der.size()) == NULL)

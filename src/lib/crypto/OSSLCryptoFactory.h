@@ -52,6 +52,9 @@ public:
 	// Return the one-and-only instance
 	static OSSLCryptoFactory* i();
 
+	// This will destroy the one-and-only instance.
+	static void reset();
+
 	// Create a concrete instance of a symmetric algorithm
 	virtual SymmetricAlgorithm* getSymmetricAlgorithm(std::string algorithm);
 

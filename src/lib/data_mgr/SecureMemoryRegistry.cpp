@@ -38,7 +38,7 @@
 #include "SecureMemoryRegistry.h"
 
 // Initialise the one-and-only instance
-SecureMemoryRegistry* SecureMemoryRegistry::instance = NULL;
+std::auto_ptr<SecureMemoryRegistry> SecureMemoryRegistry::instance(NULL);
 
 // Constructor
 SecureMemoryRegistry::SecureMemoryRegistry()
@@ -49,26 +49,35 @@ SecureMemoryRegistry::SecureMemoryRegistry()
 // Destructor
 SecureMemoryRegistry::~SecureMemoryRegistry()
 {
+	if (!registry.empty())
+	{
+		ERROR_MSG("SecureMemoryRegistry is not empty: leak!");
+	}
 	MutexFactory::i()->recycleMutex(SecMemRegistryMutex);
 }
 
 // Return the one-and-only instance
 SecureMemoryRegistry* SecureMemoryRegistry::i()
 {
-	if (instance == NULL)
+	if (instance.get() == NULL)
 	{
-		instance = new SecureMemoryRegistry();
+		instance = std::auto_ptr<SecureMemoryRegistry>(new SecureMemoryRegistry());
 
-		if (instance == NULL)
+		if (instance.get() == NULL)
 		{
 			// This is very bad!
-			ERROR_MSG("Fatal: failed to instantiate SecureMemoryRegistry");
+			ERROR_MSG("failed to instantiate SecureMemoryRegistry");
 
-			exit(-1);
 		}
 	}
 
-	return instance;
+	return instance.get();
+}
+
+// This will destroy the one-and-only instance.
+void SecureMemoryRegistry::reset()
+{
+	instance.reset();
 }
 
 // Register a block of memory
