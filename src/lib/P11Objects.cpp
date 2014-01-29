@@ -473,7 +473,6 @@ bool P11OpenPGPPublicKeyObj::init(OSObject *osobject)
 	P11Attribute* attrSerialNumber = new P11AttrSerialNumber(osobject);
 	P11Attribute* attrValue = new P11AttrValue(osobject,P11Attribute::ck1|P11Attribute::ck14);
 	P11Attribute* attrURL = new P11AttrURL(osobject);
-	P11Attribute* attrNameHashAlgorithm = new P11AttrNameHashAlgorithm(osobject);
 
 	// Initialize the attributes
 	if
@@ -483,8 +482,7 @@ bool P11OpenPGPPublicKeyObj::init(OSObject *osobject)
 		!attrIssuer->init() ||
 		!attrSerialNumber->init() ||
 		!attrValue->init() ||
-		!attrURL->init() ||
-		!attrNameHashAlgorithm->init()
+		!attrURL->init()
 	)
 	{
 		ERROR_MSG("Could not initialize the attribute");
@@ -498,7 +496,6 @@ bool P11OpenPGPPublicKeyObj::init(OSObject *osobject)
 	attributes[attrSerialNumber->getType()] = attrSerialNumber;
 	attributes[attrValue->getType()] = attrValue;
 	attributes[attrURL->getType()] = attrURL;
-	attributes[attrNameHashAlgorithm->getType()] = attrNameHashAlgorithm;
 
 	return true;
 }
