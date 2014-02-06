@@ -161,7 +161,7 @@ static CK_RV extractObjectInformation(CK_ATTRIBUTE_PTR pTemplate, CK_ULONG ulCou
 									   CK_OBJECT_CLASS &objClass,
 									   CK_KEY_TYPE &keyType,
 									   CK_CERTIFICATE_TYPE &certType,
-									   CK_BBOOL &isToken,
+									   CK_BBOOL &isOnToken,
 									   CK_BBOOL &isPrivate)
 {
 	bool bHasClass = false;
@@ -197,7 +197,7 @@ static CK_RV extractObjectInformation(CK_ATTRIBUTE_PTR pTemplate, CK_ULONG ulCou
 			case CKA_TOKEN:
 				if (pTemplate[i].ulValueLen == sizeof(CK_BBOOL))
 				{
-					isToken = *(CK_BBOOL*)pTemplate[i].pValue;
+					isOnToken = *(CK_BBOOL*)pTemplate[i].pValue;
 				}
 				break;
 			case CKA_PRIVATE:
@@ -1224,11 +1224,11 @@ CK_RV SoftHSM::C_CopyObject(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject
 	OSObject *object = (OSObject *)handleManager->getObject(hObject);
 	if (object == NULL_PTR || !object->isValid()) return CKR_OBJECT_HANDLE_INVALID;
 
-	CK_BBOOL wasToken = object->getAttribute(CKA_TOKEN)->getBooleanValue();
+	CK_BBOOL wasOnToken = object->getAttribute(CKA_TOKEN)->getBooleanValue();
 	CK_BBOOL wasPrivate = object->getAttribute(CKA_PRIVATE)->getBooleanValue();
 
 	// Check read user credentials
-	CK_RV rv = haveRead(session->getState(), wasToken, wasPrivate);
+	CK_RV rv = haveRead(session->getState(), wasOnToken, wasPrivate);
 	if (rv != CKR_OK)
 	{
 		if (rv == CKR_USER_NOT_LOGGED_IN)
@@ -1244,14 +1244,14 @@ CK_RV SoftHSM::C_CopyObject(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject
 	if (!isCopyable) return CKR_COPY_PROHIBITED;
 
 	// Extract critical information from the template
-	CK_BBOOL isToken = wasToken;
+	CK_BBOOL isOnToken = wasOnToken;
 	CK_BBOOL isPrivate = wasPrivate;
-	
+
 	for (CK_ULONG i = 0; i < ulCount; i++)
 	{
 		if ((pTemplate[i].type == CKA_TOKEN) && (pTemplate[i].ulValueLen == sizeof(CK_BBOOL)))
 		{
-			isToken = *(CK_BBOOL*)pTemplate[i].pValue;
+			isOnToken = *(CK_BBOOL*)pTemplate[i].pValue;
 			continue;
 		}
 		if ((pTemplate[i].type == CKA_PRIVATE) && (pTemplate[i].ulValueLen == sizeof(CK_BBOOL)))
@@ -1265,7 +1265,7 @@ CK_RV SoftHSM::C_CopyObject(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject
 	if (wasPrivate && !isPrivate) return CKR_TEMPLATE_INCONSISTENT;
 
 	// Check write user credentials
-	rv = haveWrite(session->getState(), isToken, isPrivate);
+	rv = haveWrite(session->getState(), isOnToken, isPrivate);
 	if (rv != CKR_OK)
 	{
 		if (rv == CKR_USER_NOT_LOGGED_IN)
@@ -1278,7 +1278,7 @@ CK_RV SoftHSM::C_CopyObject(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject
 
 	// Create the object in session or on the token
 	OSObject *newobject = NULL_PTR;
-	if (isToken)
+	if (isOnToken)
 	{
 		newobject = (OSObject*) token->createObject();
 	}
@@ -1311,7 +1311,6 @@ CK_RV SoftHSM::C_CopyObject(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject
 				rv = CKR_FUNCTION_FAILED;
 				break;
 			}
-				
 		}
 		else
 		{
@@ -1359,7 +1358,7 @@ CK_RV SoftHSM::C_CopyObject(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject
 	}
 
 	// Set handle
-	if (isToken)
+	if (isOnToken)
 	{
 		*phNewObject = handleManager->addTokenObject(slot->getSlotID(), isPrivate != CK_FALSE, newobject);
 	}
@@ -1388,11 +1387,11 @@ CK_RV SoftHSM::C_DestroyObject(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObj
 	OSObject *object = (OSObject *)handleManager->getObject(hObject);
 	if (object == NULL_PTR || !object->isValid()) return CKR_OBJECT_HANDLE_INVALID;
 
-	CK_BBOOL isToken = object->getAttribute(CKA_TOKEN)->getBooleanValue();
+	CK_BBOOL isOnToken = object->getAttribute(CKA_TOKEN)->getBooleanValue();
 	CK_BBOOL isPrivate = object->getAttribute(CKA_PRIVATE)->getBooleanValue();
 
 	// Check user credentials
-	CK_RV rv = haveWrite(session->getState(), isToken, isPrivate);
+	CK_RV rv = haveWrite(session->getState(), isOnToken, isPrivate);
 	if (rv != CKR_OK)
 	{
 		if (rv == CKR_USER_NOT_LOGGED_IN)
@@ -1456,10 +1455,25 @@ CK_RV SoftHSM::C_GetAttributeValue(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE 
 	OSObject *object = (OSObject *)handleManager->getObject(hObject);
 	if (object == NULL_PTR || !object->isValid()) return CKR_OBJECT_HANDLE_INVALID;
 
+	CK_BBOOL isOnToken = object->getAttribute(CKA_TOKEN)->getBooleanValue();
+	CK_BBOOL isPrivate = object->getAttribute(CKA_PRIVATE)->getBooleanValue();
+
+	// Check read user credentials
+	CK_RV rv = haveRead(session->getState(), isOnToken, isPrivate);
+	if (rv != CKR_OK)
+	{
+		if (rv == CKR_USER_NOT_LOGGED_IN)
+			INFO_MSG("User is not authorized");
+
+		// CKR_USER_NOT_LOGGED_IN is not a valid return code for this function,
+		// so we use CKR_GENERAL_ERROR.
+		return CKR_GENERAL_ERROR;
+	}
+
 	// Wrap a P11Object around the OSObject so we can access the attributes in the
 	// context of the object in which it is defined.
 	std::auto_ptr< P11Object > p11object;
-	CK_RV rv = newP11Object(object,p11object);
+	rv = newP11Object(object,p11object);
 	if (rv != CKR_OK)
 		return rv;
 
@@ -1486,11 +1500,11 @@ CK_RV SoftHSM::C_SetAttributeValue(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE 
 	OSObject *object = (OSObject *)handleManager->getObject(hObject);
 	if (object == NULL_PTR || !object->isValid()) return CKR_OBJECT_HANDLE_INVALID;
 
-	CK_BBOOL isToken = object->getAttribute(CKA_TOKEN)->getBooleanValue();
+	CK_BBOOL isOnToken = object->getAttribute(CKA_TOKEN)->getBooleanValue();
 	CK_BBOOL isPrivate = object->getAttribute(CKA_PRIVATE)->getBooleanValue();
 
 	// Check user credentials
-	CK_RV rv = haveWrite(session->getState(), isToken, isPrivate);
+	CK_RV rv = haveWrite(session->getState(), isOnToken, isPrivate);
 	if (rv != CKR_OK)
 	{
 		if (rv == CKR_USER_NOT_LOGGED_IN)
@@ -1634,11 +1648,11 @@ CK_RV SoftHSM::C_FindObjectsInit(CK_SESSION_HANDLE hSession, CK_ATTRIBUTE_PTR pT
 		if (bAttrMatch)
 		{
 			CK_SLOT_ID slotID = slot->getSlotID();
-			bool isToken = (*it)->getAttribute(CKA_TOKEN)->getBooleanValue();
+			bool isOnToken = (*it)->getAttribute(CKA_TOKEN)->getBooleanValue();
 			bool isPrivate = (*it)->getAttribute(CKA_PRIVATE)->getBooleanValue();
 			// Create an object handle for every returned object.
 			CK_OBJECT_HANDLE hObject;
-			if (isToken)
+			if (isOnToken)
 				hObject = handleManager->addTokenObject(slotID,isPrivate,*it);
 			else
 				hObject = handleManager->addSessionObject(slotID,hSession,isPrivate,*it);
@@ -1739,6 +1753,19 @@ CK_RV SoftHSM::SymEncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 	// Check the key handle.
 	OSObject *key = (OSObject *)handleManager->getObject(hKey);
 	if (key == NULL_PTR || !key->isValid()) return CKR_OBJECT_HANDLE_INVALID;
+
+	CK_BBOOL isOnToken = key->getAttribute(CKA_TOKEN)->getBooleanValue();
+	CK_BBOOL isPrivate = key->getAttribute(CKA_PRIVATE)->getBooleanValue();
+
+	// Check read user credentials
+	CK_RV rv = haveRead(session->getState(), isOnToken, isPrivate);
+	if (rv != CKR_OK)
+	{
+		if (rv == CKR_USER_NOT_LOGGED_IN)
+			INFO_MSG("User is not authorized");
+
+		return rv;
+	}
 
 	// Check if key can be used for encryption
         if (!key->attributeExists(CKA_ENCRYPT) || key->getAttribute(CKA_ENCRYPT)->getBooleanValue() == false)
@@ -1862,6 +1889,19 @@ CK_RV SoftHSM::AsymEncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMec
 	// Check the key handle.
 	OSObject *key = (OSObject *)handleManager->getObject(hKey);
 	if (key == NULL_PTR || !key->isValid()) return CKR_OBJECT_HANDLE_INVALID;
+
+	CK_BBOOL isOnToken = key->getAttribute(CKA_TOKEN)->getBooleanValue();
+	CK_BBOOL isPrivate = key->getAttribute(CKA_PRIVATE)->getBooleanValue();
+
+	// Check read user credentials
+	CK_RV rv = haveRead(session->getState(), isOnToken, isPrivate);
+	if (rv != CKR_OK)
+	{
+		if (rv == CKR_USER_NOT_LOGGED_IN)
+			INFO_MSG("User is not authorized");
+
+		return rv;
+	}
 
 	// Check if key can be used for encryption
         if (!key->attributeExists(CKA_ENCRYPT) || key->getAttribute(CKA_ENCRYPT)->getBooleanValue() == false)
@@ -2142,6 +2182,19 @@ CK_RV SoftHSM::SymDecryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 	OSObject *key = (OSObject *)handleManager->getObject(hKey);
 	if (key == NULL_PTR || !key->isValid()) return CKR_OBJECT_HANDLE_INVALID;
 
+	CK_BBOOL isOnToken = key->getAttribute(CKA_TOKEN)->getBooleanValue();
+	CK_BBOOL isPrivate = key->getAttribute(CKA_PRIVATE)->getBooleanValue();
+
+	// Check read user credentials
+	CK_RV rv = haveRead(session->getState(), isOnToken, isPrivate);
+	if (rv != CKR_OK)
+	{
+		if (rv == CKR_USER_NOT_LOGGED_IN)
+			INFO_MSG("User is not authorized");
+
+		return rv;
+	}
+
 	// Check if key can be used for decryption
         if (!key->attributeExists(CKA_DECRYPT) || key->getAttribute(CKA_DECRYPT)->getBooleanValue() == false)
 		return CKR_KEY_FUNCTION_NOT_PERMITTED;
@@ -2264,6 +2317,19 @@ CK_RV SoftHSM::AsymDecryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMec
 	// Check the key handle.
 	OSObject *key = (OSObject *)handleManager->getObject(hKey);
 	if (key == NULL_PTR || !key->isValid()) return CKR_OBJECT_HANDLE_INVALID;
+
+	CK_BBOOL isOnToken = key->getAttribute(CKA_TOKEN)->getBooleanValue();
+	CK_BBOOL isPrivate = key->getAttribute(CKA_PRIVATE)->getBooleanValue();
+
+	// Check read user credentials
+	CK_RV rv = haveRead(session->getState(), isOnToken, isPrivate);
+	if (rv != CKR_OK)
+	{
+		if (rv == CKR_USER_NOT_LOGGED_IN)
+			INFO_MSG("User is not authorized");
+
+		return rv;
+	}
 
 	// Check if key can be used for decryption
         if (!key->attributeExists(CKA_DECRYPT) || key->getAttribute(CKA_DECRYPT)->getBooleanValue() == false)
@@ -2693,7 +2759,9 @@ CK_RV SoftHSM::C_DigestKey(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject)
 		if (rv == CKR_USER_NOT_LOGGED_IN)
 			INFO_MSG("User is not authorized");
 
-		return rv;
+		// CKR_USER_NOT_LOGGED_IN is not a valid return code for this function,
+		// so we use CKR_GENERAL_ERROR.
+		return CKR_GENERAL_ERROR;
 	}
 
 	// Parano...
@@ -2821,6 +2889,19 @@ CK_RV SoftHSM::MacSignInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechani
 	OSObject *key = (OSObject *)handleManager->getObject(hKey);
 	if (key == NULL_PTR || !key->isValid()) return CKR_OBJECT_HANDLE_INVALID;
 
+	CK_BBOOL isOnToken = key->getAttribute(CKA_TOKEN)->getBooleanValue();
+	CK_BBOOL isPrivate = key->getAttribute(CKA_PRIVATE)->getBooleanValue();
+
+	// Check read user credentials
+	CK_RV rv = haveRead(session->getState(), isOnToken, isPrivate);
+	if (rv != CKR_OK)
+	{
+		if (rv == CKR_USER_NOT_LOGGED_IN)
+			INFO_MSG("User is not authorized");
+
+		return rv;
+	}
+
 	// Check if key can be used for signing
         if (!key->attributeExists(CKA_SIGN) || key->getAttribute(CKA_SIGN)->getBooleanValue() == false)
 		return CKR_KEY_FUNCTION_NOT_PERMITTED;
@@ -2908,6 +2989,19 @@ CK_RV SoftHSM::AsymSignInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechan
 	// Check the key handle.
 	OSObject *key = (OSObject *)handleManager->getObject(hKey);
 	if (key == NULL_PTR || !key->isValid()) return CKR_OBJECT_HANDLE_INVALID;
+
+	CK_BBOOL isOnToken = key->getAttribute(CKA_TOKEN)->getBooleanValue();
+	CK_BBOOL isPrivate = key->getAttribute(CKA_PRIVATE)->getBooleanValue();
+
+	// Check read user credentials
+	CK_RV rv = haveRead(session->getState(), isOnToken, isPrivate);
+	if (rv != CKR_OK)
+	{
+		if (rv == CKR_USER_NOT_LOGGED_IN)
+			INFO_MSG("User is not authorized");
+
+		return rv;
+	}
 
 	// Check if key can be used for signing
         if (!key->attributeExists(CKA_SIGN) || key->getAttribute(CKA_SIGN)->getBooleanValue() == false)
@@ -3507,6 +3601,19 @@ CK_RV SoftHSM::MacVerifyInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMecha
 	OSObject *key = (OSObject *)handleManager->getObject(hKey);
 	if (key == NULL_PTR || !key->isValid()) return CKR_OBJECT_HANDLE_INVALID;
 
+	CK_BBOOL isOnToken = key->getAttribute(CKA_TOKEN)->getBooleanValue();
+	CK_BBOOL isPrivate = key->getAttribute(CKA_PRIVATE)->getBooleanValue();
+
+	// Check read user credentials
+	CK_RV rv = haveRead(session->getState(), isOnToken, isPrivate);
+	if (rv != CKR_OK)
+	{
+		if (rv == CKR_USER_NOT_LOGGED_IN)
+			INFO_MSG("User is not authorized");
+
+		return rv;
+	}
+
 	// Check if key can be used for verifying
         if (!key->attributeExists(CKA_VERIFY) || key->getAttribute(CKA_VERIFY)->getBooleanValue() == false)
 		return CKR_KEY_FUNCTION_NOT_PERMITTED;
@@ -3594,6 +3701,19 @@ CK_RV SoftHSM::AsymVerifyInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 	// Check the key handle.
 	OSObject *key = (OSObject *)handleManager->getObject(hKey);
 	if (key == NULL_PTR || !key->isValid()) return CKR_OBJECT_HANDLE_INVALID;
+
+	CK_BBOOL isOnToken = key->getAttribute(CKA_TOKEN)->getBooleanValue();
+	CK_BBOOL isPrivate = key->getAttribute(CKA_PRIVATE)->getBooleanValue();
+
+	// Check read user credentials
+	CK_RV rv = haveRead(session->getState(), isOnToken, isPrivate);
+	if (rv != CKR_OK)
+	{
+		if (rv == CKR_USER_NOT_LOGGED_IN)
+			INFO_MSG("User is not authorized");
+
+		return rv;
+	}
 
 	// Check if key can be used for verifying
         if (!key->attributeExists(CKA_VERIFY) || key->getAttribute(CKA_VERIFY)->getBooleanValue() == false)
@@ -4218,10 +4338,10 @@ CK_RV SoftHSM::C_GenerateKey(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMecha
 	}
 
 	// Extract information from the template that is needed to create the object.
-	CK_BBOOL isToken = CK_FALSE;
+	CK_BBOOL isOnToken = CK_FALSE;
 	CK_BBOOL isPrivate = CK_TRUE;
 	CK_CERTIFICATE_TYPE dummy;
-	extractObjectInformation(pTemplate, ulCount, objClass, keyType, dummy, isToken, isPrivate);
+	extractObjectInformation(pTemplate, ulCount, objClass, keyType, dummy, isOnToken, isPrivate);
 
 	// Report errors and/or unexpected usage.
 	if (objClass != CKO_SECRET_KEY && objClass != CKO_DOMAIN_PARAMETERS)
@@ -4246,7 +4366,7 @@ CK_RV SoftHSM::C_GenerateKey(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMecha
 		return CKR_TEMPLATE_INCONSISTENT;
 
 	// Check authorization
-	CK_RV rv = haveWrite(session->getState(), isToken, isPrivate);
+	CK_RV rv = haveWrite(session->getState(), isOnToken, isPrivate);
 	if (rv != CKR_OK)
 	{
 		if (rv == CKR_USER_NOT_LOGGED_IN)
@@ -4260,37 +4380,37 @@ CK_RV SoftHSM::C_GenerateKey(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMecha
 	// Generate DSA domain parameters
 	if (pMechanism->mechanism == CKM_DSA_PARAMETER_GEN)
 	{
-		return this->generateDSAParameters(hSession, pTemplate, ulCount, phKey, isToken, isPrivate);
+		return this->generateDSAParameters(hSession, pTemplate, ulCount, phKey, isOnToken, isPrivate);
 	}
 
 	// Generate DH domain parameters
 	if (pMechanism->mechanism == CKM_DH_PKCS_PARAMETER_GEN)
 	{
-		return this->generateDHParameters(hSession, pTemplate, ulCount, phKey, isToken, isPrivate);
+		return this->generateDHParameters(hSession, pTemplate, ulCount, phKey, isOnToken, isPrivate);
 	}
 
 	// Generate DES secret key
 	if (pMechanism->mechanism == CKM_DES_KEY_GEN)
 	{
-		return this->generateDES(hSession, pTemplate, ulCount, phKey, isToken, isPrivate);
+		return this->generateDES(hSession, pTemplate, ulCount, phKey, isOnToken, isPrivate);
 	}
 
 	// Generate DES2 secret key
 	if (pMechanism->mechanism == CKM_DES2_KEY_GEN)
 	{
-		return this->generateDES2(hSession, pTemplate, ulCount, phKey, isToken, isPrivate);
+		return this->generateDES2(hSession, pTemplate, ulCount, phKey, isOnToken, isPrivate);
 	}
 
 	// Generate DES3 secret key
 	if (pMechanism->mechanism == CKM_DES3_KEY_GEN)
 	{
-		return this->generateDES3(hSession, pTemplate, ulCount, phKey, isToken, isPrivate);
+		return this->generateDES3(hSession, pTemplate, ulCount, phKey, isOnToken, isPrivate);
 	}
 
 	// Generate AES secret key
 	if (pMechanism->mechanism == CKM_AES_KEY_GEN)
 	{
-		return this->generateAES(hSession, pTemplate, ulCount, phKey, isToken, isPrivate);
+		return this->generateAES(hSession, pTemplate, ulCount, phKey, isOnToken, isPrivate);
 	}
 
 	return CKR_GENERAL_ERROR;
@@ -4990,7 +5110,6 @@ CK_RV SoftHSM::C_UnwrapKey
 			}
 			else
 				bOK = false;
-				
 
 			if (bOK)
 				bOK = osobject->commitTransaction();
@@ -5088,7 +5207,6 @@ CK_RV SoftHSM::C_DeriveKey
 		return CKR_KEY_FUNCTION_NOT_PERMITTED;
 
 	// Extract information from the template that is needed to create the object.
-
 	CK_OBJECT_CLASS objClass;
 	CK_KEY_TYPE keyType;
 	CK_BBOOL isOnToken = CK_FALSE;
@@ -5212,7 +5330,7 @@ CK_RV SoftHSM::generateAES
 	CK_ATTRIBUTE_PTR pTemplate,
 	CK_ULONG ulCount,
 	CK_OBJECT_HANDLE_PTR phKey,
-	CK_BBOOL isToken,
+	CK_BBOOL isOnToken,
 	CK_BBOOL isPrivate)
 {
 	*phKey = CK_INVALID_HANDLE;
@@ -5282,7 +5400,7 @@ CK_RV SoftHSM::generateAES
 	CK_KEY_TYPE keyType = CKK_AES;
 	CK_ATTRIBUTE keyAttribs[maxAttribs] = {
 		{ CKA_CLASS, &objClass, sizeof(objClass) },
-		{ CKA_TOKEN, &isToken, sizeof(isToken) },
+		{ CKA_TOKEN, &isOnToken, sizeof(isOnToken) },
 		{ CKA_PRIVATE, &isPrivate, sizeof(isPrivate) },
 		{ CKA_KEY_TYPE, &keyType, sizeof(keyType) },
 	};
@@ -5372,7 +5490,7 @@ CK_RV SoftHSM::generateDES
 	CK_ATTRIBUTE_PTR pTemplate,
 	CK_ULONG ulCount,
 	CK_OBJECT_HANDLE_PTR phKey,
-	CK_BBOOL isToken,
+	CK_BBOOL isOnToken,
 	CK_BBOOL isPrivate)
 {
 	*phKey = CK_INVALID_HANDLE;
@@ -5409,7 +5527,7 @@ CK_RV SoftHSM::generateDES
 	CK_KEY_TYPE keyType = CKK_DES;
 	CK_ATTRIBUTE keyAttribs[maxAttribs] = {
 		{ CKA_CLASS, &objClass, sizeof(objClass) },
-		{ CKA_TOKEN, &isToken, sizeof(isToken) },
+		{ CKA_TOKEN, &isOnToken, sizeof(isOnToken) },
 		{ CKA_PRIVATE, &isPrivate, sizeof(isPrivate) },
 		{ CKA_KEY_TYPE, &keyType, sizeof(keyType) },
 	};
@@ -5499,7 +5617,7 @@ CK_RV SoftHSM::generateDES2
 	CK_ATTRIBUTE_PTR pTemplate,
 	CK_ULONG ulCount,
 	CK_OBJECT_HANDLE_PTR phKey,
-	CK_BBOOL isToken,
+	CK_BBOOL isOnToken,
 	CK_BBOOL isPrivate)
 {
 	*phKey = CK_INVALID_HANDLE;
@@ -5536,7 +5654,7 @@ CK_RV SoftHSM::generateDES2
 	CK_KEY_TYPE keyType = CKK_DES2;
 	CK_ATTRIBUTE keyAttribs[maxAttribs] = {
 		{ CKA_CLASS, &objClass, sizeof(objClass) },
-		{ CKA_TOKEN, &isToken, sizeof(isToken) },
+		{ CKA_TOKEN, &isOnToken, sizeof(isOnToken) },
 		{ CKA_PRIVATE, &isPrivate, sizeof(isPrivate) },
 		{ CKA_KEY_TYPE, &keyType, sizeof(keyType) },
 	};
@@ -5626,7 +5744,7 @@ CK_RV SoftHSM::generateDES3
 	CK_ATTRIBUTE_PTR pTemplate,
 	CK_ULONG ulCount,
 	CK_OBJECT_HANDLE_PTR phKey,
-	CK_BBOOL isToken,
+	CK_BBOOL isOnToken,
 	CK_BBOOL isPrivate)
 {
 	*phKey = CK_INVALID_HANDLE;
@@ -5663,7 +5781,7 @@ CK_RV SoftHSM::generateDES3
 	CK_KEY_TYPE keyType = CKK_DES3;
 	CK_ATTRIBUTE keyAttribs[maxAttribs] = {
 		{ CKA_CLASS, &objClass, sizeof(objClass) },
-		{ CKA_TOKEN, &isToken, sizeof(isToken) },
+		{ CKA_TOKEN, &isOnToken, sizeof(isOnToken) },
 		{ CKA_PRIVATE, &isPrivate, sizeof(isPrivate) },
 		{ CKA_KEY_TYPE, &keyType, sizeof(keyType) },
 	};
@@ -6319,7 +6437,7 @@ CK_RV SoftHSM::generateDSAParameters
 	CK_ATTRIBUTE_PTR pTemplate,
 	CK_ULONG ulCount,
 	CK_OBJECT_HANDLE_PTR phKey,
-	CK_BBOOL isToken,
+	CK_BBOOL isOnToken,
 	CK_BBOOL isPrivate)
 {
 	*phKey = CK_INVALID_HANDLE;
@@ -6397,7 +6515,7 @@ CK_RV SoftHSM::generateDSAParameters
 	CK_KEY_TYPE keyType = CKK_DSA;
 	CK_ATTRIBUTE paramsAttribs[maxAttribs] = {
 		{ CKA_CLASS, &objClass, sizeof(objClass) },
-		{ CKA_TOKEN, &isToken, sizeof(isToken) },
+		{ CKA_TOKEN, &isOnToken, sizeof(isOnToken) },
 		{ CKA_PRIVATE, &isPrivate, sizeof(isPrivate) },
 		{ CKA_KEY_TYPE, &keyType, sizeof(keyType) },
 	};
@@ -7009,7 +7127,7 @@ CK_RV SoftHSM::generateDHParameters
 	CK_ATTRIBUTE_PTR pTemplate,
 	CK_ULONG ulCount,
 	CK_OBJECT_HANDLE_PTR phKey,
-	CK_BBOOL isToken,
+	CK_BBOOL isOnToken,
 	CK_BBOOL isPrivate)
 {
 	*phKey = CK_INVALID_HANDLE;
@@ -7071,7 +7189,7 @@ CK_RV SoftHSM::generateDHParameters
 	CK_KEY_TYPE keyType = CKK_DH;
 	CK_ATTRIBUTE paramsAttribs[maxAttribs] = {
 		{ CKA_CLASS, &objClass, sizeof(objClass) },
-		{ CKA_TOKEN, &isToken, sizeof(isToken) },
+		{ CKA_TOKEN, &isOnToken, sizeof(isOnToken) },
 		{ CKA_PRIVATE, &isPrivate, sizeof(isPrivate) },
 		{ CKA_KEY_TYPE, &keyType, sizeof(keyType) },
 	};
@@ -7885,9 +8003,9 @@ CK_RV SoftHSM::CreateObject(CK_SESSION_HANDLE hSession, CK_ATTRIBUTE_PTR pTempla
 	CK_OBJECT_CLASS objClass = CKO_DATA;
 	CK_KEY_TYPE keyType = CKK_RSA;
 	CK_CERTIFICATE_TYPE certType = CKC_X_509;
-	CK_BBOOL isToken = CK_FALSE;
+	CK_BBOOL isOnToken = CK_FALSE;
 	CK_BBOOL isPrivate = CK_TRUE;
-	CK_RV rv = extractObjectInformation(pTemplate,ulCount,objClass,keyType,certType, isToken, isPrivate);
+	CK_RV rv = extractObjectInformation(pTemplate,ulCount,objClass,keyType,certType, isOnToken, isPrivate);
 	if (rv != CKR_OK)
 	{
 		ERROR_MSG("Mandatory attribute not present in template");
@@ -7895,7 +8013,7 @@ CK_RV SoftHSM::CreateObject(CK_SESSION_HANDLE hSession, CK_ATTRIBUTE_PTR pTempla
 	}
 
 	// Check user credentials
-	rv = haveWrite(session->getState(), isToken, isPrivate);
+	rv = haveWrite(session->getState(), isOnToken, isPrivate);
 	if (rv != CKR_OK)
 	{
 		if (rv == CKR_USER_NOT_LOGGED_IN)
@@ -7913,7 +8031,7 @@ CK_RV SoftHSM::CreateObject(CK_SESSION_HANDLE hSession, CK_ATTRIBUTE_PTR pTempla
 
 	// Create the object in session or on the token
 	OSObject *object = NULL_PTR;
-	if (isToken)
+	if (isOnToken)
 	{
 		object = (OSObject*) token->createObject();
 	}
@@ -7929,7 +8047,7 @@ CK_RV SoftHSM::CreateObject(CK_SESSION_HANDLE hSession, CK_ATTRIBUTE_PTR pTempla
 	if (rv != CKR_OK)
 		return rv;
 
-	if (isToken) {
+	if (isOnToken) {
 		*phObject = handleManager->addTokenObject(slot->getSlotID(), isPrivate != CK_FALSE, object);
 	} else {
 		*phObject = handleManager->addSessionObject(slot->getSlotID(), hSession, isPrivate != CK_FALSE, object);
