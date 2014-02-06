@@ -415,6 +415,7 @@ typedef unsigned long ck_certificate_type_t;
 #define CKC_X_509_ATTR_CERT	(1)
 #define CKC_WTLS		(2)
 #define CKC_VENDOR_DEFINED	((unsigned long) (1ul << 31))
+#define CKC_OPENPGP		(CKC_VENDOR_DEFINED|0x00504750)
 
 #define CK_OTP_FORMAT_DECIMAL		(0)
 #define CK_OTP_FORMAT_HEXADECIMAL	(1)
