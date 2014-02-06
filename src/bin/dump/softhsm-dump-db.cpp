@@ -34,6 +34,7 @@
 
 #include <sched.h>
 #include <sqlite3.h>
+#include <string.h>
 
 #include "common.h"
 
