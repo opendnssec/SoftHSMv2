@@ -205,7 +205,7 @@ private:
 		CK_ATTRIBUTE_PTR pTemplate,
 		CK_ULONG ulCount,
 		CK_OBJECT_HANDLE_PTR phKey,
-		CK_BBOOL isToken,
+		CK_BBOOL isOnToken,
 		CK_BBOOL isPrivate
 	);
 	CK_RV generateDES2
@@ -214,7 +214,7 @@ private:
 		CK_ATTRIBUTE_PTR pTemplate,
 		CK_ULONG ulCount,
 		CK_OBJECT_HANDLE_PTR phKey,
-		CK_BBOOL isToken,
+		CK_BBOOL isOnToken,
 		CK_BBOOL isPrivate
 	);
 	CK_RV generateDES3
@@ -223,7 +223,7 @@ private:
 		CK_ATTRIBUTE_PTR pTemplate,
 		CK_ULONG ulCount,
 		CK_OBJECT_HANDLE_PTR phKey,
-		CK_BBOOL isToken,
+		CK_BBOOL isOnToken,
 		CK_BBOOL isPrivate
 	);
 	CK_RV generateAES
@@ -232,7 +232,7 @@ private:
 		CK_ATTRIBUTE_PTR pTemplate,
 		CK_ULONG ulCount,
 		CK_OBJECT_HANDLE_PTR phKey,
-		CK_BBOOL isToken,
+		CK_BBOOL isOnToken,
 		CK_BBOOL isPrivate
 	);
 	CK_RV generateRSA
@@ -268,7 +268,7 @@ private:
 		CK_ATTRIBUTE_PTR pTemplate,
 		CK_ULONG ulCount,
 		CK_OBJECT_HANDLE_PTR phKey,
-		CK_BBOOL isToken,
+		CK_BBOOL isOnToken,
 		CK_BBOOL isPrivate
 	);
 	CK_RV generateEC
@@ -305,7 +305,7 @@ private:
 		CK_ATTRIBUTE_PTR pTemplate,
 		CK_ULONG ulCount,
 		CK_OBJECT_HANDLE_PTR phKey,
-		CK_BBOOL isToken,
+		CK_BBOOL isOnToken,
 		CK_BBOOL isPrivate
 	);
 	CK_RV generateGOST
