@@ -10,7 +10,7 @@ AC_DEFUN([ACX_BOTAN_GNUMP],[
 		[AC_LANG_PROGRAM(
 			[#include <botan/build.h>],
 			[#ifndef BOTAN_HAS_ENGINE_GNU_MP
-			#error "Botan version too old";
+			#error "No GNU MP support";
 			#endif])],
 		[AC_MSG_RESULT([checking for Botan GNU MP support... yes])],
 		[AC_MSG_RESULT([checking for Botan GNU MP support... no])
