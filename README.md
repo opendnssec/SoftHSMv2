@@ -34,6 +34,9 @@ Minimum required versions:
 - Botan 1.10.0 
 - OpenSSL 1.0.0
 
+If you are using Botan, make sure that it has support for GNU MP (--with-gnump).
+This will improve the performance when doing public key operations.
+
 There is a migration tool for converting token databases from SoftHSMv1 into
 the new type of tokens. If this tool is built, then SQLite3 is required (>=
 3.4.2).
