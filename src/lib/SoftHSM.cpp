@@ -4499,13 +4499,11 @@ CK_RV SoftHSM::C_WrapKey
 	CK_BBOOL isWrapKeyPrivate = wrapKey->getAttribute(CKA_PRIVATE)->getBooleanValue();
 
 	// Check user credentials for the wrapping key
-	CK_RV rv = haveWrite(session->getState(), isWrapKeyOnToken, isWrapKeyPrivate);
+	CK_RV rv = haveRead(session->getState(), isWrapKeyOnToken, isWrapKeyPrivate);
 	if (rv != CKR_OK)
 	{
 		if (rv == CKR_USER_NOT_LOGGED_IN)
 			INFO_MSG("User is not authorized");
-		if (rv == CKR_SESSION_READ_ONLY)
-			INFO_MSG("Session is read-only");
 
 		return rv;
 	}
@@ -4787,13 +4785,11 @@ CK_RV SoftHSM::C_UnwrapKey
 	CK_BBOOL isUnwrapKeyPrivate = unwrapKey->getAttribute(CKA_PRIVATE)->getBooleanValue();
 
 	// Check user credentials
-	CK_RV rv = haveWrite(session->getState(), isUnwrapKeyOnToken, isUnwrapKeyPrivate);
+	CK_RV rv = haveRead(session->getState(), isUnwrapKeyOnToken, isUnwrapKeyPrivate);
 	if (rv != CKR_OK)
 	{
 		if (rv == CKR_USER_NOT_LOGGED_IN)
 			INFO_MSG("User is not authorized");
-		if (rv == CKR_SESSION_READ_ONLY)
-			INFO_MSG("Session is read-only");
 
 		return rv;
 	}
@@ -5067,13 +5063,11 @@ CK_RV SoftHSM::C_DeriveKey
 	CK_BBOOL isKeyPrivate = key->getAttribute(CKA_PRIVATE)->getBooleanValue();
 
 	// Check user credentials
-	CK_RV rv = haveWrite(session->getState(), isKeyOnToken, isKeyPrivate);
+	CK_RV rv = haveRead(session->getState(), isKeyOnToken, isKeyPrivate);
 	if (rv != CKR_OK)
 	{
 		if (rv == CKR_USER_NOT_LOGGED_IN)
 			INFO_MSG("User is not authorized");
-		if (rv == CKR_SESSION_READ_ONLY)
-			INFO_MSG("Session is read-only");
 
 		return rv;
 	}
