@@ -57,11 +57,7 @@ AC_DEFUN([ACX_CRYPTO_BACKEND],[
 	if test "x${crypto_backend}" = "xopenssl"; then
 		AC_MSG_RESULT(OpenSSL)
 
-		if test "x${enable_gost}" = "xyes"; then
-			ACX_OPENSSL(1,0,0)
-		else
-			ACX_OPENSSL(0,9,8)
-		fi
+		ACX_OPENSSL(1,0,0)
 
 		CRYPTO_INCLUDES=$OPENSSL_INCLUDES
 		CRYPTO_LIBS=$OPENSSL_LIBS
@@ -85,11 +81,7 @@ AC_DEFUN([ACX_CRYPTO_BACKEND],[
 	elif test "x${crypto_backend}" = "xbotan"; then
 		AC_MSG_RESULT(Botan)
 
-		if test "x${enable_gost}" = "xyes"; then
-			ACX_BOTAN(1,10,0)
-		else
-			ACX_BOTAN(1,10,0)
-		fi
+		ACX_BOTAN(1,10,0)
 
 		CRYPTO_INCLUDES=$BOTAN_INCLUDES
 		CRYPTO_LIBS=$BOTAN_LIBS
