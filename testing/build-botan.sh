@@ -33,10 +33,14 @@ case "$DISTRIBUTION" in
 		;;
 	freebsd | \
 	netbsd )
+		opt=""
+		if uname -a 2>/dev/null | grep -q "FreeBSD 10" 2>/dev/null; then
+			opt="--cc=clang"
+		fi
 		(
 			gunzip -c "$BOTAN_SRC" | tar xf - &&
 			cd "$BOTAN" &&
-			python2.7 ./configure.py --prefix="$INSTALL_ROOT" &&
+			python2.7 ./configure.py --prefix="$INSTALL_ROOT" $opt &&
 			$MAKE &&
 			$MAKE install
 		) &&
