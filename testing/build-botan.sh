@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 source `dirname "$0"`/lib.sh && init || exit 1
 
-BOTAN="Botan-1.10.3"
+BOTAN="Botan-1.10.7"
 BOTAN_URL="http://botan.randombit.net/files/$BOTAN.tgz"
 BOTAN_FILENAME="$BOTAN.tgz"
 BOTAN_HASH_TYPE="sha1"
-BOTAN_HASH="0c0b2f6337d94245a32e215047311526652a114d"
+BOTAN_HASH="54552cdafabea710f48cd4536a938ed329ef60dd"
 
 check_if_built botan && exit 0
 start_build botan
@@ -43,12 +43,24 @@ case "$DISTRIBUTION" in
 		build_ok=1
 		;;
 	sunos )
+		opt=""
+		case "$platform" in
+			i386)
+				opt="--disable-asm --cpu=i686"
+				;;
+
+			sparc)
+				opt="--cpu=sparc64"
+				;;
+
+			*)
+				exit 1
+				;;
+		esac
 		(
 			gunzip -c "$BOTAN_SRC" | tar xf - &&
 			cd "$BOTAN" &&
-			./configure.py --prefix="$INSTALL_ROOT" \
-				--disable-asm \
-				--cpu=i686 &&
+			./configure.py --prefix="$INSTALL_ROOT" $opt &&
 			$MAKE &&
 			$MAKE install
 		) &&
