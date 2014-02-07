@@ -51,8 +51,8 @@ Options:
 	--disable-non-paged-memory
 				Disable non-paged memory for secure storage
 				(default enabled)
-	--disable-ecc		Enable support for ECC (default enabled)
-	--enable-gost		Enable support for GOST (default disabled)
+	--disable-ecc		Disable support for ECC (default enabled)
+	--disable-gost		Disable support for GOST (default enabled)
 	--enable-visibility	Enable -fvisibility=hidden GCC flags so
 				only the PKCS#11 C_* entry points are kept
 	--with-crypto-backend	Select crypto backend (openssl|botan)

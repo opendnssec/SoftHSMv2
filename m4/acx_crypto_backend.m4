@@ -24,10 +24,10 @@ AC_DEFUN([ACX_CRYPTO_BACKEND],[
 
 	AC_ARG_ENABLE(gost,
 		AC_HELP_STRING([--enable-gost],
-			[Enable support for GOST (default disabled)]
+			[Enable support for GOST (default enabled)]
 		),
 		[enable_gost="${enableval}"],
-		[enable_gost="no"]
+		[enable_gost="yes"]
 	)
 	AC_MSG_CHECKING(for GOST support)
 	if test "x${enable_gost}" = "xyes"; then
