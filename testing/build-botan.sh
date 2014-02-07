@@ -21,8 +21,7 @@ case "$DISTRIBUTION" in
 	ubuntu | \
 	debian | \
 	opensuse | \
-	suse | \
-	freebsd )
+	suse )
 		(
 			gunzip -c "$BOTAN_SRC" | tar xf - &&
 			cd "$BOTAN" &&
@@ -32,6 +31,7 @@ case "$DISTRIBUTION" in
 		) &&
 		build_ok=1
 		;;
+	freebsd | \
 	netbsd )
 		(
 			gunzip -c "$BOTAN_SRC" | tar xf - &&
@@ -43,6 +43,7 @@ case "$DISTRIBUTION" in
 		build_ok=1
 		;;
 	sunos )
+		platform=`uname -p`
 		opt=""
 		case "$platform" in
 			i386)
