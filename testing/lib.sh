@@ -694,8 +694,13 @@ check_if_tested ()
 		local build_rev=`cat "$INSTALL_ROOT/.$name_tag.test" 2>/dev/null`
 		
 		if [ "$REVISION" = "$build_rev" ]; then
-		    if [ -f junit.xml ]; then
-		        touch junit.xml
+		    if [ "$INSTALL_ROOT/.$name_tag.junit" ]; then
+		        if ! cp -- "$INSTALL_ROOT/.$name_tag.junit" "$WORKSPACE/junit.xml" 2>/dev/null; then
+		            return 1
+		        fi
+		    fi
+		    if [ -f "$WORKSPACE/junit.xml" ]; then
+		        touch "$WORKSPACE/junit.xml"
 		    fi
 			return 0
 		fi
@@ -830,6 +835,12 @@ set_test_ok ()
 				echo "set_test_ok: Can't tag test ok $INSTALL_ROOT/.$name_tag.ok.test !" >&2
 				return 1
 			fi
+            if [ -f "$WORKSPACE/junit.xml" ]; then
+                if ! cp -- "$WORKSPACE/junit.xml" "$INSTALL_ROOT/.$name_tag.junit" 2>/dev/null; then
+                     echo "set_test_ok: Can't copy $WORKSPACE/junit.xml to $INSTALL_ROOT/.$name_tag.junit !" >&2
+                     return 1
+                 fi
+            fi
 			return 0
 		fi
 	fi
