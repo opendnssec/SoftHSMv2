@@ -177,7 +177,7 @@ ByteString OSSLGOSTPrivateKey::PKCS8Encode()
 }
 
 // Decode from PKCS#8 BER
-bool OSSLGOSTPrivateKey::PKCS8Decode(const ByteString& ber)
+bool OSSLGOSTPrivateKey::PKCS8Decode(const ByteString& /*ber*/)
 {
 	return false;
 }
