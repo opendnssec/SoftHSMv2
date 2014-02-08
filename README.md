@@ -23,6 +23,7 @@ because of the PKCS#11 interface.
 ## Developers
 
 - Rickard Bellgrim (.SE, The Internet Infrastructure Foundation, www.iis.se)
+- Francis Dupont (ISC, www.isc.org)
 - René Post (XPT Software and Consulting, www.xpt.nl)
 - Roland van Rijswijk (SURFnet bv, www.surfnet.nl)
 
