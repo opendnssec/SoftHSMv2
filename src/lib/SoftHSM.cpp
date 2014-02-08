@@ -398,7 +398,7 @@ CK_RV SoftHSM::C_Initialize(CK_VOID_PTR pInitArgs)
 	}
 
 	// Initiate SecureMemoryRegistry
-	if (SecureMemoryRegistry::i == NULL)
+	if (SecureMemoryRegistry::i() == NULL)
 	{
 		return CKR_GENERAL_ERROR;
 	}
