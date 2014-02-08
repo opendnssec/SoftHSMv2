@@ -156,7 +156,7 @@ ByteString BotanGOSTPrivateKey::PKCS8Encode()
 }
 
 // Decode from PKCS#8 BER
-bool BotanGOSTPrivateKey::PKCS8Decode(const ByteString& ber)
+bool BotanGOSTPrivateKey::PKCS8Decode(const ByteString& /*ber*/)
 {
 	return false;
 }
