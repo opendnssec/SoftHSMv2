@@ -55,10 +55,6 @@ public:
 	void tearDown();
 
 private:
-	void writeTmpFile(ByteString& data);
-
-	void readTmpFile(ByteString& data);
-
 	// AES instance
 	SymmetricAlgorithm* aes;
 };

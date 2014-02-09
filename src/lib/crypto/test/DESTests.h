@@ -57,10 +57,6 @@ public:
 	void tearDown();
 
 private:
-	void writeTmpFile(ByteString& data);
-
-	void readTmpFile(ByteString& data);
-
 	// DES instance
 	SymmetricAlgorithm* des;
 };
