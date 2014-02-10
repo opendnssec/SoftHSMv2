@@ -49,7 +49,7 @@ EXTRA_DIST =	$(srcdir)/m4/*.m4 \
 		$(srcdir)/win32+botan/util/util.vcxproj \
 		$(srcdir)/win32+botan/util/util.vcxproj.filters \
 		$(srcdir)/win32+botan/util/util.vcxproj.user \
-		$(srcdir)/WIN32-NOTES \
+		$(srcdir)/WIN32-NOTES.md \
 		$(srcdir)/win32+openssl/config.h \
 		$(srcdir)/win32+openssl/convarch/convarch.vcxproj \
 		$(srcdir)/win32+openssl/convarch/convarch.vcxproj.filters \
