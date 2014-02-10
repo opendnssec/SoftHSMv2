@@ -58,6 +58,8 @@ void SlotManagerTests::tearDown()
 #else
 	CPPUNIT_ASSERT(!system("rmdir /s /q testdir 2> nul"));
 #endif
+
+	SecureMemoryRegistry::reset();
 }
 
 void SlotManagerTests::testNoExistingTokens()

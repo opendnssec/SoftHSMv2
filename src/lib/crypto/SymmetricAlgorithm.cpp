@@ -123,9 +123,9 @@ bool SymmetricAlgorithm::decryptFinal(ByteString& /*data*/)
 }
 
 // Key factory
-void SymmetricAlgorithm::recycleKey(SymmetricKey* /*toRecycle*/)
+void SymmetricAlgorithm::recycleKey(SymmetricKey* toRecycle)
 {
-	delete currentKey;
+	delete toRecycle;
 }
 
 bool SymmetricAlgorithm::generateKey(SymmetricKey& key, RNG* rng /* = NULL */)
