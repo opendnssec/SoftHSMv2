@@ -1,0 +1,8 @@
+NEWS for SoftHSM -- History of user visible changes
+
+SoftHSM 2.0.0a1 - 2014-02-10
+
+This is the first alpha release of SoftHSMv2. It focuses on a higher 
+level of security by encrypting sensitive information and using 
+unswappable memory. There is also a more generalized crypto backend,
+where you can use Botan or OpenSSL.

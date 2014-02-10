@@ -1,0 +1,40 @@
+# Automake, autoconf, libtool
+Makefile
+Makefile.in
+core
+acinclude.m4
+aclocal.m4
+autom4te.cache
+compile
+py-compile
+confdefs.h
+config.*
+!win32+botan/config.h
+!win32+openssl/config.h
+configure
+conftest
+conftest.c
+depcomp
+install-sh
+libtool
+libtool.m4
+lt*.m4
+ltmain.sh
+missing
+mkinstalldirs
+stamp-h*
+obj
+test-driver
+
+# Object files
+*.o
+
+# Libraries
+*.lib
+*.a
+
+# Shared objects (inc. Windows DLLs)
+*.dll
+*.so
+*.so.*
+*.dylib
