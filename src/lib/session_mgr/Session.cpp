@@ -368,12 +368,15 @@ PrivateKey* Session::getPrivateKey()
 
 void Session::setSymmetricKey(SymmetricKey* symmetricKey)
 {
-	if (macOp == NULL)
-		return;
-
 	if (this->symmetricKey != NULL)
 	{
-		macOp->recycleKey(symmetricKey);
+		if (macOp) {
+			macOp->recycleKey(symmetricKey);
+		} else if (symmetricCryptoOp) {
+			symmetricCryptoOp->recycleKey(symmetricKey);
+		} else {
+			return;
+		}
 	}
 
 	this->symmetricKey = symmetricKey;
