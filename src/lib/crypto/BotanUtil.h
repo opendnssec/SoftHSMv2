@@ -36,7 +36,7 @@
 #include "config.h"
 #include "ByteString.h"
 #include <botan/bigint.h>
-#ifdef WITH_ECC
+#if defined(WITH_ECC) || defined(WITH_GOST)
 #include <botan/ec_group.h>
 #endif
 
@@ -48,7 +48,7 @@ namespace BotanUtil
 	// Convert a ByteString to a Botan BigInt
 	Botan::BigInt byteString2bigInt(const ByteString& byteString);
 
-#ifdef WITH_ECC
+#if defined(WITH_ECC) || defined(WITH_GOST)
 	// Convert a Botan EC group to a ByteString
 	ByteString ecGroup2ByteString(const Botan::EC_Group& ecGroup);
 
