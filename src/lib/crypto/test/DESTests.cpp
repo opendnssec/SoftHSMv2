@@ -223,7 +223,6 @@ void DESTests::testCBC()
 		"6209876098547207"
 	};
 
-	printf("cbc\n");
 	for (int i = 0; i < 5; i++)
 	{
 		ByteString keyData56(testKeys56[i]);
@@ -491,7 +490,6 @@ void DESTests::testECB()
 		"6209876098547207"
 	};
 
-	printf("ecb\n");
 	for (int i = 0; i < 5; i++)
 	{
 		ByteString keyData56(testKeys56[i]);
@@ -759,7 +757,6 @@ void DESTests::testOFB()
 		"6209876098547207"
 	};
 
-	printf("ofb\n");
 	for (int i = 0; i < 5; i++)
 	{
 		ByteString keyData56(testKeys56[i]);
@@ -1026,7 +1023,6 @@ void DESTests::testCFB()
 		"6209876098547207"
 	};
 
-	printf("cfb\n");
 	for (int i = 0; i < 5; i++)
 	{
 		ByteString keyData56(testKeys56[i]);
