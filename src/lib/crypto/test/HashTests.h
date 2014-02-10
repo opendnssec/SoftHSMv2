@@ -60,10 +60,6 @@ public:
 	void tearDown();
 
 private:
-	void writeTmpFile(ByteString& data);
-
-	void readTmpFile(ByteString& data);
-
 	HashAlgorithm* hash;
 
 	RNG* rng;
