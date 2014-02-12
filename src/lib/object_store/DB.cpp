@@ -33,9 +33,11 @@
 
 #include "config.h"
 #include "OSPathSep.h"
+#include "log.h"
 #include <cstdlib>
 #include <cstdio>
 #include <iostream>
+#include <vector>
 #include <sqlite3.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -69,14 +71,16 @@ void DB::shutdown()
 	sqlite3_shutdown();
 }
 
-static int static_vprintf_err(const char *format, va_list ap)
+static int static_log_err(const char *format, va_list ap)
 {
-	int rv = vfprintf(stderr,format,ap);
-	fprintf(stderr,"\n");
-	return rv;
+	std::vector<char> logMessage;
+	logMessage.resize(4096);
+	vsnprintf(&logMessage[0], 4096, format, ap);
+	ERROR_MSG(&logMessage[0]);
+	return 0;
 }
 
-static DB::LogErrorHandler static_LogErrorhandler = static_vprintf_err;
+static DB::LogErrorHandler static_LogErrorhandler = static_log_err;
 
 void DB::logError(const std::string &format, ...)
 {
@@ -97,7 +101,7 @@ DB::LogErrorHandler DB::setLogErrorHandler(DB::LogErrorHandler handler)
 
 void DB::resetLogErrorHandler()
 {
-	static_LogErrorhandler = static_vprintf_err;
+	static_LogErrorhandler = static_log_err;
 }
 
 static void reportErrorDB(sqlite3 *db)
