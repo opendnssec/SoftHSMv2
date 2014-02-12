@@ -42,7 +42,7 @@ class ObjectStoreToken
 {
 public:
 	// Select the type of backend to use for storing token objects.
-	static void selectBackend(const std::string& backend);
+	static bool selectBackend(const std::string& backend);
 	
 	// Create a new token
 	static ObjectStoreToken* createToken(const std::string basePath, const std::string tokenDir, const ByteString& label, const ByteString& serial);
