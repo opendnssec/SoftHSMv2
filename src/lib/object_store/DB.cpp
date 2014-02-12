@@ -66,7 +66,6 @@ void DB::initialize()
 // Call once at process termination
 void DB::shutdown()
 {
-	printf("\nsqlite3 memory still in use: %lld\n", sqlite3_memory_used());
 	sqlite3_shutdown();
 }
 
@@ -237,14 +236,7 @@ public:
 			reportError(_stmt);
 			return Statement::ReturnCodeError;
 		}
-	#if 0
-	#if HAVE_SQL_TRACE
-		if (rv == SQLITE_ROW)
-			printf("SQLITE_ROW\n");
-		else
-			printf("SQLITE_DONE\n");
-	#endif
-	#endif
+
 		if (rv==SQLITE_ROW)
 		{
 			return Statement::ReturnCodeRow;
@@ -492,8 +484,6 @@ time_t DB::Result::getDatetime(unsigned int fieldidx)
 
 	const unsigned char *value = sqlite3_column_text(_handle->_stmt, fieldidx-1);
 	int valuelen = sqlite3_column_bytes(_handle->_stmt, fieldidx-1);
-
-//		printf("datetime:%s\n",value);
 
 	unsigned long years,mons,days,hours,mins,secs;
 	struct tm gm_tm = {0,0,0,0,0,0,0,0,0,0,0};
@@ -770,7 +760,7 @@ DB::Statement DB::Connection::prepare(const std::string &format, ...){
 	va_end(args);
 	if (cneeded<0) {
 		DB::logError("Connection::prepare: vsnprintf encoding error");
-		return Statement();	
+		return Statement();
 	}
 	if (((size_t)cneeded)>=sizeof(statement)) {
 		// long form
