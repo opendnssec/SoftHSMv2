@@ -38,6 +38,7 @@
 #include "BotanUtil.h"
 #include <string.h>
 #include <botan/pkcs8.h>
+#include <botan/ber_dec.h>
 #include <botan/der_enc.h>
 #include <botan/oids.h>
 
@@ -135,9 +136,13 @@ ByteString BotanDSAPrivateKey::PKCS8Encode()
 	ByteString der;
 	createBotanKey();
 	if (dsa == NULL) return der;
+#if BOTAN_VERSION_MINOR == 11
+	const Botan::secure_vector<Botan::byte> ber = Botan::PKCS8::BER_encode(*dsa);
+#else
 	const Botan::SecureVector<Botan::byte> ber = Botan::PKCS8::BER_encode(*dsa);
+#endif
 	der.resize(ber.size());
-	memcpy(&der[0], ber.begin(), ber.size());
+	memcpy(&der[0], &ber[0], ber.size());
 	return der;
 }
 
@@ -146,7 +151,11 @@ bool BotanDSAPrivateKey::PKCS8Decode(const ByteString& ber)
 {
 	Botan::DataSource_Memory source(ber.const_byte_str(), ber.size());
 	if (source.end_of_data()) return false;
+#if BOTAN_VERSION_MINOR == 11
+	Botan::secure_vector<Botan::byte> keydata;
+#else
 	Botan::SecureVector<Botan::byte> keydata;
+#endif
 	Botan::AlgorithmIdentifier alg_id;
 	Botan::DSA_PrivateKey* key = NULL;
 	try
