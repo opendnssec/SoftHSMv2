@@ -10,10 +10,12 @@ AC_DEFUN([ACX_BOTAN_ECC],[
 	AC_LANG_PUSH([C++])
 	AC_RUN_IFELSE([
 		AC_LANG_SOURCE([[
+			#include <botan/init.h>
 			#include <botan/ec_group.h>
 			#include <botan/oids.h>
 			int main()
 			{
+				Botan::LibraryInitializer::initialize();
 				const std::string name("secp256r1");
 				const Botan::OID oid(Botan::OIDS::lookup(name));
 				const Botan::EC_Group ecg(oid);

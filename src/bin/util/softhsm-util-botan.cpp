@@ -148,6 +148,16 @@ Botan::Private_Key* crypto_read_file(char* filePath, char* filePIN)
 
 	try
 	{
+#if BOTAN_VERSION_MINOR == 11
+		if (filePIN == NULL)
+		{
+			pkey = Botan::PKCS8::load_key(std::string(filePath), *rng);
+		}
+		else
+		{
+			pkey = Botan::PKCS8::load_key(std::string(filePath), *rng, std::string(filePIN));
+		}
+#else
 		if (filePIN == NULL)
 		{
 			pkey = Botan::PKCS8::load_key(filePath, *rng);
@@ -156,6 +166,7 @@ Botan::Private_Key* crypto_read_file(char* filePath, char* filePIN)
 		{
 			pkey = Botan::PKCS8::load_key(filePath, *rng, filePIN);
 		}
+#endif
 	}
 	catch (std::exception& e)
 	{

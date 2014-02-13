@@ -10,10 +10,12 @@ AC_DEFUN([ACX_BOTAN_GOST],[
 	AC_LANG_PUSH([C++])
 	AC_RUN_IFELSE([
 		AC_LANG_SOURCE([[
+			#include <botan/init.h>
 			#include <botan/gost_3410.h>
 			#include <botan/oids.h>
 			int main()
 			{
+				Botan::LibraryInitializer::initialize();
 				const std::string name("gost_256A");
 				const Botan::OID oid(Botan::OIDS::lookup(name));
 				const Botan::EC_Group group(oid);

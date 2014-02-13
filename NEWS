@@ -1,5 +1,17 @@
 NEWS for SoftHSM -- History of user visible changes
 
+SoftHSM develop
+
+* SOFTHSM-68: Display a better configure message when there is a 
+  version of Botan with a broken ECC/OID implementation.
+* SOFTHSM-70: Improved handling of the database backend.
+* SOFTHSM-71: Supporting Botan 1.11.
+
+Bugfixes:
+* SOFTHSM-69: GOST did not work when you disabled ECC.
+* Fixed a number of memory leaks.
+
+
 SoftHSM 2.0.0a1 - 2014-02-10
 
 This is the first alpha release of SoftHSMv2. It focuses on a higher 
