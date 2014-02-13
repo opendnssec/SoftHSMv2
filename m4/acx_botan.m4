@@ -22,6 +22,10 @@ AC_DEFUN([ACX_BOTAN],[
 	BOTAN_LIBS="-L$BOTAN_PATH/lib -lbotan-1.$BOTAN_VERSION_MINOR"
 	AC_MSG_RESULT($BOTAN_LIBS)
 
+	if test "x${BOTAN_VERSION_MINOR}" = "x11"; then
+		AX_CXX_COMPILE_STDCXX_11([noext],[mandatory])
+	fi
+
 	tmp_CPPFLAGS=$CPPFLAGS
 	tmp_LIBS=$LIBS
 
