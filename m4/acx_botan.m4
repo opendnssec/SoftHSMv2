@@ -9,12 +9,12 @@ AC_DEFUN([ACX_BOTAN],[
 		])
 
 	BOTAN_VERSION_MINOR=10
-	AC_MSG_CHECKING(what are the Botan includes)
 	AC_CHECK_FILE($BOTAN_PATH/include/botan-1.10/botan/init.h,
 		      BOTAN_VERSION_MINOR=10,
 		      AC_CHECK_FILE($BOTAN_PATH/include/botan-1.11/botan/init.h,
 				    BOTAN_VERSION_MINOR=11,
 				    AC_MSG_ERROR([Cannot find Botan includes])))
+	AC_MSG_CHECKING(what are the Botan includes)
 	BOTAN_INCLUDES="-I$BOTAN_PATH/include/botan-1.$BOTAN_VERSION_MINOR"
 	AC_MSG_RESULT($BOTAN_INCLUDES)
 
