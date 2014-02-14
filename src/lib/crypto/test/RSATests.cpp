@@ -78,7 +78,6 @@ void RSATests::testKeyGeneration()
 
 	// Key sizes to test
 	std::vector<size_t> keySizes;
-	keySizes.push_back(1023);
 	keySizes.push_back(1024);
 	keySizes.push_back(1025);
 	keySizes.push_back(1280);
