@@ -742,14 +742,9 @@ bool BotanRSA::generateKeyPair(AsymmetricKeyPair** ppKeyPair, AsymmetricParamete
 
 	if (params->getBitLength() < getMinKeySize() || params->getBitLength() > getMaxKeySize())
 	{
-		ERROR_MSG("This RSA key size is not supported");
+		ERROR_MSG("This RSA key size (%lu) is not supported", params->getBitLength());
 
 		return false;
-	}
-
-	if (params->getBitLength() < 1024)
-	{
-		WARNING_MSG("Using an RSA key size < 1024 bits is not recommended");
 	}
 
 	// Retrieve the desired public exponent
@@ -772,8 +767,8 @@ bool BotanRSA::generateKeyPair(AsymmetricKeyPair** ppKeyPair, AsymmetricParamete
 		BotanRNG* rng = (BotanRNG*)BotanCryptoFactory::i()->getRNG();
 		rsa = new Botan::RSA_PrivateKey(*rng->getRNG(),	params->getBitLength(),	e);
 	}
-	catch(...) {
-		ERROR_MSG("RSA key generation failed");
+	catch (std::exception& e) {
+		ERROR_MSG("RSA key generation failed: %s", e.what());
 
 		delete kp;
 
@@ -793,7 +788,7 @@ bool BotanRSA::generateKeyPair(AsymmetricKeyPair** ppKeyPair, AsymmetricParamete
 
 unsigned long BotanRSA::getMinKeySize()
 {
-	return 512;
+	return 1024;
 }
 
 unsigned long BotanRSA::getMaxKeySize()
