@@ -38,15 +38,33 @@
 #include "BotanUtil.h"
 #include <string.h>
 #include <botan/pkcs8.h>
+#include <botan/ber_dec.h>
 #include <botan/der_enc.h>
 #include <botan/oids.h>
 
+#if BOTAN_VERSION_MINOR == 11
+std::vector<Botan::byte> BotanDH_PrivateKey::public_value() const
+{
+	return this->impl->public_value();
+}
+#else
 Botan::MemoryVector<Botan::byte> BotanDH_PrivateKey::public_value() const
 {
 	return this->impl->public_value();
 }
+#endif
 
 // Redefine of DH_PrivateKey constructor with the correct format
+#if BOTAN_VERSION_MINOR == 11
+BotanDH_PrivateKey::BotanDH_PrivateKey(
+			const Botan::AlgorithmIdentifier& alg_id,
+			const Botan::secure_vector<Botan::byte>& key_bits,
+			Botan::RandomNumberGenerator& rng) :
+	Botan::DL_Scheme_PrivateKey(alg_id, key_bits, Botan::DL_Group::PKCS3_DH_PARAMETERS)
+{
+	impl = new Botan::DH_PrivateKey(rng, group, x);
+}
+#else
 BotanDH_PrivateKey::BotanDH_PrivateKey(
 			const Botan::AlgorithmIdentifier& alg_id,
 			const Botan::MemoryRegion<Botan::byte>& key_bits,
@@ -55,6 +73,7 @@ BotanDH_PrivateKey::BotanDH_PrivateKey(
 {
 	impl = new Botan::DH_PrivateKey(rng, group, x);
 }
+#endif
 
 BotanDH_PrivateKey::BotanDH_PrivateKey(Botan::RandomNumberGenerator& rng,
 				       const Botan::DL_Group& grp,
@@ -153,6 +172,18 @@ ByteString BotanDHPrivateKey::PKCS8Encode()
 	if (dh == NULL) return der;
 	// Force PKCS3_DH_PARAMETERS for p, g and no q.
 	const size_t PKCS8_VERSION = 0;
+#if BOTAN_VERSION_MINOR == 11
+	const std::vector<Botan::byte> parameters = dh->impl->get_domain().DER_encode(Botan::DL_Group::PKCS3_DH_PARAMETERS);
+	const Botan::AlgorithmIdentifier alg_id(dh->impl->get_oid(), parameters);
+	const Botan::secure_vector<Botan::byte> ber =
+		Botan::DER_Encoder()
+		.start_cons(Botan::SEQUENCE)
+		    .encode(PKCS8_VERSION)
+		    .encode(alg_id)
+		    .encode(dh->impl->pkcs8_private_key(), Botan::OCTET_STRING)
+		.end_cons()
+	    .get_contents();
+#else
 	const Botan::MemoryVector<Botan::byte> parameters = dh->impl->get_domain().DER_encode(Botan::DL_Group::PKCS3_DH_PARAMETERS);
 	const Botan::AlgorithmIdentifier alg_id(dh->impl->get_oid(), parameters);
 	const Botan::SecureVector<Botan::byte> ber =
@@ -163,8 +194,9 @@ ByteString BotanDHPrivateKey::PKCS8Encode()
 		    .encode(dh->impl->pkcs8_private_key(), Botan::OCTET_STRING)
 		.end_cons()
 	    .get_contents();
+#endif
 	der.resize(ber.size());
-	memcpy(&der[0], ber.begin(), ber.size());
+	memcpy(&der[0], &ber[0], ber.size());
 	return der;
 }
 
@@ -173,12 +205,15 @@ bool BotanDHPrivateKey::PKCS8Decode(const ByteString& ber)
 {
 	Botan::DataSource_Memory source(ber.const_byte_str(), ber.size());
 	if (source.end_of_data()) return false;
+#if BOTAN_VERSION_MINOR == 11
+	Botan::secure_vector<Botan::byte> keydata;
+#else
 	Botan::SecureVector<Botan::byte> keydata;
+#endif
 	Botan::AlgorithmIdentifier alg_id;
 	BotanDH_PrivateKey* key = NULL;
 	try
 	{
-
 		Botan::BER_Decoder(source)
 		.start_cons(Botan::SEQUENCE)
 			.decode_and_check<size_t>(0, "Unknown PKCS #8 version number")
@@ -231,7 +266,7 @@ void BotanDHPrivateKey::createBotanKey()
 	    this->g.size() != 0 &&
 	    this->x.size() != 0)
 	{
-		if (dh)   
+		if (dh)
 		{
 			delete dh;
 			dh = NULL;

@@ -53,7 +53,7 @@ Botan::BigInt BotanUtil::byteString2bigInt(const ByteString& byteString)
 	return Botan::BigInt(byteString.const_byte_str(), byteString.size());
 }
 
-#ifdef WITH_ECC
+#if defined(WITH_ECC) || defined(WITH_GOST)
 // Convert a Botan EC group to a ByteString
 ByteString BotanUtil::ecGroup2ByteString(const Botan::EC_Group& ecGroup)
 {

@@ -49,7 +49,7 @@ static CreateToken static_createToken = reinterpret_cast<CreateToken>(OSToken::c
 static AccessToken static_accessToken = reinterpret_cast<AccessToken>(OSToken::accessToken);
 
 // Create a new token
-/*static*/ void ObjectStoreToken::selectBackend(const std::string &backend)
+/*static*/ bool ObjectStoreToken::selectBackend(const std::string &backend)
 {
 	if (backend == "file")
 	{
@@ -57,7 +57,7 @@ static AccessToken static_accessToken = reinterpret_cast<AccessToken>(OSToken::a
 		static_accessToken = reinterpret_cast<AccessToken>(OSToken::accessToken);
 	}
 #if HAVE_OBJECTSTORE_BACKEND_DB
-	else if (backend == "db") 
+	else if (backend == "db")
 	{
 		static_createToken = reinterpret_cast<CreateToken>(DBToken::createToken);
 		static_accessToken = reinterpret_cast<AccessToken>(DBToken::accessToken);
@@ -65,8 +65,11 @@ static AccessToken static_accessToken = reinterpret_cast<AccessToken>(OSToken::a
 #endif
 	else
 	{
-		ERROR_MSG("Unknown objectstore.backend \"%s\", backend unchanged", backend.c_str());
+		ERROR_MSG("Unknown value (%s) for objectstore.backend in configuration", backend.c_str());
+		return false;
 	}
+
+	return true;
 }
 
 ObjectStoreToken* ObjectStoreToken::createToken(const std::string basePath, const std::string tokenDir, const ByteString& label, const ByteString& serial)

@@ -9,18 +9,22 @@ AC_DEFUN([ACX_BOTAN],[
 		])
 
 	BOTAN_VERSION_MINOR=10
-	AC_MSG_CHECKING(what are the Botan includes)
 	AC_CHECK_FILE($BOTAN_PATH/include/botan-1.10/botan/init.h,
 		      BOTAN_VERSION_MINOR=10,
 		      AC_CHECK_FILE($BOTAN_PATH/include/botan-1.11/botan/init.h,
 				    BOTAN_VERSION_MINOR=11,
 				    AC_MSG_ERROR([Cannot find Botan includes])))
+	AC_MSG_CHECKING(what are the Botan includes)
 	BOTAN_INCLUDES="-I$BOTAN_PATH/include/botan-1.$BOTAN_VERSION_MINOR"
 	AC_MSG_RESULT($BOTAN_INCLUDES)
 
 	AC_MSG_CHECKING(what are the Botan libs)
 	BOTAN_LIBS="-L$BOTAN_PATH/lib -lbotan-1.$BOTAN_VERSION_MINOR"
 	AC_MSG_RESULT($BOTAN_LIBS)
+
+	if test "x${BOTAN_VERSION_MINOR}" = "x11"; then
+		AX_CXX_COMPILE_STDCXX_11([noext],[mandatory])
+	fi
 
 	tmp_CPPFLAGS=$CPPFLAGS
 	tmp_LIBS=$LIBS

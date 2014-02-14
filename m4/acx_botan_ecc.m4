@@ -10,10 +10,12 @@ AC_DEFUN([ACX_BOTAN_ECC],[
 	AC_LANG_PUSH([C++])
 	AC_RUN_IFELSE([
 		AC_LANG_SOURCE([[
+			#include <botan/init.h>
 			#include <botan/ec_group.h>
 			#include <botan/oids.h>
 			int main()
 			{
+				Botan::LibraryInitializer::initialize();
 				const std::string name("secp256r1");
 				const Botan::OID oid(Botan::OIDS::lookup(name));
 				const Botan::EC_Group ecg(oid);
@@ -36,17 +38,9 @@ AC_DEFUN([ACX_BOTAN_ECC],[
 	],[
 		AC_MSG_RESULT([Cannot find P256])
 		AC_MSG_ERROR([
-Botan library has no ECC support
-or src/pubkey/ec_group/ec_group.cpp must be fixed: at line 124:
-@@ -121,7 +121,7 @@
-          .get_contents();
-       }
-    else if(form == EC_DOMPAR_ENC_OID)
--      return DER_Encoder().encode(get_oid()).get_contents();
-+      return DER_Encoder().encode(OID(get_oid())).get_contents();
-    else if(form == EC_DOMPAR_ENC_IMPLICITCA)
-       return DER_Encoder().encode_null().get_contents();
-    else
+Botan library has no valid ECC support. Please upgrade to a later version 
+of Botan, above or including version 1.10.6 or 1.11.5.
+Alternatively disable ECC support in SoftHSM with --disable-ecc
 ])
 	],[])
 	AC_LANG_POP([C++])

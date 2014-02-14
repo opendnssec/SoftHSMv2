@@ -517,7 +517,7 @@ void dump_booleans(sqlite3* db, long long oid)
 			printf("\n");
 		}
 
-		dumpBool(value);
+		dumpBool1(value);
 		printf("\n");
 	}
 }
