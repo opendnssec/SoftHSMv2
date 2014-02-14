@@ -78,7 +78,6 @@ void RSATests::testKeyGeneration()
 
 	// Key sizes to test
 	std::vector<size_t> keySizes;
-	keySizes.push_back(1023);
 	keySizes.push_back(1024);
 	keySizes.push_back(1025);
 	keySizes.push_back(1280);
@@ -93,24 +92,17 @@ void RSATests::testKeyGeneration()
 			p.setBitLength(*k);
 
 			// Generate key-pair
-			if (*k < 1024)
-			{
-				CPPUNIT_ASSERT(!rsa->generateKeyPair(&kp, &p));
-			}
-			else
-			{
-				CPPUNIT_ASSERT(rsa->generateKeyPair(&kp, &p));
+			CPPUNIT_ASSERT(rsa->generateKeyPair(&kp, &p));
 
-				RSAPublicKey* pub = (RSAPublicKey*) kp->getPublicKey();
-				RSAPrivateKey* priv = (RSAPrivateKey*) kp->getPrivateKey();
+			RSAPublicKey* pub = (RSAPublicKey*) kp->getPublicKey();
+			RSAPrivateKey* priv = (RSAPrivateKey*) kp->getPrivateKey();
 
-				CPPUNIT_ASSERT(pub->getBitLength() == *k);
-				CPPUNIT_ASSERT(priv->getBitLength() == *k);
-				CPPUNIT_ASSERT(pub->getE() == *e);
-				CPPUNIT_ASSERT(priv->getE() == *e);
+			CPPUNIT_ASSERT(pub->getBitLength() == *k);
+			CPPUNIT_ASSERT(priv->getBitLength() == *k);
+			CPPUNIT_ASSERT(pub->getE() == *e);
+			CPPUNIT_ASSERT(priv->getE() == *e);
 
-				rsa->recycleKeyPair(kp);
-			}
+			rsa->recycleKeyPair(kp);
 		}
 	}
 }

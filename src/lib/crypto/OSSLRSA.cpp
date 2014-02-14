@@ -55,7 +55,7 @@ OSSLRSA::~OSSLRSA()
 	{
 		delete pCurrentHash;
 	}
-	
+
 	if (pSecondHash != NULL)
 	{
 		delete pSecondHash;
@@ -78,7 +78,7 @@ bool OSSLRSA::sign(PrivateKey* privateKey, const ByteString& dataToSign, ByteStr
 		if (!privateKey->isOfType(OSSLRSAPrivateKey::type))
 		{
 			ERROR_MSG("Invalid key type supplied");
-	
+
 			return false;
 		}
 
@@ -130,7 +130,7 @@ bool OSSLRSA::sign(PrivateKey* privateKey, const ByteString& dataToSign, ByteStr
 		if (!privateKey->isOfType(OSSLRSAPrivateKey::type))
 		{
 			ERROR_MSG("Invalid key type supplied");
-	
+
 			return false;
 		}
 
@@ -177,7 +177,7 @@ bool OSSLRSA::sign(PrivateKey* privateKey, const ByteString& dataToSign, ByteStr
 		return AsymmetricAlgorithm::sign(privateKey, dataToSign, signature, mechanism);
 	}
 }
-	
+
 bool OSSLRSA::signInit(PrivateKey* privateKey, const std::string mechanism)
 {
 	if (!AsymmetricAlgorithm::signInit(privateKey, mechanism))
@@ -275,7 +275,7 @@ bool OSSLRSA::signInit(PrivateKey* privateKey, const std::string mechanism)
 		{
 			delete pCurrentHash;
 			pCurrentHash = NULL;
-			
+
 			delete pSecondHash;
 			pSecondHash = NULL;
 		}
@@ -328,7 +328,7 @@ bool OSSLRSA::signUpdate(const ByteString& dataToSign)
 }
 
 bool OSSLRSA::signFinal(ByteString& signature)
-{	
+{
 	// Save necessary state before calling super class signFinal
 	OSSLRSAPrivateKey* pk = (OSSLRSAPrivateKey*) currentPrivateKey;
 
@@ -360,7 +360,7 @@ bool OSSLRSA::signFinal(ByteString& signature)
 	{
 		return false;
 	}
-	
+
 	ByteString digest = firstHash + secondHash;
 
 	// Resize the data block for the signature to the modulus size of the key
@@ -406,7 +406,7 @@ bool OSSLRSA::signFinal(ByteString& signature)
 	if (!RSA_blinding_on(rsa, NULL))
 	{
 		ERROR_MSG("Failed to turn blinding on for OpenSSL RSA key");
-	
+
 		return false;
 	}
 
@@ -436,7 +436,7 @@ bool OSSLRSA::verify(PublicKey* publicKey, const ByteString& originalData, const
 		if (!publicKey->isOfType(OSSLRSAPublicKey::type))
 		{
 			ERROR_MSG("Invalid key type supplied");
-	
+
 			return false;
 		}
 
@@ -467,12 +467,12 @@ bool OSSLRSA::verify(PublicKey* publicKey, const ByteString& originalData, const
 		// Specific implementation for raw RSA verifiction; originalData is assumed to contain the
 		// full input data used to compute the signature and verification is performed by comparing
 		// originalData to the data recovered from the signature
-		
+
 		// Check if the public key is the right type
 		if (!publicKey->isOfType(OSSLRSAPublicKey::type))
 		{
 			ERROR_MSG("Invalid key type supplied");
-	
+
 			return false;
 		}
 
@@ -602,7 +602,7 @@ bool OSSLRSA::verifyInit(PublicKey* publicKey, const std::string mechanism)
 		{
 			delete pCurrentHash;
 			pCurrentHash = NULL;
-			
+
 			delete pSecondHash;
 			pSecondHash = NULL;
 		}
@@ -687,7 +687,7 @@ bool OSSLRSA::verifyFinal(const ByteString& signature)
 	{
 		return false;
 	}
-	
+
 	ByteString digest = firstHash + secondHash;
 
 	// Determine the signature NID type
@@ -859,7 +859,7 @@ bool OSSLRSA::decrypt(PrivateKey* privateKey, const ByteString& encryptedData, B
 
 	// Perform the RSA operation
 	data.resize(RSA_size(rsa));
-	
+
 	int decSize = RSA_private_decrypt(encryptedData.size(), (unsigned char*) encryptedData.const_byte_str(), &data[0], rsa, osslPadding);
 
 	if (decSize == -1)
@@ -900,6 +900,11 @@ bool OSSLRSA::generateKeyPair(AsymmetricKeyPair** ppKeyPair, AsymmetricParameter
 		return false;
 	}
 
+	if (params->getBitLength() < 1024)
+	{
+		WARNING_MSG("Using an RSA key size < 1024 bits is not recommended");
+	}
+
 	// Retrieve the desired public exponent
 	unsigned long e = params->getE().long_val();
 
@@ -938,7 +943,7 @@ bool OSSLRSA::generateKeyPair(AsymmetricKeyPair** ppKeyPair, AsymmetricParameter
 
 unsigned long OSSLRSA::getMinKeySize()
 {
-	return 1024;
+	return 512;
 }
 
 unsigned long OSSLRSA::getMaxKeySize()
@@ -1039,7 +1044,7 @@ PrivateKey* OSSLRSA::newPrivateKey()
 {
 	return (PrivateKey*) new OSSLRSAPrivateKey();
 }
-	
+
 AsymmetricParameters* OSSLRSA::newParameters()
 {
 	return (AsymmetricParameters*) new RSAParameters();
