@@ -6,6 +6,7 @@ SoftHSM develop
   version of Botan with a broken ECC/OID implementation.
 * SOFTHSM-70: Improved handling of the database backend.
 * SOFTHSM-71: Supporting Botan 1.11.
+* SOFTHSM-76: Do not generate RSA keys smaller than 1024 bit.
 
 Bugfixes:
 * SOFTHSM-69: GOST did not work when you disabled ECC.
