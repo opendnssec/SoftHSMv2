@@ -93,17 +93,24 @@ void RSATests::testKeyGeneration()
 			p.setBitLength(*k);
 
 			// Generate key-pair
-			CPPUNIT_ASSERT(rsa->generateKeyPair(&kp, &p));
+			if (*k < 1024)
+			{
+				CPPUNIT_ASSERT(!rsa->generateKeyPair(&kp, &p));
+			}
+			else
+			{
+				CPPUNIT_ASSERT(rsa->generateKeyPair(&kp, &p));
 
-			RSAPublicKey* pub = (RSAPublicKey*) kp->getPublicKey();
-			RSAPrivateKey* priv = (RSAPrivateKey*) kp->getPrivateKey();
+				RSAPublicKey* pub = (RSAPublicKey*) kp->getPublicKey();
+				RSAPrivateKey* priv = (RSAPrivateKey*) kp->getPrivateKey();
 
-			CPPUNIT_ASSERT(pub->getBitLength() == *k);
-			CPPUNIT_ASSERT(priv->getBitLength() == *k);
-			CPPUNIT_ASSERT(pub->getE() == *e);
-			CPPUNIT_ASSERT(priv->getE() == *e);
+				CPPUNIT_ASSERT(pub->getBitLength() == *k);
+				CPPUNIT_ASSERT(priv->getBitLength() == *k);
+				CPPUNIT_ASSERT(pub->getE() == *e);
+				CPPUNIT_ASSERT(priv->getE() == *e);
 
-			rsa->recycleKeyPair(kp);
+				rsa->recycleKeyPair(kp);
+			}
 		}
 	}
 }
