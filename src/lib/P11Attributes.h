@@ -75,11 +75,11 @@ public:
 		ck5=0x10,       //  5  Must be specified when object is unwrapped with C_UnwrapKey.
 		ck6=0x20,       //  6  Must not be specified when object is unwrapped with C_UnwrapKey.
 		ck7=0x40,       //  7  Cannot be revealed if object has its CKA_SENSITIVE attribute set to CK_TRUE or
-						//      its CKA_EXTRACTABLE attribute set to CK_FALSE.
+		                //      its CKA_EXTRACTABLE attribute set to CK_FALSE.
 		ck8=0x80,       //  8  May be modified after object is created with a C_SetAttributeValue call
-						//      or in the process of copying an object with a C_CopyObject call.
-						//      However, it is possible that a particular token may not permit modification of
-						//      the attribute during the course of a C_CopyObject call.
+		                //      or in the process of copying an object with a C_CopyObject call.
+		                //      However, it is possible that a particular token may not permit modification of
+		                //      the attribute during the course of a C_CopyObject call.
 		ck9=0x100,      //  9  Default value is token-specific, and may depend on the values of other attributes.
 		ck10=0x200,     // 10  Can only be set to CK_TRUE by the SO user.
 		ck11=0x400,     // 11  Attribute cannot be changed once set to CK_TRUE. It becomes a read only attribute.
@@ -152,7 +152,7 @@ class P11AttrKeyType : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrKeyType(OSObject* osobject) : P11Attribute(osobject) { type = CKA_KEY_TYPE; size = sizeof(CK_KEY_TYPE); checks = ck1|ck5; }
+	P11AttrKeyType(OSObject* osobject, CK_ULONG inchecks = 0) : P11Attribute(osobject) { type = CKA_KEY_TYPE; size = sizeof(CK_KEY_TYPE); checks = ck1|inchecks; }
 
 protected:
 	// Set the default value of the attribute
@@ -413,21 +413,13 @@ protected:
 
 /*****************************************
  * CKA_START_DATE
- * Because this attribute is used in a
- * certificate object where the CKA_VALUE
- * containing the certificate data is not
- * modifiable, we assume that this attribute
- * is also not modifiable.
- * There is also no explicit mention of
- * this CKA_START_DATE attribute being
- * modifiable,
  *****************************************/
 
 class P11AttrStartDate : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrStartDate(OSObject* osobject) : P11Attribute(osobject) { type = CKA_START_DATE; checks = 0; }
+	P11AttrStartDate(OSObject* osobject, CK_ULONG inchecks) : P11Attribute(osobject) { type = CKA_START_DATE; checks = inchecks; }
 
 protected:
 	// Set the default value of the attribute
@@ -439,21 +431,13 @@ protected:
 
 /*****************************************
  * CKA_END_DATE
- * Because this attribute is used in a
- * certificate object where the CKA_VALUE
- * containing the certificate data is not
- * modifiable, we assume that this attribute
- * is also not modifiable.
- * There is also no explicit mention of
- * this CKA_END_DATE attribute being
- * modifiable,
  *****************************************/
 
 class P11AttrEndDate : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrEndDate(OSObject* osobject) : P11Attribute(osobject) { type = CKA_END_DATE; checks = 0; }
+	P11AttrEndDate(OSObject* osobject, CK_ULONG inchecks) : P11Attribute(osobject) { type = CKA_END_DATE; checks = inchecks; }
 
 protected:
 	// Set the default value of the attribute
@@ -729,7 +713,7 @@ class P11AttrLocal : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrLocal(OSObject* osobject) : P11Attribute(osobject) { type = CKA_LOCAL; size = sizeof(CK_BBOOL); checks = ck2|ck4|ck6; }
+	P11AttrLocal(OSObject* osobject, CK_ULONG inchecks = 0) : P11Attribute(osobject) { type = CKA_LOCAL; size = sizeof(CK_BBOOL); checks = ck2|ck4|inchecks; }
 
 protected:
 	// Set the default value of the attribute
@@ -783,7 +767,7 @@ class P11AttrNeverExtractable : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrNeverExtractable(OSObject* osobject) : P11Attribute(osobject) { type = CKA_NEVER_EXTRACTABLE; size = sizeof(CK_BBOOL); checks = ck2|ck4; }
+	P11AttrNeverExtractable(OSObject* osobject) : P11Attribute(osobject) { type = CKA_NEVER_EXTRACTABLE; size = sizeof(CK_BBOOL); checks = ck2|ck4|ck6; }
 
 protected:
 	// Set the default value of the attribute
@@ -873,7 +857,7 @@ class P11AttrModulus : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrModulus(OSObject* osobject) : P11Attribute(osobject) { type = CKA_MODULUS; checks = ck1|ck4|ck6; }
+	P11AttrModulus(OSObject* osobject, CK_ULONG inchecks = 0) : P11Attribute(osobject) { type = CKA_MODULUS; checks = ck1|ck4|inchecks; }
 
 protected:
 	// Set the default value of the attribute
