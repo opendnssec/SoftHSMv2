@@ -356,7 +356,6 @@ CK_RV P11Attribute::retrieve(Token *token, bool isPrivate, CK_VOID_PTR pValue, C
 			{
 				// attr is already retrieved and verified to be an Array
 				rv = retrieveArray((CK_ATTRIBUTE_PTR)pValue, attr->getArrayValue());
-					
 			}
 		}
 		*pulValueLen = attrSize;
