@@ -1057,6 +1057,24 @@ protected:
 };
 
 /*****************************************
+ * CKA_VALUE_BITS
+ *****************************************/
+
+class P11AttrValueBits : public P11Attribute
+{
+public:
+	// Constructor
+	P11AttrValueBits(OSObject* osobject) : P11Attribute(osobject) { type = CKA_VALUE_BITS; size = sizeof(CK_ULONG); checks = ck2|ck6;}
+
+protected:
+	// Set the default value of the attribute
+	virtual bool setDefault();
+
+	// Update the value if allowed
+	virtual CK_RV updateAttr(Token *token, bool isPrivate, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op);
+};
+
+/*****************************************
  * CKA_EC_PARAMS
  *****************************************/
 

@@ -128,9 +128,18 @@ bool BotanDH::generateKeyPair(AsymmetricKeyPair** ppKeyPair, AsymmetricParameter
 	try
 	{
 		BotanRNG* rng = (BotanRNG*)BotanCryptoFactory::i()->getRNG();
+
+		// PKCS#3: 2^(l-1) <= x < 2^l
+		Botan::BigInt x;
+		if (params->getXBitLength() > 0)
+		{
+			x.randomize(*rng->getRNG(), params->getXBitLength());
+		}
+
 		dh = new BotanDH_PrivateKey(*rng->getRNG(),
 					Botan::DL_Group(BotanUtil::byteString2bigInt(params->getP()),
-					BotanUtil::byteString2bigInt(params->getG())));
+					BotanUtil::byteString2bigInt(params->getG())),
+					x);
 	}
 	catch (std::exception& e)
 	{
@@ -229,7 +238,7 @@ bool BotanDH::generateParameters(AsymmetricParameters** ppParams, void* paramete
 
 	if (bitLen < getMinKeySize() || bitLen > getMaxKeySize())
 	{
-		ERROR_MSG("This DH key size is not supported"); 
+		ERROR_MSG("This DH key size is not supported");
 
 		return false;
 	}
@@ -355,7 +364,7 @@ PrivateKey* BotanDH::newPrivateKey()
 {
 	return (PrivateKey*) new BotanDHPrivateKey();
 }
-	
+
 AsymmetricParameters* BotanDH::newParameters()
 {
 	return (AsymmetricParameters*) new DHParameters();
