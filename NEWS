@@ -8,6 +8,7 @@ SoftHSM develop
 * SOFTHSM-71: Supporting Botan 1.11.
 * SOFTHSM-76: Do not generate RSA keys smaller than 1024 bit when 
   using the Botan crypto backend.
+* SOFTHSM-83: Support CKA_VALUE_BITS for CKK_DH private key object.
 
 Bugfixes:
 * SOFTHSM-69: GOST did not work when you disabled ECC.
