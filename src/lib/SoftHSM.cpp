@@ -6907,10 +6907,25 @@ CK_RV SoftHSM::generateDH
 		return CKR_TEMPLATE_INCOMPLETE;
 	}
 
+	// Extract optional bit length
+	size_t bitLen = 0;
+	for (CK_ULONG i = 0; i < ulPrivateKeyAttributeCount; i++)
+	{
+		switch (pPrivateKeyTemplate[i].type)
+		{
+			case CKA_VALUE_BITS:
+				bitLen = *(CK_ULONG*)pPrivateKeyTemplate[i].pValue;
+				break;
+			default:
+				break;
+		}
+	}
+
 	// Set the parameters
 	DHParameters p;
 	p.setP(prime);
 	p.setG(generator);
+	p.setXBitLength(bitLen);
 
 	// Generate key pair
 	AsymmetricKeyPair* kp = NULL;
@@ -7081,6 +7096,11 @@ CK_RV SoftHSM::generateDH
 				bOK = bOK && osobject->setAttribute(CKA_PRIME, prime);
 				bOK = bOK && osobject->setAttribute(CKA_BASE, generator);
 				bOK = bOK && osobject->setAttribute(CKA_VALUE, value);
+
+				if (bitLen == 0)
+				{
+					bOK = bOK && osobject->setAttribute(CKA_VALUE_BITS, (unsigned long)priv->getX().bits());
+				}
 
 				if (bOK)
 					bOK = osobject->commitTransaction();

@@ -50,6 +50,13 @@ void DHParameters::setG(const ByteString& g)
 	this->g = g;
 }
 
+// Set the optional bit length
+void DHParameters::setXBitLength(const size_t bitLen)
+{
+	this->bitLen = bitLen;
+}
+
+
 // Get the public prime p
 const ByteString& DHParameters::getP() const
 {
@@ -60,6 +67,12 @@ const ByteString& DHParameters::getP() const
 const ByteString& DHParameters::getG() const
 {
 	return g;
+}
+
+// Get the optional bit length
+size_t DHParameters::getXBitLength() const
+{
+	return bitLen;
 }
 
 // Are the parameters of the given type?

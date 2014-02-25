@@ -1108,14 +1108,15 @@ bool P11DHPrivateKeyObj::init(OSObject *osobject)
 	P11Attribute* attrPrime = new P11AttrPrime(osobject,P11Attribute::ck4|P11Attribute::ck6);
 	P11Attribute* attrBase = new P11AttrBase(osobject,P11Attribute::ck4|P11Attribute::ck6);
 	P11Attribute* attrValue = new P11AttrValue(osobject,P11Attribute::ck1|P11Attribute::ck4|P11Attribute::ck6|P11Attribute::ck7);
-	// TODO: Missing CKA_VALUE_BITS
+	P11Attribute* attrValueBits = new P11AttrValueBits(osobject);
 
 	// Initialize the attributes
 	if
 	(
 		!attrPrime->init() ||
 		!attrBase->init() ||
-		!attrValue->init()
+		!attrValue->init() ||
+		!attrValueBits->init()
 	)
 	{
 		ERROR_MSG("Could not initialize the attribute");
@@ -1126,6 +1127,7 @@ bool P11DHPrivateKeyObj::init(OSObject *osobject)
 	attributes[attrPrime->getType()] = attrPrime;
 	attributes[attrBase->getType()] = attrBase;
 	attributes[attrValue->getType()] = attrValue;
+	attributes[attrValueBits->getType()] = attrValueBits;
 
 	initialized = true;
 	return true;

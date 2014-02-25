@@ -58,7 +58,7 @@ bool OSSLDH::signUpdate(const ByteString& /*dataToSign*/)
 }
 
 bool OSSLDH::signFinal(ByteString& /*signature*/)
-{	
+{
 	ERROR_MSG("DH does not support signing");
 
 	return false;
@@ -137,6 +137,22 @@ bool OSSLDH::generateKeyPair(AsymmetricKeyPair** ppKeyPair, AsymmetricParameters
 	if (dh->g != NULL)
 		BN_clear_free(dh->g);
 	dh->g = OSSL::byteString2bn(params->getG());
+
+	// PKCS#3: 2^(l-1) <= x < 2^l
+	if (params->getXBitLength() > 0)
+	{
+		if (dh->priv_key == NULL)
+			dh->priv_key = BN_new();
+
+		if (BN_rand(dh->priv_key, params->getXBitLength(), 0, 0) != 1)
+		{
+			ERROR_MSG("DH private key generation failed (0x%08X)", ERR_get_error());
+
+			DH_free(dh);
+
+			return false;
+		}
+	}
 
 	if (DH_generate_key(dh) != 1)
 	{
