@@ -40,6 +40,9 @@
 class DHParameters : public AsymmetricParameters
 {
 public:
+	// Base constructors
+	DHParameters() : bitLen(0) { }
+
 	// The type
 	static const char* type;
 
