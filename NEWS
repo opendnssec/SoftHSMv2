@@ -3,7 +3,7 @@ NEWS for SoftHSM -- History of user visible changes
 SoftHSM develop
 
 * SOFTHSM-68: Display a better configure message when there is a 
-  version of Botan with a broken ECC/OID implementation.
+  version of Botan with a broken ECC/GOST/OID implementation.
 * SOFTHSM-70: Improved handling of the database backend.
 * SOFTHSM-71: Supporting Botan 1.11.
 * SOFTHSM-76: Do not generate RSA keys smaller than 1024 bit when 
