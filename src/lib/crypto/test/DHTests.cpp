@@ -120,6 +120,9 @@ void DHTests::testSerialisation()
 	CPPUNIT_ASSERT(dh->generateParameters(ap, (void*) 512));
 #endif
 
+	// Set a fixed private value length
+	p->setXBitLength(128);
+
 	// Serialise the parameters
 	ByteString serialisedParams = p->serialise();
 
@@ -134,6 +137,7 @@ void DHTests::testSerialisation()
 
 	CPPUNIT_ASSERT(p->getP() == ddP->getP());
 	CPPUNIT_ASSERT(p->getG() == ddP->getG());
+	CPPUNIT_ASSERT(p->getXBitLength() == ddP->getXBitLength());
 
 	// Generate a key-pair
 	AsymmetricKeyPair* kp;
@@ -174,7 +178,13 @@ void DHTests::testPKCS8()
 	// Generate 1024-bit parameters for testing
 	AsymmetricParameters* p;
 
+	//CPPUNIT_ASSERT(dh->generateParameters(&p, (void*) 1024));
+	// changed for 512-bit for speed...
+#ifndef WITH_BOTAN
 	CPPUNIT_ASSERT(dh->generateParameters(&p, (void*) 1024));
+#else
+	CPPUNIT_ASSERT(dh->generateParameters(&p, (void*) 512));
+#endif
 
 	// Generate a key-pair
 	AsymmetricKeyPair* kp;
