@@ -119,6 +119,21 @@ void RSATests::testSerialisation()
 	CPPUNIT_ASSERT(rsa->generateKeyPair(&kp, &p));
 	CPPUNIT_ASSERT(kp != NULL);
 
+	// Serialise the parameters
+	ByteString serialisedParams = p.serialise();
+
+	// Deserialise the parameters
+	AsymmetricParameters* dP;
+
+	CPPUNIT_ASSERT(rsa->reconstructParameters(&dP, serialisedParams));
+	CPPUNIT_ASSERT(dP->areOfType(RSAParameters::type));
+
+	RSAParameters* ddP = (RSAParameters*) dP;
+
+	CPPUNIT_ASSERT(p.getE() == ddP->getE());
+	CPPUNIT_ASSERT(p.getBitLength() == ddP->getBitLength());
+	rsa->recycleParameters(dP);
+
 	// Serialise the key-pair
 	ByteString serialisedKP = kp->serialise();
 

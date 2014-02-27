@@ -71,6 +71,24 @@ bool RSAParameters::areOfType(const char* type)
 // Serialisation
 ByteString RSAParameters::serialise() const
 {
-	return ByteString();
+	ByteString len(bitLen);
+
+	return e.serialise() + len.serialise();
 }
 
+bool RSAParameters::deserialise(ByteString& serialised)
+{
+	ByteString dE = ByteString::chainDeserialise(serialised);
+	ByteString dLen = ByteString::chainDeserialise(serialised);
+
+	if ((dE.size() == 0) ||
+	    (dLen.size() == 0))
+        {
+		return false;
+	}
+
+	setE(dE);
+	setBitLength(dLen.long_val());
+
+        return true;
+}

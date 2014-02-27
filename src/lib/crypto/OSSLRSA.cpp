@@ -1050,3 +1050,24 @@ AsymmetricParameters* OSSLRSA::newParameters()
 	return (AsymmetricParameters*) new RSAParameters();
 }
 
+bool OSSLRSA::reconstructParameters(AsymmetricParameters** ppParams, ByteString& serialisedData)
+{
+	// Check input parameters
+	if ((ppParams == NULL) || (serialisedData.size() == 0))
+	{
+		return false;
+	}
+
+	RSAParameters* params = new RSAParameters();
+
+	if (!params->deserialise(serialisedData))
+	{
+		delete params;
+
+		return false;
+	}
+
+	*ppParams = params;
+
+	return true;
+}
