@@ -40,6 +40,9 @@
 class RSAParameters : public AsymmetricParameters
 {
 public:
+	// Base constructor
+	RSAParameters() : bitLen(0) { }
+
 	// The type
 	static const char* type;
 
@@ -60,6 +63,7 @@ public:
 
 	// Serialisation
 	virtual ByteString serialise() const;
+	virtual bool deserialise(ByteString& serialised);
 
 private:
 	ByteString e;

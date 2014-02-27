@@ -84,22 +84,27 @@ bool DHParameters::areOfType(const char* type)
 // Serialisation
 ByteString DHParameters::serialise() const
 {
-	return p.serialise() + g.serialise();
+	ByteString len(bitLen);
+
+	return p.serialise() + g.serialise() + len.serialise();
 }
 
 bool DHParameters::deserialise(ByteString& serialised)
 {
 	ByteString dP = ByteString::chainDeserialise(serialised);
 	ByteString dG = ByteString::chainDeserialise(serialised);
+	ByteString dLen = ByteString::chainDeserialise(serialised);
 
 	if ((dP.size() == 0) ||
-	    (dG.size() == 0))
+	    (dG.size() == 0) ||
+	    (dLen.size() == 0))
 	{
 		return false;
 	}
 
 	setP(dP);
 	setG(dG);
+	setXBitLength(dLen.long_val());
 
 	return true;
 }
