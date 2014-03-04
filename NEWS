@@ -14,6 +14,7 @@ Bugfixes:
 * SOFTHSM-69: GOST did not work when you disabled ECC.
 * SOFTHSM-78: Correct the attribute checks for a number of objects.
 * Fixed a number of memory leaks.
+* SOFTHSM-80: Prevent segfault in OpenSSL GOST HMAC code.
 
 
 SoftHSM 2.0.0a1 - 2014-02-10
