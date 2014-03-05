@@ -240,7 +240,7 @@ bool readArray(FILE* stream, uint64_t len, std::vector<Attribute>& value)
 				(void) fsetpos(stream, &pos);
 				return false;
 			}
-			attr.bytestrValue.resize(size);
+			attr.bytestrValue.resize((size_t)size);
 			if (!readBytes(stream, attr.bytestrValue))
 			{
 				(void) fsetpos(stream, &pos);
