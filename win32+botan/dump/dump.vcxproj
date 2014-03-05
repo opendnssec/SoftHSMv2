@@ -76,11 +76,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\src\bin\dump\common.h" />
     <ClInclude Include="..\..\src\bin\dump\tables.h" />
     <ClInclude Include="..\config.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\src\bin\dump\softhsm-dump.cpp" />
+    <ClCompile Include="..\..\src\bin\dump\softhsm-dump-file.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
