@@ -393,7 +393,6 @@ void test_a_dbobject_with_an_object::should_store_mixed_attributes()
 
 void test_a_dbobject_with_an_object::should_store_double_attributes()
 {
-	
 	bool value1 = true;
 	bool value1a = false;
 	unsigned long value2 = 0x87654321;
@@ -582,7 +581,7 @@ void test_a_dbobject_with_an_object::can_refresh_attributes()
 
 		// Now check that the second instance also knows about the change
 		CPPUNIT_ASSERT(testObject2.getAttribute(CKA_PRIME_BITS)->isUnsignedLongAttribute());
-		
+
 		// Note that the CKA_PRIME_BITS attribute cannot officially be modified.
 		// We optimize inside DBObject to only propagate to the database modifiable attributes.
 		// Therefore we don't expect changes to CKA_PRIME_BITS to propagate to testObject2.
@@ -682,11 +681,11 @@ void test_a_dbobject_with_an_object::should_use_transactions()
 	CPPUNIT_ASSERT(testObject2.getAttribute(CKA_PRIME_BITS)->getUnsignedLongValue() == value2);
 	CPPUNIT_ASSERT(testObject2.getAttribute(CKA_VALUE_BITS)->getUnsignedLongValue() == value3);
 	CPPUNIT_ASSERT(testObject2.getAttribute(CKA_ID)->getByteStringValue() == value4);
-	
+
 	// Commit the transaction
 	CPPUNIT_ASSERT(testObject.commitTransaction());
 
-	// Verify that non-modifiable attributes did not propagate but modifiable attributes 
+	// Verify that non-modifiable attributes did not propagate but modifiable attributes
 	// have now changed on the other instance
 	CPPUNIT_ASSERT(testObject2.getAttribute(CKA_TOKEN)->isBooleanAttribute());
 	CPPUNIT_ASSERT(testObject2.getAttribute(CKA_PRIME_BITS)->isUnsignedLongAttribute());
@@ -697,10 +696,10 @@ void test_a_dbobject_with_an_object::should_use_transactions()
 	CPPUNIT_ASSERT(testObject2.getAttribute(CKA_TOKEN)->getBooleanValue() != value1a);
 	CPPUNIT_ASSERT(testObject2.getAttribute(CKA_PRIME_BITS)->getUnsignedLongValue() != value2a);
 	CPPUNIT_ASSERT(testObject2.getAttribute(CKA_VALUE_BITS)->getUnsignedLongValue() != value3a);
-	
+
 	// CKA_ID attribute can be modified after creation and therefore should have propagated.
 	CPPUNIT_ASSERT(testObject2.getAttribute(CKA_ID)->getByteStringValue() == value4a);
-	
+
 	// Start transaction on object
 	CPPUNIT_ASSERT(testObject.startTransaction(DBObject::ReadWrite));
 
@@ -709,7 +708,7 @@ void test_a_dbobject_with_an_object::should_use_transactions()
 	CPPUNIT_ASSERT(testObject.setAttribute(CKA_PRIME_BITS, attr2));
 	CPPUNIT_ASSERT(testObject.setAttribute(CKA_VALUE_BITS, attr3));
 	CPPUNIT_ASSERT(testObject.setAttribute(CKA_ID, attr4));
-	
+
 	// Verify that the attributes were set
 	CPPUNIT_ASSERT(testObject.getAttribute(CKA_TOKEN)->isBooleanAttribute());
 	CPPUNIT_ASSERT(testObject.getAttribute(CKA_PRIME_BITS)->isUnsignedLongAttribute());
@@ -720,18 +719,18 @@ void test_a_dbobject_with_an_object::should_use_transactions()
 	CPPUNIT_ASSERT(testObject.getAttribute(CKA_PRIME_BITS)->getUnsignedLongValue() == value2);
 	CPPUNIT_ASSERT(testObject.getAttribute(CKA_VALUE_BITS)->getUnsignedLongValue() == value3);
 	CPPUNIT_ASSERT(testObject.getAttribute(CKA_ID)->getByteStringValue() == value4);
-	
+
 	// Create a fresh third instance for the same object to force the data to be retrieved from the database.
 	DBObject testObject3(connection2);
 	CPPUNIT_ASSERT(testObject3.find(1));
 	CPPUNIT_ASSERT(testObject3.isValid());
-	
+
 	// Verify that they are unchanged on the other instance, while the transaction is still in progress.
 	CPPUNIT_ASSERT(testObject3.getAttribute(CKA_TOKEN)->isBooleanAttribute());
 	CPPUNIT_ASSERT(testObject3.getAttribute(CKA_PRIME_BITS)->isUnsignedLongAttribute());
 	CPPUNIT_ASSERT(testObject3.getAttribute(CKA_VALUE_BITS)->isUnsignedLongAttribute());
 	CPPUNIT_ASSERT(testObject3.getAttribute(CKA_ID)->isByteStringAttribute());
-	
+
 	// Verify that the attributes from the database are still hodling the same value as when the transaction started.
 	CPPUNIT_ASSERT(testObject3.getAttribute(CKA_TOKEN)->getBooleanValue() == value1a);
 	CPPUNIT_ASSERT(testObject3.getAttribute(CKA_PRIME_BITS)->getUnsignedLongValue() == value2a);

@@ -47,14 +47,12 @@ class test_a_newly_created_object_store : public CppUnit::TestFixture
 public:
 	void setUp();
 	void tearDown();
-	
+
 	void contains_no_items();
 	void can_create_a_new_token();
 protected:
 	ObjectStore *store;
 	ObjectStoreToken *nulltoken;
-	ByteString label1;
-	ByteString label2;
 
 private:
 };
@@ -71,7 +69,7 @@ class test_a_newly_created_object_store_containing_two_tokens : public test_a_ne
 public:
 	void setUp();
 	void tearDown();
-	
+
 	void has_two_tokens();
 	void can_access_both_tokens();
 	void assigned_labels_correctly_to_tokens();

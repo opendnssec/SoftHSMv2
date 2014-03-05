@@ -55,22 +55,6 @@ static void xTrace(void*connectionLabel,const char*zSql)
 }
 #endif
 
-// Call once at process startup
-void DB::initialize()
-{
-	if (!sqlite3_threadsafe()) {
-		DB::logError("initialize: sqlite3 compiled with multi-threading support disabled.");
-		return;
-	}
-	sqlite3_initialize();
-}
-
-// Call once at process termination
-void DB::shutdown()
-{
-	sqlite3_shutdown();
-}
-
 static int static_log_err(const char *format, va_list ap)
 {
 	std::vector<char> logMessage;
