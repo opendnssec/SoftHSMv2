@@ -75,7 +75,7 @@ class test_a_dbobject_with_an_object : public test_a_dbobject
 public:
 	void setUp();
 	void tearDown();
-	
+
 	void should_store_boolean_attributes();
 	void should_store_unsigned_long_attributes();
 	void should_store_binary_attributes();

@@ -83,7 +83,7 @@ void test_a_db::can_be_connected_to_database()
 	CPPUNIT_ASSERT(isConnected);
 #ifndef _WIN32
 	CPPUNIT_ASSERT_EQUAL(system("test -f ./testdir/TestToken"), 0);
-#else	
+#else
 	CPPUNIT_ASSERT(GetFileAttributes("testdir\\TestToken") != INVALID_FILE_ATTRIBUTES);
 #endif
 }
@@ -159,7 +159,7 @@ void test_a_db_with_a_connection_with_tables::setUp()
 {
 	test_a_db_with_a_connection::setUp();
 	can_create_tables();
-	
+
 	// attribute_text
 	CPPUNIT_ASSERT(!connection->tableExists("attribute_text"));
 	DB::Statement cr_attr_text = connection->prepare(
@@ -171,7 +171,7 @@ void test_a_db_with_a_connection_with_tables::setUp()
 		);
 	CPPUNIT_ASSERT(connection->execute(cr_attr_text));
 	CPPUNIT_ASSERT(connection->tableExists("attribute_text"));
-	
+
 	// attribute_integer
 	CPPUNIT_ASSERT(!connection->tableExists("attribute_integer"));
 	DB::Statement cr_attr_integer = connection->prepare(
@@ -183,7 +183,7 @@ void test_a_db_with_a_connection_with_tables::setUp()
 		);
 	CPPUNIT_ASSERT(connection->execute(cr_attr_integer));
 	CPPUNIT_ASSERT(connection->tableExists("attribute_integer"));
-	
+
 	// attribute_blob
 	CPPUNIT_ASSERT(!connection->tableExists("attribute_blob"));
 	DB::Statement cr_attr_blob = connection->prepare(
@@ -195,7 +195,7 @@ void test_a_db_with_a_connection_with_tables::setUp()
 		);
 	CPPUNIT_ASSERT(connection->execute(cr_attr_blob));
 	CPPUNIT_ASSERT(connection->tableExists("attribute_blob"));
-	
+
 	// attribute_boolean
 	CPPUNIT_ASSERT(!connection->tableExists("attribute_boolean"));
 	DB::Statement cr_attr_boolean = connection->prepare(
@@ -207,7 +207,7 @@ void test_a_db_with_a_connection_with_tables::setUp()
 		);
 	CPPUNIT_ASSERT(connection->execute(cr_attr_boolean));
 	CPPUNIT_ASSERT(connection->tableExists("attribute_boolean"));
-	
+
 	// attribute_datetime
 	CPPUNIT_ASSERT(!connection->tableExists("attribute_datetime"));
 	DB::Statement cr_attr_datetime = connection->prepare(
@@ -219,7 +219,7 @@ void test_a_db_with_a_connection_with_tables::setUp()
 		);
 	CPPUNIT_ASSERT(connection->execute(cr_attr_datetime));
 	CPPUNIT_ASSERT(connection->tableExists("attribute_datetime"));
-	
+
 	// attribute_real
 	CPPUNIT_ASSERT(!connection->tableExists("attribute_real"));
 	DB::Statement cr_attr_real = connection->prepare(
@@ -597,7 +597,7 @@ void test_a_db_with_a_connection_with_tables_with_a_second_connection_open::setU
 	connection2 = DB::Connection::Create("testdir","TestToken");
 	CPPUNIT_ASSERT(connection2 != null);
 	CPPUNIT_ASSERT(connection2->connect());
-	connection2->setBusyTimeout(10);	
+	connection2->setBusyTimeout(10);
 }
 
 void test_a_db_with_a_connection_with_tables_with_a_second_connection_open::tearDown()

@@ -51,8 +51,7 @@ void test_a_newly_created_object_store::setUp()
 
 	store = new ObjectStore("testdir");
 	nulltoken = NULL;
-	label1 = "DEADC0FFEE";
-	label2 = "DEADBEEF";}
+}
 
 void test_a_newly_created_object_store::tearDown()
 {
@@ -75,6 +74,8 @@ void test_a_newly_created_object_store::contains_no_items()
 
 void test_a_newly_created_object_store::can_create_a_new_token()
 {
+	ByteString label1 = "DEADC0FFEE";
+
 	ObjectStoreToken *token1 = store->newToken(label1);
 	CPPUNIT_ASSERT(token1 != nulltoken);
 	CPPUNIT_ASSERT_EQUAL(store->getTokenCount(), (size_t)1);
@@ -87,10 +88,13 @@ void test_a_newly_created_object_store_containing_two_tokens::setUp()
 {
 	test_a_newly_created_object_store::setUp();
 
+	ByteString label1 = "DEADC0FFEE";
+	ByteString label2 = "DEADBEEF";
+
 	ObjectStoreToken* token1 = store->newToken(label1);
 	CPPUNIT_ASSERT(token1 != nulltoken);
 	CPPUNIT_ASSERT_EQUAL(store->getTokenCount(), (size_t)1);
-	
+
 	ObjectStoreToken* token2 = store->newToken(label2);
 	CPPUNIT_ASSERT(token2 != nulltoken);
 	CPPUNIT_ASSERT_EQUAL(store->getTokenCount(), (size_t)2);
@@ -102,7 +106,7 @@ void test_a_newly_created_object_store_containing_two_tokens::tearDown()
 	ObjectStoreToken* token2 = store->getToken(1);
 	CPPUNIT_ASSERT(store->destroyToken(token1));
 	CPPUNIT_ASSERT(store->destroyToken(token2));
-	
+
 	test_a_newly_created_object_store::tearDown();
 }
 
@@ -123,6 +127,9 @@ void test_a_newly_created_object_store_containing_two_tokens::can_access_both_to
 
 void test_a_newly_created_object_store_containing_two_tokens::assigned_labels_correctly_to_tokens()
 {
+	ByteString label1 = "DEADC0FFEE";
+	ByteString label2 = "DEADBEEF";
+
 	// Retrieve both tokens and check that both are present
 	ObjectStoreToken* token1 = store->getToken(0);
 	ObjectStoreToken* token2 = store->getToken(1);
