@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010 .SE (The Internet Infrastructure Foundation)
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -10,7 +10,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -43,7 +43,7 @@
 // Get a password from the user
 void getPW(char* pin, char* newPIN, CK_ULONG userType)
 {
-	// Keep a copy of the PIN because getpass/getpassphrase 
+	// Keep a copy of the PIN because getpass/getpassphrase
 	// will overwrite the previous PIN.
 	char password[MAX_PIN_LEN+1];
 
@@ -59,12 +59,12 @@ void getPW(char* pin, char* newPIN, CK_ULONG userType)
 		if (userType == CKU_SO)
 		{
 			printf("*** SO PIN (%i-%i characters) ***\n",
-				MIN_PIN_LEN, MAX_PIN_LEN); 
+				MIN_PIN_LEN, MAX_PIN_LEN);
 		}
 		else
 		{
 			printf("*** User PIN (%i-%i characters) ***\n",
-				MIN_PIN_LEN, MAX_PIN_LEN); 
+				MIN_PIN_LEN, MAX_PIN_LEN);
 		}
 
 #ifdef HAVE_GETPASSPHRASE
@@ -94,7 +94,7 @@ void getPW(char* pin, char* newPIN, CK_ULONG userType)
 			length = 0;
 			continue;
 		}
-		strcpy(password, pin);
+		memcpy(password, pin, length+1);
 
 #ifdef HAVE_GETPASSPHRASE
 		if (userType == CKU_SO)
@@ -124,5 +124,5 @@ void getPW(char* pin, char* newPIN, CK_ULONG userType)
 		}
 	}
 
-	strcpy(newPIN, pin);
+	memcpy(newPIN, pin, length+1);
 }
