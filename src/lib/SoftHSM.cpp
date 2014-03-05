@@ -5094,19 +5094,19 @@ CK_RV SoftHSM::C_UnwrapKey
 			}
 			else if (keyType == CKK_RSA)
 			{
-				bOK = bOK && setRSAPrivateKey(osobject, keydata, token, isPrivate);
+				bOK = bOK && setRSAPrivateKey(osobject, keydata, token, isPrivate != CK_FALSE);
 			}
 			else if (keyType == CKK_DSA)
 			{
-				bOK = bOK && setDSAPrivateKey(osobject, keydata, token, isPrivate);
+				bOK = bOK && setDSAPrivateKey(osobject, keydata, token, isPrivate != CK_FALSE);
 			}
 			else if (keyType == CKK_DH)
 			{
-				bOK = bOK && setDHPrivateKey(osobject, keydata, token, isPrivate);
+				bOK = bOK && setDHPrivateKey(osobject, keydata, token, isPrivate != CK_FALSE);
 			}
 			else if (keyType == CKK_EC)
 			{
-				bOK = bOK && setECPrivateKey(osobject, keydata, token, isPrivate);
+				bOK = bOK && setECPrivateKey(osobject, keydata, token, isPrivate != CK_FALSE);
 			}
 			else
 				bOK = false;
