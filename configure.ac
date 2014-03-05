@@ -48,6 +48,7 @@ AC_PROG_CXX
 # Compiler flags
 ACX_PEDANTIC
 ACX_STRICT
+ACX_64BIT
 
 # Check for libraries (-ldl can be required by OpenSSL too)
 ACX_DLOPEN
