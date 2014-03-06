@@ -43,6 +43,9 @@ syslog(int priority, const char *message, ...) {
 	va_end(ap);
 
 	/* Make sure that the channel is open to write the event */
+	if (hEventLog == NULL) {
+		openlog("SoftHSM", 0, 0);
+	}
 	if (hEventLog != NULL) {
 		switch (priority) {
 		case LOG_INFO:
