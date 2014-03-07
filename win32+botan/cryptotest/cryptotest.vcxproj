@@ -58,10 +58,6 @@
       <AdditionalLibraryDirectories>..\$(Configuration);..\..\..\cu\lib;..\..\..\btn\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>convarch.lib;cppunitd.lib;botand.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
-    <PreBuildEvent>
-      <Command>openssl version
-</Command>
-    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -82,10 +78,6 @@
       <AdditionalLibraryDirectories>..\$(Configuration);..\..\..\cu\lib;..\..\..\btn\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>convarch.lib;cppunit.lib;botan.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
-    <PreBuildEvent>
-      <Command>openssl version
-</Command>
-    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\lib\cryptoki_compat\pkcs11.h" />
