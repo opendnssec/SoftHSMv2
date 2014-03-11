@@ -157,12 +157,14 @@ static CK_RV newP11Object(CK_OBJECT_CLASS objClass, CK_KEY_TYPE keyType, CK_CERT
 	return CKR_OK;
 }
 
-static CK_RV extractObjectInformation(CK_ATTRIBUTE_PTR pTemplate, CK_ULONG ulCount,
-									   CK_OBJECT_CLASS &objClass,
-									   CK_KEY_TYPE &keyType,
-									   CK_CERTIFICATE_TYPE &certType,
-									   CK_BBOOL &isOnToken,
-									   CK_BBOOL &isPrivate)
+static CK_RV extractObjectInformation(CK_ATTRIBUTE_PTR pTemplate,
+				      CK_ULONG ulCount,
+				      CK_OBJECT_CLASS &objClass,
+				      CK_KEY_TYPE &keyType,
+				      CK_CERTIFICATE_TYPE &certType,
+				      CK_BBOOL &isOnToken,
+				      CK_BBOOL &isPrivate,
+				      bool bImplicit)
 {
 	bool bHasClass = false;
 	bool bHasKeyType = false;
@@ -209,6 +211,11 @@ static CK_RV extractObjectInformation(CK_ATTRIBUTE_PTR pTemplate, CK_ULONG ulCou
 			default:
 				break;
 		}
+	}
+
+	if (bImplicit)
+	{
+		return CKR_OK;
 	}
 
 	if (!bHasClass)
@@ -4296,7 +4303,6 @@ CK_RV SoftHSM::C_GenerateKey(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMecha
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
 
 	if (pMechanism == NULL_PTR) return CKR_ARGUMENTS_BAD;
-	if (pTemplate == NULL_PTR) return CKR_ARGUMENTS_BAD;
 	if (phKey == NULL_PTR) return CKR_ARGUMENTS_BAD;
 
 	// Get the session
@@ -4341,7 +4347,8 @@ CK_RV SoftHSM::C_GenerateKey(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMecha
 	CK_BBOOL isOnToken = CK_FALSE;
 	CK_BBOOL isPrivate = CK_TRUE;
 	CK_CERTIFICATE_TYPE dummy;
-	extractObjectInformation(pTemplate, ulCount, objClass, keyType, dummy, isOnToken, isPrivate);
+	bool isImplicit = true;
+	extractObjectInformation(pTemplate, ulCount, objClass, keyType, dummy, isOnToken, isPrivate, isImplicit);
 
 	// Report errors and/or unexpected usage.
 	if (objClass != CKO_SECRET_KEY && objClass != CKO_DOMAIN_PARAMETERS)
@@ -4432,8 +4439,6 @@ CK_RV SoftHSM::C_GenerateKeyPair
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
 
 	if (pMechanism == NULL_PTR) return CKR_ARGUMENTS_BAD;
-	if (pPublicKeyTemplate == NULL_PTR) return CKR_ARGUMENTS_BAD;
-	if (pPrivateKeyTemplate == NULL_PTR) return CKR_ARGUMENTS_BAD;
 	if (phPublicKey == NULL_PTR) return CKR_ARGUMENTS_BAD;
 	if (phPrivateKey == NULL_PTR) return CKR_ARGUMENTS_BAD;
 
@@ -4473,7 +4478,8 @@ CK_RV SoftHSM::C_GenerateKeyPair
 	CK_OBJECT_CLASS publicKeyClass = CKO_PUBLIC_KEY;
 	CK_BBOOL ispublicKeyToken = CK_FALSE;
 	CK_BBOOL ispublicKeyPrivate = CK_TRUE;
-	extractObjectInformation(pPublicKeyTemplate, ulPublicKeyAttributeCount, publicKeyClass, keyType, dummy, ispublicKeyToken, ispublicKeyPrivate);
+	bool isPublicKeyImplicit = true;
+	extractObjectInformation(pPublicKeyTemplate, ulPublicKeyAttributeCount, publicKeyClass, keyType, dummy, ispublicKeyToken, ispublicKeyPrivate, isPublicKeyImplicit);
 
 	// Report errors caused by accidental template mix-ups in the application using this cryptoki lib.
 	if (publicKeyClass != CKO_PUBLIC_KEY)
@@ -4493,7 +4499,8 @@ CK_RV SoftHSM::C_GenerateKeyPair
 	CK_OBJECT_CLASS privateKeyClass = CKO_PRIVATE_KEY;
 	CK_BBOOL isprivateKeyToken = CK_FALSE;
 	CK_BBOOL isprivateKeyPrivate = CK_TRUE;
-	extractObjectInformation(pPrivateKeyTemplate, ulPrivateKeyAttributeCount, privateKeyClass, keyType, dummy, isprivateKeyToken, isprivateKeyPrivate);
+	bool isPrivateKeyImplicit = true;
+	extractObjectInformation(pPrivateKeyTemplate, ulPrivateKeyAttributeCount, privateKeyClass, keyType, dummy, isprivateKeyToken, isprivateKeyPrivate, isPrivateKeyImplicit);
 
 	// Report errors caused by accidental template mix-ups in the application using this cryptoki lib.
 	if (privateKeyClass != CKO_PRIVATE_KEY)
@@ -4930,13 +4937,18 @@ CK_RV SoftHSM::C_UnwrapKey
 		return CKR_KEY_FUNCTION_NOT_PERMITTED;
 
 	// Extract information from the template that is needed to create the object.
-
 	CK_OBJECT_CLASS objClass;
 	CK_KEY_TYPE keyType;
 	CK_BBOOL isOnToken = CK_FALSE;
 	CK_BBOOL isPrivate = CK_TRUE;
 	CK_CERTIFICATE_TYPE dummy;
-	extractObjectInformation(pTemplate, ulCount, objClass, keyType, dummy, isOnToken, isPrivate);
+	bool isImplicit = false;
+	rv = extractObjectInformation(pTemplate, ulCount, objClass, keyType, dummy, isOnToken, isPrivate, isImplicit);
+	if (rv != CKR_OK)
+	{
+		ERROR_MSG("Mandatory attribute not present in template");
+		return rv;
+	}
 
 	// Report errors and/or unexpected usage.
 	if (objClass != CKO_SECRET_KEY && objClass != CKO_PRIVATE_KEY)
@@ -5212,7 +5224,13 @@ CK_RV SoftHSM::C_DeriveKey
 	CK_BBOOL isOnToken = CK_FALSE;
 	CK_BBOOL isPrivate = CK_TRUE;
 	CK_CERTIFICATE_TYPE dummy;
-	extractObjectInformation(pTemplate, ulCount, objClass, keyType, dummy, isOnToken, isPrivate);
+	bool isImplicit = false;
+	rv = extractObjectInformation(pTemplate, ulCount, objClass, keyType, dummy, isOnToken, isPrivate, isImplicit);
+	if (rv != CKR_OK)
+	{
+		ERROR_MSG("Mandatory attribute not present in template");
+		return rv;
+	}
 
 	// Report errors and/or unexpected usage.
 	if (objClass != CKO_SECRET_KEY && keyType != CKK_GENERIC_SECRET)
@@ -8025,7 +8043,8 @@ CK_RV SoftHSM::CreateObject(CK_SESSION_HANDLE hSession, CK_ATTRIBUTE_PTR pTempla
 	CK_CERTIFICATE_TYPE certType = CKC_X_509;
 	CK_BBOOL isOnToken = CK_FALSE;
 	CK_BBOOL isPrivate = CK_TRUE;
-	CK_RV rv = extractObjectInformation(pTemplate,ulCount,objClass,keyType,certType, isOnToken, isPrivate);
+	bool isImplicit = false;
+	CK_RV rv = extractObjectInformation(pTemplate,ulCount,objClass,keyType,certType, isOnToken, isPrivate, isImplicit);
 	if (rv != CKR_OK)
 	{
 		ERROR_MSG("Mandatory attribute not present in template");
