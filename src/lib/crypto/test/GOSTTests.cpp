@@ -53,6 +53,11 @@ void GOSTTests::setUp()
 	mac = NULL;
 	gost = NULL;
 	rng = NULL;
+
+	gost = CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::GOST);
+
+	// Check the GOST object
+	CPPUNIT_ASSERT(gost != NULL);
 }
 
 void GOSTTests::tearDown()
@@ -191,8 +196,6 @@ void GOSTTests::testKeyGeneration()
 {
 	AsymmetricKeyPair* kp;
 
-	CPPUNIT_ASSERT((gost = CryptoFactory::i()->getAsymmetricAlgorithm("gost")));
-
 	// Set domain parameters
 	ByteString curve = "06072a850302022301";
 	ECParameters* p = new ECParameters;
@@ -209,15 +212,10 @@ void GOSTTests::testKeyGeneration()
 
 	gost->recycleParameters(p);
 	gost->recycleKeyPair(kp);
-
-	CryptoFactory::i()->recycleAsymmetricAlgorithm(gost);
-	gost = NULL;
 }
 
 void GOSTTests::testSerialisation()
 {
-	CPPUNIT_ASSERT((gost = CryptoFactory::i()->getAsymmetricAlgorithm("gost")));
-
 	// Get GOST R 34.10-2001 params-A domain parameters
 	ECParameters* p = new ECParameters;
 	p->setEC(ByteString("06072a850302022301"));
@@ -263,9 +261,6 @@ void GOSTTests::testSerialisation()
 	gost->recycleParameters(dEC);
 	gost->recycleKeyPair(kp);
 	gost->recycleKeyPair(dKP);
-
-	CryptoFactory::i()->recycleAsymmetricAlgorithm(gost);
-	gost = NULL;
 }
 
 void GOSTTests::testSigningVerifying()
@@ -273,8 +268,6 @@ void GOSTTests::testSigningVerifying()
 	AsymmetricKeyPair* kp;
 	ECParameters *p;
 	ByteString curve = "06072a850302022301";
-
-	CPPUNIT_ASSERT((gost = CryptoFactory::i()->getAsymmetricAlgorithm("gost")));
 
 	// Get parameters
 	p = new ECParameters;
@@ -301,9 +294,6 @@ void GOSTTests::testSigningVerifying()
 
 	gost->recycleKeyPair(kp);
 	gost->recycleParameters(p);
-
-	CryptoFactory::i()->recycleAsymmetricAlgorithm(gost);
-	gost = NULL;
 }
 
 void GOSTTests::testSignVerifyKnownVector()

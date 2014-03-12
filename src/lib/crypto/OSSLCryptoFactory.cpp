@@ -67,7 +67,7 @@
 #endif
 
 // Initialise the one-and-only instance
-std::auto_ptr<OSSLCryptoFactory> OSSLCryptoFactory::instance(NULL); 
+std::auto_ptr<OSSLCryptoFactory> OSSLCryptoFactory::instance(NULL);
 
 // Thread ID callback
 #ifdef HAVE_PTHREAD_H
@@ -248,47 +248,35 @@ SymmetricAlgorithm* OSSLCryptoFactory::getSymmetricAlgorithm(std::string algorit
 }
 
 // Create a concrete instance of an asymmetric algorithm
-AsymmetricAlgorithm* OSSLCryptoFactory::getAsymmetricAlgorithm(std::string algorithm)
+AsymmetricAlgorithm* OSSLCryptoFactory::getAsymmetricAlgorithm(AsymAlgo::Type algorithm)
 {
-	std::string lcAlgo;
-	lcAlgo.resize(algorithm.size());
-	std::transform(algorithm.begin(), algorithm.end(), lcAlgo.begin(), tolower);
-
-	if (!lcAlgo.compare("rsa"))
+	switch (algorithm)
 	{
-		return new OSSLRSA();
-	}
-	else if (!lcAlgo.compare("dsa"))
-	{
-		return new OSSLDSA();
-	}
-	else if (!lcAlgo.compare("dh"))
-	{
-		return new OSSLDH();
-	}
+		case AsymAlgo::RSA:
+			return new OSSLRSA();
+		case AsymAlgo::DSA:
+			return new OSSLDSA();
+		case AsymAlgo::DH:
+			return new OSSLDH();
 #ifdef WITH_ECC
-	else if (!lcAlgo.compare("ecdh"))
-	{
-		return new OSSLECDH();
-	}
-	else if (!lcAlgo.compare("ecdsa"))
-	{
-		return new OSSLECDSA();
-	}
+		case AsymAlgo::ECDH:
+			return new OSSLECDH();
+		case AsymAlgo::ECDSA:
+			return new OSSLECDSA();
 #endif
 #ifdef WITH_GOST
-	else if (!lcAlgo.compare("gost"))
-	{
-		return new OSSLGOST();
-	}
+		case AsymAlgo::GOST:
+			return new OSSLGOST();
 #endif
-	else
-	{
-		// No algorithm implementation is available
-		ERROR_MSG("Unknown algorithm '%s'", algorithm.c_str());
+		default:
+			// No algorithm implementation is available
+			ERROR_MSG("Unknown algorithm '%i'", algorithm);
 
-		return NULL;
-	}
+			return NULL;
+	};
+
+	// No algorithm implementation is available
+	return NULL;
 }
 
 // Create a concrete instance of a hash algorithm

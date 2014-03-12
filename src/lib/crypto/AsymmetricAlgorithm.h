@@ -42,6 +42,18 @@
 #include "SymmetricKey.h"
 #include "RNG.h"
 
+struct AsymAlgo {
+        enum Type {
+		Unknown,
+		RSA,
+		DSA,
+		DH,
+		ECDH,
+		ECDSA,
+		GOST
+        };
+};
+
 class AsymmetricAlgorithm
 {
 public:

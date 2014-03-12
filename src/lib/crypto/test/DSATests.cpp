@@ -48,7 +48,7 @@ void DSATests::setUp()
 {
 	dsa = NULL;
 
-	dsa = CryptoFactory::i()->getAsymmetricAlgorithm("DSA");
+	dsa = CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::DSA);
 
 	// Check the DSA object
 	CPPUNIT_ASSERT(dsa != NULL);

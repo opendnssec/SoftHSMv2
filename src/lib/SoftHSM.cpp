@@ -680,7 +680,7 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 		return CKR_SLOT_ID_INVALID;
 	}
 
-	AsymmetricAlgorithm* rsa = CryptoFactory::i()->getAsymmetricAlgorithm("RSA");
+	AsymmetricAlgorithm* rsa = CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::RSA);
 	if (rsa != NULL)
 	{
 		rsaMinSize = rsa->getMinKeySize();
@@ -692,7 +692,7 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 	}
 	CryptoFactory::i()->recycleAsymmetricAlgorithm(rsa);
 
-	AsymmetricAlgorithm* dsa = CryptoFactory::i()->getAsymmetricAlgorithm("DSA");
+	AsymmetricAlgorithm* dsa = CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::DSA);
 	if (dsa != NULL)
 	{
 		dsaMinSize = dsa->getMinKeySize();
@@ -715,7 +715,7 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 	}
 	CryptoFactory::i()->recycleAsymmetricAlgorithm(dsa);
 
-	AsymmetricAlgorithm* dh = CryptoFactory::i()->getAsymmetricAlgorithm("DH");
+	AsymmetricAlgorithm* dh = CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::DH);
 	if (dh != NULL)
 	{
 		dhMinSize = dh->getMinKeySize();
@@ -728,7 +728,7 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 	CryptoFactory::i()->recycleAsymmetricAlgorithm(dh);
 
 #ifdef WITH_ECC
-	AsymmetricAlgorithm* ecdsa = CryptoFactory::i()->getAsymmetricAlgorithm("ECDSA");
+	AsymmetricAlgorithm* ecdsa = CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::ECDSA);
 	if (ecdsa != NULL)
 	{
 		ecdsaMinSize = ecdsa->getMinKeySize();
@@ -740,7 +740,7 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 	}
 	CryptoFactory::i()->recycleAsymmetricAlgorithm(ecdsa);
 
-	AsymmetricAlgorithm* ecdh = CryptoFactory::i()->getAsymmetricAlgorithm("ECDH");
+	AsymmetricAlgorithm* ecdh = CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::ECDH);
 	if (ecdh != NULL)
 	{
 		ecdhMinSize = ecdh->getMinKeySize();
@@ -1955,7 +1955,7 @@ CK_RV SoftHSM::AsymEncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMec
 	PublicKey* publicKey = NULL;
 	if (isRSA)
 	{
-		asymCrypto = CryptoFactory::i()->getAsymmetricAlgorithm("rsa");
+		asymCrypto = CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::RSA);
 		if (asymCrypto == NULL) return CKR_MECHANISM_INVALID;
 
 		publicKey = asymCrypto->newPublicKey();
@@ -2383,7 +2383,7 @@ CK_RV SoftHSM::AsymDecryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMec
 	PrivateKey* privateKey = NULL;
 	if (isRSA)
 	{
-		asymCrypto = CryptoFactory::i()->getAsymmetricAlgorithm("rsa");
+		asymCrypto = CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::RSA);
 		if (asymCrypto == NULL) return CKR_MECHANISM_INVALID;
 
 		privateKey = asymCrypto->newPrivateKey();
@@ -3116,7 +3116,7 @@ CK_RV SoftHSM::AsymSignInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechan
 	PrivateKey* privateKey = NULL;
 	if (isRSA)
 	{
-		asymCrypto = CryptoFactory::i()->getAsymmetricAlgorithm("rsa");
+		asymCrypto = CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::RSA);
 		if (asymCrypto == NULL) return CKR_MECHANISM_INVALID;
 
 		privateKey = asymCrypto->newPrivateKey();
@@ -3135,7 +3135,7 @@ CK_RV SoftHSM::AsymSignInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechan
 	}
 	else if (isDSA)
 	{
-		asymCrypto = CryptoFactory::i()->getAsymmetricAlgorithm("dsa");
+		asymCrypto = CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::DSA);
 		if (asymCrypto == NULL) return CKR_MECHANISM_INVALID;
 
 		privateKey = asymCrypto->newPrivateKey();
@@ -3155,7 +3155,7 @@ CK_RV SoftHSM::AsymSignInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechan
 #ifdef WITH_ECC
 	else if (isECDSA)
 	{
-		asymCrypto = CryptoFactory::i()->getAsymmetricAlgorithm("ecdsa");
+		asymCrypto = CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::ECDSA);
 		if (asymCrypto == NULL) return CKR_MECHANISM_INVALID;
 
 		privateKey = asymCrypto->newPrivateKey();
@@ -3176,7 +3176,7 @@ CK_RV SoftHSM::AsymSignInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechan
 	else
 	{
 #ifdef WITH_GOST
-		asymCrypto = CryptoFactory::i()->getAsymmetricAlgorithm("gost");
+		asymCrypto = CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::GOST);
 		if (asymCrypto == NULL) return CKR_MECHANISM_INVALID;
 
 		privateKey = asymCrypto->newPrivateKey();
@@ -3828,7 +3828,7 @@ CK_RV SoftHSM::AsymVerifyInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 	PublicKey* publicKey = NULL;
 	if (isRSA)
 	{
-		asymCrypto = CryptoFactory::i()->getAsymmetricAlgorithm("rsa");
+		asymCrypto = CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::RSA);
 		if (asymCrypto == NULL) return CKR_MECHANISM_INVALID;
 
 		publicKey = asymCrypto->newPublicKey();
@@ -3847,7 +3847,7 @@ CK_RV SoftHSM::AsymVerifyInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 	}
 	else if (isDSA)
 	{
-		asymCrypto = CryptoFactory::i()->getAsymmetricAlgorithm("dsa");
+		asymCrypto = CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::DSA);
 		if (asymCrypto == NULL) return CKR_MECHANISM_INVALID;
 
 		publicKey = asymCrypto->newPublicKey();
@@ -3867,7 +3867,7 @@ CK_RV SoftHSM::AsymVerifyInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 #ifdef WITH_ECC
 	else if (isECDSA)
 	{
-		asymCrypto = CryptoFactory::i()->getAsymmetricAlgorithm("ecdsa");
+		asymCrypto = CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::ECDSA);
 		if (asymCrypto == NULL) return CKR_MECHANISM_INVALID;
 
 		publicKey = asymCrypto->newPublicKey();
@@ -3888,7 +3888,7 @@ CK_RV SoftHSM::AsymVerifyInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 	else
 	{
 #ifdef WITH_GOST
-		asymCrypto = CryptoFactory::i()->getAsymmetricAlgorithm("gost");
+		asymCrypto = CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::GOST);
 		if (asymCrypto == NULL) return CKR_MECHANISM_INVALID;
 
 		publicKey = asymCrypto->newPublicKey();
@@ -4714,21 +4714,21 @@ CK_RV SoftHSM::C_WrapKey
 	else
 	{
 		CK_KEY_TYPE keyType = key->getAttribute(CKA_KEY_TYPE)->getUnsignedLongValue();
-		std::string alg = "";
+		AsymAlgo::Type alg = AsymAlgo::Unknown;
 		switch (keyType) {
 			case CKK_RSA:
-				alg = "rsa";
+				alg = AsymAlgo::RSA;
 				break;
 			case CKK_DSA:
-				alg = "dsa";
+				alg = AsymAlgo::DSA;
 				break;
 			case CKK_DH:
-				alg = "dh";
+				alg = AsymAlgo::DH;
 				break;
 #ifdef WITH_ECC
 			case CKK_EC:
 				// can be ecdh too but it doesn't matter
-				alg = "ecdsa";
+				alg = AsymAlgo::ECDSA;
 				break;
 #endif
 			default:
@@ -4736,7 +4736,7 @@ CK_RV SoftHSM::C_WrapKey
 		}
 		AsymmetricAlgorithm* asymCrypto = NULL;
 		PrivateKey* privateKey = NULL;
-		asymCrypto = CryptoFactory::i()->getAsymmetricAlgorithm(alg.c_str());
+		asymCrypto = CryptoFactory::i()->getAsymmetricAlgorithm(alg);
 		if (asymCrypto == NULL)
 			return CKR_GENERAL_ERROR;
 		privateKey = asymCrypto->newPrivateKey();
@@ -5947,7 +5947,7 @@ CK_RV SoftHSM::generateRSA
 
 	// Generate key pair
 	AsymmetricKeyPair* kp = NULL;
-	AsymmetricAlgorithm* rsa = CryptoFactory::i()->getAsymmetricAlgorithm("RSA");
+	AsymmetricAlgorithm* rsa = CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::RSA);
 	if (rsa == NULL)
 		return CKR_GENERAL_ERROR;
 	if (!rsa->generateKeyPair(&kp, &p))
@@ -6233,7 +6233,7 @@ CK_RV SoftHSM::generateDSA
 
 	// Generate key pair
 	AsymmetricKeyPair* kp = NULL;
-	AsymmetricAlgorithm* dsa = CryptoFactory::i()->getAsymmetricAlgorithm("DSA");
+	AsymmetricAlgorithm* dsa = CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::DSA);
 	if (dsa == NULL) return CKR_GENERAL_ERROR;
 	if (!dsa->generateKeyPair(&kp, &p))
 	{
@@ -6514,7 +6514,7 @@ CK_RV SoftHSM::generateDSAParameters
 
 	// Generate domain parameters
 	AsymmetricParameters* p = NULL;
-	AsymmetricAlgorithm* dsa = CryptoFactory::i()->getAsymmetricAlgorithm("DSA");
+	AsymmetricAlgorithm* dsa = CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::DSA);
 	if (dsa == NULL) return CKR_GENERAL_ERROR;
 	if (!dsa->generateParameters(&p, (void *)bitLen))
 	{
@@ -6676,7 +6676,7 @@ CK_RV SoftHSM::generateEC
 
 	// Generate key pair
 	AsymmetricKeyPair* kp = NULL;
-	AsymmetricAlgorithm* ec = CryptoFactory::i()->getAsymmetricAlgorithm("ECDSA");
+	AsymmetricAlgorithm* ec = CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::ECDSA);
 	if (ec == NULL) return CKR_GENERAL_ERROR;
 	if (!ec->generateKeyPair(&kp, &p))
 	{
@@ -6947,7 +6947,7 @@ CK_RV SoftHSM::generateDH
 
 	// Generate key pair
 	AsymmetricKeyPair* kp = NULL;
-	AsymmetricAlgorithm* dh = CryptoFactory::i()->getAsymmetricAlgorithm("DH");
+	AsymmetricAlgorithm* dh = CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::DH);
 	if (dh == NULL) return CKR_GENERAL_ERROR;
 	if (!dh->generateKeyPair(&kp, &p))
 	{
@@ -7208,7 +7208,7 @@ CK_RV SoftHSM::generateDHParameters
 
 	// Generate domain parameters
 	AsymmetricParameters* p = NULL;
-	AsymmetricAlgorithm* dh = CryptoFactory::i()->getAsymmetricAlgorithm("DH");
+	AsymmetricAlgorithm* dh = CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::DH);
 	if (dh == NULL) return CKR_GENERAL_ERROR;
 	if (!dh->generateParameters(&p, (void *)bitLen))
 	{
@@ -7374,7 +7374,7 @@ CK_RV SoftHSM::generateGOST
 
 	// Generate key pair
 	AsymmetricKeyPair* kp = NULL;
-	AsymmetricAlgorithm* gost = CryptoFactory::i()->getAsymmetricAlgorithm("GOST");
+	AsymmetricAlgorithm* gost = CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::GOST);
 	if (gost == NULL) return CKR_GENERAL_ERROR;
 	if (!gost->generateKeyPair(&kp, &p))
 	{
@@ -7629,7 +7629,7 @@ CK_RV SoftHSM::deriveDH
 		return CKR_KEY_HANDLE_INVALID;
 
 	// Get the DH algorithm handler
-	AsymmetricAlgorithm* dh = CryptoFactory::i()->getAsymmetricAlgorithm("DH");
+	AsymmetricAlgorithm* dh = CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::DH);
 	if (dh == NULL)
 		return CKR_MECHANISM_INVALID;
 
@@ -7859,7 +7859,7 @@ CK_RV SoftHSM::deriveECDH
 		return CKR_KEY_HANDLE_INVALID;
 
 	// Get the ECDH algorithm handler
-	AsymmetricAlgorithm* ecdh = CryptoFactory::i()->getAsymmetricAlgorithm("ECDH");
+	AsymmetricAlgorithm* ecdh = CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::ECDH);
 	if (ecdh == NULL)
 		return CKR_MECHANISM_INVALID;
 
@@ -8493,7 +8493,7 @@ CK_RV SoftHSM::getSymmetricKey(SymmetricKey* skey, Token* token, OSObject* key)
 
 bool SoftHSM::setRSAPrivateKey(OSObject* key, ByteString ber, Token* token, bool isPrivate)
 {
-	AsymmetricAlgorithm* rsa = CryptoFactory::i()->getAsymmetricAlgorithm("rsa");
+	AsymmetricAlgorithm* rsa = CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::RSA);
 	if (rsa == NULL)
 		return false;
 	PrivateKey* priv = rsa->newPrivateKey();
@@ -8557,7 +8557,7 @@ bool SoftHSM::setRSAPrivateKey(OSObject* key, ByteString ber, Token* token, bool
 
 bool SoftHSM::setDSAPrivateKey(OSObject* key, ByteString ber, Token* token, bool isPrivate)
 {
-	AsymmetricAlgorithm* dsa = CryptoFactory::i()->getAsymmetricAlgorithm("dsa");
+	AsymmetricAlgorithm* dsa = CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::DSA);
 	if (dsa == NULL)
 		return false;
 	PrivateKey* priv = dsa->newPrivateKey();
@@ -8605,7 +8605,7 @@ bool SoftHSM::setDSAPrivateKey(OSObject* key, ByteString ber, Token* token, bool
 
 bool SoftHSM::setDHPrivateKey(OSObject* key, ByteString ber, Token* token, bool isPrivate)
 {
-	AsymmetricAlgorithm* dh = CryptoFactory::i()->getAsymmetricAlgorithm("dh");
+	AsymmetricAlgorithm* dh = CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::DH);
 	if (dh == NULL)
 		return false;
 	PrivateKey* priv = dh->newPrivateKey();
@@ -8648,7 +8648,7 @@ bool SoftHSM::setDHPrivateKey(OSObject* key, ByteString ber, Token* token, bool 
 }
 bool SoftHSM::setECPrivateKey(OSObject* key, ByteString ber, Token* token, bool isPrivate)
 {
-	AsymmetricAlgorithm* ecc = CryptoFactory::i()->getAsymmetricAlgorithm("ecdsa");
+	AsymmetricAlgorithm* ecc = CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::ECDSA);
 	if (ecc == NULL)
 		return false;
 	PrivateKey* priv = ecc->newPrivateKey();

@@ -59,7 +59,7 @@ public:
 	virtual SymmetricAlgorithm* getSymmetricAlgorithm(std::string algorithm);
 
 	// Create a concrete instance of an asymmetric algorithm
-	virtual AsymmetricAlgorithm* getAsymmetricAlgorithm(std::string algorithm);
+	virtual AsymmetricAlgorithm* getAsymmetricAlgorithm(AsymAlgo::Type algorithm);
 
 	// Create a concrete instance of a hash algorithm
 	virtual HashAlgorithm* getHashAlgorithm(std::string algorithm);

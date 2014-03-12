@@ -62,7 +62,7 @@ public:
 	SymmetricAlgorithm* getSymmetricAlgorithm(std::string algorithm);
 
 	// Create a concrete instance of an asymmetric algorithm
-	AsymmetricAlgorithm* getAsymmetricAlgorithm(std::string algorithm);
+	AsymmetricAlgorithm* getAsymmetricAlgorithm(AsymAlgo::Type algorithm);
 
 	// Create a concrete instance of a hash algorithm
 	HashAlgorithm* getHashAlgorithm(std::string algorithm);

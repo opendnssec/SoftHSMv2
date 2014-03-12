@@ -50,7 +50,7 @@ void ECDSATests::setUp()
 {
 	ecdsa = NULL;
 
-	ecdsa = CryptoFactory::i()->getAsymmetricAlgorithm("ECDSA");
+	ecdsa = CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::ECDSA);
 
 	// Check the ECDSA object
 	CPPUNIT_ASSERT(ecdsa != NULL);

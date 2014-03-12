@@ -48,7 +48,7 @@ void RSATests::setUp()
 {
 	rsa = NULL;
 
-	rsa = CryptoFactory::i()->getAsymmetricAlgorithm("RSA");
+	rsa = CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::RSA);
 
 	// Check the RSA object
 	CPPUNIT_ASSERT(rsa != NULL);

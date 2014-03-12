@@ -48,7 +48,7 @@ void DHTests::setUp()
 {
 	dh = NULL;
 
-	dh = CryptoFactory::i()->getAsymmetricAlgorithm("DH");
+	dh = CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::DH);
 
 	// Check the DH object
 	CPPUNIT_ASSERT(dh != NULL);

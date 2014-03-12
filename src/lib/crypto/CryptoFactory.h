@@ -59,7 +59,7 @@ public:
 	virtual void recycleSymmetricAlgorithm(SymmetricAlgorithm* toRecycle);
 
 	// Create a concrete instance of an asymmetric algorithm
-	virtual AsymmetricAlgorithm* getAsymmetricAlgorithm(std::string algorithm) = 0;
+	virtual AsymmetricAlgorithm* getAsymmetricAlgorithm(AsymAlgo::Type algorithm) = 0;
 
 	// Recycle an asymmetric algorithm instance -- override this function in the derived
 	// class if you need to perform specific clean-up

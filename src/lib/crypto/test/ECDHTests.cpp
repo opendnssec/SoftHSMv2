@@ -49,7 +49,7 @@ void ECDHTests::setUp()
 {
 	ecdh = NULL;
 
-	ecdh = CryptoFactory::i()->getAsymmetricAlgorithm("ECDH");
+	ecdh = CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::ECDH);
 
 	// Check the ECDH object
 	CPPUNIT_ASSERT(ecdh != NULL);

@@ -140,47 +140,32 @@ SymmetricAlgorithm* BotanCryptoFactory::getSymmetricAlgorithm(std::string algori
 }
 
 // Create a concrete instance of an asymmetric algorithm
-AsymmetricAlgorithm* BotanCryptoFactory::getAsymmetricAlgorithm(std::string algorithm)
+AsymmetricAlgorithm* BotanCryptoFactory::getAsymmetricAlgorithm(AsymAlgo::Type algorithm)
 {
-	std::string lcAlgo;
-	lcAlgo.resize(algorithm.size());
-	std::transform(algorithm.begin(), algorithm.end(), lcAlgo.begin(), tolower);
-
-	if (!lcAlgo.compare("rsa"))
+	switch (algorithm)
 	{
-		return new BotanRSA();
-	}
-	else if (!lcAlgo.compare("dsa"))
-	{
-		return new BotanDSA();
-	}
-	else if (!lcAlgo.compare("dh"))
-	{
-		return new BotanDH();
-	}
+		case AsymAlgo::RSA:
+			return new BotanRSA();
+		case AsymAlgo::DSA:
+			return new BotanDSA();
+		case AsymAlgo::DH:
+			return new BotanDH();
 #ifdef WITH_ECC
-	else if (!lcAlgo.compare("ecdh"))
-	{
-		return new BotanECDH();
-	}
-	else if (!lcAlgo.compare("ecdsa"))
-	{
-		return new BotanECDSA();
-	}
+		case AsymAlgo::ECDH:
+			return new BotanECDH();
+		case AsymAlgo::ECDSA:
+			return new BotanECDSA();
 #endif
 #ifdef WITH_GOST
-	else if (!lcAlgo.compare("gost"))
-	{
-		return new BotanGOST();
-	}
+		case AsymAlgo::GOST:
+			return new BotanGOST();
 #endif
-	else
-	{
-		// No algorithm implementation is available
-		ERROR_MSG("Unknown algorithm '%s'", algorithm.c_str());
+		default:
+			// No algorithm implementation is available
+			ERROR_MSG("Unknown algorithm '%i'", algorithm);
 
-		return NULL;
-	}
+			return NULL;
+	};
 
 	// No algorithm implementation is available
 	return NULL;
