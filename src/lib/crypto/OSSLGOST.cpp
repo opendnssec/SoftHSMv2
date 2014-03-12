@@ -52,13 +52,9 @@ OSSLGOST::~OSSLGOST()
 }
 
 // Signing functions
-bool OSSLGOST::sign(PrivateKey* privateKey, const ByteString& dataToSign, ByteString& signature, const std::string mechanism)
+bool OSSLGOST::sign(PrivateKey* privateKey, const ByteString& dataToSign, ByteString& signature, const AsymMech::Type mechanism)
 {
-	std::string lowerMechanism;
-	lowerMechanism.resize(mechanism.size());
-	std::transform(mechanism.begin(), mechanism.end(), lowerMechanism.begin(), tolower);
-
-	if (!lowerMechanism.compare("gost"))
+	if (mechanism == AsymMech::GOST)
 	{
 		// Separate implementation for GOST signing without hash computation
 
@@ -126,7 +122,7 @@ bool OSSLGOST::sign(PrivateKey* privateKey, const ByteString& dataToSign, ByteSt
 	}
 }
 
-bool OSSLGOST::signInit(PrivateKey* privateKey, const std::string mechanism)
+bool OSSLGOST::signInit(PrivateKey* privateKey, const AsymMech::Type mechanism)
 {
 	if (!AsymmetricAlgorithm::signInit(privateKey, mechanism))
 	{
@@ -144,13 +140,9 @@ bool OSSLGOST::signInit(PrivateKey* privateKey, const std::string mechanism)
 		return false;
 	}
 
-	std::string lowerMechanism;
-	lowerMechanism.resize(mechanism.size());
-	std::transform(mechanism.begin(), mechanism.end(), lowerMechanism.begin(), tolower);
-
-	if (lowerMechanism.compare("gost-gost"))
+	if (mechanism != AsymMech::GOST_GOST)
 	{
-		ERROR_MSG("Invalid mechanism supplied (%s)", mechanism.c_str());
+		ERROR_MSG("Invalid mechanism supplied (%i)", mechanism);
 
 		ByteString dummy;
 		AsymmetricAlgorithm::signFinal(dummy);
@@ -240,13 +232,9 @@ bool OSSLGOST::signFinal(ByteString& signature)
 }
 
 // Verification functions
-bool OSSLGOST::verify(PublicKey* publicKey, const ByteString& originalData, const ByteString& signature, const std::string mechanism)
+bool OSSLGOST::verify(PublicKey* publicKey, const ByteString& originalData, const ByteString& signature, const AsymMech::Type mechanism)
 {
-	std::string lowerMechanism;
-	lowerMechanism.resize(mechanism.size());
-	std::transform(mechanism.begin(), mechanism.end(), lowerMechanism.begin(), tolower);
-
-	if (!lowerMechanism.compare("gost"))
+	if (mechanism == AsymMech::GOST)
 	{
 		// Separate implementation for GOST verification without hash computation
 
@@ -301,7 +289,7 @@ bool OSSLGOST::verify(PublicKey* publicKey, const ByteString& originalData, cons
 	}
 }
 
-bool OSSLGOST::verifyInit(PublicKey* publicKey, const std::string mechanism)
+bool OSSLGOST::verifyInit(PublicKey* publicKey, const AsymMech::Type mechanism)
 {
 	if (!AsymmetricAlgorithm::verifyInit(publicKey, mechanism))
 	{
@@ -319,13 +307,9 @@ bool OSSLGOST::verifyInit(PublicKey* publicKey, const std::string mechanism)
 		return false;
 	}
 
-	std::string lowerMechanism;
-	lowerMechanism.resize(mechanism.size());
-	std::transform(mechanism.begin(), mechanism.end(), lowerMechanism.begin(), tolower);
-
-	if (lowerMechanism.compare("gost-gost"))
+	if (mechanism != AsymMech::GOST_GOST)
 	{
-		ERROR_MSG("Invalid mechanism supplied (%s)", mechanism.c_str());
+		ERROR_MSG("Invalid mechanism supplied (%i)", mechanism);
 
 		ByteString dummy;
 		AsymmetricAlgorithm::verifyFinal(dummy);
@@ -409,7 +393,7 @@ bool OSSLGOST::verifyFinal(const ByteString& signature)
 }
 
 // Encryption functions
-bool OSSLGOST::encrypt(PublicKey* /*publicKey*/, const ByteString& /*data*/, ByteString& /*encryptedData*/, const std::string /*padding*/)
+bool OSSLGOST::encrypt(PublicKey* /*publicKey*/, const ByteString& /*data*/, ByteString& /*encryptedData*/, const AsymMech::Type /*padding*/)
 {
 	ERROR_MSG("GOST does not support encryption");
 
@@ -417,7 +401,7 @@ bool OSSLGOST::encrypt(PublicKey* /*publicKey*/, const ByteString& /*data*/, Byt
 }
 
 // Decryption functions
-bool OSSLGOST::decrypt(PrivateKey* /*privateKey*/, const ByteString& /*encryptedData*/, ByteString& /*data*/, const std::string /*padding*/)
+bool OSSLGOST::decrypt(PrivateKey* /*privateKey*/, const ByteString& /*encryptedData*/, ByteString& /*data*/, const AsymMech::Type /*padding*/)
 {
 	ERROR_MSG("GOST does not support decryption");
 
@@ -608,7 +592,7 @@ PrivateKey* OSSLGOST::newPrivateKey()
 {
 	return (PrivateKey*) new OSSLGOSTPrivateKey();
 }
-	
+
 AsymmetricParameters* OSSLGOST::newParameters()
 {
 	return (AsymmetricParameters*) new ECParameters();

@@ -42,8 +42,10 @@
 #include "SymmetricKey.h"
 #include "RNG.h"
 
-struct AsymAlgo {
-        enum Type {
+struct AsymAlgo
+{
+        enum Type
+	{
 		Unknown,
 		RSA,
 		DSA,
@@ -52,6 +54,33 @@ struct AsymAlgo {
 		ECDSA,
 		GOST
         };
+};
+
+struct AsymMech
+{
+	enum Type
+	{
+		Unknown,
+		RSA,
+		RSA_MD5_PKCS,
+		RSA_PKCS,
+		RSA_PKCS_OAEP,
+		RSA_SHA1_PKCS,
+		RSA_SHA224_PKCS,
+		RSA_SHA256_PKCS,
+		RSA_SHA384_PKCS,
+		RSA_SHA512_PKCS,
+		RSA_SSL,
+		DSA,
+		DSA_SHA1,
+		DSA_SHA224,
+		DSA_SHA256,
+		DSA_SHA384,
+		DSA_SHA512,
+		ECDSA,
+		GOST,
+		GOST_GOST
+	};
 };
 
 class AsymmetricAlgorithm
@@ -64,22 +93,22 @@ public:
 	virtual ~AsymmetricAlgorithm() { }
 
 	// Signing functions
-	virtual bool sign(PrivateKey* privateKey, const ByteString& dataToSign, ByteString& signature, const std::string mechanism);
-	virtual bool signInit(PrivateKey* privateKey, const std::string mechanism);
+	virtual bool sign(PrivateKey* privateKey, const ByteString& dataToSign, ByteString& signature, const AsymMech::Type mechanism);
+	virtual bool signInit(PrivateKey* privateKey, const AsymMech::Type mechanism);
 	virtual bool signUpdate(const ByteString& dataToSign);
 	virtual bool signFinal(ByteString& signature);
 
 	// Verification functions
-	virtual bool verify(PublicKey* publicKey, const ByteString& originalData, const ByteString& signature, const std::string mechanism);
-	virtual bool verifyInit(PublicKey* publicKey, const std::string mechanism);
+	virtual bool verify(PublicKey* publicKey, const ByteString& originalData, const ByteString& signature, const AsymMech::Type mechanism);
+	virtual bool verifyInit(PublicKey* publicKey, const AsymMech::Type mechanism);
 	virtual bool verifyUpdate(const ByteString& originalData);
 	virtual bool verifyFinal(const ByteString& signature);
 
 	// Encryption functions
-	virtual bool encrypt(PublicKey* publicKey, const ByteString& data, ByteString& encryptedData, const std::string padding) = 0;
+	virtual bool encrypt(PublicKey* publicKey, const ByteString& data, ByteString& encryptedData, const AsymMech::Type padding) = 0;
 
 	// Decryption functions
-	virtual bool decrypt(PrivateKey* privateKey, const ByteString& encryptedData, ByteString& data, const std::string padding) = 0;
+	virtual bool decrypt(PrivateKey* privateKey, const ByteString& encryptedData, ByteString& data, const AsymMech::Type padding) = 0;
 
 	// Key factory
 	virtual bool generateKeyPair(AsymmetricKeyPair** ppKeyPair, AsymmetricParameters* parameters, RNG* rng = NULL) = 0;
@@ -106,8 +135,8 @@ protected:
 	PublicKey* currentPublicKey;
 	PrivateKey* currentPrivateKey;
 
-	std::string currentMechanism;
-	std::string currentPadding;
+	AsymMech::Type currentMechanism;
+	AsymMech::Type currentPadding;
 
 private:
 	enum

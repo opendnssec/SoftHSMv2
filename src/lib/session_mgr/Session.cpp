@@ -300,12 +300,12 @@ SymmetricAlgorithm *Session::getSymmetricCryptoOp()
 	return symmetricCryptoOp;
 }
 
-void Session::setMechanism(const char *mechanism)
+void Session::setMechanism(AsymMech::Type mechanism)
 {
 	this->mechanism = mechanism;
 }
 
-const char *Session::getMechanism()
+AsymMech::Type Session::getMechanism()
 {
 	return mechanism;
 }

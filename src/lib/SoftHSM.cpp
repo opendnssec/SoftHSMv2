@@ -1915,15 +1915,15 @@ CK_RV SoftHSM::AsymEncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMec
 		return CKR_KEY_FUNCTION_NOT_PERMITTED;
 
 	// Get the asymmetric algorithm matching the mechanism
-	const char *mechanism;
+	AsymMech::Type mechanism;
 	bool isRSA = false;
 	switch(pMechanism->mechanism) {
 		case CKM_RSA_PKCS:
-			mechanism = "rsa-pkcs";
+			mechanism = AsymMech::RSA_PKCS;
 			isRSA = true;
 			break;
 		case CKM_RSA_X_509:
-			mechanism = "rsa-raw";
+			mechanism = AsymMech::RSA;
 			isRSA = true;
 			break;
 		case CKM_RSA_PKCS_OAEP:
@@ -1944,7 +1944,7 @@ CK_RV SoftHSM::AsymEncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMec
 				return CKR_ARGUMENTS_BAD;
 			}
 
-			mechanism = "rsa-pkcs-oaep";
+			mechanism = AsymMech::RSA_PKCS_OAEP;
 			isRSA = true;
 			break;
 		default:
@@ -2058,9 +2058,9 @@ static CK_RV SymEncrypt(Session* session, CK_BYTE_PTR pData, CK_ULONG ulDataLen,
 static CK_RV AsymEncrypt(Session* session, CK_BYTE_PTR pData, CK_ULONG ulDataLen, CK_BYTE_PTR pEncryptedData, CK_ULONG_PTR pulEncryptedDataLen)
 {
 	AsymmetricAlgorithm* asymCrypto = session->getAsymmetricCryptoOp();
-	const char *mechanism = session->getMechanism();
+	AsymMech::Type mechanism = session->getMechanism();
 	PublicKey* publicKey = session->getPublicKey();
-	if (asymCrypto == NULL || mechanism == NULL || !session->getAllowSinglePartOp() || publicKey == NULL)
+	if (asymCrypto == NULL || !session->getAllowSinglePartOp() || publicKey == NULL)
 	{
 		session->resetOp();
 		return CKR_OPERATION_NOT_INITIALIZED;
@@ -2088,7 +2088,7 @@ static CK_RV AsymEncrypt(Session* session, CK_BYTE_PTR pData, CK_ULONG ulDataLen
 
 	// PKCS #11 Mechanisms v2.30: Cryptoki Draft 7 page 32
 	// We must allow input length <= k and therfore need to prepend the data with zeroes.
-	if (strcmp(mechanism,"rsa-raw") == 0) {
+	if (mechanism == AsymMech::RSA) {
 		data.wipe(size-ulDataLen);
 	}
 
@@ -2343,15 +2343,15 @@ CK_RV SoftHSM::AsymDecryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMec
 		return CKR_KEY_FUNCTION_NOT_PERMITTED;
 
 	// Get the asymmetric algorithm matching the mechanism
-	const char *mechanism;
+	AsymMech::Type mechanism = AsymMech::Unknown;
 	bool isRSA = false;
 	switch(pMechanism->mechanism) {
 		case CKM_RSA_PKCS:
-			mechanism = "rsa-pkcs";
+			mechanism = AsymMech::RSA_PKCS;
 			isRSA = true;
 			break;
 		case CKM_RSA_X_509:
-			mechanism = "rsa-raw";
+			mechanism = AsymMech::RSA;
 			isRSA = true;
 			break;
 		case CKM_RSA_PKCS_OAEP:
@@ -2372,7 +2372,7 @@ CK_RV SoftHSM::AsymDecryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMec
 				return CKR_ARGUMENTS_BAD;
 			}
 
-			mechanism = "rsa-pkcs-oaep";
+			mechanism = AsymMech::RSA_PKCS_OAEP;
 			isRSA = true;
 			break;
 		default:
@@ -2487,9 +2487,9 @@ static CK_RV SymDecrypt(Session* session, CK_BYTE_PTR pEncryptedData, CK_ULONG u
 static CK_RV AsymDecrypt(Session* session, CK_BYTE_PTR pEncryptedData, CK_ULONG ulEncryptedDataLen, CK_BYTE_PTR pData, CK_ULONG_PTR pulDataLen)
 {
 	AsymmetricAlgorithm* asymCrypto = session->getAsymmetricCryptoOp();
-	const char *mechanism = session->getMechanism();
+	AsymMech::Type mechanism = session->getMechanism();
 	PrivateKey* privateKey = session->getPrivateKey();
-	if (asymCrypto == NULL || mechanism == NULL || !session->getAllowSinglePartOp() || privateKey == NULL)
+	if (asymCrypto == NULL || !session->getAllowSinglePartOp() || privateKey == NULL)
 	{
 		session->resetOp();
 		return CKR_OPERATION_NOT_INITIALIZED;
@@ -3015,96 +3015,96 @@ CK_RV SoftHSM::AsymSignInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechan
 		return CKR_KEY_FUNCTION_NOT_PERMITTED;
 
 	// Get the asymmetric algorithm matching the mechanism
-	const char *mechanism;
+	AsymMech::Type mechanism = AsymMech::Unknown;
 	bool bAllowMultiPartOp;
 	bool isRSA = false;
 	bool isDSA = false;
 	bool isECDSA = false;
 	switch(pMechanism->mechanism) {
 		case CKM_RSA_PKCS:
-			mechanism = "rsa-pkcs";
+			mechanism = AsymMech::RSA_PKCS;
 			bAllowMultiPartOp = false;
 			isRSA = true;
 			break;
 		case CKM_RSA_X_509:
-			mechanism = "rsa-raw";
+			mechanism = AsymMech::RSA;
 			bAllowMultiPartOp = false;
 			isRSA = true;
 			break;
 		case CKM_MD5_RSA_PKCS:
-			mechanism = "rsa-md5-pkcs";
+			mechanism = AsymMech::RSA_MD5_PKCS;
 			bAllowMultiPartOp = true;
 			isRSA = true;
 			break;
 		case CKM_SHA1_RSA_PKCS:
-			mechanism = "rsa-sha1-pkcs";
+			mechanism = AsymMech::RSA_SHA1_PKCS;
 			bAllowMultiPartOp = true;
 			isRSA = true;
 			break;
 		case CKM_SHA224_RSA_PKCS:
-			mechanism = "rsa-sha224-pkcs";
+			mechanism = AsymMech::RSA_SHA224_PKCS;
 			bAllowMultiPartOp = true;
 			isRSA = true;
 			break;
 		case CKM_SHA256_RSA_PKCS:
-			mechanism = "rsa-sha256-pkcs";
+			mechanism = AsymMech::RSA_SHA256_PKCS;
 			bAllowMultiPartOp = true;
 			isRSA = true;
 			break;
 		case CKM_SHA384_RSA_PKCS:
-			mechanism = "rsa-sha384-pkcs";
+			mechanism = AsymMech::RSA_SHA384_PKCS;
 			bAllowMultiPartOp = true;
 			isRSA = true;
 			break;
 		case CKM_SHA512_RSA_PKCS:
-			mechanism = "rsa-sha512-pkcs";
+			mechanism = AsymMech::RSA_SHA512_PKCS;
 			bAllowMultiPartOp = true;
 			isRSA = true;
 			break;
 		case CKM_DSA:
-			mechanism = "dsa";
+			mechanism = AsymMech::DSA;
 			bAllowMultiPartOp = false;
 			isDSA = true;
 			break;
 		case CKM_DSA_SHA1:
-			mechanism = "dsa-sha1";
+			mechanism = AsymMech::DSA_SHA1;
 			bAllowMultiPartOp = true;
 			isDSA = true;
 			break;
 		case CKM_DSA_SHA224:
-			mechanism = "dsa-sha224";
+			mechanism = AsymMech::DSA_SHA224;
 			bAllowMultiPartOp = true;
 			isDSA = true;
 			break;
 		case CKM_DSA_SHA256:
-			mechanism = "dsa-sha256";
+			mechanism = AsymMech::DSA_SHA256;
 			bAllowMultiPartOp = true;
 			isDSA = true;
 			break;
 		case CKM_DSA_SHA384:
-			mechanism = "dsa-sha384";
+			mechanism = AsymMech::DSA_SHA384;
 			bAllowMultiPartOp = true;
 			isDSA = true;
 			break;
 		case CKM_DSA_SHA512:
-			mechanism = "dsa-sha512";
+			mechanism = AsymMech::DSA_SHA512;
 			bAllowMultiPartOp = true;
 			isDSA = true;
 			break;
 #ifdef WITH_ECC
 		case CKM_ECDSA:
-			mechanism = "ecdsa";
+			mechanism = AsymMech::ECDSA;
 			bAllowMultiPartOp = false;
 			isECDSA = true;
 			break;
 #endif
 #ifdef WITH_GOST
 		case CKM_GOSTR3410:
-			mechanism = "gost";
+			mechanism = AsymMech::GOST;
 			bAllowMultiPartOp = false;
 			break;
 		case CKM_GOSTR3410_WITH_GOSTR3411:
-			mechanism = "gost-gost";
+			mechanism = AsymMech::GOST_GOST;
 			bAllowMultiPartOp = true;
 			break;
 #endif
@@ -3285,9 +3285,9 @@ static CK_RV MacSign(Session* session, CK_BYTE_PTR pData, CK_ULONG ulDataLen, CK
 static CK_RV AsymSign(Session* session, CK_BYTE_PTR pData, CK_ULONG ulDataLen, CK_BYTE_PTR pSignature, CK_ULONG_PTR pulSignatureLen)
 {
 	AsymmetricAlgorithm* asymCrypto = session->getAsymmetricCryptoOp();
-	const char *mechanism = session->getMechanism();
+	AsymMech::Type mechanism = session->getMechanism();
 	PrivateKey* privateKey = session->getPrivateKey();
-	if (asymCrypto == NULL || mechanism == NULL || !session->getAllowSinglePartOp() || privateKey == NULL)
+	if (asymCrypto == NULL || !session->getAllowSinglePartOp() || privateKey == NULL)
 	{
 		session->resetOp();
 		return CKR_OPERATION_NOT_INITIALIZED;
@@ -3313,7 +3313,7 @@ static CK_RV AsymSign(Session* session, CK_BYTE_PTR pData, CK_ULONG ulDataLen, C
 
 	// PKCS #11 Mechanisms v2.30: Cryptoki Draft 7 page 32
 	// We must allow input length <= k and therfore need to prepend the data with zeroes.
-	if (strcmp(mechanism,"rsa-raw") == 0) {
+	if (mechanism == AsymMech::RSA) {
 		data.wipe(size-ulDataLen);
 	}
 
@@ -3727,96 +3727,96 @@ CK_RV SoftHSM::AsymVerifyInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 		return CKR_KEY_FUNCTION_NOT_PERMITTED;
 
 	// Get the asymmetric algorithm matching the mechanism
-	const char *mechanism;
+	AsymMech::Type mechanism = AsymMech::Unknown;
 	bool bAllowMultiPartOp;
 	bool isRSA = false;
 	bool isDSA = false;
 	bool isECDSA = false;
 	switch(pMechanism->mechanism) {
 		case CKM_RSA_PKCS:
-			mechanism = "rsa-pkcs";
+			mechanism = AsymMech::RSA_PKCS;
 			bAllowMultiPartOp = false;
 			isRSA = true;
 			break;
 		case CKM_RSA_X_509:
-			mechanism = "rsa-raw";
+			mechanism = AsymMech::RSA;
 			bAllowMultiPartOp = false;
 			isRSA = true;
 			break;
 		case CKM_MD5_RSA_PKCS:
-			mechanism = "rsa-md5-pkcs";
+			mechanism = AsymMech::RSA_MD5_PKCS;
 			bAllowMultiPartOp = true;
 			isRSA = true;
 			break;
 		case CKM_SHA1_RSA_PKCS:
-			mechanism = "rsa-sha1-pkcs";
+			mechanism = AsymMech::RSA_SHA1_PKCS;
 			bAllowMultiPartOp = true;
 			isRSA = true;
 			break;
 		case CKM_SHA224_RSA_PKCS:
-			mechanism = "rsa-sha224-pkcs";
+			mechanism = AsymMech::RSA_SHA224_PKCS;
 			bAllowMultiPartOp = true;
 			isRSA = true;
 			break;
 		case CKM_SHA256_RSA_PKCS:
-			mechanism = "rsa-sha256-pkcs";
+			mechanism = AsymMech::RSA_SHA256_PKCS;
 			bAllowMultiPartOp = true;
 			isRSA = true;
 			break;
 		case CKM_SHA384_RSA_PKCS:
-			mechanism = "rsa-sha384-pkcs";
+			mechanism = AsymMech::RSA_SHA384_PKCS;
 			bAllowMultiPartOp = true;
 			isRSA = true;
 			break;
 		case CKM_SHA512_RSA_PKCS:
-			mechanism = "rsa-sha512-pkcs";
+			mechanism = AsymMech::RSA_SHA512_PKCS;
 			bAllowMultiPartOp = true;
 			isRSA = true;
 			break;
 		case CKM_DSA:
-			mechanism = "dsa";
+			mechanism = AsymMech::DSA;
 			bAllowMultiPartOp = false;
 			isDSA = true;
 			break;
 		case CKM_DSA_SHA1:
-			mechanism = "dsa-sha1";
+			mechanism = AsymMech::DSA_SHA1;
 			bAllowMultiPartOp = true;
 			isDSA = true;
 			break;
 		case CKM_DSA_SHA224:
-			mechanism = "dsa-sha224";
+			mechanism = AsymMech::DSA_SHA224;
 			bAllowMultiPartOp = true;
 			isDSA = true;
 			break;
 		case CKM_DSA_SHA256:
-			mechanism = "dsa-sha256";
+			mechanism = AsymMech::DSA_SHA256;
 			bAllowMultiPartOp = true;
 			isDSA = true;
 			break;
 		case CKM_DSA_SHA384:
-			mechanism = "dsa-sha384";
+			mechanism = AsymMech::DSA_SHA384;
 			bAllowMultiPartOp = true;
 			isDSA = true;
 			break;
 		case CKM_DSA_SHA512:
-			mechanism = "dsa-sha512";
+			mechanism = AsymMech::DSA_SHA512;
 			bAllowMultiPartOp = true;
 			isDSA = true;
 			break;
 #ifdef WITH_ECC
 		case CKM_ECDSA:
-			mechanism = "ecdsa";
+			mechanism = AsymMech::ECDSA;
 			bAllowMultiPartOp = false;
 			isECDSA = true;
 			break;
 #endif
 #ifdef WITH_GOST
 		case CKM_GOSTR3410:
-			mechanism = "gost";
+			mechanism = AsymMech::GOST;
 			bAllowMultiPartOp = false;
 			break;
 		case CKM_GOSTR3410_WITH_GOSTR3411:
-			mechanism = "gost-gost";
+			mechanism = AsymMech::GOST_GOST;
 			bAllowMultiPartOp = true;
 			break;
 #endif
@@ -3985,9 +3985,9 @@ static CK_RV MacVerify(Session* session, CK_BYTE_PTR pData, CK_ULONG ulDataLen, 
 static CK_RV AsymVerify(Session* session, CK_BYTE_PTR pData, CK_ULONG ulDataLen, CK_BYTE_PTR pSignature, CK_ULONG ulSignatureLen)
 {
 	AsymmetricAlgorithm* asymCrypto = session->getAsymmetricCryptoOp();
-	const char *mechanism = session->getMechanism();
+	AsymMech::Type mechanism = session->getMechanism();
 	PublicKey* publicKey = session->getPublicKey();
-	if (asymCrypto == NULL || mechanism == NULL || !session->getAllowSinglePartOp() || publicKey == NULL)
+	if (asymCrypto == NULL || !session->getAllowSinglePartOp() || publicKey == NULL)
 	{
 		session->resetOp();
 		return CKR_OPERATION_NOT_INITIALIZED;
@@ -4009,7 +4009,7 @@ static CK_RV AsymVerify(Session* session, CK_BYTE_PTR pData, CK_ULONG ulDataLen,
 
 	// PKCS #11 Mechanisms v2.30: Cryptoki Draft 7 page 32
 	// We must allow input length <= k and therfore need to prepend the data with zeroes.
-	if (strcmp(mechanism,"rsa-raw") == 0) {
+	if (mechanism == AsymMech::RSA) {
 		data.wipe(size-ulDataLen);
 	}
 

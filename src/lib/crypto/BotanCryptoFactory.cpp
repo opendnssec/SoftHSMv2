@@ -165,7 +165,7 @@ AsymmetricAlgorithm* BotanCryptoFactory::getAsymmetricAlgorithm(AsymAlgo::Type a
 			ERROR_MSG("Unknown algorithm '%i'", algorithm);
 
 			return NULL;
-	};
+	}
 
 	// No algorithm implementation is available
 	return NULL;

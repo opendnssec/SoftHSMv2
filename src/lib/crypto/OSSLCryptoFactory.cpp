@@ -273,7 +273,7 @@ AsymmetricAlgorithm* OSSLCryptoFactory::getAsymmetricAlgorithm(AsymAlgo::Type al
 			ERROR_MSG("Unknown algorithm '%i'", algorithm);
 
 			return NULL;
-	};
+	}
 
 	// No algorithm implementation is available
 	return NULL;

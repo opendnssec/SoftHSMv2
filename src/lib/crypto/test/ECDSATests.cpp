@@ -221,10 +221,10 @@ void ECDSATests::testSigningVerifying()
 		ByteString hResult;
 		CPPUNIT_ASSERT(hash->hashFinal(hResult));
 		ByteString sig;
-		CPPUNIT_ASSERT(ecdsa->sign(kp->getPrivateKey(), hResult, sig, "ECDSA"));
+		CPPUNIT_ASSERT(ecdsa->sign(kp->getPrivateKey(), hResult, sig, AsymMech::ECDSA));
 
 		// And verify it
-		CPPUNIT_ASSERT(ecdsa->verify(kp->getPublicKey(), hResult, sig, "ECDSA"));
+		CPPUNIT_ASSERT(ecdsa->verify(kp->getPublicKey(), hResult, sig, AsymMech::ECDSA));
 
 		ecdsa->recycleKeyPair(kp);
 		ecdsa->recycleParameters(p);
@@ -279,14 +279,14 @@ void ECDSATests::testSignVerifyKnownVector()
 	CPPUNIT_ASSERT(hash1->hashUpdate(data1));
 	ByteString hResult1;
 	CPPUNIT_ASSERT(hash1->hashFinal(hResult1));
-	CPPUNIT_ASSERT(ecdsa->verify(pubKey1, hResult1, goodSignature1, "ECDSA"));
-	CPPUNIT_ASSERT(!ecdsa->verify(pubKey1, hResult1, badSignature1, "ECDSA"));
+	CPPUNIT_ASSERT(ecdsa->verify(pubKey1, hResult1, goodSignature1, AsymMech::ECDSA));
+	CPPUNIT_ASSERT(!ecdsa->verify(pubKey1, hResult1, badSignature1, AsymMech::ECDSA));
 	CPPUNIT_ASSERT(hash2->hashInit());
 	CPPUNIT_ASSERT(hash2->hashUpdate(data2));
 	ByteString hResult2;
 	CPPUNIT_ASSERT(hash2->hashFinal(hResult2));
-	CPPUNIT_ASSERT(ecdsa->verify(pubKey2, hResult2, goodSignature2, "ECDSA"));
-	CPPUNIT_ASSERT(!ecdsa->verify(pubKey2, hResult2, badSignature2, "ECDSA"));
+	CPPUNIT_ASSERT(ecdsa->verify(pubKey2, hResult2, goodSignature2, AsymMech::ECDSA));
+	CPPUNIT_ASSERT(!ecdsa->verify(pubKey2, hResult2, badSignature2, AsymMech::ECDSA));
 
 	ecdsa->recyclePublicKey(pubKey1);
 	ecdsa->recyclePublicKey(pubKey2);
