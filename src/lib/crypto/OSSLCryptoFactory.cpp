@@ -238,7 +238,7 @@ SymmetricAlgorithm* OSSLCryptoFactory::getSymmetricAlgorithm(std::string algorit
 	{
 		return new OSSLDES();
 	}
-	else 
+	else
 	{
 		// No algorithm implementation is available
 		ERROR_MSG("Unknown algorithm '%s'", lcAlgo.c_str());
@@ -312,48 +312,31 @@ HashAlgorithm* OSSLCryptoFactory::getHashAlgorithm(HashAlgo::Type algorithm)
 }
 
 // Create a concrete instance of a MAC algorithm
-MacAlgorithm* OSSLCryptoFactory::getMacAlgorithm(std::string algorithm)
+MacAlgorithm* OSSLCryptoFactory::getMacAlgorithm(MacAlgo::Type algorithm)
 {
-	std::string lcAlgo;
-	lcAlgo.resize(algorithm.size());
-	std::transform(algorithm.begin(), algorithm.end(), lcAlgo.begin(), tolower);
-
-	if (!lcAlgo.compare("hmac-md5"))
+	switch (algorithm)
 	{
-		return new OSSLHMACMD5();
-	}
-	else if (!lcAlgo.compare("hmac-sha1"))
-	{
-		return new OSSLHMACSHA1();
-	}
-	else if (!lcAlgo.compare("hmac-sha224"))
-	{
-		return new OSSLHMACSHA224();
-	}
-	else if (!lcAlgo.compare("hmac-sha256"))
-	{
-		return new OSSLHMACSHA256();
-	}
-	else if (!lcAlgo.compare("hmac-sha384"))
-	{
-		return new OSSLHMACSHA384();
-	}
-	else if (!lcAlgo.compare("hmac-sha512"))
-	{
-		return new OSSLHMACSHA512();
-	}
+		case MacAlgo::HMAC_MD5:
+			return new OSSLHMACMD5();
+		case MacAlgo::HMAC_SHA1:
+			return new OSSLHMACSHA1();
+		case MacAlgo::HMAC_SHA224:
+			return new OSSLHMACSHA224();
+		case MacAlgo::HMAC_SHA256:
+			return new OSSLHMACSHA256();
+		case MacAlgo::HMAC_SHA384:
+			return new OSSLHMACSHA384();
+		case MacAlgo::HMAC_SHA512:
+			return new OSSLHMACSHA512();
 #ifdef WITH_GOST
-	else if (!lcAlgo.compare("hmac-gost"))
-	{
-		return new OSSLHMACGOSTR3411();
-	}
+		case MacAlgo::HMAC_GOST:
+			return new OSSLHMACGOSTR3411();
 #endif
-	else
-	{
-		// No algorithm implementation is available
-		ERROR_MSG("Unknown algorithm '%s'", algorithm.c_str());
+		default:
+			// No algorithm implementation is available
+			ERROR_MSG("Unknown algorithm '%i'", algorithm);
 
-		return NULL;
+			return NULL;
 	}
 
 	// No algorithm implementation is available

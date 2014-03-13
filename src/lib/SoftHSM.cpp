@@ -2915,34 +2915,35 @@ CK_RV SoftHSM::MacSignInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechani
 		return CKR_KEY_FUNCTION_NOT_PERMITTED;
 
 	// Get the MAC algorithm matching the mechanism
-	MacAlgorithm* mac = NULL;
+	MacAlgo::Type algo = MacAlgo::Unknown;
 	switch(pMechanism->mechanism) {
 		case CKM_MD5_HMAC:
-			mac = CryptoFactory::i()->getMacAlgorithm("hmac-md5");
+			algo = MacAlgo::HMAC_MD5;
 			break;
 		case CKM_SHA_1_HMAC:
-			mac = CryptoFactory::i()->getMacAlgorithm("hmac-sha1");
+			algo = MacAlgo::HMAC_SHA1;
 			break;
 		case CKM_SHA224_HMAC:
-			mac = CryptoFactory::i()->getMacAlgorithm("hmac-sha224");
+			algo = MacAlgo::HMAC_SHA224;
 			break;
 		case CKM_SHA256_HMAC:
-			mac = CryptoFactory::i()->getMacAlgorithm("hmac-sha256");
+			algo = MacAlgo::HMAC_SHA256;
 			break;
 		case CKM_SHA384_HMAC:
-			mac = CryptoFactory::i()->getMacAlgorithm("hmac-sha384");
+			algo = MacAlgo::HMAC_SHA384;
 			break;
 		case CKM_SHA512_HMAC:
-			mac = CryptoFactory::i()->getMacAlgorithm("hmac-sha512");
+			algo = MacAlgo::HMAC_SHA512;
 			break;
 #ifdef WITH_GOST
 		case CKM_GOSTR3411_HMAC:
-			mac = CryptoFactory::i()->getMacAlgorithm("hmac-gost");
+			algo = MacAlgo::HMAC_GOST;
 			break;
 #endif
 		default:
 			return CKR_MECHANISM_INVALID;
 	}
+	MacAlgorithm* mac = CryptoFactory::i()->getMacAlgorithm(algo);
 	if (mac == NULL) return CKR_MECHANISM_INVALID;
 
 	SymmetricKey* privkey = new SymmetricKey();
@@ -3627,34 +3628,35 @@ CK_RV SoftHSM::MacVerifyInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMecha
 		return CKR_KEY_FUNCTION_NOT_PERMITTED;
 
 	// Get the MAC algorithm matching the mechanism
-	MacAlgorithm* mac = NULL;
+	MacAlgo::Type algo = MacAlgo::Unknown;
 	switch(pMechanism->mechanism) {
 		case CKM_MD5_HMAC:
-			mac = CryptoFactory::i()->getMacAlgorithm("hmac-md5");
+			algo = MacAlgo::HMAC_MD5;
 			break;
 		case CKM_SHA_1_HMAC:
-			mac = CryptoFactory::i()->getMacAlgorithm("hmac-sha1");
+			algo = MacAlgo::HMAC_SHA1;
 			break;
 		case CKM_SHA224_HMAC:
-			mac = CryptoFactory::i()->getMacAlgorithm("hmac-sha224");
+			algo = MacAlgo::HMAC_SHA224;
 			break;
 		case CKM_SHA256_HMAC:
-			mac = CryptoFactory::i()->getMacAlgorithm("hmac-sha256");
+			algo = MacAlgo::HMAC_SHA256;
 			break;
 		case CKM_SHA384_HMAC:
-			mac = CryptoFactory::i()->getMacAlgorithm("hmac-sha384");
+			algo = MacAlgo::HMAC_SHA384;
 			break;
 		case CKM_SHA512_HMAC:
-			mac = CryptoFactory::i()->getMacAlgorithm("hmac-sha512");
+			algo = MacAlgo::HMAC_SHA512;
 			break;
 #ifdef WITH_GOST
 		case CKM_GOSTR3411_HMAC:
-			mac = CryptoFactory::i()->getMacAlgorithm("hmac-gost");
+			algo = MacAlgo::HMAC_GOST;
 			break;
 #endif
 		default:
 			return CKR_MECHANISM_INVALID;
 	}
+	MacAlgorithm* mac = CryptoFactory::i()->getMacAlgorithm(algo);
 	if (mac == NULL) return CKR_MECHANISM_INVALID;
 
 	SymmetricKey* pubkey = new SymmetricKey();

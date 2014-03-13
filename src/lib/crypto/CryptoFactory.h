@@ -73,7 +73,7 @@ public:
 	virtual void recycleHashAlgorithm(HashAlgorithm* toRecycle);
 
 	// Create a concrete instance of a MAC algorithm
-	virtual MacAlgorithm* getMacAlgorithm(std::string algorithm) = 0;
+	virtual MacAlgorithm* getMacAlgorithm(MacAlgo::Type algorithm) = 0;
 
 	// Recycle a MAC algorithm instance -- override this function in the derived
 	// class if you need to perform specific clean-up

@@ -204,48 +204,31 @@ HashAlgorithm* BotanCryptoFactory::getHashAlgorithm(HashAlgo::Type algorithm)
 }
 
 // Create a concrete instance of a MAC algorithm
-MacAlgorithm* BotanCryptoFactory::getMacAlgorithm(std::string algorithm)
+MacAlgorithm* BotanCryptoFactory::getMacAlgorithm(MacAlgo::Type algorithm)
 {
-	std::string lcAlgo;
-	lcAlgo.resize(algorithm.size());
-	std::transform(algorithm.begin(), algorithm.end(), lcAlgo.begin(), tolower);
-
-	if (!lcAlgo.compare("hmac-md5"))
+	switch (algorithm)
 	{
-		return new BotanHMACMD5();
-	}
-	else if (!lcAlgo.compare("hmac-sha1"))
-	{
-		return new BotanHMACSHA1();
-	}
-	else if (!lcAlgo.compare("hmac-sha224"))
-	{
-		return new BotanHMACSHA224();
-	}
-	else if (!lcAlgo.compare("hmac-sha256"))
-	{
-		return new BotanHMACSHA256();
-	}
-	else if (!lcAlgo.compare("hmac-sha384"))
-	{
-		return new BotanHMACSHA384();
-	}
-	else if (!lcAlgo.compare("hmac-sha512"))
-	{
-		return new BotanHMACSHA512();
-	}
+		case MacAlgo::HMAC_MD5:
+			return new BotanHMACMD5();
+		case MacAlgo::HMAC_SHA1:
+			return new BotanHMACSHA1();
+		case MacAlgo::HMAC_SHA224:
+			return new BotanHMACSHA224();
+		case MacAlgo::HMAC_SHA256:
+			return new BotanHMACSHA256();
+		case MacAlgo::HMAC_SHA384:
+			return new BotanHMACSHA384();
+		case MacAlgo::HMAC_SHA512:
+			return new BotanHMACSHA512();
 #ifdef WITH_GOST
-	else if (!lcAlgo.compare("hmac-gost"))
-	{
-		return new BotanHMACGOSTR3411();
-	}
+		case MacAlgo::HMAC_GOST:
+			return new BotanHMACGOSTR3411();
 #endif
-	else
-	{
-		// No algorithm implementation is available
-		ERROR_MSG("Unknown algorithm '%s'", algorithm.c_str());
+		default:
+			// No algorithm implementation is available
+			ERROR_MSG("Unknown algorithm '%i'", algorithm);
 
-		return NULL;
+			return NULL;
 	}
 
 	// No algorithm implementation is available

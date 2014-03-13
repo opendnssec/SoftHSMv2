@@ -65,7 +65,7 @@ public:
 	virtual HashAlgorithm* getHashAlgorithm(HashAlgo::Type algorithm);
 
 	// Create a concrete instance of a MAC algorithm
-	virtual MacAlgorithm* getMacAlgorithm(std::string algorithm);
+	virtual MacAlgorithm* getMacAlgorithm(MacAlgo::Type algorithm);
 
 	// Get the global RNG (may be an unique RNG per thread)
 	virtual RNG* getRNG(RNGImpl::Type name = RNGImpl::Default);

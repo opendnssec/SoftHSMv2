@@ -119,7 +119,7 @@ void GOSTTests::testHmac()
 {
 	// Get an RNG and HMAC GOST R34.11-94 instance
 	CPPUNIT_ASSERT((rng = CryptoFactory::i()->getRNG()) != NULL);
-	CPPUNIT_ASSERT((mac = CryptoFactory::i()->getMacAlgorithm("hmac-gost")) != NULL);
+	CPPUNIT_ASSERT((mac = CryptoFactory::i()->getMacAlgorithm(MacAlgo::HMAC_GOST)) != NULL);
 
 	// Key
 	char pk[] = "a_key_for_HMAC-GOST_R-34.11-94_test";
