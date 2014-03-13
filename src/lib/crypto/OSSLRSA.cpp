@@ -191,49 +191,32 @@ bool OSSLRSA::signInit(PrivateKey* privateKey, const AsymMech::Type mechanism)
 		return false;
 	}
 
+	HashAlgo::Type hash1 = HashAlgo::Unknown;
+	HashAlgo::Type hash2 = HashAlgo::Unknown;
+
 	switch (mechanism)
 	{
 		case AsymMech::RSA_MD5_PKCS:
-			pCurrentHash = CryptoFactory::i()->getHashAlgorithm("md5");
+			hash1 = HashAlgo::MD5;
 			break;
 		case AsymMech::RSA_SHA1_PKCS:
-			pCurrentHash = CryptoFactory::i()->getHashAlgorithm("sha1");
+			hash1 = HashAlgo::SHA1;
 			break;
 		case AsymMech::RSA_SHA224_PKCS:
-			pCurrentHash = CryptoFactory::i()->getHashAlgorithm("sha224");
+			hash1 = HashAlgo::SHA224;
 			break;
 		case AsymMech::RSA_SHA256_PKCS:
-			pCurrentHash = CryptoFactory::i()->getHashAlgorithm("sha256");
+			hash1 = HashAlgo::SHA256;
 			break;
 		case AsymMech::RSA_SHA384_PKCS:
-			pCurrentHash = CryptoFactory::i()->getHashAlgorithm("sha384");
+			hash1 = HashAlgo::SHA384;
 			break;
 		case AsymMech::RSA_SHA512_PKCS:
-			pCurrentHash = CryptoFactory::i()->getHashAlgorithm("sha512");
+			hash1 = HashAlgo::SHA512;
 			break;
 		case AsymMech::RSA_SSL:
-			pCurrentHash = CryptoFactory::i()->getHashAlgorithm("md5");
-			pSecondHash = CryptoFactory::i()->getHashAlgorithm("sha1");
-
-			if (pSecondHash == NULL || !pSecondHash->hashInit())
-			{
-				if (pCurrentHash != NULL)
-				{
-					delete pCurrentHash;
-					pCurrentHash = NULL;
-				}
-
-				if (pSecondHash != NULL)
-				{
-					delete pSecondHash;
-					pSecondHash = NULL;
-				}
-
-				ByteString dummy;
-				AsymmetricAlgorithm::signFinal(dummy);
-
-				return false;
-			}
+			hash1 = HashAlgo::MD5;
+			hash2 = HashAlgo::SHA1;
 			break;
 		default:
 			ERROR_MSG("Invalid mechanism supplied (%i)", mechanism);
@@ -244,6 +227,8 @@ bool OSSLRSA::signInit(PrivateKey* privateKey, const AsymMech::Type mechanism)
 			return false;
 	}
 
+	pCurrentHash = CryptoFactory::i()->getHashAlgorithm(hash1);
+
 	if (pCurrentHash == NULL || !pCurrentHash->hashInit())
 	{
 		if (pCurrentHash != NULL)
@@ -252,16 +237,32 @@ bool OSSLRSA::signInit(PrivateKey* privateKey, const AsymMech::Type mechanism)
 			pCurrentHash = NULL;
 		}
 
-		if (pSecondHash != NULL)
-		{
-			delete pSecondHash;
-			pSecondHash = NULL;
-		}
-
 		ByteString dummy;
 		AsymmetricAlgorithm::signFinal(dummy);
 
 		return false;
+	}
+
+	if (hash2 != HashAlgo::Unknown)
+	{
+		pSecondHash = CryptoFactory::i()->getHashAlgorithm(hash2);
+
+		if (pSecondHash == NULL || !pSecondHash->hashInit())
+		{
+			delete pCurrentHash;
+			pCurrentHash = NULL;
+
+			if (pSecondHash != NULL)
+			{
+				delete pSecondHash;
+				pSecondHash = NULL;
+			}
+
+			ByteString dummy;
+			AsymmetricAlgorithm::signFinal(dummy);
+
+			return false;
+		}
 	}
 
 	return true;
@@ -489,49 +490,32 @@ bool OSSLRSA::verifyInit(PublicKey* publicKey, const AsymMech::Type mechanism)
 		return false;
 	}
 
+	HashAlgo::Type hash1 = HashAlgo::Unknown;
+	HashAlgo::Type hash2 = HashAlgo::Unknown;
+
 	switch (mechanism)
 	{
 		case AsymMech::RSA_MD5_PKCS:
-			pCurrentHash = CryptoFactory::i()->getHashAlgorithm("md5");
+			hash1 = HashAlgo::MD5;
 			break;
 		case AsymMech::RSA_SHA1_PKCS:
-			pCurrentHash = CryptoFactory::i()->getHashAlgorithm("sha1");
+			hash1 = HashAlgo::SHA1;
 			break;
 		case AsymMech::RSA_SHA224_PKCS:
-			pCurrentHash = CryptoFactory::i()->getHashAlgorithm("sha224");
+			hash1 = HashAlgo::SHA224;
 			break;
 		case AsymMech::RSA_SHA256_PKCS:
-			pCurrentHash = CryptoFactory::i()->getHashAlgorithm("sha256");
+			hash1 = HashAlgo::SHA256;
 			break;
 		case AsymMech::RSA_SHA384_PKCS:
-			pCurrentHash = CryptoFactory::i()->getHashAlgorithm("sha384");
+			hash1 = HashAlgo::SHA384;
 			break;
 		case AsymMech::RSA_SHA512_PKCS:
-			pCurrentHash = CryptoFactory::i()->getHashAlgorithm("sha512");
+			hash1 = HashAlgo::SHA512;
 			break;
 		case AsymMech::RSA_SSL:
-			pCurrentHash = CryptoFactory::i()->getHashAlgorithm("md5");
-			pSecondHash = CryptoFactory::i()->getHashAlgorithm("sha1");
-
-			if (pSecondHash == NULL || !pSecondHash->hashInit())
-			{
-				if (pCurrentHash != NULL)
-				{
-					delete pCurrentHash;
-					pCurrentHash = NULL;
-				}
-
-				if (pSecondHash != NULL)
-				{
-					delete pSecondHash;
-					pSecondHash = NULL;
-				}
-
-				ByteString dummy;
-				AsymmetricAlgorithm::verifyFinal(dummy);
-
-				return false;
-			}
+			hash1 = HashAlgo::MD5;
+			hash2 = HashAlgo::SHA1;
 			break;
 		default:
 			ERROR_MSG("Invalid mechanism supplied (%i)", mechanism);
@@ -542,6 +526,8 @@ bool OSSLRSA::verifyInit(PublicKey* publicKey, const AsymMech::Type mechanism)
 			return false;
 	}
 
+	pCurrentHash = CryptoFactory::i()->getHashAlgorithm(hash1);
+
 	if (pCurrentHash == NULL || !pCurrentHash->hashInit())
 	{
 		if (pCurrentHash != NULL)
@@ -550,16 +536,32 @@ bool OSSLRSA::verifyInit(PublicKey* publicKey, const AsymMech::Type mechanism)
 			pCurrentHash = NULL;
 		}
 
-		if (pSecondHash != NULL)
-		{
-			delete pSecondHash;
-			pSecondHash = NULL;
-		}
-
 		ByteString dummy;
 		AsymmetricAlgorithm::verifyFinal(dummy);
 
 		return false;
+	}
+
+	if (hash2 != HashAlgo::Unknown)
+	{
+		pSecondHash = CryptoFactory::i()->getHashAlgorithm(hash2);
+
+		if (pSecondHash == NULL || !pSecondHash->hashInit())
+		{
+			delete pCurrentHash;
+			pCurrentHash = NULL;
+
+			if (pSecondHash != NULL)
+			{
+				delete pSecondHash;
+				pSecondHash = NULL;
+			}
+
+			ByteString dummy;
+			AsymmetricAlgorithm::verifyFinal(dummy);
+
+			return false;
+		}
 	}
 
 	return true;

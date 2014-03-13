@@ -66,7 +66,7 @@ public:
 	virtual void recycleAsymmetricAlgorithm(AsymmetricAlgorithm* toRecycle);
 
 	// Create a concrete instance of a hash algorithm
-	virtual HashAlgorithm* getHashAlgorithm(std::string algorithm) = 0;
+	virtual HashAlgorithm* getHashAlgorithm(HashAlgo::Type algorithm) = 0;
 
 	// Recycle a hash algorithm instance -- override this function in the derived
 	// class if you need to perform specific clean-up

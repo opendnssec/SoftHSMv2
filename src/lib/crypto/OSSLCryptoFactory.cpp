@@ -280,48 +280,31 @@ AsymmetricAlgorithm* OSSLCryptoFactory::getAsymmetricAlgorithm(AsymAlgo::Type al
 }
 
 // Create a concrete instance of a hash algorithm
-HashAlgorithm* OSSLCryptoFactory::getHashAlgorithm(std::string algorithm)
+HashAlgorithm* OSSLCryptoFactory::getHashAlgorithm(HashAlgo::Type algorithm)
 {
-	std::string lcAlgo;
-	lcAlgo.resize(algorithm.size());
-	std::transform(algorithm.begin(), algorithm.end(), lcAlgo.begin(), tolower);
-
-	if (!lcAlgo.compare("md5"))
+	switch (algorithm)
 	{
-		return new OSSLMD5();
-	}
-	else if (!lcAlgo.compare("sha1"))
-	{
-		return new OSSLSHA1();
-	}
-	else if (!lcAlgo.compare("sha224"))
-	{
-		return new OSSLSHA224();
-	}
-	else if (!lcAlgo.compare("sha256"))
-	{
-		return new OSSLSHA256();
-	}
-	else if (!lcAlgo.compare("sha384"))
-	{
-		return new OSSLSHA384();
-	}
-	else if (!lcAlgo.compare("sha512"))
-	{
-		return new OSSLSHA512();
-	}
+		case HashAlgo::MD5:
+			return new OSSLMD5();
+		case HashAlgo::SHA1:
+			return new OSSLSHA1();
+		case HashAlgo::SHA224:
+			return new OSSLSHA224();
+		case HashAlgo::SHA256:
+			return new OSSLSHA256();
+		case HashAlgo::SHA384:
+			return new OSSLSHA384();
+		case HashAlgo::SHA512:
+			return new OSSLSHA512();
 #ifdef WITH_GOST
-	else if (!lcAlgo.compare("gost"))
-	{
-		return new OSSLGOSTR3411();
-	}
+		case HashAlgo::GOST:
+			return new OSSLGOSTR3411();
 #endif
-	else
-	{
-		// No algorithm implementation is available
-		ERROR_MSG("Unknown algorithm '%s'", algorithm.c_str());
+		default:
+			// No algorithm implementation is available
+			ERROR_MSG("Unknown algorithm '%i'", algorithm);
 
-		return NULL;
+			return NULL;
 	}
 
 	// No algorithm implementation is available

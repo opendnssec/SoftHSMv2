@@ -187,14 +187,14 @@ void ECDSATests::testSigningVerifying()
 	ECParameters *p;
 
 	// Curves/Hashes to test
-	std::vector<std::pair<ByteString, const char*> > totest;
+	std::vector<std::pair<ByteString, HashAlgo::Type> > totest;
 	// Add X9.62 prime256v1
-	totest.push_back(std::make_pair(ByteString("06082a8648ce3d030107"), "sha256"));
+	totest.push_back(std::make_pair(ByteString("06082a8648ce3d030107"), HashAlgo::SHA256));
 	// Add secp384r1
-	totest.push_back(std::make_pair(ByteString("06052b81040022"), "sha384"));
+	totest.push_back(std::make_pair(ByteString("06052b81040022"), HashAlgo::SHA384));
 
 
-	for (std::vector<std::pair<ByteString, const char*> >::iterator k = totest.begin(); k != totest.end(); k++)
+	for (std::vector<std::pair<ByteString, HashAlgo::Type> >::iterator k = totest.begin(); k != totest.end(); k++)
 	{
 		// Get parameters
 		p = new ECParameters;
@@ -238,8 +238,8 @@ void ECDSATests::testSignVerifyKnownVector()
 	ECPublicKey* pubKey2 = (ECPublicKey*) ecdsa->newPublicKey();
 	ECPrivateKey* privKey1 = (ECPrivateKey*) ecdsa->newPrivateKey();
 	ECPrivateKey* privKey2 = (ECPrivateKey*) ecdsa->newPrivateKey();
-	HashAlgorithm* hash1 = CryptoFactory::i()->getHashAlgorithm("sha256");
-	HashAlgorithm* hash2 = CryptoFactory::i()->getHashAlgorithm("sha384");
+	HashAlgorithm* hash1 = CryptoFactory::i()->getHashAlgorithm(HashAlgo::SHA256);
+	HashAlgorithm* hash2 = CryptoFactory::i()->getHashAlgorithm(HashAlgo::SHA384);
 
 	// Reconstruct public and private key #1
 	ByteString ec1 = "06082a8648ce3d030107"; // X9.62 prime256v1

@@ -65,7 +65,7 @@ public:
 	AsymmetricAlgorithm* getAsymmetricAlgorithm(AsymAlgo::Type algorithm);
 
 	// Create a concrete instance of a hash algorithm
-	HashAlgorithm* getHashAlgorithm(std::string algorithm);
+	HashAlgorithm* getHashAlgorithm(HashAlgo::Type algorithm);
 
 	// Create a concrete instance of a MAC algorithm
 	MacAlgorithm* getMacAlgorithm(std::string algorithm);

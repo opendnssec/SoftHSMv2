@@ -115,22 +115,24 @@ bool OSSLDSA::signInit(PrivateKey* privateKey, const AsymMech::Type mechanism)
 		return false;
 	}
 
+	HashAlgo::Type hash = HashAlgo::Unknown;
+
 	switch (mechanism)
 	{
 		case AsymMech::DSA_SHA1:
-			pCurrentHash = CryptoFactory::i()->getHashAlgorithm("sha1");
+			hash = HashAlgo::SHA1;
 			break;
 		case AsymMech::DSA_SHA224:
-			pCurrentHash = CryptoFactory::i()->getHashAlgorithm("sha224");
+			hash = HashAlgo::SHA224;
 			break;
 		case AsymMech::DSA_SHA256:
-			pCurrentHash = CryptoFactory::i()->getHashAlgorithm("sha256");
+			hash = HashAlgo::SHA256;
 			break;
 		case AsymMech::DSA_SHA384:
-			pCurrentHash = CryptoFactory::i()->getHashAlgorithm("sha384");
+			hash = HashAlgo::SHA384;
 			break;
 		case AsymMech::DSA_SHA512:
-			pCurrentHash = CryptoFactory::i()->getHashAlgorithm("sha512");
+			hash = HashAlgo::SHA512;
 			break;
 		default:
 			ERROR_MSG("Invalid mechanism supplied (%i)", mechanism);
@@ -140,6 +142,9 @@ bool OSSLDSA::signInit(PrivateKey* privateKey, const AsymMech::Type mechanism)
 
 			return false;
 	}
+
+	pCurrentHash = CryptoFactory::i()->getHashAlgorithm(hash);
+
 
 	if (pCurrentHash == NULL)
 	{
@@ -293,22 +298,24 @@ bool OSSLDSA::verifyInit(PublicKey* publicKey, const AsymMech::Type mechanism)
 		return false;
 	}
 
+	HashAlgo::Type hash = HashAlgo::Unknown;
+
 	switch (mechanism)
 	{
 		case AsymMech::DSA_SHA1:
-			pCurrentHash = CryptoFactory::i()->getHashAlgorithm("sha1");
+			hash = HashAlgo::SHA1;
 			break;
 		case AsymMech::DSA_SHA224:
-			pCurrentHash = CryptoFactory::i()->getHashAlgorithm("sha224");
+			hash = HashAlgo::SHA224;
 			break;
 		case AsymMech::DSA_SHA256:
-			pCurrentHash = CryptoFactory::i()->getHashAlgorithm("sha256");
+			hash = HashAlgo::SHA256;
 			break;
 		case AsymMech::DSA_SHA384:
-			pCurrentHash = CryptoFactory::i()->getHashAlgorithm("sha384");
+			hash = HashAlgo::SHA384;
 			break;
 		case AsymMech::DSA_SHA512:
-			pCurrentHash = CryptoFactory::i()->getHashAlgorithm("sha512");
+			hash = HashAlgo::SHA512;
 			break;
 		default:
 			ERROR_MSG("Invalid mechanism supplied (%i)", mechanism);
@@ -318,6 +325,9 @@ bool OSSLDSA::verifyInit(PublicKey* publicKey, const AsymMech::Type mechanism)
 
 			return false;
 	}
+
+	pCurrentHash = CryptoFactory::i()->getHashAlgorithm(hash);
+
 
 	if (pCurrentHash == NULL)
 	{

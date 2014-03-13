@@ -38,11 +38,11 @@
 
 struct RNGImpl
 {
-        enum Type
-        {
-                Unknown,
-                Default
-        };
+	enum Type
+	{
+		Unknown,
+		Default
+	};
 };
 
 class RNG

@@ -2603,34 +2603,35 @@ CK_RV SoftHSM::C_DigestInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechan
 	if (session->getOpType() != SESSION_OP_NONE) return CKR_OPERATION_ACTIVE;
 
 	// Get the mechanism
-	HashAlgorithm* hash = NULL;
+	HashAlgo::Type algo = HashAlgo::Unknown;
 	switch(pMechanism->mechanism) {
 		case CKM_MD5:
-			hash = CryptoFactory::i()->getHashAlgorithm("md5");
+			algo = HashAlgo::MD5;
 			break;
 		case CKM_SHA_1:
-			hash = CryptoFactory::i()->getHashAlgorithm("sha1");
+			algo = HashAlgo::SHA1;
 			break;
 		case CKM_SHA224:
-			hash = CryptoFactory::i()->getHashAlgorithm("sha224");
+			algo = HashAlgo::SHA224;
 			break;
 		case CKM_SHA256:
-			hash = CryptoFactory::i()->getHashAlgorithm("sha256");
+			algo = HashAlgo::SHA256;
 			break;
 		case CKM_SHA384:
-			hash = CryptoFactory::i()->getHashAlgorithm("sha384");
+			algo = HashAlgo::SHA384;
 			break;
 		case CKM_SHA512:
-			hash = CryptoFactory::i()->getHashAlgorithm("sha512");
+			algo = HashAlgo::SHA512;
 			break;
 #ifdef WITH_GOST
 		case CKM_GOSTR3411:
-			hash = CryptoFactory::i()->getHashAlgorithm("gost");
+			algo = HashAlgo::GOST;
 			break;
 #endif
 		default:
 			return CKR_MECHANISM_INVALID;
 	}
+	HashAlgorithm* hash = CryptoFactory::i()->getHashAlgorithm(algo);
 	if (hash == NULL) return CKR_MECHANISM_INVALID;
 
 	// Initialize hashing

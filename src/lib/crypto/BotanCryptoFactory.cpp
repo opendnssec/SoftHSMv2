@@ -172,48 +172,31 @@ AsymmetricAlgorithm* BotanCryptoFactory::getAsymmetricAlgorithm(AsymAlgo::Type a
 }
 
 // Create a concrete instance of a hash algorithm
-HashAlgorithm* BotanCryptoFactory::getHashAlgorithm(std::string algorithm)
+HashAlgorithm* BotanCryptoFactory::getHashAlgorithm(HashAlgo::Type algorithm)
 {
-	std::string lcAlgo;
-	lcAlgo.resize(algorithm.size());
-	std::transform(algorithm.begin(), algorithm.end(), lcAlgo.begin(), tolower);
-
-	if (!lcAlgo.compare("md5"))
+	switch (algorithm)
 	{
-		return new BotanMD5();
-	}
-	else if (!lcAlgo.compare("sha1"))
-	{
-		return new BotanSHA1();
-	}
-	else if (!lcAlgo.compare("sha224"))
-	{
-		return new BotanSHA224();
-	}
-	else if (!lcAlgo.compare("sha256"))
-	{
-		return new BotanSHA256();
-	}
-	else if (!lcAlgo.compare("sha384"))
-	{
-		return new BotanSHA384();
-	}
-	else if (!lcAlgo.compare("sha512"))
-	{
-		return new BotanSHA512();
-	}
+		case HashAlgo::MD5:
+			return new BotanMD5();
+		case HashAlgo::SHA1:
+			return new BotanSHA1();
+		case HashAlgo::SHA224:
+			return new BotanSHA224();
+		case HashAlgo::SHA256:
+			return new BotanSHA256();
+		case HashAlgo::SHA384:
+			return new BotanSHA384();
+		case HashAlgo::SHA512:
+			return new BotanSHA512();
 #ifdef WITH_GOST
-	else if (!lcAlgo.compare("gost"))
-	{
-		return new BotanGOSTR3411();
-	}
+		case HashAlgo::GOST:
+			return new BotanGOSTR3411();
 #endif
-	else
-	{
-		// No algorithm implementation is available
-		ERROR_MSG("Unknown algorithm '%s'", algorithm.c_str());
+		default:
+			// No algorithm implementation is available
+			ERROR_MSG("Unknown algorithm '%i'", algorithm);
 
-		return NULL;
+			return NULL;
 	}
 
 	// No algorithm implementation is available

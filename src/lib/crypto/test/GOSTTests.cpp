@@ -86,7 +86,7 @@ void GOSTTests::testHash()
 	char testResult[512] = "3EC65819A084AD30712C4B3EB69CE130A8C7221EA3D8A9996D4BA6F298BC39F9";
 
 	// Get a GOST R 34.11-94 hash instance
-	CPPUNIT_ASSERT((hash = CryptoFactory::i()->getHashAlgorithm("gost")) != NULL);
+	CPPUNIT_ASSERT((hash = CryptoFactory::i()->getHashAlgorithm(HashAlgo::GOST)) != NULL);
 
 	ByteString b(testData);
 	ByteString osslHash(testResult), gostHash;
@@ -174,7 +174,7 @@ void GOSTTests::testHmac()
 
 void GOSTTests::testHashKnownVector()
 {
-	CPPUNIT_ASSERT((hash = CryptoFactory::i()->getHashAlgorithm("gost")) != NULL);
+	CPPUNIT_ASSERT((hash = CryptoFactory::i()->getHashAlgorithm(HashAlgo::GOST)) != NULL);
 
 	// Message to hash for test #1
 	ByteString msg = "6d65737361676520646967657374"; // "message digest"

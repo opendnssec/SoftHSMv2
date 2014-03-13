@@ -42,7 +42,7 @@ int main(int /*argc*/, char** /*argv*/)
 	CppUnit::TestFactoryRegistry &registry = CppUnit::TestFactoryRegistry::getRegistry();
 
 	runner.addTest(registry.makeTest());
-	bool wasSucessful = runner.run("RSATests");
+	bool wasSucessful = runner.run();
 
 	CryptoFactory::reset();
 	SecureMemoryRegistry::reset();
