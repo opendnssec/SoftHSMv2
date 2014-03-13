@@ -270,13 +270,9 @@ MacAlgorithm* BotanCryptoFactory::getMacAlgorithm(std::string algorithm)
 }
 
 // Get the global RNG (may be an unique RNG per thread)
-RNG* BotanCryptoFactory::getRNG(std::string name /* = "default" */)
+RNG* BotanCryptoFactory::getRNG(RNGImpl::Type name /* = RNGImpl::Default */)
 {
-	std::string lcAlgo;
-	lcAlgo.resize(name.size());
-	std::transform(name.begin(), name.end(), lcAlgo.begin(), tolower);
-
-	if (!lcAlgo.compare("default"))
+	if (name == RNGImpl::Default)
 	{
 		RNG *threadRNG = NULL;
 
@@ -318,8 +314,8 @@ RNG* BotanCryptoFactory::getRNG(std::string name /* = "default" */)
 	}
 	else
 	{
-		// No algorithm implementation is available
-		ERROR_MSG("Unknown algorithm '%s'", name.c_str());
+		// No RNG implementation is available
+		ERROR_MSG("Unknown RNG '%i'", name);
 
 		return NULL;
 	}

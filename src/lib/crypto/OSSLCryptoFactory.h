@@ -68,7 +68,7 @@ public:
 	virtual MacAlgorithm* getMacAlgorithm(std::string algorithm);
 
 	// Get the global RNG (may be an unique RNG per thread)
-	virtual RNG* getRNG(std::string name = "default");
+	virtual RNG* getRNG(RNGImpl::Type name = RNGImpl::Default);
 
 	// Destructor
 	virtual ~OSSLCryptoFactory();

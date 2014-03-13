@@ -79,7 +79,7 @@ void CryptoFactory::recycleSymmetricAlgorithm(SymmetricAlgorithm* toRecycle)
 {
 	delete toRecycle;
 }
-	
+
 // Recycle an asymmetric algorithm instance -- override this function in the derived
 // class if you need to perform specific clean-up
 void CryptoFactory::recycleAsymmetricAlgorithm(AsymmetricAlgorithm* toRecycle)

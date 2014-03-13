@@ -71,7 +71,7 @@ public:
 	MacAlgorithm* getMacAlgorithm(std::string algorithm);
 
 	// Get the global RNG (may be an unique RNG per thread)
-	RNG* getRNG(std::string name = "default");
+	RNG* getRNG(RNGImpl::Type name = RNGImpl::Default);
 
 	// Destructor
 	~BotanCryptoFactory();

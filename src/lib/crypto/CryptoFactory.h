@@ -80,7 +80,7 @@ public:
 	virtual void recycleMacAlgorithm(MacAlgorithm* toRecycle);
 
 	// Get the global RNG (may be an unique RNG per thread)
-	virtual RNG* getRNG(std::string name = "default") = 0;
+	virtual RNG* getRNG(RNGImpl::Type name = RNGImpl::Default) = 0;
 
 	// Destructor
 	virtual ~CryptoFactory() { }
