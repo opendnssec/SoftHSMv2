@@ -43,7 +43,7 @@ void AESTests::setUp()
 {
 	aes = NULL;
 
-	aes = CryptoFactory::i()->getSymmetricAlgorithm("aes");
+	aes = CryptoFactory::i()->getSymmetricAlgorithm(SymAlgo::AES);
 
 	// Check the return value
 	CPPUNIT_ASSERT(aes != NULL);

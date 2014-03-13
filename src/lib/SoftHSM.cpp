@@ -1779,18 +1779,18 @@ CK_RV SoftHSM::SymEncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 		return CKR_KEY_FUNCTION_NOT_PERMITTED;
 
 	// Get the symmetric algorithm matching the mechanism
-	SymmetricAlgorithm* cipher = NULL;
+	SymAlgo::Type algo = SymAlgo::Unknown;
 	std::string mode;
 	ByteString iv;
 	size_t bb = 8;
 	switch(pMechanism->mechanism) {
 		case CKM_DES_ECB:
-			cipher = CryptoFactory::i()->getSymmetricAlgorithm("des");
+			algo = SymAlgo::DES;
 			mode = "ecb";
 			bb = 7;
 			break;
 		case CKM_DES_CBC:
-			cipher = CryptoFactory::i()->getSymmetricAlgorithm("des");
+			algo = SymAlgo::DES;
 			mode = "cbc";
 			if (pMechanism->pParameter == NULL_PTR ||
 			    pMechanism->ulParameterLen == 0)
@@ -1803,12 +1803,12 @@ CK_RV SoftHSM::SymEncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 			bb = 7;
 			break;
 		case CKM_DES3_ECB:
-			cipher = CryptoFactory::i()->getSymmetricAlgorithm("3des");
+			algo = SymAlgo::DES3;
 			mode = "ecb";
 			bb = 7;
 			break;
 		case CKM_DES3_CBC:
-			cipher = CryptoFactory::i()->getSymmetricAlgorithm("3des");
+			algo = SymAlgo::DES3;
 			mode = "cbc";
 			if (pMechanism->pParameter == NULL_PTR ||
 			    pMechanism->ulParameterLen == 0)
@@ -1821,11 +1821,11 @@ CK_RV SoftHSM::SymEncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 			bb = 7;
 			break;
 		case CKM_AES_ECB:
-			cipher = CryptoFactory::i()->getSymmetricAlgorithm("aes");
+			algo = SymAlgo::AES;
 			mode = "ecb";
 			break;
 		case CKM_AES_CBC:
-			cipher = CryptoFactory::i()->getSymmetricAlgorithm("aes");
+			algo = SymAlgo::AES;
 			mode = "cbc";
 			if (pMechanism->pParameter == NULL_PTR ||
 			    pMechanism->ulParameterLen == 0)
@@ -1839,6 +1839,7 @@ CK_RV SoftHSM::SymEncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 		default:
 			return CKR_MECHANISM_INVALID;
 	}
+	SymmetricAlgorithm* cipher = CryptoFactory::i()->getSymmetricAlgorithm(algo);
 	if (cipher == NULL) return CKR_MECHANISM_INVALID;
 
 	SymmetricKey* secretkey = new SymmetricKey();
@@ -2207,18 +2208,18 @@ CK_RV SoftHSM::SymDecryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 		return CKR_KEY_FUNCTION_NOT_PERMITTED;
 
 	// Get the symmetric algorithm matching the mechanism
-	SymmetricAlgorithm* cipher = NULL;
+	SymAlgo::Type algo = SymAlgo::Unknown;
 	std::string mode;
 	ByteString iv;
 	size_t bb = 8;
 	switch(pMechanism->mechanism) {
 		case CKM_DES_ECB:
-			cipher = CryptoFactory::i()->getSymmetricAlgorithm("des");
+			algo = SymAlgo::DES;
 			mode = "ecb";
 			bb = 7;
 			break;
 		case CKM_DES_CBC:
-			cipher = CryptoFactory::i()->getSymmetricAlgorithm("des");
+			algo = SymAlgo::DES;
 			mode = "cbc";
 			if (pMechanism->pParameter == NULL_PTR ||
 			    pMechanism->ulParameterLen == 0)
@@ -2231,12 +2232,12 @@ CK_RV SoftHSM::SymDecryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 			bb = 7;
 			break;
 		case CKM_DES3_ECB:
-			cipher = CryptoFactory::i()->getSymmetricAlgorithm("3des");
+			algo = SymAlgo::DES3;
 			mode = "ecb";
 			bb = 7;
 			break;
 		case CKM_DES3_CBC:
-			cipher = CryptoFactory::i()->getSymmetricAlgorithm("3des");
+			algo = SymAlgo::DES3;
 			mode = "cbc";
 			if (pMechanism->pParameter == NULL_PTR ||
 			    pMechanism->ulParameterLen == 0)
@@ -2249,11 +2250,11 @@ CK_RV SoftHSM::SymDecryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 			bb = 7;
 			break;
 		case CKM_AES_ECB:
-			cipher = CryptoFactory::i()->getSymmetricAlgorithm("aes");
+			algo = SymAlgo::AES;
 			mode = "ecb";
 			break;
 		case CKM_AES_CBC:
-			cipher = CryptoFactory::i()->getSymmetricAlgorithm("aes");
+			algo = SymAlgo::AES;
 			mode = "cbc";
 			if (pMechanism->pParameter == NULL_PTR ||
 			    pMechanism->ulParameterLen == 0)
@@ -2267,6 +2268,7 @@ CK_RV SoftHSM::SymDecryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 		default:
 			return CKR_MECHANISM_INVALID;
 	}
+	SymmetricAlgorithm* cipher = CryptoFactory::i()->getSymmetricAlgorithm(algo);
 	if (cipher == NULL) return CKR_MECHANISM_INVALID;
 
 	SymmetricKey* secretkey = new SymmetricKey();
@@ -4778,7 +4780,7 @@ CK_RV SoftHSM::C_WrapKey
 		return CKR_KEY_NOT_WRAPPABLE;
 
 	// Get the symmetric algorithm matching the mechanism
-	SymmetricAlgorithm* cipher = NULL;
+	SymAlgo::Type algo = SymAlgo::Unknown;
 	std::string mode;
 	size_t bb = 8;
 	CK_ULONG wrappedlen = keydata.size();
@@ -4797,7 +4799,7 @@ CK_RV SoftHSM::C_WrapKey
 				*pulWrappedKeyLen = wrappedlen;
 				return CKR_BUFFER_TOO_SMALL;
 			}
-			cipher = CryptoFactory::i()->getSymmetricAlgorithm("aes");
+			algo = SymAlgo::AES;
 			mode = "aes-keywrap";
 			break;
 #ifdef HAVE_AES_KEY_WRAP_PAD
@@ -4813,13 +4815,14 @@ CK_RV SoftHSM::C_WrapKey
 				*pulWrappedKeyLen = wrappedlen;
 				return CKR_BUFFER_TOO_SMALL;
 			}
-			cipher = CryptoFactory::i()->getSymmetricAlgorithm("aes");
+			algo = SymAlgo::AES;
 			mode = "aes-keywrap-pad";
 			break;
 #endif
 		default:
 			return CKR_MECHANISM_INVALID;
 	}
+	SymmetricAlgorithm* cipher = CryptoFactory::i()->getSymmetricAlgorithm(algo);
 	if (cipher == NULL) return CKR_MECHANISM_INVALID;
 
 	SymmetricKey* wrappingkey = new SymmetricKey();
@@ -5030,23 +5033,24 @@ CK_RV SoftHSM::C_UnwrapKey
 	*hKey = CK_INVALID_HANDLE;
 
 	// Get the symmetric algorithm matching the mechanism
-	SymmetricAlgorithm* cipher = NULL;
+	SymAlgo::Type algo = SymAlgo::Unknown;
 	std::string mode;
 	size_t bb = 8;
 	switch(pMechanism->mechanism) {
 		case CKM_AES_KEY_WRAP:
-			cipher = CryptoFactory::i()->getSymmetricAlgorithm("aes");
+			algo = SymAlgo::AES;
 			mode = "aes-keywrap";
 			break;
 #ifdef HAVE_AES_KEY_WRAP_PAD
 		case CKM_AES_KEY_WRAP_PAD:
-			cipher = CryptoFactory::i()->getSymmetricAlgorithm("aes");
+			algo = SymAlgo::AES;
 			mode = "aes-keywrap-pad";
 			break;
 #endif
 		default:
 			return CKR_MECHANISM_INVALID;
 	}
+	SymmetricAlgorithm* cipher = CryptoFactory::i()->getSymmetricAlgorithm(algo);
 	if (cipher == NULL) return CKR_MECHANISM_INVALID;
 
 	SymmetricKey* unwrappingkey = new SymmetricKey();
@@ -5401,7 +5405,7 @@ CK_RV SoftHSM::generateAES
 
 	// Generate the secret key
 	AESKey* key = new AESKey(keyLen * 8);
-	SymmetricAlgorithm* aes = CryptoFactory::i()->getSymmetricAlgorithm("AES");
+	SymmetricAlgorithm* aes = CryptoFactory::i()->getSymmetricAlgorithm(SymAlgo::AES);
 	if (aes == NULL) return CKR_GENERAL_ERROR;
 	RNG* rng = CryptoFactory::i()->getRNG();
 	if (rng == NULL) return CKR_GENERAL_ERROR;
@@ -5528,7 +5532,7 @@ CK_RV SoftHSM::generateDES
 
 	// Generate the secret key
 	DESKey* key = new DESKey(56);
-	SymmetricAlgorithm* des = CryptoFactory::i()->getSymmetricAlgorithm("DES");
+	SymmetricAlgorithm* des = CryptoFactory::i()->getSymmetricAlgorithm(SymAlgo::DES);
 	if (des == NULL) return CKR_GENERAL_ERROR;
 	RNG* rng = CryptoFactory::i()->getRNG();
 	if (rng == NULL) return CKR_GENERAL_ERROR;
@@ -5655,7 +5659,7 @@ CK_RV SoftHSM::generateDES2
 
 	// Generate the secret key
 	DESKey* key = new DESKey(112);
-	SymmetricAlgorithm* des = CryptoFactory::i()->getSymmetricAlgorithm("DES");
+	SymmetricAlgorithm* des = CryptoFactory::i()->getSymmetricAlgorithm(SymAlgo::DES3);
 	if (des == NULL) return CKR_GENERAL_ERROR;
 	RNG* rng = CryptoFactory::i()->getRNG();
 	if (rng == NULL) return CKR_GENERAL_ERROR;
@@ -5782,7 +5786,7 @@ CK_RV SoftHSM::generateDES3
 
 	// Generate the secret key
 	DESKey* key = new DESKey(168);
-	SymmetricAlgorithm* des = CryptoFactory::i()->getSymmetricAlgorithm("DES");
+	SymmetricAlgorithm* des = CryptoFactory::i()->getSymmetricAlgorithm(SymAlgo::DES3);
 	if (des == NULL) return CKR_GENERAL_ERROR;
 	RNG* rng = CryptoFactory::i()->getRNG();
 	if (rng == NULL) return CKR_GENERAL_ERROR;

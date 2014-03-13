@@ -59,7 +59,7 @@ public:
 	static void reset();
 
 	// Create a concrete instance of a symmetric algorithm
-	SymmetricAlgorithm* getSymmetricAlgorithm(std::string algorithm);
+	SymmetricAlgorithm* getSymmetricAlgorithm(SymAlgo::Type algorithm);
 
 	// Create a concrete instance of an asymmetric algorithm
 	AsymmetricAlgorithm* getAsymmetricAlgorithm(AsymAlgo::Type algorithm);

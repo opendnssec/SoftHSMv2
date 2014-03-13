@@ -55,7 +55,7 @@ void SecureDataManager::initObject()
 	rng = CryptoFactory::i()->getRNG();
 
 	// Get an AES implementation
-	aes = CryptoFactory::i()->getSymmetricAlgorithm("aes");
+	aes = CryptoFactory::i()->getSymmetricAlgorithm(SymAlgo::AES);
 
 	// Initialise masking data
 	mask = new ByteString();

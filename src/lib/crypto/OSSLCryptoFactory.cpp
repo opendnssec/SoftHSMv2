@@ -224,27 +224,24 @@ void OSSLCryptoFactory::reset()
 }
 
 // Create a concrete instance of a symmetric algorithm
-SymmetricAlgorithm* OSSLCryptoFactory::getSymmetricAlgorithm(std::string algorithm)
+SymmetricAlgorithm* OSSLCryptoFactory::getSymmetricAlgorithm(SymAlgo::Type algorithm)
 {
-	std::string lcAlgo;
-	lcAlgo.resize(algorithm.size());
-	std::transform(algorithm.begin(), algorithm.end(), lcAlgo.begin(), tolower);
+	switch (algorithm)
+	{
+		case SymAlgo::AES:
+			return new OSSLAES();
+		case SymAlgo::DES:
+		case SymAlgo::DES3:
+			return new OSSLDES();
+		default:
+			// No algorithm implementation is available
+			ERROR_MSG("Unknown algorithm '%i'", algorithm);
 
-	if (!lcAlgo.compare("aes"))
-	{
-		return new OSSLAES();
+			return NULL;
 	}
-	else if (!lcAlgo.compare("des") || !lcAlgo.compare("3des"))
-	{
-		return new OSSLDES();
-	}
-	else
-	{
-		// No algorithm implementation is available
-		ERROR_MSG("Unknown algorithm '%s'", lcAlgo.c_str());
 
-		return NULL;
-	}
+	// No algorithm implementation is available
+	return NULL;
 }
 
 // Create a concrete instance of an asymmetric algorithm

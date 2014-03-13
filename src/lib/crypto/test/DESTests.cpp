@@ -43,7 +43,7 @@ void DESTests::setUp()
 {
 	des = NULL;
 
-	des = CryptoFactory::i()->getSymmetricAlgorithm("des");
+	des = CryptoFactory::i()->getSymmetricAlgorithm(SymAlgo::DES);
 
 	// Check the return value
 	CPPUNIT_ASSERT(des != NULL);

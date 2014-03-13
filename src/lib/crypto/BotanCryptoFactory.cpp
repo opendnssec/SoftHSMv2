@@ -113,27 +113,21 @@ void BotanCryptoFactory::reset()
 }
 
 // Create a concrete instance of a symmetric algorithm
-SymmetricAlgorithm* BotanCryptoFactory::getSymmetricAlgorithm(std::string algorithm)
+SymmetricAlgorithm* BotanCryptoFactory::getSymmetricAlgorithm(SymAlgo::Type algorithm)
 {
-        std::string lcAlgo;
-        lcAlgo.resize(algorithm.size());
-        std::transform(algorithm.begin(), algorithm.end(), lcAlgo.begin(), tolower);
+	switch (algorithm)
+	{
+		case SymAlgo::AES:
+        	        return new BotanAES();
+		case SymAlgo::DES:
+		case SymAlgo::DES3:
+	                return new BotanDES();
+		default:
+	                // No algorithm implementation is available
+        	        ERROR_MSG("Unknown algorithm '%i'", algorithm);
 
-        if (!lcAlgo.compare("aes"))
-        {
-                return new BotanAES();
-        }
-        else if (!lcAlgo.compare("des") || !lcAlgo.compare("3des"))
-        {
-                return new BotanDES();
-        }
-        else
-        {
-                // No algorithm implementation is available
-                ERROR_MSG("Unknown algorithm '%s'", lcAlgo.c_str());
-
-                return NULL;
-        }
+                	return NULL;
+	}
 
 	// No algorithm implementation is available
 	return NULL;

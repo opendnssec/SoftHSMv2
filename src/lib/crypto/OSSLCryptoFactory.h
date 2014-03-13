@@ -56,7 +56,7 @@ public:
 	static void reset();
 
 	// Create a concrete instance of a symmetric algorithm
-	virtual SymmetricAlgorithm* getSymmetricAlgorithm(std::string algorithm);
+	virtual SymmetricAlgorithm* getSymmetricAlgorithm(SymAlgo::Type algorithm);
 
 	// Create a concrete instance of an asymmetric algorithm
 	virtual AsymmetricAlgorithm* getAsymmetricAlgorithm(AsymAlgo::Type algorithm);

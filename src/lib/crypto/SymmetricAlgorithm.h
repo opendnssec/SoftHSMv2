@@ -38,6 +38,17 @@
 #include "SymmetricKey.h"
 #include "RNG.h"
 
+struct SymAlgo
+{
+	enum Type
+	{
+		Unknown,
+		AES,
+		DES,
+		DES3
+	};
+};
+
 class SymmetricAlgorithm
 {
 public:

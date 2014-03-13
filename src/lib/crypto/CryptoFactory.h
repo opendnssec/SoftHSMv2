@@ -52,7 +52,7 @@ public:
 	static void reset();
 
 	// Create a concrete instance of a symmetric algorithm
-	virtual SymmetricAlgorithm* getSymmetricAlgorithm(std::string algorithm) = 0;
+	virtual SymmetricAlgorithm* getSymmetricAlgorithm(SymAlgo::Type algorithm) = 0;
 
 	// Recycle a symmetric algorithm instance -- override this function in the derived
 	// class if you need to perform specific clean-up
