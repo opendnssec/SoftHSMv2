@@ -37,7 +37,7 @@
 #include <botan/rfc3394.h>
 
 // Wrap/Unwrap keys
-bool BotanAES::wrapKey(const SymmetricKey* key, const std::string mode, const ByteString& in, ByteString& out)
+bool BotanAES::wrapKey(const SymmetricKey* key, const SymWrap::Type mode, const ByteString& in, ByteString& out)
 {
 	// Check key bit length; AES only supports 128, 192 or 256 bit keys
 	if ((key->getBitLen() != 128) &&
@@ -50,7 +50,7 @@ bool BotanAES::wrapKey(const SymmetricKey* key, const std::string mode, const By
 	}
 
 	// Determine the wrapping mode
-	if (!mode.compare("aes-keywrap"))
+	if (mode == SymWrap::AES_KEYWRAP)
 	{
 		// RFC 3394 AES key wrap
 		if (in.size() < 16)
@@ -97,7 +97,7 @@ bool BotanAES::wrapKey(const SymmetricKey* key, const std::string mode, const By
 		return  true;
 	}
 #ifdef HAVE_AES_KEY_WRAP_PAD
-	else if (!mode.compare("aes-keywrap-pad"))
+	else if (mode == SymWrap::AES_KEYWRAP_PAD)
 	{
 		// RFC 5649 AES key wrap with pad
 #if BOTAN_VERSION_MINOR == 11
@@ -133,13 +133,13 @@ bool BotanAES::wrapKey(const SymmetricKey* key, const std::string mode, const By
 #endif
 	else
 	{
-		ERROR_MSG("unknown AES key wrap mode %s", mode.c_str());
+		ERROR_MSG("unknown AES key wrap mode %i", mode);
 
 		return false;
 	}
 }
 
-bool BotanAES::unwrapKey(const SymmetricKey* key, const std::string mode, const ByteString& in, ByteString& out)
+bool BotanAES::unwrapKey(const SymmetricKey* key, const SymWrap::Type mode, const ByteString& in, ByteString& out)
 {
 	// Check key bit length; AES only supports 128, 192 or 256 bit keys
 	if ((key->getBitLen() != 128) &&
@@ -152,7 +152,7 @@ bool BotanAES::unwrapKey(const SymmetricKey* key, const std::string mode, const 
 	}
 
 	// Determine the unwrapping mode
-	if (!mode.compare("aes-keywrap"))
+	if (mode == SymWrap::AES_KEYWRAP)
 	{
 		// RFC 3394 AES key wrap
 		if (in.size() < 24)
@@ -199,7 +199,7 @@ bool BotanAES::unwrapKey(const SymmetricKey* key, const std::string mode, const 
 		return  true;
 	}
 #ifdef HAVE_AES_KEY_WRAP_PAD
-	else if (!mode.compare("aes-keywrap-pad"))
+	else if (mode == SymWrap::AES_KEYWRAP_PAD)
 	{
 		// RFC 5649 AES key wrap with wrap
 		if (in.size() < 16)
@@ -248,7 +248,7 @@ bool BotanAES::unwrapKey(const SymmetricKey* key, const std::string mode, const 
 #endif
 	else
 	{
-		ERROR_MSG("unknown AES key wrap mode %s", mode.c_str());
+		ERROR_MSG("unknown AES key wrap mode %i", mode);
 
 		return false;
 	}

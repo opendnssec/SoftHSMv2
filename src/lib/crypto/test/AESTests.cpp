@@ -606,24 +606,24 @@ void AESTests::testWrap()
 	AESKey aesKeK(128);
 	CPPUNIT_ASSERT(aesKeK.setKeyBits(kekData));
 
-	CPPUNIT_ASSERT(aes->wrapKey(&aesKeK, "aes-keywrap", keyData, wrapped));
+	CPPUNIT_ASSERT(aes->wrapKey(&aesKeK, SymWrap::AES_KEYWRAP, keyData, wrapped));
 	CPPUNIT_ASSERT(wrapped.size() == keyData.size() + 8);
 
 	ByteString expected("1FA68B0A8112B447AEF34BD8FB5A7B829D3E862371D2CFE5");
 	CPPUNIT_ASSERT(wrapped == expected);
 
 	ByteString unwrapped;
-	CPPUNIT_ASSERT(aes->unwrapKey(&aesKeK, "aes-keywrap", wrapped, unwrapped));
+	CPPUNIT_ASSERT(aes->unwrapKey(&aesKeK, SymWrap::AES_KEYWRAP, wrapped, unwrapped));
 	CPPUNIT_ASSERT(unwrapped == keyData);
 
 #ifdef HAVE_AES_KEY_WRAP_PAD
 	keyData.resize(20);
 	ByteString padwrapped;
-	CPPUNIT_ASSERT(aes->wrapKey(&aesKeK, "aes-keywrap-pad", keyData, padwrapped));
+	CPPUNIT_ASSERT(aes->wrapKey(&aesKeK, SymWrap::AES_KEYWRAP_PAD, keyData, padwrapped));
 	CPPUNIT_ASSERT(padwrapped.size() == 32);
 
 	ByteString padunwrapped;
-	CPPUNIT_ASSERT(aes->unwrapKey(&aesKeK, "aes-keywrap-pad", padwrapped, padunwrapped));
+	CPPUNIT_ASSERT(aes->unwrapKey(&aesKeK, SymWrap::AES_KEYWRAP_PAD, padwrapped, padunwrapped));
 	CPPUNIT_ASSERT(padunwrapped == keyData);
 #endif
 }

@@ -4781,7 +4781,7 @@ CK_RV SoftHSM::C_WrapKey
 
 	// Get the symmetric algorithm matching the mechanism
 	SymAlgo::Type algo = SymAlgo::Unknown;
-	std::string mode;
+	SymWrap::Type mode = SymWrap::Unknown;
 	size_t bb = 8;
 	CK_ULONG wrappedlen = keydata.size();
 	switch(pMechanism->mechanism) {
@@ -4800,7 +4800,7 @@ CK_RV SoftHSM::C_WrapKey
 				return CKR_BUFFER_TOO_SMALL;
 			}
 			algo = SymAlgo::AES;
-			mode = "aes-keywrap";
+			mode = SymWrap::AES_KEYWRAP;
 			break;
 #ifdef HAVE_AES_KEY_WRAP_PAD
 		case CKM_AES_KEY_WRAP_PAD:
@@ -4816,7 +4816,7 @@ CK_RV SoftHSM::C_WrapKey
 				return CKR_BUFFER_TOO_SMALL;
 			}
 			algo = SymAlgo::AES;
-			mode = "aes-keywrap-pad";
+			mode = SymWrap::AES_KEYWRAP_PAD;
 			break;
 #endif
 		default:
@@ -5034,17 +5034,17 @@ CK_RV SoftHSM::C_UnwrapKey
 
 	// Get the symmetric algorithm matching the mechanism
 	SymAlgo::Type algo = SymAlgo::Unknown;
-	std::string mode;
+	SymWrap::Type mode = SymWrap::Unknown;
 	size_t bb = 8;
 	switch(pMechanism->mechanism) {
 		case CKM_AES_KEY_WRAP:
 			algo = SymAlgo::AES;
-			mode = "aes-keywrap";
+			mode = SymWrap::AES_KEYWRAP;
 			break;
 #ifdef HAVE_AES_KEY_WRAP_PAD
 		case CKM_AES_KEY_WRAP_PAD:
 			algo = SymAlgo::AES;
-			mode = "aes-keywrap-pad";
+			mode = SymWrap::AES_KEYWRAP_PAD;
 			break;
 #endif
 		default:

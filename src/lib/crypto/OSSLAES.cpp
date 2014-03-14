@@ -37,7 +37,7 @@
 #include "salloc.h"
 
 // Wrap/Unwrap keys
-bool OSSLAES::wrapKey(const SymmetricKey* key, const std::string mode, const ByteString& in, ByteString& out)
+bool OSSLAES::wrapKey(const SymmetricKey* key, const SymWrap::Type mode, const ByteString& in, ByteString& out)
 {
 	// Check key bit length; AES only supports 128, 192 or 256 bit keys
 	if ((key->getBitLen() != 128) &&
@@ -50,7 +50,7 @@ bool OSSLAES::wrapKey(const SymmetricKey* key, const std::string mode, const Byt
 	}
 
 	// Determine the wrapping mode
-	if (!mode.compare("aes-keywrap"))
+	if (mode == SymWrap::AES_KEYWRAP)
 	{
 		// RFC 3394 AES key wrap
 		if (in.size() < 16)
@@ -86,7 +86,7 @@ bool OSSLAES::wrapKey(const SymmetricKey* key, const std::string mode, const Byt
 		return  true;
 	}
 #ifdef HAVE_AES_KEY_WRAP_PAD
-	else if (!mode.compare("aes-keywrap-pad"))
+	else if (mode == SymWrap::AES_KEYWRAP_PAD)
 	{
 		// RFC 5649 AES key wrap with pad
 		AES_KEY aesKey;
@@ -113,13 +113,13 @@ bool OSSLAES::wrapKey(const SymmetricKey* key, const std::string mode, const Byt
 #endif
 	else
 	{
-		ERROR_MSG("unknown AES key wrap mode %s", mode.c_str());
+		ERROR_MSG("unknown AES key wrap mode %i", mode);
 
 		return false;
 	}
 }
 
-bool OSSLAES::unwrapKey(const SymmetricKey* key, const std::string mode, const ByteString& in, ByteString& out)
+bool OSSLAES::unwrapKey(const SymmetricKey* key, const SymWrap::Type mode, const ByteString& in, ByteString& out)
 {
 	// Check key bit length; AES only supports 128, 192 or 256 bit keys
 	if ((key->getBitLen() != 128) &&
@@ -132,7 +132,7 @@ bool OSSLAES::unwrapKey(const SymmetricKey* key, const std::string mode, const B
 	}
 
 	// Determine the unwrapping mode
-	if (!mode.compare("aes-keywrap"))
+	if (mode == SymWrap::AES_KEYWRAP)
 	{
 		// RFC 3394 AES key wrap
 		if (in.size() < 24)
@@ -168,7 +168,7 @@ bool OSSLAES::unwrapKey(const SymmetricKey* key, const std::string mode, const B
 		return  true;
 	}
 #ifdef HAVE_AES_KEY_WRAP_PAD
-	else if (!mode.compare("aes-keywrap-pad"))
+	else if (mode == SymWrap::AES_KEYWRAP_PAD)
 	{
 		// RFC 5649 AES key wrap with pad
 		if (in.size() < 16)
@@ -208,7 +208,7 @@ bool OSSLAES::unwrapKey(const SymmetricKey* key, const std::string mode, const B
 #endif
 	else
 	{
-		ERROR_MSG("unknown AES key wrap mode %s", mode.c_str());
+		ERROR_MSG("unknown AES key wrap mode %i", mode);
 
 		return false;
 	}

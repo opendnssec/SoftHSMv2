@@ -35,14 +35,14 @@
 #include <algorithm>
 #include "odd.h"
 
-bool BotanDES::wrapKey(const SymmetricKey* /*key*/, const std::string /*mode*/, const ByteString& /*in*/, ByteString& /*out*/)
+bool BotanDES::wrapKey(const SymmetricKey* /*key*/, const SymWrap::Type /*mode*/, const ByteString& /*in*/, ByteString& /*out*/)
 {
 	ERROR_MSG("DES does not support key wrapping");
 
 	return false;
 }
 
-bool BotanDES::unwrapKey(const SymmetricKey* /*key*/, const std::string /*mode*/, const ByteString& /*in*/, ByteString& /*out*/)
+bool BotanDES::unwrapKey(const SymmetricKey* /*key*/, const SymWrap::Type /*mode*/, const ByteString& /*in*/, ByteString& /*out*/)
 {
 	ERROR_MSG("DES does not support key unwrapping");
 

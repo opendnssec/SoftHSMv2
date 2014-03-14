@@ -61,6 +61,16 @@ struct SymMode
 	};
 };
 
+struct SymWrap
+{
+	enum Type
+	{
+		Unknown,
+		AES_KEYWRAP,
+		AES_KEYWRAP_PAD
+	};
+};
+
 class SymmetricAlgorithm
 {
 public:
@@ -81,9 +91,9 @@ public:
 	virtual bool decryptFinal(ByteString& data);
 
 	// Wrap/Unwrap keys
-	virtual bool wrapKey(const SymmetricKey* key, const std::string mode, const ByteString& in, ByteString& out) = 0;
+	virtual bool wrapKey(const SymmetricKey* key, const SymWrap::Type mode, const ByteString& in, ByteString& out) = 0;
 
-	virtual bool unwrapKey(const SymmetricKey* key, const std::string mode, const ByteString& in, ByteString& out) = 0;
+	virtual bool unwrapKey(const SymmetricKey* key, const SymWrap::Type mode, const ByteString& in, ByteString& out) = 0;
 
 	// Key factory
 	virtual void recycleKey(SymmetricKey* toRecycle);
