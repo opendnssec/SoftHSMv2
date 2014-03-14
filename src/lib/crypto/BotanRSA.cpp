@@ -659,7 +659,7 @@ bool BotanRSA::decrypt(PrivateKey* privateKey, const ByteString& encryptedData, 
 	}
 
 	// Return the result
-	if (!eme.compare("Raw"))
+	if (padding == AsymMech::RSA)
 	{
 		// We compensate that Botan removes leading zeros
 		int modSize = pk->getN().size();

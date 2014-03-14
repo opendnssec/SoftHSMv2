@@ -1780,18 +1780,18 @@ CK_RV SoftHSM::SymEncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 
 	// Get the symmetric algorithm matching the mechanism
 	SymAlgo::Type algo = SymAlgo::Unknown;
-	std::string mode;
+	SymMode::Type mode = SymMode::Unknown;
 	ByteString iv;
 	size_t bb = 8;
 	switch(pMechanism->mechanism) {
 		case CKM_DES_ECB:
 			algo = SymAlgo::DES;
-			mode = "ecb";
+			mode = SymMode::ECB;
 			bb = 7;
 			break;
 		case CKM_DES_CBC:
 			algo = SymAlgo::DES;
-			mode = "cbc";
+			mode = SymMode::CBC;
 			if (pMechanism->pParameter == NULL_PTR ||
 			    pMechanism->ulParameterLen == 0)
 			{
@@ -1804,12 +1804,12 @@ CK_RV SoftHSM::SymEncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 			break;
 		case CKM_DES3_ECB:
 			algo = SymAlgo::DES3;
-			mode = "ecb";
+			mode = SymMode::ECB;
 			bb = 7;
 			break;
 		case CKM_DES3_CBC:
 			algo = SymAlgo::DES3;
-			mode = "cbc";
+			mode = SymMode::CBC;
 			if (pMechanism->pParameter == NULL_PTR ||
 			    pMechanism->ulParameterLen == 0)
 			{
@@ -1822,11 +1822,11 @@ CK_RV SoftHSM::SymEncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 			break;
 		case CKM_AES_ECB:
 			algo = SymAlgo::AES;
-			mode = "ecb";
+			mode = SymMode::ECB;
 			break;
 		case CKM_AES_CBC:
 			algo = SymAlgo::AES;
-			mode = "cbc";
+			mode = SymMode::CBC;
 			if (pMechanism->pParameter == NULL_PTR ||
 			    pMechanism->ulParameterLen == 0)
 			{
@@ -2209,18 +2209,18 @@ CK_RV SoftHSM::SymDecryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 
 	// Get the symmetric algorithm matching the mechanism
 	SymAlgo::Type algo = SymAlgo::Unknown;
-	std::string mode;
+	SymMode::Type mode = SymMode::Unknown;
 	ByteString iv;
 	size_t bb = 8;
 	switch(pMechanism->mechanism) {
 		case CKM_DES_ECB:
 			algo = SymAlgo::DES;
-			mode = "ecb";
+			mode = SymMode::ECB;
 			bb = 7;
 			break;
 		case CKM_DES_CBC:
 			algo = SymAlgo::DES;
-			mode = "cbc";
+			mode = SymMode::CBC;
 			if (pMechanism->pParameter == NULL_PTR ||
 			    pMechanism->ulParameterLen == 0)
 			{
@@ -2233,12 +2233,12 @@ CK_RV SoftHSM::SymDecryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 			break;
 		case CKM_DES3_ECB:
 			algo = SymAlgo::DES3;
-			mode = "ecb";
+			mode = SymMode::ECB;
 			bb = 7;
 			break;
 		case CKM_DES3_CBC:
 			algo = SymAlgo::DES3;
-			mode = "cbc";
+			mode = SymMode::CBC;
 			if (pMechanism->pParameter == NULL_PTR ||
 			    pMechanism->ulParameterLen == 0)
 			{
@@ -2251,11 +2251,11 @@ CK_RV SoftHSM::SymDecryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 			break;
 		case CKM_AES_ECB:
 			algo = SymAlgo::AES;
-			mode = "ecb";
+			mode = SymMode::ECB;
 			break;
 		case CKM_AES_CBC:
 			algo = SymAlgo::AES;
-			mode = "cbc";
+			mode = SymMode::CBC;
 			if (pMechanism->pParameter == NULL_PTR ||
 			    pMechanism->ulParameterLen == 0)
 			{

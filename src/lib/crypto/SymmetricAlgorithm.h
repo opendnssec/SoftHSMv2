@@ -49,6 +49,18 @@ struct SymAlgo
 	};
 };
 
+struct SymMode
+{
+	enum Type
+	{
+		Unknown,
+		CBC,
+		CFB,
+		ECB,
+		OFB
+	};
+};
+
 class SymmetricAlgorithm
 {
 public:
@@ -59,12 +71,12 @@ public:
 	virtual ~SymmetricAlgorithm() { }
 
 	// Encryption functions
-	virtual bool encryptInit(const SymmetricKey* key, const std::string mode = "cbc", const ByteString& IV = ByteString(), bool padding = true);
+	virtual bool encryptInit(const SymmetricKey* key, const SymMode::Type mode = SymMode::CBC, const ByteString& IV = ByteString(), bool padding = true);
 	virtual bool encryptUpdate(const ByteString& data, ByteString& encryptedData);
 	virtual bool encryptFinal(ByteString& encryptedData);
 
 	// Decryption functions
-	virtual bool decryptInit(const SymmetricKey* key, const std::string mode = "cbc", const ByteString& IV = ByteString(), bool padding = true);
+	virtual bool decryptInit(const SymmetricKey* key, const SymMode::Type mode = SymMode::CBC, const ByteString& IV = ByteString(), bool padding = true);
 	virtual bool decryptUpdate(const ByteString& encryptedData, ByteString& data);
 	virtual bool decryptFinal(ByteString& data);
 
@@ -82,11 +94,14 @@ public:
 	virtual size_t getBlockSize() const = 0;
 
 protected:
-	// The current cipher mode
-	std::string currentCipherMode;
-
 	// The current key
 	const SymmetricKey* currentKey;
+
+	// The current cipher mode
+	SymMode::Type currentCipherMode;
+
+	// The current padding
+	bool currentPaddingMode;
 
 	// The current operation
 	enum
@@ -94,7 +109,7 @@ protected:
 		NONE,
 		ENCRYPT,
 		DECRYPT
-	} 
+	}
 	currentOperation;
 };
 

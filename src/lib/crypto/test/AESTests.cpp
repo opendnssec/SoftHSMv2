@@ -83,7 +83,7 @@ void AESTests::testCBC()
 		"096874395874290867409857496743857632098479834634",
 		"439867439058743095864395348375043296845094854983"
 	};
-	
+
 	char testKeys256[][65] =
 	{
 		"0000000000000000000000000000000000000000000000000000000000000000",
@@ -249,7 +249,7 @@ void AESTests::testCBC()
 
 			// Now, do the same thing using our AES implementation
 			shsmCipherText.wipe();
-			CPPUNIT_ASSERT(aes->encryptInit(&aesKey128, "cbc", IV));
+			CPPUNIT_ASSERT(aes->encryptInit(&aesKey128, SymMode::CBC, IV));
 
 			CPPUNIT_ASSERT(aes->encryptUpdate(plainText, OB));
 			shsmCipherText += OB;
@@ -260,8 +260,8 @@ void AESTests::testCBC()
 			CPPUNIT_ASSERT(shsmCipherText == cipherText);
 
 			// Check that we can get the plain text
-			shsmPlainText.wipe(); 
-			CPPUNIT_ASSERT(aes->decryptInit(&aesKey128, "cbc", IV));
+			shsmPlainText.wipe();
+			CPPUNIT_ASSERT(aes->decryptInit(&aesKey128, SymMode::CBC, IV));
 
 			CPPUNIT_ASSERT(aes->decryptUpdate(shsmCipherText, OB));
 			shsmPlainText += OB;
@@ -276,7 +276,7 @@ void AESTests::testCBC()
 
 			// Now, do the same thing using our AES implementation
 			shsmCipherText.wipe();
-			CPPUNIT_ASSERT(aes->encryptInit(&aesKey192, "cbc", IV));
+			CPPUNIT_ASSERT(aes->encryptInit(&aesKey192, SymMode::CBC, IV));
 
 			CPPUNIT_ASSERT(aes->encryptUpdate(plainText, OB));
 			shsmCipherText += OB;
@@ -287,8 +287,8 @@ void AESTests::testCBC()
 			CPPUNIT_ASSERT(shsmCipherText == cipherText);
 
 			// Check that we can get the plain text
-			shsmPlainText.wipe(); 
-			CPPUNIT_ASSERT(aes->decryptInit(&aesKey192, "cbc", IV));
+			shsmPlainText.wipe();
+			CPPUNIT_ASSERT(aes->decryptInit(&aesKey192, SymMode::CBC, IV));
 
 			CPPUNIT_ASSERT(aes->decryptUpdate(shsmCipherText, OB));
 			shsmPlainText += OB;
@@ -303,7 +303,7 @@ void AESTests::testCBC()
 
 			// Now, do the same thing using our AES implementation
 			shsmCipherText.wipe();
-			CPPUNIT_ASSERT(aes->encryptInit(&aesKey256, "cbc", IV));
+			CPPUNIT_ASSERT(aes->encryptInit(&aesKey256, SymMode::CBC, IV));
 
 			CPPUNIT_ASSERT(aes->encryptUpdate(plainText, OB));
 			shsmCipherText += OB;
@@ -314,8 +314,8 @@ void AESTests::testCBC()
 			CPPUNIT_ASSERT(shsmCipherText == cipherText);
 
 			// Check that we can get the plain text
-			shsmPlainText.wipe(); 
-			CPPUNIT_ASSERT(aes->decryptInit(&aesKey256, "cbc", IV));
+			shsmPlainText.wipe();
+			CPPUNIT_ASSERT(aes->decryptInit(&aesKey256, SymMode::CBC, IV));
 
 			CPPUNIT_ASSERT(aes->decryptUpdate(shsmCipherText, OB));
 			shsmPlainText += OB;
@@ -347,7 +347,7 @@ void AESTests::testECB()
 		"096874395874290867409857496743857632098479834634",
 		"439867439058743095864395348375043296845094854983"
 	};
-	
+
 	char testKeys256[][65] =
 	{
 		"0000000000000000000000000000000000000000000000000000000000000000",
@@ -515,7 +515,7 @@ void AESTests::testECB()
 
 			// Now, do the same thing using our AES implementation
 			shsmCipherText.wipe();
-			CPPUNIT_ASSERT(aes->encryptInit(&aesKey128, "ecb", IV));
+			CPPUNIT_ASSERT(aes->encryptInit(&aesKey128, SymMode::ECB, IV));
 
 			CPPUNIT_ASSERT(aes->encryptUpdate(plainText, OB));
 			shsmCipherText += OB;
@@ -526,8 +526,8 @@ void AESTests::testECB()
 			CPPUNIT_ASSERT(shsmCipherText == cipherText);
 
 			// Check that we can get the plain text
-			shsmPlainText.wipe(); 
-			CPPUNIT_ASSERT(aes->decryptInit(&aesKey128, "ecb", IV));
+			shsmPlainText.wipe();
+			CPPUNIT_ASSERT(aes->decryptInit(&aesKey128, SymMode::ECB, IV));
 
 			CPPUNIT_ASSERT(aes->decryptUpdate(shsmCipherText, OB));
 			shsmPlainText += OB;
@@ -542,7 +542,7 @@ void AESTests::testECB()
 
 			// Now, do the same thing using our AES implementation
 			shsmCipherText.wipe();
-			CPPUNIT_ASSERT(aes->encryptInit(&aesKey192, "ecb", IV));
+			CPPUNIT_ASSERT(aes->encryptInit(&aesKey192, SymMode::ECB, IV));
 
 			CPPUNIT_ASSERT(aes->encryptUpdate(plainText, OB));
 			shsmCipherText += OB;
@@ -553,8 +553,8 @@ void AESTests::testECB()
 			CPPUNIT_ASSERT(shsmCipherText == cipherText);
 
 			// Check that we can get the plain text
-			shsmPlainText.wipe(); 
-			CPPUNIT_ASSERT(aes->decryptInit(&aesKey192, "ecb", IV));
+			shsmPlainText.wipe();
+			CPPUNIT_ASSERT(aes->decryptInit(&aesKey192, SymMode::ECB, IV));
 
 			CPPUNIT_ASSERT(aes->decryptUpdate(shsmCipherText, OB));
 			shsmPlainText += OB;
@@ -569,7 +569,7 @@ void AESTests::testECB()
 
 			// Now, do the same thing using our AES implementation
 			shsmCipherText.wipe();
-			CPPUNIT_ASSERT(aes->encryptInit(&aesKey256, "ecb", IV));
+			CPPUNIT_ASSERT(aes->encryptInit(&aesKey256, SymMode::ECB, IV));
 
 			CPPUNIT_ASSERT(aes->encryptUpdate(plainText, OB));
 			shsmCipherText += OB;
@@ -580,8 +580,8 @@ void AESTests::testECB()
 			CPPUNIT_ASSERT(shsmCipherText == cipherText);
 
 			// Check that we can get the plain text
-			shsmPlainText.wipe(); 
-			CPPUNIT_ASSERT(aes->decryptInit(&aesKey256, "ecb", IV));
+			shsmPlainText.wipe();
+			CPPUNIT_ASSERT(aes->decryptInit(&aesKey256, SymMode::ECB, IV));
 
 			CPPUNIT_ASSERT(aes->decryptUpdate(shsmCipherText, OB));
 			shsmPlainText += OB;

@@ -219,7 +219,7 @@ const EVP_CIPHER* OSSLAES::getCipher() const
 	if (currentKey == NULL) return NULL;
 
 	// Check currentKey bit length; AES only supports 128, 192 or 256 bit keys
-	if ((currentKey->getBitLen() != 128) && 
+	if ((currentKey->getBitLen() != 128) &&
 	    (currentKey->getBitLen() != 192) &&
             (currentKey->getBitLen() != 256))
 	{
@@ -229,7 +229,7 @@ const EVP_CIPHER* OSSLAES::getCipher() const
 	}
 
 	// Determine the cipher mode
-	if (!currentCipherMode.compare("cbc"))
+	if (currentCipherMode == SymMode::CBC)
 	{
 		switch(currentKey->getBitLen())
 		{
@@ -241,7 +241,7 @@ const EVP_CIPHER* OSSLAES::getCipher() const
 				return EVP_aes_256_cbc();
 		};
 	}
-	else if (!currentCipherMode.compare("ecb"))
+	else if (currentCipherMode == SymMode::ECB)
 	{
 		switch(currentKey->getBitLen())
 		{
@@ -254,7 +254,7 @@ const EVP_CIPHER* OSSLAES::getCipher() const
 		};
 	}
 
-	ERROR_MSG("Invalid AES cipher mode %s", currentCipherMode.c_str());
+	ERROR_MSG("Invalid AES cipher mode %i", currentCipherMode);
 
 	return NULL;
 }
