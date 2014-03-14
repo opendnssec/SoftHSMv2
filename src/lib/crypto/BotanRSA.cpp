@@ -56,26 +56,22 @@ BotanRSA::~BotanRSA()
 }
 
 // Signing functions
-bool BotanRSA::sign(PrivateKey* privateKey, const ByteString& dataToSign, ByteString& signature, const 
-std::string mechanism)
+bool BotanRSA::sign(PrivateKey* privateKey, const ByteString& dataToSign,
+		    ByteString& signature, const AsymMech::Type mechanism)
 {
-	std::string lowerMechanism;
-	lowerMechanism.resize(mechanism.size());
-	std::transform(mechanism.begin(), mechanism.end(), lowerMechanism.begin(), tolower);
 	std::string emsa = "";
 
-	if (!lowerMechanism.compare("rsa-pkcs"))
+	switch (mechanism)
 	{
-		emsa = "EMSA3(Raw)";
-	}
-	else if (!lowerMechanism.compare("rsa-raw"))
-	{
-		emsa = "Raw";
-	}
-	else
-	{
-		// Call default implementation
-		return AsymmetricAlgorithm::sign(privateKey, dataToSign, signature, mechanism);
+		case AsymMech::RSA:
+			emsa = "Raw";
+			break;
+		case AsymMech::RSA_PKCS:
+			emsa = "EMSA3(Raw)";
+			break;
+		default:
+			// Call default implementation
+			return AsymmetricAlgorithm::sign(privateKey, dataToSign, signature, mechanism);
 	}
 
 	// Check if the private key is the right type
@@ -142,8 +138,8 @@ std::string mechanism)
 
 	return true;
 }
-	
-bool BotanRSA::signInit(PrivateKey* privateKey, const std::string mechanism)
+
+bool BotanRSA::signInit(PrivateKey* privateKey, const AsymMech::Type mechanism)
 {
 	if (!AsymmetricAlgorithm::signInit(privateKey, mechanism))
 	{
@@ -161,47 +157,38 @@ bool BotanRSA::signInit(PrivateKey* privateKey, const std::string mechanism)
 		return false;
 	}
 
-	std::string lowerMechanism;
-	lowerMechanism.resize(mechanism.size());
-	std::transform(mechanism.begin(), mechanism.end(), lowerMechanism.begin(), tolower);
 	std::string emsa;
 
-	if (!lowerMechanism.compare("rsa-md5-pkcs"))
+	switch (mechanism)
 	{
-		emsa = "EMSA3(MD5)";
-	}
-	else if (!lowerMechanism.compare("rsa-sha1-pkcs"))
-	{
-		emsa = "EMSA3(SHA-160)";
-	}
-	else if (!lowerMechanism.compare("rsa-sha224-pkcs"))
-	{
-		emsa = "EMSA3(SHA-224)";
-	}
-	else if (!lowerMechanism.compare("rsa-sha256-pkcs"))
-	{
-		emsa = "EMSA3(SHA-256)";
-	}
-	else if (!lowerMechanism.compare("rsa-sha384-pkcs"))
-	{
-		emsa = "EMSA3(SHA-384)";
-	}
-	else if (!lowerMechanism.compare("rsa-sha512-pkcs"))
-	{
-		emsa = "EMSA3(SHA-512)";
-	}
-	else if (!lowerMechanism.compare("rsa-ssl"))
-	{
-		emsa = "EMSA3(Parallel(MD5,SHA-160))";
-	}
-	else
-	{
-		ERROR_MSG("Invalid mechanism supplied (%s)", mechanism.c_str());
+		case AsymMech::RSA_MD5_PKCS:
+			emsa = "EMSA3(MD5)";
+			break;
+		case AsymMech::RSA_SHA1_PKCS:
+			emsa = "EMSA3(SHA-160)";
+			break;
+		case AsymMech::RSA_SHA224_PKCS:
+			emsa = "EMSA3(SHA-224)";
+			break;
+		case AsymMech::RSA_SHA256_PKCS:
+			emsa = "EMSA3(SHA-256)";
+			break;
+		case AsymMech::RSA_SHA384_PKCS:
+			emsa = "EMSA3(SHA-384)";
+			break;
+		case AsymMech::RSA_SHA512_PKCS:
+			emsa = "EMSA3(SHA-512)";
+			break;
+		case AsymMech::RSA_SSL:
+			emsa = "EMSA3(Parallel(MD5,SHA-160))";
+			break;
+		default:
+			ERROR_MSG("Invalid mechanism supplied (%i)", mechanism);
 
-		ByteString dummy;
-		AsymmetricAlgorithm::signFinal(dummy);
+			ByteString dummy;
+			AsymmetricAlgorithm::signFinal(dummy);
 
-		return false;
+			return false;
 	}
 
 	BotanRSAPrivateKey* pk = (BotanRSAPrivateKey*) currentPrivateKey;
@@ -305,25 +292,22 @@ bool BotanRSA::signFinal(ByteString& signature)
 }
 
 // Verification functions
-bool BotanRSA::verify(PublicKey* publicKey, const ByteString& originalData, const ByteString& signature, const std::string mechanism)
+bool BotanRSA::verify(PublicKey* publicKey, const ByteString& originalData,
+		      const ByteString& signature, const AsymMech::Type mechanism)
 {
-	std::string lowerMechanism;
-	lowerMechanism.resize(mechanism.size());
-	std::transform(mechanism.begin(), mechanism.end(), lowerMechanism.begin(), tolower);
 	std::string emsa = "";
 
-	if (!lowerMechanism.compare("rsa-pkcs"))
+	switch (mechanism)
 	{
-		emsa = "EMSA3(Raw)";
-	}
-	else if (!lowerMechanism.compare("rsa-raw"))
-	{
-		emsa = "Raw";
-	}
-	else
-	{
-		// Call the generic function
-		return AsymmetricAlgorithm::verify(publicKey, originalData, signature, mechanism);
+		case AsymMech::RSA:
+			emsa = "Raw";
+			break;
+		case AsymMech::RSA_PKCS:
+			emsa = "EMSA3(Raw)";
+			break;
+		default:
+			// Call the generic function
+			return AsymmetricAlgorithm::verify(publicKey, originalData, signature, mechanism);
 	}
 
 	// Check if the public key is the right type
@@ -380,7 +364,7 @@ bool BotanRSA::verify(PublicKey* publicKey, const ByteString& originalData, cons
 	return verResult;
 }
 
-bool BotanRSA::verifyInit(PublicKey* publicKey, const std::string mechanism)
+bool BotanRSA::verifyInit(PublicKey* publicKey, const AsymMech::Type mechanism)
 {
 	if (!AsymmetricAlgorithm::verifyInit(publicKey, mechanism))
 	{
@@ -398,47 +382,38 @@ bool BotanRSA::verifyInit(PublicKey* publicKey, const std::string mechanism)
 		return false;
 	}
 
-	std::string lowerMechanism;
-	lowerMechanism.resize(mechanism.size());
-	std::transform(mechanism.begin(), mechanism.end(), lowerMechanism.begin(), tolower);
 	std::string emsa;
 
-	if (!lowerMechanism.compare("rsa-md5-pkcs"))
+	switch (mechanism)
 	{
-		emsa = "EMSA3(MD5)";
-	}
-	else if (!lowerMechanism.compare("rsa-sha1-pkcs"))
-	{
-		emsa = "EMSA3(SHA-160)";
-	}
-	else if (!lowerMechanism.compare("rsa-sha224-pkcs"))
-	{
-		emsa = "EMSA3(SHA-224)";
-	}
-	else if (!lowerMechanism.compare("rsa-sha256-pkcs"))
-	{
-		emsa = "EMSA3(SHA-256)";
-	}
-	else if (!lowerMechanism.compare("rsa-sha384-pkcs"))
-	{
-		emsa = "EMSA3(SHA-384)";
-	}
-	else if (!lowerMechanism.compare("rsa-sha512-pkcs"))
-	{
-		emsa = "EMSA3(SHA-512)";
-	}
-	else if (!lowerMechanism.compare("rsa-ssl"))
-	{
-		emsa = "EMSA3(Parallel(MD5,SHA-160))";
-	}
-	else
-	{
-		ERROR_MSG("Invalid mechanism supplied (%s)", mechanism.c_str());
+		case AsymMech::RSA_MD5_PKCS:
+			emsa = "EMSA3(MD5)";
+			break;
+		case AsymMech::RSA_SHA1_PKCS:
+			emsa = "EMSA3(SHA-160)";
+			break;
+		case AsymMech::RSA_SHA224_PKCS:
+			emsa = "EMSA3(SHA-224)";
+			break;
+		case AsymMech::RSA_SHA256_PKCS:
+			emsa = "EMSA3(SHA-256)";
+			break;
+		case AsymMech::RSA_SHA384_PKCS:
+			emsa = "EMSA3(SHA-384)";
+			break;
+		case AsymMech::RSA_SHA512_PKCS:
+			emsa = "EMSA3(SHA-512)";
+			break;
+		case AsymMech::RSA_SSL:
+			emsa = "EMSA3(Parallel(MD5,SHA-160))";
+			break;
+		default:
+			ERROR_MSG("Invalid mechanism supplied (%i)", mechanism);
 
-		ByteString dummy;
-		AsymmetricAlgorithm::verifyFinal(dummy);
+			ByteString dummy;
+			AsymmetricAlgorithm::verifyFinal(dummy);
 
-		return false;
+			return false;
 	}
 
 	BotanRSAPublicKey* pk = (BotanRSAPublicKey*) currentPublicKey;
@@ -528,7 +503,7 @@ bool BotanRSA::verifyFinal(const ByteString& signature)
 }
 
 // Encryption functions
-bool BotanRSA::encrypt(PublicKey* publicKey, const ByteString& data, ByteString& encryptedData, const std::string padding)
+bool BotanRSA::encrypt(PublicKey* publicKey, const ByteString& data, ByteString& encryptedData, const AsymMech::Type padding)
 {
 	// Check if the public key is the right type
 	if (!publicKey->isOfType(BotanRSAPublicKey::type))
@@ -538,28 +513,23 @@ bool BotanRSA::encrypt(PublicKey* publicKey, const ByteString& data, ByteString&
 		return false;
 	}
 
-	std::string lowerPadding;
-	lowerPadding.resize(padding.size());
-	std::transform(padding.begin(), padding.end(), lowerPadding.begin(), tolower);
 	std::string eme;
 
-	if (!lowerPadding.compare("rsa-pkcs"))
+	switch (padding)
 	{
-		eme = "PKCS1v15";
-	}
-	else if (!lowerPadding.compare("rsa-pkcs-oaep"))
-	{
-		eme = "EME1(SHA-160)";
-	}
-	else if (!lowerPadding.compare("rsa-raw"))
-	{
-		eme = "Raw";
-	}
-	else
-	{
-		ERROR_MSG("Invalid padding mechanism supplied (%s)", padding.c_str());
+		case AsymMech::RSA_PKCS:
+			eme = "PKCS1v15";
+			break;
+		case AsymMech::RSA_PKCS_OAEP:
+			eme = "EME1(SHA-160)";
+			break;
+		case AsymMech::RSA:
+			eme = "Raw";
+			break;
+		default:
+			ERROR_MSG("Invalid padding mechanism supplied (%i)", padding);
 
-		return false;
+			return false;
 	}
 
 	BotanRSAPublicKey* pk = (BotanRSAPublicKey*) publicKey;
@@ -618,7 +588,7 @@ bool BotanRSA::encrypt(PublicKey* publicKey, const ByteString& data, ByteString&
 }
 
 // Decryption functions
-bool BotanRSA::decrypt(PrivateKey* privateKey, const ByteString& encryptedData, ByteString& data, const std::string padding)
+bool BotanRSA::decrypt(PrivateKey* privateKey, const ByteString& encryptedData, ByteString& data, const AsymMech::Type padding)
 {
 	// Check if the private key is the right type
 	if (!privateKey->isOfType(BotanRSAPrivateKey::type))
@@ -628,28 +598,23 @@ bool BotanRSA::decrypt(PrivateKey* privateKey, const ByteString& encryptedData, 
 		return false;
 	}
 
-	std::string lowerPadding;
-	lowerPadding.resize(padding.size());
-	std::transform(padding.begin(), padding.end(), lowerPadding.begin(), tolower);
 	std::string eme;
 
-	if (!lowerPadding.compare("rsa-pkcs"))
+	switch (padding)
 	{
-		eme = "PKCS1v15";
-	}
-	else if (!lowerPadding.compare("rsa-pkcs-oaep"))
-	{
-		eme = "EME1(SHA-160)";
-	}
-	else if (!lowerPadding.compare("rsa-raw"))
-	{
-		eme = "Raw";
-	}
-	else
-	{
-		ERROR_MSG("Invalid padding mechanism supplied (%s)", padding.c_str());
+		case AsymMech::RSA_PKCS:
+			eme = "PKCS1v15";
+			break;
+		case AsymMech::RSA_PKCS_OAEP:
+			eme = "EME1(SHA-160)";
+			break;
+		case AsymMech::RSA:
+			eme = "Raw";
+			break;
+		default:
+			ERROR_MSG("Invalid padding mechanism supplied (%i)", padding);
 
-		return false;
+			return false;
 	}
 
 	BotanRSAPrivateKey* pk = (BotanRSAPrivateKey*) privateKey;
@@ -694,7 +659,7 @@ bool BotanRSA::decrypt(PrivateKey* privateKey, const ByteString& encryptedData, 
 	}
 
 	// Return the result
-	if (!eme.compare("Raw"))
+	if (padding == AsymMech::RSA)
 	{
 		// We compensate that Botan removes leading zeros
 		int modSize = pk->getN().size();

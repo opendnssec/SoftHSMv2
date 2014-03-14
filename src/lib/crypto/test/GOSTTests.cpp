@@ -53,6 +53,11 @@ void GOSTTests::setUp()
 	mac = NULL;
 	gost = NULL;
 	rng = NULL;
+
+	gost = CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::GOST);
+
+	// Check the GOST object
+	CPPUNIT_ASSERT(gost != NULL);
 }
 
 void GOSTTests::tearDown()
@@ -81,7 +86,7 @@ void GOSTTests::testHash()
 	char testResult[512] = "3EC65819A084AD30712C4B3EB69CE130A8C7221EA3D8A9996D4BA6F298BC39F9";
 
 	// Get a GOST R 34.11-94 hash instance
-	CPPUNIT_ASSERT((hash = CryptoFactory::i()->getHashAlgorithm("gost")) != NULL);
+	CPPUNIT_ASSERT((hash = CryptoFactory::i()->getHashAlgorithm(HashAlgo::GOST)) != NULL);
 
 	ByteString b(testData);
 	ByteString osslHash(testResult), gostHash;
@@ -114,7 +119,7 @@ void GOSTTests::testHmac()
 {
 	// Get an RNG and HMAC GOST R34.11-94 instance
 	CPPUNIT_ASSERT((rng = CryptoFactory::i()->getRNG()) != NULL);
-	CPPUNIT_ASSERT((mac = CryptoFactory::i()->getMacAlgorithm("hmac-gost")) != NULL);
+	CPPUNIT_ASSERT((mac = CryptoFactory::i()->getMacAlgorithm(MacAlgo::HMAC_GOST)) != NULL);
 
 	// Key
 	char pk[] = "a_key_for_HMAC-GOST_R-34.11-94_test";
@@ -169,7 +174,7 @@ void GOSTTests::testHmac()
 
 void GOSTTests::testHashKnownVector()
 {
-	CPPUNIT_ASSERT((hash = CryptoFactory::i()->getHashAlgorithm("gost")) != NULL);
+	CPPUNIT_ASSERT((hash = CryptoFactory::i()->getHashAlgorithm(HashAlgo::GOST)) != NULL);
 
 	// Message to hash for test #1
 	ByteString msg = "6d65737361676520646967657374"; // "message digest"
@@ -191,8 +196,6 @@ void GOSTTests::testKeyGeneration()
 {
 	AsymmetricKeyPair* kp;
 
-	CPPUNIT_ASSERT((gost = CryptoFactory::i()->getAsymmetricAlgorithm("gost")));
-
 	// Set domain parameters
 	ByteString curve = "06072a850302022301";
 	ECParameters* p = new ECParameters;
@@ -209,15 +212,10 @@ void GOSTTests::testKeyGeneration()
 
 	gost->recycleParameters(p);
 	gost->recycleKeyPair(kp);
-
-	CryptoFactory::i()->recycleAsymmetricAlgorithm(gost);
-	gost = NULL;
 }
 
 void GOSTTests::testSerialisation()
 {
-	CPPUNIT_ASSERT((gost = CryptoFactory::i()->getAsymmetricAlgorithm("gost")));
-
 	// Get GOST R 34.10-2001 params-A domain parameters
 	ECParameters* p = new ECParameters;
 	p->setEC(ByteString("06072a850302022301"));
@@ -263,9 +261,6 @@ void GOSTTests::testSerialisation()
 	gost->recycleParameters(dEC);
 	gost->recycleKeyPair(kp);
 	gost->recycleKeyPair(dKP);
-
-	CryptoFactory::i()->recycleAsymmetricAlgorithm(gost);
-	gost = NULL;
 }
 
 void GOSTTests::testSigningVerifying()
@@ -273,8 +268,6 @@ void GOSTTests::testSigningVerifying()
 	AsymmetricKeyPair* kp;
 	ECParameters *p;
 	ByteString curve = "06072a850302022301";
-
-	CPPUNIT_ASSERT((gost = CryptoFactory::i()->getAsymmetricAlgorithm("gost")));
 
 	// Get parameters
 	p = new ECParameters;
@@ -294,16 +287,13 @@ void GOSTTests::testSigningVerifying()
 
 	// Sign the data
 	ByteString sig;
-	CPPUNIT_ASSERT(gost->sign(kp->getPrivateKey(), dataToSign, sig, "gost-gost"));
+	CPPUNIT_ASSERT(gost->sign(kp->getPrivateKey(), dataToSign, sig, AsymMech::GOST_GOST));
 
 	// And verify it
-	CPPUNIT_ASSERT(gost->verify(kp->getPublicKey(), dataToSign, sig, "gost-gost"));
+	CPPUNIT_ASSERT(gost->verify(kp->getPublicKey(), dataToSign, sig, AsymMech::GOST_GOST));
 
 	gost->recycleKeyPair(kp);
 	gost->recycleParameters(p);
-
-	CryptoFactory::i()->recycleAsymmetricAlgorithm(gost);
-	gost = NULL;
 }
 
 void GOSTTests::testSignVerifyKnownVector()

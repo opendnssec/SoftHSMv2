@@ -35,14 +35,14 @@
 #include <algorithm>
 #include "odd.h"
 
-bool OSSLDES::wrapKey(const SymmetricKey* /*key*/, const std::string /*mode*/, const ByteString& /*in*/, ByteString& /*out*/)
+bool OSSLDES::wrapKey(const SymmetricKey* /*key*/, const SymWrap::Type /*mode*/, const ByteString& /*in*/, ByteString& /*out*/)
 {
 	ERROR_MSG("DES does not support key wrapping");
 
 	return false;
 }
 
-bool OSSLDES::unwrapKey(const SymmetricKey* /*key*/, const std::string /*mode*/, const ByteString& /*in*/, ByteString& /*out*/)
+bool OSSLDES::unwrapKey(const SymmetricKey* /*key*/, const SymWrap::Type /*mode*/, const ByteString& /*in*/, ByteString& /*out*/)
 {
 	ERROR_MSG("DES does not support key unwrapping");
 
@@ -70,7 +70,7 @@ const EVP_CIPHER* OSSLDES::getCipher() const
 	}
 
 	// Determine the cipher mode
-	if (!currentCipherMode.compare("cbc"))
+	if (currentCipherMode == SymMode::CBC)
 	{
 		switch(currentKey->getBitLen())
 		{
@@ -82,7 +82,7 @@ const EVP_CIPHER* OSSLDES::getCipher() const
 				return EVP_des_ede3_cbc();
 		};
 	}
-	else if (!currentCipherMode.compare("ecb"))
+	else if (currentCipherMode == SymMode::ECB)
 	{
 		switch(currentKey->getBitLen())
 		{
@@ -94,7 +94,7 @@ const EVP_CIPHER* OSSLDES::getCipher() const
 				return EVP_des_ede3_ecb();
 		};
 	}
-	else if (!currentCipherMode.compare("ofb"))
+	else if (currentCipherMode == SymMode::OFB)
 	{
 		switch(currentKey->getBitLen())
 		{
@@ -106,7 +106,7 @@ const EVP_CIPHER* OSSLDES::getCipher() const
 				return EVP_des_ede3_ofb();
 		};
 	}
-	else if (!currentCipherMode.compare("cfb"))
+	else if (currentCipherMode == SymMode::CFB)
 	{
 		switch(currentKey->getBitLen())
 		{
@@ -119,7 +119,7 @@ const EVP_CIPHER* OSSLDES::getCipher() const
 		};
 	}
 
-	ERROR_MSG("Invalid DES cipher mode %s", currentCipherMode.c_str());
+	ERROR_MSG("Invalid DES cipher mode %i", currentCipherMode);
 
 	return NULL;
 }

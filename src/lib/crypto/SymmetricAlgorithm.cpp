@@ -36,12 +36,13 @@
 
 SymmetricAlgorithm::SymmetricAlgorithm()
 {
-	currentCipherMode = "invalid";
 	currentKey = NULL;
+	currentCipherMode = SymMode::Unknown;
+	currentPaddingMode = true;
 	currentOperation = NONE;
 }
 
-bool SymmetricAlgorithm::encryptInit(const SymmetricKey* key, const std::string mode /* = "CBC" */, const ByteString& /*IV = ByteString() */, bool /*padding = true */)
+bool SymmetricAlgorithm::encryptInit(const SymmetricKey* key, const SymMode::Type mode /* = SymMode::CBC */, const ByteString& /*IV = ByteString() */, bool padding /* = true */)
 {
 	if ((key == NULL) || (currentOperation != NONE))
 	{
@@ -49,9 +50,8 @@ bool SymmetricAlgorithm::encryptInit(const SymmetricKey* key, const std::string 
 	}
 
 	currentKey = key;
-	currentCipherMode.clear();
-	currentCipherMode.resize(mode.size());
-	transform(mode.begin(), mode.end(), currentCipherMode.begin(), tolower);
+	currentCipherMode = mode;
+	currentPaddingMode = padding;
 	currentOperation = ENCRYPT;
 
 	return true;
@@ -74,14 +74,15 @@ bool SymmetricAlgorithm::encryptFinal(ByteString& /*encryptedData*/)
 		return false;
 	}
 
-	currentOperation = NONE;
 	currentKey = NULL;
-	currentCipherMode = "invalid";
+	currentCipherMode = SymMode::Unknown;
+	currentPaddingMode = true;
+	currentOperation = NONE;
 
 	return true;
 }
 
-bool SymmetricAlgorithm::decryptInit(const SymmetricKey* key, const std::string mode /* = "CBC" */, const ByteString& /*IV = ByteString() */, bool /*padding = true */)
+bool SymmetricAlgorithm::decryptInit(const SymmetricKey* key, const SymMode::Type mode /* = SymMode::CBC */, const ByteString& /*IV = ByteString() */, bool padding /* = true */)
 {
 	if ((key == NULL) || (currentOperation != NONE))
 	{
@@ -89,9 +90,8 @@ bool SymmetricAlgorithm::decryptInit(const SymmetricKey* key, const std::string 
 	}
 
 	currentKey = key;
-	currentCipherMode.clear();
-	currentCipherMode.resize(mode.size());
-	transform(mode.begin(), mode.end(), currentCipherMode.begin(), tolower);
+	currentCipherMode = mode;
+	currentPaddingMode = padding;
 	currentOperation = DECRYPT;
 
 	return true;
@@ -115,9 +115,10 @@ bool SymmetricAlgorithm::decryptFinal(ByteString& /*data*/)
 		return false;
 	}
 
-	currentOperation = NONE;
 	currentKey = NULL;
-	currentCipherMode = "invalid";
+	currentCipherMode = SymMode::Unknown;
+	currentPaddingMode = true;
+	currentOperation = NONE;
 
 	return true;
 }

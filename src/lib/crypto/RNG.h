@@ -36,6 +36,15 @@
 #include "config.h"
 #include "ByteString.h"
 
+struct RNGImpl
+{
+	enum Type
+	{
+		Unknown,
+		Default
+	};
+};
+
 class RNG
 {
 public:

@@ -38,18 +38,20 @@
 AsymmetricAlgorithm::AsymmetricAlgorithm()
 {
 	currentOperation = NONE;
+	currentMechanism = AsymMech::Unknown;
+	currentPadding = AsymMech::Unknown;
 	currentPublicKey = NULL;
 	currentPrivateKey = NULL;
 }
 
 // Signing functions
-bool AsymmetricAlgorithm::sign(PrivateKey* privateKey, const ByteString& dataToSign, ByteString& signature, const std::string mechanism)
+bool AsymmetricAlgorithm::sign(PrivateKey* privateKey, const ByteString& dataToSign, ByteString& signature, const AsymMech::Type mechanism)
 {
 	// Compose from multi-part operations
 	return (signInit(privateKey, mechanism) && signUpdate(dataToSign) && signFinal(signature));
 }
 
-bool AsymmetricAlgorithm::signInit(PrivateKey* privateKey, const std::string mechanism)
+bool AsymmetricAlgorithm::signInit(PrivateKey* privateKey, const AsymMech::Type mechanism)
 {
 	if ((currentOperation != NONE) || (privateKey == NULL))
 	{
@@ -82,19 +84,19 @@ bool AsymmetricAlgorithm::signFinal(ByteString& /*signature*/)
 
 	currentOperation = NONE;
 	currentPrivateKey = NULL;
-	currentMechanism = "";
+	currentMechanism = AsymMech::Unknown;
 
 	return true;
 }
 
 // Verification functions
-bool AsymmetricAlgorithm::verify(PublicKey* publicKey, const ByteString& originalData, const ByteString& signature, const std::string mechanism)
+bool AsymmetricAlgorithm::verify(PublicKey* publicKey, const ByteString& originalData, const ByteString& signature, const AsymMech::Type mechanism)
 {
 	// Compose from multi-part operations
 	return (verifyInit(publicKey, mechanism) && verifyUpdate(originalData) && verifyFinal(signature));
 }
 
-bool AsymmetricAlgorithm::verifyInit(PublicKey* publicKey, const std::string mechanism)
+bool AsymmetricAlgorithm::verifyInit(PublicKey* publicKey, const AsymMech::Type mechanism)
 {
 	if ((currentOperation != NONE) || (publicKey == NULL))
 	{
@@ -127,7 +129,7 @@ bool AsymmetricAlgorithm::verifyFinal(const ByteString& /*signature*/)
 
 	currentOperation = NONE;
 	currentPublicKey = NULL;
-	currentMechanism = "";
+	currentMechanism = AsymMech::Unknown;
 
 	return true;
 }

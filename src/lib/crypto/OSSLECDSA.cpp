@@ -45,15 +45,11 @@
 #include <string.h>
 
 // Signing functions
-bool OSSLECDSA::sign(PrivateKey* privateKey, const ByteString& dataToSign, ByteString& signature, const std::string mechanism)
+bool OSSLECDSA::sign(PrivateKey* privateKey, const ByteString& dataToSign, ByteString& signature, const AsymMech::Type mechanism)
 {
-	std::string lowerMechanism;
-	lowerMechanism.resize(mechanism.size());
-	std::transform(mechanism.begin(), mechanism.end(), lowerMechanism.begin(), tolower);
-
-	if (lowerMechanism.compare("ecdsa"))
+	if (mechanism != AsymMech::ECDSA)
 	{
-		ERROR_MSG("Invalid mechanism supplied (%s)", mechanism.c_str());
+		ERROR_MSG("Invalid mechanism supplied (%i)", mechanism);
 		return false;
 	}
 
@@ -100,7 +96,7 @@ bool OSSLECDSA::sign(PrivateKey* privateKey, const ByteString& dataToSign, ByteS
 	return true;
 }
 
-bool OSSLECDSA::signInit(PrivateKey* /*privateKey*/, const std::string /*mechanism*/)
+bool OSSLECDSA::signInit(PrivateKey* /*privateKey*/, const AsymMech::Type /*mechanism*/)
 {
 	ERROR_MSG("ECDSA does not support multi part signing");
 
@@ -122,15 +118,11 @@ bool OSSLECDSA::signFinal(ByteString& /*signature*/)
 }
 
 // Verification functions
-bool OSSLECDSA::verify(PublicKey* publicKey, const ByteString& originalData, const ByteString& signature, const std::string mechanism)
+bool OSSLECDSA::verify(PublicKey* publicKey, const ByteString& originalData, const ByteString& signature, const AsymMech::Type mechanism)
 {
-	std::string lowerMechanism;
-	lowerMechanism.resize(mechanism.size());
-	std::transform(mechanism.begin(), mechanism.end(), lowerMechanism.begin(), tolower);
-
-	if (lowerMechanism.compare("ecdsa"))
+	if (mechanism != AsymMech::ECDSA)
 	{
-		ERROR_MSG("Invalid mechanism supplied (%s)", mechanism.c_str());
+		ERROR_MSG("Invalid mechanism supplied (%i)", mechanism);
 		return false;
 	}
 
@@ -200,7 +192,7 @@ bool OSSLECDSA::verify(PublicKey* publicKey, const ByteString& originalData, con
 	return true;
 }
 
-bool OSSLECDSA::verifyInit(PublicKey* /*publicKey*/, const std::string /*mechanism*/)
+bool OSSLECDSA::verifyInit(PublicKey* /*publicKey*/, const AsymMech::Type /*mechanism*/)
 {
 	ERROR_MSG("ECDSA does not support multi part verifying");
 
@@ -222,7 +214,7 @@ bool OSSLECDSA::verifyFinal(const ByteString& /*signature*/)
 }
 
 // Encryption functions
-bool OSSLECDSA::encrypt(PublicKey* /*publicKey*/, const ByteString& /*data*/, ByteString& /*encryptedData*/, const std::string /*padding*/)
+bool OSSLECDSA::encrypt(PublicKey* /*publicKey*/, const ByteString& /*data*/, ByteString& /*encryptedData*/, const AsymMech::Type /*padding*/)
 {
 	ERROR_MSG("ECDSA does not support encryption");
 
@@ -230,7 +222,7 @@ bool OSSLECDSA::encrypt(PublicKey* /*publicKey*/, const ByteString& /*data*/, By
 }
 
 // Decryption functions
-bool OSSLECDSA::decrypt(PrivateKey* /*privateKey*/, const ByteString& /*encryptedData*/, ByteString& /*data*/, const std::string /*padding*/)
+bool OSSLECDSA::decrypt(PrivateKey* /*privateKey*/, const ByteString& /*encryptedData*/, ByteString& /*data*/, const AsymMech::Type /*padding*/)
 {
 	ERROR_MSG("ECDSA does not support decryption");
 
@@ -398,7 +390,7 @@ PrivateKey* OSSLECDSA::newPrivateKey()
 {
 	return (PrivateKey*) new OSSLECPrivateKey();
 }
-	
+
 AsymmetricParameters* OSSLECDSA::newParameters()
 {
 	return (AsymmetricParameters*) new ECParameters();

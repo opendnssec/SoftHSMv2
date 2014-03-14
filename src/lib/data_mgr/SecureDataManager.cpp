@@ -55,7 +55,7 @@ void SecureDataManager::initObject()
 	rng = CryptoFactory::i()->getRNG();
 
 	// Get an AES implementation
-	aes = CryptoFactory::i()->getSymmetricAlgorithm("aes");
+	aes = CryptoFactory::i()->getSymmetricAlgorithm(SymAlgo::AES);
 
 	// Initialise masking data
 	mask = new ByteString();
@@ -132,7 +132,7 @@ bool SecureDataManager::pbeEncryptKey(const ByteString& passphrase, ByteString& 
 	// Encrypt the data
 	ByteString block;
 
-	if (!aes->encryptInit(pbeKey, "cbc", IV)) 
+	if (!aes->encryptInit(pbeKey, SymMode::CBC, IV))
 	{
 		delete pbeKey;
 
@@ -271,7 +271,7 @@ bool SecureDataManager::login(const ByteString& passphrase, const ByteString& en
 	ByteString finalBlock;
 
 	// NOTE: The login will fail here if incorrect passphrase is supplied
-	if (!aes->decryptInit(pbeKey, "cbc", IV) ||
+	if (!aes->decryptInit(pbeKey, SymMode::CBC, IV) ||
 	    !aes->decryptUpdate(encryptedKeyData, decryptedKeyData) ||
 	    !aes->decryptFinal(finalBlock))
 	{
@@ -363,7 +363,7 @@ bool SecureDataManager::decrypt(const ByteString& encrypted, ByteString& plainte
 
 	ByteString finalBlock;
 
-	if (!aes->decryptInit(&theKey, "cbc", IV) ||
+	if (!aes->decryptInit(&theKey, SymMode::CBC, IV) ||
 	    !aes->decryptUpdate(encrypted.substr(aes->getBlockSize()), plaintext) ||
 	    !aes->decryptFinal(finalBlock))
 	{
@@ -407,7 +407,7 @@ bool SecureDataManager::encrypt(const ByteString& plaintext, ByteString& encrypt
 
 	ByteString finalBlock;
 
-	if (!aes->encryptInit(&theKey, "cbc", IV) ||
+	if (!aes->encryptInit(&theKey, SymMode::CBC, IV) ||
 	    !aes->encryptUpdate(plaintext, encrypted) ||
 	    !aes->encryptFinal(finalBlock))
 	{

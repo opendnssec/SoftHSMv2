@@ -98,8 +98,8 @@ public:
 	void setSymmetricCryptoOp(SymmetricAlgorithm* symmetricCryptoOp);
 	SymmetricAlgorithm* getSymmetricCryptoOp();
 
-	void setMechanism(const char *mechanism);
-	const char *getMechanism();
+	void setMechanism(AsymMech::Type mechanism);
+	AsymMech::Type getMechanism();
 
 	void setAllowMultiPartOp(bool allowMultiPartOp);
 	bool getAllowMultiPartOp();
@@ -150,7 +150,7 @@ private:
 	// Symmetric Crypto
 	SymmetricAlgorithm* symmetricCryptoOp;
 
-	const char * mechanism;
+	AsymMech::Type mechanism;
 	bool allowMultiPartOp;
 	bool allowSinglePartOp;
 	PublicKey* publicKey;

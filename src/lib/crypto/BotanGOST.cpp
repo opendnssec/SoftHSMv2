@@ -60,7 +60,7 @@ BotanGOST::~BotanGOST()
 }
 
 // Signing functions
-bool BotanGOST::signInit(PrivateKey* privateKey, const std::string mechanism)
+bool BotanGOST::signInit(PrivateKey* privateKey, const AsymMech::Type mechanism)
 {
 	if (!AsymmetricAlgorithm::signInit(privateKey, mechanism))
 	{
@@ -78,28 +78,24 @@ bool BotanGOST::signInit(PrivateKey* privateKey, const std::string mechanism)
 		return false;
 	}
 
-	std::string lowerMechanism;
-	lowerMechanism.resize(mechanism.size());
-	std::transform(mechanism.begin(), mechanism.end(), lowerMechanism.begin(), tolower);
 	std::string emsa;
 
-	if (!lowerMechanism.compare("gost-gost"))
+	switch (mechanism)
 	{
-		emsa = "EMSA1(GOST-34.11)";
-	}
-	else if (!lowerMechanism.compare("gost"))
-	{
-		emsa = "Raw";
-	}
-        else
-        {
-		ERROR_MSG("Invalid mechanism supplied (%s)", mechanism.c_str());
+		case AsymMech::GOST:
+			emsa = "Raw";
+			break;
+		case AsymMech::GOST_GOST:
+			emsa = "EMSA1(GOST-34.11)";
+			break;
+		default:
+			ERROR_MSG("Invalid mechanism supplied (%i)", mechanism);
 
-		ByteString dummy;
-		AsymmetricAlgorithm::signFinal(dummy);
+			ByteString dummy;
+			AsymmetricAlgorithm::signFinal(dummy);
 
-		return false;
-        }
+			return false;
+	}
 
         BotanGOSTPrivateKey* pk = (BotanGOSTPrivateKey*) currentPrivateKey;
         Botan::GOST_3410_PrivateKey* botanKey = pk->getBotanKey();
@@ -202,7 +198,7 @@ bool BotanGOST::signFinal(ByteString& signature)
 }
 
 // Verification functions
-bool BotanGOST::verifyInit(PublicKey* publicKey, const std::string mechanism)
+bool BotanGOST::verifyInit(PublicKey* publicKey, const AsymMech::Type mechanism)
 {
 	if (!AsymmetricAlgorithm::verifyInit(publicKey, mechanism))
 	{
@@ -220,27 +216,23 @@ bool BotanGOST::verifyInit(PublicKey* publicKey, const std::string mechanism)
 		return false;
 	}
 
-	std::string lowerMechanism;
-	lowerMechanism.resize(mechanism.size());
-	std::transform(mechanism.begin(), mechanism.end(), lowerMechanism.begin(), tolower);
 	std::string emsa;
 
-	if (!lowerMechanism.compare("gost-gost"))
+	switch (mechanism)
 	{
-		emsa = "EMSA1(GOST-34.11)";
-	}
-	else if (!lowerMechanism.compare("gost"))
-	{
-		emsa = "Raw";
-	}
-        else
-        {
-		ERROR_MSG("Invalid mechanism supplied (%s)", mechanism.c_str());
+		case AsymMech::GOST:
+			emsa = "Raw";
+			break;
+		case AsymMech::GOST_GOST:
+			emsa = "EMSA1(GOST-34.11)";
+			break;
+		default:
+			ERROR_MSG("Invalid mechanism supplied (%i)", mechanism);
 
-		ByteString dummy;
-		AsymmetricAlgorithm::verifyFinal(dummy);
+			ByteString dummy;
+			AsymmetricAlgorithm::verifyFinal(dummy);
 
-		return false;
+			return false;
 	}
 
 	BotanGOSTPublicKey* pk = (BotanGOSTPublicKey*) currentPublicKey;
@@ -317,7 +309,7 @@ bool BotanGOST::verifyFinal(const ByteString& signature)
 	{
 		ERROR_MSG("Could not check the signature");
 
-		delete verifier;                     
+		delete verifier;
 		verifier = NULL;
 
 		return false;
@@ -330,7 +322,7 @@ bool BotanGOST::verifyFinal(const ByteString& signature)
 }
 
 // Encryption functions
-bool BotanGOST::encrypt(PublicKey* /*publicKey*/, const ByteString& /*data*/, ByteString& /*encryptedData*/, const std::string /*padding*/)
+bool BotanGOST::encrypt(PublicKey* /*publicKey*/, const ByteString& /*data*/, ByteString& /*encryptedData*/, const AsymMech::Type /*padding*/)
 {
 	ERROR_MSG("GOST does not support encryption");
 
@@ -338,7 +330,7 @@ bool BotanGOST::encrypt(PublicKey* /*publicKey*/, const ByteString& /*data*/, By
 }
 
 // Decryption functions
-bool BotanGOST::decrypt(PrivateKey* /*privateKey*/, const ByteString& /*encryptedData*/, ByteString& /*data*/, const std::string /*padding*/)
+bool BotanGOST::decrypt(PrivateKey* /*privateKey*/, const ByteString& /*encryptedData*/, ByteString& /*data*/, const AsymMech::Type /*padding*/)
 {
 	ERROR_MSG("GOST does not support decryption");
 
@@ -495,7 +487,7 @@ PrivateKey* BotanGOST::newPrivateKey()
 {
 	return (PrivateKey*) new BotanGOSTPrivateKey();
 }
-	
+
 AsymmetricParameters* BotanGOST::newParameters()
 {
 	return (AsymmetricParameters*) new ECParameters();

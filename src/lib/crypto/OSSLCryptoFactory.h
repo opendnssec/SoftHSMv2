@@ -56,19 +56,19 @@ public:
 	static void reset();
 
 	// Create a concrete instance of a symmetric algorithm
-	virtual SymmetricAlgorithm* getSymmetricAlgorithm(std::string algorithm);
+	virtual SymmetricAlgorithm* getSymmetricAlgorithm(SymAlgo::Type algorithm);
 
 	// Create a concrete instance of an asymmetric algorithm
-	virtual AsymmetricAlgorithm* getAsymmetricAlgorithm(std::string algorithm);
+	virtual AsymmetricAlgorithm* getAsymmetricAlgorithm(AsymAlgo::Type algorithm);
 
 	// Create a concrete instance of a hash algorithm
-	virtual HashAlgorithm* getHashAlgorithm(std::string algorithm);
+	virtual HashAlgorithm* getHashAlgorithm(HashAlgo::Type algorithm);
 
 	// Create a concrete instance of a MAC algorithm
-	virtual MacAlgorithm* getMacAlgorithm(std::string algorithm);
+	virtual MacAlgorithm* getMacAlgorithm(MacAlgo::Type algorithm);
 
 	// Get the global RNG (may be an unique RNG per thread)
-	virtual RNG* getRNG(std::string name = "default");
+	virtual RNG* getRNG(RNGImpl::Type name = RNGImpl::Default);
 
 	// Destructor
 	virtual ~OSSLCryptoFactory();

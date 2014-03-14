@@ -44,7 +44,6 @@
 BotanSymmetricAlgorithm::BotanSymmetricAlgorithm()
 {
 	cryption = NULL;
-	currentPaddingMode = "invalid";
 }
 
 // Destructor
@@ -55,7 +54,7 @@ BotanSymmetricAlgorithm::~BotanSymmetricAlgorithm()
 }
 
 // Encryption functions
-bool BotanSymmetricAlgorithm::encryptInit(const SymmetricKey* key, const std::string mode /* = "cbc" */, const ByteString& IV /* = ByteString()*/, bool padding /* = true */)
+bool BotanSymmetricAlgorithm::encryptInit(const SymmetricKey* key, const SymMode::Type mode /* = SymMode:CBC */, const ByteString& IV /* = ByteString()*/, bool padding /* = true */)
 {
 	// Call the superclass initialiser
 	if (!SymmetricAlgorithm::encryptInit(key, mode, IV, padding))
@@ -85,16 +84,6 @@ bool BotanSymmetricAlgorithm::encryptInit(const SymmetricKey* key, const std::st
 		iv.wipe(getBlockSize());
 	}
 
-	// Set the padding mode (PCKS7 or NoPadding)
-	if (padding)
-	{
-		currentPaddingMode = "PKCS7";
-	}
-	else
-	{
-		currentPaddingMode = "NoPadding";
-	}
-
 	// Determine the cipher
 	std::string cipherName = getCipher();
 
@@ -113,7 +102,7 @@ bool BotanSymmetricAlgorithm::encryptInit(const SymmetricKey* key, const std::st
 	{
 		Botan::SymmetricKey botanKey = Botan::SymmetricKey(key->getKeyBits().const_byte_str(), key->getKeyBits().size());
 		Botan::InitializationVector botanIV = Botan::InitializationVector(IV.const_byte_str(), IV.size());
-		if (mode == "ecb")
+		if (mode == SymMode::ECB)
 		{
 			cryption = new Botan::Pipe(Botan::get_cipher(cipherName, botanKey, Botan::ENCRYPTION));
 		}
@@ -237,7 +226,7 @@ bool BotanSymmetricAlgorithm::encryptFinal(ByteString& encryptedData)
 }
 
 // Decryption functions
-bool BotanSymmetricAlgorithm::decryptInit(const SymmetricKey* key, const std::string mode /* = "cbc" */, const ByteString& IV /* = ByteString() */, bool padding /* = true */)
+bool BotanSymmetricAlgorithm::decryptInit(const SymmetricKey* key, const SymMode::Type mode /* = SymMode::CBC */, const ByteString& IV /* = ByteString() */, bool padding /* = true */)
 {
 	// Call the superclass initialiser
 	if (!SymmetricAlgorithm::decryptInit(key, mode, IV, padding))
@@ -267,16 +256,6 @@ bool BotanSymmetricAlgorithm::decryptInit(const SymmetricKey* key, const std::st
 		iv.wipe(getBlockSize());
 	}
 
-	// Set the padding mode (PCKS7 or NoPadding)
-	if (padding)
-	{
-		currentPaddingMode = "PKCS7";
-	}
-	else
-	{
-		currentPaddingMode = "NoPadding";
-	}
-
 	// Determine the cipher class
 	std::string cipherName = getCipher();
 
@@ -295,7 +274,7 @@ bool BotanSymmetricAlgorithm::decryptInit(const SymmetricKey* key, const std::st
 	{
 		Botan::SymmetricKey botanKey = Botan::SymmetricKey(key->getKeyBits().const_byte_str(), key->getKeyBits().size());
 		Botan::InitializationVector botanIV = Botan::InitializationVector(IV.const_byte_str(), IV.size());
-		if (mode == "ecb")
+		if (mode == SymMode::ECB)
 		{
 			cryption = new Botan::Pipe(Botan::get_cipher(cipherName, botanKey, Botan::DECRYPTION));
 		}
