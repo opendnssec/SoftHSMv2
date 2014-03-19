@@ -60,7 +60,9 @@ BotanECDSA::~BotanECDSA()
 }
 
 // Signing functions
-bool BotanECDSA::sign(PrivateKey* privateKey, const ByteString& dataToSign, ByteString& signature, const AsymMech::Type mechanism)
+bool BotanECDSA::sign(PrivateKey* privateKey, const ByteString& dataToSign,
+		      ByteString& signature, const AsymMech::Type mechanism,
+		      const void* /* param = NULL */, const size_t /* paramLen = 0 */)
 {
 	std::string emsa;
 
@@ -140,7 +142,8 @@ bool BotanECDSA::sign(PrivateKey* privateKey, const ByteString& dataToSign, Byte
 }
 
 // Signing functions
-bool BotanECDSA::signInit(PrivateKey* /*privateKey*/, const AsymMech::Type /*mechanism*/)
+bool BotanECDSA::signInit(PrivateKey* /*privateKey*/, const AsymMech::Type /*mechanism*/,
+			  const void* /* param = NULL */, const size_t /* paramLen = 0 */)
 {
 	ERROR_MSG("ECDSA does not support multi part signing");
 
@@ -162,7 +165,9 @@ bool BotanECDSA::signFinal(ByteString& /*signature*/)
 }
 
 // Verification functions
-bool BotanECDSA::verify(PublicKey* publicKey, const ByteString& originalData, const ByteString& signature, const AsymMech::Type mechanism)
+bool BotanECDSA::verify(PublicKey* publicKey, const ByteString& originalData,
+			const ByteString& signature, const AsymMech::Type mechanism,
+			const void* /* param = NULL */, const size_t /* paramLen = 0 */)
 {
 	std::string emsa;
 
@@ -232,7 +237,8 @@ bool BotanECDSA::verify(PublicKey* publicKey, const ByteString& originalData, co
 }
 
 // Verification functions
-bool BotanECDSA::verifyInit(PublicKey* /*publicKey*/, const AsymMech::Type /*mechanism*/)
+bool BotanECDSA::verifyInit(PublicKey* /*publicKey*/, const AsymMech::Type /*mechanism*/,
+			    const void* /* param = NULL */, const size_t /* paramLen = 0 */)
 {
 	ERROR_MSG("ECDSA does not support multi part verifying");
 
@@ -254,7 +260,8 @@ bool BotanECDSA::verifyFinal(const ByteString& /*signature*/)
 }
 
 // Encryption functions
-bool BotanECDSA::encrypt(PublicKey* /*publicKey*/, const ByteString& /*data*/, ByteString& /*encryptedData*/, const AsymMech::Type /*padding*/)
+bool BotanECDSA::encrypt(PublicKey* /*publicKey*/, const ByteString& /*data*/,
+			 ByteString& /*encryptedData*/, const AsymMech::Type /*padding*/)
 {
 	ERROR_MSG("ECDSA does not support encryption");
 
@@ -262,7 +269,8 @@ bool BotanECDSA::encrypt(PublicKey* /*publicKey*/, const ByteString& /*data*/, B
 }
 
 // Decryption functions
-bool BotanECDSA::decrypt(PrivateKey* /*privateKey*/, const ByteString& /*encryptedData*/, ByteString& /*data*/, const AsymMech::Type /*padding*/)
+bool BotanECDSA::decrypt(PrivateKey* /*privateKey*/, const ByteString& /*encryptedData*/,
+			 ByteString& /*data*/, const AsymMech::Type /*padding*/)
 {
 	ERROR_MSG("ECDSA does not support decryption");
 

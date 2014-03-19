@@ -13,6 +13,8 @@ SoftHSM develop
 * SUPPORT-129: Possible to use an empty template in C_GenerateKey.
   The class and key type are inherited from the generation mechanism.
   Some mechanisms do however require a length attribute. [SOFTHSM-88]
+* SUPPORT-131: Support RSA PSS using SHA1, SHA224, SHA256, SHA384,
+  or SHA512. [SOFTHSM-87]
 
 Bugfixes:
 * SOFTHSM-69: GOST did not work when you disabled ECC.

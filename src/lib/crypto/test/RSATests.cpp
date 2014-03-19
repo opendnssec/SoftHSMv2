@@ -264,7 +264,21 @@ void RSATests::testSigningVerifying()
 	mechanisms.push_back(AsymMech::RSA_SHA256_PKCS);
 	mechanisms.push_back(AsymMech::RSA_SHA384_PKCS);
 	mechanisms.push_back(AsymMech::RSA_SHA512_PKCS);
+	mechanisms.push_back(AsymMech::RSA_SHA1_PKCS_PSS);
+	mechanisms.push_back(AsymMech::RSA_SHA224_PKCS_PSS);
+	mechanisms.push_back(AsymMech::RSA_SHA256_PKCS_PSS);
+	mechanisms.push_back(AsymMech::RSA_SHA384_PKCS_PSS);
+	mechanisms.push_back(AsymMech::RSA_SHA512_PKCS_PSS);
 	mechanisms.push_back(AsymMech::RSA_SSL);
+
+	/* Max salt length for SHA512 and 1024-bit RSA is 62 bytes */
+	RSA_PKCS_PSS_PARAMS pssParams[] = {
+		{ HashAlgo::SHA1,   AsymRSAMGF::MGF1_SHA1,   20 },
+		{ HashAlgo::SHA224, AsymRSAMGF::MGF1_SHA224, 0  },
+		{ HashAlgo::SHA256, AsymRSAMGF::MGF1_SHA256, 0  },
+		{ HashAlgo::SHA384, AsymRSAMGF::MGF1_SHA384, 48 },
+		{ HashAlgo::SHA512, AsymRSAMGF::MGF1_SHA512, 62 }
+	};
 
 	for (std::vector<ByteString>::iterator e = exponents.begin(); e != exponents.end(); e++)
 	{
@@ -287,33 +301,67 @@ void RSATests::testSigningVerifying()
 			for (std::vector<AsymMech::Type>::iterator m = mechanisms.begin(); m != mechanisms.end(); m++)
 			{
 				ByteString blockSignature, singlePartSignature;
+				void* param = NULL;
+				size_t paramLen = 0;
+				bool isPSS = false;
+
+				switch (*m)
+				{
+					case AsymMech::RSA_SHA1_PKCS_PSS:
+						param = &pssParams[0];
+						paramLen = sizeof(pssParams[0]);
+						isPSS = true;
+						break;
+					case AsymMech::RSA_SHA224_PKCS_PSS:
+						param = &pssParams[1];
+						paramLen = sizeof(pssParams[1]);
+						isPSS = true;
+						break;
+					case AsymMech::RSA_SHA256_PKCS_PSS:
+						param = &pssParams[2];
+						paramLen = sizeof(pssParams[2]);
+						isPSS = true;
+						break;
+					case AsymMech::RSA_SHA384_PKCS_PSS:
+						param = &pssParams[3];
+						paramLen = sizeof(pssParams[3]);
+						isPSS = true;
+						break;
+					case AsymMech::RSA_SHA512_PKCS_PSS:
+						param = &pssParams[4];
+						paramLen = sizeof(pssParams[4]);
+						isPSS = true;
+						break;
+					default:
+						break;
+				}
 
 				// Sign the data in blocks
-				CPPUNIT_ASSERT(rsa->signInit(kp->getPrivateKey(), *m));
+				CPPUNIT_ASSERT(rsa->signInit(kp->getPrivateKey(), *m, param, paramLen));
 				CPPUNIT_ASSERT(rsa->signUpdate(dataToSign.substr(0, 134)));
 				CPPUNIT_ASSERT(rsa->signUpdate(dataToSign.substr(134, 289)));
 				CPPUNIT_ASSERT(rsa->signUpdate(dataToSign.substr(134 + 289)));
 				CPPUNIT_ASSERT(rsa->signFinal(blockSignature));
 
 				// Sign the data in one pass
-				CPPUNIT_ASSERT(rsa->sign(kp->getPrivateKey(), dataToSign, singlePartSignature, *m));
+				CPPUNIT_ASSERT(rsa->sign(kp->getPrivateKey(), dataToSign, singlePartSignature, *m, param, paramLen));
 
 				// If it is not a PSS signature, check if the two signatures match
-				if (*m != AsymMech::Unknown)
+				if (!isPSS)
 				{
 					// Check if the two signatures match
 					CPPUNIT_ASSERT(blockSignature == singlePartSignature);
 				}
 
 				// Now perform multi-pass verification
-				CPPUNIT_ASSERT(rsa->verifyInit(kp->getPublicKey(), *m));
+				CPPUNIT_ASSERT(rsa->verifyInit(kp->getPublicKey(), *m, param, paramLen));
 				CPPUNIT_ASSERT(rsa->verifyUpdate(dataToSign.substr(0, 125)));
 				CPPUNIT_ASSERT(rsa->verifyUpdate(dataToSign.substr(125, 247)));
 				CPPUNIT_ASSERT(rsa->verifyUpdate(dataToSign.substr(125 + 247)));
 				CPPUNIT_ASSERT(rsa->verifyFinal(blockSignature));
 
 				// And single-pass verification
-				CPPUNIT_ASSERT(rsa->verify(kp->getPublicKey(), dataToSign, singlePartSignature, *m));
+				CPPUNIT_ASSERT(rsa->verify(kp->getPublicKey(), dataToSign, singlePartSignature, *m, param, paramLen));
 			}
 
 			// Test mechanisms that do not perform internal hashing

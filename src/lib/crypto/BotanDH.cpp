@@ -45,7 +45,8 @@
 #include <botan/pubkey.h>
 
 // Signing functions
-bool BotanDH::signInit(PrivateKey* /*privateKey*/, const AsymMech::Type /*mechanism*/)
+bool BotanDH::signInit(PrivateKey* /*privateKey*/, const AsymMech::Type /*mechanism*/,
+		       const void* /* param = NULL */, const size_t /* paramLen = 0 */)
 {
 	ERROR_MSG("DH does not support signing");
 
@@ -67,7 +68,8 @@ bool BotanDH::signFinal(ByteString& /*signature*/)
 }
 
 // Verification functions
-bool BotanDH::verifyInit(PublicKey* /*publicKey*/, const AsymMech::Type /*mechanism*/)
+bool BotanDH::verifyInit(PublicKey* /*publicKey*/, const AsymMech::Type /*mechanism*/,
+			 const void* /* param = NULL */, const size_t /* paramLen = 0 */)
 {
 	ERROR_MSG("DH does not support verifying");
 
@@ -89,7 +91,8 @@ bool BotanDH::verifyFinal(const ByteString& /*signature*/)
 }
 
 // Encryption functions
-bool BotanDH::encrypt(PublicKey* /*publicKey*/, const ByteString& /*data*/, ByteString& /*encryptedData*/, const AsymMech::Type /*padding*/)
+bool BotanDH::encrypt(PublicKey* /*publicKey*/, const ByteString& /*data*/,
+		      ByteString& /*encryptedData*/, const AsymMech::Type /*padding*/)
 {
 	ERROR_MSG("DH does not support encryption");
 
@@ -97,7 +100,8 @@ bool BotanDH::encrypt(PublicKey* /*publicKey*/, const ByteString& /*data*/, Byte
 }
 
 // Decryption functions
-bool BotanDH::decrypt(PrivateKey* /*privateKey*/, const ByteString& /*encryptedData*/, ByteString& /*data*/, const AsymMech::Type /*padding*/)
+bool BotanDH::decrypt(PrivateKey* /*privateKey*/, const ByteString& /*encryptedData*/,
+		      ByteString& /*data*/, const AsymMech::Type /*padding*/)
 {
 	ERROR_MSG("DH does not support decryption");
 

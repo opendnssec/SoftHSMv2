@@ -51,6 +51,8 @@ Session::Session(Slot* slot, bool isReadWrite, CK_VOID_PTR pApplication, CK_NOTI
 	publicKey = NULL;
 	privateKey = NULL;
 	symmetricKey = NULL;
+	param = NULL;
+	paramLen = 0;
 }
 
 // Constructor
@@ -71,6 +73,8 @@ Session::Session()
 	publicKey = NULL;
 	privateKey = NULL;
 	symmetricKey = NULL;
+	param = NULL;
+	paramLen = 0;
 }
 
 // Destructor
@@ -170,6 +174,13 @@ int Session::getOpType()
 // Reset the operations
 void Session::resetOp()
 {
+	if (param != NULL)
+	{
+		free(param);
+		param = NULL;
+		paramLen = 0;
+	}
+
 	if (digestOp != NULL)
 	{
 		CryptoFactory::i()->recycleHashAlgorithm(digestOp);
@@ -308,6 +319,30 @@ void Session::setMechanism(AsymMech::Type mechanism)
 AsymMech::Type Session::getMechanism()
 {
 	return mechanism;
+}
+
+void Session::setParameters(void* param, size_t paramLen)
+{
+	if (param == NULL || paramLen == 0) return;
+
+	if (this->param != NULL)
+	{
+		free(this->param);
+		this->paramLen = 0;
+	}
+
+	this->param = malloc(paramLen);
+	if (this->param != NULL)
+	{
+		memcpy(this->param, param, paramLen);
+		this->paramLen = paramLen;
+	}
+}
+
+void* Session::getParameters(size_t& paramLen)
+{
+	paramLen = this->paramLen;
+	return this->param;
 }
 
 void Session::setAllowMultiPartOp(bool allowMultiPartOp)

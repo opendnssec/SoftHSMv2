@@ -40,6 +40,7 @@
 #include "BotanRSAKeyPair.h"
 #include <algorithm>
 #include <botan/rsa.h>
+#include <sstream>
 
 // Constructor
 BotanRSA::BotanRSA()
@@ -57,7 +58,8 @@ BotanRSA::~BotanRSA()
 
 // Signing functions
 bool BotanRSA::sign(PrivateKey* privateKey, const ByteString& dataToSign,
-		    ByteString& signature, const AsymMech::Type mechanism)
+		    ByteString& signature, const AsymMech::Type mechanism,
+		    const void* param /* = NULL */, const size_t paramLen /* = 0 */)
 {
 	std::string emsa = "";
 
@@ -71,7 +73,7 @@ bool BotanRSA::sign(PrivateKey* privateKey, const ByteString& dataToSign,
 			break;
 		default:
 			// Call default implementation
-			return AsymmetricAlgorithm::sign(privateKey, dataToSign, signature, mechanism);
+			return AsymmetricAlgorithm::sign(privateKey, dataToSign, signature, mechanism, param, paramLen);
 	}
 
 	// Check if the private key is the right type
@@ -115,9 +117,9 @@ bool BotanRSA::sign(PrivateKey* privateKey, const ByteString& dataToSign,
 		BotanRNG* rng = (BotanRNG*)BotanCryptoFactory::i()->getRNG();
 		signResult = signer->sign_message(dataToSign.const_byte_str(), dataToSign.size(), *rng->getRNG());
 	}
-	catch (...)
+	catch (std::exception& e)
 	{
-		ERROR_MSG("Could not sign the data");
+		ERROR_MSG("Could not sign the data: %s", e.what());
 
 		delete signer;
 		signer = NULL;
@@ -139,9 +141,10 @@ bool BotanRSA::sign(PrivateKey* privateKey, const ByteString& dataToSign,
 	return true;
 }
 
-bool BotanRSA::signInit(PrivateKey* privateKey, const AsymMech::Type mechanism)
+bool BotanRSA::signInit(PrivateKey* privateKey, const AsymMech::Type mechanism,
+			const void* param /* = NULL */, const size_t paramLen /* = 0 */)
 {
-	if (!AsymmetricAlgorithm::signInit(privateKey, mechanism))
+	if (!AsymmetricAlgorithm::signInit(privateKey, mechanism, param, paramLen))
 	{
 		return false;
 	}
@@ -158,6 +161,8 @@ bool BotanRSA::signInit(PrivateKey* privateKey, const AsymMech::Type mechanism)
 	}
 
 	std::string emsa;
+	std::ostringstream request;
+	size_t sLen;
 
 	switch (mechanism)
 	{
@@ -178,6 +183,116 @@ bool BotanRSA::signInit(PrivateKey* privateKey, const AsymMech::Type mechanism)
 			break;
 		case AsymMech::RSA_SHA512_PKCS:
 			emsa = "EMSA3(SHA-512)";
+			break;
+		case AsymMech::RSA_SHA1_PKCS_PSS:
+			if (param == NULL || paramLen != sizeof(RSA_PKCS_PSS_PARAMS) ||
+			    ((RSA_PKCS_PSS_PARAMS*) param)->hashAlg != HashAlgo::SHA1 ||
+			    ((RSA_PKCS_PSS_PARAMS*) param)->mgf != AsymRSAMGF::MGF1_SHA1)
+			{
+				ERROR_MSG("Invalid parameters");
+				ByteString dummy;
+				AsymmetricAlgorithm::signFinal(dummy);
+				return false;
+			}
+			sLen = ((RSA_PKCS_PSS_PARAMS*) param)->sLen;
+			if (sLen > ((privateKey->getBitLength()+6)/8-2-20))
+			{
+				ERROR_MSG("sLen (%lu) is too large for current key size (%lu)",
+					  (unsigned long)sLen, privateKey->getBitLength());
+				ByteString dummy;
+				AsymmetricAlgorithm::signFinal(dummy);
+				return false;
+			}
+			request << "EMSA4(SHA-160,MGF1," << sLen << ")";
+			emsa = request.str();
+			break;
+		case AsymMech::RSA_SHA224_PKCS_PSS:
+			if (param == NULL || paramLen != sizeof(RSA_PKCS_PSS_PARAMS) ||
+			    ((RSA_PKCS_PSS_PARAMS*) param)->hashAlg != HashAlgo::SHA224 ||
+			    ((RSA_PKCS_PSS_PARAMS*) param)->mgf != AsymRSAMGF::MGF1_SHA224)
+			{
+				ERROR_MSG("Invalid parameters");
+				ByteString dummy;
+				AsymmetricAlgorithm::signFinal(dummy);
+				return false;
+			}
+			sLen = ((RSA_PKCS_PSS_PARAMS*) param)->sLen;
+			if (sLen > ((privateKey->getBitLength()+6)/8-2-28))
+			{
+				ERROR_MSG("sLen (%lu) is too large for current key size (%lu)",
+					  (unsigned long)sLen, privateKey->getBitLength());
+				ByteString dummy;
+				AsymmetricAlgorithm::signFinal(dummy);
+				return false;
+			}
+			request << "EMSA4(SHA-224,MGF1," << sLen << ")";
+			emsa = request.str();
+			break;
+		case AsymMech::RSA_SHA256_PKCS_PSS:
+			if (param == NULL || paramLen != sizeof(RSA_PKCS_PSS_PARAMS) ||
+			    ((RSA_PKCS_PSS_PARAMS*) param)->hashAlg != HashAlgo::SHA256 ||
+			    ((RSA_PKCS_PSS_PARAMS*) param)->mgf != AsymRSAMGF::MGF1_SHA256)
+			{
+				ERROR_MSG("Invalid parameters");
+				ByteString dummy;
+				AsymmetricAlgorithm::signFinal(dummy);
+				return false;
+			}
+			sLen = ((RSA_PKCS_PSS_PARAMS*) param)->sLen;
+			if (sLen > ((privateKey->getBitLength()+6)/8-2-32))
+			{
+				ERROR_MSG("sLen (%lu) is too large for current key size (%lu)",
+					  (unsigned long)sLen, privateKey->getBitLength());
+				ByteString dummy;
+				AsymmetricAlgorithm::signFinal(dummy);
+				return false;
+			}
+			request << "EMSA4(SHA-256,MGF1," << sLen << ")";
+			emsa = request.str();
+			break;
+		case AsymMech::RSA_SHA384_PKCS_PSS:
+			if (param == NULL || paramLen != sizeof(RSA_PKCS_PSS_PARAMS) ||
+			    ((RSA_PKCS_PSS_PARAMS*) param)->hashAlg != HashAlgo::SHA384 ||
+			    ((RSA_PKCS_PSS_PARAMS*) param)->mgf != AsymRSAMGF::MGF1_SHA384)
+			{
+				ERROR_MSG("Invalid parameters");
+				ByteString dummy;
+				AsymmetricAlgorithm::signFinal(dummy);
+				return false;
+			}
+			sLen = ((RSA_PKCS_PSS_PARAMS*) param)->sLen;
+			if (sLen > ((privateKey->getBitLength()+6)/8-2-48))
+			{
+				ERROR_MSG("sLen (%lu) is too large for current key size (%lu)",
+					  (unsigned long)sLen, privateKey->getBitLength());
+				ByteString dummy;
+				AsymmetricAlgorithm::signFinal(dummy);
+				return false;
+			}
+			request << "EMSA4(SHA-384,MGF1," << sLen << ")";
+			emsa = request.str();
+			break;
+		case AsymMech::RSA_SHA512_PKCS_PSS:
+			if (param == NULL || paramLen != sizeof(RSA_PKCS_PSS_PARAMS) ||
+			    ((RSA_PKCS_PSS_PARAMS*) param)->hashAlg != HashAlgo::SHA512 ||
+			    ((RSA_PKCS_PSS_PARAMS*) param)->mgf != AsymRSAMGF::MGF1_SHA512)
+			{
+				ERROR_MSG("Invalid parameters");
+				ByteString dummy;
+				AsymmetricAlgorithm::signFinal(dummy);
+				return false;
+			}
+			sLen = ((RSA_PKCS_PSS_PARAMS*) param)->sLen;
+			if (sLen > ((privateKey->getBitLength()+6)/8-2-64))
+			{
+				ERROR_MSG("sLen (%lu) is too large for current key size (%lu)",
+					  (unsigned long)sLen, privateKey->getBitLength());
+				ByteString dummy;
+				AsymmetricAlgorithm::signFinal(dummy);
+				return false;
+			}
+			request << "EMSA4(SHA-512,MGF1," << sLen << ")";
+			emsa = request.str();
 			break;
 		case AsymMech::RSA_SSL:
 			emsa = "EMSA3(Parallel(MD5,SHA-160))";
@@ -293,7 +408,8 @@ bool BotanRSA::signFinal(ByteString& signature)
 
 // Verification functions
 bool BotanRSA::verify(PublicKey* publicKey, const ByteString& originalData,
-		      const ByteString& signature, const AsymMech::Type mechanism)
+		      const ByteString& signature, const AsymMech::Type mechanism,
+		      const void* param /* = NULL */, const size_t paramLen /* = 0 */)
 {
 	std::string emsa = "";
 
@@ -307,7 +423,7 @@ bool BotanRSA::verify(PublicKey* publicKey, const ByteString& originalData,
 			break;
 		default:
 			// Call the generic function
-			return AsymmetricAlgorithm::verify(publicKey, originalData, signature, mechanism);
+			return AsymmetricAlgorithm::verify(publicKey, originalData, signature, mechanism, param, paramLen);
 	}
 
 	// Check if the public key is the right type
@@ -364,9 +480,10 @@ bool BotanRSA::verify(PublicKey* publicKey, const ByteString& originalData,
 	return verResult;
 }
 
-bool BotanRSA::verifyInit(PublicKey* publicKey, const AsymMech::Type mechanism)
+bool BotanRSA::verifyInit(PublicKey* publicKey, const AsymMech::Type mechanism,
+			  const void* param /* = NULL */, const size_t paramLen /* = 0 */)
 {
-	if (!AsymmetricAlgorithm::verifyInit(publicKey, mechanism))
+	if (!AsymmetricAlgorithm::verifyInit(publicKey, mechanism, param, paramLen))
 	{
 		return false;
 	}
@@ -383,6 +500,8 @@ bool BotanRSA::verifyInit(PublicKey* publicKey, const AsymMech::Type mechanism)
 	}
 
 	std::string emsa;
+	std::ostringstream request;
+	size_t sLen;
 
 	switch (mechanism)
 	{
@@ -403,6 +522,116 @@ bool BotanRSA::verifyInit(PublicKey* publicKey, const AsymMech::Type mechanism)
 			break;
 		case AsymMech::RSA_SHA512_PKCS:
 			emsa = "EMSA3(SHA-512)";
+			break;
+		case AsymMech::RSA_SHA1_PKCS_PSS:
+			if (param == NULL || paramLen != sizeof(RSA_PKCS_PSS_PARAMS) ||
+			    ((RSA_PKCS_PSS_PARAMS*) param)->hashAlg != HashAlgo::SHA1 ||
+			    ((RSA_PKCS_PSS_PARAMS*) param)->mgf != AsymRSAMGF::MGF1_SHA1)
+			{
+				ERROR_MSG("Invalid parameters");
+				ByteString dummy;
+				AsymmetricAlgorithm::verifyFinal(dummy);
+				return false;
+			}
+			sLen = ((RSA_PKCS_PSS_PARAMS*) param)->sLen;
+			if (sLen > ((publicKey->getBitLength()+6)/8-2-20))
+			{
+				ERROR_MSG("sLen (%lu) is too large for current key size (%lu)",
+					  (unsigned long)sLen, publicKey->getBitLength());
+				ByteString dummy;
+				AsymmetricAlgorithm::verifyFinal(dummy);
+				return false;
+			}
+			request << "EMSA4(SHA-160,MGF1," << sLen << ")";
+			emsa = request.str();
+			break;
+		case AsymMech::RSA_SHA224_PKCS_PSS:
+			if (param == NULL || paramLen != sizeof(RSA_PKCS_PSS_PARAMS) ||
+			    ((RSA_PKCS_PSS_PARAMS*) param)->hashAlg != HashAlgo::SHA224 ||
+			    ((RSA_PKCS_PSS_PARAMS*) param)->mgf != AsymRSAMGF::MGF1_SHA224)
+			{
+				ERROR_MSG("Invalid parameters");
+				ByteString dummy;
+				AsymmetricAlgorithm::verifyFinal(dummy);
+				return false;
+			}
+			sLen = ((RSA_PKCS_PSS_PARAMS*) param)->sLen;
+			if (sLen > ((publicKey->getBitLength()+6)/8-2-28))
+			{
+				ERROR_MSG("sLen (%lu) is too large for current key size (%lu)",
+					  (unsigned long)sLen, publicKey->getBitLength());
+				ByteString dummy;
+				AsymmetricAlgorithm::verifyFinal(dummy);
+				return false;
+			}
+			request << "EMSA4(SHA-224,MGF1," << sLen << ")";
+			emsa = request.str();
+			break;
+		case AsymMech::RSA_SHA256_PKCS_PSS:
+			if (param == NULL || paramLen != sizeof(RSA_PKCS_PSS_PARAMS) ||
+			    ((RSA_PKCS_PSS_PARAMS*) param)->hashAlg != HashAlgo::SHA256 ||
+			    ((RSA_PKCS_PSS_PARAMS*) param)->mgf != AsymRSAMGF::MGF1_SHA256)
+			{
+				ERROR_MSG("Invalid parameters");
+				ByteString dummy;
+				AsymmetricAlgorithm::verifyFinal(dummy);
+				return false;
+			}
+			sLen = ((RSA_PKCS_PSS_PARAMS*) param)->sLen;
+			if (sLen > ((publicKey->getBitLength()+6)/8-2-32))
+			{
+				ERROR_MSG("sLen (%lu) is too large for current key size (%lu)",
+					  (unsigned long)sLen, publicKey->getBitLength());
+				ByteString dummy;
+				AsymmetricAlgorithm::verifyFinal(dummy);
+				return false;
+			}
+			request << "EMSA4(SHA-256,MGF1," << sLen << ")";
+			emsa = request.str();
+			break;
+		case AsymMech::RSA_SHA384_PKCS_PSS:
+			if (param == NULL || paramLen != sizeof(RSA_PKCS_PSS_PARAMS) ||
+			    ((RSA_PKCS_PSS_PARAMS*) param)->hashAlg != HashAlgo::SHA384 ||
+			    ((RSA_PKCS_PSS_PARAMS*) param)->mgf != AsymRSAMGF::MGF1_SHA384)
+			{
+				ERROR_MSG("Invalid parameters");
+				ByteString dummy;
+				AsymmetricAlgorithm::verifyFinal(dummy);
+				return false;
+			}
+			sLen = ((RSA_PKCS_PSS_PARAMS*) param)->sLen;
+			if (sLen > ((publicKey->getBitLength()+6)/8-2-48))
+			{
+				ERROR_MSG("sLen (%lu) is too large for current key size (%lu)",
+					  (unsigned long)sLen, publicKey->getBitLength());
+				ByteString dummy;
+				AsymmetricAlgorithm::verifyFinal(dummy);
+				return false;
+			}
+			request << "EMSA4(SHA-384,MGF1," << sLen << ")";
+			emsa = request.str();
+			break;
+		case AsymMech::RSA_SHA512_PKCS_PSS:
+			if (param == NULL || paramLen != sizeof(RSA_PKCS_PSS_PARAMS) ||
+			    ((RSA_PKCS_PSS_PARAMS*) param)->hashAlg != HashAlgo::SHA512 ||
+			    ((RSA_PKCS_PSS_PARAMS*) param)->mgf != AsymRSAMGF::MGF1_SHA512)
+			{
+				ERROR_MSG("Invalid parameters");
+				ByteString dummy;
+				AsymmetricAlgorithm::verifyFinal(dummy);
+				return false;
+			}
+			sLen = ((RSA_PKCS_PSS_PARAMS*) param)->sLen;
+			if (sLen > ((publicKey->getBitLength()+6)/8-2-64))
+			{
+				ERROR_MSG("sLen (%lu) is too large for current key size (%lu)",
+					  (unsigned long)sLen, publicKey->getBitLength());
+				ByteString dummy;
+				AsymmetricAlgorithm::verifyFinal(dummy);
+				return false;
+			}
+			request << "EMSA4(SHA-512,MGF1," << sLen << ")";
+			emsa = request.str();
 			break;
 		case AsymMech::RSA_SSL:
 			emsa = "EMSA3(Parallel(MD5,SHA-160))";
@@ -503,7 +732,8 @@ bool BotanRSA::verifyFinal(const ByteString& signature)
 }
 
 // Encryption functions
-bool BotanRSA::encrypt(PublicKey* publicKey, const ByteString& data, ByteString& encryptedData, const AsymMech::Type padding)
+bool BotanRSA::encrypt(PublicKey* publicKey, const ByteString& data,
+		       ByteString& encryptedData, const AsymMech::Type padding)
 {
 	// Check if the public key is the right type
 	if (!publicKey->isOfType(BotanRSAPublicKey::type))
@@ -588,7 +818,8 @@ bool BotanRSA::encrypt(PublicKey* publicKey, const ByteString& data, ByteString&
 }
 
 // Decryption functions
-bool BotanRSA::decrypt(PrivateKey* privateKey, const ByteString& encryptedData, ByteString& data, const AsymMech::Type padding)
+bool BotanRSA::decrypt(PrivateKey* privateKey, const ByteString& encryptedData,
+		       ByteString& data, const AsymMech::Type padding)
 {
 	// Check if the private key is the right type
 	if (!privateKey->isOfType(BotanRSAPrivateKey::type))

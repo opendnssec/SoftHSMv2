@@ -59,7 +59,8 @@ OSSLDSA::~OSSLDSA()
 
 // Signing functions
 bool OSSLDSA::sign(PrivateKey* privateKey, const ByteString& dataToSign,
-		   ByteString& signature, const AsymMech::Type mechanism)
+		   ByteString& signature, const AsymMech::Type mechanism,
+		   const void* param /* = NULL */, const size_t paramLen /* = 0 */)
 {
 	if (mechanism == AsymMech::DSA)
 	{
@@ -93,13 +94,14 @@ bool OSSLDSA::sign(PrivateKey* privateKey, const ByteString& dataToSign,
 	else
 	{
 		// Call default implementation
-		return AsymmetricAlgorithm::sign(privateKey, dataToSign, signature, mechanism);
+		return AsymmetricAlgorithm::sign(privateKey, dataToSign, signature, mechanism, param, paramLen);
 	}
 }
 
-bool OSSLDSA::signInit(PrivateKey* privateKey, const AsymMech::Type mechanism)
+bool OSSLDSA::signInit(PrivateKey* privateKey, const AsymMech::Type mechanism,
+		       const void* param /* = NULL */, const size_t paramLen /* = 0 */)
 {
-	if (!AsymmetricAlgorithm::signInit(privateKey, mechanism))
+	if (!AsymmetricAlgorithm::signInit(privateKey, mechanism, param, paramLen))
 	{
 		return false;
 	}
@@ -144,7 +146,6 @@ bool OSSLDSA::signInit(PrivateKey* privateKey, const AsymMech::Type mechanism)
 	}
 
 	pCurrentHash = CryptoFactory::i()->getHashAlgorithm(hash);
-
 
 	if (pCurrentHash == NULL)
 	{
@@ -229,7 +230,8 @@ bool OSSLDSA::signFinal(ByteString& signature)
 
 // Verification functions
 bool OSSLDSA::verify(PublicKey* publicKey, const ByteString& originalData,
-		     const ByteString& signature, const AsymMech::Type mechanism)
+		     const ByteString& signature, const AsymMech::Type mechanism,
+		     const void* param /* = NULL */, const size_t paramLen /* = 0 */)
 {
 	if (mechanism == AsymMech::DSA)
 	{
@@ -276,13 +278,14 @@ bool OSSLDSA::verify(PublicKey* publicKey, const ByteString& originalData,
 	else
 	{
 		// Call the generic function
-		return AsymmetricAlgorithm::verify(publicKey, originalData, signature, mechanism);
+		return AsymmetricAlgorithm::verify(publicKey, originalData, signature, mechanism, param, paramLen);
 	}
 }
 
-bool OSSLDSA::verifyInit(PublicKey* publicKey, const AsymMech::Type mechanism)
+bool OSSLDSA::verifyInit(PublicKey* publicKey, const AsymMech::Type mechanism,
+			 const void* param /* = NULL */, const size_t paramLen /* = 0 */)
 {
-	if (!AsymmetricAlgorithm::verifyInit(publicKey, mechanism))
+	if (!AsymmetricAlgorithm::verifyInit(publicKey, mechanism, param, paramLen))
 	{
 		return false;
 	}
@@ -424,7 +427,8 @@ bool OSSLDSA::verifyFinal(const ByteString& signature)
 }
 
 // Encryption functions
-bool OSSLDSA::encrypt(PublicKey* /*publicKey*/, const ByteString& /*data*/, ByteString& /*encryptedData*/, const AsymMech::Type /*padding*/)
+bool OSSLDSA::encrypt(PublicKey* /*publicKey*/, const ByteString& /*data*/,
+		      ByteString& /*encryptedData*/, const AsymMech::Type /*padding*/)
 {
 	ERROR_MSG("DSA does not support encryption");
 
@@ -432,7 +436,8 @@ bool OSSLDSA::encrypt(PublicKey* /*publicKey*/, const ByteString& /*data*/, Byte
 }
 
 // Decryption functions
-bool OSSLDSA::decrypt(PrivateKey* /*privateKey*/, const ByteString& /*encryptedData*/, ByteString& /*data*/, const AsymMech::Type /*padding*/)
+bool OSSLDSA::decrypt(PrivateKey* /*privateKey*/, const ByteString& /*encryptedData*/,
+		      ByteString& /*data*/, const AsymMech::Type /*padding*/)
 {
 	ERROR_MSG("DSA does not support decryption");
 
