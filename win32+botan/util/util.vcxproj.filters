@@ -37,7 +37,7 @@
     <ClInclude Include="..\..\src\bin\common\library.h">
       <Filter>Common Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\bin\util\softhsm-util.h">
+    <ClInclude Include="..\..\src\bin\util\softhsm2-util.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\lib\cryptoki_compat\pkcs11.h">
@@ -46,7 +46,7 @@
     <ClInclude Include="..\..\src\bin\win32\getopt.h">
       <Filter>Win32 Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\bin\util\softhsm-util-botan.h">
+    <ClInclude Include="..\..\src\bin\util\softhsm2-util-botan.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -57,7 +57,7 @@
     <ClCompile Include="..\..\src\bin\common\library.cpp">
       <Filter>Common Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\bin\util\softhsm-util.cpp">
+    <ClCompile Include="..\..\src\bin\util\softhsm2-util.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\bin\win32\getopt.cpp">
@@ -66,7 +66,7 @@
     <ClCompile Include="..\..\src\bin\win32\getpassphase.cpp">
       <Filter>Win32 Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\bin\util\softhsm-util-botan.cpp">
+    <ClCompile Include="..\..\src\bin\util\softhsm2-util-botan.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

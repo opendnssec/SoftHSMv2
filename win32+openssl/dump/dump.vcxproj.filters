@@ -26,7 +26,7 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\src\bin\dump\softhsm-dump-file.cpp">
+    <ClCompile Include="..\..\src\bin\dump\softhsm2-dump-file.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -82,7 +82,7 @@
   <ItemGroup>
     <ClInclude Include="..\..\src\bin\common\getpw.h" />
     <ClInclude Include="..\..\src\bin\common\library.h" />
-    <ClInclude Include="..\..\src\bin\keyconv\softhsm-keyconv.h" />
+    <ClInclude Include="..\..\src\bin\keyconv\softhsm2-keyconv.h" />
     <ClInclude Include="..\..\src\bin\win32\getopt.h" />
     <ClInclude Include="..\config.h" />
   </ItemGroup>
@@ -90,8 +90,8 @@
     <ClCompile Include="..\..\src\bin\common\getpw.cpp" />
     <ClCompile Include="..\..\src\bin\common\library.cpp" />
     <ClCompile Include="..\..\src\bin\keyconv\base64.c" />
-    <ClCompile Include="..\..\src\bin\keyconv\softhsm-keyconv-ossl.cpp" />
-    <ClCompile Include="..\..\src\bin\keyconv\softhsm-keyconv.cpp" />
+    <ClCompile Include="..\..\src\bin\keyconv\softhsm2-keyconv-ossl.cpp" />
+    <ClCompile Include="..\..\src\bin\keyconv\softhsm2-keyconv.cpp" />
     <ClCompile Include="..\..\src\bin\win32\getopt.cpp" />
     <ClCompile Include="..\..\src\bin\win32\getpassphase.cpp" />
   </ItemGroup>

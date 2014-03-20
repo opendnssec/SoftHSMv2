@@ -81,7 +81,7 @@
     <ClInclude Include="..\config.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\src\bin\dump\softhsm-dump-file.cpp" />
+    <ClCompile Include="..\..\src\bin\dump\softhsm2-dump-file.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
