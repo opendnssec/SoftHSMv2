@@ -101,6 +101,9 @@ public:
 	void setMechanism(AsymMech::Type mechanism);
 	AsymMech::Type getMechanism();
 
+	void setParameters(void* param, size_t paramLen);
+	void* getParameters(size_t& paramLen);
+
 	void setAllowMultiPartOp(bool allowMultiPartOp);
 	bool getAllowMultiPartOp();
 
@@ -151,6 +154,8 @@ private:
 	SymmetricAlgorithm* symmetricCryptoOp;
 
 	AsymMech::Type mechanism;
+	void* param;
+	size_t paramLen;
 	bool allowMultiPartOp;
 	bool allowSinglePartOp;
 	PublicKey* publicKey;

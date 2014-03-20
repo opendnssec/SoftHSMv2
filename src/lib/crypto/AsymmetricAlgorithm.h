@@ -34,13 +34,13 @@
 #define _SOFTHSM_V2_ASYMMETRICALGORITHM_H
 
 #include "config.h"
-#include <string>
 #include "AsymmetricKeyPair.h"
 #include "AsymmetricParameters.h"
+#include "HashAlgorithm.h"
 #include "PublicKey.h"
 #include "PrivateKey.h"
-#include "SymmetricKey.h"
 #include "RNG.h"
+#include "SymmetricKey.h"
 
 struct AsymAlgo
 {
@@ -70,6 +70,11 @@ struct AsymMech
 		RSA_SHA256_PKCS,
 		RSA_SHA384_PKCS,
 		RSA_SHA512_PKCS,
+		RSA_SHA1_PKCS_PSS,
+		RSA_SHA224_PKCS_PSS,
+		RSA_SHA256_PKCS_PSS,
+		RSA_SHA384_PKCS_PSS,
+		RSA_SHA512_PKCS_PSS,
 		RSA_SSL,
 		DSA,
 		DSA_SHA1,
@@ -83,6 +88,26 @@ struct AsymMech
 	};
 };
 
+struct AsymRSAMGF
+{
+	enum Type
+	{
+		Unknown,
+		MGF1_SHA1,
+		MGF1_SHA224,
+		MGF1_SHA256,
+		MGF1_SHA384,
+		MGF1_SHA512
+	};
+};
+
+struct RSA_PKCS_PSS_PARAMS
+{
+	HashAlgo::Type hashAlg;
+	AsymRSAMGF::Type mgf;
+	size_t sLen;
+};
+
 class AsymmetricAlgorithm
 {
 public:
@@ -93,14 +118,14 @@ public:
 	virtual ~AsymmetricAlgorithm() { }
 
 	// Signing functions
-	virtual bool sign(PrivateKey* privateKey, const ByteString& dataToSign, ByteString& signature, const AsymMech::Type mechanism);
-	virtual bool signInit(PrivateKey* privateKey, const AsymMech::Type mechanism);
+	virtual bool sign(PrivateKey* privateKey, const ByteString& dataToSign, ByteString& signature, const AsymMech::Type mechanism, const void* param = NULL, const size_t paramLen = 0);
+	virtual bool signInit(PrivateKey* privateKey, const AsymMech::Type mechanism, const void* param = NULL, const size_t paramLen = 0);
 	virtual bool signUpdate(const ByteString& dataToSign);
 	virtual bool signFinal(ByteString& signature);
 
 	// Verification functions
-	virtual bool verify(PublicKey* publicKey, const ByteString& originalData, const ByteString& signature, const AsymMech::Type mechanism);
-	virtual bool verifyInit(PublicKey* publicKey, const AsymMech::Type mechanism);
+	virtual bool verify(PublicKey* publicKey, const ByteString& originalData, const ByteString& signature, const AsymMech::Type mechanism, const void* param = NULL, const size_t paramLen = 0);
+	virtual bool verifyInit(PublicKey* publicKey, const AsymMech::Type mechanism, const void* param = NULL, const size_t paramLen = 0);
 	virtual bool verifyUpdate(const ByteString& originalData);
 	virtual bool verifyFinal(const ByteString& signature);
 

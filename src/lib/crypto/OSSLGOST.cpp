@@ -52,7 +52,9 @@ OSSLGOST::~OSSLGOST()
 }
 
 // Signing functions
-bool OSSLGOST::sign(PrivateKey* privateKey, const ByteString& dataToSign, ByteString& signature, const AsymMech::Type mechanism)
+bool OSSLGOST::sign(PrivateKey* privateKey, const ByteString& dataToSign,
+		    ByteString& signature, const AsymMech::Type mechanism,
+		    const void* param /* = NULL */, const size_t paramLen /* = 0 */)
 {
 	if (mechanism == AsymMech::GOST)
 	{
@@ -118,13 +120,14 @@ bool OSSLGOST::sign(PrivateKey* privateKey, const ByteString& dataToSign, ByteSt
 	else
 	{
 		// Call default implementation
-		return AsymmetricAlgorithm::sign(privateKey, dataToSign, signature, mechanism);
+		return AsymmetricAlgorithm::sign(privateKey, dataToSign, signature, mechanism, param, paramLen);
 	}
 }
 
-bool OSSLGOST::signInit(PrivateKey* privateKey, const AsymMech::Type mechanism)
+bool OSSLGOST::signInit(PrivateKey* privateKey, const AsymMech::Type mechanism,
+			const void* param /* = NULL */, const size_t paramLen /* = 0 */)
 {
-	if (!AsymmetricAlgorithm::signInit(privateKey, mechanism))
+	if (!AsymmetricAlgorithm::signInit(privateKey, mechanism, param, paramLen))
 	{
 		return false;
 	}
@@ -232,7 +235,9 @@ bool OSSLGOST::signFinal(ByteString& signature)
 }
 
 // Verification functions
-bool OSSLGOST::verify(PublicKey* publicKey, const ByteString& originalData, const ByteString& signature, const AsymMech::Type mechanism)
+bool OSSLGOST::verify(PublicKey* publicKey, const ByteString& originalData,
+		      const ByteString& signature, const AsymMech::Type mechanism,
+		      const void* param /* = NULL */, const size_t paramLen /* = 0 */)
 {
 	if (mechanism == AsymMech::GOST)
 	{
@@ -285,13 +290,14 @@ bool OSSLGOST::verify(PublicKey* publicKey, const ByteString& originalData, cons
 	else
 	{
 		// Call the generic function
-		return AsymmetricAlgorithm::verify(publicKey, originalData, signature, mechanism);
+		return AsymmetricAlgorithm::verify(publicKey, originalData, signature, mechanism, param, paramLen);
 	}
 }
 
-bool OSSLGOST::verifyInit(PublicKey* publicKey, const AsymMech::Type mechanism)
+bool OSSLGOST::verifyInit(PublicKey* publicKey, const AsymMech::Type mechanism,
+			  const void* param /* = NULL */, const size_t paramLen /* = 0 */)
 {
-	if (!AsymmetricAlgorithm::verifyInit(publicKey, mechanism))
+	if (!AsymmetricAlgorithm::verifyInit(publicKey, mechanism, param, paramLen))
 	{
 		return false;
 	}
@@ -393,7 +399,8 @@ bool OSSLGOST::verifyFinal(const ByteString& signature)
 }
 
 // Encryption functions
-bool OSSLGOST::encrypt(PublicKey* /*publicKey*/, const ByteString& /*data*/, ByteString& /*encryptedData*/, const AsymMech::Type /*padding*/)
+bool OSSLGOST::encrypt(PublicKey* /*publicKey*/, const ByteString& /*data*/,
+		       ByteString& /*encryptedData*/, const AsymMech::Type /*padding*/)
 {
 	ERROR_MSG("GOST does not support encryption");
 
@@ -401,7 +408,8 @@ bool OSSLGOST::encrypt(PublicKey* /*publicKey*/, const ByteString& /*data*/, Byt
 }
 
 // Decryption functions
-bool OSSLGOST::decrypt(PrivateKey* /*privateKey*/, const ByteString& /*encryptedData*/, ByteString& /*data*/, const AsymMech::Type /*padding*/)
+bool OSSLGOST::decrypt(PrivateKey* /*privateKey*/, const ByteString& /*encryptedData*/,
+		       ByteString& /*data*/, const AsymMech::Type /*padding*/)
 {
 	ERROR_MSG("GOST does not support decryption");
 

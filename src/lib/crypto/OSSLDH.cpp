@@ -43,7 +43,8 @@
 #include <openssl/err.h>
 
 // Signing functions
-bool OSSLDH::signInit(PrivateKey* /*privateKey*/, const AsymMech::Type /*mechanism*/)
+bool OSSLDH::signInit(PrivateKey* /*privateKey*/, const AsymMech::Type /*mechanism*/,
+		      const void* /* param = NULL */, const size_t /* paramLen = 0 */)
 {
 	ERROR_MSG("DH does not support signing");
 
@@ -65,7 +66,8 @@ bool OSSLDH::signFinal(ByteString& /*signature*/)
 }
 
 // Verification functions
-bool OSSLDH::verifyInit(PublicKey* /*publicKey*/, const AsymMech::Type /*mechanism*/)
+bool OSSLDH::verifyInit(PublicKey* /*publicKey*/, const AsymMech::Type /*mechanism*/,
+			const void* /* param = NULL */, const size_t /* paramLen = 0 */)
 {
 	ERROR_MSG("DH does not support verifying");
 
@@ -87,7 +89,8 @@ bool OSSLDH::verifyFinal(const ByteString& /*signature*/)
 }
 
 // Encryption functions
-bool OSSLDH::encrypt(PublicKey* /*publicKey*/, const ByteString& /*data*/, ByteString& /*encryptedData*/, const AsymMech::Type /*padding*/)
+bool OSSLDH::encrypt(PublicKey* /*publicKey*/, const ByteString& /*data*/,
+		     ByteString& /*encryptedData*/, const AsymMech::Type /*padding*/)
 {
 	ERROR_MSG("DH does not support encryption");
 
@@ -95,7 +98,8 @@ bool OSSLDH::encrypt(PublicKey* /*publicKey*/, const ByteString& /*data*/, ByteS
 }
 
 // Decryption functions
-bool OSSLDH::decrypt(PrivateKey* /*privateKey*/, const ByteString& /*encryptedData*/, ByteString& /*data*/, const AsymMech::Type /*padding*/)
+bool OSSLDH::decrypt(PrivateKey* /*privateKey*/, const ByteString& /*encryptedData*/,
+		     ByteString& /*data*/, const AsymMech::Type /*padding*/)
 {
 	ERROR_MSG("DH does not support decryption");
 

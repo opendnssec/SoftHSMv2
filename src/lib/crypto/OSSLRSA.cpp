@@ -46,6 +46,7 @@ OSSLRSA::OSSLRSA()
 {
 	pCurrentHash = NULL;
 	pSecondHash = NULL;
+	sLen = 0;
 }
 
 // Destructor
@@ -63,7 +64,9 @@ OSSLRSA::~OSSLRSA()
 }
 
 // Signing functions
-bool OSSLRSA::sign(PrivateKey* privateKey, const ByteString& dataToSign, ByteString& signature, const AsymMech::Type mechanism)
+bool OSSLRSA::sign(PrivateKey* privateKey, const ByteString& dataToSign,
+		   ByteString& signature, const AsymMech::Type mechanism,
+		   const void* param /* = NULL */, const size_t paramLen /* = 0 */)
 {
 	if (mechanism == AsymMech::RSA_PKCS)
 	{
@@ -169,13 +172,14 @@ bool OSSLRSA::sign(PrivateKey* privateKey, const ByteString& dataToSign, ByteStr
 	else
 	{
 		// Call default implementation
-		return AsymmetricAlgorithm::sign(privateKey, dataToSign, signature, mechanism);
+		return AsymmetricAlgorithm::sign(privateKey, dataToSign, signature, mechanism, param, paramLen);
 	}
 }
 
-bool OSSLRSA::signInit(PrivateKey* privateKey, const AsymMech::Type mechanism)
+bool OSSLRSA::signInit(PrivateKey* privateKey, const AsymMech::Type mechanism,
+		       const void* param /* = NULL */, const size_t paramLen /* = 0 */)
 {
-	if (!AsymmetricAlgorithm::signInit(privateKey, mechanism))
+	if (!AsymmetricAlgorithm::signInit(privateKey, mechanism, param, paramLen))
 	{
 		return false;
 	}
@@ -212,6 +216,111 @@ bool OSSLRSA::signInit(PrivateKey* privateKey, const AsymMech::Type mechanism)
 			hash1 = HashAlgo::SHA384;
 			break;
 		case AsymMech::RSA_SHA512_PKCS:
+			hash1 = HashAlgo::SHA512;
+			break;
+		case AsymMech::RSA_SHA1_PKCS_PSS:
+			if (param == NULL || paramLen != sizeof(RSA_PKCS_PSS_PARAMS) ||
+			    ((RSA_PKCS_PSS_PARAMS*) param)->hashAlg != HashAlgo::SHA1 ||
+			    ((RSA_PKCS_PSS_PARAMS*) param)->mgf != AsymRSAMGF::MGF1_SHA1)
+			{
+				ERROR_MSG("Invalid parameters");
+				ByteString dummy;
+				AsymmetricAlgorithm::signFinal(dummy);
+				return false;
+			}
+			sLen = ((RSA_PKCS_PSS_PARAMS*) param)->sLen;
+			if (sLen > ((privateKey->getBitLength()+6)/8-2-20))
+			{
+				ERROR_MSG("sLen (%lu) is too large for current key size (%lu)",
+					  (unsigned long)sLen, privateKey->getBitLength());
+				ByteString dummy;
+				AsymmetricAlgorithm::signFinal(dummy);
+				return false;
+			}
+			hash1 = HashAlgo::SHA1;
+			break;
+		case AsymMech::RSA_SHA224_PKCS_PSS:
+			if (param == NULL || paramLen != sizeof(RSA_PKCS_PSS_PARAMS) ||
+			    ((RSA_PKCS_PSS_PARAMS*) param)->hashAlg != HashAlgo::SHA224 ||
+			    ((RSA_PKCS_PSS_PARAMS*) param)->mgf != AsymRSAMGF::MGF1_SHA224)
+			{
+				ERROR_MSG("Invalid parameters");
+				ByteString dummy;
+				AsymmetricAlgorithm::signFinal(dummy);
+				return false;
+			}
+			sLen = ((RSA_PKCS_PSS_PARAMS*) param)->sLen;
+			if (sLen > ((privateKey->getBitLength()+6)/8-2-28))
+			{
+				ERROR_MSG("sLen (%lu) is too large for current key size (%lu)",
+					  (unsigned long)sLen, privateKey->getBitLength());
+				ByteString dummy;
+				AsymmetricAlgorithm::signFinal(dummy);
+				return false;
+			}
+			hash1 = HashAlgo::SHA224;
+			break;
+		case AsymMech::RSA_SHA256_PKCS_PSS:
+			if (param == NULL || paramLen != sizeof(RSA_PKCS_PSS_PARAMS) ||
+			    ((RSA_PKCS_PSS_PARAMS*) param)->hashAlg != HashAlgo::SHA256 ||
+			    ((RSA_PKCS_PSS_PARAMS*) param)->mgf != AsymRSAMGF::MGF1_SHA256)
+			{
+				ERROR_MSG("Invalid parameters");
+				ByteString dummy;
+				AsymmetricAlgorithm::signFinal(dummy);
+				return false;
+			}
+			sLen = ((RSA_PKCS_PSS_PARAMS*) param)->sLen;
+			if (sLen > ((privateKey->getBitLength()+6)/8-2-32))
+			{
+				ERROR_MSG("sLen (%lu) is too large for current key size (%lu)",
+					  (unsigned long)sLen, privateKey->getBitLength());
+				ByteString dummy;
+				AsymmetricAlgorithm::signFinal(dummy);
+				return false;
+			}
+			hash1 = HashAlgo::SHA256;
+			break;
+		case AsymMech::RSA_SHA384_PKCS_PSS:
+			if (param == NULL || paramLen != sizeof(RSA_PKCS_PSS_PARAMS) ||
+			    ((RSA_PKCS_PSS_PARAMS*) param)->hashAlg != HashAlgo::SHA384 ||
+			    ((RSA_PKCS_PSS_PARAMS*) param)->mgf != AsymRSAMGF::MGF1_SHA384)
+			{
+				ERROR_MSG("Invalid parameters");
+				ByteString dummy;
+				AsymmetricAlgorithm::signFinal(dummy);
+				return false;
+			}
+			sLen = ((RSA_PKCS_PSS_PARAMS*) param)->sLen;
+			if (sLen > ((privateKey->getBitLength()+6)/8-2-48))
+			{
+				ERROR_MSG("sLen (%lu) is too large for current key size (%lu)",
+					  (unsigned long)sLen, privateKey->getBitLength());
+				ByteString dummy;
+				AsymmetricAlgorithm::signFinal(dummy);
+				return false;
+			}
+			hash1 = HashAlgo::SHA384;
+			break;
+		case AsymMech::RSA_SHA512_PKCS_PSS:
+			if (param == NULL || paramLen != sizeof(RSA_PKCS_PSS_PARAMS) ||
+			    ((RSA_PKCS_PSS_PARAMS*) param)->hashAlg != HashAlgo::SHA512 ||
+			    ((RSA_PKCS_PSS_PARAMS*) param)->mgf != AsymRSAMGF::MGF1_SHA512)
+			{
+				ERROR_MSG("Invalid parameters");
+				ByteString dummy;
+				AsymmetricAlgorithm::signFinal(dummy);
+				return false;
+			}
+			sLen = ((RSA_PKCS_PSS_PARAMS*) param)->sLen;
+			if (sLen > ((privateKey->getBitLength()+6)/8-2-64))
+			{
+				ERROR_MSG("sLen (%lu) is too large for current key size (%lu)",
+					  (unsigned long)sLen, privateKey->getBitLength());
+				ByteString dummy;
+				AsymmetricAlgorithm::signFinal(dummy);
+				return false;
+			}
 			hash1 = HashAlgo::SHA512;
 			break;
 		case AsymMech::RSA_SSL:
@@ -341,6 +450,8 @@ bool OSSLRSA::signFinal(ByteString& signature)
 
 	// Determine the signature NID type
 	int type = 0;
+	bool isPSS = false;
+	const EVP_MD* hash = NULL;
 
 	switch (mechanism)
 	{
@@ -362,6 +473,26 @@ bool OSSLRSA::signFinal(ByteString& signature)
 		case AsymMech::RSA_SHA512_PKCS:
 			type = NID_sha512;
 			break;
+		case AsymMech::RSA_SHA1_PKCS_PSS:
+			isPSS = true;
+			hash = EVP_sha1();
+			break;
+		case AsymMech::RSA_SHA224_PKCS_PSS:
+			isPSS = true;
+			hash = EVP_sha224();
+			break;
+		case AsymMech::RSA_SHA256_PKCS_PSS:
+			isPSS = true;
+			hash = EVP_sha256();
+			break;
+		case AsymMech::RSA_SHA384_PKCS_PSS:
+			isPSS = true;
+			hash = EVP_sha384();
+			break;
+		case AsymMech::RSA_SHA512_PKCS_PSS:
+			isPSS = true;
+			hash = EVP_sha512();
+			break;
 		case AsymMech::RSA_SSL:
 			type = NID_md5_sha1;
 			break;
@@ -381,7 +512,40 @@ bool OSSLRSA::signFinal(ByteString& signature)
 		return false;
 	}
 
-	bool rv = (RSA_sign(type, &digest[0], digest.size(), &signature[0], &sigLen, pk->getOSSLKey()) == 1);
+	bool rv;
+
+	if (isPSS)
+	{
+		ByteString em;
+		em.resize(pk->getN().size());
+
+		rv = (RSA_padding_add_PKCS1_PSS(pk->getOSSLKey(), &em[0], &digest[0],
+						hash, sLen) == 1);
+		if (!rv)
+		{
+			ERROR_MSG("RSA PSS padding failed (0x%08X)", ERR_get_error());
+		}
+		else
+		{
+			int result = RSA_private_encrypt(em.size(), &em[0], &signature[0],
+							 pk->getOSSLKey(), RSA_NO_PADDING);
+			if (result >= 0)
+			{
+				sigLen = result;
+				rv = true;
+			}
+			else
+			{
+				rv = false;
+				ERROR_MSG("RSA private encrypt failed (0x%08X)", ERR_get_error());
+			}
+		}
+	}
+	else
+	{
+		rv = (RSA_sign(type, &digest[0], digest.size(), &signature[0],
+			       &sigLen, pk->getOSSLKey()) == 1);
+	}
 
 	RSA_blinding_off(rsa);
 
@@ -391,7 +555,9 @@ bool OSSLRSA::signFinal(ByteString& signature)
 }
 
 // Verification functions
-bool OSSLRSA::verify(PublicKey* publicKey, const ByteString& originalData, const ByteString& signature, const AsymMech::Type mechanism)
+bool OSSLRSA::verify(PublicKey* publicKey, const ByteString& originalData,
+		     const ByteString& signature, const AsymMech::Type mechanism,
+		     const void* param /* = NULL */, const size_t paramLen /* = 0 */)
 {
 	if (mechanism == AsymMech::RSA_PKCS)
 	{
@@ -468,13 +634,14 @@ bool OSSLRSA::verify(PublicKey* publicKey, const ByteString& originalData, const
 	else
 	{
 		// Call the generic function
-		return AsymmetricAlgorithm::verify(publicKey, originalData, signature, mechanism);
+		return AsymmetricAlgorithm::verify(publicKey, originalData, signature, mechanism, param, paramLen);
 	}
 }
 
-bool OSSLRSA::verifyInit(PublicKey* publicKey, const AsymMech::Type mechanism)
+bool OSSLRSA::verifyInit(PublicKey* publicKey, const AsymMech::Type mechanism,
+			 const void* param /* = NULL */, const size_t paramLen /* = 0 */)
 {
-	if (!AsymmetricAlgorithm::verifyInit(publicKey, mechanism))
+	if (!AsymmetricAlgorithm::verifyInit(publicKey, mechanism, param, paramLen))
 	{
 		return false;
 	}
@@ -511,6 +678,111 @@ bool OSSLRSA::verifyInit(PublicKey* publicKey, const AsymMech::Type mechanism)
 			hash1 = HashAlgo::SHA384;
 			break;
 		case AsymMech::RSA_SHA512_PKCS:
+			hash1 = HashAlgo::SHA512;
+			break;
+		case AsymMech::RSA_SHA1_PKCS_PSS:
+			if (param == NULL || paramLen != sizeof(RSA_PKCS_PSS_PARAMS) ||
+			    ((RSA_PKCS_PSS_PARAMS*) param)->hashAlg != HashAlgo::SHA1 ||
+			    ((RSA_PKCS_PSS_PARAMS*) param)->mgf != AsymRSAMGF::MGF1_SHA1)
+			{
+				ERROR_MSG("Invalid parameters");
+				ByteString dummy;
+				AsymmetricAlgorithm::verifyFinal(dummy);
+				return false;
+			}
+			sLen = ((RSA_PKCS_PSS_PARAMS*) param)->sLen;
+			if (sLen > ((publicKey->getBitLength()+6)/8-2-20))
+			{
+				ERROR_MSG("sLen (%lu) is too large for current key size (%lu)",
+					  (unsigned long)sLen, publicKey->getBitLength());
+				ByteString dummy;
+				AsymmetricAlgorithm::verifyFinal(dummy);
+				return false;
+			}
+			hash1 = HashAlgo::SHA1;
+			break;
+		case AsymMech::RSA_SHA224_PKCS_PSS:
+			if (param == NULL || paramLen != sizeof(RSA_PKCS_PSS_PARAMS) ||
+			    ((RSA_PKCS_PSS_PARAMS*) param)->hashAlg != HashAlgo::SHA224 ||
+			    ((RSA_PKCS_PSS_PARAMS*) param)->mgf != AsymRSAMGF::MGF1_SHA224)
+			{
+				ERROR_MSG("Invalid parameters");
+				ByteString dummy;
+				AsymmetricAlgorithm::verifyFinal(dummy);
+				return false;
+			}
+			sLen = ((RSA_PKCS_PSS_PARAMS*) param)->sLen;
+			if (sLen > ((publicKey->getBitLength()+6)/8-2-28))
+			{
+				ERROR_MSG("sLen (%lu) is too large for current key size (%lu)",
+					  (unsigned long)sLen, publicKey->getBitLength());
+				ByteString dummy;
+				AsymmetricAlgorithm::verifyFinal(dummy);
+				return false;
+			}
+			hash1 = HashAlgo::SHA224;
+			break;
+		case AsymMech::RSA_SHA256_PKCS_PSS:
+			if (param == NULL || paramLen != sizeof(RSA_PKCS_PSS_PARAMS) ||
+			    ((RSA_PKCS_PSS_PARAMS*) param)->hashAlg != HashAlgo::SHA256 ||
+			    ((RSA_PKCS_PSS_PARAMS*) param)->mgf != AsymRSAMGF::MGF1_SHA256)
+			{
+				ERROR_MSG("Invalid parameters");
+				ByteString dummy;
+				AsymmetricAlgorithm::verifyFinal(dummy);
+				return false;
+			}
+			sLen = ((RSA_PKCS_PSS_PARAMS*) param)->sLen;
+			if (sLen > ((publicKey->getBitLength()+6)/8-2-32))
+			{
+				ERROR_MSG("sLen (%lu) is too large for current key size (%lu)",
+					  (unsigned long)sLen, publicKey->getBitLength());
+				ByteString dummy;
+				AsymmetricAlgorithm::verifyFinal(dummy);
+				return false;
+			}
+			hash1 = HashAlgo::SHA256;
+			break;
+		case AsymMech::RSA_SHA384_PKCS_PSS:
+			if (param == NULL || paramLen != sizeof(RSA_PKCS_PSS_PARAMS) ||
+			    ((RSA_PKCS_PSS_PARAMS*) param)->hashAlg != HashAlgo::SHA384 ||
+			    ((RSA_PKCS_PSS_PARAMS*) param)->mgf != AsymRSAMGF::MGF1_SHA384)
+			{
+				ERROR_MSG("Invalid parameters");
+				ByteString dummy;
+				AsymmetricAlgorithm::verifyFinal(dummy);
+				return false;
+			}
+			sLen = ((RSA_PKCS_PSS_PARAMS*) param)->sLen;
+			if (sLen > ((publicKey->getBitLength()+6)/8-2-48))
+			{
+				ERROR_MSG("sLen (%lu) is too large for current key size (%lu)",
+					  (unsigned long)sLen, publicKey->getBitLength());
+				ByteString dummy;
+				AsymmetricAlgorithm::verifyFinal(dummy);
+				return false;
+			}
+			hash1 = HashAlgo::SHA384;
+			break;
+		case AsymMech::RSA_SHA512_PKCS_PSS:
+			if (param == NULL || paramLen != sizeof(RSA_PKCS_PSS_PARAMS) ||
+			    ((RSA_PKCS_PSS_PARAMS*) param)->hashAlg != HashAlgo::SHA512 ||
+			    ((RSA_PKCS_PSS_PARAMS*) param)->mgf != AsymRSAMGF::MGF1_SHA512)
+			{
+				ERROR_MSG("Invalid parameters");
+				ByteString dummy;
+				AsymmetricAlgorithm::verifyFinal(dummy);
+				return false;
+			}
+			sLen = ((RSA_PKCS_PSS_PARAMS*) param)->sLen;
+			if (sLen > ((publicKey->getBitLength()+6)/8-2-64))
+			{
+				ERROR_MSG("sLen (%lu) is too large for current key size (%lu)",
+					  (unsigned long)sLen, publicKey->getBitLength());
+				ByteString dummy;
+				AsymmetricAlgorithm::verifyFinal(dummy);
+				return false;
+			}
 			hash1 = HashAlgo::SHA512;
 			break;
 		case AsymMech::RSA_SSL:
@@ -637,6 +909,8 @@ bool OSSLRSA::verifyFinal(const ByteString& signature)
 
 	// Determine the signature NID type
 	int type = 0;
+	bool isPSS = false;
+	const EVP_MD* hash = NULL;
 
 	switch (mechanism)
 	{
@@ -658,6 +932,26 @@ bool OSSLRSA::verifyFinal(const ByteString& signature)
 		case AsymMech::RSA_SHA512_PKCS:
 			type = NID_sha512;
 			break;
+		case AsymMech::RSA_SHA1_PKCS_PSS:
+			isPSS = true;
+			hash = EVP_sha1();
+			break;
+		case AsymMech::RSA_SHA224_PKCS_PSS:
+			isPSS = true;
+			hash = EVP_sha224();
+			break;
+		case AsymMech::RSA_SHA256_PKCS_PSS:
+			isPSS = true;
+			hash = EVP_sha256();
+			break;
+		case AsymMech::RSA_SHA384_PKCS_PSS:
+			isPSS = true;
+			hash = EVP_sha384();
+			break;
+		case AsymMech::RSA_SHA512_PKCS_PSS:
+			isPSS = true;
+			hash = EVP_sha512();
+			break;
 		case AsymMech::RSA_SSL:
 			type = NID_md5_sha1;
 			break;
@@ -666,15 +960,51 @@ bool OSSLRSA::verifyFinal(const ByteString& signature)
 	}
 
 	// Perform the verify operation
-	bool rv = (RSA_verify(type, &digest[0], digest.size(), (unsigned char*) signature.const_byte_str(), signature.size(), pk->getOSSLKey()) == 1);
+	bool rv;
 
-	if (!rv) ERROR_MSG("RSA verify failed (0x%08X)", ERR_get_error());
+	if (isPSS)
+	{
+		ByteString plain;
+		plain.resize(pk->getN().size());
+		int result = RSA_public_decrypt(signature.size(),
+						(unsigned char*) signature.const_byte_str(),
+						&plain[0],
+						pk->getOSSLKey(),
+						RSA_NO_PADDING);
+		if (result < 0)
+		{
+			rv = false;
+			ERROR_MSG("RSA public decrypt failed (0x%08X)", ERR_get_error());
+		}
+		else
+		{
+			plain.resize(result);
+			result = RSA_verify_PKCS1_PSS(pk->getOSSLKey(), &digest[0],
+						      hash, &plain[0], sLen);
+			if (result == 1)
+			{
+				rv = true;
+			}
+			else
+			{
+				rv = false;
+				ERROR_MSG("RSA PSS verify failed (0x%08X)", ERR_get_error());
+			}
+		}
+	}
+	else
+	{
+		rv = (RSA_verify(type, &digest[0], digest.size(), (unsigned char*) signature.const_byte_str(), signature.size(), pk->getOSSLKey()) == 1);
+
+		if (!rv) ERROR_MSG("RSA verify failed (0x%08X)", ERR_get_error());
+	}
 
 	return rv;
 }
 
 // Encryption functions
-bool OSSLRSA::encrypt(PublicKey* publicKey, const ByteString& data, ByteString& encryptedData, const AsymMech::Type padding)
+bool OSSLRSA::encrypt(PublicKey* publicKey, const ByteString& data,
+		      ByteString& encryptedData, const AsymMech::Type padding)
 {
 	// Check if the public key is the right type
 	if (!publicKey->isOfType(OSSLRSAPublicKey::type))
@@ -749,7 +1079,8 @@ bool OSSLRSA::encrypt(PublicKey* publicKey, const ByteString& data, ByteString& 
 }
 
 // Decryption functions
-bool OSSLRSA::decrypt(PrivateKey* privateKey, const ByteString& encryptedData, ByteString& data, const AsymMech::Type padding)
+bool OSSLRSA::decrypt(PrivateKey* privateKey, const ByteString& encryptedData,
+		      ByteString& data, const AsymMech::Type padding)
 {
 	// Check if the private key is the right type
 	if (!privateKey->isOfType(OSSLRSAPrivateKey::type))
