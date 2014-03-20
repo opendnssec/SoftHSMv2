@@ -9,6 +9,8 @@ SoftHSM develop
 * SOFTHSM-76: Do not generate RSA keys smaller than 1024 bit when 
   using the Botan crypto backend.
 * SOFTHSM-83: Support CKA_VALUE_BITS for CKK_DH private key object.
+* SOFTHSM-85: Rename libsofthsm.so to libsofthsm2.so and prefix the
+  command line utilties with softhsm2-.
 * SOFTHSM-89: Use constants and not strings for signaling algorithms.
 * SUPPORT-129: Possible to use an empty template in C_GenerateKey.
   The class and key type are inherited from the generation mechanism.

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010 .SE (The Internet Infrastructure Foundation)
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -10,7 +10,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -24,8 +24,8 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _SOFTHSM_V2_SOFTHSM_KEYCONV_H
-#define _SOFTHSM_V2_SOFTHSM_KEYCONV_H 1
+#ifndef _SOFTHSM_V2_SOFTHSM2_KEYCONV_H
+#define _SOFTHSM_V2_SOFTHSM2_KEYCONV_H 1
 
 #include <stdlib.h>
 
@@ -125,10 +125,10 @@ enum FILE_TAGS {
 	TAG_SUBPRIME,
 	TAG_BASE,
 	TAG_CREATED,
-	TAG_PUBLISH, 
+	TAG_PUBLISH,
 	TAG_ACTIVATE,
 	// So we know how long this list is
 	TAG_MAX
 };
 
-#endif /* _SOFTHSM_V2_SOFTHSM_KEYCONV_H */
+#endif /* _SOFTHSM_V2_SOFTHSM2_KEYCONV_H */

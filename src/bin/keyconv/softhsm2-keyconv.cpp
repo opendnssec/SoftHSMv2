@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010 .SE (The Internet Infrastructure Foundation)
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -10,7 +10,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -26,19 +26,19 @@
 
 /************************************************************
 *
-* softhsm-keyconv
+* softhsm2-keyconv
 *
 * This program is for converting from BIND .private-key
 * format to PKCS#8 key file format. So that keys can be
 * imported from BIND to SoftHSM.
 *
-* Some of the design/code is from keyconv.c written by 
+* Some of the design/code is from keyconv.c written by
 * Hakan Olsson and Jakob Schlyter in 2000 and 2001.
 *
 ************************************************************/
 
 #include <config.h>
-#include "softhsm-keyconv.h"
+#include "softhsm2-keyconv.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -54,7 +54,7 @@
 void usage()
 {
 	printf("Converting from BIND .private-key format to PKCS#8 key file format.\n");
-	printf("Usage: softhsm-keyconv [OPTIONS]\n");
+	printf("Usage: softhsm2-keyconv [OPTIONS]\n");
 	printf("Options:\n");
 	printf("  -h                  Shows this help screen.\n");
 	printf("  --help              Shows this help screen.\n");
