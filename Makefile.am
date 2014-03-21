@@ -11,8 +11,12 @@ MAINTAINERCLEANFILES = \
 
 SUBDIRS = src
 
-EXTRA_DIST =	$(srcdir)/m4/*.m4 \
+EXTRA_DIST =	$(srcdir)/aes_wrap_key_with_pad/botan-diff \
+		$(srcdir)/aes_wrap_key_with_pad/openssl-diff \
+		$(srcdir)/aes_wrap_key_with_pad/README \
 		$(srcdir)/LICENSE \
+		$(srcdir)/m4/*.m4 \
+		$(srcdir)/OSX-NOTES.md \
 		$(srcdir)/README.md \
 		$(srcdir)/win32+botan/config.h \
 		$(srcdir)/win32+botan/convarch/convarch.vcxproj \
@@ -24,6 +28,9 @@ EXTRA_DIST =	$(srcdir)/m4/*.m4 \
 		$(srcdir)/win32+botan/datamgrtest/datamgrtest.vcxproj \
 		$(srcdir)/win32+botan/datamgrtest/datamgrtest.vcxproj.filters \
 		$(srcdir)/win32+botan/datamgrtest/datamgrtest.vcxproj.user \
+		$(srcdir)/win32+botan/dump/dump.vcxproj \
+		$(srcdir)/win32+botan/dump/dump.vcxproj.filters \
+		$(srcdir)/win32+botan/dump/dump.vcxproj.user \
 		$(srcdir)/win32+botan/handlemgrtest/handlemgrtest.vcxproj \
 		$(srcdir)/win32+botan/handlemgrtest/handlemgrtest.vcxproj.filters \
 		$(srcdir)/win32+botan/handlemgrtest/handlemgrtest.vcxproj.user \
@@ -60,6 +67,9 @@ EXTRA_DIST =	$(srcdir)/m4/*.m4 \
 		$(srcdir)/win32+openssl/datamgrtest/datamgrtest.vcxproj \
 		$(srcdir)/win32+openssl/datamgrtest/datamgrtest.vcxproj.filters \
 		$(srcdir)/win32+openssl/datamgrtest/datamgrtest.vcxproj.user \
+		$(srcdir)/win32+openssl/dump/dump.vcxproj \
+		$(srcdir)/win32+openssl/dump/dump.vcxproj.filters \
+		$(srcdir)/win32+openssl/dump/dump.vcxproj.user \
 		$(srcdir)/win32+openssl/handlemgrtest/handlemgrtest.vcxproj \
 		$(srcdir)/win32+openssl/handlemgrtest/handlemgrtest.vcxproj.filters \
 		$(srcdir)/win32+openssl/handlemgrtest/handlemgrtest.vcxproj.user \
