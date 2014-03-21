@@ -1,9 +1,9 @@
-.TH SOFTHSM-MIGRATE 1 "22 October 2012" "SoftHSM"
+.TH SOFTHSM2-MIGRATE 1 "20 March 2014" "SoftHSM"
 .SH NAME
-softhsm-migrate \- SoftHSM v1 migration tool
+softhsm2-migrate \- SoftHSM v1 migration tool
 .SH SYNOPSIS
 .PP
-.B softhsm-util \-\-db
+.B softhsm2-migrate \-\-db
 .I path
 .B \-\-slot
 .I number
@@ -11,7 +11,7 @@ softhsm-migrate \- SoftHSM v1 migration tool
 .I PIN
 .B \-\-no\-public\-key]
 .SH DESCRIPTION
-.B softhsm-migration
+.B softhsm2-migrate
 is a tool that can migrate SoftHSM v1 databases to PKCS#11.
 The default HSM is SoftHSM v2, but can be used with other 
 PKCS#11 libraries by using the option
@@ -49,13 +49,13 @@ A token database can be migrated with the following command:
 .LP
 .RS
 .nf
-softhsm-migrate \-\-db /home/user/token.db \-\-slot 1
+softhsm2-migrate \-\-db /home/user/token.db \-\-slot 1
 .fi
 .RE
 .SH AUTHORS
-Written by Rickard Bellgrim, René Post, and Roland van Rijswijk.
+Written by Rickard Bellgrim, Francis Dupont, René Post, and Roland van Rijswijk.
 .LP
 .SH "SEE ALSO"
-.IR softhsm-keyconv (1),
-.IR softhsm-util (1),
+.IR softhsm2-keyconv (1),
+.IR softhsm2-util (1),
 .IR softhsm2.conf (5)

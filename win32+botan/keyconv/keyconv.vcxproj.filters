@@ -37,7 +37,7 @@
     <ClInclude Include="..\..\src\bin\common\library.h">
       <Filter>Common Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\bin\keyconv\softhsm-keyconv.h">
+    <ClInclude Include="..\..\src\bin\keyconv\softhsm2-keyconv.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\config.h">
@@ -48,7 +48,7 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\src\bin\keyconv\softhsm-keyconv.cpp">
+    <ClCompile Include="..\..\src\bin\keyconv\softhsm2-keyconv.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\bin\common\getpw.cpp">
@@ -66,7 +66,7 @@
     <ClCompile Include="..\..\src\bin\win32\getpassphase.cpp">
       <Filter>Win32 Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\bin\keyconv\softhsm-keyconv-botan.cpp">
+    <ClCompile Include="..\..\src\bin\keyconv\softhsm2-keyconv-botan.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

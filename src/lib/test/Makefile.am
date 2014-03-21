@@ -21,7 +21,7 @@ p11test_SOURCES =		p11test.cpp \
 				AsymEncryptDecryptTests.cpp \
 				../common/osmutex.cpp
 
-p11test_LDADD =			../libsofthsm.la 
+p11test_LDADD =			../libsofthsm2.la 
 
 p11test_LDFLAGS = 		@CRYPTO_LIBS@ -no-install `cppunit-config --libs` -pthread -static
 
