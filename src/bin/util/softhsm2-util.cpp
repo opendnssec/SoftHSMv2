@@ -555,7 +555,7 @@ char* hexStrToBin(char* objectID, int idLength, size_t* newLen)
 {
 	char* bytes = NULL;
 
-	if (idLength % 2 != 0)
+	if (idLength < 2 || idLength % 2 != 0)
 	{
 		fprintf(stderr, "ERROR: Invalid length on hex string.\n");
 		return NULL;
