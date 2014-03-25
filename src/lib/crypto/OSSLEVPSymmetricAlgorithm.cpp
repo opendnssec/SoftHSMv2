@@ -52,7 +52,7 @@ OSSLEVPSymmetricAlgorithm::~OSSLEVPSymmetricAlgorithm()
 }
 
 // Encryption functions
-bool OSSLEVPSymmetricAlgorithm::encryptInit(const SymmetricKey* key, const std::string mode /* = "cbc" */, const ByteString& IV /* = ByteString()*/, bool padding /* = true */)
+bool OSSLEVPSymmetricAlgorithm::encryptInit(const SymmetricKey* key, const SymMode::Type mode /* = SymMode::CBC */, const ByteString& IV /* = ByteString()*/, bool padding /* = true */)
 {
 	// Call the superclass initialiser
 	if (!SymmetricAlgorithm::encryptInit(key, mode, IV, padding))
@@ -215,7 +215,7 @@ bool OSSLEVPSymmetricAlgorithm::encryptFinal(ByteString& encryptedData)
 }
 
 // Decryption functions
-bool OSSLEVPSymmetricAlgorithm::decryptInit(const SymmetricKey* key, const std::string mode /* = "cbc" */, const ByteString& IV /* = ByteString() */, bool padding /* = true */)
+bool OSSLEVPSymmetricAlgorithm::decryptInit(const SymmetricKey* key, const SymMode::Type mode /* = SymMode::CBC */, const ByteString& IV /* = ByteString() */, bool padding /* = true */)
 {
 	// Call the superclass initialiser
 	if (!SymmetricAlgorithm::decryptInit(key, mode, IV, padding))

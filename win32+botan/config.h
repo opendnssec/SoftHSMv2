@@ -128,7 +128,8 @@ int setenv(const char *name, const char *value, int overwrite);
 
 /* Temporary for debug */
 
-#define DEBUG_LOG_STDERR 1
+#undef DEBUG_LOG_STDERR
+// #define DEBUG_LOG_STDERR 1
 
 /* To avoid unsafe warnings (off) */
 

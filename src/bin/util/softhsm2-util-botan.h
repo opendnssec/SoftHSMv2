@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010 .SE (The Internet Infrastructure Foundation)
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -10,7 +10,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -25,13 +25,13 @@
  */
 
 /*****************************************************************************
- softhsm-util-botan.h
+ softhsm2-util-botan.h
 
  Header file for Botan implemented
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_SOFTHSM_UTIL_BOTAN_H
-#define _SOFTHSM_V2_SOFTHSM_UTIL_BOTAN_H
+#ifndef _SOFTHSM_V2_SOFTHSM2_UTIL_BOTAN_H
+#define _SOFTHSM_V2_SOFTHSM2_UTIL_BOTAN_H
 
 #include <botan/rsa.h>
 #include <botan/dsa.h>
@@ -110,4 +110,4 @@ int crypto_save_dsa(CK_SESSION_HANDLE hSession, char* label, char* objID, size_t
 dsa_key_material_t* crypto_malloc_dsa(Botan::DSA_PrivateKey* dsa);
 void crypto_free_dsa(dsa_key_material_t* keyMat);
 
-#endif // !_SOFTHSM_V2_SOFTHSM_UTIL_OSSL_H
+#endif // !_SOFTHSM_V2_SOFTHSM2_UTIL_OSSL_H

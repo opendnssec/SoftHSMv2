@@ -38,6 +38,39 @@
 #include "SymmetricKey.h"
 #include "RNG.h"
 
+struct SymAlgo
+{
+	enum Type
+	{
+		Unknown,
+		AES,
+		DES,
+		DES3
+	};
+};
+
+struct SymMode
+{
+	enum Type
+	{
+		Unknown,
+		CBC,
+		CFB,
+		ECB,
+		OFB
+	};
+};
+
+struct SymWrap
+{
+	enum Type
+	{
+		Unknown,
+		AES_KEYWRAP,
+		AES_KEYWRAP_PAD
+	};
+};
+
 class SymmetricAlgorithm
 {
 public:
@@ -48,19 +81,19 @@ public:
 	virtual ~SymmetricAlgorithm() { }
 
 	// Encryption functions
-	virtual bool encryptInit(const SymmetricKey* key, const std::string mode = "cbc", const ByteString& IV = ByteString(), bool padding = true);
+	virtual bool encryptInit(const SymmetricKey* key, const SymMode::Type mode = SymMode::CBC, const ByteString& IV = ByteString(), bool padding = true);
 	virtual bool encryptUpdate(const ByteString& data, ByteString& encryptedData);
 	virtual bool encryptFinal(ByteString& encryptedData);
 
 	// Decryption functions
-	virtual bool decryptInit(const SymmetricKey* key, const std::string mode = "cbc", const ByteString& IV = ByteString(), bool padding = true);
+	virtual bool decryptInit(const SymmetricKey* key, const SymMode::Type mode = SymMode::CBC, const ByteString& IV = ByteString(), bool padding = true);
 	virtual bool decryptUpdate(const ByteString& encryptedData, ByteString& data);
 	virtual bool decryptFinal(ByteString& data);
 
 	// Wrap/Unwrap keys
-	virtual bool wrapKey(const SymmetricKey* key, const std::string mode, const ByteString& in, ByteString& out) = 0;
+	virtual bool wrapKey(const SymmetricKey* key, const SymWrap::Type mode, const ByteString& in, ByteString& out) = 0;
 
-	virtual bool unwrapKey(const SymmetricKey* key, const std::string mode, const ByteString& in, ByteString& out) = 0;
+	virtual bool unwrapKey(const SymmetricKey* key, const SymWrap::Type mode, const ByteString& in, ByteString& out) = 0;
 
 	// Key factory
 	virtual void recycleKey(SymmetricKey* toRecycle);
@@ -71,11 +104,14 @@ public:
 	virtual size_t getBlockSize() const = 0;
 
 protected:
-	// The current cipher mode
-	std::string currentCipherMode;
-
 	// The current key
 	const SymmetricKey* currentKey;
+
+	// The current cipher mode
+	SymMode::Type currentCipherMode;
+
+	// The current padding
+	bool currentPaddingMode;
 
 	// The current operation
 	enum
@@ -83,7 +119,7 @@ protected:
 		NONE,
 		ENCRYPT,
 		DECRYPT
-	} 
+	}
 	currentOperation;
 };
 

@@ -50,7 +50,7 @@
     <ClCompile Include="..\..\src\lib\SoftHSM.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\lib\win32\dllmain.cc">
+    <ClCompile Include="..\..\src\lib\win32\dllmain.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -16,18 +16,39 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "dump", "dump\dump.vcxproj", "{F60ACB12-7D05-4A89-B2D1-DD16E1F3566B}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "p11test", "p11test\p11test.vcxproj", "{7C5EE7FC-B5FC-47BF-8164-A452FE689472}"
+	ProjectSection(ProjectDependencies) = postProject
+		{801F5AB2-7A62-4085-B129-D15E2D717219} = {801F5AB2-7A62-4085-B129-D15E2D717219}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "cryptotest", "cryptotest\cryptotest.vcxproj", "{07E03E0B-C525-4A72-88C6-2238896A4D8C}"
+	ProjectSection(ProjectDependencies) = postProject
+		{F64541B6-FFBF-4368-B93A-A5CA8ADAD795} = {F64541B6-FFBF-4368-B93A-A5CA8ADAD795}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "datamgrtest", "datamgrtest\datamgrtest.vcxproj", "{E20315B5-B49E-46D7-B7EC-1A439F347C95}"
+	ProjectSection(ProjectDependencies) = postProject
+		{F64541B6-FFBF-4368-B93A-A5CA8ADAD795} = {F64541B6-FFBF-4368-B93A-A5CA8ADAD795}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "handlemgrtest", "handlemgrtest\handlemgrtest.vcxproj", "{014B1E10-EC68-4BEC-B992-F92CA2B6816F}"
+	ProjectSection(ProjectDependencies) = postProject
+		{F64541B6-FFBF-4368-B93A-A5CA8ADAD795} = {F64541B6-FFBF-4368-B93A-A5CA8ADAD795}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "objstoretest", "objstoretest\objstoretest.vcxproj", "{44F77533-A4A1-4175-8C4C-07106B3F9C08}"
+	ProjectSection(ProjectDependencies) = postProject
+		{F64541B6-FFBF-4368-B93A-A5CA8ADAD795} = {F64541B6-FFBF-4368-B93A-A5CA8ADAD795}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "sessionmgrtest", "sessionmgrtest\sessionmgrtest.vcxproj", "{45E2ABF6-91A7-4AA5-A82B-0C8E54BCCCB9}"
+	ProjectSection(ProjectDependencies) = postProject
+		{F64541B6-FFBF-4368-B93A-A5CA8ADAD795} = {F64541B6-FFBF-4368-B93A-A5CA8ADAD795}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "slotmgrtest", "slotmgrtest\slotmgrtest.vcxproj", "{F62E31E5-0F8D-4B70-8F26-44AFA1A9E645}"
+	ProjectSection(ProjectDependencies) = postProject
+		{F64541B6-FFBF-4368-B93A-A5CA8ADAD795} = {F64541B6-FFBF-4368-B93A-A5CA8ADAD795}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "convarch", "convarch\convarch.vcxproj", "{F64541B6-FFBF-4368-B93A-A5CA8ADAD795}"
 EndProject

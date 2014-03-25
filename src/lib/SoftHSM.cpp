@@ -157,12 +157,14 @@ static CK_RV newP11Object(CK_OBJECT_CLASS objClass, CK_KEY_TYPE keyType, CK_CERT
 	return CKR_OK;
 }
 
-static CK_RV extractObjectInformation(CK_ATTRIBUTE_PTR pTemplate, CK_ULONG ulCount,
-									   CK_OBJECT_CLASS &objClass,
-									   CK_KEY_TYPE &keyType,
-									   CK_CERTIFICATE_TYPE &certType,
-									   CK_BBOOL &isToken,
-									   CK_BBOOL &isPrivate)
+static CK_RV extractObjectInformation(CK_ATTRIBUTE_PTR pTemplate,
+				      CK_ULONG ulCount,
+				      CK_OBJECT_CLASS &objClass,
+				      CK_KEY_TYPE &keyType,
+				      CK_CERTIFICATE_TYPE &certType,
+				      CK_BBOOL &isOnToken,
+				      CK_BBOOL &isPrivate,
+				      bool bImplicit)
 {
 	bool bHasClass = false;
 	bool bHasKeyType = false;
@@ -197,7 +199,7 @@ static CK_RV extractObjectInformation(CK_ATTRIBUTE_PTR pTemplate, CK_ULONG ulCou
 			case CKA_TOKEN:
 				if (pTemplate[i].ulValueLen == sizeof(CK_BBOOL))
 				{
-					isToken = *(CK_BBOOL*)pTemplate[i].pValue;
+					isOnToken = *(CK_BBOOL*)pTemplate[i].pValue;
 				}
 				break;
 			case CKA_PRIVATE:
@@ -209,6 +211,11 @@ static CK_RV extractObjectInformation(CK_ATTRIBUTE_PTR pTemplate, CK_ULONG ulCou
 			default:
 				break;
 		}
+	}
+
+	if (bImplicit)
+	{
+		return CKR_OK;
 	}
 
 	if (!bHasClass)
@@ -415,11 +422,14 @@ CK_RV SoftHSM::C_Initialize(CK_VOID_PTR pInitArgs)
 		return CKR_GENERAL_ERROR;
 	}
 
+	// Configure object store storage backend used by all tokens.
+	if (!ObjectStoreToken::selectBackend(Configuration::i()->getString("objectstore.backend", DEFAULT_OBJECTSTORE_BACKEND)))
+	{
+		return CKR_GENERAL_ERROR;
+	}
+
 	sessionObjectStore = new SessionObjectStore();
 
-	// Configure object store storage backend used by all tokens.
-	ObjectStoreToken::selectBackend(Configuration::i()->getString("objectstore.backend", DEFAULT_OBJECTSTORE_BACKEND));
-	
 	// Load the object store
 	objectStore = new ObjectStore(Configuration::i()->getString("directories.tokendir", DEFAULT_TOKENDIR));
 	if (!objectStore->isValid())
@@ -544,7 +554,7 @@ CK_RV SoftHSM::C_GetTokenInfo(CK_SLOT_ID slotID, CK_TOKEN_INFO_PTR pInfo)
 CK_RV SoftHSM::C_GetMechanismList(CK_SLOT_ID slotID, CK_MECHANISM_TYPE_PTR pMechanismList, CK_ULONG_PTR pulCount)
 {
 	// A list with the supported mechanisms
-	CK_ULONG nrSupportedMechanisms = 44;
+	CK_ULONG nrSupportedMechanisms = 49;
 #ifdef WITH_ECC
 	nrSupportedMechanisms += 3;
 #endif
@@ -578,6 +588,11 @@ CK_RV SoftHSM::C_GetMechanismList(CK_SLOT_ID slotID, CK_MECHANISM_TYPE_PTR pMech
 		CKM_SHA256_RSA_PKCS,
 		CKM_SHA384_RSA_PKCS,
 		CKM_SHA512_RSA_PKCS,
+		CKM_SHA1_RSA_PKCS_PSS,
+		CKM_SHA224_RSA_PKCS_PSS,
+		CKM_SHA256_RSA_PKCS_PSS,
+		CKM_SHA384_RSA_PKCS_PSS,
+		CKM_SHA512_RSA_PKCS_PSS,
 		CKM_DES_KEY_GEN,
 		CKM_DES2_KEY_GEN,
 		CKM_DES3_KEY_GEN,
@@ -670,7 +685,7 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 		return CKR_SLOT_ID_INVALID;
 	}
 
-	AsymmetricAlgorithm* rsa = CryptoFactory::i()->getAsymmetricAlgorithm("RSA");
+	AsymmetricAlgorithm* rsa = CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::RSA);
 	if (rsa != NULL)
 	{
 		rsaMinSize = rsa->getMinKeySize();
@@ -682,7 +697,7 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 	}
 	CryptoFactory::i()->recycleAsymmetricAlgorithm(rsa);
 
-	AsymmetricAlgorithm* dsa = CryptoFactory::i()->getAsymmetricAlgorithm("DSA");
+	AsymmetricAlgorithm* dsa = CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::DSA);
 	if (dsa != NULL)
 	{
 		dsaMinSize = dsa->getMinKeySize();
@@ -705,7 +720,7 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 	}
 	CryptoFactory::i()->recycleAsymmetricAlgorithm(dsa);
 
-	AsymmetricAlgorithm* dh = CryptoFactory::i()->getAsymmetricAlgorithm("DH");
+	AsymmetricAlgorithm* dh = CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::DH);
 	if (dh != NULL)
 	{
 		dhMinSize = dh->getMinKeySize();
@@ -718,7 +733,7 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 	CryptoFactory::i()->recycleAsymmetricAlgorithm(dh);
 
 #ifdef WITH_ECC
-	AsymmetricAlgorithm* ecdsa = CryptoFactory::i()->getAsymmetricAlgorithm("ECDSA");
+	AsymmetricAlgorithm* ecdsa = CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::ECDSA);
 	if (ecdsa != NULL)
 	{
 		ecdsaMinSize = ecdsa->getMinKeySize();
@@ -730,7 +745,7 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 	}
 	CryptoFactory::i()->recycleAsymmetricAlgorithm(ecdsa);
 
-	AsymmetricAlgorithm* ecdh = CryptoFactory::i()->getAsymmetricAlgorithm("ECDH");
+	AsymmetricAlgorithm* ecdh = CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::ECDH);
 	if (ecdh != NULL)
 	{
 		ecdhMinSize = ecdh->getMinKeySize();
@@ -784,6 +799,11 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 		case CKM_SHA256_RSA_PKCS:
 		case CKM_SHA384_RSA_PKCS:
 		case CKM_SHA512_RSA_PKCS:
+		case CKM_SHA1_RSA_PKCS_PSS:
+		case CKM_SHA224_RSA_PKCS_PSS:
+		case CKM_SHA256_RSA_PKCS_PSS:
+		case CKM_SHA384_RSA_PKCS_PSS:
+		case CKM_SHA512_RSA_PKCS_PSS:
 			pInfo->ulMinKeySize = rsaMinSize;
 			pInfo->ulMaxKeySize = rsaMaxSize;
 			pInfo->flags = CKF_SIGN | CKF_VERIFY;
@@ -1221,11 +1241,11 @@ CK_RV SoftHSM::C_CopyObject(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject
 	OSObject *object = (OSObject *)handleManager->getObject(hObject);
 	if (object == NULL_PTR || !object->isValid()) return CKR_OBJECT_HANDLE_INVALID;
 
-	CK_BBOOL wasToken = object->getAttribute(CKA_TOKEN)->getBooleanValue();
+	CK_BBOOL wasOnToken = object->getAttribute(CKA_TOKEN)->getBooleanValue();
 	CK_BBOOL wasPrivate = object->getAttribute(CKA_PRIVATE)->getBooleanValue();
 
 	// Check read user credentials
-	CK_RV rv = haveRead(session->getState(), wasToken, wasPrivate);
+	CK_RV rv = haveRead(session->getState(), wasOnToken, wasPrivate);
 	if (rv != CKR_OK)
 	{
 		if (rv == CKR_USER_NOT_LOGGED_IN)
@@ -1241,14 +1261,14 @@ CK_RV SoftHSM::C_CopyObject(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject
 	if (!isCopyable) return CKR_COPY_PROHIBITED;
 
 	// Extract critical information from the template
-	CK_BBOOL isToken = wasToken;
+	CK_BBOOL isOnToken = wasOnToken;
 	CK_BBOOL isPrivate = wasPrivate;
-	
+
 	for (CK_ULONG i = 0; i < ulCount; i++)
 	{
 		if ((pTemplate[i].type == CKA_TOKEN) && (pTemplate[i].ulValueLen == sizeof(CK_BBOOL)))
 		{
-			isToken = *(CK_BBOOL*)pTemplate[i].pValue;
+			isOnToken = *(CK_BBOOL*)pTemplate[i].pValue;
 			continue;
 		}
 		if ((pTemplate[i].type == CKA_PRIVATE) && (pTemplate[i].ulValueLen == sizeof(CK_BBOOL)))
@@ -1262,7 +1282,7 @@ CK_RV SoftHSM::C_CopyObject(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject
 	if (wasPrivate && !isPrivate) return CKR_TEMPLATE_INCONSISTENT;
 
 	// Check write user credentials
-	rv = haveWrite(session->getState(), isToken, isPrivate);
+	rv = haveWrite(session->getState(), isOnToken, isPrivate);
 	if (rv != CKR_OK)
 	{
 		if (rv == CKR_USER_NOT_LOGGED_IN)
@@ -1275,7 +1295,7 @@ CK_RV SoftHSM::C_CopyObject(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject
 
 	// Create the object in session or on the token
 	OSObject *newobject = NULL_PTR;
-	if (isToken)
+	if (isOnToken)
 	{
 		newobject = (OSObject*) token->createObject();
 	}
@@ -1308,7 +1328,6 @@ CK_RV SoftHSM::C_CopyObject(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject
 				rv = CKR_FUNCTION_FAILED;
 				break;
 			}
-				
 		}
 		else
 		{
@@ -1356,7 +1375,7 @@ CK_RV SoftHSM::C_CopyObject(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject
 	}
 
 	// Set handle
-	if (isToken)
+	if (isOnToken)
 	{
 		*phNewObject = handleManager->addTokenObject(slot->getSlotID(), isPrivate != CK_FALSE, newobject);
 	}
@@ -1385,11 +1404,11 @@ CK_RV SoftHSM::C_DestroyObject(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObj
 	OSObject *object = (OSObject *)handleManager->getObject(hObject);
 	if (object == NULL_PTR || !object->isValid()) return CKR_OBJECT_HANDLE_INVALID;
 
-	CK_BBOOL isToken = object->getAttribute(CKA_TOKEN)->getBooleanValue();
+	CK_BBOOL isOnToken = object->getAttribute(CKA_TOKEN)->getBooleanValue();
 	CK_BBOOL isPrivate = object->getAttribute(CKA_PRIVATE)->getBooleanValue();
 
 	// Check user credentials
-	CK_RV rv = haveWrite(session->getState(), isToken, isPrivate);
+	CK_RV rv = haveWrite(session->getState(), isOnToken, isPrivate);
 	if (rv != CKR_OK)
 	{
 		if (rv == CKR_USER_NOT_LOGGED_IN)
@@ -1453,10 +1472,25 @@ CK_RV SoftHSM::C_GetAttributeValue(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE 
 	OSObject *object = (OSObject *)handleManager->getObject(hObject);
 	if (object == NULL_PTR || !object->isValid()) return CKR_OBJECT_HANDLE_INVALID;
 
+	CK_BBOOL isOnToken = object->getAttribute(CKA_TOKEN)->getBooleanValue();
+	CK_BBOOL isPrivate = object->getAttribute(CKA_PRIVATE)->getBooleanValue();
+
+	// Check read user credentials
+	CK_RV rv = haveRead(session->getState(), isOnToken, isPrivate);
+	if (rv != CKR_OK)
+	{
+		if (rv == CKR_USER_NOT_LOGGED_IN)
+			INFO_MSG("User is not authorized");
+
+		// CKR_USER_NOT_LOGGED_IN is not a valid return code for this function,
+		// so we use CKR_GENERAL_ERROR.
+		return CKR_GENERAL_ERROR;
+	}
+
 	// Wrap a P11Object around the OSObject so we can access the attributes in the
 	// context of the object in which it is defined.
 	std::auto_ptr< P11Object > p11object;
-	CK_RV rv = newP11Object(object,p11object);
+	rv = newP11Object(object,p11object);
 	if (rv != CKR_OK)
 		return rv;
 
@@ -1483,11 +1517,11 @@ CK_RV SoftHSM::C_SetAttributeValue(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE 
 	OSObject *object = (OSObject *)handleManager->getObject(hObject);
 	if (object == NULL_PTR || !object->isValid()) return CKR_OBJECT_HANDLE_INVALID;
 
-	CK_BBOOL isToken = object->getAttribute(CKA_TOKEN)->getBooleanValue();
+	CK_BBOOL isOnToken = object->getAttribute(CKA_TOKEN)->getBooleanValue();
 	CK_BBOOL isPrivate = object->getAttribute(CKA_PRIVATE)->getBooleanValue();
 
 	// Check user credentials
-	CK_RV rv = haveWrite(session->getState(), isToken, isPrivate);
+	CK_RV rv = haveWrite(session->getState(), isOnToken, isPrivate);
 	if (rv != CKR_OK)
 	{
 		if (rv == CKR_USER_NOT_LOGGED_IN)
@@ -1631,11 +1665,11 @@ CK_RV SoftHSM::C_FindObjectsInit(CK_SESSION_HANDLE hSession, CK_ATTRIBUTE_PTR pT
 		if (bAttrMatch)
 		{
 			CK_SLOT_ID slotID = slot->getSlotID();
-			bool isToken = (*it)->getAttribute(CKA_TOKEN)->getBooleanValue();
+			bool isOnToken = (*it)->getAttribute(CKA_TOKEN)->getBooleanValue();
 			bool isPrivate = (*it)->getAttribute(CKA_PRIVATE)->getBooleanValue();
 			// Create an object handle for every returned object.
 			CK_OBJECT_HANDLE hObject;
-			if (isToken)
+			if (isOnToken)
 				hObject = handleManager->addTokenObject(slotID,isPrivate,*it);
 			else
 				hObject = handleManager->addSessionObject(slotID,hSession,isPrivate,*it);
@@ -1737,24 +1771,37 @@ CK_RV SoftHSM::SymEncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 	OSObject *key = (OSObject *)handleManager->getObject(hKey);
 	if (key == NULL_PTR || !key->isValid()) return CKR_OBJECT_HANDLE_INVALID;
 
+	CK_BBOOL isOnToken = key->getAttribute(CKA_TOKEN)->getBooleanValue();
+	CK_BBOOL isPrivate = key->getAttribute(CKA_PRIVATE)->getBooleanValue();
+
+	// Check read user credentials
+	CK_RV rv = haveRead(session->getState(), isOnToken, isPrivate);
+	if (rv != CKR_OK)
+	{
+		if (rv == CKR_USER_NOT_LOGGED_IN)
+			INFO_MSG("User is not authorized");
+
+		return rv;
+	}
+
 	// Check if key can be used for encryption
         if (!key->attributeExists(CKA_ENCRYPT) || key->getAttribute(CKA_ENCRYPT)->getBooleanValue() == false)
 		return CKR_KEY_FUNCTION_NOT_PERMITTED;
 
 	// Get the symmetric algorithm matching the mechanism
-	SymmetricAlgorithm* cipher = NULL;
-	std::string mode;
+	SymAlgo::Type algo = SymAlgo::Unknown;
+	SymMode::Type mode = SymMode::Unknown;
 	ByteString iv;
 	size_t bb = 8;
 	switch(pMechanism->mechanism) {
 		case CKM_DES_ECB:
-			cipher = CryptoFactory::i()->getSymmetricAlgorithm("des");
-			mode = "ecb";
+			algo = SymAlgo::DES;
+			mode = SymMode::ECB;
 			bb = 7;
 			break;
 		case CKM_DES_CBC:
-			cipher = CryptoFactory::i()->getSymmetricAlgorithm("des");
-			mode = "cbc";
+			algo = SymAlgo::DES;
+			mode = SymMode::CBC;
 			if (pMechanism->pParameter == NULL_PTR ||
 			    pMechanism->ulParameterLen == 0)
 			{
@@ -1766,13 +1813,13 @@ CK_RV SoftHSM::SymEncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 			bb = 7;
 			break;
 		case CKM_DES3_ECB:
-			cipher = CryptoFactory::i()->getSymmetricAlgorithm("3des");
-			mode = "ecb";
+			algo = SymAlgo::DES3;
+			mode = SymMode::ECB;
 			bb = 7;
 			break;
 		case CKM_DES3_CBC:
-			cipher = CryptoFactory::i()->getSymmetricAlgorithm("3des");
-			mode = "cbc";
+			algo = SymAlgo::DES3;
+			mode = SymMode::CBC;
 			if (pMechanism->pParameter == NULL_PTR ||
 			    pMechanism->ulParameterLen == 0)
 			{
@@ -1784,12 +1831,12 @@ CK_RV SoftHSM::SymEncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 			bb = 7;
 			break;
 		case CKM_AES_ECB:
-			cipher = CryptoFactory::i()->getSymmetricAlgorithm("aes");
-			mode = "ecb";
+			algo = SymAlgo::AES;
+			mode = SymMode::ECB;
 			break;
 		case CKM_AES_CBC:
-			cipher = CryptoFactory::i()->getSymmetricAlgorithm("aes");
-			mode = "cbc";
+			algo = SymAlgo::AES;
+			mode = SymMode::CBC;
 			if (pMechanism->pParameter == NULL_PTR ||
 			    pMechanism->ulParameterLen == 0)
 			{
@@ -1802,6 +1849,7 @@ CK_RV SoftHSM::SymEncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 		default:
 			return CKR_MECHANISM_INVALID;
 	}
+	SymmetricAlgorithm* cipher = CryptoFactory::i()->getSymmetricAlgorithm(algo);
 	if (cipher == NULL) return CKR_MECHANISM_INVALID;
 
 	SymmetricKey* secretkey = new SymmetricKey();
@@ -1860,41 +1908,54 @@ CK_RV SoftHSM::AsymEncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMec
 	OSObject *key = (OSObject *)handleManager->getObject(hKey);
 	if (key == NULL_PTR || !key->isValid()) return CKR_OBJECT_HANDLE_INVALID;
 
+	CK_BBOOL isOnToken = key->getAttribute(CKA_TOKEN)->getBooleanValue();
+	CK_BBOOL isPrivate = key->getAttribute(CKA_PRIVATE)->getBooleanValue();
+
+	// Check read user credentials
+	CK_RV rv = haveRead(session->getState(), isOnToken, isPrivate);
+	if (rv != CKR_OK)
+	{
+		if (rv == CKR_USER_NOT_LOGGED_IN)
+			INFO_MSG("User is not authorized");
+
+		return rv;
+	}
+
 	// Check if key can be used for encryption
         if (!key->attributeExists(CKA_ENCRYPT) || key->getAttribute(CKA_ENCRYPT)->getBooleanValue() == false)
 		return CKR_KEY_FUNCTION_NOT_PERMITTED;
 
 	// Get the asymmetric algorithm matching the mechanism
-	const char *mechanism;
+	AsymMech::Type mechanism;
 	bool isRSA = false;
 	switch(pMechanism->mechanism) {
 		case CKM_RSA_PKCS:
-			mechanism = "rsa-pkcs";
+			mechanism = AsymMech::RSA_PKCS;
 			isRSA = true;
 			break;
 		case CKM_RSA_X_509:
-			mechanism = "rsa-raw";
+			mechanism = AsymMech::RSA;
 			isRSA = true;
 			break;
 		case CKM_RSA_PKCS_OAEP:
 			if (pMechanism->pParameter == NULL_PTR ||
 			    pMechanism->ulParameterLen != sizeof(CK_RSA_PKCS_OAEP_PARAMS))
 			{
-				DEBUG_MSG("pParameter must be of type CK_RSA_PKCS_OAEP_PARAMS");
+				ERROR_MSG("pParameter must be of type CK_RSA_PKCS_OAEP_PARAMS");
 				return CKR_ARGUMENTS_BAD;
 			}
 			if (CK_RSA_PKCS_OAEP_PARAMS_PTR(pMechanism->pParameter)->hashAlg != CKM_SHA_1)
 			{
-				DEBUG_MSG("hashAlg must be CKM_SHA_1");
+				ERROR_MSG("hashAlg must be CKM_SHA_1");
 				return CKR_ARGUMENTS_BAD;
 			}
 			if (CK_RSA_PKCS_OAEP_PARAMS_PTR(pMechanism->pParameter)->mgf != CKG_MGF1_SHA1)
 			{
-				DEBUG_MSG("mgf must be CKG_MGF1_SHA1");
+				ERROR_MSG("mgf must be CKG_MGF1_SHA1");
 				return CKR_ARGUMENTS_BAD;
 			}
 
-			mechanism = "rsa-pkcs-oaep";
+			mechanism = AsymMech::RSA_PKCS_OAEP;
 			isRSA = true;
 			break;
 		default:
@@ -1905,7 +1966,7 @@ CK_RV SoftHSM::AsymEncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMec
 	PublicKey* publicKey = NULL;
 	if (isRSA)
 	{
-		asymCrypto = CryptoFactory::i()->getAsymmetricAlgorithm("rsa");
+		asymCrypto = CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::RSA);
 		if (asymCrypto == NULL) return CKR_MECHANISM_INVALID;
 
 		publicKey = asymCrypto->newPublicKey();
@@ -2008,9 +2069,9 @@ static CK_RV SymEncrypt(Session* session, CK_BYTE_PTR pData, CK_ULONG ulDataLen,
 static CK_RV AsymEncrypt(Session* session, CK_BYTE_PTR pData, CK_ULONG ulDataLen, CK_BYTE_PTR pEncryptedData, CK_ULONG_PTR pulEncryptedDataLen)
 {
 	AsymmetricAlgorithm* asymCrypto = session->getAsymmetricCryptoOp();
-	const char *mechanism = session->getMechanism();
+	AsymMech::Type mechanism = session->getMechanism();
 	PublicKey* publicKey = session->getPublicKey();
-	if (asymCrypto == NULL || mechanism == NULL || !session->getAllowSinglePartOp() || publicKey == NULL)
+	if (asymCrypto == NULL || !session->getAllowSinglePartOp() || publicKey == NULL)
 	{
 		session->resetOp();
 		return CKR_OPERATION_NOT_INITIALIZED;
@@ -2038,7 +2099,7 @@ static CK_RV AsymEncrypt(Session* session, CK_BYTE_PTR pData, CK_ULONG ulDataLen
 
 	// PKCS #11 Mechanisms v2.30: Cryptoki Draft 7 page 32
 	// We must allow input length <= k and therfore need to prepend the data with zeroes.
-	if (strcmp(mechanism,"rsa-raw") == 0) {
+	if (mechanism == AsymMech::RSA) {
 		data.wipe(size-ulDataLen);
 	}
 
@@ -2139,24 +2200,37 @@ CK_RV SoftHSM::SymDecryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 	OSObject *key = (OSObject *)handleManager->getObject(hKey);
 	if (key == NULL_PTR || !key->isValid()) return CKR_OBJECT_HANDLE_INVALID;
 
+	CK_BBOOL isOnToken = key->getAttribute(CKA_TOKEN)->getBooleanValue();
+	CK_BBOOL isPrivate = key->getAttribute(CKA_PRIVATE)->getBooleanValue();
+
+	// Check read user credentials
+	CK_RV rv = haveRead(session->getState(), isOnToken, isPrivate);
+	if (rv != CKR_OK)
+	{
+		if (rv == CKR_USER_NOT_LOGGED_IN)
+			INFO_MSG("User is not authorized");
+
+		return rv;
+	}
+
 	// Check if key can be used for decryption
         if (!key->attributeExists(CKA_DECRYPT) || key->getAttribute(CKA_DECRYPT)->getBooleanValue() == false)
 		return CKR_KEY_FUNCTION_NOT_PERMITTED;
 
 	// Get the symmetric algorithm matching the mechanism
-	SymmetricAlgorithm* cipher = NULL;
-	std::string mode;
+	SymAlgo::Type algo = SymAlgo::Unknown;
+	SymMode::Type mode = SymMode::Unknown;
 	ByteString iv;
 	size_t bb = 8;
 	switch(pMechanism->mechanism) {
 		case CKM_DES_ECB:
-			cipher = CryptoFactory::i()->getSymmetricAlgorithm("des");
-			mode = "ecb";
+			algo = SymAlgo::DES;
+			mode = SymMode::ECB;
 			bb = 7;
 			break;
 		case CKM_DES_CBC:
-			cipher = CryptoFactory::i()->getSymmetricAlgorithm("des");
-			mode = "cbc";
+			algo = SymAlgo::DES;
+			mode = SymMode::CBC;
 			if (pMechanism->pParameter == NULL_PTR ||
 			    pMechanism->ulParameterLen == 0)
 			{
@@ -2168,13 +2242,13 @@ CK_RV SoftHSM::SymDecryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 			bb = 7;
 			break;
 		case CKM_DES3_ECB:
-			cipher = CryptoFactory::i()->getSymmetricAlgorithm("3des");
-			mode = "ecb";
+			algo = SymAlgo::DES3;
+			mode = SymMode::ECB;
 			bb = 7;
 			break;
 		case CKM_DES3_CBC:
-			cipher = CryptoFactory::i()->getSymmetricAlgorithm("3des");
-			mode = "cbc";
+			algo = SymAlgo::DES3;
+			mode = SymMode::CBC;
 			if (pMechanism->pParameter == NULL_PTR ||
 			    pMechanism->ulParameterLen == 0)
 			{
@@ -2186,12 +2260,12 @@ CK_RV SoftHSM::SymDecryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 			bb = 7;
 			break;
 		case CKM_AES_ECB:
-			cipher = CryptoFactory::i()->getSymmetricAlgorithm("aes");
-			mode = "ecb";
+			algo = SymAlgo::AES;
+			mode = SymMode::ECB;
 			break;
 		case CKM_AES_CBC:
-			cipher = CryptoFactory::i()->getSymmetricAlgorithm("aes");
-			mode = "cbc";
+			algo = SymAlgo::AES;
+			mode = SymMode::CBC;
 			if (pMechanism->pParameter == NULL_PTR ||
 			    pMechanism->ulParameterLen == 0)
 			{
@@ -2204,6 +2278,7 @@ CK_RV SoftHSM::SymDecryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 		default:
 			return CKR_MECHANISM_INVALID;
 	}
+	SymmetricAlgorithm* cipher = CryptoFactory::i()->getSymmetricAlgorithm(algo);
 	if (cipher == NULL) return CKR_MECHANISM_INVALID;
 
 	SymmetricKey* secretkey = new SymmetricKey();
@@ -2262,20 +2337,33 @@ CK_RV SoftHSM::AsymDecryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMec
 	OSObject *key = (OSObject *)handleManager->getObject(hKey);
 	if (key == NULL_PTR || !key->isValid()) return CKR_OBJECT_HANDLE_INVALID;
 
+	CK_BBOOL isOnToken = key->getAttribute(CKA_TOKEN)->getBooleanValue();
+	CK_BBOOL isPrivate = key->getAttribute(CKA_PRIVATE)->getBooleanValue();
+
+	// Check read user credentials
+	CK_RV rv = haveRead(session->getState(), isOnToken, isPrivate);
+	if (rv != CKR_OK)
+	{
+		if (rv == CKR_USER_NOT_LOGGED_IN)
+			INFO_MSG("User is not authorized");
+
+		return rv;
+	}
+
 	// Check if key can be used for decryption
         if (!key->attributeExists(CKA_DECRYPT) || key->getAttribute(CKA_DECRYPT)->getBooleanValue() == false)
 		return CKR_KEY_FUNCTION_NOT_PERMITTED;
 
 	// Get the asymmetric algorithm matching the mechanism
-	const char *mechanism;
+	AsymMech::Type mechanism = AsymMech::Unknown;
 	bool isRSA = false;
 	switch(pMechanism->mechanism) {
 		case CKM_RSA_PKCS:
-			mechanism = "rsa-pkcs";
+			mechanism = AsymMech::RSA_PKCS;
 			isRSA = true;
 			break;
 		case CKM_RSA_X_509:
-			mechanism = "rsa-raw";
+			mechanism = AsymMech::RSA;
 			isRSA = true;
 			break;
 		case CKM_RSA_PKCS_OAEP:
@@ -2296,7 +2384,7 @@ CK_RV SoftHSM::AsymDecryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMec
 				return CKR_ARGUMENTS_BAD;
 			}
 
-			mechanism = "rsa-pkcs-oaep";
+			mechanism = AsymMech::RSA_PKCS_OAEP;
 			isRSA = true;
 			break;
 		default:
@@ -2307,7 +2395,7 @@ CK_RV SoftHSM::AsymDecryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMec
 	PrivateKey* privateKey = NULL;
 	if (isRSA)
 	{
-		asymCrypto = CryptoFactory::i()->getAsymmetricAlgorithm("rsa");
+		asymCrypto = CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::RSA);
 		if (asymCrypto == NULL) return CKR_MECHANISM_INVALID;
 
 		privateKey = asymCrypto->newPrivateKey();
@@ -2411,9 +2499,9 @@ static CK_RV SymDecrypt(Session* session, CK_BYTE_PTR pEncryptedData, CK_ULONG u
 static CK_RV AsymDecrypt(Session* session, CK_BYTE_PTR pEncryptedData, CK_ULONG ulEncryptedDataLen, CK_BYTE_PTR pData, CK_ULONG_PTR pulDataLen)
 {
 	AsymmetricAlgorithm* asymCrypto = session->getAsymmetricCryptoOp();
-	const char *mechanism = session->getMechanism();
+	AsymMech::Type mechanism = session->getMechanism();
 	PrivateKey* privateKey = session->getPrivateKey();
-	if (asymCrypto == NULL || mechanism == NULL || !session->getAllowSinglePartOp() || privateKey == NULL)
+	if (asymCrypto == NULL || !session->getAllowSinglePartOp() || privateKey == NULL)
 	{
 		session->resetOp();
 		return CKR_OPERATION_NOT_INITIALIZED;
@@ -2527,34 +2615,35 @@ CK_RV SoftHSM::C_DigestInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechan
 	if (session->getOpType() != SESSION_OP_NONE) return CKR_OPERATION_ACTIVE;
 
 	// Get the mechanism
-	HashAlgorithm* hash = NULL;
+	HashAlgo::Type algo = HashAlgo::Unknown;
 	switch(pMechanism->mechanism) {
 		case CKM_MD5:
-			hash = CryptoFactory::i()->getHashAlgorithm("md5");
+			algo = HashAlgo::MD5;
 			break;
 		case CKM_SHA_1:
-			hash = CryptoFactory::i()->getHashAlgorithm("sha1");
+			algo = HashAlgo::SHA1;
 			break;
 		case CKM_SHA224:
-			hash = CryptoFactory::i()->getHashAlgorithm("sha224");
+			algo = HashAlgo::SHA224;
 			break;
 		case CKM_SHA256:
-			hash = CryptoFactory::i()->getHashAlgorithm("sha256");
+			algo = HashAlgo::SHA256;
 			break;
 		case CKM_SHA384:
-			hash = CryptoFactory::i()->getHashAlgorithm("sha384");
+			algo = HashAlgo::SHA384;
 			break;
 		case CKM_SHA512:
-			hash = CryptoFactory::i()->getHashAlgorithm("sha512");
+			algo = HashAlgo::SHA512;
 			break;
 #ifdef WITH_GOST
 		case CKM_GOSTR3411:
-			hash = CryptoFactory::i()->getHashAlgorithm("gost");
+			algo = HashAlgo::GOST;
 			break;
 #endif
 		default:
 			return CKR_MECHANISM_INVALID;
 	}
+	HashAlgorithm* hash = CryptoFactory::i()->getHashAlgorithm(algo);
 	if (hash == NULL) return CKR_MECHANISM_INVALID;
 
 	// Initialize hashing
@@ -2690,7 +2779,9 @@ CK_RV SoftHSM::C_DigestKey(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject)
 		if (rv == CKR_USER_NOT_LOGGED_IN)
 			INFO_MSG("User is not authorized");
 
-		return rv;
+		// CKR_USER_NOT_LOGGED_IN is not a valid return code for this function,
+		// so we use CKR_GENERAL_ERROR.
+		return CKR_GENERAL_ERROR;
 	}
 
 	// Parano...
@@ -2818,39 +2909,53 @@ CK_RV SoftHSM::MacSignInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechani
 	OSObject *key = (OSObject *)handleManager->getObject(hKey);
 	if (key == NULL_PTR || !key->isValid()) return CKR_OBJECT_HANDLE_INVALID;
 
+	CK_BBOOL isOnToken = key->getAttribute(CKA_TOKEN)->getBooleanValue();
+	CK_BBOOL isPrivate = key->getAttribute(CKA_PRIVATE)->getBooleanValue();
+
+	// Check read user credentials
+	CK_RV rv = haveRead(session->getState(), isOnToken, isPrivate);
+	if (rv != CKR_OK)
+	{
+		if (rv == CKR_USER_NOT_LOGGED_IN)
+			INFO_MSG("User is not authorized");
+
+		return rv;
+	}
+
 	// Check if key can be used for signing
         if (!key->attributeExists(CKA_SIGN) || key->getAttribute(CKA_SIGN)->getBooleanValue() == false)
 		return CKR_KEY_FUNCTION_NOT_PERMITTED;
 
 	// Get the MAC algorithm matching the mechanism
-	MacAlgorithm* mac = NULL;
+	MacAlgo::Type algo = MacAlgo::Unknown;
 	switch(pMechanism->mechanism) {
 		case CKM_MD5_HMAC:
-			mac = CryptoFactory::i()->getMacAlgorithm("hmac-md5");
+			algo = MacAlgo::HMAC_MD5;
 			break;
 		case CKM_SHA_1_HMAC:
-			mac = CryptoFactory::i()->getMacAlgorithm("hmac-sha1");
+			algo = MacAlgo::HMAC_SHA1;
 			break;
 		case CKM_SHA224_HMAC:
-			mac = CryptoFactory::i()->getMacAlgorithm("hmac-sha224");
+			algo = MacAlgo::HMAC_SHA224;
 			break;
 		case CKM_SHA256_HMAC:
-			mac = CryptoFactory::i()->getMacAlgorithm("hmac-sha256");
+			algo = MacAlgo::HMAC_SHA256;
 			break;
 		case CKM_SHA384_HMAC:
-			mac = CryptoFactory::i()->getMacAlgorithm("hmac-sha384");
+			algo = MacAlgo::HMAC_SHA384;
 			break;
 		case CKM_SHA512_HMAC:
-			mac = CryptoFactory::i()->getMacAlgorithm("hmac-sha512");
+			algo = MacAlgo::HMAC_SHA512;
 			break;
 #ifdef WITH_GOST
 		case CKM_GOSTR3411_HMAC:
-			mac = CryptoFactory::i()->getMacAlgorithm("hmac-gost");
+			algo = MacAlgo::HMAC_GOST;
 			break;
 #endif
 		default:
 			return CKR_MECHANISM_INVALID;
 	}
+	MacAlgorithm* mac = CryptoFactory::i()->getMacAlgorithm(algo);
 	if (mac == NULL) return CKR_MECHANISM_INVALID;
 
 	SymmetricKey* privkey = new SymmetricKey();
@@ -2906,101 +3011,207 @@ CK_RV SoftHSM::AsymSignInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechan
 	OSObject *key = (OSObject *)handleManager->getObject(hKey);
 	if (key == NULL_PTR || !key->isValid()) return CKR_OBJECT_HANDLE_INVALID;
 
+	CK_BBOOL isOnToken = key->getAttribute(CKA_TOKEN)->getBooleanValue();
+	CK_BBOOL isPrivate = key->getAttribute(CKA_PRIVATE)->getBooleanValue();
+
+	// Check read user credentials
+	CK_RV rv = haveRead(session->getState(), isOnToken, isPrivate);
+	if (rv != CKR_OK)
+	{
+		if (rv == CKR_USER_NOT_LOGGED_IN)
+			INFO_MSG("User is not authorized");
+
+		return rv;
+	}
+
 	// Check if key can be used for signing
         if (!key->attributeExists(CKA_SIGN) || key->getAttribute(CKA_SIGN)->getBooleanValue() == false)
 		return CKR_KEY_FUNCTION_NOT_PERMITTED;
 
 	// Get the asymmetric algorithm matching the mechanism
-	const char *mechanism;
+	AsymMech::Type mechanism = AsymMech::Unknown;
+	void* param = NULL;
+	size_t paramLen = 0;
+	RSA_PKCS_PSS_PARAMS pssParam;
 	bool bAllowMultiPartOp;
 	bool isRSA = false;
 	bool isDSA = false;
 	bool isECDSA = false;
 	switch(pMechanism->mechanism) {
 		case CKM_RSA_PKCS:
-			mechanism = "rsa-pkcs";
+			mechanism = AsymMech::RSA_PKCS;
 			bAllowMultiPartOp = false;
 			isRSA = true;
 			break;
 		case CKM_RSA_X_509:
-			mechanism = "rsa-raw";
+			mechanism = AsymMech::RSA;
 			bAllowMultiPartOp = false;
 			isRSA = true;
 			break;
 		case CKM_MD5_RSA_PKCS:
-			mechanism = "rsa-md5-pkcs";
+			mechanism = AsymMech::RSA_MD5_PKCS;
 			bAllowMultiPartOp = true;
 			isRSA = true;
 			break;
 		case CKM_SHA1_RSA_PKCS:
-			mechanism = "rsa-sha1-pkcs";
+			mechanism = AsymMech::RSA_SHA1_PKCS;
 			bAllowMultiPartOp = true;
 			isRSA = true;
 			break;
 		case CKM_SHA224_RSA_PKCS:
-			mechanism = "rsa-sha224-pkcs";
+			mechanism = AsymMech::RSA_SHA224_PKCS;
 			bAllowMultiPartOp = true;
 			isRSA = true;
 			break;
 		case CKM_SHA256_RSA_PKCS:
-			mechanism = "rsa-sha256-pkcs";
+			mechanism = AsymMech::RSA_SHA256_PKCS;
 			bAllowMultiPartOp = true;
 			isRSA = true;
 			break;
 		case CKM_SHA384_RSA_PKCS:
-			mechanism = "rsa-sha384-pkcs";
+			mechanism = AsymMech::RSA_SHA384_PKCS;
 			bAllowMultiPartOp = true;
 			isRSA = true;
 			break;
 		case CKM_SHA512_RSA_PKCS:
-			mechanism = "rsa-sha512-pkcs";
+			mechanism = AsymMech::RSA_SHA512_PKCS;
+			bAllowMultiPartOp = true;
+			isRSA = true;
+			break;
+		case CKM_SHA1_RSA_PKCS_PSS:
+			if (pMechanism->pParameter == NULL_PTR ||
+			    pMechanism->ulParameterLen != sizeof(CK_RSA_PKCS_PSS_PARAMS) ||
+			    CK_RSA_PKCS_PSS_PARAMS_PTR(pMechanism->pParameter)->hashAlg != CKM_SHA_1 ||
+			    CK_RSA_PKCS_PSS_PARAMS_PTR(pMechanism->pParameter)->mgf != CKG_MGF1_SHA1)
+			{
+				ERROR_MSG("Invalid parameters");
+				return CKR_ARGUMENTS_BAD;
+			}
+			mechanism = AsymMech::RSA_SHA1_PKCS_PSS;
+			pssParam.hashAlg = HashAlgo::SHA1;
+			pssParam.mgf = AsymRSAMGF::MGF1_SHA1;
+			pssParam.sLen = CK_RSA_PKCS_PSS_PARAMS_PTR(pMechanism->pParameter)->sLen;
+			param = &pssParam;
+			paramLen = sizeof(pssParam);
+			bAllowMultiPartOp = true;
+			isRSA = true;
+			break;
+		case CKM_SHA224_RSA_PKCS_PSS:
+			if (pMechanism->pParameter == NULL_PTR ||
+			    pMechanism->ulParameterLen != sizeof(CK_RSA_PKCS_PSS_PARAMS) ||
+			    CK_RSA_PKCS_PSS_PARAMS_PTR(pMechanism->pParameter)->hashAlg != CKM_SHA224 ||
+			    CK_RSA_PKCS_PSS_PARAMS_PTR(pMechanism->pParameter)->mgf != CKG_MGF1_SHA224)
+			{
+				ERROR_MSG("Invalid parameters");
+				return CKR_ARGUMENTS_BAD;
+			}
+			mechanism = AsymMech::RSA_SHA224_PKCS_PSS;
+			pssParam.hashAlg = HashAlgo::SHA224;
+			pssParam.mgf = AsymRSAMGF::MGF1_SHA224;
+			pssParam.sLen = CK_RSA_PKCS_PSS_PARAMS_PTR(pMechanism->pParameter)->sLen;
+			param = &pssParam;
+			paramLen = sizeof(pssParam);
+			bAllowMultiPartOp = true;
+			isRSA = true;
+			break;
+		case CKM_SHA256_RSA_PKCS_PSS:
+			if (pMechanism->pParameter == NULL_PTR ||
+			    pMechanism->ulParameterLen != sizeof(CK_RSA_PKCS_PSS_PARAMS) ||
+			    CK_RSA_PKCS_PSS_PARAMS_PTR(pMechanism->pParameter)->hashAlg != CKM_SHA256 ||
+			    CK_RSA_PKCS_PSS_PARAMS_PTR(pMechanism->pParameter)->mgf != CKG_MGF1_SHA256)
+			{
+				ERROR_MSG("Invalid parameters");
+				return CKR_ARGUMENTS_BAD;
+			}
+			mechanism = AsymMech::RSA_SHA256_PKCS_PSS;
+			pssParam.hashAlg = HashAlgo::SHA256;
+			pssParam.mgf = AsymRSAMGF::MGF1_SHA256;
+			pssParam.sLen = CK_RSA_PKCS_PSS_PARAMS_PTR(pMechanism->pParameter)->sLen;
+			param = &pssParam;
+			paramLen = sizeof(pssParam);
+			bAllowMultiPartOp = true;
+			isRSA = true;
+			break;
+		case CKM_SHA384_RSA_PKCS_PSS:
+			if (pMechanism->pParameter == NULL_PTR ||
+			    pMechanism->ulParameterLen != sizeof(CK_RSA_PKCS_PSS_PARAMS) ||
+			    CK_RSA_PKCS_PSS_PARAMS_PTR(pMechanism->pParameter)->hashAlg != CKM_SHA384 ||
+			    CK_RSA_PKCS_PSS_PARAMS_PTR(pMechanism->pParameter)->mgf != CKG_MGF1_SHA384)
+			{
+				ERROR_MSG("Invalid parameters");
+				return CKR_ARGUMENTS_BAD;
+			}
+			mechanism = AsymMech::RSA_SHA384_PKCS_PSS;
+			pssParam.hashAlg = HashAlgo::SHA384;
+			pssParam.mgf = AsymRSAMGF::MGF1_SHA384;
+			pssParam.sLen = CK_RSA_PKCS_PSS_PARAMS_PTR(pMechanism->pParameter)->sLen;
+			param = &pssParam;
+			paramLen = sizeof(pssParam);
+			bAllowMultiPartOp = true;
+			isRSA = true;
+			break;
+		case CKM_SHA512_RSA_PKCS_PSS:
+			if (pMechanism->pParameter == NULL_PTR ||
+			    pMechanism->ulParameterLen != sizeof(CK_RSA_PKCS_PSS_PARAMS) ||
+			    CK_RSA_PKCS_PSS_PARAMS_PTR(pMechanism->pParameter)->hashAlg != CKM_SHA512 ||
+			    CK_RSA_PKCS_PSS_PARAMS_PTR(pMechanism->pParameter)->mgf != CKG_MGF1_SHA512)
+			{
+				ERROR_MSG("Invalid parameters");
+				return CKR_ARGUMENTS_BAD;
+			}
+			mechanism = AsymMech::RSA_SHA512_PKCS_PSS;
+			pssParam.hashAlg = HashAlgo::SHA512;
+			pssParam.mgf = AsymRSAMGF::MGF1_SHA512;
+			pssParam.sLen = CK_RSA_PKCS_PSS_PARAMS_PTR(pMechanism->pParameter)->sLen;
+			param = &pssParam;
+			paramLen = sizeof(pssParam);
 			bAllowMultiPartOp = true;
 			isRSA = true;
 			break;
 		case CKM_DSA:
-			mechanism = "dsa";
+			mechanism = AsymMech::DSA;
 			bAllowMultiPartOp = false;
 			isDSA = true;
 			break;
 		case CKM_DSA_SHA1:
-			mechanism = "dsa-sha1";
+			mechanism = AsymMech::DSA_SHA1;
 			bAllowMultiPartOp = true;
 			isDSA = true;
 			break;
 		case CKM_DSA_SHA224:
-			mechanism = "dsa-sha224";
+			mechanism = AsymMech::DSA_SHA224;
 			bAllowMultiPartOp = true;
 			isDSA = true;
 			break;
 		case CKM_DSA_SHA256:
-			mechanism = "dsa-sha256";
+			mechanism = AsymMech::DSA_SHA256;
 			bAllowMultiPartOp = true;
 			isDSA = true;
 			break;
 		case CKM_DSA_SHA384:
-			mechanism = "dsa-sha384";
+			mechanism = AsymMech::DSA_SHA384;
 			bAllowMultiPartOp = true;
 			isDSA = true;
 			break;
 		case CKM_DSA_SHA512:
-			mechanism = "dsa-sha512";
+			mechanism = AsymMech::DSA_SHA512;
 			bAllowMultiPartOp = true;
 			isDSA = true;
 			break;
 #ifdef WITH_ECC
 		case CKM_ECDSA:
-			mechanism = "ecdsa";
+			mechanism = AsymMech::ECDSA;
 			bAllowMultiPartOp = false;
 			isECDSA = true;
 			break;
 #endif
 #ifdef WITH_GOST
 		case CKM_GOSTR3410:
-			mechanism = "gost";
+			mechanism = AsymMech::GOST;
 			bAllowMultiPartOp = false;
 			break;
 		case CKM_GOSTR3410_WITH_GOSTR3411:
-			mechanism = "gost-gost";
+			mechanism = AsymMech::GOST_GOST;
 			bAllowMultiPartOp = true;
 			break;
 #endif
@@ -3012,7 +3223,7 @@ CK_RV SoftHSM::AsymSignInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechan
 	PrivateKey* privateKey = NULL;
 	if (isRSA)
 	{
-		asymCrypto = CryptoFactory::i()->getAsymmetricAlgorithm("rsa");
+		asymCrypto = CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::RSA);
 		if (asymCrypto == NULL) return CKR_MECHANISM_INVALID;
 
 		privateKey = asymCrypto->newPrivateKey();
@@ -3031,7 +3242,7 @@ CK_RV SoftHSM::AsymSignInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechan
 	}
 	else if (isDSA)
 	{
-		asymCrypto = CryptoFactory::i()->getAsymmetricAlgorithm("dsa");
+		asymCrypto = CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::DSA);
 		if (asymCrypto == NULL) return CKR_MECHANISM_INVALID;
 
 		privateKey = asymCrypto->newPrivateKey();
@@ -3051,7 +3262,7 @@ CK_RV SoftHSM::AsymSignInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechan
 #ifdef WITH_ECC
 	else if (isECDSA)
 	{
-		asymCrypto = CryptoFactory::i()->getAsymmetricAlgorithm("ecdsa");
+		asymCrypto = CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::ECDSA);
 		if (asymCrypto == NULL) return CKR_MECHANISM_INVALID;
 
 		privateKey = asymCrypto->newPrivateKey();
@@ -3072,7 +3283,7 @@ CK_RV SoftHSM::AsymSignInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechan
 	else
 	{
 #ifdef WITH_GOST
-		asymCrypto = CryptoFactory::i()->getAsymmetricAlgorithm("gost");
+		asymCrypto = CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::GOST);
 		if (asymCrypto == NULL) return CKR_MECHANISM_INVALID;
 
 		privateKey = asymCrypto->newPrivateKey();
@@ -3094,7 +3305,7 @@ CK_RV SoftHSM::AsymSignInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechan
         }
 
 	// Initialize signing
-	if (bAllowMultiPartOp && !asymCrypto->signInit(privateKey,mechanism))
+	if (bAllowMultiPartOp && !asymCrypto->signInit(privateKey,mechanism,param,paramLen))
 	{
 		asymCrypto->recyclePrivateKey(privateKey);
 		CryptoFactory::i()->recycleAsymmetricAlgorithm(asymCrypto);
@@ -3104,6 +3315,7 @@ CK_RV SoftHSM::AsymSignInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechan
 	session->setOpType(SESSION_OP_SIGN);
 	session->setAsymmetricCryptoOp(asymCrypto);
 	session->setMechanism(mechanism);
+	session->setParameters(param, paramLen);
 	session->setAllowMultiPartOp(bAllowMultiPartOp);
 	session->setAllowSinglePartOp(true);
 	session->setPrivateKey(privateKey);
@@ -3181,9 +3393,11 @@ static CK_RV MacSign(Session* session, CK_BYTE_PTR pData, CK_ULONG ulDataLen, CK
 static CK_RV AsymSign(Session* session, CK_BYTE_PTR pData, CK_ULONG ulDataLen, CK_BYTE_PTR pSignature, CK_ULONG_PTR pulSignatureLen)
 {
 	AsymmetricAlgorithm* asymCrypto = session->getAsymmetricCryptoOp();
-	const char *mechanism = session->getMechanism();
+	AsymMech::Type mechanism = session->getMechanism();
 	PrivateKey* privateKey = session->getPrivateKey();
-	if (asymCrypto == NULL || mechanism == NULL || !session->getAllowSinglePartOp() || privateKey == NULL)
+	size_t paramLen;
+	void* param = session->getParameters(paramLen);
+	if (asymCrypto == NULL || !session->getAllowSinglePartOp() || privateKey == NULL)
 	{
 		session->resetOp();
 		return CKR_OPERATION_NOT_INITIALIZED;
@@ -3209,7 +3423,7 @@ static CK_RV AsymSign(Session* session, CK_BYTE_PTR pData, CK_ULONG ulDataLen, C
 
 	// PKCS #11 Mechanisms v2.30: Cryptoki Draft 7 page 32
 	// We must allow input length <= k and therfore need to prepend the data with zeroes.
-	if (strcmp(mechanism,"rsa-raw") == 0) {
+	if (mechanism == AsymMech::RSA) {
 		data.wipe(size-ulDataLen);
 	}
 
@@ -3226,7 +3440,7 @@ static CK_RV AsymSign(Session* session, CK_BYTE_PTR pData, CK_ULONG ulDataLen, C
 			return CKR_GENERAL_ERROR;
 		}
 	}
-	else if (!asymCrypto->sign(privateKey,data,signature,mechanism))
+	else if (!asymCrypto->sign(privateKey,data,signature,mechanism,param,paramLen))
 	{
 		session->resetOp();
 		return CKR_GENERAL_ERROR;
@@ -3504,39 +3718,53 @@ CK_RV SoftHSM::MacVerifyInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMecha
 	OSObject *key = (OSObject *)handleManager->getObject(hKey);
 	if (key == NULL_PTR || !key->isValid()) return CKR_OBJECT_HANDLE_INVALID;
 
+	CK_BBOOL isOnToken = key->getAttribute(CKA_TOKEN)->getBooleanValue();
+	CK_BBOOL isPrivate = key->getAttribute(CKA_PRIVATE)->getBooleanValue();
+
+	// Check read user credentials
+	CK_RV rv = haveRead(session->getState(), isOnToken, isPrivate);
+	if (rv != CKR_OK)
+	{
+		if (rv == CKR_USER_NOT_LOGGED_IN)
+			INFO_MSG("User is not authorized");
+
+		return rv;
+	}
+
 	// Check if key can be used for verifying
         if (!key->attributeExists(CKA_VERIFY) || key->getAttribute(CKA_VERIFY)->getBooleanValue() == false)
 		return CKR_KEY_FUNCTION_NOT_PERMITTED;
 
 	// Get the MAC algorithm matching the mechanism
-	MacAlgorithm* mac = NULL;
+	MacAlgo::Type algo = MacAlgo::Unknown;
 	switch(pMechanism->mechanism) {
 		case CKM_MD5_HMAC:
-			mac = CryptoFactory::i()->getMacAlgorithm("hmac-md5");
+			algo = MacAlgo::HMAC_MD5;
 			break;
 		case CKM_SHA_1_HMAC:
-			mac = CryptoFactory::i()->getMacAlgorithm("hmac-sha1");
+			algo = MacAlgo::HMAC_SHA1;
 			break;
 		case CKM_SHA224_HMAC:
-			mac = CryptoFactory::i()->getMacAlgorithm("hmac-sha224");
+			algo = MacAlgo::HMAC_SHA224;
 			break;
 		case CKM_SHA256_HMAC:
-			mac = CryptoFactory::i()->getMacAlgorithm("hmac-sha256");
+			algo = MacAlgo::HMAC_SHA256;
 			break;
 		case CKM_SHA384_HMAC:
-			mac = CryptoFactory::i()->getMacAlgorithm("hmac-sha384");
+			algo = MacAlgo::HMAC_SHA384;
 			break;
 		case CKM_SHA512_HMAC:
-			mac = CryptoFactory::i()->getMacAlgorithm("hmac-sha512");
+			algo = MacAlgo::HMAC_SHA512;
 			break;
 #ifdef WITH_GOST
 		case CKM_GOSTR3411_HMAC:
-			mac = CryptoFactory::i()->getMacAlgorithm("hmac-gost");
+			algo = MacAlgo::HMAC_GOST;
 			break;
 #endif
 		default:
 			return CKR_MECHANISM_INVALID;
 	}
+	MacAlgorithm* mac = CryptoFactory::i()->getMacAlgorithm(algo);
 	if (mac == NULL) return CKR_MECHANISM_INVALID;
 
 	SymmetricKey* pubkey = new SymmetricKey();
@@ -3592,101 +3820,207 @@ CK_RV SoftHSM::AsymVerifyInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 	OSObject *key = (OSObject *)handleManager->getObject(hKey);
 	if (key == NULL_PTR || !key->isValid()) return CKR_OBJECT_HANDLE_INVALID;
 
+	CK_BBOOL isOnToken = key->getAttribute(CKA_TOKEN)->getBooleanValue();
+	CK_BBOOL isPrivate = key->getAttribute(CKA_PRIVATE)->getBooleanValue();
+
+	// Check read user credentials
+	CK_RV rv = haveRead(session->getState(), isOnToken, isPrivate);
+	if (rv != CKR_OK)
+	{
+		if (rv == CKR_USER_NOT_LOGGED_IN)
+			INFO_MSG("User is not authorized");
+
+		return rv;
+	}
+
 	// Check if key can be used for verifying
         if (!key->attributeExists(CKA_VERIFY) || key->getAttribute(CKA_VERIFY)->getBooleanValue() == false)
 		return CKR_KEY_FUNCTION_NOT_PERMITTED;
 
 	// Get the asymmetric algorithm matching the mechanism
-	const char *mechanism;
+	AsymMech::Type mechanism = AsymMech::Unknown;
+	void* param = NULL;
+	size_t paramLen = 0;
+	RSA_PKCS_PSS_PARAMS pssParam;
 	bool bAllowMultiPartOp;
 	bool isRSA = false;
 	bool isDSA = false;
 	bool isECDSA = false;
 	switch(pMechanism->mechanism) {
 		case CKM_RSA_PKCS:
-			mechanism = "rsa-pkcs";
+			mechanism = AsymMech::RSA_PKCS;
 			bAllowMultiPartOp = false;
 			isRSA = true;
 			break;
 		case CKM_RSA_X_509:
-			mechanism = "rsa-raw";
+			mechanism = AsymMech::RSA;
 			bAllowMultiPartOp = false;
 			isRSA = true;
 			break;
 		case CKM_MD5_RSA_PKCS:
-			mechanism = "rsa-md5-pkcs";
+			mechanism = AsymMech::RSA_MD5_PKCS;
 			bAllowMultiPartOp = true;
 			isRSA = true;
 			break;
 		case CKM_SHA1_RSA_PKCS:
-			mechanism = "rsa-sha1-pkcs";
+			mechanism = AsymMech::RSA_SHA1_PKCS;
 			bAllowMultiPartOp = true;
 			isRSA = true;
 			break;
 		case CKM_SHA224_RSA_PKCS:
-			mechanism = "rsa-sha224-pkcs";
+			mechanism = AsymMech::RSA_SHA224_PKCS;
 			bAllowMultiPartOp = true;
 			isRSA = true;
 			break;
 		case CKM_SHA256_RSA_PKCS:
-			mechanism = "rsa-sha256-pkcs";
+			mechanism = AsymMech::RSA_SHA256_PKCS;
 			bAllowMultiPartOp = true;
 			isRSA = true;
 			break;
 		case CKM_SHA384_RSA_PKCS:
-			mechanism = "rsa-sha384-pkcs";
+			mechanism = AsymMech::RSA_SHA384_PKCS;
 			bAllowMultiPartOp = true;
 			isRSA = true;
 			break;
 		case CKM_SHA512_RSA_PKCS:
-			mechanism = "rsa-sha512-pkcs";
+			mechanism = AsymMech::RSA_SHA512_PKCS;
+			bAllowMultiPartOp = true;
+			isRSA = true;
+			break;
+		case CKM_SHA1_RSA_PKCS_PSS:
+			if (pMechanism->pParameter == NULL_PTR ||
+			    pMechanism->ulParameterLen != sizeof(CK_RSA_PKCS_PSS_PARAMS) ||
+			    CK_RSA_PKCS_PSS_PARAMS_PTR(pMechanism->pParameter)->hashAlg != CKM_SHA_1 ||
+			    CK_RSA_PKCS_PSS_PARAMS_PTR(pMechanism->pParameter)->mgf != CKG_MGF1_SHA1)
+			{
+				ERROR_MSG("Invalid parameters");
+				return CKR_ARGUMENTS_BAD;
+			}
+			mechanism = AsymMech::RSA_SHA1_PKCS_PSS;
+			pssParam.hashAlg = HashAlgo::SHA1;
+			pssParam.mgf = AsymRSAMGF::MGF1_SHA1;
+			pssParam.sLen = CK_RSA_PKCS_PSS_PARAMS_PTR(pMechanism->pParameter)->sLen;
+			param = &pssParam;
+			paramLen = sizeof(pssParam);
+			bAllowMultiPartOp = true;
+			isRSA = true;
+			break;
+		case CKM_SHA224_RSA_PKCS_PSS:
+			if (pMechanism->pParameter == NULL_PTR ||
+			    pMechanism->ulParameterLen != sizeof(CK_RSA_PKCS_PSS_PARAMS) ||
+			    CK_RSA_PKCS_PSS_PARAMS_PTR(pMechanism->pParameter)->hashAlg != CKM_SHA224 ||
+			    CK_RSA_PKCS_PSS_PARAMS_PTR(pMechanism->pParameter)->mgf != CKG_MGF1_SHA224)
+			{
+				ERROR_MSG("Invalid parameters");
+				return CKR_ARGUMENTS_BAD;
+			}
+			mechanism = AsymMech::RSA_SHA224_PKCS_PSS;
+			pssParam.hashAlg = HashAlgo::SHA224;
+			pssParam.mgf = AsymRSAMGF::MGF1_SHA224;
+			pssParam.sLen = CK_RSA_PKCS_PSS_PARAMS_PTR(pMechanism->pParameter)->sLen;
+			param = &pssParam;
+			paramLen = sizeof(pssParam);
+			bAllowMultiPartOp = true;
+			isRSA = true;
+			break;
+		case CKM_SHA256_RSA_PKCS_PSS:
+			if (pMechanism->pParameter == NULL_PTR ||
+			    pMechanism->ulParameterLen != sizeof(CK_RSA_PKCS_PSS_PARAMS) ||
+			    CK_RSA_PKCS_PSS_PARAMS_PTR(pMechanism->pParameter)->hashAlg != CKM_SHA256 ||
+			    CK_RSA_PKCS_PSS_PARAMS_PTR(pMechanism->pParameter)->mgf != CKG_MGF1_SHA256)
+			{
+				ERROR_MSG("Invalid parameters");
+				return CKR_ARGUMENTS_BAD;
+			}
+			mechanism = AsymMech::RSA_SHA256_PKCS_PSS;
+			pssParam.hashAlg = HashAlgo::SHA256;
+			pssParam.mgf = AsymRSAMGF::MGF1_SHA256;
+			pssParam.sLen = CK_RSA_PKCS_PSS_PARAMS_PTR(pMechanism->pParameter)->sLen;
+			param = &pssParam;
+			paramLen = sizeof(pssParam);
+			bAllowMultiPartOp = true;
+			isRSA = true;
+			break;
+		case CKM_SHA384_RSA_PKCS_PSS:
+			if (pMechanism->pParameter == NULL_PTR ||
+			    pMechanism->ulParameterLen != sizeof(CK_RSA_PKCS_PSS_PARAMS) ||
+			    CK_RSA_PKCS_PSS_PARAMS_PTR(pMechanism->pParameter)->hashAlg != CKM_SHA384 ||
+			    CK_RSA_PKCS_PSS_PARAMS_PTR(pMechanism->pParameter)->mgf != CKG_MGF1_SHA384)
+			{
+				ERROR_MSG("Invalid parameters");
+				return CKR_ARGUMENTS_BAD;
+			}
+			mechanism = AsymMech::RSA_SHA384_PKCS_PSS;
+			pssParam.hashAlg = HashAlgo::SHA384;
+			pssParam.mgf = AsymRSAMGF::MGF1_SHA384;
+			pssParam.sLen = CK_RSA_PKCS_PSS_PARAMS_PTR(pMechanism->pParameter)->sLen;
+			param = &pssParam;
+			paramLen = sizeof(pssParam);
+			bAllowMultiPartOp = true;
+			isRSA = true;
+			break;
+		case CKM_SHA512_RSA_PKCS_PSS:
+			if (pMechanism->pParameter == NULL_PTR ||
+			    pMechanism->ulParameterLen != sizeof(CK_RSA_PKCS_PSS_PARAMS) ||
+			    CK_RSA_PKCS_PSS_PARAMS_PTR(pMechanism->pParameter)->hashAlg != CKM_SHA512 ||
+			    CK_RSA_PKCS_PSS_PARAMS_PTR(pMechanism->pParameter)->mgf != CKG_MGF1_SHA512)
+			{
+				ERROR_MSG("Invalid parameters");
+				return CKR_ARGUMENTS_BAD;
+			}
+			mechanism = AsymMech::RSA_SHA512_PKCS_PSS;
+			pssParam.hashAlg = HashAlgo::SHA512;
+			pssParam.mgf = AsymRSAMGF::MGF1_SHA512;
+			pssParam.sLen = CK_RSA_PKCS_PSS_PARAMS_PTR(pMechanism->pParameter)->sLen;
+			param = &pssParam;
+			paramLen = sizeof(pssParam);
 			bAllowMultiPartOp = true;
 			isRSA = true;
 			break;
 		case CKM_DSA:
-			mechanism = "dsa";
+			mechanism = AsymMech::DSA;
 			bAllowMultiPartOp = false;
 			isDSA = true;
 			break;
 		case CKM_DSA_SHA1:
-			mechanism = "dsa-sha1";
+			mechanism = AsymMech::DSA_SHA1;
 			bAllowMultiPartOp = true;
 			isDSA = true;
 			break;
 		case CKM_DSA_SHA224:
-			mechanism = "dsa-sha224";
+			mechanism = AsymMech::DSA_SHA224;
 			bAllowMultiPartOp = true;
 			isDSA = true;
 			break;
 		case CKM_DSA_SHA256:
-			mechanism = "dsa-sha256";
+			mechanism = AsymMech::DSA_SHA256;
 			bAllowMultiPartOp = true;
 			isDSA = true;
 			break;
 		case CKM_DSA_SHA384:
-			mechanism = "dsa-sha384";
+			mechanism = AsymMech::DSA_SHA384;
 			bAllowMultiPartOp = true;
 			isDSA = true;
 			break;
 		case CKM_DSA_SHA512:
-			mechanism = "dsa-sha512";
+			mechanism = AsymMech::DSA_SHA512;
 			bAllowMultiPartOp = true;
 			isDSA = true;
 			break;
 #ifdef WITH_ECC
 		case CKM_ECDSA:
-			mechanism = "ecdsa";
+			mechanism = AsymMech::ECDSA;
 			bAllowMultiPartOp = false;
 			isECDSA = true;
 			break;
 #endif
 #ifdef WITH_GOST
 		case CKM_GOSTR3410:
-			mechanism = "gost";
+			mechanism = AsymMech::GOST;
 			bAllowMultiPartOp = false;
 			break;
 		case CKM_GOSTR3410_WITH_GOSTR3411:
-			mechanism = "gost-gost";
+			mechanism = AsymMech::GOST_GOST;
 			bAllowMultiPartOp = true;
 			break;
 #endif
@@ -3698,7 +4032,7 @@ CK_RV SoftHSM::AsymVerifyInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 	PublicKey* publicKey = NULL;
 	if (isRSA)
 	{
-		asymCrypto = CryptoFactory::i()->getAsymmetricAlgorithm("rsa");
+		asymCrypto = CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::RSA);
 		if (asymCrypto == NULL) return CKR_MECHANISM_INVALID;
 
 		publicKey = asymCrypto->newPublicKey();
@@ -3717,7 +4051,7 @@ CK_RV SoftHSM::AsymVerifyInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 	}
 	else if (isDSA)
 	{
-		asymCrypto = CryptoFactory::i()->getAsymmetricAlgorithm("dsa");
+		asymCrypto = CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::DSA);
 		if (asymCrypto == NULL) return CKR_MECHANISM_INVALID;
 
 		publicKey = asymCrypto->newPublicKey();
@@ -3737,7 +4071,7 @@ CK_RV SoftHSM::AsymVerifyInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 #ifdef WITH_ECC
 	else if (isECDSA)
 	{
-		asymCrypto = CryptoFactory::i()->getAsymmetricAlgorithm("ecdsa");
+		asymCrypto = CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::ECDSA);
 		if (asymCrypto == NULL) return CKR_MECHANISM_INVALID;
 
 		publicKey = asymCrypto->newPublicKey();
@@ -3758,7 +4092,7 @@ CK_RV SoftHSM::AsymVerifyInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 	else
 	{
 #ifdef WITH_GOST
-		asymCrypto = CryptoFactory::i()->getAsymmetricAlgorithm("gost");
+		asymCrypto = CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::GOST);
 		if (asymCrypto == NULL) return CKR_MECHANISM_INVALID;
 
 		publicKey = asymCrypto->newPublicKey();
@@ -3780,7 +4114,7 @@ CK_RV SoftHSM::AsymVerifyInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
         }
 
 	// Initialize verifying
-	if (bAllowMultiPartOp && !asymCrypto->verifyInit(publicKey,mechanism))
+	if (bAllowMultiPartOp && !asymCrypto->verifyInit(publicKey,mechanism,param,paramLen))
 	{
 		asymCrypto->recyclePublicKey(publicKey);
 		CryptoFactory::i()->recycleAsymmetricAlgorithm(asymCrypto);
@@ -3790,6 +4124,7 @@ CK_RV SoftHSM::AsymVerifyInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 	session->setOpType(SESSION_OP_VERIFY);
 	session->setAsymmetricCryptoOp(asymCrypto);
 	session->setMechanism(mechanism);
+	session->setParameters(param, paramLen);
 	session->setAllowMultiPartOp(bAllowMultiPartOp);
 	session->setAllowSinglePartOp(true);
 	session->setPublicKey(publicKey);
@@ -3855,9 +4190,11 @@ static CK_RV MacVerify(Session* session, CK_BYTE_PTR pData, CK_ULONG ulDataLen, 
 static CK_RV AsymVerify(Session* session, CK_BYTE_PTR pData, CK_ULONG ulDataLen, CK_BYTE_PTR pSignature, CK_ULONG ulSignatureLen)
 {
 	AsymmetricAlgorithm* asymCrypto = session->getAsymmetricCryptoOp();
-	const char *mechanism = session->getMechanism();
+	AsymMech::Type mechanism = session->getMechanism();
 	PublicKey* publicKey = session->getPublicKey();
-	if (asymCrypto == NULL || mechanism == NULL || !session->getAllowSinglePartOp() || publicKey == NULL)
+	size_t paramLen;
+	void* param = session->getParameters(paramLen);
+	if (asymCrypto == NULL || !session->getAllowSinglePartOp() || publicKey == NULL)
 	{
 		session->resetOp();
 		return CKR_OPERATION_NOT_INITIALIZED;
@@ -3879,7 +4216,7 @@ static CK_RV AsymVerify(Session* session, CK_BYTE_PTR pData, CK_ULONG ulDataLen,
 
 	// PKCS #11 Mechanisms v2.30: Cryptoki Draft 7 page 32
 	// We must allow input length <= k and therfore need to prepend the data with zeroes.
-	if (strcmp(mechanism,"rsa-raw") == 0) {
+	if (mechanism == AsymMech::RSA) {
 		data.wipe(size-ulDataLen);
 	}
 
@@ -3896,7 +4233,7 @@ static CK_RV AsymVerify(Session* session, CK_BYTE_PTR pData, CK_ULONG ulDataLen,
 			return CKR_SIGNATURE_INVALID;
 		}
 	}
-	else if (!asymCrypto->verify(publicKey,data,signature,mechanism))
+	else if (!asymCrypto->verify(publicKey,data,signature,mechanism,param,paramLen))
 	{
 		session->resetOp();
 		return CKR_SIGNATURE_INVALID;
@@ -4173,7 +4510,6 @@ CK_RV SoftHSM::C_GenerateKey(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMecha
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
 
 	if (pMechanism == NULL_PTR) return CKR_ARGUMENTS_BAD;
-	if (pTemplate == NULL_PTR) return CKR_ARGUMENTS_BAD;
 	if (phKey == NULL_PTR) return CKR_ARGUMENTS_BAD;
 
 	// Get the session
@@ -4215,10 +4551,11 @@ CK_RV SoftHSM::C_GenerateKey(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMecha
 	}
 
 	// Extract information from the template that is needed to create the object.
-	CK_BBOOL isToken = CK_FALSE;
+	CK_BBOOL isOnToken = CK_FALSE;
 	CK_BBOOL isPrivate = CK_TRUE;
 	CK_CERTIFICATE_TYPE dummy;
-	extractObjectInformation(pTemplate, ulCount, objClass, keyType, dummy, isToken, isPrivate);
+	bool isImplicit = true;
+	extractObjectInformation(pTemplate, ulCount, objClass, keyType, dummy, isOnToken, isPrivate, isImplicit);
 
 	// Report errors and/or unexpected usage.
 	if (objClass != CKO_SECRET_KEY && objClass != CKO_DOMAIN_PARAMETERS)
@@ -4243,7 +4580,7 @@ CK_RV SoftHSM::C_GenerateKey(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMecha
 		return CKR_TEMPLATE_INCONSISTENT;
 
 	// Check authorization
-	CK_RV rv = haveWrite(session->getState(), isToken, isPrivate);
+	CK_RV rv = haveWrite(session->getState(), isOnToken, isPrivate);
 	if (rv != CKR_OK)
 	{
 		if (rv == CKR_USER_NOT_LOGGED_IN)
@@ -4257,37 +4594,37 @@ CK_RV SoftHSM::C_GenerateKey(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMecha
 	// Generate DSA domain parameters
 	if (pMechanism->mechanism == CKM_DSA_PARAMETER_GEN)
 	{
-		return this->generateDSAParameters(hSession, pTemplate, ulCount, phKey, isToken, isPrivate);
+		return this->generateDSAParameters(hSession, pTemplate, ulCount, phKey, isOnToken, isPrivate);
 	}
 
 	// Generate DH domain parameters
 	if (pMechanism->mechanism == CKM_DH_PKCS_PARAMETER_GEN)
 	{
-		return this->generateDHParameters(hSession, pTemplate, ulCount, phKey, isToken, isPrivate);
+		return this->generateDHParameters(hSession, pTemplate, ulCount, phKey, isOnToken, isPrivate);
 	}
 
 	// Generate DES secret key
 	if (pMechanism->mechanism == CKM_DES_KEY_GEN)
 	{
-		return this->generateDES(hSession, pTemplate, ulCount, phKey, isToken, isPrivate);
+		return this->generateDES(hSession, pTemplate, ulCount, phKey, isOnToken, isPrivate);
 	}
 
 	// Generate DES2 secret key
 	if (pMechanism->mechanism == CKM_DES2_KEY_GEN)
 	{
-		return this->generateDES2(hSession, pTemplate, ulCount, phKey, isToken, isPrivate);
+		return this->generateDES2(hSession, pTemplate, ulCount, phKey, isOnToken, isPrivate);
 	}
 
 	// Generate DES3 secret key
 	if (pMechanism->mechanism == CKM_DES3_KEY_GEN)
 	{
-		return this->generateDES3(hSession, pTemplate, ulCount, phKey, isToken, isPrivate);
+		return this->generateDES3(hSession, pTemplate, ulCount, phKey, isOnToken, isPrivate);
 	}
 
 	// Generate AES secret key
 	if (pMechanism->mechanism == CKM_AES_KEY_GEN)
 	{
-		return this->generateAES(hSession, pTemplate, ulCount, phKey, isToken, isPrivate);
+		return this->generateAES(hSession, pTemplate, ulCount, phKey, isOnToken, isPrivate);
 	}
 
 	return CKR_GENERAL_ERROR;
@@ -4309,8 +4646,6 @@ CK_RV SoftHSM::C_GenerateKeyPair
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
 
 	if (pMechanism == NULL_PTR) return CKR_ARGUMENTS_BAD;
-	if (pPublicKeyTemplate == NULL_PTR) return CKR_ARGUMENTS_BAD;
-	if (pPrivateKeyTemplate == NULL_PTR) return CKR_ARGUMENTS_BAD;
 	if (phPublicKey == NULL_PTR) return CKR_ARGUMENTS_BAD;
 	if (phPrivateKey == NULL_PTR) return CKR_ARGUMENTS_BAD;
 
@@ -4350,7 +4685,8 @@ CK_RV SoftHSM::C_GenerateKeyPair
 	CK_OBJECT_CLASS publicKeyClass = CKO_PUBLIC_KEY;
 	CK_BBOOL ispublicKeyToken = CK_FALSE;
 	CK_BBOOL ispublicKeyPrivate = CK_TRUE;
-	extractObjectInformation(pPublicKeyTemplate, ulPublicKeyAttributeCount, publicKeyClass, keyType, dummy, ispublicKeyToken, ispublicKeyPrivate);
+	bool isPublicKeyImplicit = true;
+	extractObjectInformation(pPublicKeyTemplate, ulPublicKeyAttributeCount, publicKeyClass, keyType, dummy, ispublicKeyToken, ispublicKeyPrivate, isPublicKeyImplicit);
 
 	// Report errors caused by accidental template mix-ups in the application using this cryptoki lib.
 	if (publicKeyClass != CKO_PUBLIC_KEY)
@@ -4370,7 +4706,8 @@ CK_RV SoftHSM::C_GenerateKeyPair
 	CK_OBJECT_CLASS privateKeyClass = CKO_PRIVATE_KEY;
 	CK_BBOOL isprivateKeyToken = CK_FALSE;
 	CK_BBOOL isprivateKeyPrivate = CK_TRUE;
-	extractObjectInformation(pPrivateKeyTemplate, ulPrivateKeyAttributeCount, privateKeyClass, keyType, dummy, isprivateKeyToken, isprivateKeyPrivate);
+	bool isPrivateKeyImplicit = true;
+	extractObjectInformation(pPrivateKeyTemplate, ulPrivateKeyAttributeCount, privateKeyClass, keyType, dummy, isprivateKeyToken, isprivateKeyPrivate, isPrivateKeyImplicit);
 
 	// Report errors caused by accidental template mix-ups in the application using this cryptoki lib.
 	if (privateKeyClass != CKO_PRIVATE_KEY)
@@ -4584,21 +4921,21 @@ CK_RV SoftHSM::C_WrapKey
 	else
 	{
 		CK_KEY_TYPE keyType = key->getAttribute(CKA_KEY_TYPE)->getUnsignedLongValue();
-		std::string alg = "";
+		AsymAlgo::Type alg = AsymAlgo::Unknown;
 		switch (keyType) {
 			case CKK_RSA:
-				alg = "rsa";
+				alg = AsymAlgo::RSA;
 				break;
 			case CKK_DSA:
-				alg = "dsa";
+				alg = AsymAlgo::DSA;
 				break;
 			case CKK_DH:
-				alg = "dh";
+				alg = AsymAlgo::DH;
 				break;
 #ifdef WITH_ECC
 			case CKK_EC:
 				// can be ecdh too but it doesn't matter
-				alg = "ecdsa";
+				alg = AsymAlgo::ECDSA;
 				break;
 #endif
 			default:
@@ -4606,7 +4943,7 @@ CK_RV SoftHSM::C_WrapKey
 		}
 		AsymmetricAlgorithm* asymCrypto = NULL;
 		PrivateKey* privateKey = NULL;
-		asymCrypto = CryptoFactory::i()->getAsymmetricAlgorithm(alg.c_str());
+		asymCrypto = CryptoFactory::i()->getAsymmetricAlgorithm(alg);
 		if (asymCrypto == NULL)
 			return CKR_GENERAL_ERROR;
 		privateKey = asymCrypto->newPrivateKey();
@@ -4645,8 +4982,8 @@ CK_RV SoftHSM::C_WrapKey
 		return CKR_KEY_NOT_WRAPPABLE;
 
 	// Get the symmetric algorithm matching the mechanism
-	SymmetricAlgorithm* cipher = NULL;
-	std::string mode;
+	SymAlgo::Type algo = SymAlgo::Unknown;
+	SymWrap::Type mode = SymWrap::Unknown;
 	size_t bb = 8;
 	CK_ULONG wrappedlen = keydata.size();
 	switch(pMechanism->mechanism) {
@@ -4664,8 +5001,8 @@ CK_RV SoftHSM::C_WrapKey
 				*pulWrappedKeyLen = wrappedlen;
 				return CKR_BUFFER_TOO_SMALL;
 			}
-			cipher = CryptoFactory::i()->getSymmetricAlgorithm("aes");
-			mode = "aes-keywrap";
+			algo = SymAlgo::AES;
+			mode = SymWrap::AES_KEYWRAP;
 			break;
 #ifdef HAVE_AES_KEY_WRAP_PAD
 		case CKM_AES_KEY_WRAP_PAD:
@@ -4680,13 +5017,14 @@ CK_RV SoftHSM::C_WrapKey
 				*pulWrappedKeyLen = wrappedlen;
 				return CKR_BUFFER_TOO_SMALL;
 			}
-			cipher = CryptoFactory::i()->getSymmetricAlgorithm("aes");
-			mode = "aes-keywrap-pad";
+			algo = SymAlgo::AES;
+			mode = SymWrap::AES_KEYWRAP_PAD;
 			break;
 #endif
 		default:
 			return CKR_MECHANISM_INVALID;
 	}
+	SymmetricAlgorithm* cipher = CryptoFactory::i()->getSymmetricAlgorithm(algo);
 	if (cipher == NULL) return CKR_MECHANISM_INVALID;
 
 	SymmetricKey* wrappingkey = new SymmetricKey();
@@ -4807,13 +5145,18 @@ CK_RV SoftHSM::C_UnwrapKey
 		return CKR_KEY_FUNCTION_NOT_PERMITTED;
 
 	// Extract information from the template that is needed to create the object.
-
 	CK_OBJECT_CLASS objClass;
 	CK_KEY_TYPE keyType;
 	CK_BBOOL isOnToken = CK_FALSE;
 	CK_BBOOL isPrivate = CK_TRUE;
 	CK_CERTIFICATE_TYPE dummy;
-	extractObjectInformation(pTemplate, ulCount, objClass, keyType, dummy, isOnToken, isPrivate);
+	bool isImplicit = false;
+	rv = extractObjectInformation(pTemplate, ulCount, objClass, keyType, dummy, isOnToken, isPrivate, isImplicit);
+	if (rv != CKR_OK)
+	{
+		ERROR_MSG("Mandatory attribute not present in template");
+		return rv;
+	}
 
 	// Report errors and/or unexpected usage.
 	if (objClass != CKO_SECRET_KEY && objClass != CKO_PRIVATE_KEY)
@@ -4892,23 +5235,24 @@ CK_RV SoftHSM::C_UnwrapKey
 	*hKey = CK_INVALID_HANDLE;
 
 	// Get the symmetric algorithm matching the mechanism
-	SymmetricAlgorithm* cipher = NULL;
-	std::string mode;
+	SymAlgo::Type algo = SymAlgo::Unknown;
+	SymWrap::Type mode = SymWrap::Unknown;
 	size_t bb = 8;
 	switch(pMechanism->mechanism) {
 		case CKM_AES_KEY_WRAP:
-			cipher = CryptoFactory::i()->getSymmetricAlgorithm("aes");
-			mode = "aes-keywrap";
+			algo = SymAlgo::AES;
+			mode = SymWrap::AES_KEYWRAP;
 			break;
 #ifdef HAVE_AES_KEY_WRAP_PAD
 		case CKM_AES_KEY_WRAP_PAD:
-			cipher = CryptoFactory::i()->getSymmetricAlgorithm("aes");
-			mode = "aes-keywrap-pad";
+			algo = SymAlgo::AES;
+			mode = SymWrap::AES_KEYWRAP_PAD;
 			break;
 #endif
 		default:
 			return CKR_MECHANISM_INVALID;
 	}
+	SymmetricAlgorithm* cipher = CryptoFactory::i()->getSymmetricAlgorithm(algo);
 	if (cipher == NULL) return CKR_MECHANISM_INVALID;
 
 	SymmetricKey* unwrappingkey = new SymmetricKey();
@@ -4971,23 +5315,22 @@ CK_RV SoftHSM::C_UnwrapKey
 			}
 			else if (keyType == CKK_RSA)
 			{
-				bOK = bOK && setRSAPrivateKey(osobject, keydata, token, isPrivate);
+				bOK = bOK && setRSAPrivateKey(osobject, keydata, token, isPrivate != CK_FALSE);
 			}
 			else if (keyType == CKK_DSA)
 			{
-				bOK = bOK && setDSAPrivateKey(osobject, keydata, token, isPrivate);
+				bOK = bOK && setDSAPrivateKey(osobject, keydata, token, isPrivate != CK_FALSE);
 			}
 			else if (keyType == CKK_DH)
 			{
-				bOK = bOK && setDHPrivateKey(osobject, keydata, token, isPrivate);
+				bOK = bOK && setDHPrivateKey(osobject, keydata, token, isPrivate != CK_FALSE);
 			}
 			else if (keyType == CKK_EC)
 			{
-				bOK = bOK && setECPrivateKey(osobject, keydata, token, isPrivate);
+				bOK = bOK && setECPrivateKey(osobject, keydata, token, isPrivate != CK_FALSE);
 			}
 			else
 				bOK = false;
-				
 
 			if (bOK)
 				bOK = osobject->commitTransaction();
@@ -5085,13 +5428,18 @@ CK_RV SoftHSM::C_DeriveKey
 		return CKR_KEY_FUNCTION_NOT_PERMITTED;
 
 	// Extract information from the template that is needed to create the object.
-
 	CK_OBJECT_CLASS objClass;
 	CK_KEY_TYPE keyType;
 	CK_BBOOL isOnToken = CK_FALSE;
 	CK_BBOOL isPrivate = CK_TRUE;
 	CK_CERTIFICATE_TYPE dummy;
-	extractObjectInformation(pTemplate, ulCount, objClass, keyType, dummy, isOnToken, isPrivate);
+	bool isImplicit = false;
+	rv = extractObjectInformation(pTemplate, ulCount, objClass, keyType, dummy, isOnToken, isPrivate, isImplicit);
+	if (rv != CKR_OK)
+	{
+		ERROR_MSG("Mandatory attribute not present in template");
+		return rv;
+	}
 
 	// Report errors and/or unexpected usage.
 	if (objClass != CKO_SECRET_KEY && keyType != CKK_GENERIC_SECRET)
@@ -5209,7 +5557,7 @@ CK_RV SoftHSM::generateAES
 	CK_ATTRIBUTE_PTR pTemplate,
 	CK_ULONG ulCount,
 	CK_OBJECT_HANDLE_PTR phKey,
-	CK_BBOOL isToken,
+	CK_BBOOL isOnToken,
 	CK_BBOOL isPrivate)
 {
 	*phKey = CK_INVALID_HANDLE;
@@ -5259,7 +5607,7 @@ CK_RV SoftHSM::generateAES
 
 	// Generate the secret key
 	AESKey* key = new AESKey(keyLen * 8);
-	SymmetricAlgorithm* aes = CryptoFactory::i()->getSymmetricAlgorithm("AES");
+	SymmetricAlgorithm* aes = CryptoFactory::i()->getSymmetricAlgorithm(SymAlgo::AES);
 	if (aes == NULL) return CKR_GENERAL_ERROR;
 	RNG* rng = CryptoFactory::i()->getRNG();
 	if (rng == NULL) return CKR_GENERAL_ERROR;
@@ -5279,7 +5627,7 @@ CK_RV SoftHSM::generateAES
 	CK_KEY_TYPE keyType = CKK_AES;
 	CK_ATTRIBUTE keyAttribs[maxAttribs] = {
 		{ CKA_CLASS, &objClass, sizeof(objClass) },
-		{ CKA_TOKEN, &isToken, sizeof(isToken) },
+		{ CKA_TOKEN, &isOnToken, sizeof(isOnToken) },
 		{ CKA_PRIVATE, &isPrivate, sizeof(isPrivate) },
 		{ CKA_KEY_TYPE, &keyType, sizeof(keyType) },
 	};
@@ -5369,7 +5717,7 @@ CK_RV SoftHSM::generateDES
 	CK_ATTRIBUTE_PTR pTemplate,
 	CK_ULONG ulCount,
 	CK_OBJECT_HANDLE_PTR phKey,
-	CK_BBOOL isToken,
+	CK_BBOOL isOnToken,
 	CK_BBOOL isPrivate)
 {
 	*phKey = CK_INVALID_HANDLE;
@@ -5386,7 +5734,7 @@ CK_RV SoftHSM::generateDES
 
 	// Generate the secret key
 	DESKey* key = new DESKey(56);
-	SymmetricAlgorithm* des = CryptoFactory::i()->getSymmetricAlgorithm("DES");
+	SymmetricAlgorithm* des = CryptoFactory::i()->getSymmetricAlgorithm(SymAlgo::DES);
 	if (des == NULL) return CKR_GENERAL_ERROR;
 	RNG* rng = CryptoFactory::i()->getRNG();
 	if (rng == NULL) return CKR_GENERAL_ERROR;
@@ -5406,7 +5754,7 @@ CK_RV SoftHSM::generateDES
 	CK_KEY_TYPE keyType = CKK_DES;
 	CK_ATTRIBUTE keyAttribs[maxAttribs] = {
 		{ CKA_CLASS, &objClass, sizeof(objClass) },
-		{ CKA_TOKEN, &isToken, sizeof(isToken) },
+		{ CKA_TOKEN, &isOnToken, sizeof(isOnToken) },
 		{ CKA_PRIVATE, &isPrivate, sizeof(isPrivate) },
 		{ CKA_KEY_TYPE, &keyType, sizeof(keyType) },
 	};
@@ -5496,7 +5844,7 @@ CK_RV SoftHSM::generateDES2
 	CK_ATTRIBUTE_PTR pTemplate,
 	CK_ULONG ulCount,
 	CK_OBJECT_HANDLE_PTR phKey,
-	CK_BBOOL isToken,
+	CK_BBOOL isOnToken,
 	CK_BBOOL isPrivate)
 {
 	*phKey = CK_INVALID_HANDLE;
@@ -5513,7 +5861,7 @@ CK_RV SoftHSM::generateDES2
 
 	// Generate the secret key
 	DESKey* key = new DESKey(112);
-	SymmetricAlgorithm* des = CryptoFactory::i()->getSymmetricAlgorithm("DES");
+	SymmetricAlgorithm* des = CryptoFactory::i()->getSymmetricAlgorithm(SymAlgo::DES3);
 	if (des == NULL) return CKR_GENERAL_ERROR;
 	RNG* rng = CryptoFactory::i()->getRNG();
 	if (rng == NULL) return CKR_GENERAL_ERROR;
@@ -5533,7 +5881,7 @@ CK_RV SoftHSM::generateDES2
 	CK_KEY_TYPE keyType = CKK_DES2;
 	CK_ATTRIBUTE keyAttribs[maxAttribs] = {
 		{ CKA_CLASS, &objClass, sizeof(objClass) },
-		{ CKA_TOKEN, &isToken, sizeof(isToken) },
+		{ CKA_TOKEN, &isOnToken, sizeof(isOnToken) },
 		{ CKA_PRIVATE, &isPrivate, sizeof(isPrivate) },
 		{ CKA_KEY_TYPE, &keyType, sizeof(keyType) },
 	};
@@ -5623,7 +5971,7 @@ CK_RV SoftHSM::generateDES3
 	CK_ATTRIBUTE_PTR pTemplate,
 	CK_ULONG ulCount,
 	CK_OBJECT_HANDLE_PTR phKey,
-	CK_BBOOL isToken,
+	CK_BBOOL isOnToken,
 	CK_BBOOL isPrivate)
 {
 	*phKey = CK_INVALID_HANDLE;
@@ -5640,7 +5988,7 @@ CK_RV SoftHSM::generateDES3
 
 	// Generate the secret key
 	DESKey* key = new DESKey(168);
-	SymmetricAlgorithm* des = CryptoFactory::i()->getSymmetricAlgorithm("DES");
+	SymmetricAlgorithm* des = CryptoFactory::i()->getSymmetricAlgorithm(SymAlgo::DES3);
 	if (des == NULL) return CKR_GENERAL_ERROR;
 	RNG* rng = CryptoFactory::i()->getRNG();
 	if (rng == NULL) return CKR_GENERAL_ERROR;
@@ -5660,7 +6008,7 @@ CK_RV SoftHSM::generateDES3
 	CK_KEY_TYPE keyType = CKK_DES3;
 	CK_ATTRIBUTE keyAttribs[maxAttribs] = {
 		{ CKA_CLASS, &objClass, sizeof(objClass) },
-		{ CKA_TOKEN, &isToken, sizeof(isToken) },
+		{ CKA_TOKEN, &isOnToken, sizeof(isOnToken) },
 		{ CKA_PRIVATE, &isPrivate, sizeof(isPrivate) },
 		{ CKA_KEY_TYPE, &keyType, sizeof(keyType) },
 	};
@@ -5808,7 +6156,7 @@ CK_RV SoftHSM::generateRSA
 
 	// Generate key pair
 	AsymmetricKeyPair* kp = NULL;
-	AsymmetricAlgorithm* rsa = CryptoFactory::i()->getAsymmetricAlgorithm("RSA");
+	AsymmetricAlgorithm* rsa = CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::RSA);
 	if (rsa == NULL)
 		return CKR_GENERAL_ERROR;
 	if (!rsa->generateKeyPair(&kp, &p))
@@ -6094,7 +6442,7 @@ CK_RV SoftHSM::generateDSA
 
 	// Generate key pair
 	AsymmetricKeyPair* kp = NULL;
-	AsymmetricAlgorithm* dsa = CryptoFactory::i()->getAsymmetricAlgorithm("DSA");
+	AsymmetricAlgorithm* dsa = CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::DSA);
 	if (dsa == NULL) return CKR_GENERAL_ERROR;
 	if (!dsa->generateKeyPair(&kp, &p))
 	{
@@ -6316,7 +6664,7 @@ CK_RV SoftHSM::generateDSAParameters
 	CK_ATTRIBUTE_PTR pTemplate,
 	CK_ULONG ulCount,
 	CK_OBJECT_HANDLE_PTR phKey,
-	CK_BBOOL isToken,
+	CK_BBOOL isOnToken,
 	CK_BBOOL isPrivate)
 {
 	*phKey = CK_INVALID_HANDLE;
@@ -6375,7 +6723,7 @@ CK_RV SoftHSM::generateDSAParameters
 
 	// Generate domain parameters
 	AsymmetricParameters* p = NULL;
-	AsymmetricAlgorithm* dsa = CryptoFactory::i()->getAsymmetricAlgorithm("DSA");
+	AsymmetricAlgorithm* dsa = CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::DSA);
 	if (dsa == NULL) return CKR_GENERAL_ERROR;
 	if (!dsa->generateParameters(&p, (void *)bitLen))
 	{
@@ -6394,7 +6742,7 @@ CK_RV SoftHSM::generateDSAParameters
 	CK_KEY_TYPE keyType = CKK_DSA;
 	CK_ATTRIBUTE paramsAttribs[maxAttribs] = {
 		{ CKA_CLASS, &objClass, sizeof(objClass) },
-		{ CKA_TOKEN, &isToken, sizeof(isToken) },
+		{ CKA_TOKEN, &isOnToken, sizeof(isOnToken) },
 		{ CKA_PRIVATE, &isPrivate, sizeof(isPrivate) },
 		{ CKA_KEY_TYPE, &keyType, sizeof(keyType) },
 	};
@@ -6537,7 +6885,7 @@ CK_RV SoftHSM::generateEC
 
 	// Generate key pair
 	AsymmetricKeyPair* kp = NULL;
-	AsymmetricAlgorithm* ec = CryptoFactory::i()->getAsymmetricAlgorithm("ECDSA");
+	AsymmetricAlgorithm* ec = CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::ECDSA);
 	if (ec == NULL) return CKR_GENERAL_ERROR;
 	if (!ec->generateKeyPair(&kp, &p))
 	{
@@ -6786,14 +7134,29 @@ CK_RV SoftHSM::generateDH
 		return CKR_TEMPLATE_INCOMPLETE;
 	}
 
+	// Extract optional bit length
+	size_t bitLen = 0;
+	for (CK_ULONG i = 0; i < ulPrivateKeyAttributeCount; i++)
+	{
+		switch (pPrivateKeyTemplate[i].type)
+		{
+			case CKA_VALUE_BITS:
+				bitLen = *(CK_ULONG*)pPrivateKeyTemplate[i].pValue;
+				break;
+			default:
+				break;
+		}
+	}
+
 	// Set the parameters
 	DHParameters p;
 	p.setP(prime);
 	p.setG(generator);
+	p.setXBitLength(bitLen);
 
 	// Generate key pair
 	AsymmetricKeyPair* kp = NULL;
-	AsymmetricAlgorithm* dh = CryptoFactory::i()->getAsymmetricAlgorithm("DH");
+	AsymmetricAlgorithm* dh = CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::DH);
 	if (dh == NULL) return CKR_GENERAL_ERROR;
 	if (!dh->generateKeyPair(&kp, &p))
 	{
@@ -6961,6 +7324,11 @@ CK_RV SoftHSM::generateDH
 				bOK = bOK && osobject->setAttribute(CKA_BASE, generator);
 				bOK = bOK && osobject->setAttribute(CKA_VALUE, value);
 
+				if (bitLen == 0)
+				{
+					bOK = bOK && osobject->setAttribute(CKA_VALUE_BITS, (unsigned long)priv->getX().bits());
+				}
+
 				if (bOK)
 					bOK = osobject->commitTransaction();
 				else
@@ -7006,7 +7374,7 @@ CK_RV SoftHSM::generateDHParameters
 	CK_ATTRIBUTE_PTR pTemplate,
 	CK_ULONG ulCount,
 	CK_OBJECT_HANDLE_PTR phKey,
-	CK_BBOOL isToken,
+	CK_BBOOL isOnToken,
 	CK_BBOOL isPrivate)
 {
 	*phKey = CK_INVALID_HANDLE;
@@ -7049,7 +7417,7 @@ CK_RV SoftHSM::generateDHParameters
 
 	// Generate domain parameters
 	AsymmetricParameters* p = NULL;
-	AsymmetricAlgorithm* dh = CryptoFactory::i()->getAsymmetricAlgorithm("DH");
+	AsymmetricAlgorithm* dh = CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::DH);
 	if (dh == NULL) return CKR_GENERAL_ERROR;
 	if (!dh->generateParameters(&p, (void *)bitLen))
 	{
@@ -7068,7 +7436,7 @@ CK_RV SoftHSM::generateDHParameters
 	CK_KEY_TYPE keyType = CKK_DH;
 	CK_ATTRIBUTE paramsAttribs[maxAttribs] = {
 		{ CKA_CLASS, &objClass, sizeof(objClass) },
-		{ CKA_TOKEN, &isToken, sizeof(isToken) },
+		{ CKA_TOKEN, &isOnToken, sizeof(isOnToken) },
 		{ CKA_PRIVATE, &isPrivate, sizeof(isPrivate) },
 		{ CKA_KEY_TYPE, &keyType, sizeof(keyType) },
 	};
@@ -7215,7 +7583,7 @@ CK_RV SoftHSM::generateGOST
 
 	// Generate key pair
 	AsymmetricKeyPair* kp = NULL;
-	AsymmetricAlgorithm* gost = CryptoFactory::i()->getAsymmetricAlgorithm("GOST");
+	AsymmetricAlgorithm* gost = CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::GOST);
 	if (gost == NULL) return CKR_GENERAL_ERROR;
 	if (!gost->generateKeyPair(&kp, &p))
 	{
@@ -7470,7 +7838,7 @@ CK_RV SoftHSM::deriveDH
 		return CKR_KEY_HANDLE_INVALID;
 
 	// Get the DH algorithm handler
-	AsymmetricAlgorithm* dh = CryptoFactory::i()->getAsymmetricAlgorithm("DH");
+	AsymmetricAlgorithm* dh = CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::DH);
 	if (dh == NULL)
 		return CKR_MECHANISM_INVALID;
 
@@ -7700,7 +8068,7 @@ CK_RV SoftHSM::deriveECDH
 		return CKR_KEY_HANDLE_INVALID;
 
 	// Get the ECDH algorithm handler
-	AsymmetricAlgorithm* ecdh = CryptoFactory::i()->getAsymmetricAlgorithm("ECDH");
+	AsymmetricAlgorithm* ecdh = CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::ECDH);
 	if (ecdh == NULL)
 		return CKR_MECHANISM_INVALID;
 
@@ -7882,9 +8250,10 @@ CK_RV SoftHSM::CreateObject(CK_SESSION_HANDLE hSession, CK_ATTRIBUTE_PTR pTempla
 	CK_OBJECT_CLASS objClass = CKO_DATA;
 	CK_KEY_TYPE keyType = CKK_RSA;
 	CK_CERTIFICATE_TYPE certType = CKC_X_509;
-	CK_BBOOL isToken = CK_FALSE;
+	CK_BBOOL isOnToken = CK_FALSE;
 	CK_BBOOL isPrivate = CK_TRUE;
-	CK_RV rv = extractObjectInformation(pTemplate,ulCount,objClass,keyType,certType, isToken, isPrivate);
+	bool isImplicit = false;
+	CK_RV rv = extractObjectInformation(pTemplate,ulCount,objClass,keyType,certType, isOnToken, isPrivate, isImplicit);
 	if (rv != CKR_OK)
 	{
 		ERROR_MSG("Mandatory attribute not present in template");
@@ -7892,7 +8261,7 @@ CK_RV SoftHSM::CreateObject(CK_SESSION_HANDLE hSession, CK_ATTRIBUTE_PTR pTempla
 	}
 
 	// Check user credentials
-	rv = haveWrite(session->getState(), isToken, isPrivate);
+	rv = haveWrite(session->getState(), isOnToken, isPrivate);
 	if (rv != CKR_OK)
 	{
 		if (rv == CKR_USER_NOT_LOGGED_IN)
@@ -7910,7 +8279,7 @@ CK_RV SoftHSM::CreateObject(CK_SESSION_HANDLE hSession, CK_ATTRIBUTE_PTR pTempla
 
 	// Create the object in session or on the token
 	OSObject *object = NULL_PTR;
-	if (isToken)
+	if (isOnToken)
 	{
 		object = (OSObject*) token->createObject();
 	}
@@ -7926,7 +8295,7 @@ CK_RV SoftHSM::CreateObject(CK_SESSION_HANDLE hSession, CK_ATTRIBUTE_PTR pTempla
 	if (rv != CKR_OK)
 		return rv;
 
-	if (isToken) {
+	if (isOnToken) {
 		*phObject = handleManager->addTokenObject(slot->getSlotID(), isPrivate != CK_FALSE, object);
 	} else {
 		*phObject = handleManager->addSessionObject(slot->getSlotID(), hSession, isPrivate != CK_FALSE, object);
@@ -8333,7 +8702,7 @@ CK_RV SoftHSM::getSymmetricKey(SymmetricKey* skey, Token* token, OSObject* key)
 
 bool SoftHSM::setRSAPrivateKey(OSObject* key, ByteString ber, Token* token, bool isPrivate)
 {
-	AsymmetricAlgorithm* rsa = CryptoFactory::i()->getAsymmetricAlgorithm("rsa");
+	AsymmetricAlgorithm* rsa = CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::RSA);
 	if (rsa == NULL)
 		return false;
 	PrivateKey* priv = rsa->newPrivateKey();
@@ -8397,7 +8766,7 @@ bool SoftHSM::setRSAPrivateKey(OSObject* key, ByteString ber, Token* token, bool
 
 bool SoftHSM::setDSAPrivateKey(OSObject* key, ByteString ber, Token* token, bool isPrivate)
 {
-	AsymmetricAlgorithm* dsa = CryptoFactory::i()->getAsymmetricAlgorithm("dsa");
+	AsymmetricAlgorithm* dsa = CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::DSA);
 	if (dsa == NULL)
 		return false;
 	PrivateKey* priv = dsa->newPrivateKey();
@@ -8445,7 +8814,7 @@ bool SoftHSM::setDSAPrivateKey(OSObject* key, ByteString ber, Token* token, bool
 
 bool SoftHSM::setDHPrivateKey(OSObject* key, ByteString ber, Token* token, bool isPrivate)
 {
-	AsymmetricAlgorithm* dh = CryptoFactory::i()->getAsymmetricAlgorithm("dh");
+	AsymmetricAlgorithm* dh = CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::DH);
 	if (dh == NULL)
 		return false;
 	PrivateKey* priv = dh->newPrivateKey();
@@ -8488,7 +8857,7 @@ bool SoftHSM::setDHPrivateKey(OSObject* key, ByteString ber, Token* token, bool 
 }
 bool SoftHSM::setECPrivateKey(OSObject* key, ByteString ber, Token* token, bool isPrivate)
 {
-	AsymmetricAlgorithm* ecc = CryptoFactory::i()->getAsymmetricAlgorithm("ecdsa");
+	AsymmetricAlgorithm* ecc = CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::ECDSA);
 	if (ecc == NULL)
 		return false;
 	PrivateKey* priv = ecc->newPrivateKey();

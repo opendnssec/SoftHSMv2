@@ -43,7 +43,8 @@
 #include <openssl/err.h>
 
 // Signing functions
-bool OSSLDH::signInit(PrivateKey* /*privateKey*/, const std::string /*mechanism*/)
+bool OSSLDH::signInit(PrivateKey* /*privateKey*/, const AsymMech::Type /*mechanism*/,
+		      const void* /* param = NULL */, const size_t /* paramLen = 0 */)
 {
 	ERROR_MSG("DH does not support signing");
 
@@ -58,14 +59,15 @@ bool OSSLDH::signUpdate(const ByteString& /*dataToSign*/)
 }
 
 bool OSSLDH::signFinal(ByteString& /*signature*/)
-{	
+{
 	ERROR_MSG("DH does not support signing");
 
 	return false;
 }
 
 // Verification functions
-bool OSSLDH::verifyInit(PublicKey* /*publicKey*/, const std::string /*mechanism*/)
+bool OSSLDH::verifyInit(PublicKey* /*publicKey*/, const AsymMech::Type /*mechanism*/,
+			const void* /* param = NULL */, const size_t /* paramLen = 0 */)
 {
 	ERROR_MSG("DH does not support verifying");
 
@@ -87,7 +89,8 @@ bool OSSLDH::verifyFinal(const ByteString& /*signature*/)
 }
 
 // Encryption functions
-bool OSSLDH::encrypt(PublicKey* /*publicKey*/, const ByteString& /*data*/, ByteString& /*encryptedData*/, const std::string /*padding*/)
+bool OSSLDH::encrypt(PublicKey* /*publicKey*/, const ByteString& /*data*/,
+		     ByteString& /*encryptedData*/, const AsymMech::Type /*padding*/)
 {
 	ERROR_MSG("DH does not support encryption");
 
@@ -95,7 +98,8 @@ bool OSSLDH::encrypt(PublicKey* /*publicKey*/, const ByteString& /*data*/, ByteS
 }
 
 // Decryption functions
-bool OSSLDH::decrypt(PrivateKey* /*privateKey*/, const ByteString& /*encryptedData*/, ByteString& /*data*/, const std::string /*padding*/)
+bool OSSLDH::decrypt(PrivateKey* /*privateKey*/, const ByteString& /*encryptedData*/,
+		     ByteString& /*data*/, const AsymMech::Type /*padding*/)
 {
 	ERROR_MSG("DH does not support decryption");
 
@@ -137,6 +141,22 @@ bool OSSLDH::generateKeyPair(AsymmetricKeyPair** ppKeyPair, AsymmetricParameters
 	if (dh->g != NULL)
 		BN_clear_free(dh->g);
 	dh->g = OSSL::byteString2bn(params->getG());
+
+	// PKCS#3: 2^(l-1) <= x < 2^l
+	if (params->getXBitLength() > 0)
+	{
+		if (dh->priv_key == NULL)
+			dh->priv_key = BN_new();
+
+		if (BN_rand(dh->priv_key, params->getXBitLength(), 0, 0) != 1)
+		{
+			ERROR_MSG("DH private key generation failed (0x%08X)", ERR_get_error());
+
+			DH_free(dh);
+
+			return false;
+		}
+	}
 
 	if (DH_generate_key(dh) != 1)
 	{

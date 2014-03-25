@@ -35,14 +35,14 @@
 #include <algorithm>
 #include "odd.h"
 
-bool BotanDES::wrapKey(const SymmetricKey* /*key*/, const std::string /*mode*/, const ByteString& /*in*/, ByteString& /*out*/)
+bool BotanDES::wrapKey(const SymmetricKey* /*key*/, const SymWrap::Type /*mode*/, const ByteString& /*in*/, ByteString& /*out*/)
 {
 	ERROR_MSG("DES does not support key wrapping");
 
 	return false;
 }
 
-bool BotanDES::unwrapKey(const SymmetricKey* /*key*/, const std::string /*mode*/, const ByteString& /*in*/, ByteString& /*out*/)
+bool BotanDES::unwrapKey(const SymmetricKey* /*key*/, const SymWrap::Type /*mode*/, const ByteString& /*in*/, ByteString& /*out*/)
 {
 	ERROR_MSG("DES does not support key unwrapping");
 
@@ -51,86 +51,64 @@ bool BotanDES::unwrapKey(const SymmetricKey* /*key*/, const std::string /*mode*/
 
 std::string BotanDES::getCipher() const
 {
+	std::string algo;
+	std::string mode;
+	std::string padding;
+
 	if (currentKey == NULL) return "";
 
-	// Check currentKey bit length; 3DES only supports 56-bit, 112-bit or 168-bit keys 
-	if ((currentKey->getBitLen() != 56) &&
-	    (currentKey->getBitLen() != 112) &&
-            (currentKey->getBitLen() != 168))
+	// Check currentKey bit length; 3DES only supports 56-bit, 112-bit or 168-bit keys
+	switch (currentKey->getBitLen())
 	{
-		ERROR_MSG("Invalid DES currentKey length (%d bits)", currentKey->getBitLen());
+		case 56:
+			// People shouldn't really be using 56-bit DES keys, generate a warning
+			DEBUG_MSG("CAUTION: use of 56-bit DES keys is not recommended!");
+			algo = "DES";
+			break;
+		case 112:
+		case 168:
+			algo = "TripleDES";
+			break;
+		default:
+			ERROR_MSG("Invalid DES currentKey length (%d bits)", currentKey->getBitLen());
 
-		return "";
-	}
-
-	// Check padding mode
-	if (!currentPaddingMode.compare("PKCS7") &&
-	    !currentPaddingMode.compare("NoPadding"))
-	{
-		ERROR_MSG("Invalid AES padding mode %s", currentPaddingMode.c_str());
-
-		return "";
-	}
-
-	// People shouldn't really be using 56-bit DES keys, generate a warning
-	if (currentKey->getBitLen() == 56)
-	{
-		DEBUG_MSG("CAUTION: use of 56-bit DES keys is not recommended!");
+			return "";
 	}
 
 	// Determine the cipher mode
-	if (!currentCipherMode.compare("cbc"))
+	switch (currentCipherMode)
 	{
-		switch(currentKey->getBitLen())
-		{
-			case 56:
-				return "DES/CBC/" + currentPaddingMode;
-			case 112:
-				return "TripleDES/CBC/" + currentPaddingMode;
-			case 168:
-				return "TripleDES/CBC/" + currentPaddingMode;
-		};
-	}
-	else if (!currentCipherMode.compare("ecb"))
-	{
-		switch(currentKey->getBitLen())
-		{
-			case 56:
-				return "DES/ECB/" + currentPaddingMode;
-			case 112:
-				return "TripleDES/ECB/" + currentPaddingMode;
-			case 168:
-				return "TripleDES/ECB/" + currentPaddingMode;
-		};
-	}
-	else if (!currentCipherMode.compare("ofb"))
-	{
-		switch(currentKey->getBitLen())
-		{
-			case 56:
-				return "DES/OFB/NoPadding";
-			case 112:
-				return "TripleDES/OFB/NoPadding";
-			case 168:
-				return "TripleDES/OFB/NoPadding";
-		};
-	}
-	else if (!currentCipherMode.compare("cfb"))
-	{
-		switch(currentKey->getBitLen())
-		{
-			case 56:
-				return "DES/CFB/NoPadding";
-			case 112:
-				return "TripleDES/CFB/NoPadding";
-			case 168:
-				return "TripleDES/CFB/NoPadding";
-		};
+		case SymMode::CBC:
+			mode = "CBC";
+			break;
+		case SymMode::CFB:
+			mode = "CFB";
+			break;
+		case SymMode::ECB:
+			mode = "ECB";
+			break;
+		case SymMode::OFB:
+			mode = "OFB";
+			break;
+		default:
+			ERROR_MSG("Invalid DES cipher mode %i", currentCipherMode);
+
+			return "";
 	}
 
-	ERROR_MSG("Invalid DES cipher mode %s", currentCipherMode.c_str());
+	// Check padding mode
+	if (currentPaddingMode &&
+	    currentCipherMode != SymMode::OFB &&
+	    currentCipherMode != SymMode::CFB)
+	{
+		padding = "PKCS7";
+	}
+	else
+	{
+		padding = "NoPadding";
+	}
 
-	return "";
+	return algo + "/" + mode + "/" + padding;
 }
 
 bool BotanDES::generateKey(SymmetricKey& key, RNG* rng /* = NULL */)

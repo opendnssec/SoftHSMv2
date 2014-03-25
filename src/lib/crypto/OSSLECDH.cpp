@@ -44,7 +44,8 @@
 #include <openssl/err.h>
 
 // Signing functions
-bool OSSLECDH::signInit(PrivateKey* /*privateKey*/, const std::string /*mechanism*/)
+bool OSSLECDH::signInit(PrivateKey* /*privateKey*/, const AsymMech::Type /*mechanism*/,
+			const void* /* param = NULL */, const size_t /* paramLen = 0 */)
 {
 	ERROR_MSG("ECDH does not support signing");
 
@@ -66,7 +67,8 @@ bool OSSLECDH::signFinal(ByteString& /*signature*/)
 }
 
 // Verification functions
-bool OSSLECDH::verifyInit(PublicKey* /*publicKey*/, const std::string /*mechanism*/)
+bool OSSLECDH::verifyInit(PublicKey* /*publicKey*/, const AsymMech::Type /*mechanism*/,
+			  const void* /* param = NULL */, const size_t /* paramLen = 0 */)
 {
 	ERROR_MSG("ECDH does not support verifying");
 
@@ -88,7 +90,8 @@ bool OSSLECDH::verifyFinal(const ByteString& /*signature*/)
 }
 
 // Encryption functions
-bool OSSLECDH::encrypt(PublicKey* /*publicKey*/, const ByteString& /*data*/, ByteString& /*encryptedData*/, const std::string /*padding*/)
+bool OSSLECDH::encrypt(PublicKey* /*publicKey*/, const ByteString& /*data*/,
+		       ByteString& /*encryptedData*/, const AsymMech::Type /*padding*/)
 {
 	ERROR_MSG("ECDH does not support encryption");
 
@@ -96,7 +99,8 @@ bool OSSLECDH::encrypt(PublicKey* /*publicKey*/, const ByteString& /*data*/, Byt
 }
 
 // Decryption functions
-bool OSSLECDH::decrypt(PrivateKey* /*privateKey*/, const ByteString& /*encryptedData*/, ByteString& /*data*/, const std::string /*padding*/)
+bool OSSLECDH::decrypt(PrivateKey* /*privateKey*/, const ByteString& /*encryptedData*/,
+		       ByteString& /*data*/, const AsymMech::Type /*padding*/)
 {
 	ERROR_MSG("ECDH does not support decryption");
 

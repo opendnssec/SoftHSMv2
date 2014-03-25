@@ -40,12 +40,6 @@
 
 namespace DB {
 
-// Call once at process startup
-void initialize();
-
-// Call once at process termination
-void shutdown();
-
 // Log an error to the error handler that has been setup using a call to setLogErrorHandler declared below.
 void logError(const std::string &format, ...);
 

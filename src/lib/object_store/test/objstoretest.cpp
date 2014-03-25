@@ -33,6 +33,9 @@
 #include <cppunit/extensions/TestFactoryRegistry.h>
 #include <cppunit/ui/text/TestRunner.h>
 
+#include "CryptoFactory.h"
+#include "SecureMemoryRegistry.h"
+
 int main(int /*argc*/, char** /*argv*/)
 {
 	CppUnit::TextUi::TestRunner runner;
@@ -40,6 +43,9 @@ int main(int /*argc*/, char** /*argv*/)
 
 	runner.addTest(registry.makeTest());
 	bool wasSucessful = runner.run();
+
+	CryptoFactory::reset();
+	SecureMemoryRegistry::reset();
 
 	return wasSucessful ? 0 : 1;
 }

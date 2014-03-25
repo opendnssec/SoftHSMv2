@@ -15,6 +15,9 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\src\bin\dump\common.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\src\bin\dump\tables.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -23,7 +26,7 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\src\bin\dump\softhsm-dump.cpp">
+    <ClCompile Include="..\..\src\bin\dump\softhsm2-dump-file.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

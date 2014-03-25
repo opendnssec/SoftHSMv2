@@ -122,7 +122,7 @@ unsigned long MacAlgorithm::getMaxKeySize()
 	return 0;
 }
 
-void MacAlgorithm::recycleKey(SymmetricKey* /*toRecycle*/)
+void MacAlgorithm::recycleKey(SymmetricKey* toRecycle)
 {
-	delete currentKey;
+	delete toRecycle;
 }

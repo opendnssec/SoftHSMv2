@@ -67,7 +67,7 @@ class test_a_db_with_a_connection : public test_a_db
 public:
 	void setUp();
 	void tearDown();
-	
+
 	void can_prepare_statements();
 	void can_perform_statements();
 	void maintains_correct_refcounts();
@@ -93,10 +93,10 @@ class test_a_db_with_a_connection_with_tables : public test_a_db_with_a_connecti
 	CPPUNIT_TEST(can_update_real_attribute_bound_value);
 	CPPUNIT_TEST(supports_transactions);
 	CPPUNIT_TEST_SUITE_END();
-public:	
+public:
 	void setUp();
 	void tearDown();
-	
+
 	void can_insert_records();
 	void can_retrieve_records();
 	void can_cascade_delete_objects_and_attributes();
@@ -119,10 +119,10 @@ class test_a_db_with_a_connection_with_tables_with_a_second_connection_open : pu
 	CPPUNIT_TEST(handles_nested_transactions);
 	CPPUNIT_TEST(supports_transactions_with_other_connections_open);
 	CPPUNIT_TEST_SUITE_END();
-public:	
+public:
 	void setUp();
 	void tearDown();
-	
+
 	void handles_nested_transactions();
 	void supports_transactions_with_other_connections_open();
 protected:

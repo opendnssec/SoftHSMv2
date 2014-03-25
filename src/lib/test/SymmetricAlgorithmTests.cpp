@@ -634,3 +634,38 @@ void SymmetricAlgorithmTests::testDesEncryptDecrypt()
 	des3EncryptDecrypt(CKM_DES3_ECB,hSessionRO,hKey3);
 	des3EncryptDecrypt(CKM_DES3_CBC,hSessionRO,hKey3);
 }
+
+void SymmetricAlgorithmTests::testNullTemplate()
+{
+	CK_RV rv;
+	CK_UTF8CHAR pin[] = SLOT_0_USER1_PIN;
+	CK_ULONG pinLength = sizeof(pin) - 1;
+	CK_SESSION_HANDLE hSession;
+	CK_MECHANISM mechanism1 = { CKM_DES_KEY_GEN, NULL_PTR, 0 };
+	CK_MECHANISM mechanism2 = { CKM_AES_KEY_GEN, NULL_PTR, 0 };
+	CK_OBJECT_HANDLE hKey = CK_INVALID_HANDLE;
+
+	// Just make sure that we finalize any previous tests
+	C_Finalize(NULL_PTR);
+
+	// Initialize the library and start the test.
+	rv = C_Initialize(NULL_PTR);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Open read-write session
+	rv = C_OpenSession(SLOT_INIT_TOKEN, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSession);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Login USER into the sessions so we can create a private objects
+	rv = C_Login(hSession, CKU_USER, pin, pinLength);
+	CPPUNIT_ASSERT(rv==CKR_OK);
+
+	rv = C_GenerateKey(hSession, &mechanism1, NULL_PTR, 0, &hKey);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	rv = C_DestroyObject(hSession, hKey);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	rv = C_GenerateKey(hSession, &mechanism2, NULL_PTR, 0, &hKey);
+	CPPUNIT_ASSERT(rv == CKR_TEMPLATE_INCOMPLETE);
+}

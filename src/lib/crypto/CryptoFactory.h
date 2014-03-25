@@ -52,35 +52,35 @@ public:
 	static void reset();
 
 	// Create a concrete instance of a symmetric algorithm
-	virtual SymmetricAlgorithm* getSymmetricAlgorithm(std::string algorithm) = 0;
+	virtual SymmetricAlgorithm* getSymmetricAlgorithm(SymAlgo::Type algorithm) = 0;
 
 	// Recycle a symmetric algorithm instance -- override this function in the derived
 	// class if you need to perform specific clean-up
 	virtual void recycleSymmetricAlgorithm(SymmetricAlgorithm* toRecycle);
 
 	// Create a concrete instance of an asymmetric algorithm
-	virtual AsymmetricAlgorithm* getAsymmetricAlgorithm(std::string algorithm) = 0;
+	virtual AsymmetricAlgorithm* getAsymmetricAlgorithm(AsymAlgo::Type algorithm) = 0;
 
 	// Recycle an asymmetric algorithm instance -- override this function in the derived
 	// class if you need to perform specific clean-up
 	virtual void recycleAsymmetricAlgorithm(AsymmetricAlgorithm* toRecycle);
 
 	// Create a concrete instance of a hash algorithm
-	virtual HashAlgorithm* getHashAlgorithm(std::string algorithm) = 0;
+	virtual HashAlgorithm* getHashAlgorithm(HashAlgo::Type algorithm) = 0;
 
 	// Recycle a hash algorithm instance -- override this function in the derived
 	// class if you need to perform specific clean-up
 	virtual void recycleHashAlgorithm(HashAlgorithm* toRecycle);
 
 	// Create a concrete instance of a MAC algorithm
-	virtual MacAlgorithm* getMacAlgorithm(std::string algorithm) = 0;
+	virtual MacAlgorithm* getMacAlgorithm(MacAlgo::Type algorithm) = 0;
 
 	// Recycle a MAC algorithm instance -- override this function in the derived
 	// class if you need to perform specific clean-up
 	virtual void recycleMacAlgorithm(MacAlgorithm* toRecycle);
 
 	// Get the global RNG (may be an unique RNG per thread)
-	virtual RNG* getRNG(std::string name = "default") = 0;
+	virtual RNG* getRNG(RNGImpl::Type name = RNGImpl::Default) = 0;
 
 	// Destructor
 	virtual ~CryptoFactory() { }

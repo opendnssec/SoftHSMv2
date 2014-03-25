@@ -39,9 +39,11 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
+    <TargetName>softhsm2-util</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
+    <TargetName>softhsm2-util</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -82,16 +84,16 @@
   <ItemGroup>
     <ClInclude Include="..\..\src\bin\common\getpw.h" />
     <ClInclude Include="..\..\src\bin\common\library.h" />
-    <ClInclude Include="..\..\src\bin\util\softhsm-util-ossl.h" />
-    <ClInclude Include="..\..\src\bin\util\softhsm-util.h" />
+    <ClInclude Include="..\..\src\bin\util\softhsm2-util-ossl.h" />
+    <ClInclude Include="..\..\src\bin\util\softhsm2-util.h" />
     <ClInclude Include="..\..\src\bin\win32\getopt.h" />
     <ClInclude Include="..\..\src\lib\cryptoki_compat\pkcs11.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\bin\common\getpw.cpp" />
     <ClCompile Include="..\..\src\bin\common\library.cpp" />
-    <ClCompile Include="..\..\src\bin\util\softhsm-util-ossl.cpp" />
-    <ClCompile Include="..\..\src\bin\util\softhsm-util.cpp" />
+    <ClCompile Include="..\..\src\bin\util\softhsm2-util-ossl.cpp" />
+    <ClCompile Include="..\..\src\bin\util\softhsm2-util.cpp" />
     <ClCompile Include="..\..\src\bin\win32\getopt.cpp" />
     <ClCompile Include="..\..\src\bin\win32\getpassphase.cpp" />
   </ItemGroup>

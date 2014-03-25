@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010 .SE (The Internet Infrastructure Foundation)
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -10,7 +10,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -25,14 +25,14 @@
  */
 
 /*****************************************************************************
- softhsm-util.h
+ softhsm2-util.h
 
  This program can be used for interacting with HSMs using PKCS#11.
- The default library is the libsofthsm.so
+ The default library is the libsofthsm2.so
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_SOFTHSM_UTIL_H
-#define _SOFTHSM_V2_SOFTHSM_UTIL_H
+#ifndef _SOFTHSM_V2_SOFTHSM2_UTIL_H
+#define _SOFTHSM_V2_SOFTHSM2_UTIL_H
 
 #include "pkcs11.h"
 
@@ -62,4 +62,4 @@ extern CK_FUNCTION_LIST_PTR p11;
 /// PKCS#11 support
 CK_OBJECT_HANDLE searchObject(CK_SESSION_HANDLE hSession, char* objID, size_t objIDLen);
 
-#endif // !_SOFTHSM_V2_SOFTHSM_UTIL_H
+#endif // !_SOFTHSM_V2_SOFTHSM2_UTIL_H

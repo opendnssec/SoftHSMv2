@@ -356,7 +356,6 @@ CK_RV P11Attribute::retrieve(Token *token, bool isPrivate, CK_VOID_PTR pValue, C
 			{
 				// attr is already retrieved and verified to be an Array
 				rv = retrieveArray((CK_ATTRIBUTE_PTR)pValue, attr->getArrayValue());
-					
 			}
 		}
 		*pulValueLen = attrSize;
@@ -882,6 +881,14 @@ CK_RV P11AttrValue::updateAttr(Token *token, bool isPrivate, CK_VOID_PTR pValue,
 	{
 		OSAttribute bytes((unsigned long)plaintext.size());
 		osobject->setAttribute(CKA_VALUE_LEN, bytes);
+	}
+
+	// Set the CKA_VALUE_BITS during C_CreateObject
+
+	if (op == OBJECT_OP_CREATE && osobject->attributeExists(CKA_VALUE_BITS))
+	{
+		OSAttribute bits((unsigned long)plaintext.bits());
+		osobject->setAttribute(CKA_VALUE_BITS, bits);
 	}
 
 	return CKR_OK;
@@ -1985,6 +1992,39 @@ bool P11AttrPrimeBits::setDefault()
 
 // Update the value if allowed
 CK_RV P11AttrPrimeBits::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op)
+{
+	// Attribute specific checks
+
+	if (op != OBJECT_OP_GENERATE)
+	{
+		return CKR_ATTRIBUTE_READ_ONLY;
+	}
+
+	if (ulValueLen != sizeof(CK_ULONG))
+	{
+		return CKR_ATTRIBUTE_VALUE_INVALID;
+	}
+
+	// Store data
+
+	osobject->setAttribute(type, *(CK_ULONG*)pValue);
+
+	return CKR_OK;
+}
+
+/*****************************************
+ * CKA_VALUE_BITS
+ *****************************************/
+
+// Set default value
+bool P11AttrValueBits::setDefault()
+{
+	OSAttribute attr((unsigned long)0);
+	return osobject->setAttribute(type, attr);
+}
+
+// Update the value if allowed
+CK_RV P11AttrValueBits::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op)
 {
 	// Attribute specific checks
 

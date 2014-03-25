@@ -50,7 +50,7 @@ void ECDSATests::setUp()
 {
 	ecdsa = NULL;
 
-	ecdsa = CryptoFactory::i()->getAsymmetricAlgorithm("ECDSA");
+	ecdsa = CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::ECDSA);
 
 	// Check the ECDSA object
 	CPPUNIT_ASSERT(ecdsa != NULL);
@@ -187,14 +187,14 @@ void ECDSATests::testSigningVerifying()
 	ECParameters *p;
 
 	// Curves/Hashes to test
-	std::vector<std::pair<ByteString, const char*> > totest;
+	std::vector<std::pair<ByteString, HashAlgo::Type> > totest;
 	// Add X9.62 prime256v1
-	totest.push_back(std::make_pair(ByteString("06082a8648ce3d030107"), "sha256"));
+	totest.push_back(std::make_pair(ByteString("06082a8648ce3d030107"), HashAlgo::SHA256));
 	// Add secp384r1
-	totest.push_back(std::make_pair(ByteString("06052b81040022"), "sha384"));
+	totest.push_back(std::make_pair(ByteString("06052b81040022"), HashAlgo::SHA384));
 
 
-	for (std::vector<std::pair<ByteString, const char*> >::iterator k = totest.begin(); k != totest.end(); k++)
+	for (std::vector<std::pair<ByteString, HashAlgo::Type> >::iterator k = totest.begin(); k != totest.end(); k++)
 	{
 		// Get parameters
 		p = new ECParameters;
@@ -221,10 +221,10 @@ void ECDSATests::testSigningVerifying()
 		ByteString hResult;
 		CPPUNIT_ASSERT(hash->hashFinal(hResult));
 		ByteString sig;
-		CPPUNIT_ASSERT(ecdsa->sign(kp->getPrivateKey(), hResult, sig, "ECDSA"));
+		CPPUNIT_ASSERT(ecdsa->sign(kp->getPrivateKey(), hResult, sig, AsymMech::ECDSA));
 
 		// And verify it
-		CPPUNIT_ASSERT(ecdsa->verify(kp->getPublicKey(), hResult, sig, "ECDSA"));
+		CPPUNIT_ASSERT(ecdsa->verify(kp->getPublicKey(), hResult, sig, AsymMech::ECDSA));
 
 		ecdsa->recycleKeyPair(kp);
 		ecdsa->recycleParameters(p);
@@ -238,8 +238,8 @@ void ECDSATests::testSignVerifyKnownVector()
 	ECPublicKey* pubKey2 = (ECPublicKey*) ecdsa->newPublicKey();
 	ECPrivateKey* privKey1 = (ECPrivateKey*) ecdsa->newPrivateKey();
 	ECPrivateKey* privKey2 = (ECPrivateKey*) ecdsa->newPrivateKey();
-	HashAlgorithm* hash1 = CryptoFactory::i()->getHashAlgorithm("sha256");
-	HashAlgorithm* hash2 = CryptoFactory::i()->getHashAlgorithm("sha384");
+	HashAlgorithm* hash1 = CryptoFactory::i()->getHashAlgorithm(HashAlgo::SHA256);
+	HashAlgorithm* hash2 = CryptoFactory::i()->getHashAlgorithm(HashAlgo::SHA384);
 
 	// Reconstruct public and private key #1
 	ByteString ec1 = "06082a8648ce3d030107"; // X9.62 prime256v1
@@ -279,14 +279,14 @@ void ECDSATests::testSignVerifyKnownVector()
 	CPPUNIT_ASSERT(hash1->hashUpdate(data1));
 	ByteString hResult1;
 	CPPUNIT_ASSERT(hash1->hashFinal(hResult1));
-	CPPUNIT_ASSERT(ecdsa->verify(pubKey1, hResult1, goodSignature1, "ECDSA"));
-	CPPUNIT_ASSERT(!ecdsa->verify(pubKey1, hResult1, badSignature1, "ECDSA"));
+	CPPUNIT_ASSERT(ecdsa->verify(pubKey1, hResult1, goodSignature1, AsymMech::ECDSA));
+	CPPUNIT_ASSERT(!ecdsa->verify(pubKey1, hResult1, badSignature1, AsymMech::ECDSA));
 	CPPUNIT_ASSERT(hash2->hashInit());
 	CPPUNIT_ASSERT(hash2->hashUpdate(data2));
 	ByteString hResult2;
 	CPPUNIT_ASSERT(hash2->hashFinal(hResult2));
-	CPPUNIT_ASSERT(ecdsa->verify(pubKey2, hResult2, goodSignature2, "ECDSA"));
-	CPPUNIT_ASSERT(!ecdsa->verify(pubKey2, hResult2, badSignature2, "ECDSA"));
+	CPPUNIT_ASSERT(ecdsa->verify(pubKey2, hResult2, goodSignature2, AsymMech::ECDSA));
+	CPPUNIT_ASSERT(!ecdsa->verify(pubKey2, hResult2, badSignature2, AsymMech::ECDSA));
 
 	ecdsa->recyclePublicKey(pubKey1);
 	ecdsa->recyclePublicKey(pubKey2);

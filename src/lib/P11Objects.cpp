@@ -346,8 +346,12 @@ bool P11CertificateObj::init(OSObject *osobject)
 	P11Attribute* attrCertificateCategory = new P11AttrCertificateCategory(osobject);
 	// TODO: CKA_CHECK_VALUE is accepted, but we do not calculate it
 	P11Attribute* attrCheckValue = new P11AttrCheckValue(osobject);
-	P11Attribute* attrStartDate = new P11AttrStartDate(osobject);
-	P11Attribute* attrEndDate = new P11AttrEndDate(osobject);
+	// NOTE: Because these attributes are used in a certificate object
+	//  where the CKA_VALUE containing the certificate data is not
+	//  modifiable, we assume that this attribute is also not modifiable.
+	//  There is also no explicit mention of these attributes being modifiable.
+	P11Attribute* attrStartDate = new P11AttrStartDate(osobject,0);
+	P11Attribute* attrEndDate = new P11AttrEndDate(osobject,0);
 
 	// Initialize the attributes
 	if
@@ -516,14 +520,14 @@ bool P11KeyObj::init(OSObject *osobject)
 	if (!P11Object::init(osobject)) return false;
 
 	// Create attributes
-	P11Attribute* attrKeyType = new P11AttrKeyType(osobject);
+	P11Attribute* attrKeyType = new P11AttrKeyType(osobject,P11Attribute::ck5);
 	P11Attribute* attrID = new P11AttrID(osobject);
-	P11Attribute* attrStartDate = new P11AttrStartDate(osobject);
-	P11Attribute* attrEndDate = new P11AttrEndDate(osobject);
+	P11Attribute* attrStartDate = new P11AttrStartDate(osobject,P11Attribute::ck8);
+	P11Attribute* attrEndDate = new P11AttrEndDate(osobject,P11Attribute::ck8);
 	P11Attribute* attrDerive = new P11AttrDerive(osobject);
-	P11Attribute* attrLocal = new P11AttrLocal(osobject);
+	P11Attribute* attrLocal = new P11AttrLocal(osobject,P11Attribute::ck6);
 	P11Attribute* attrKeyGenMechanism = new P11AttrKeyGenMechanism(osobject);
-	// CKA_ALLOWED_MECHANISMS is not supported
+	// TODO: CKA_ALLOWED_MECHANISMS is not supported
 
 	// Initialize the attributes
 	if
@@ -885,6 +889,7 @@ bool P11PrivateKeyObj::init(OSObject *osobject)
 	P11Attribute* attrNeverExtractable = new P11AttrNeverExtractable(osobject);
 	P11Attribute* attrWrapWithTrusted = new P11AttrWrapWithTrusted(osobject);
 	P11Attribute* attrUnwrapTemplate = new P11AttrUnwrapTemplate(osobject);
+	// TODO: CKA_ALWAYS_AUTHENTICATE is accepted, but we do not use it
 	P11Attribute* attrAlwaysAuthenticate = new P11AttrAlwaysAuthenticate(osobject);
 
 	// Initialize the attributes
@@ -947,7 +952,7 @@ bool P11RSAPrivateKeyObj::init(OSObject *osobject)
 	if (initialized) return true;
 
 	// Create attributes
-	P11Attribute* attrModulus = new P11AttrModulus(osobject);
+	P11Attribute* attrModulus = new P11AttrModulus(osobject,P11Attribute::ck6);
 	P11Attribute* attrPublicExponent = new P11AttrPublicExponent(osobject,P11Attribute::ck4|P11Attribute::ck6);
 	P11Attribute* attrPrivateExponent = new P11AttrPrivateExponent(osobject);
 	P11Attribute* attrPrime1 = new P11AttrPrime1(osobject);
@@ -1103,13 +1108,15 @@ bool P11DHPrivateKeyObj::init(OSObject *osobject)
 	P11Attribute* attrPrime = new P11AttrPrime(osobject,P11Attribute::ck4|P11Attribute::ck6);
 	P11Attribute* attrBase = new P11AttrBase(osobject,P11Attribute::ck4|P11Attribute::ck6);
 	P11Attribute* attrValue = new P11AttrValue(osobject,P11Attribute::ck1|P11Attribute::ck4|P11Attribute::ck6|P11Attribute::ck7);
+	P11Attribute* attrValueBits = new P11AttrValueBits(osobject);
 
 	// Initialize the attributes
 	if
 	(
 		!attrPrime->init() ||
 		!attrBase->init() ||
-		!attrValue->init()
+		!attrValue->init() ||
+		!attrValueBits->init()
 	)
 	{
 		ERROR_MSG("Could not initialize the attribute");
@@ -1120,6 +1127,7 @@ bool P11DHPrivateKeyObj::init(OSObject *osobject)
 	attributes[attrPrime->getType()] = attrPrime;
 	attributes[attrBase->getType()] = attrBase;
 	attributes[attrValue->getType()] = attrValue;
+	attributes[attrValueBits->getType()] = attrValueBits;
 
 	initialized = true;
 	return true;
@@ -1530,18 +1538,18 @@ bool P11DSADomainObj::init(OSObject *osobject)
 	if (!P11DomainObj::init(osobject)) return false;
 
 	// Create attributes
+	P11Attribute* attrPrime = new P11AttrPrime(osobject,P11Attribute::ck4);
+	P11Attribute* attrSubPrime = new P11AttrSubPrime(osobject,P11Attribute::ck4);
+	P11Attribute* attrBase = new P11AttrBase(osobject,P11Attribute::ck4);
 	P11Attribute* attrPrimeBits = new P11AttrPrimeBits(osobject);
-	P11Attribute* attrPrime = new P11AttrPrime(osobject);
-	P11Attribute* attrSubPrime = new P11AttrSubPrime(osobject);
-	P11Attribute* attrBase = new P11AttrBase(osobject);
 
 	// Initialize the attributes
 	if
 	(
-		!attrPrimeBits->init() ||
 		!attrPrime->init() ||
 		!attrSubPrime->init() ||
-		!attrBase->init()
+		!attrBase->init() ||
+		!attrPrimeBits->init()
 	)
 	{
 		ERROR_MSG("Could not initialize the attribute");
@@ -1549,10 +1557,10 @@ bool P11DSADomainObj::init(OSObject *osobject)
 	}
 
 	// Add them to the map
-	attributes[attrPrimeBits->getType()] = attrPrimeBits;
 	attributes[attrPrime->getType()] = attrPrime;
 	attributes[attrSubPrime->getType()] = attrSubPrime;
 	attributes[attrBase->getType()] = attrBase;
+	attributes[attrPrimeBits->getType()] = attrPrimeBits;
 
 	initialized = true;
 	return true;
@@ -1580,16 +1588,16 @@ bool P11DHDomainObj::init(OSObject *osobject)
 	if (!P11DomainObj::init(osobject)) return false;
 
 	// Create attributes
+	P11Attribute* attrPrime = new P11AttrPrime(osobject,P11Attribute::ck4);
+	P11Attribute* attrBase = new P11AttrBase(osobject,P11Attribute::ck4);
 	P11Attribute* attrPrimeBits = new P11AttrPrimeBits(osobject);
-	P11Attribute* attrPrime = new P11AttrPrime(osobject);
-	P11Attribute* attrBase = new P11AttrBase(osobject);
 
 	// Initialize the attributes
 	if
 	(
-		!attrPrimeBits->init() ||
 		!attrPrime->init() ||
-		!attrBase->init()
+		!attrBase->init() ||
+		!attrPrimeBits->init()
 	)
 	{
 		ERROR_MSG("Could not initialize the attribute");
@@ -1597,9 +1605,9 @@ bool P11DHDomainObj::init(OSObject *osobject)
 	}
 
 	// Add them to the map
-	attributes[attrPrimeBits->getType()] = attrPrimeBits;
 	attributes[attrPrime->getType()] = attrPrime;
 	attributes[attrBase->getType()] = attrBase;
+	attributes[attrPrimeBits->getType()] = attrPrimeBits;
 
 	initialized = true;
 	return true;

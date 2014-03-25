@@ -48,7 +48,7 @@ void DSATests::setUp()
 {
 	dsa = NULL;
 
-	dsa = CryptoFactory::i()->getAsymmetricAlgorithm("DSA");
+	dsa = CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::DSA);
 
 	// Check the DSA object
 	CPPUNIT_ASSERT(dsa != NULL);
@@ -210,10 +210,10 @@ void DSATests::testSigningVerifying()
 #endif
 
 	// Mechanisms to test
-	std::vector<const char*> mechanisms;
-	mechanisms.push_back("dsa-sha1");
-	mechanisms.push_back("dsa-sha224");
-	mechanisms.push_back("dsa-sha256");
+	std::vector<AsymMech::Type> mechanisms;
+	mechanisms.push_back(AsymMech::DSA_SHA1);
+	mechanisms.push_back(AsymMech::DSA_SHA224);
+	mechanisms.push_back(AsymMech::DSA_SHA256);
 
 	for (std::vector<size_t>::iterator k = keySizes.begin(); k != keySizes.end(); k++)
 	{
@@ -233,7 +233,7 @@ void DSATests::testSigningVerifying()
 		CPPUNIT_ASSERT(rng->generateRandom(dataToSign, 567));
 
 		// Test mechanisms that perform internal hashing
-		for (std::vector<const char*>::iterator m = mechanisms.begin(); m != mechanisms.end(); m++)
+		for (std::vector<AsymMech::Type>::iterator m = mechanisms.begin(); m != mechanisms.end(); m++)
 		{
 			ByteString blockSignature, singlePartSignature;
 
@@ -263,10 +263,10 @@ void DSATests::testSigningVerifying()
 
 		// Sign the data
 		ByteString signature;
-		CPPUNIT_ASSERT(dsa->sign(kp->getPrivateKey(), dataToSign, signature, "dsa"));
+		CPPUNIT_ASSERT(dsa->sign(kp->getPrivateKey(), dataToSign, signature, AsymMech::DSA));
 
 		// Verify the signature
-		CPPUNIT_ASSERT(dsa->verify(kp->getPublicKey(), dataToSign, signature, "dsa"));
+		CPPUNIT_ASSERT(dsa->verify(kp->getPublicKey(), dataToSign, signature, AsymMech::DSA));
 
 		dsa->recycleKeyPair(kp);
 		dsa->recycleParameters(p);
@@ -322,10 +322,10 @@ void DSATests::testSignVerifyKnownVector()
 	ByteString goodSignature2 = "315c875dcd4850e948b8ac42824e9483a32d5ba5abe0681b9b9448d444f2be3c89718d12e54a8d9ed066e4a55f7ed5a2229cd23b9a3cee78f83ed6aa61f6bcb9";
 	ByteString badSignature2 = "315c875dcd4850e948b8ac42824e9483a32d5ba5abe0681b9b9448d444f2be3c89718d12e54a8d9ed066e4a55f7ed5a2229cd23b9a3cee78f83ed6aa61f6bcb8";
 
-	CPPUNIT_ASSERT(dsa->verify(pubKey1, data1, goodSignature1, "dsa-sha1"));
-	CPPUNIT_ASSERT(!dsa->verify(pubKey1, data1, badSignature1, "dsa-sha1"));
-	CPPUNIT_ASSERT(dsa->verify(pubKey2, data2, goodSignature2, "dsa-sha256"));
-	CPPUNIT_ASSERT(!dsa->verify(pubKey2, data2, badSignature2, "dsa-sha256"));
+	CPPUNIT_ASSERT(dsa->verify(pubKey1, data1, goodSignature1, AsymMech::DSA_SHA1));
+	CPPUNIT_ASSERT(!dsa->verify(pubKey1, data1, badSignature1, AsymMech::DSA_SHA1));
+	CPPUNIT_ASSERT(dsa->verify(pubKey2, data2, goodSignature2, AsymMech::DSA_SHA256));
+	CPPUNIT_ASSERT(!dsa->verify(pubKey2, data2, badSignature2, AsymMech::DSA_SHA256));
 
 	dsa->recyclePublicKey(pubKey1);
 	dsa->recyclePublicKey(pubKey2);

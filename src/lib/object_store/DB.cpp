@@ -33,9 +33,11 @@
 
 #include "config.h"
 #include "OSPathSep.h"
+#include "log.h"
 #include <cstdlib>
 #include <cstdio>
 #include <iostream>
+#include <vector>
 #include <sqlite3.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -53,31 +55,16 @@ static void xTrace(void*connectionLabel,const char*zSql)
 }
 #endif
 
-// Call once at process startup
-void DB::initialize()
+static int static_log_err(const char *format, va_list ap)
 {
-	if (!sqlite3_threadsafe()) {
-		DB::logError("initialize: sqlite3 compiled with multi-threading support disabled.");
-		return;
-	}
-	sqlite3_initialize();
+	std::vector<char> logMessage;
+	logMessage.resize(4096);
+	vsnprintf(&logMessage[0], 4096, format, ap);
+	ERROR_MSG(&logMessage[0]);
+	return 0;
 }
 
-// Call once at process termination
-void DB::shutdown()
-{
-	printf("\nsqlite3 memory still in use: %lld\n", sqlite3_memory_used());
-	sqlite3_shutdown();
-}
-
-static int static_vprintf_err(const char *format, va_list ap)
-{
-	int rv = vfprintf(stderr,format,ap);
-	fprintf(stderr,"\n");
-	return rv;
-}
-
-static DB::LogErrorHandler static_LogErrorhandler = static_vprintf_err;
+static DB::LogErrorHandler static_LogErrorhandler = static_log_err;
 
 void DB::logError(const std::string &format, ...)
 {
@@ -98,7 +85,7 @@ DB::LogErrorHandler DB::setLogErrorHandler(DB::LogErrorHandler handler)
 
 void DB::resetLogErrorHandler()
 {
-	static_LogErrorhandler = static_vprintf_err;
+	static_LogErrorhandler = static_log_err;
 }
 
 static void reportErrorDB(sqlite3 *db)
@@ -237,14 +224,7 @@ public:
 			reportError(_stmt);
 			return Statement::ReturnCodeError;
 		}
-	#if 0
-	#if HAVE_SQL_TRACE
-		if (rv == SQLITE_ROW)
-			printf("SQLITE_ROW\n");
-		else
-			printf("SQLITE_DONE\n");
-	#endif
-	#endif
+
 		if (rv==SQLITE_ROW)
 		{
 			return Statement::ReturnCodeRow;
@@ -492,8 +472,6 @@ time_t DB::Result::getDatetime(unsigned int fieldidx)
 
 	const unsigned char *value = sqlite3_column_text(_handle->_stmt, fieldidx-1);
 	int valuelen = sqlite3_column_bytes(_handle->_stmt, fieldidx-1);
-
-//		printf("datetime:%s\n",value);
 
 	unsigned long years,mons,days,hours,mins,secs;
 	struct tm gm_tm = {0,0,0,0,0,0,0,0,0,0,0};
@@ -770,7 +748,7 @@ DB::Statement DB::Connection::prepare(const std::string &format, ...){
 	va_end(args);
 	if (cneeded<0) {
 		DB::logError("Connection::prepare: vsnprintf encoding error");
-		return Statement();	
+		return Statement();
 	}
 	if (((size_t)cneeded)>=sizeof(statement)) {
 		// long form

@@ -9,7 +9,7 @@
 define([SOFTHSM_VERSION_MAJOR], [2])
 define([SOFTHSM_VERSION_MINOR], [0])
 define([SOFTHSM_VERSION_FIX], [0])
-define([PACKAGE_SUFFIX], [a1])
+define([PACKAGE_SUFFIX], [a2])
 
 # Library version
 
@@ -48,6 +48,7 @@ AC_PROG_CXX
 # Compiler flags
 ACX_PEDANTIC
 ACX_STRICT
+ACX_64BIT
 
 # Check for libraries (-ldl can be required by OpenSSL too)
 ACX_DLOPEN
@@ -78,7 +79,7 @@ AC_ARG_WITH(migrate,
 	[build_migrate="${withval}"],
 	[build_migrate="no"]
 )
-AC_MSG_CHECKING(if building with softhsm-migrate)
+AC_MSG_CHECKING(if building with softhsm2-migrate)
 if test "x${build_migrate}" = "xyes"; then
 	AC_MSG_RESULT(yes)
 	ACX_YIELD
@@ -174,7 +175,7 @@ AC_DEFINE_UNQUOTED(
 )
 AC_DEFINE_UNQUOTED(
 	[DEFAULT_PKCS11_LIB],
-	["$full_libdir/libsofthsm.so"],
+	["$full_libdir/libsofthsm2.so"],
 	[The default PKCS#11 library]
 )
 

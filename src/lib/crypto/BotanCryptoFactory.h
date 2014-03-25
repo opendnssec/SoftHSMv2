@@ -59,19 +59,19 @@ public:
 	static void reset();
 
 	// Create a concrete instance of a symmetric algorithm
-	SymmetricAlgorithm* getSymmetricAlgorithm(std::string algorithm);
+	SymmetricAlgorithm* getSymmetricAlgorithm(SymAlgo::Type algorithm);
 
 	// Create a concrete instance of an asymmetric algorithm
-	AsymmetricAlgorithm* getAsymmetricAlgorithm(std::string algorithm);
+	AsymmetricAlgorithm* getAsymmetricAlgorithm(AsymAlgo::Type algorithm);
 
 	// Create a concrete instance of a hash algorithm
-	HashAlgorithm* getHashAlgorithm(std::string algorithm);
+	HashAlgorithm* getHashAlgorithm(HashAlgo::Type algorithm);
 
 	// Create a concrete instance of a MAC algorithm
-	MacAlgorithm* getMacAlgorithm(std::string algorithm);
+	MacAlgorithm* getMacAlgorithm(MacAlgo::Type algorithm);
 
 	// Get the global RNG (may be an unique RNG per thread)
-	RNG* getRNG(std::string name = "default");
+	RNG* getRNG(RNGImpl::Type name = RNGImpl::Default);
 
 	// Destructor
 	~BotanCryptoFactory();

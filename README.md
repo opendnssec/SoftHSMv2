@@ -98,11 +98,11 @@ Details on the configuration can be found in "man softhsm2.conf".
 
 ### Initialize Tokens
 
-Use either softhsm-util or the PKCS#11 interface. The SO PIN can e.g. be used
+Use either softhsm2-util or the PKCS#11 interface. The SO PIN can e.g. be used
 to re-initialize the token and the user PIN is handed out to the application so
 it can interact with the token.
 
-      softhsm-util --init-token --slot 0 --label "My token 1"
+      softhsm2-util --init-token --slot 0 --label "My token 1"
 
 Type in SO PIN and user PIN. Once a token has been initialized, more slots will
 be added automatically with a new uninitialized token.

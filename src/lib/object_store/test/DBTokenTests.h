@@ -50,7 +50,7 @@ class test_a_dbtoken : public CppUnit::TestFixture
 public:
 	void setUp();
 	void tearDown();
-	
+
 	void should_be_creatable();
 	void should_support_pin_setting_getting();
 	void should_allow_object_enumeration();

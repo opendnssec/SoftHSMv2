@@ -45,7 +45,8 @@
 #include <botan/pubkey.h>
 
 // Signing functions
-bool BotanDH::signInit(PrivateKey* /*privateKey*/, const std::string /*mechanism*/)
+bool BotanDH::signInit(PrivateKey* /*privateKey*/, const AsymMech::Type /*mechanism*/,
+		       const void* /* param = NULL */, const size_t /* paramLen = 0 */)
 {
 	ERROR_MSG("DH does not support signing");
 
@@ -67,7 +68,8 @@ bool BotanDH::signFinal(ByteString& /*signature*/)
 }
 
 // Verification functions
-bool BotanDH::verifyInit(PublicKey* /*publicKey*/, const std::string /*mechanism*/)
+bool BotanDH::verifyInit(PublicKey* /*publicKey*/, const AsymMech::Type /*mechanism*/,
+			 const void* /* param = NULL */, const size_t /* paramLen = 0 */)
 {
 	ERROR_MSG("DH does not support verifying");
 
@@ -89,7 +91,8 @@ bool BotanDH::verifyFinal(const ByteString& /*signature*/)
 }
 
 // Encryption functions
-bool BotanDH::encrypt(PublicKey* /*publicKey*/, const ByteString& /*data*/, ByteString& /*encryptedData*/, const std::string /*padding*/)
+bool BotanDH::encrypt(PublicKey* /*publicKey*/, const ByteString& /*data*/,
+		      ByteString& /*encryptedData*/, const AsymMech::Type /*padding*/)
 {
 	ERROR_MSG("DH does not support encryption");
 
@@ -97,7 +100,8 @@ bool BotanDH::encrypt(PublicKey* /*publicKey*/, const ByteString& /*data*/, Byte
 }
 
 // Decryption functions
-bool BotanDH::decrypt(PrivateKey* /*privateKey*/, const ByteString& /*encryptedData*/, ByteString& /*data*/, const std::string /*padding*/)
+bool BotanDH::decrypt(PrivateKey* /*privateKey*/, const ByteString& /*encryptedData*/,
+		      ByteString& /*data*/, const AsymMech::Type /*padding*/)
 {
 	ERROR_MSG("DH does not support decryption");
 
@@ -128,9 +132,18 @@ bool BotanDH::generateKeyPair(AsymmetricKeyPair** ppKeyPair, AsymmetricParameter
 	try
 	{
 		BotanRNG* rng = (BotanRNG*)BotanCryptoFactory::i()->getRNG();
+
+		// PKCS#3: 2^(l-1) <= x < 2^l
+		Botan::BigInt x;
+		if (params->getXBitLength() > 0)
+		{
+			x.randomize(*rng->getRNG(), params->getXBitLength());
+		}
+
 		dh = new BotanDH_PrivateKey(*rng->getRNG(),
 					Botan::DL_Group(BotanUtil::byteString2bigInt(params->getP()),
-					BotanUtil::byteString2bigInt(params->getG())));
+					BotanUtil::byteString2bigInt(params->getG())),
+					x);
 	}
 	catch (std::exception& e)
 	{
@@ -229,7 +242,7 @@ bool BotanDH::generateParameters(AsymmetricParameters** ppParams, void* paramete
 
 	if (bitLen < getMinKeySize() || bitLen > getMaxKeySize())
 	{
-		ERROR_MSG("This DH key size is not supported"); 
+		ERROR_MSG("This DH key size is not supported");
 
 		return false;
 	}
@@ -355,7 +368,7 @@ PrivateKey* BotanDH::newPrivateKey()
 {
 	return (PrivateKey*) new BotanDHPrivateKey();
 }
-	
+
 AsymmetricParameters* BotanDH::newParameters()
 {
 	return (AsymmetricParameters*) new DHParameters();

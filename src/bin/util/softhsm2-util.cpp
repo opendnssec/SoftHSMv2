@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010 .SE (The Internet Infrastructure Foundation)
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -10,7 +10,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -25,14 +25,14 @@
  */
 
 /*****************************************************************************
- softhsm-util.cpp
+ softhsm2-util.cpp
 
  This program can be used for interacting with HSMs using PKCS#11.
- The default library is the libsofthsm.so
+ The default library is the libsofthsm2.so
  *****************************************************************************/
 
 #include <config.h>
-#include "softhsm-util.h"
+#include "softhsm2-util.h"
 #include "getpw.h"
 #include "library.h"
 
@@ -52,7 +52,7 @@
 void usage()
 {
 	printf("Support tool for PKCS#11\n");
-	printf("Usage: softhsm-util [ACTION] [OPTIONS]\n");
+	printf("Usage: softhsm2-util [ACTION] [OPTIONS]\n");
 	printf("Action:\n");
 	printf("  -h                Shows this help screen.\n");
 	printf("  --help            Shows this help screen.\n");
@@ -247,7 +247,7 @@ int main(int argc, char* argv[])
 	// Import a key pair from the given path
 	if (doImport)
 	{
-		rv = importKeyPair(inPath, filePIN, slot, userPIN, label, objectID, 
+		rv = importKeyPair(inPath, filePIN, slot, userPIN, label, objectID,
 					forceExec, noPublicKey);
 	}
 
@@ -386,7 +386,7 @@ int showSlots()
 
 		rv = p11->C_GetSlotInfo(pSlotList[i], &slotInfo);
 		if (rv != CKR_OK)
-		{  
+		{
 			fprintf(stderr, "ERROR: Could not get info about slot %lu.\n", pSlotList[i]);
 			continue;
 		}
@@ -412,7 +412,7 @@ int showSlots()
 		rv = p11->C_GetTokenInfo(pSlotList[i], &tokenInfo);
 		if (rv != CKR_OK)
 		{
-			fprintf(stderr, "ERROR: Could not get info about the token in slot %lu.\n", 
+			fprintf(stderr, "ERROR: Could not get info about the token in slot %lu.\n",
 				pSlotList[i]);
 			continue;
 		}
@@ -555,7 +555,7 @@ char* hexStrToBin(char* objectID, int idLength, size_t* newLen)
 {
 	char* bytes = NULL;
 
-	if (idLength % 2 != 0)
+	if (idLength < 2 || idLength % 2 != 0)
 	{
 		fprintf(stderr, "ERROR: Invalid length on hex string.\n");
 		return NULL;

@@ -13,7 +13,7 @@ win32+openssl and win32+botan, flags in config.h, solution file in softhsm2.
 
 - convarch: internal static library
 - softhsm2 (main project): softhsm2.dll
-- keyconv, util: keyconv.exe and util.exe tools
+- keyconv, util, dump: softhsm2-keyconv.exe, softhsm2-util.exe, and softhsm2-dump-file.exe tools
 - p11test, cryptotest, datamgrtest, handlemgrtest, objstoretest,
   sessionmgrtest, slotmgrtest: checking tools
 
