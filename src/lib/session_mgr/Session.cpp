@@ -266,7 +266,7 @@ void Session::setMacOp(MacAlgorithm *macOp)
 	if (this->macOp != NULL)
 	{
 		setSymmetricKey(NULL);
-		CryptoFactory::i()->recycleMacAlgorithm(macOp);
+		CryptoFactory::i()->recycleMacAlgorithm(this->macOp);
 	}
 
 	this->macOp = macOp;
@@ -284,7 +284,7 @@ void Session::setAsymmetricCryptoOp(AsymmetricAlgorithm *asymmetricCryptoOp)
 	{
 		setPublicKey(NULL);
 		setPrivateKey(NULL);
-		CryptoFactory::i()->recycleAsymmetricAlgorithm(asymmetricCryptoOp);
+		CryptoFactory::i()->recycleAsymmetricAlgorithm(this->asymmetricCryptoOp);
 	}
 
 	this->asymmetricCryptoOp = asymmetricCryptoOp;
@@ -300,7 +300,7 @@ void Session::setSymmetricCryptoOp(SymmetricAlgorithm *symmetricCryptoOp)
 	if (this->symmetricCryptoOp != NULL)
 	{
 		setSymmetricKey(NULL);
-		CryptoFactory::i()->recycleSymmetricAlgorithm(symmetricCryptoOp);
+		CryptoFactory::i()->recycleSymmetricAlgorithm(this->symmetricCryptoOp);
 	}
 
 	this->symmetricCryptoOp = symmetricCryptoOp;
@@ -372,7 +372,7 @@ void Session::setPublicKey(PublicKey* publicKey)
 
 	if (this->publicKey != NULL)
 	{
-		asymmetricCryptoOp->recyclePublicKey(publicKey);
+		asymmetricCryptoOp->recyclePublicKey(this->publicKey);
 	}
 
 	this->publicKey = publicKey;
@@ -390,7 +390,7 @@ void Session::setPrivateKey(PrivateKey* privateKey)
 
 	if (this->privateKey != NULL)
 	{
-		asymmetricCryptoOp->recyclePrivateKey(privateKey);
+		asymmetricCryptoOp->recyclePrivateKey(this->privateKey);
 	}
 
 	this->privateKey = privateKey;
@@ -406,9 +406,9 @@ void Session::setSymmetricKey(SymmetricKey* symmetricKey)
 	if (this->symmetricKey != NULL)
 	{
 		if (macOp) {
-			macOp->recycleKey(symmetricKey);
+			macOp->recycleKey(this->symmetricKey);
 		} else if (symmetricCryptoOp) {
-			symmetricCryptoOp->recycleKey(symmetricKey);
+			symmetricCryptoOp->recycleKey(this->symmetricKey);
 		} else {
 			return;
 		}
