@@ -70,12 +70,6 @@ public:
 	const ByteString& getByteStringValue() const;
 	const std::map<CK_ATTRIBUTE_TYPE,OSAttribute>& getArrayValue() const;
 
-	// Set the attribute value
-	void setBooleanValue(const bool value);
-	void setUnsignedLongValue(const unsigned long value);
-	void setByteStringValue(const ByteString& value);
-	void setArrayValue(const std::map<CK_ATTRIBUTE_TYPE,OSAttribute>& value);
-
 	// Helper for template (aka array) matching
 	bool peekValue(ByteString& value) const;
 
