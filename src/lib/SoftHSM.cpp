@@ -5284,7 +5284,7 @@ CK_RV SoftHSM::C_UnwrapKey
 		return rv;
 
 	// Create the secret object using C_CreateObject
-	rv = this->CreateObject(hSession, secretAttribs, secretAttribsCount, hKey, OBJECT_OP_GENERATE);
+	rv = this->CreateObject(hSession, secretAttribs, secretAttribsCount, hKey, OBJECT_OP_UNWRAP);
 
 	// Store the attributes that are being supplied
 	if (rv == CKR_OK)
