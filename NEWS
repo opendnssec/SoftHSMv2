@@ -2,6 +2,9 @@ NEWS for SoftHSM -- History of user visible changes
 
 SoftHSM develop
 
+* SOFTHSM-84: Check that all mandatory attributes are given during
+  the creation process.
+
 Bugfixes:
 * SOFTHSM-93: Invalid C++ object recycling.
 
