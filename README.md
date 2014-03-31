@@ -57,8 +57,7 @@ Options:
 				(default enabled)
 	--disable-ecc		Disable support for ECC (default enabled)
 	--disable-gost		Disable support for GOST (default enabled)
-	--enable-visibility	Enable -fvisibility=hidden GCC flags so
-				only the PKCS#11 C_* entry points are kept
+	--disable-visibility	Disable hidden visibilty link mode [enabled]
 	--with-crypto-backend	Select crypto backend (openssl|botan)
 	--with-openssl=PATH	Specify prefix of path of OpenSSL
 	--with-botan=PATH	Specify prefix of path of Botan
