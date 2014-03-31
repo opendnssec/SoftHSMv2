@@ -634,7 +634,10 @@ CK_RV P11AttrToken::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR
 
 	// Attribute specific checks
 
-	if (op != OBJECT_OP_GENERATE && op != OBJECT_OP_CREATE && op != OBJECT_OP_COPY)
+	if (op != OBJECT_OP_GENERATE &&
+	    op != OBJECT_OP_CREATE &&
+	    op != OBJECT_OP_COPY &&
+	    op != OBJECT_OP_UNWRAP)
 	{
 		return CKR_ATTRIBUTE_READ_ONLY;
 	}
@@ -677,7 +680,10 @@ CK_RV P11AttrPrivate::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_P
 
 	// Attribute specific checks
 
-	if (op != OBJECT_OP_GENERATE && op != OBJECT_OP_CREATE && op != OBJECT_OP_COPY)
+	if (op != OBJECT_OP_GENERATE &&
+	    op != OBJECT_OP_CREATE &&
+	    op != OBJECT_OP_COPY &&
+	    op != OBJECT_OP_UNWRAP)
 	{
 		return CKR_ATTRIBUTE_READ_ONLY;
 	}
@@ -720,7 +726,10 @@ CK_RV P11AttrModifiable::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOI
 
 	// Attribute specific checks
 
-	if (op != OBJECT_OP_GENERATE && op != OBJECT_OP_CREATE && op != OBJECT_OP_COPY)
+	if (op != OBJECT_OP_GENERATE &&
+	    op != OBJECT_OP_CREATE &&
+	    op != OBJECT_OP_COPY &&
+	    op != OBJECT_OP_UNWRAP)
 	{
 		return CKR_ATTRIBUTE_READ_ONLY;
 	}
@@ -774,7 +783,10 @@ CK_RV P11AttrCopyable::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_
 
 	// Attribute specific checks
 
-	if (op != OBJECT_OP_GENERATE && op != OBJECT_OP_CREATE && op != OBJECT_OP_COPY)
+	if (op != OBJECT_OP_GENERATE &&
+	    op != OBJECT_OP_CREATE &&
+	    op != OBJECT_OP_COPY &&
+	    op != OBJECT_OP_UNWRAP)
 	{
 		return CKR_ATTRIBUTE_READ_ONLY;
 	}
