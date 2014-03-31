@@ -58,6 +58,9 @@ public:
 	// Return the attribute type
 	CK_ATTRIBUTE_TYPE getType();
 
+	// Return the attribute checks
+	CK_ULONG getChecks();
+
 	// Retrieve the value if allowed
 	CK_RV retrieve(Token *token, bool isPrivate, CK_VOID_PTR pValue, CK_ULONG_PTR pulValueLen);
 

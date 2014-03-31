@@ -118,6 +118,12 @@ CK_ATTRIBUTE_TYPE P11Attribute::getType()
 	return type;
 }
 
+// Return the attribute checks
+CK_ATTRIBUTE_TYPE P11Attribute::getChecks()
+{
+	return checks;
+}
+
 // Retrieve a template array
 static CK_RV retrieveArray(CK_ATTRIBUTE_PTR pTemplate, const std::map<CK_ATTRIBUTE_TYPE,OSAttribute>& array)
 {
