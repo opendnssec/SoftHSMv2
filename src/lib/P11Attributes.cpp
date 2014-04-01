@@ -118,6 +118,12 @@ CK_ATTRIBUTE_TYPE P11Attribute::getType()
 	return type;
 }
 
+// Return the attribute checks
+CK_ATTRIBUTE_TYPE P11Attribute::getChecks()
+{
+	return checks;
+}
+
 // Retrieve a template array
 static CK_RV retrieveArray(CK_ATTRIBUTE_PTR pTemplate, const std::map<CK_ATTRIBUTE_TYPE,OSAttribute>& array)
 {
@@ -628,7 +634,10 @@ CK_RV P11AttrToken::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR
 
 	// Attribute specific checks
 
-	if (op != OBJECT_OP_GENERATE && op != OBJECT_OP_CREATE && op != OBJECT_OP_COPY)
+	if (op != OBJECT_OP_GENERATE &&
+	    op != OBJECT_OP_CREATE &&
+	    op != OBJECT_OP_COPY &&
+	    op != OBJECT_OP_UNWRAP)
 	{
 		return CKR_ATTRIBUTE_READ_ONLY;
 	}
@@ -671,7 +680,10 @@ CK_RV P11AttrPrivate::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_P
 
 	// Attribute specific checks
 
-	if (op != OBJECT_OP_GENERATE && op != OBJECT_OP_CREATE && op != OBJECT_OP_COPY)
+	if (op != OBJECT_OP_GENERATE &&
+	    op != OBJECT_OP_CREATE &&
+	    op != OBJECT_OP_COPY &&
+	    op != OBJECT_OP_UNWRAP)
 	{
 		return CKR_ATTRIBUTE_READ_ONLY;
 	}
@@ -714,7 +726,10 @@ CK_RV P11AttrModifiable::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOI
 
 	// Attribute specific checks
 
-	if (op != OBJECT_OP_GENERATE && op != OBJECT_OP_CREATE && op != OBJECT_OP_COPY)
+	if (op != OBJECT_OP_GENERATE &&
+	    op != OBJECT_OP_CREATE &&
+	    op != OBJECT_OP_COPY &&
+	    op != OBJECT_OP_UNWRAP)
 	{
 		return CKR_ATTRIBUTE_READ_ONLY;
 	}
@@ -768,7 +783,10 @@ CK_RV P11AttrCopyable::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_
 
 	// Attribute specific checks
 
-	if (op != OBJECT_OP_GENERATE && op != OBJECT_OP_CREATE && op != OBJECT_OP_COPY)
+	if (op != OBJECT_OP_GENERATE &&
+	    op != OBJECT_OP_CREATE &&
+	    op != OBJECT_OP_COPY &&
+	    op != OBJECT_OP_UNWRAP)
 	{
 		return CKR_ATTRIBUTE_READ_ONLY;
 	}

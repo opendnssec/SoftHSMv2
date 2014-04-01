@@ -327,6 +327,7 @@ CK_RV SignVerifyTests::generateKey(CK_SESSION_HANDLE hSession, CK_KEY_TYPE keyTy
 	CK_BYTE val[GEN_KEY_LEN];
 	//CK_BBOOL bFalse = CK_FALSE;
 	CK_BBOOL bTrue = CK_TRUE;
+	CK_BYTE oid[] = { 0x06, 0x07, 0x2A, 0x85, 0x03, 0x02, 0x02, 0x1F, 0x00 };
 	CK_ATTRIBUTE kAttribs[] = {
 		{ CKA_CLASS, &keyClass, sizeof(keyClass) },
 		{ CKA_KEY_TYPE, &keyType, sizeof(keyType) },
@@ -335,14 +336,22 @@ CK_RV SignVerifyTests::generateKey(CK_SESSION_HANDLE hSession, CK_KEY_TYPE keyTy
 		{ CKA_SENSITIVE, &bTrue, sizeof(bTrue) },
 		{ CKA_VERIFY, &bTrue, sizeof(bTrue) },
 		{ CKA_SIGN, &bTrue, sizeof(bTrue) },
-		{ CKA_VALUE, &val[0], sizeof(val) }
+		{ CKA_VALUE, val, sizeof(val) },
+		{ CKA_GOST28147_PARAMS, oid, sizeof(oid) }
 	};
 
 	rv = C_GenerateRandom(hSession, val, GEN_KEY_LEN);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	hKey = CK_INVALID_HANDLE;
-	return C_CreateObject(hSession, kAttribs, sizeof(kAttribs)/sizeof(CK_ATTRIBUTE), &hKey);
+	if (keyType == CKK_GOST28147)
+	{
+		return C_CreateObject(hSession, kAttribs, 9, &hKey);
+	}
+	else
+	{
+		return C_CreateObject(hSession, kAttribs, 8, &hKey);
+	}
 }
 
 void SignVerifyTests::hmacSignVerify(CK_MECHANISM_TYPE mechanismType, CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hKey)

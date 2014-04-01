@@ -211,13 +211,36 @@ CK_RV P11Object::saveTemplate(Token *token, bool isPrivate, CK_ATTRIBUTE_PTR pTe
 
 	// All attributes that have to be specified are marked as such in the specification.
 	// The following checks are relevant here:
-	//  ck1  Must be specified when object is created with C_CreateObject.
-	//  ck3  Must be specified when object is generated with C_GenerateKey or C_GenerateKeyPair.
-	//  ck5  Must be specified when object is unwrapped with C_UnwrapKey.
+	for (std::map<CK_ATTRIBUTE_TYPE, P11Attribute*>::iterator i = attributes.begin(); i != attributes.end(); i++)
+	{
+		CK_ULONG checks = i->second->getChecks();
 
-	// TODO:
-	//   Go through the attributes and see whether any attribute that MUST be specified
-	//   during creation etc. have been specified in pTemplate.
+		//  ck1  Must be specified when object is created with C_CreateObject.
+		//  ck3  Must be specified when object is generated with C_GenerateKey or C_GenerateKeyPair.
+		//  ck5  Must be specified when object is unwrapped with C_UnwrapKey.
+		if (((checks & P11Attribute::ck1) == P11Attribute::ck1 && op == OBJECT_OP_CREATE) ||
+		    ((checks & P11Attribute::ck3) == P11Attribute::ck3 && op == OBJECT_OP_GENERATE) ||
+		    ((checks & P11Attribute::ck5) == P11Attribute::ck5 && op == OBJECT_OP_UNWRAP))
+		{
+			bool isSpecified = false;
+
+			for (CK_ULONG n = 0; n < ulAttributeCount; n++)
+			{
+				if (i->first == pTemplate[n].type)
+				{
+					isSpecified = true;
+					break;
+				}
+			}
+
+			if (!isSpecified)
+			{
+				ERROR_MSG("Mandatory attribute (0x%08X) was not specified in template", (unsigned int)i->first);
+
+				return CKR_TEMPLATE_INCOMPLETE;
+			}
+		}
+	}
 
 	// [PKCS#11 v2.3 pg. 60]
 	//    5. If the attribute values in the supplied template, together with any default attribute
