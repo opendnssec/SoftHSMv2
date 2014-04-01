@@ -4,6 +4,7 @@ SoftHSM develop
 
 * SOFTHSM-84: Check that all mandatory attributes are given during
   the creation process.
+* SOFTHSM-92: Enable -fvisibility=hidden on per default
 
 Bugfixes:
 * SOFTHSM-93: Invalid C++ object recycling.
