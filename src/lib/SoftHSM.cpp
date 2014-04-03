@@ -6481,9 +6481,6 @@ CK_RV SoftHSM::generateDSA
 				case CKA_TOKEN:
 				case CKA_PRIVATE:
 				case CKA_KEY_TYPE:
-				case CKA_PRIME:
-				case CKA_SUBPRIME:
-				case CKA_BASE:
 					continue;
 				default:
 					publicKeyAttribs[publicKeyAttribsCount++] = pPublicKeyTemplate[i];
@@ -6508,27 +6505,15 @@ CK_RV SoftHSM::generateDSA
 				bOK = bOK && osobject->setAttribute(CKA_KEY_GEN_MECHANISM,ulKeyGenMechanism);
 
 				// DSA Public Key Attributes
-				ByteString prime;
-				ByteString subprime;
-				ByteString generator;
 				ByteString value;
 				if (isPublicKeyPrivate)
 				{
-					token->encrypt(pub->getP(), prime);
-					token->encrypt(pub->getQ(), subprime);
-					token->encrypt(pub->getG(), generator);
 					token->encrypt(pub->getY(), value);
 				}
 				else
 				{
-					prime = pub->getP();
-					subprime = pub->getQ();
-					generator = pub->getG();
 					value = pub->getY();
 				}
-				bOK = bOK && osobject->setAttribute(CKA_PRIME, prime);
-				bOK = bOK && osobject->setAttribute(CKA_SUBPRIME, subprime);
-				bOK = bOK && osobject->setAttribute(CKA_BASE, generator);
 				bOK = bOK && osobject->setAttribute(CKA_VALUE, value);
 
 				if (bOK)
@@ -6924,7 +6909,6 @@ CK_RV SoftHSM::generateEC
 				case CKA_TOKEN:
 				case CKA_PRIVATE:
 				case CKA_KEY_TYPE:
-				case CKA_EC_PARAMS:
 					continue;
 				default:
 					publicKeyAttribs[publicKeyAttribsCount++] = pPublicKeyTemplate[i];
@@ -6949,19 +6933,15 @@ CK_RV SoftHSM::generateEC
 				bOK = bOK && osobject->setAttribute(CKA_KEY_GEN_MECHANISM,ulKeyGenMechanism);
 
 				// EC Public Key Attributes
-				ByteString group;
 				ByteString point;
 				if (isPublicKeyPrivate)
 				{
-					token->encrypt(pub->getEC(), group);
 					token->encrypt(pub->getQ(), point);
 				}
 				else
 				{
-					group = pub->getEC();
 					point = pub->getQ();
 				}
-				bOK = bOK && osobject->setAttribute(CKA_EC_PARAMS, group);
 				bOK = bOK && osobject->setAttribute(CKA_EC_POINT, point);
 
 				if (bOK)
