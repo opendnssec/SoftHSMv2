@@ -41,6 +41,9 @@
 #include <sqlite3.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <errno.h>
 
 #include "DB.h"
 
@@ -809,8 +812,15 @@ bool DB::Connection::connect(const char *
 #endif
 							 )
 {
-	// Circumvent the sqlite3 reliance on umask to enforce secure permissions
-	mode_t saved_umask = umask(S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
+	// Create and set file permissions if the DB does not exist.
+	int fd = open(_dbpath.c_str(), O_CREAT, S_IRUSR | S_IWUSR);
+	if (fd == -1)
+	{
+		DB::logError("Could not open database: %s (errno %i)",
+			     _dbpath.c_str(), errno);
+		return false;
+	}
+	::close(fd);
 
 	int rv = sqlite3_open_v2(_dbpath.c_str(),
 							 &_db,
@@ -818,8 +828,6 @@ bool DB::Connection::connect(const char *
 							 | SQLITE_OPEN_CREATE
 							 | SQLITE_OPEN_FULLMUTEX,
 							 NULL);
-	// Restore umask to avoid side effects
-	(void) umask(saved_umask);
 
 	if (rv != SQLITE_OK) {
 		reportErrorDB(_db);

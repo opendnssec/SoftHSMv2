@@ -8,6 +8,7 @@ SoftHSM develop
 
 Bugfixes:
 * SOFTHSM-93: Invalid C++ object recycling.
+* SOFTHSM-95: umask affecting the calling application.
 
 
 SoftHSM 2.0.0a2 - 2014-03-25
