@@ -7175,8 +7175,6 @@ CK_RV SoftHSM::generateDH
 				case CKA_TOKEN:
 				case CKA_PRIVATE:
 				case CKA_KEY_TYPE:
-				case CKA_PRIME:
-				case CKA_BASE:
 					continue;
 				default:
 					publicKeyAttribs[publicKeyAttribsCount++] = pPublicKeyTemplate[i];
@@ -7201,23 +7199,15 @@ CK_RV SoftHSM::generateDH
 				bOK = bOK && osobject->setAttribute(CKA_KEY_GEN_MECHANISM,ulKeyGenMechanism);
 
 				// DH Public Key Attributes
-				ByteString prime;
-				ByteString generator;
 				ByteString value;
 				if (isPublicKeyPrivate)
 				{
-					token->encrypt(pub->getP(), prime);
-					token->encrypt(pub->getG(), generator);
 					token->encrypt(pub->getY(), value);
 				}
 				else
 				{
-					prime = pub->getP();
-					generator = pub->getG();
 					value = pub->getY();
 				}
-				bOK = bOK && osobject->setAttribute(CKA_PRIME, prime);
-				bOK = bOK && osobject->setAttribute(CKA_BASE, generator);
 				bOK = bOK && osobject->setAttribute(CKA_VALUE, value);
 
 				if (bOK)
