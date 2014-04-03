@@ -90,6 +90,8 @@ private:
 	std::map<DWORD, RNG*> rngs;
 #endif
         Mutex* rngsMutex;
+
+	bool wasInitialized;
 };
 
 #endif // !_SOFTHSM_V2_BOTANCRYPTOFACTORY_H
