@@ -67,9 +67,7 @@ BotanCryptoFactory::BotanCryptoFactory()
 	wasInitialized = false;
 
 	// Check if Botan has already been initialized
-	Botan::Library_State* state = Botan::Global_State_Management::swap_global_state(0);
-	Botan::Global_State_Management::swap_global_state(state);
-	if (state)
+	if (Botan::Global_State_Management::global_state_exists())
 	{
 		wasInitialized = true;
 	}
