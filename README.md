@@ -95,6 +95,10 @@ can be change by setting the environment variable.
 
 Details on the configuration can be found in "man softhsm2.conf".
 
+Create the token directory you defined in your config file:
+
+      mkdir <token_dir>
+
 ### Initialize Tokens
 
 Use either softhsm2-util or the PKCS#11 interface. The SO PIN can e.g. be used
