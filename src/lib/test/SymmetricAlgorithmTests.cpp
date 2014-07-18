@@ -351,7 +351,7 @@ void SymmetricAlgorithmTests::aesWrapUnwrap(CK_MECHANISM_TYPE mechanismType, CK_
 		{ CKA_KEY_TYPE, &genKeyType, sizeof(genKeyType) },
 		{ CKA_TOKEN, &bFalse, sizeof(bFalse) },
 		{ CKA_PRIVATE, &bTrue, sizeof(bTrue) },
-		{ CKA_SENSITIVE, &bFalse, sizeof(bFalse) },
+		{ CKA_SENSITIVE, &bTrue, sizeof(bTrue) }, // Wrapping is allowed even on sensitive objects
 		{ CKA_VALUE, keyPtr, keyLen }
 	};
 	CK_OBJECT_HANDLE hSecret;
