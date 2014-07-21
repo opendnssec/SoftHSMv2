@@ -135,6 +135,10 @@ public:
 	// Decryption functions
 	virtual bool decrypt(PrivateKey* privateKey, const ByteString& encryptedData, ByteString& data, const AsymMech::Type padding) = 0;
 
+	// Wrap/Unwrap keys
+	bool wrapKey(PublicKey* publicKey, const ByteString& data, ByteString& encryptedData, const AsymMech::Type padding);
+	bool unwrapKey(PrivateKey* privateKey, const ByteString& encryptedData, ByteString& data, const AsymMech::Type padding);
+
 	// Key factory
 	virtual bool generateKeyPair(AsymmetricKeyPair** ppKeyPair, AsymmetricParameters* parameters, RNG* rng = NULL) = 0;
 	virtual unsigned long getMinKeySize() = 0;
@@ -171,6 +175,8 @@ private:
 		VERIFY
 	}
 	currentOperation;
+
+	bool isWrappingMech(AsymMech::Type padding);
 };
 
 #endif // !_SOFTHSM_V2_ASYMMETRICALGORITHM_H

@@ -140,6 +140,39 @@ bool AsymmetricAlgorithm::verifyFinal(const ByteString& /*signature*/)
 	return true;
 }
 
+// Returns true for mechanisms which have 'tick mark' in Wrap&Unwrap column in PKCS #11 Mechanisms v2.30
+bool AsymmetricAlgorithm::isWrappingMech(AsymMech::Type padding)
+{
+	switch (padding)
+	{
+		case AsymMech::RSA:
+		case AsymMech::RSA_PKCS:
+		case AsymMech::RSA_PKCS_OAEP:
+			return true;
+
+		default:
+			return false;
+	}
+}
+
+// Wrap/Unwrap keys
+bool AsymmetricAlgorithm::wrapKey(PublicKey* publicKey, const ByteString& data, ByteString& encryptedData, const AsymMech::Type padding)
+{
+	if (!isWrappingMech(padding))
+		return false;
+
+	return encrypt(publicKey, data, encryptedData, padding);
+}
+
+bool AsymmetricAlgorithm::unwrapKey(PrivateKey* privateKey, const ByteString& encryptedData, ByteString& data, const AsymMech::Type padding)
+{
+	if (!isWrappingMech(padding))
+		return false;
+
+	return decrypt(privateKey, encryptedData, data, padding);
+}
+
+
 bool AsymmetricAlgorithm::generateParameters(AsymmetricParameters** /*ppParams*/, void* /*parameters = NULL*/, RNG* /*rng = NULL*/)
 {
 	return false;
