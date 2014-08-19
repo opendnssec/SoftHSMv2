@@ -4913,7 +4913,7 @@ CK_RV SoftHSM::WrapKeyAsym
 			return CKR_MECHANISM_INVALID;
 	}
 	// Wrap the key
-	if (!cipher->encrypt(publicKey, keydata, wrapped, mech))
+	if (!cipher->wrapKey(publicKey, keydata, wrapped, mech))
 	{
 		cipher->recyclePublicKey(publicKey);
 		CryptoFactory::i()->recycleAsymmetricAlgorithm(cipher);
@@ -5252,7 +5252,7 @@ CK_RV SoftHSM::UnwrapKeyAsym
 
 	// Unwrap the key
 	CK_RV rv = CKR_OK;
-	if (!cipher->decrypt(unwrappingkey, wrapped, keydata, mode))
+	if (!cipher->unwrapKey(unwrappingkey, wrapped, keydata, mode))
 		rv = CKR_GENERAL_ERROR;
 	cipher->recyclePrivateKey(unwrappingkey);
 	CryptoFactory::i()->recycleAsymmetricAlgorithm(cipher);
