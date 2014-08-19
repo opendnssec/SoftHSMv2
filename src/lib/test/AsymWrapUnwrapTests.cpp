@@ -183,6 +183,8 @@ void AsymWrapUnwrapTests::rsaWrapUnwrap(CK_MECHANISM_TYPE mechanismType, CK_SESS
 		{ CKA_VALUE, &symValue, ulSymValueLen }
 	};
 
+	CK_MECHANISM_INFO mechInfo;
+
 	if (mechanismType == CKM_RSA_PKCS_OAEP)
 	{
 		mechanism.pParameter = &oaepParams;
@@ -196,6 +198,12 @@ void AsymWrapUnwrapTests::rsaWrapUnwrap(CK_MECHANISM_TYPE mechanismType, CK_SESS
 	rv = C_GetAttributeValue(hSession, symKey, valueTemplate, sizeof(valueTemplate)/sizeof(CK_ATTRIBUTE));
 	CPPUNIT_ASSERT(rv==CKR_OK);
 	ulSymValueLen = valueTemplate[0].ulValueLen;
+
+	// CKM_RSA_PKCS Wrap/Unwrap support
+	rv = C_GetMechanismInfo(SLOT_INIT_TOKEN, CKM_RSA_PKCS, &mechInfo);
+	CPPUNIT_ASSERT(rv==CKR_OK);
+	CPPUNIT_ASSERT(mechInfo.flags&CKF_WRAP);
+	CPPUNIT_ASSERT(mechInfo.flags&CKF_UNWRAP);
 
 	// Estimate wrapped length
 	rv = C_WrapKey(hSession, &mechanism, hPublicKey, symKey, NULL_PTR, &wrappedLenEstimation);

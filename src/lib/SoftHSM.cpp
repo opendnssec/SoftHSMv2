@@ -788,6 +788,10 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 			pInfo->flags = CKF_GENERATE_KEY_PAIR;
 			break;
 		case CKM_RSA_PKCS:
+			pInfo->ulMinKeySize = rsaMinSize;
+			pInfo->ulMaxKeySize = rsaMaxSize;
+			pInfo->flags = CKF_SIGN | CKF_VERIFY | CKF_ENCRYPT | CKF_DECRYPT | CKF_WRAP | CKF_UNWRAP;
+			break;
 		case CKM_RSA_X_509:
 			pInfo->ulMinKeySize = rsaMinSize;
 			pInfo->ulMaxKeySize = rsaMaxSize;
