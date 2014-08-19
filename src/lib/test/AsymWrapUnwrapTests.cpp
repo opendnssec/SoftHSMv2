@@ -165,6 +165,7 @@ void AsymWrapUnwrapTests::rsaWrapUnwrap(CK_MECHANISM_TYPE mechanismType, CK_SESS
 	CK_OBJECT_HANDLE symKey = CK_INVALID_HANDLE;
 	CK_OBJECT_HANDLE unwrappedKey = CK_INVALID_HANDLE;
 	CK_RV rv;
+	CK_ULONG wrappedLenEstimation;
 
 	CK_BBOOL bFalse = CK_FALSE;
 	CK_BBOOL bTrue = CK_TRUE;
@@ -196,9 +197,22 @@ void AsymWrapUnwrapTests::rsaWrapUnwrap(CK_MECHANISM_TYPE mechanismType, CK_SESS
 	CPPUNIT_ASSERT(rv==CKR_OK);
 	ulSymValueLen = valueTemplate[0].ulValueLen;
 
+	// Estimate wrapped length
+	rv = C_WrapKey(hSession, &mechanism, hPublicKey, symKey, NULL_PTR, &wrappedLenEstimation);
+	CPPUNIT_ASSERT(rv==CKR_OK);
+	CPPUNIT_ASSERT(wrappedLenEstimation>0);
+
+	// This should always fail because wrapped data have to be longer than 0 bytes
+	ulCipherTextLen = 0;
+	rv = C_WrapKey(hSession, &mechanism, hPublicKey, symKey, cipherText, &ulCipherTextLen);
+	CPPUNIT_ASSERT(rv==CKR_BUFFER_TOO_SMALL);
+
+	// Do real wrapping
 	ulCipherTextLen = sizeof(cipherText);
 	rv = C_WrapKey(hSession, &mechanism, hPublicKey, symKey, cipherText, &ulCipherTextLen);
 	CPPUNIT_ASSERT(rv==CKR_OK);
+	// Check length 'estimation'
+	CPPUNIT_ASSERT(wrappedLenEstimation>=ulCipherTextLen);
 
 	rv = C_UnwrapKey(hSession, &mechanism, hPrivateKey, cipherText, ulCipherTextLen, unwrapTemplate, sizeof(unwrapTemplate)/sizeof(CK_ATTRIBUTE), &unwrappedKey);
 	CPPUNIT_ASSERT(rv==CKR_OK);

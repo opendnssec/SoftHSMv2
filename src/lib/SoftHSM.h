@@ -375,8 +375,6 @@ private:
 	CK_RV WrapKeyAsym
 	(
 		CK_MECHANISM_PTR pMechanism,
-		CK_BYTE_PTR pWrappedKey,
-		CK_ULONG_PTR pulWrappedKeyLen,
 		Token *token,
 		OSObject *wrapKey,
 		ByteString &keydata,
@@ -386,8 +384,6 @@ private:
 	CK_RV WrapKeySym
 	(
 		CK_MECHANISM_PTR pMechanism,
-		CK_BYTE_PTR pWrappedKey,
-		CK_ULONG_PTR pulWrappedKeyLen,
 		Token *token,
 		OSObject *wrapKey,
 		ByteString &keydata,

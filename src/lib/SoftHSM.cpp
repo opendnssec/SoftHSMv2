@@ -4792,8 +4792,6 @@ CK_RV SoftHSM::C_GenerateKeyPair
 CK_RV SoftHSM::WrapKeySym
 (
 	CK_MECHANISM_PTR pMechanism,
-	CK_BYTE_PTR pWrappedKey,
-	CK_ULONG_PTR pulWrappedKeyLen,
 	Token* token,
 	OSObject* wrapKey,
 	ByteString& keydata,
@@ -4809,33 +4807,11 @@ CK_RV SoftHSM::WrapKeySym
 		case CKM_AES_KEY_WRAP:
 			if ((wrappedlen < 16) || ((wrappedlen % 8) != 0))
 				return CKR_KEY_SIZE_RANGE;
-			wrappedlen += 8;
-			*pulWrappedKeyLen = wrappedlen;
-			if (pWrappedKey == NULL_PTR)
-			{
-				return CKR_OK;
-			}
-			if (*pulWrappedKeyLen < wrappedlen)
-			{
-				*pulWrappedKeyLen = wrappedlen;
-				return CKR_BUFFER_TOO_SMALL;
-			}
 			algo = SymAlgo::AES;
 			mode = SymWrap::AES_KEYWRAP;
 			break;
 #ifdef HAVE_AES_KEY_WRAP_PAD
 		case CKM_AES_KEY_WRAP_PAD:
-			wrappedlen = ((wrappedlen + 7) / 8 + 1) * 8;
-			if (pWrappedKey == NULL_PTR)
-			{
-				*pulWrappedKeyLen = wrappedlen;
-				return CKR_OK;
-			}
-			if (*pulWrappedKeyLen < wrappedlen)
-			{
-				*pulWrappedKeyLen = wrappedlen;
-				return CKR_BUFFER_TOO_SMALL;
-			}
 			algo = SymAlgo::AES;
 			mode = SymWrap::AES_KEYWRAP_PAD;
 			break;
@@ -4880,8 +4856,6 @@ CK_RV SoftHSM::WrapKeySym
 CK_RV SoftHSM::WrapKeyAsym
 (
 	CK_MECHANISM_PTR pMechanism,
-	CK_BYTE_PTR pWrappedKey,
-	CK_ULONG_PTR pulWrappedKeyLen,
 	Token* token,
 	OSObject* wrapKey,
 	ByteString& keydata,
@@ -4905,9 +4879,6 @@ CK_RV SoftHSM::WrapKeyAsym
 			// RFC 3447 section 7.2.1
 			if (keydata.size() > modulus_length - 11)
 				return CKR_KEY_SIZE_RANGE;
-			*pulWrappedKeyLen = modulus_length;
-			if (pWrappedKey == NULL_PTR)
-				return CKR_OK;
 			break;
 
 		default:
@@ -5155,22 +5126,21 @@ CK_RV SoftHSM::C_WrapKey
 
 	keyClass = wrapKey->getAttribute(CKA_CLASS)->getUnsignedLongValue();
 	ByteString wrapped;
-	CK_ULONG realWrappedKeyLen;
 	if (keyClass == CKO_SECRET_KEY)
-		rv = SoftHSM::WrapKeySym(pMechanism, pWrappedKey, &realWrappedKeyLen, token, wrapKey, keydata, wrapped);
+		rv = SoftHSM::WrapKeySym(pMechanism, token, wrapKey, keydata, wrapped);
 	else
-		rv = SoftHSM::WrapKeyAsym(pMechanism, pWrappedKey, &realWrappedKeyLen, token, wrapKey, keydata, wrapped);
+		rv = SoftHSM::WrapKeyAsym(pMechanism, token, wrapKey, keydata, wrapped);
 	if (rv != CKR_OK)
 		return rv;
 
 	if (pWrappedKey != NULL) {
-		if (*pulWrappedKeyLen >= realWrappedKeyLen)
-			memcpy(pWrappedKey, wrapped.byte_str(), realWrappedKeyLen);
+		if (*pulWrappedKeyLen >= wrapped.size())
+			memcpy(pWrappedKey, wrapped.byte_str(), wrapped.size());
 		else
 			rv = CKR_BUFFER_TOO_SMALL;
 	}
 
-	*pulWrappedKeyLen = realWrappedKeyLen;
+	*pulWrappedKeyLen = wrapped.size();
 	return rv;
 }
 

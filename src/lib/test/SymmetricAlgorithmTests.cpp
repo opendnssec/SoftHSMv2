@@ -367,6 +367,7 @@ void SymmetricAlgorithmTests::aesWrapUnwrap(CK_MECHANISM_TYPE mechanismType, CK_
 
 	CK_BYTE_PTR wrappedPtr = NULL_PTR;
 	CK_ULONG wrappedLen = 0UL;
+	CK_ULONG zero = 0UL;
 	CK_ULONG rndKeyLen = keyLen;
 	if (mechanismType == CKM_AES_KEY_WRAP_PAD)
 		rndKeyLen =  (keyLen + 7) & ~7;
@@ -382,14 +383,21 @@ void SymmetricAlgorithmTests::aesWrapUnwrap(CK_MECHANISM_TYPE mechanismType, CK_
 	CPPUNIT_ASSERT(rv == CKR_OK);
 	CPPUNIT_ASSERT(hSecret != CK_INVALID_HANDLE);
 
+	// Estimate wrapped length
 	rv = C_WrapKey(hSession, &mechanism, hKey, hSecret, wrappedPtr, &wrappedLen);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 	CPPUNIT_ASSERT(wrappedLen == rndKeyLen + 8);
+
 	wrappedPtr = (CK_BYTE_PTR) malloc(wrappedLen);
 	CPPUNIT_ASSERT(wrappedPtr != NULL_PTR);
 	rv = C_WrapKey(hSession, &mechanism, hKey, hSecret, wrappedPtr, &wrappedLen);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 	CPPUNIT_ASSERT(wrappedLen == rndKeyLen + 8);
+
+	// This should always fail because wrapped data have to be longer than 0 bytes
+	zero = 0;
+	rv = C_WrapKey(hSession, &mechanism, hKey, hSecret, wrappedPtr, &zero);
+	CPPUNIT_ASSERT(rv == CKR_BUFFER_TOO_SMALL);
 
 	CK_ATTRIBUTE nattribs[] = {
 		{ CKA_CLASS, &secretClass, sizeof(secretClass) },
