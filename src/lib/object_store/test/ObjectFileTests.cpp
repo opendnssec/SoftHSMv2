@@ -128,6 +128,7 @@ void ObjectFileTests::testBoolAttr()
 		CPPUNIT_ASSERT(testObject.setAttribute(CKA_VERIFY, attr6));
 		CPPUNIT_ASSERT(testObject.getAttribute(CKA_VERIFY)->isBooleanAttribute());
 		CPPUNIT_ASSERT(testObject.getAttribute(CKA_VERIFY)->getBooleanValue() == value6);
+		CPPUNIT_ASSERT(testObject.getBooleanValue(CKA_VERIFY, false) == value6);
 	}
 }
 
@@ -197,6 +198,7 @@ void ObjectFileTests::testULongAttr()
 		CPPUNIT_ASSERT(testObject.setAttribute(CKA_CLASS, attr6));
 		CPPUNIT_ASSERT(testObject.getAttribute(CKA_CLASS)->isUnsignedLongAttribute());
 		CPPUNIT_ASSERT(testObject.getAttribute(CKA_CLASS)->getUnsignedLongValue() == value6);
+		CPPUNIT_ASSERT(testObject.getUnsignedLongValue(CKA_CLASS, 0x0) == value6);
 	}
 }
 

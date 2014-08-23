@@ -847,44 +847,10 @@ OSAttribute *DBObject::accessAttribute(CK_ATTRIBUTE_TYPE type)
 	return NULL;
 }
 
-// Check if the specified attribute exists
-bool DBObject::attributeExists(CK_ATTRIBUTE_TYPE type)
+// Retrieve the specified attribute for internal use
+// Calling function must lock the mutex
+OSAttribute* DBObject::getAttributeDB(CK_ATTRIBUTE_TYPE type)
 {
-	MutexLocker lock(_mutex);
-
-	if (_connection == NULL)
-	{
-		ERROR_MSG("Object is not connected to the database.");
-		return false;
-	}
-
-	if (_objectId == 0)
-	{
-		ERROR_MSG("Cannot access invalid object.");
-		return false;
-	}
-
-	if (_transaction)
-	{
-		std::map<CK_ATTRIBUTE_TYPE,OSAttribute*>::iterator it =	 _transaction->find(type);
-		if (it != _transaction->end())
-			return true;
-	}
-
-	std::map<CK_ATTRIBUTE_TYPE,OSAttribute*>::iterator it =	 _attributes.find(type);
-	if (it != _attributes.end())
-	{
-		return true;
-	}
-
-	return accessAttribute(type) != NULL;
-}
-
-// Retrieve the specified attribute
-OSAttribute* DBObject::getAttribute(CK_ATTRIBUTE_TYPE type)
-{
-	MutexLocker lock(_mutex);
-
 	if (_connection == NULL)
 	{
 		ERROR_MSG("Object is not connected to the database.");
@@ -916,6 +882,58 @@ OSAttribute* DBObject::getAttribute(CK_ATTRIBUTE_TYPE type)
 	}
 
 	return accessAttribute(type);
+}
+
+// Check if the specified attribute exists
+bool DBObject::attributeExists(CK_ATTRIBUTE_TYPE type)
+{
+	MutexLocker lock(_mutex);
+
+	return getAttributeDB(type) != NULL;
+}
+
+// Retrieve the specified attribute
+OSAttribute* DBObject::getAttribute(CK_ATTRIBUTE_TYPE type)
+{
+	MutexLocker lock(_mutex);
+
+	return getAttributeDB(type);
+}
+
+bool DBObject::getBooleanValue(CK_ATTRIBUTE_TYPE type, bool val)
+{
+	MutexLocker lock(_mutex);
+
+	OSAttribute* attr = getAttributeDB(type);
+	if (attr == NULL) return val;
+
+	if (attr->isBooleanAttribute())
+	{
+		return attr->getBooleanValue();
+	}
+	else
+	{
+		ERROR_MSG("The attribute is not a boolean: 0x%08X", type);
+		return val;
+	}
+}
+
+unsigned long DBObject::getUnsignedLongValue(CK_ATTRIBUTE_TYPE type, unsigned long val)
+{
+	MutexLocker lock(_mutex);
+
+	OSAttribute* attr = getAttributeDB(type);
+	if (attr == NULL) return val;
+
+	if (attr->isUnsignedLongAttribute())
+	{
+		return attr->getUnsignedLongValue();
+	}
+	else
+	{
+		ERROR_MSG("The attribute is not an unsigned long: 0x%08X", type);
+		return val;
+	}
 }
 
 CK_ATTRIBUTE_TYPE DBObject::nextAttributeType(CK_ATTRIBUTE_TYPE)

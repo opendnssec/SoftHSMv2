@@ -38,8 +38,8 @@
 SessionObject::SessionObject(SessionObjectStore* parent, CK_SLOT_ID slotID, CK_SESSION_HANDLE hSession, bool isPrivate)
 {
 	this->hSession = hSession;
-    this->slotID = slotID;
-    this->isPrivate = isPrivate;
+	this->slotID = slotID;
+	this->isPrivate = isPrivate;
 	objectMutex = MutexFactory::i()->getMutex();
 	valid = (objectMutex != NULL);
 	this->parent = parent;
@@ -69,6 +69,50 @@ OSAttribute* SessionObject::getAttribute(CK_ATTRIBUTE_TYPE type)
 	return attributes[type];
 }
 
+bool SessionObject::getBooleanValue(CK_ATTRIBUTE_TYPE type, bool val)
+{
+	MutexLocker lock(objectMutex);
+
+	OSAttribute* attr = attributes[type];
+	if (attr == NULL)
+	{
+		ERROR_MSG("The attribute does not exist: 0x%08X", type);
+		return val;
+	}
+
+	if (attr->isBooleanAttribute())
+	{
+		return attr->getBooleanValue();
+	}
+	else
+	{
+		ERROR_MSG("The attribute is not a boolean: 0x%08X", type);
+		return val;
+	}
+}
+
+unsigned long SessionObject::getUnsignedLongValue(CK_ATTRIBUTE_TYPE type, unsigned long val)
+{
+	MutexLocker lock(objectMutex);
+
+	OSAttribute* attr = attributes[type];
+	if (attr == NULL)
+	{
+		ERROR_MSG("The attribute does not exist: 0x%08X", type);
+		return val;
+	}
+
+	if (attr->isUnsignedLongAttribute())
+	{
+		return attr->getUnsignedLongValue();
+	}
+	else
+	{
+		ERROR_MSG("The attribute is not an unsigned long: 0x%08X", type);
+		return val;
+	}
+}
+
 // Retrieve the next attribute type
 CK_ATTRIBUTE_TYPE SessionObject::nextAttributeType(CK_ATTRIBUTE_TYPE type)
 {
@@ -80,7 +124,7 @@ CK_ATTRIBUTE_TYPE SessionObject::nextAttributeType(CK_ATTRIBUTE_TYPE type)
 	while ((n != attributes.end()) && (n->second == NULL))
 		++n;
 
-	
+
 	// return type or CKA_CLASS (= 0)
 	if (n == attributes.end())
 	{

@@ -49,7 +49,7 @@ class SessionObject : public OSObject
 {
 public:
 	// Constructor
-    SessionObject(SessionObjectStore* parent, CK_SLOT_ID slotID, CK_SESSION_HANDLE hSession, bool isPrivate = false);
+	SessionObject(SessionObjectStore* parent, CK_SLOT_ID slotID, CK_SESSION_HANDLE hSession, bool isPrivate = false);
 
 	// Destructor
 	virtual ~SessionObject();
@@ -59,6 +59,8 @@ public:
 
 	// Retrieve the specified attribute
 	virtual OSAttribute* getAttribute(CK_ATTRIBUTE_TYPE type);
+	virtual bool getBooleanValue(CK_ATTRIBUTE_TYPE type, bool val);
+	virtual unsigned long getUnsignedLongValue(CK_ATTRIBUTE_TYPE type, unsigned long val);
 
 	// Retrieve the next attribute type
 	virtual CK_ATTRIBUTE_TYPE nextAttributeType(CK_ATTRIBUTE_TYPE type);
@@ -69,20 +71,20 @@ public:
 	// The validity state of the object
 	virtual bool isValid();
 
-    bool hasSlotID(CK_SLOT_ID slotID);
+	bool hasSlotID(CK_SLOT_ID slotID);
 
 	// Called by the session object store when a session is closed. If it's the
 	// session this object was associated with, the function returns true and the
 	// object is invalidated
-    bool removeOnSessionClose(CK_SESSION_HANDLE hSession);
+	bool removeOnSessionClose(CK_SESSION_HANDLE hSession);
 
-    // Called by the session object store when all the sessions for a token
-    // have been closed.
-    bool removeOnAllSessionsClose(CK_SLOT_ID slotID);
+	// Called by the session object store when all the sessions for a token
+	// have been closed.
+	bool removeOnAllSessionsClose(CK_SLOT_ID slotID);
 
-    // Called by the session object store when a token is logged out.
-    // Remove when this session object is a private object for this token.
-    bool removeOnTokenLogout(CK_SLOT_ID slotID);
+	// Called by the session object store when a token is logged out.
+	// Remove when this session object is a private object for this token.
+	bool removeOnTokenLogout(CK_SLOT_ID slotID);
 
 	// These functions are just stubs for session objects
 	virtual bool startTransaction(Access access);
@@ -109,14 +111,14 @@ private:
 	// Mutex object for thread-safeness
 	Mutex* objectMutex;
 
-    // The slotID of the object is associated with.
-    CK_SLOT_ID slotID;
+	// The slotID of the object is associated with.
+	CK_SLOT_ID slotID;
 
-    // The session the object is associated with.
+	// The session the object is associated with.
 	CK_SESSION_HANDLE hSession;
 
-    // Indicates whether this object is private
-    bool isPrivate;
+	// Indicates whether this object is private
+	bool isPrivate;
 
 	// The parent SessionObjectStore
 	SessionObjectStore* parent;

@@ -102,6 +102,7 @@ void SessionObjectTests::testBoolAttr()
 	CPPUNIT_ASSERT(testObject.setAttribute(CKA_VERIFY, attr6));
 	CPPUNIT_ASSERT(testObject.getAttribute(CKA_VERIFY)->isBooleanAttribute());
 	CPPUNIT_ASSERT(testObject.getAttribute(CKA_VERIFY)->getBooleanValue() == value6);
+	CPPUNIT_ASSERT(testObject.getBooleanValue(CKA_VERIFY, false) == value6);
 }
 
 void SessionObjectTests::testULongAttr()
@@ -127,7 +128,7 @@ void SessionObjectTests::testULongAttr()
 	CPPUNIT_ASSERT(testObject.setAttribute(CKA_AUTH_PIN_FLAGS, attr3));
 	CPPUNIT_ASSERT(testObject.setAttribute(CKA_SUBPRIME_BITS, attr4));
 	CPPUNIT_ASSERT(testObject.setAttribute(CKA_KEY_TYPE, attr5));
-		
+
 	CPPUNIT_ASSERT(testObject.isValid());
 
 	CPPUNIT_ASSERT(testObject.attributeExists(CKA_MODULUS_BITS));
@@ -155,6 +156,7 @@ void SessionObjectTests::testULongAttr()
 	CPPUNIT_ASSERT(testObject.setAttribute(CKA_CLASS, attr6));
 	CPPUNIT_ASSERT(testObject.getAttribute(CKA_CLASS)->isUnsignedLongAttribute());
 	CPPUNIT_ASSERT(testObject.getAttribute(CKA_CLASS)->getUnsignedLongValue() == value6);
+	CPPUNIT_ASSERT(testObject.getUnsignedLongValue(CKA_CLASS, 0x0) == value6);
 }
 
 void SessionObjectTests::testByteStrAttr()

@@ -175,6 +175,7 @@ void test_a_dbobject_with_an_object::should_store_boolean_attributes()
 		CPPUNIT_ASSERT(testObject.setAttribute(CKA_VERIFY, attr6));
 		CPPUNIT_ASSERT(testObject.getAttribute(CKA_VERIFY)->isBooleanAttribute());
 		CPPUNIT_ASSERT_EQUAL(testObject.getAttribute(CKA_VERIFY)->getBooleanValue(), value6);
+		CPPUNIT_ASSERT_EQUAL(testObject.getBooleanValue(CKA_VERIFY, false), value6);
 	}
 }
 
@@ -237,6 +238,7 @@ void test_a_dbobject_with_an_object::should_store_unsigned_long_attributes()
 		CPPUNIT_ASSERT(testObject.setAttribute(CKA_CLASS, attr6));
 		CPPUNIT_ASSERT(testObject.getAttribute(CKA_CLASS)->isUnsignedLongAttribute());
 		CPPUNIT_ASSERT_EQUAL(testObject.getAttribute(CKA_CLASS)->getUnsignedLongValue(), value6);
+		CPPUNIT_ASSERT_EQUAL(testObject.getUnsignedLongValue(CKA_CLASS, 0x0), value6);
 	}
 }
 
