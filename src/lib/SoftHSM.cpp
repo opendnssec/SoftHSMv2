@@ -5023,9 +5023,6 @@ CK_RV SoftHSM::C_WrapKey
 		return CKR_KEY_UNEXTRACTABLE;
 	if ((key->attributeExists(CKA_WRAP_WITH_TRUSTED) && key->getAttribute(CKA_WRAP_WITH_TRUSTED)->getBooleanValue()) && (!wrapKey->attributeExists(CKA_TRUSTED) || wrapKey->getAttribute(CKA_TRUSTED)->getBooleanValue() == false))
 		return CKR_KEY_NOT_WRAPPABLE;
-	// If a sensible key may be wrapped, it may be unwrapped as not sensible
-	if (key->attributeExists(CKA_SENSITIVE) && key->getAttribute(CKA_SENSITIVE)->getBooleanValue())
-		return CKR_KEY_NOT_WRAPPABLE;
 
 	// Check the class
 	CK_OBJECT_CLASS keyClass = key->getAttribute(CKA_CLASS)->getUnsignedLongValue();
