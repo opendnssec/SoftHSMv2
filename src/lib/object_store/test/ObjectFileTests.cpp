@@ -267,7 +267,7 @@ void ObjectFileTests::testByteStrAttr()
 
 		CPPUNIT_ASSERT(testObject.setAttribute(CKA_ISSUER, attr6));
 		CPPUNIT_ASSERT(testObject.getAttribute(CKA_ISSUER)->isByteStringAttribute());
-		CPPUNIT_ASSERT(testObject.getAttribute(CKA_ISSUER)->getByteStringValue() == value6);
+		CPPUNIT_ASSERT(testObject.getByteStringValue(CKA_ISSUER) == value6);
 	}
 }
 

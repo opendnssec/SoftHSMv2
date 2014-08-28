@@ -364,23 +364,24 @@ static bool isModifiable(CK_ATTRIBUTE_TYPE type)
 {
 	switch (type) {
 	case CKA_LABEL:
+	case CKA_TRUSTED:
 	case CKA_ID:
 	case CKA_ISSUER:
 	case CKA_SERIAL_NUMBER:
+	case CKA_START_DATE:
+	case CKA_END_DATE:
 	case CKA_DERIVE:
+	case CKA_SUBJECT:
 	case CKA_ENCRYPT:
 	case CKA_VERIFY:
 	case CKA_VERIFY_RECOVER:
 	case CKA_WRAP:
+	case CKA_SENSITIVE:
 	case CKA_DECRYPT:
 	case CKA_SIGN:
 	case CKA_SIGN_RECOVER:
 	case CKA_UNWRAP:
-	case CKA_SENSITIVE:
 	case CKA_EXTRACTABLE:
-	case CKA_GOSTR3411_PARAMS:
-	case CKA_SUBJECT:
-	case CKA_GOST28147_PARAMS:
 	case CKA_OS_TOKENFLAGS:
 	case CKA_OS_SOPIN:
 	case CKA_OS_USERPIN:
@@ -897,7 +898,11 @@ OSAttribute* DBObject::getAttribute(CK_ATTRIBUTE_TYPE type)
 {
 	MutexLocker lock(_mutex);
 
-	return getAttributeDB(type);
+	OSAttribute* attr = getAttributeDB(type);
+
+	if (attr == NULL) return NULL;
+
+	return new OSAttribute(*attr);
 }
 
 bool DBObject::getBooleanValue(CK_ATTRIBUTE_TYPE type, bool val)
@@ -932,6 +937,26 @@ unsigned long DBObject::getUnsignedLongValue(CK_ATTRIBUTE_TYPE type, unsigned lo
 	else
 	{
 		ERROR_MSG("The attribute is not an unsigned long: 0x%08X", type);
+		return val;
+	}
+}
+
+ByteString DBObject::getByteStringValue(CK_ATTRIBUTE_TYPE type)
+{
+	MutexLocker lock(_mutex);
+
+	ByteString val;
+
+	OSAttribute* attr = getAttributeDB(type);
+	if (attr == NULL) return val;
+
+	if (attr->isByteStringAttribute())
+	{
+		return attr->getByteStringValue();
+	}
+	else
+	{
+		ERROR_MSG("The attribute is not a byte string: 0x%08X", type);
 		return val;
 	}
 }

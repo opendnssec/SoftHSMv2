@@ -102,7 +102,10 @@ OSAttribute* ObjectFile::getAttribute(CK_ATTRIBUTE_TYPE type)
 {
 	MutexLocker lock(objectMutex);
 
-	return attributes[type];
+	OSAttribute* attr = attributes[type];
+	if (attr == NULL) return NULL;
+
+	return new OSAttribute(*attr);
 }
 
 bool ObjectFile::getBooleanValue(CK_ATTRIBUTE_TYPE type, bool val)
@@ -145,6 +148,30 @@ unsigned long ObjectFile::getUnsignedLongValue(CK_ATTRIBUTE_TYPE type, unsigned 
 	else
 	{
 		ERROR_MSG("The attribute is not an unsigned long: 0x%08X", type);
+		return val;
+	}
+}
+
+ByteString ObjectFile::getByteStringValue(CK_ATTRIBUTE_TYPE type)
+{
+	MutexLocker lock(objectMutex);
+
+	ByteString val;
+
+	OSAttribute* attr = attributes[type];
+	if (attr == NULL)
+	{
+		ERROR_MSG("The attribute does not exist: 0x%08X", type);
+		return val;
+	}
+
+	if (attr->isByteStringAttribute())
+	{
+		return attr->getByteStringValue();
+	}
+	else
+	{
+		ERROR_MSG("The attribute is not a byte string: 0x%08X", type);
 		return val;
 	}
 }
