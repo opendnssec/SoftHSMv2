@@ -95,11 +95,11 @@ void SessionObjectStoreTests::testCreateDeleteObjects()
 		CPPUNIT_ASSERT((*i)->isValid());
 		CPPUNIT_ASSERT((*i)->attributeExists(CKA_ID));
 
-		CPPUNIT_ASSERT((*i)->getAttribute(CKA_ID)->isByteStringAttribute());
+		CPPUNIT_ASSERT((*i)->getAttribute(CKA_ID).isByteStringAttribute());
 
 		for (int j = 0; j < 3; j++)
 		{
-			if ((*i)->getAttribute(CKA_ID)->getByteStringValue() == id[j])
+			if ((*i)->getAttribute(CKA_ID).getByteStringValue() == id[j])
 			{
 				present1[j] = true;
 			}
@@ -119,9 +119,9 @@ void SessionObjectStoreTests::testCreateDeleteObjects()
 		CPPUNIT_ASSERT((*i)->isValid());
 		CPPUNIT_ASSERT((*i)->attributeExists(CKA_ID));
 
-		CPPUNIT_ASSERT((*i)->getAttribute(CKA_ID)->isByteStringAttribute());
+		CPPUNIT_ASSERT((*i)->getAttribute(CKA_ID).isByteStringAttribute());
 
-		if ((*i)->getAttribute(CKA_ID)->getByteStringValue() == id[1])
+		if ((*i)->getAttribute(CKA_ID).getByteStringValue() == id[1])
 		{
 			CPPUNIT_ASSERT(testStore->deleteObject(*i));
 			break;
@@ -141,13 +141,13 @@ void SessionObjectStoreTests::testCreateDeleteObjects()
 		CPPUNIT_ASSERT((*i)->isValid());
 		CPPUNIT_ASSERT((*i)->attributeExists(CKA_ID));
 
-		CPPUNIT_ASSERT((*i)->getAttribute(CKA_ID)->isByteStringAttribute());
+		CPPUNIT_ASSERT((*i)->getAttribute(CKA_ID).isByteStringAttribute());
 
-		if ((*i)->getAttribute(CKA_ID)->getByteStringValue() == id[0])
+		if ((*i)->getAttribute(CKA_ID).getByteStringValue() == id[0])
 		{
 			present3[0] = true;
 		}
-		if ((*i)->getAttribute(CKA_ID)->getByteStringValue() == id[2])
+		if ((*i)->getAttribute(CKA_ID).getByteStringValue() == id[2])
 		{
 			present3[1] = true;
 		}
@@ -198,11 +198,11 @@ void SessionObjectStoreTests::testMultiSession()
 		CPPUNIT_ASSERT((*i)->isValid());
 		CPPUNIT_ASSERT((*i)->attributeExists(CKA_ID));
 
-		CPPUNIT_ASSERT((*i)->getAttribute(CKA_ID)->isByteStringAttribute());
+		CPPUNIT_ASSERT((*i)->getAttribute(CKA_ID).isByteStringAttribute());
 
 		for (int j = 0; j < 3; j++)
 		{
-			if ((*i)->getAttribute(CKA_ID)->getByteStringValue() == id[j])
+			if ((*i)->getAttribute(CKA_ID).getByteStringValue() == id[j])
 			{
 				present1[j] = true;
 			}
@@ -230,13 +230,13 @@ void SessionObjectStoreTests::testMultiSession()
 		CPPUNIT_ASSERT((*i)->isValid());
 		CPPUNIT_ASSERT((*i)->attributeExists(CKA_ID));
 
-		CPPUNIT_ASSERT((*i)->getAttribute(CKA_ID)->isByteStringAttribute());
+		CPPUNIT_ASSERT((*i)->getAttribute(CKA_ID).isByteStringAttribute());
 
-		if ((*i)->getAttribute(CKA_ID)->getByteStringValue() == id[0])
+		if ((*i)->getAttribute(CKA_ID).getByteStringValue() == id[0])
 		{
 			present3[0] = true;
 		}
-		if ((*i)->getAttribute(CKA_ID)->getByteStringValue() == id[2])
+		if ((*i)->getAttribute(CKA_ID).getByteStringValue() == id[2])
 		{
 			present3[1] = true;
 		}

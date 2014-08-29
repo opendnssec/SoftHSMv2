@@ -894,15 +894,14 @@ bool DBObject::attributeExists(CK_ATTRIBUTE_TYPE type)
 }
 
 // Retrieve the specified attribute
-OSAttribute* DBObject::getAttribute(CK_ATTRIBUTE_TYPE type)
+OSAttribute DBObject::getAttribute(CK_ATTRIBUTE_TYPE type)
 {
 	MutexLocker lock(_mutex);
 
 	OSAttribute* attr = getAttributeDB(type);
+	if (attr == NULL) return OSAttribute((unsigned long)0);
 
-	if (attr == NULL) return NULL;
-
-	return new OSAttribute(*attr);
+	return *attr;
 }
 
 bool DBObject::getBooleanValue(CK_ATTRIBUTE_TYPE type, bool val)
@@ -983,9 +982,6 @@ CK_ATTRIBUTE_TYPE DBObject::nextAttributeType(CK_ATTRIBUTE_TYPE)
 // Set the specified attribute
 bool DBObject::setAttribute(CK_ATTRIBUTE_TYPE type, const OSAttribute& attribute)
 {
-	// Retrieve and existing attribute if it exists or NULL if it doesn't
-	OSAttribute *attr = getAttribute(type);
-
 	MutexLocker lock(_mutex);
 
 	if (_connection == NULL)
@@ -998,6 +994,9 @@ bool DBObject::setAttribute(CK_ATTRIBUTE_TYPE type, const OSAttribute& attribute
 		ERROR_MSG("Cannot update invalid object.");
 		return false;
 	}
+
+	// Retrieve and existing attribute if it exists or NULL if it doesn't
+	OSAttribute *attr = getAttributeDB(type);
 
 	// Update an existing attribute...
 	if (attr)

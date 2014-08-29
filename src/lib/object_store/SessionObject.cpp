@@ -62,14 +62,18 @@ bool SessionObject::attributeExists(CK_ATTRIBUTE_TYPE type)
 }
 
 // Retrieve the specified attribute
-OSAttribute* SessionObject::getAttribute(CK_ATTRIBUTE_TYPE type)
+OSAttribute SessionObject::getAttribute(CK_ATTRIBUTE_TYPE type)
 {
 	MutexLocker lock(objectMutex);
 
 	OSAttribute* attr = attributes[type];
-	if (attr == NULL) return NULL;
+	if (attr == NULL)
+	{
+		ERROR_MSG("The attribute does not exist: 0x%08X", type);
+		return OSAttribute((unsigned long)0);
+	}
 
-	return new OSAttribute(*attr);
+	return *attr;
 }
 
 bool SessionObject::getBooleanValue(CK_ATTRIBUTE_TYPE type, bool val)
