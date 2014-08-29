@@ -70,32 +70,36 @@ bool P11Attribute::isModifiable()
 {
 	// Get the CKA_MODIFIABLE attribute, when the attribute is
 	// not present return the default value which is CK_TRUE.
-	OSAttribute* attr = osobject->getAttribute(CKA_MODIFIABLE);
-	return attr == NULL || attr->getBooleanValue();
+	if (!osobject->attributeExists(CKA_MODIFIABLE)) return true;
+
+	return osobject->getBooleanValue(CKA_MODIFIABLE, true);
 }
 
 bool P11Attribute::isSensitive()
 {
 	// Get the CKA_SENSITIVE attribute, when the attribute is not present
 	// assume the object is not sensitive.
-	OSAttribute* attr = osobject->getAttribute(CKA_SENSITIVE);
-	return attr != NULL && attr->getBooleanValue();
+	if (!osobject->attributeExists(CKA_SENSITIVE)) return false;
+
+	return osobject->getBooleanValue(CKA_SENSITIVE, false);
 }
 
 bool P11Attribute::isExtractable()
 {
 	// Get the CKA_EXTRACTABLE attribute, when the attribute is
 	// not present assume the object allows extraction.
-	OSAttribute* attr = osobject->getAttribute(CKA_EXTRACTABLE);
-	return attr == NULL || attr->getBooleanValue();
+	if (!osobject->attributeExists(CKA_EXTRACTABLE)) return true;
+
+	return osobject->getBooleanValue(CKA_EXTRACTABLE, true);
 }
 
 bool P11Attribute::isTrusted()
 {
 	// Get the CKA_TRUSTED attribute, when the attribute is
 	// not present assume the object is not trusted.
-	OSAttribute* attr = osobject->getAttribute(CKA_TRUSTED);
-	return attr != NULL && attr->getBooleanValue();
+	if (!osobject->attributeExists(CKA_TRUSTED)) return false;
+
+	return osobject->getBooleanValue(CKA_TRUSTED, false);
 }
 
 // Initialize the attribute
@@ -249,28 +253,28 @@ CK_RV P11Attribute::retrieve(Token *token, bool isPrivate, CK_VOID_PTR pValue, C
 		return CKR_ATTRIBUTE_SENSITIVE;
 	}
 
+	// Retrieve the lower level attribute.
+	if (!osobject->attributeExists(type)) {
+		// Should be impossible.
+		ERROR_MSG("Internal error: attribute not present");
+		return CKR_GENERAL_ERROR;
+	}
+	OSAttribute attr = osobject->getAttribute(type);
+
 	// Get the actual attribute size.
-	OSAttribute* attr = NULL_PTR;
 	CK_ULONG attrSize = size;
-	if (size == (CK_ULONG)-1) {
+	if (size == (CK_ULONG)-1)
+	{
 		// We don't have a fixed size attribute so we need to consult
 		// the lower level attribute for the exact size.
 
-		// Retrieve the lower level attribute.
-		attr = osobject->getAttribute(type);
-		if (attr == NULL_PTR) {
-			// Should be impossible.
-			ERROR_MSG("Internal error: attribute not present");
-			return CKR_GENERAL_ERROR;
-		}
-
 		// Lower level attribute has to be variable sized.
-		if (attr->isByteStringAttribute())
+		if (attr.isByteStringAttribute())
 		{
-			if (isPrivate && attr->getByteStringValue().size() != 0)
+			if (isPrivate && attr.getByteStringValue().size() != 0)
 			{
 				ByteString value;
-				if (!token->decrypt(attr->getByteStringValue(),value))
+				if (!token->decrypt(attr.getByteStringValue(),value))
 				{
 					ERROR_MSG("Internal error: failed to decrypt private attribute value");
 					return CKR_GENERAL_ERROR;
@@ -278,11 +282,11 @@ CK_RV P11Attribute::retrieve(Token *token, bool isPrivate, CK_VOID_PTR pValue, C
 				attrSize = value.size();
 			}
 			else
-				attrSize = attr->getByteStringValue().size();
+				attrSize = attr.getByteStringValue().size();
 		}
-		else if (attr->isArrayAttribute())
+		else if (attr.isArrayAttribute())
 		{
-			attrSize = attr->getArrayValue().size() * sizeof(CK_ATTRIBUTE);
+			attrSize = attr.getArrayValue().size() * sizeof(CK_ATTRIBUTE);
 		}
 		else
 		{
@@ -308,61 +312,41 @@ CK_RV P11Attribute::retrieve(Token *token, bool isPrivate, CK_VOID_PTR pValue, C
 	// that attribute is copied into the buffer located at pValue, and
 	// the ulValueLen field is modified to hold the exact length of the
 	// attribute.
-	if (*pulValueLen >= attrSize) {
+	if (*pulValueLen >= attrSize)
+	{
 		// Only copy when there is actually something to copy
 		CK_RV rv = CKR_OK;
-		if (attrSize > 0) {
-			// Retrieve the attribute when this was not already done.
-			if (attr == NULL_PTR) {
-				// attr was not retrieved, happens only for a fixed size attribute.
-				attr = osobject->getAttribute(type);
-				if (attr == NULL_PTR) {
-					// Should be impossible.
-					ERROR_MSG("Internal error: attribute not present");
-					return CKR_GENERAL_ERROR;
-				}
 
-				// Get the unsigned long or boolean value.
-				if (attr->isUnsignedLongAttribute()) {
-					*(CK_ULONG_PTR)pValue = attr->getUnsignedLongValue();
-				}
-				else if (attr->isBooleanAttribute())
-				{
-					*(CK_BBOOL*)pValue = attr->getBooleanValue() ? CK_TRUE : CK_FALSE;
-				}
-				else
-				{
-					// Should be impossible.
-					ERROR_MSG("Internal error: attribute has variable size");
-					return CKR_GENERAL_ERROR;
-				}
-
-			}
-			else if (attr->isByteStringAttribute())
+		if (attr.isUnsignedLongAttribute()) {
+			*(CK_ULONG_PTR)pValue = attr.getUnsignedLongValue();
+		}
+		else if (attr.isBooleanAttribute())
+		{
+			*(CK_BBOOL*)pValue = attr.getBooleanValue() ? CK_TRUE : CK_FALSE;
+		}
+		else if (attr.isByteStringAttribute())
+		{
+			if (isPrivate && attr.getByteStringValue().size() != 0)
 			{
-				// attr is already retrieved and verified to be a ByteString.
-				if (isPrivate)
+				ByteString value;
+				if (!token->decrypt(attr.getByteStringValue(),value))
 				{
-					ByteString value;
-					if (!token->decrypt(attr->getByteStringValue(),value))
-					{
-						ERROR_MSG("Internal error: failed to decrypt private attribute value");
-						return CKR_GENERAL_ERROR;
-					}
-					const unsigned char* attrPtr = value.const_byte_str();
-					memcpy(pValue,attrPtr,attrSize);
+					ERROR_MSG("Internal error: failed to decrypt private attribute value");
+					return CKR_GENERAL_ERROR;
 				}
-				else
-				{
-					const unsigned char* attrPtr = attr->getByteStringValue().const_byte_str();
-					memcpy(pValue,attrPtr,attrSize);
-				}
+				const unsigned char* attrPtr = value.const_byte_str();
+				memcpy(pValue,attrPtr,attrSize);
 			}
 			else
 			{
-				// attr is already retrieved and verified to be an Array
-				rv = retrieveArray((CK_ATTRIBUTE_PTR)pValue, attr->getArrayValue());
+				const unsigned char* attrPtr = attr.getByteStringValue().const_byte_str();
+				memcpy(pValue,attrPtr,attrSize);
 			}
+		}
+		else
+		{
+			// attr is already retrieved and verified to be an Array
+			rv = retrieveArray((CK_ATTRIBUTE_PTR)pValue, attr.getArrayValue());
 		}
 		*pulValueLen = attrSize;
 		return rv;
@@ -418,8 +402,7 @@ CK_RV P11Attribute::update(Token* token, bool isPrivate, CK_VOID_PTR pValue, CK_
 
 	// Attributes cannot be modified if CKA_TRUSTED is true on a certificate object.
 	if (isTrusted()) {
-		OSAttribute* attrClass = osobject->getAttribute(CKA_CLASS);
-		if (attrClass != NULL && attrClass->getUnsignedLongValue() == CKO_CERTIFICATE)
+		if (osobject->getUnsignedLongValue(CKA_CLASS, CKO_VENDOR_DEFINED) == CKO_CERTIFICATE)
 		{
 			ERROR_MSG("A trusted certificate cannot be modified");
 			return CKR_ATTRIBUTE_READ_ONLY;
@@ -501,8 +484,6 @@ bool P11AttrClass::setDefault()
 // Update the value if allowed
 CK_RV P11AttrClass::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op)
 {
-	OSAttribute* attr = NULL;
-
 	// Attribute specific checks
 
 	if (op == OBJECT_OP_SET)
@@ -515,13 +496,7 @@ CK_RV P11AttrClass::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR
 		return CKR_ATTRIBUTE_VALUE_INVALID;
 	}
 
-	attr = osobject->getAttribute(type);
-	if (attr == NULL) {
-		ERROR_MSG("Internal error: attribute not present");
-		return CKR_GENERAL_ERROR;
-	}
-
-	if (attr->getUnsignedLongValue() != *(CK_ULONG*)pValue)
+	if (osobject->getUnsignedLongValue(CKA_CLASS, CKO_VENDOR_DEFINED) != *(CK_ULONG*)pValue)
 	{
 		return CKR_TEMPLATE_INCONSISTENT;
 	}
@@ -543,8 +518,6 @@ bool P11AttrKeyType::setDefault()
 // Update the value if allowed
 CK_RV P11AttrKeyType::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op)
 {
-	OSAttribute* attr = NULL;
-
 	// Attribute specific checks
 
 	if (op == OBJECT_OP_SET)
@@ -557,13 +530,7 @@ CK_RV P11AttrKeyType::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_P
 		return CKR_ATTRIBUTE_VALUE_INVALID;
 	}
 
-	attr = osobject->getAttribute(type);
-	if (attr == NULL) {
-		ERROR_MSG("Internal error: attribute not present");
-		return CKR_GENERAL_ERROR;
-	}
-
-	if (attr->getUnsignedLongValue() != *(CK_ULONG*)pValue)
+	if (osobject->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED) != *(CK_ULONG*)pValue)
 	{
 		return CKR_TEMPLATE_INCONSISTENT;
 	}
@@ -587,8 +554,6 @@ bool P11AttrCertificateType::setDefault()
 // Update the value if allowed
 CK_RV P11AttrCertificateType::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op)
 {
-	OSAttribute* attr = NULL;
-
 	// Attribute specific checks
 
 	if (op == OBJECT_OP_SET)
@@ -601,13 +566,7 @@ CK_RV P11AttrCertificateType::updateAttr(Token* /*token*/, bool /*isPrivate*/, C
 		return CKR_ATTRIBUTE_VALUE_INVALID;
 	}
 
-	attr = osobject->getAttribute(type);
-	if (attr == NULL) {
-		ERROR_MSG("Internal error: attribute not present");
-		return CKR_GENERAL_ERROR;
-	}
-
-	if (attr->getUnsignedLongValue() != *(CK_ULONG*)pValue)
+	if (osobject->getUnsignedLongValue(CKA_CERTIFICATE_TYPE, CKC_VENDOR_DEFINED) != *(CK_ULONG*)pValue)
 	{
 		return CKR_TEMPLATE_INCONSISTENT;
 	}
@@ -804,7 +763,7 @@ CK_RV P11AttrCopyable::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_
 	}
 	else
 	{
-		if (osobject->getAttribute(type)->getBooleanValue() == false)
+		if (osobject->getBooleanValue(CKA_COPYABLE, true) == false)
 		{
 			return CKR_ATTRIBUTE_READ_ONLY;
 		}
@@ -1603,7 +1562,7 @@ CK_RV P11AttrSensitive::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID
 
 	if (op == OBJECT_OP_SET || op == OBJECT_OP_COPY)
 	{
-		if (osobject->getAttribute(type)->getBooleanValue())
+		if (osobject->getBooleanValue(CKA_SENSITIVE, false))
 		{
 			return CKR_ATTRIBUTE_READ_ONLY;
 		}
@@ -1656,7 +1615,7 @@ CK_RV P11AttrExtractable::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VO
 
 	if (op == OBJECT_OP_SET || op == OBJECT_OP_COPY)
 	{
-		if (osobject->getAttribute(type)->getBooleanValue() == false)
+		if (osobject->getBooleanValue(CKA_EXTRACTABLE, false) == false)
 		{
 			return CKR_ATTRIBUTE_READ_ONLY;
 		}
@@ -1703,7 +1662,7 @@ CK_RV P11AttrWrapWithTrusted::updateAttr(Token* /*token*/, bool /*isPrivate*/, C
 
 	if (op == OBJECT_OP_SET || op == OBJECT_OP_COPY)
 	{
-		if (osobject->getAttribute(type)->getBooleanValue())
+		if (osobject->getBooleanValue(CKA_WRAP_WITH_TRUSTED, false))
 		{
 			return CKR_ATTRIBUTE_READ_ONLY;
 		}
