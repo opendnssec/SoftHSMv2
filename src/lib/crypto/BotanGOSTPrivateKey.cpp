@@ -88,7 +88,7 @@ void BotanGOSTPrivateKey::setFromBotan(const Botan::GOST_3410_PrivateKey* eckey)
 {
 	ByteString ec = BotanUtil::ecGroup2ByteString(eckey->domain());
 	setEC(ec);
-	ByteString d = BotanUtil::bigInt2ByteString(eckey->private_value());
+	ByteString d = BotanUtil::bigInt2ByteStringPrefix(eckey->private_value(), 32);
 	setD(d);
 }
 

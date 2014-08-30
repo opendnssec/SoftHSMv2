@@ -44,6 +44,7 @@ namespace BotanUtil
 {
 	// Convert a Botan BigInt to a ByteString
 	ByteString bigInt2ByteString(const Botan::BigInt& bigInt);
+	ByteString bigInt2ByteStringPrefix(const Botan::BigInt& bigInt, size_t size);
 
 	// Convert a ByteString to a Botan BigInt
 	Botan::BigInt byteString2bigInt(const ByteString& byteString);
