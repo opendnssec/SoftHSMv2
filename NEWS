@@ -12,6 +12,8 @@ Bugfixes:
 * SOFTHSM-97: Check if Botan has already been initialized.
 * SOFTHSM-98: Handle mandatory attributes for DSA, DH, and ECDSA
   correctly.
+* SUPPORT-136: softhsm2-keyconv creates files with sensitive material
+  in insecure way.
 
 
 SoftHSM 2.0.0a2 - 2014-03-25
