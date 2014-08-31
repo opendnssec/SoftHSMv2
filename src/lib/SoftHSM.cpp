@@ -1883,7 +1883,7 @@ CK_RV SoftHSM::SymEncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 
 	session->setOpType(SESSION_OP_ENCRYPT);
 	session->setSymmetricCryptoOp(cipher);
-	session->setAllowMultiPartOp(false);
+	session->setAllowMultiPartOp(true);
 	session->setAllowSinglePartOp(true);
 	session->setSymmetricKey(secretkey);
 
@@ -2069,74 +2069,6 @@ static CK_RV SymEncrypt(Session* session, CK_BYTE_PTR pData, CK_ULONG ulDataLen,
 	return CKR_OK;
 }
 
-
-// SymAlgorithm version of C_EncryptFinal
-static CK_RV SymEncryptFinal(Session* session, CK_BYTE_PTR pEncryptedData, CK_ULONG_PTR pulEncryptedDataLen)
-{
-	SymmetricAlgorithm* cipher = session->getSymmetricCryptoOp();
-	if (cipher == NULL)
-	{
-		session->resetOp();
-		return CKR_OPERATION_NOT_INITIALIZED;
-	}
-
-	// Finalize encryption
-	ByteString encryptedFinal;
-	if (!cipher->encryptFinal(encryptedFinal))
-	{
-		session->resetOp();
-		return CKR_GENERAL_ERROR;
-	}
-
-	memcpy(pEncryptedData, encryptedFinal.byte_str(), encryptedFinal.size());
-	*pulEncryptedDataLen = encryptedFinal.size();
-
-	session->resetOp();
-	return CKR_OK;
-}
-
-
-// SymAlgorithm version of C_EncryptUpdate
-static CK_RV SymEncryptUpdate(Session* session, CK_BYTE_PTR pData, CK_ULONG ulDataLen, CK_BYTE_PTR pEncryptedData, CK_ULONG_PTR pulEncryptedDataLen)
-{
-	SymmetricAlgorithm* cipher = session->getSymmetricCryptoOp();
-	if (cipher == NULL)
-	{
-		session->resetOp();
-		return CKR_OPERATION_NOT_INITIALIZED;
-	}
-
-	// Check data size
-	if (ulDataLen % cipher->getBlockSize() != 0)
-	{
-		session->resetOp();
-		return CKR_DATA_LEN_RANGE;
-	}
-
-	// Check buffer size
-	if (*pulEncryptedDataLen < ulDataLen)
-	{
-		*pulEncryptedDataLen = ulDataLen;
-		return CKR_BUFFER_TOO_SMALL;
-	}
-
-	// Get the data
-	ByteString data(pData, ulDataLen);
-	ByteString encryptedData;
-
-	// Encrypt the data
-	if (!cipher->encryptUpdate(data, encryptedData))
-	{
-		session->resetOp();
-		return CKR_GENERAL_ERROR;
-	}
-
-	memcpy(pEncryptedData, encryptedData.byte_str(), encryptedData.size());
-	*pulEncryptedDataLen = encryptedData.size();
-
-	return CKR_OK;
-}
-
 // AsymAlgorithm version of C_Encrypt
 static CK_RV AsymEncrypt(Session* session, CK_BYTE_PTR pData, CK_ULONG ulDataLen, CK_BYTE_PTR pEncryptedData, CK_ULONG_PTR pulEncryptedDataLen)
 {
@@ -2222,6 +2154,53 @@ CK_RV SoftHSM::C_Encrypt(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pData, CK_ULONG
 				   pEncryptedData, pulEncryptedDataLen);
 }
 
+// SymAlgorithm version of C_EncryptUpdate
+static CK_RV SymEncryptUpdate(Session* session, CK_BYTE_PTR pData, CK_ULONG ulDataLen, CK_BYTE_PTR pEncryptedData, CK_ULONG_PTR pulEncryptedDataLen)
+{
+	SymmetricAlgorithm* cipher = session->getSymmetricCryptoOp();
+	if (cipher == NULL || !session->getAllowMultiPartOp())
+	{
+		session->resetOp();
+		return CKR_OPERATION_NOT_INITIALIZED;
+	}
+
+	// Check data size
+	if (ulDataLen % cipher->getBlockSize() != 0)
+	{
+		session->resetOp();
+		return CKR_DATA_LEN_RANGE;
+	}
+
+	if (pEncryptedData == NULL_PTR)
+	{
+		*pulEncryptedDataLen = ulDataLen;
+		return CKR_OK;
+	}
+
+	// Check buffer size
+	if (*pulEncryptedDataLen < ulDataLen)
+	{
+		*pulEncryptedDataLen = ulDataLen;
+		return CKR_BUFFER_TOO_SMALL;
+	}
+
+	// Get the data
+	ByteString data(pData, ulDataLen);
+	ByteString encryptedData;
+
+	// Encrypt the data
+	if (!cipher->encryptUpdate(data, encryptedData))
+	{
+		session->resetOp();
+		return CKR_GENERAL_ERROR;
+	}
+
+	memcpy(pEncryptedData, encryptedData.byte_str(), encryptedData.size());
+	*pulEncryptedDataLen = encryptedData.size();
+
+	return CKR_OK;
+}
+
 // Feed data to the running encryption operation in a session
 CK_RV SoftHSM::C_EncryptUpdate(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pData, CK_ULONG ulDataLen, CK_BYTE_PTR pEncryptedData, CK_ULONG_PTR pulEncryptedDataLen)
 {
@@ -2243,6 +2222,48 @@ CK_RV SoftHSM::C_EncryptUpdate(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pData, CK
 				  pEncryptedData, pulEncryptedDataLen);
 	else
 		return CKR_FUNCTION_NOT_SUPPORTED;
+}
+
+// SymAlgorithm version of C_EncryptFinal
+static CK_RV SymEncryptFinal(Session* session, CK_BYTE_PTR pEncryptedData, CK_ULONG_PTR pulEncryptedDataLen)
+{
+	SymmetricAlgorithm* cipher = session->getSymmetricCryptoOp();
+	if (cipher == NULL || !session->getAllowMultiPartOp())
+	{
+		session->resetOp();
+		return CKR_OPERATION_NOT_INITIALIZED;
+	}
+
+	// Size of the encrypted data
+	// There is no final part for the supported algorithms.
+	CK_ULONG size = 0;
+
+	if (pEncryptedData == NULL_PTR)
+	{
+		*pulEncryptedDataLen = size;
+		return CKR_OK;
+	}
+
+	// Check buffer size
+	if (*pulEncryptedDataLen < size)
+	{
+		*pulEncryptedDataLen = size;
+		return CKR_BUFFER_TOO_SMALL;
+	}
+
+	// Finalize encryption
+	ByteString encryptedFinal;
+	if (!cipher->encryptFinal(encryptedFinal))
+	{
+		session->resetOp();
+		return CKR_GENERAL_ERROR;
+	}
+
+	memcpy(pEncryptedData, encryptedFinal.byte_str(), encryptedFinal.size());
+	*pulEncryptedDataLen = encryptedFinal.size();
+
+	session->resetOp();
+	return CKR_OK;
 }
 
 // Finalise the encryption operation
