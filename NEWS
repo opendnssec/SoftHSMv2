@@ -7,8 +7,11 @@ SoftHSM develop
 * SOFTHSM-92: Enable -fvisibility=hidden on per default
 * SUPPORT-137: Implement C_EncryptUpdate and C_EncryptFinal
   (Patch from Martin Paljak)
+* Add support for CKM_RSA_PKCS key un/wrapping
+  (Patch from Petr Spacek)
 
 Bugfixes:
+* SOFTHSM-66: Attribute handling when using multiple threads
 * SOFTHSM-93: Invalid C++ object recycling.
 * SOFTHSM-95: umask affecting the calling application.
 * SOFTHSM-97: Check if Botan has already been initialized.

@@ -240,13 +240,13 @@ static CK_RV extractObjectInformation(CK_ATTRIBUTE_PTR pTemplate,
 
 static CK_RV newP11Object(OSObject *object, std::auto_ptr< P11Object > &p11object)
 {
-	CK_OBJECT_CLASS objClass = object->getAttribute(CKA_CLASS)->getUnsignedLongValue();
+	CK_OBJECT_CLASS objClass = object->getUnsignedLongValue(CKA_CLASS, CKO_VENDOR_DEFINED);
 	CK_KEY_TYPE keyType = CKK_RSA;
 	CK_CERTIFICATE_TYPE certType = CKC_X_509;
 	if (object->attributeExists(CKA_KEY_TYPE))
-		keyType = object->getAttribute(CKA_KEY_TYPE)->getUnsignedLongValue();
+		keyType = object->getUnsignedLongValue(CKA_KEY_TYPE, CKK_RSA);
 	if (object->attributeExists(CKA_CERTIFICATE_TYPE))
-		certType = object->getAttribute(CKA_CERTIFICATE_TYPE)->getUnsignedLongValue();
+		certType = object->getUnsignedLongValue(CKA_CERTIFICATE_TYPE, CKC_X_509);
 	CK_RV rv = newP11Object(objClass,keyType,certType,p11object);
 	if (rv != CKR_OK)
 		return rv;
@@ -1245,8 +1245,8 @@ CK_RV SoftHSM::C_CopyObject(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject
 	OSObject *object = (OSObject *)handleManager->getObject(hObject);
 	if (object == NULL_PTR || !object->isValid()) return CKR_OBJECT_HANDLE_INVALID;
 
-	CK_BBOOL wasOnToken = object->getAttribute(CKA_TOKEN)->getBooleanValue();
-	CK_BBOOL wasPrivate = object->getAttribute(CKA_PRIVATE)->getBooleanValue();
+	CK_BBOOL wasOnToken = object->getBooleanValue(CKA_TOKEN, false);
+	CK_BBOOL wasPrivate = object->getBooleanValue(CKA_PRIVATE, true);
 
 	// Check read user credentials
 	CK_RV rv = haveRead(session->getState(), wasOnToken, wasPrivate);
@@ -1259,9 +1259,7 @@ CK_RV SoftHSM::C_CopyObject(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject
 	}
 
 	// Check if the object is copyable
-	CK_BBOOL isCopyable = true;
-	if (object->attributeExists(CKA_COPYABLE))
-		isCopyable = object->getAttribute(CKA_COPYABLE)->getBooleanValue();
+	CK_BBOOL isCopyable = object->getBooleanValue(CKA_COPYABLE, true);
 	if (!isCopyable) return CKR_COPY_PROHIBITED;
 
 	// Extract critical information from the template
@@ -1319,14 +1317,21 @@ CK_RV SoftHSM::C_CopyObject(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject
 	CK_ATTRIBUTE_TYPE attrType = CKA_CLASS;
 	do
 	{
-		OSAttribute* attr = object->getAttribute(attrType);
+		if (!object->attributeExists(attrType))
+		{
+			rv = CKR_FUNCTION_FAILED;
+			break;
+		}
+
+		OSAttribute attr = object->getAttribute(attrType);
+
 		// Upgrade privacy has to encrypt byte strings
 		if (!wasPrivate && isPrivate &&
-		    attr->isByteStringAttribute() &&
-		    attr->getByteStringValue().size() != 0)
+		    attr.isByteStringAttribute() &&
+		    attr.getByteStringValue().size() != 0)
 		{
 			ByteString value;
-			if (!token->encrypt(attr->getByteStringValue(), value) ||
+			if (!token->encrypt(attr.getByteStringValue(), value) ||
 			    !newobject->setAttribute(attrType, value))
 			{
 				rv = CKR_FUNCTION_FAILED;
@@ -1335,7 +1340,7 @@ CK_RV SoftHSM::C_CopyObject(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject
 		}
 		else
 		{
-			if (!newobject->setAttribute(attrType, *attr))
+			if (!newobject->setAttribute(attrType, attr))
 			{
 				rv = CKR_FUNCTION_FAILED;
 				break;
@@ -1408,8 +1413,8 @@ CK_RV SoftHSM::C_DestroyObject(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObj
 	OSObject *object = (OSObject *)handleManager->getObject(hObject);
 	if (object == NULL_PTR || !object->isValid()) return CKR_OBJECT_HANDLE_INVALID;
 
-	CK_BBOOL isOnToken = object->getAttribute(CKA_TOKEN)->getBooleanValue();
-	CK_BBOOL isPrivate = object->getAttribute(CKA_PRIVATE)->getBooleanValue();
+	CK_BBOOL isOnToken = object->getBooleanValue(CKA_TOKEN, false);
+	CK_BBOOL isPrivate = object->getBooleanValue(CKA_PRIVATE, true);
 
 	// Check user credentials
 	CK_RV rv = haveWrite(session->getState(), isOnToken, isPrivate);
@@ -1476,8 +1481,8 @@ CK_RV SoftHSM::C_GetAttributeValue(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE 
 	OSObject *object = (OSObject *)handleManager->getObject(hObject);
 	if (object == NULL_PTR || !object->isValid()) return CKR_OBJECT_HANDLE_INVALID;
 
-	CK_BBOOL isOnToken = object->getAttribute(CKA_TOKEN)->getBooleanValue();
-	CK_BBOOL isPrivate = object->getAttribute(CKA_PRIVATE)->getBooleanValue();
+	CK_BBOOL isOnToken = object->getBooleanValue(CKA_TOKEN, false);
+	CK_BBOOL isPrivate = object->getBooleanValue(CKA_PRIVATE, true);
 
 	// Check read user credentials
 	CK_RV rv = haveRead(session->getState(), isOnToken, isPrivate);
@@ -1521,8 +1526,8 @@ CK_RV SoftHSM::C_SetAttributeValue(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE 
 	OSObject *object = (OSObject *)handleManager->getObject(hObject);
 	if (object == NULL_PTR || !object->isValid()) return CKR_OBJECT_HANDLE_INVALID;
 
-	CK_BBOOL isOnToken = object->getAttribute(CKA_TOKEN)->getBooleanValue();
-	CK_BBOOL isPrivate = object->getAttribute(CKA_PRIVATE)->getBooleanValue();
+	CK_BBOOL isOnToken = object->getBooleanValue(CKA_TOKEN, false);
+	CK_BBOOL isPrivate = object->getBooleanValue(CKA_PRIVATE, true);
 
 	// Check user credentials
 	CK_RV rv = haveWrite(session->getState(), isOnToken, isPrivate);
@@ -1595,14 +1600,7 @@ CK_RV SoftHSM::C_FindObjectsInit(CK_SESSION_HANDLE hSession, CK_ATTRIBUTE_PTR pT
 	{
 
 		// Determine if the object has CKA_PRIVATE set to CK_TRUE
-		bool isPrivateObject;
-		OSAttribute *attr = (*it)->getAttribute(CKA_PRIVATE);
-		if (attr == NULL_PTR || !attr->isBooleanAttribute())
-		{
-			// This attribute does not exist or is of an incompatible type
-			return CKR_GENERAL_ERROR;
-		}
-		isPrivateObject = attr->getBooleanValue();
+		bool isPrivateObject = (*it)->getBooleanValue(CKA_PRIVATE, true);
 
 		// If the object is private, and we are in a public session then skip it !
 		if (isPublicSession && isPrivateObject)
@@ -1614,40 +1612,41 @@ CK_RV SoftHSM::C_FindObjectsInit(CK_SESSION_HANDLE hSession, CK_ATTRIBUTE_PTR pT
 		{
 			bAttrMatch = false;
 
-			OSAttribute *attr = (*it)->getAttribute(pTemplate[i].type);
-			if (attr == NULL_PTR)
+			if (!(*it)->attributeExists(pTemplate[i].type))
 				break;
 
-			if (attr->isBooleanAttribute())
+			OSAttribute attr = (*it)->getAttribute(pTemplate[i].type);
+
+			if (attr.isBooleanAttribute())
 			{
 				if (sizeof(CK_BBOOL) != pTemplate[i].ulValueLen)
 					break;
 				bool bTemplateValue = (*(CK_BBOOL*)pTemplate[i].pValue == CK_TRUE);
-				if (attr->getBooleanValue() != bTemplateValue)
+				if (attr.getBooleanValue() != bTemplateValue)
 					break;
 			}
 			else
 			{
-				if (attr->isUnsignedLongAttribute())
+				if (attr.isUnsignedLongAttribute())
 				{
 					if (sizeof(CK_ULONG) != pTemplate[i].ulValueLen)
 						break;
 					CK_ULONG ulTemplateValue = *(CK_ULONG_PTR)pTemplate[i].pValue;
-					if (attr->getUnsignedLongValue() != ulTemplateValue)
+					if (attr.getUnsignedLongValue() != ulTemplateValue)
 						break;
 				}
 				else
 				{
-					if (attr->isByteStringAttribute())
+					if (attr.isByteStringAttribute())
 					{
 						ByteString bsAttrValue;
-						if (isPrivateObject && attr->getByteStringValue().size() != 0)
+						if (isPrivateObject && attr.getByteStringValue().size() != 0)
 						{
-							if (!token->decrypt(attr->getByteStringValue(), bsAttrValue))
+							if (!token->decrypt(attr.getByteStringValue(), bsAttrValue))
 								return CKR_GENERAL_ERROR;
 						}
 						else
-							bsAttrValue = attr->getByteStringValue();
+							bsAttrValue = attr.getByteStringValue();
 
 						if (bsAttrValue.size() != pTemplate[i].ulValueLen)
 							break;
@@ -1669,8 +1668,8 @@ CK_RV SoftHSM::C_FindObjectsInit(CK_SESSION_HANDLE hSession, CK_ATTRIBUTE_PTR pT
 		if (bAttrMatch)
 		{
 			CK_SLOT_ID slotID = slot->getSlotID();
-			bool isOnToken = (*it)->getAttribute(CKA_TOKEN)->getBooleanValue();
-			bool isPrivate = (*it)->getAttribute(CKA_PRIVATE)->getBooleanValue();
+			bool isOnToken = (*it)->getBooleanValue(CKA_TOKEN, false);
+			bool isPrivate = (*it)->getBooleanValue(CKA_PRIVATE, true);
 			// Create an object handle for every returned object.
 			CK_OBJECT_HANDLE hObject;
 			if (isOnToken)
@@ -1775,8 +1774,8 @@ CK_RV SoftHSM::SymEncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 	OSObject *key = (OSObject *)handleManager->getObject(hKey);
 	if (key == NULL_PTR || !key->isValid()) return CKR_OBJECT_HANDLE_INVALID;
 
-	CK_BBOOL isOnToken = key->getAttribute(CKA_TOKEN)->getBooleanValue();
-	CK_BBOOL isPrivate = key->getAttribute(CKA_PRIVATE)->getBooleanValue();
+	CK_BBOOL isOnToken = key->getBooleanValue(CKA_TOKEN, false);
+	CK_BBOOL isPrivate = key->getBooleanValue(CKA_PRIVATE, true);
 
 	// Check read user credentials
 	CK_RV rv = haveRead(session->getState(), isOnToken, isPrivate);
@@ -1789,7 +1788,7 @@ CK_RV SoftHSM::SymEncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 	}
 
 	// Check if key can be used for encryption
-        if (!key->attributeExists(CKA_ENCRYPT) || key->getAttribute(CKA_ENCRYPT)->getBooleanValue() == false)
+        if (!key->getBooleanValue(CKA_ENCRYPT, false))
 		return CKR_KEY_FUNCTION_NOT_PERMITTED;
 
 	// Get the symmetric algorithm matching the mechanism
@@ -1912,8 +1911,8 @@ CK_RV SoftHSM::AsymEncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMec
 	OSObject *key = (OSObject *)handleManager->getObject(hKey);
 	if (key == NULL_PTR || !key->isValid()) return CKR_OBJECT_HANDLE_INVALID;
 
-	CK_BBOOL isOnToken = key->getAttribute(CKA_TOKEN)->getBooleanValue();
-	CK_BBOOL isPrivate = key->getAttribute(CKA_PRIVATE)->getBooleanValue();
+	CK_BBOOL isOnToken = key->getBooleanValue(CKA_TOKEN, false);
+	CK_BBOOL isPrivate = key->getBooleanValue(CKA_PRIVATE, true);
 
 	// Check read user credentials
 	CK_RV rv = haveRead(session->getState(), isOnToken, isPrivate);
@@ -1926,7 +1925,7 @@ CK_RV SoftHSM::AsymEncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMec
 	}
 
 	// Check if key can be used for encryption
-        if (!key->attributeExists(CKA_ENCRYPT) || key->getAttribute(CKA_ENCRYPT)->getBooleanValue() == false)
+        if (!key->getBooleanValue(CKA_ENCRYPT, false))
 		return CKR_KEY_FUNCTION_NOT_PERMITTED;
 
 	// Get the asymmetric algorithm matching the mechanism
@@ -2306,8 +2305,8 @@ CK_RV SoftHSM::SymDecryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 	OSObject *key = (OSObject *)handleManager->getObject(hKey);
 	if (key == NULL_PTR || !key->isValid()) return CKR_OBJECT_HANDLE_INVALID;
 
-	CK_BBOOL isOnToken = key->getAttribute(CKA_TOKEN)->getBooleanValue();
-	CK_BBOOL isPrivate = key->getAttribute(CKA_PRIVATE)->getBooleanValue();
+	CK_BBOOL isOnToken = key->getBooleanValue(CKA_TOKEN, false);
+	CK_BBOOL isPrivate = key->getBooleanValue(CKA_PRIVATE, true);
 
 	// Check read user credentials
 	CK_RV rv = haveRead(session->getState(), isOnToken, isPrivate);
@@ -2320,7 +2319,7 @@ CK_RV SoftHSM::SymDecryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 	}
 
 	// Check if key can be used for decryption
-        if (!key->attributeExists(CKA_DECRYPT) || key->getAttribute(CKA_DECRYPT)->getBooleanValue() == false)
+        if (!key->getBooleanValue(CKA_DECRYPT, false))
 		return CKR_KEY_FUNCTION_NOT_PERMITTED;
 
 	// Get the symmetric algorithm matching the mechanism
@@ -2443,8 +2442,8 @@ CK_RV SoftHSM::AsymDecryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMec
 	OSObject *key = (OSObject *)handleManager->getObject(hKey);
 	if (key == NULL_PTR || !key->isValid()) return CKR_OBJECT_HANDLE_INVALID;
 
-	CK_BBOOL isOnToken = key->getAttribute(CKA_TOKEN)->getBooleanValue();
-	CK_BBOOL isPrivate = key->getAttribute(CKA_PRIVATE)->getBooleanValue();
+	CK_BBOOL isOnToken = key->getBooleanValue(CKA_TOKEN, false);
+	CK_BBOOL isPrivate = key->getBooleanValue(CKA_PRIVATE, true);
 
 	// Check read user credentials
 	CK_RV rv = haveRead(session->getState(), isOnToken, isPrivate);
@@ -2457,7 +2456,7 @@ CK_RV SoftHSM::AsymDecryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMec
 	}
 
 	// Check if key can be used for decryption
-        if (!key->attributeExists(CKA_DECRYPT) || key->getAttribute(CKA_DECRYPT)->getBooleanValue() == false)
+        if (!key->getBooleanValue(CKA_DECRYPT, false))
 		return CKR_KEY_FUNCTION_NOT_PERMITTED;
 
 	// Get the asymmetric algorithm matching the mechanism
@@ -2875,8 +2874,8 @@ CK_RV SoftHSM::C_DigestKey(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject)
 	OSObject *key = (OSObject *)handleManager->getObject(hObject);
 	if (key == NULL_PTR || !key->isValid()) return CKR_KEY_HANDLE_INVALID;
 
-	CK_BBOOL isOnToken = key->getAttribute(CKA_TOKEN)->getBooleanValue();
-	CK_BBOOL isPrivate = key->getAttribute(CKA_PRIVATE)->getBooleanValue();
+	CK_BBOOL isOnToken = key->getBooleanValue(CKA_TOKEN, false);
+	CK_BBOOL isPrivate = key->getBooleanValue(CKA_PRIVATE, true);
 
 	// Check read user credentials
 	CK_RV rv = haveRead(session->getState(), isOnToken, isPrivate);
@@ -2891,9 +2890,9 @@ CK_RV SoftHSM::C_DigestKey(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject)
 	}
 
 	// Parano...
-	if (!key->attributeExists(CKA_EXTRACTABLE) || key->getAttribute(CKA_EXTRACTABLE)->getBooleanValue() == false)
+	if (!key->getBooleanValue(CKA_EXTRACTABLE, false))
 		return CKR_KEY_INDIGESTIBLE;
-	if (key->attributeExists(CKA_SENSITIVE) && key->getAttribute(CKA_SENSITIVE)->getBooleanValue())
+	if (key->getBooleanValue(CKA_SENSITIVE, false))
 		return CKR_KEY_INDIGESTIBLE;
 
 	// Get value
@@ -2902,12 +2901,12 @@ CK_RV SoftHSM::C_DigestKey(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject)
 	ByteString keybits;
 	if (isPrivate)
 	{
-		if (!token->decrypt(key->getAttribute(CKA_VALUE)->getByteStringValue(), keybits))
+		if (!token->decrypt(key->getByteStringValue(CKA_VALUE), keybits))
 			return CKR_GENERAL_ERROR;
 	}
 	else
 	{
-		keybits = key->getAttribute(CKA_VALUE)->getByteStringValue();
+		keybits = key->getByteStringValue(CKA_VALUE);
 	}
 
 	// Digest the value
@@ -3015,8 +3014,8 @@ CK_RV SoftHSM::MacSignInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechani
 	OSObject *key = (OSObject *)handleManager->getObject(hKey);
 	if (key == NULL_PTR || !key->isValid()) return CKR_OBJECT_HANDLE_INVALID;
 
-	CK_BBOOL isOnToken = key->getAttribute(CKA_TOKEN)->getBooleanValue();
-	CK_BBOOL isPrivate = key->getAttribute(CKA_PRIVATE)->getBooleanValue();
+	CK_BBOOL isOnToken = key->getBooleanValue(CKA_TOKEN, false);
+	CK_BBOOL isPrivate = key->getBooleanValue(CKA_PRIVATE, true);
 
 	// Check read user credentials
 	CK_RV rv = haveRead(session->getState(), isOnToken, isPrivate);
@@ -3029,7 +3028,7 @@ CK_RV SoftHSM::MacSignInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechani
 	}
 
 	// Check if key can be used for signing
-        if (!key->attributeExists(CKA_SIGN) || key->getAttribute(CKA_SIGN)->getBooleanValue() == false)
+        if (!key->getBooleanValue(CKA_SIGN, false))
 		return CKR_KEY_FUNCTION_NOT_PERMITTED;
 
 	// Get the MAC algorithm matching the mechanism
@@ -3117,8 +3116,8 @@ CK_RV SoftHSM::AsymSignInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechan
 	OSObject *key = (OSObject *)handleManager->getObject(hKey);
 	if (key == NULL_PTR || !key->isValid()) return CKR_OBJECT_HANDLE_INVALID;
 
-	CK_BBOOL isOnToken = key->getAttribute(CKA_TOKEN)->getBooleanValue();
-	CK_BBOOL isPrivate = key->getAttribute(CKA_PRIVATE)->getBooleanValue();
+	CK_BBOOL isOnToken = key->getBooleanValue(CKA_TOKEN, false);
+	CK_BBOOL isPrivate = key->getBooleanValue(CKA_PRIVATE, true);
 
 	// Check read user credentials
 	CK_RV rv = haveRead(session->getState(), isOnToken, isPrivate);
@@ -3131,7 +3130,7 @@ CK_RV SoftHSM::AsymSignInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechan
 	}
 
 	// Check if key can be used for signing
-        if (!key->attributeExists(CKA_SIGN) || key->getAttribute(CKA_SIGN)->getBooleanValue() == false)
+        if (!key->getBooleanValue(CKA_SIGN, false))
 		return CKR_KEY_FUNCTION_NOT_PERMITTED;
 
 	// Get the asymmetric algorithm matching the mechanism
@@ -3824,8 +3823,8 @@ CK_RV SoftHSM::MacVerifyInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMecha
 	OSObject *key = (OSObject *)handleManager->getObject(hKey);
 	if (key == NULL_PTR || !key->isValid()) return CKR_OBJECT_HANDLE_INVALID;
 
-	CK_BBOOL isOnToken = key->getAttribute(CKA_TOKEN)->getBooleanValue();
-	CK_BBOOL isPrivate = key->getAttribute(CKA_PRIVATE)->getBooleanValue();
+	CK_BBOOL isOnToken = key->getBooleanValue(CKA_TOKEN, false);
+	CK_BBOOL isPrivate = key->getBooleanValue(CKA_PRIVATE, true);
 
 	// Check read user credentials
 	CK_RV rv = haveRead(session->getState(), isOnToken, isPrivate);
@@ -3838,7 +3837,7 @@ CK_RV SoftHSM::MacVerifyInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMecha
 	}
 
 	// Check if key can be used for verifying
-        if (!key->attributeExists(CKA_VERIFY) || key->getAttribute(CKA_VERIFY)->getBooleanValue() == false)
+        if (!key->getBooleanValue(CKA_VERIFY, false))
 		return CKR_KEY_FUNCTION_NOT_PERMITTED;
 
 	// Get the MAC algorithm matching the mechanism
@@ -3926,8 +3925,8 @@ CK_RV SoftHSM::AsymVerifyInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 	OSObject *key = (OSObject *)handleManager->getObject(hKey);
 	if (key == NULL_PTR || !key->isValid()) return CKR_OBJECT_HANDLE_INVALID;
 
-	CK_BBOOL isOnToken = key->getAttribute(CKA_TOKEN)->getBooleanValue();
-	CK_BBOOL isPrivate = key->getAttribute(CKA_PRIVATE)->getBooleanValue();
+	CK_BBOOL isOnToken = key->getBooleanValue(CKA_TOKEN, false);
+	CK_BBOOL isPrivate = key->getBooleanValue(CKA_PRIVATE, true);
 
 	// Check read user credentials
 	CK_RV rv = haveRead(session->getState(), isOnToken, isPrivate);
@@ -3940,7 +3939,7 @@ CK_RV SoftHSM::AsymVerifyInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 	}
 
 	// Check if key can be used for verifying
-        if (!key->attributeExists(CKA_VERIFY) || key->getAttribute(CKA_VERIFY)->getBooleanValue() == false)
+        if (!key->getBooleanValue(CKA_VERIFY, false))
 		return CKR_KEY_FUNCTION_NOT_PERMITTED;
 
 	// Get the asymmetric algorithm matching the mechanism
@@ -4979,7 +4978,7 @@ CK_RV SoftHSM::WrapKeyAsym
 			CK_ULONG modulus_length;
 			if (!wrapKey->attributeExists(CKA_MODULUS_BITS))
 				return CKR_GENERAL_ERROR;
-			modulus_length = wrapKey->getAttribute(CKA_MODULUS_BITS)->getUnsignedLongValue();
+			modulus_length = wrapKey->getUnsignedLongValue(CKA_MODULUS_BITS, 0);
 			// adjust key bit length
 			modulus_length /= bb;
 			// RFC 3447 section 7.2.1
@@ -5074,8 +5073,8 @@ CK_RV SoftHSM::C_WrapKey
 	OSObject *wrapKey = (OSObject *)handleManager->getObject(hWrappingKey);
 	if (wrapKey == NULL_PTR || !wrapKey->isValid()) return CKR_WRAPPING_KEY_HANDLE_INVALID;
 
-	CK_BBOOL isWrapKeyOnToken = wrapKey->getAttribute(CKA_TOKEN)->getBooleanValue();
-	CK_BBOOL isWrapKeyPrivate = wrapKey->getAttribute(CKA_PRIVATE)->getBooleanValue();
+	CK_BBOOL isWrapKeyOnToken = wrapKey->getBooleanValue(CKA_TOKEN, false);
+	CK_BBOOL isWrapKeyPrivate = wrapKey->getBooleanValue(CKA_PRIVATE, true);
 
 	// Check user credentials for the wrapping key
 	CK_RV rv = haveRead(session->getState(), isWrapKeyOnToken, isWrapKeyPrivate);
@@ -5088,27 +5087,27 @@ CK_RV SoftHSM::C_WrapKey
 	}
 
 	// Check wrapping key class and type
-	if ((pMechanism->mechanism == CKM_AES_KEY_WRAP || pMechanism->mechanism == CKM_AES_KEY_WRAP_PAD) && wrapKey->getAttribute(CKA_CLASS)->getUnsignedLongValue() != CKO_SECRET_KEY)
+	if ((pMechanism->mechanism == CKM_AES_KEY_WRAP || pMechanism->mechanism == CKM_AES_KEY_WRAP_PAD) && wrapKey->getUnsignedLongValue(CKA_CLASS, CKO_VENDOR_DEFINED) != CKO_SECRET_KEY)
 		return CKR_WRAPPING_KEY_TYPE_INCONSISTENT;
-	if (pMechanism->mechanism == CKM_RSA_PKCS && wrapKey->getAttribute(CKA_CLASS)->getUnsignedLongValue() != CKO_PUBLIC_KEY)
+	if (pMechanism->mechanism == CKM_RSA_PKCS && wrapKey->getUnsignedLongValue(CKA_CLASS, CKO_VENDOR_DEFINED) != CKO_PUBLIC_KEY)
 		return CKR_WRAPPING_KEY_TYPE_INCONSISTENT;
-	if (pMechanism->mechanism == CKM_AES_KEY_WRAP && wrapKey->getAttribute(CKA_KEY_TYPE)->getUnsignedLongValue() != CKK_AES)
+	if (pMechanism->mechanism == CKM_AES_KEY_WRAP && wrapKey->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED) != CKK_AES)
 		return CKR_WRAPPING_KEY_TYPE_INCONSISTENT;
-	if (pMechanism->mechanism == CKM_AES_KEY_WRAP_PAD && wrapKey->getAttribute(CKA_KEY_TYPE)->getUnsignedLongValue() != CKK_AES)
+	if (pMechanism->mechanism == CKM_AES_KEY_WRAP_PAD && wrapKey->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED) != CKK_AES)
 		return CKR_WRAPPING_KEY_TYPE_INCONSISTENT;
-	if (pMechanism->mechanism == CKM_RSA_PKCS && wrapKey->getAttribute(CKA_KEY_TYPE)->getUnsignedLongValue() != CKK_RSA)
+	if (pMechanism->mechanism == CKM_RSA_PKCS && wrapKey->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED) != CKK_RSA)
 		return CKR_WRAPPING_KEY_TYPE_INCONSISTENT;
 
 	// Check if the wrapping key can be used for wrapping
-	if (!wrapKey->attributeExists(CKA_WRAP) || wrapKey->getAttribute(CKA_WRAP)->getBooleanValue() == false)
+	if (wrapKey->getBooleanValue(CKA_WRAP, false) == false)
 		return CKR_KEY_FUNCTION_NOT_PERMITTED;
 
 	// Check the to be wrapped key handle.
 	OSObject *key = (OSObject *)handleManager->getObject(hKey);
 	if (key == NULL_PTR || !key->isValid()) return CKR_KEY_HANDLE_INVALID;
 
-	CK_BBOOL isKeyOnToken = key->getAttribute(CKA_TOKEN)->getBooleanValue();
-	CK_BBOOL isKeyPrivate = key->getAttribute(CKA_PRIVATE)->getBooleanValue();
+	CK_BBOOL isKeyOnToken = key->getBooleanValue(CKA_TOKEN, false);
+	CK_BBOOL isKeyPrivate = key->getBooleanValue(CKA_PRIVATE, true);
 
 	// Check user credentials for the to be wrapped key
 	rv = haveRead(session->getState(), isKeyOnToken, isKeyPrivate);
@@ -5121,13 +5120,13 @@ CK_RV SoftHSM::C_WrapKey
 	}
 
 	// Check if the to be wrapped key can be wrapped
-	if (!key->attributeExists(CKA_EXTRACTABLE) || key->getAttribute(CKA_EXTRACTABLE)->getBooleanValue() == false)
+	if (key->getBooleanValue(CKA_EXTRACTABLE, false) == false)
 		return CKR_KEY_UNEXTRACTABLE;
-	if ((key->attributeExists(CKA_WRAP_WITH_TRUSTED) && key->getAttribute(CKA_WRAP_WITH_TRUSTED)->getBooleanValue()) && (!wrapKey->attributeExists(CKA_TRUSTED) || wrapKey->getAttribute(CKA_TRUSTED)->getBooleanValue() == false))
+	if (key->getBooleanValue(CKA_WRAP_WITH_TRUSTED, false) && wrapKey->getBooleanValue(CKA_TRUSTED, false) == false)
 		return CKR_KEY_NOT_WRAPPABLE;
 
 	// Check the class
-	CK_OBJECT_CLASS keyClass = key->getAttribute(CKA_CLASS)->getUnsignedLongValue();
+	CK_OBJECT_CLASS keyClass = key->getUnsignedLongValue(CKA_CLASS, CKO_VENDOR_DEFINED);
 	if (keyClass != CKO_SECRET_KEY && keyClass != CKO_PRIVATE_KEY)
 		return CKR_KEY_NOT_WRAPPABLE;
 	// CKM_RSA_PKCS can be used only on SECRET keys: PKCS#11 2.40 draft 2 section 2.1.6 PKCS #1 v1.5 RSA
@@ -5135,19 +5134,30 @@ CK_RV SoftHSM::C_WrapKey
 		return CKR_KEY_NOT_WRAPPABLE;
 
 	// Verify the wrap template attribute
-	if (wrapKey->attributeExists(CKA_WRAP_TEMPLATE) && wrapKey->getAttribute(CKA_WRAP_TEMPLATE)->isArrayAttribute())
+	if (wrapKey->attributeExists(CKA_WRAP_TEMPLATE))
 	{
-		typedef std::map<CK_ATTRIBUTE_TYPE,OSAttribute> array_type;
+		OSAttribute attr = wrapKey->getAttribute(CKA_WRAP_TEMPLATE);
 
-		const array_type& array = wrapKey->getAttribute(CKA_WRAP_TEMPLATE)->getArrayValue();
-
-		for (array_type::const_iterator it = array.begin(); it != array.end(); ++it)
+		if (attr.isArrayAttribute())
 		{
-			if (!key->attributeExists(it->first))
-				return CKR_KEY_NOT_WRAPPABLE;
-			ByteString v1, v2;
-			if (!key->getAttribute(it->first)->peekValue(v1) || !it->second.peekValue(v2) || (v1 != v2))
-				return CKR_KEY_NOT_WRAPPABLE;
+			typedef std::map<CK_ATTRIBUTE_TYPE,OSAttribute> array_type;
+
+			const array_type& array = attr.getArrayValue();
+
+			for (array_type::const_iterator it = array.begin(); it != array.end(); ++it)
+			{
+				if (!key->attributeExists(it->first))
+				{
+					return CKR_KEY_NOT_WRAPPABLE;
+				}
+
+				OSAttribute keyAttr = key->getAttribute(it->first);
+				ByteString v1, v2;
+				if (!keyAttr.peekValue(v1) || !it->second.peekValue(v2) || (v1 != v2))
+				{
+					return CKR_KEY_NOT_WRAPPABLE;
+				}
+			}
 		}
 	}
 
@@ -5157,16 +5167,16 @@ CK_RV SoftHSM::C_WrapKey
 	{
 		if (isKeyPrivate)
 		{
-			token->decrypt(key->getAttribute(CKA_VALUE)->getByteStringValue(), keydata);
+			token->decrypt(key->getByteStringValue(CKA_VALUE), keydata);
 		}
 		else
 		{
-			keydata = key->getAttribute(CKA_VALUE)->getByteStringValue();
+			keydata = key->getByteStringValue(CKA_VALUE);
 		}
 	}
 	else
 	{
-		CK_KEY_TYPE keyType = key->getAttribute(CKA_KEY_TYPE)->getUnsignedLongValue();
+		CK_KEY_TYPE keyType = key->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED);
 		AsymAlgo::Type alg = AsymAlgo::Unknown;
 		switch (keyType) {
 			case CKK_RSA:
@@ -5227,7 +5237,7 @@ CK_RV SoftHSM::C_WrapKey
 	if (keydata.size() == 0)
 		return CKR_KEY_NOT_WRAPPABLE;
 
-	keyClass = wrapKey->getAttribute(CKA_CLASS)->getUnsignedLongValue();
+	keyClass = wrapKey->getUnsignedLongValue(CKA_CLASS, CKO_VENDOR_DEFINED);
 	ByteString wrapped;
 	if (keyClass == CKO_SECRET_KEY)
 		rv = SoftHSM::WrapKeySym(pMechanism, token, wrapKey, keydata, wrapped);
@@ -5419,8 +5429,8 @@ CK_RV SoftHSM::C_UnwrapKey
 	OSObject *unwrapKey = (OSObject *)handleManager->getObject(hUnwrappingKey);
 	if (unwrapKey == NULL_PTR || !unwrapKey->isValid()) return CKR_UNWRAPPING_KEY_HANDLE_INVALID;
 
-	CK_BBOOL isUnwrapKeyOnToken = unwrapKey->getAttribute(CKA_TOKEN)->getBooleanValue();
-	CK_BBOOL isUnwrapKeyPrivate = unwrapKey->getAttribute(CKA_PRIVATE)->getBooleanValue();
+	CK_BBOOL isUnwrapKeyOnToken = unwrapKey->getBooleanValue(CKA_TOKEN, false);
+	CK_BBOOL isUnwrapKeyPrivate = unwrapKey->getBooleanValue(CKA_PRIVATE, true);
 
 	// Check user credentials
 	CK_RV rv = haveRead(session->getState(), isUnwrapKeyOnToken, isUnwrapKeyPrivate);
@@ -5433,19 +5443,19 @@ CK_RV SoftHSM::C_UnwrapKey
 	}
 
 	// Check unwrapping key class and type
-	if ((pMechanism->mechanism == CKM_AES_KEY_WRAP || pMechanism->mechanism == CKM_AES_KEY_WRAP_PAD) && unwrapKey->getAttribute(CKA_CLASS)->getUnsignedLongValue() != CKO_SECRET_KEY)
+	if ((pMechanism->mechanism == CKM_AES_KEY_WRAP || pMechanism->mechanism == CKM_AES_KEY_WRAP_PAD) && unwrapKey->getUnsignedLongValue(CKA_CLASS, CKO_VENDOR_DEFINED) != CKO_SECRET_KEY)
 		return CKR_UNWRAPPING_KEY_TYPE_INCONSISTENT;
-	if (pMechanism->mechanism == CKM_AES_KEY_WRAP && unwrapKey->getAttribute(CKA_KEY_TYPE)->getUnsignedLongValue() != CKK_AES)
+	if (pMechanism->mechanism == CKM_AES_KEY_WRAP && unwrapKey->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED) != CKK_AES)
 		return CKR_UNWRAPPING_KEY_TYPE_INCONSISTENT;
-	if (pMechanism->mechanism == CKM_AES_KEY_WRAP_PAD && unwrapKey->getAttribute(CKA_KEY_TYPE)->getUnsignedLongValue() != CKK_AES)
+	if (pMechanism->mechanism == CKM_AES_KEY_WRAP_PAD && unwrapKey->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED) != CKK_AES)
 		return CKR_UNWRAPPING_KEY_TYPE_INCONSISTENT;
-	if (pMechanism->mechanism == CKM_RSA_PKCS && unwrapKey->getAttribute(CKA_CLASS)->getUnsignedLongValue() != CKO_PRIVATE_KEY)
+	if (pMechanism->mechanism == CKM_RSA_PKCS && unwrapKey->getUnsignedLongValue(CKA_CLASS, CKO_VENDOR_DEFINED) != CKO_PRIVATE_KEY)
 		return CKR_UNWRAPPING_KEY_TYPE_INCONSISTENT;
-	if (pMechanism->mechanism == CKM_RSA_PKCS && unwrapKey->getAttribute(CKA_KEY_TYPE)->getUnsignedLongValue() != CKK_RSA)
+	if (pMechanism->mechanism == CKM_RSA_PKCS && unwrapKey->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED) != CKK_RSA)
 		return CKR_UNWRAPPING_KEY_TYPE_INCONSISTENT;
 
 	// Check if the unwrapping key can be used for unwrapping
-	if (!unwrapKey->attributeExists(CKA_UNWRAP) || unwrapKey->getAttribute(CKA_UNWRAP)->getBooleanValue() == false)
+	if (unwrapKey->getBooleanValue(CKA_UNWRAP, false) == false)
 		return CKR_KEY_FUNCTION_NOT_PERMITTED;
 
 	// Extract information from the template that is needed to create the object.
@@ -5507,32 +5517,45 @@ CK_RV SoftHSM::C_UnwrapKey
 	}
 
 	// Apply the unwrap template
-	if (unwrapKey->attributeExists(CKA_UNWRAP_TEMPLATE) && unwrapKey->getAttribute(CKA_UNWRAP_TEMPLATE)->isArrayAttribute())
+	if (unwrapKey->attributeExists(CKA_UNWRAP_TEMPLATE))
 	{
-		typedef std::map<CK_ATTRIBUTE_TYPE,OSAttribute> array_type;
+		OSAttribute unwrapAttr = unwrapKey->getAttribute(CKA_UNWRAP_TEMPLATE);
 
-		const array_type& array = unwrapKey->getAttribute(CKA_UNWRAP_TEMPLATE)->getArrayValue();
-
-		for (array_type::const_iterator it = array.begin(); it != array.end(); ++it)
+		if (unwrapAttr.isArrayAttribute())
 		{
-			CK_ATTRIBUTE* attr = NULL;
-			for (CK_ULONG i = 0; i < secretAttribsCount; ++i)
+			typedef std::map<CK_ATTRIBUTE_TYPE,OSAttribute> array_type;
+
+			const array_type& array = unwrapAttr.getArrayValue();
+
+			for (array_type::const_iterator it = array.begin(); it != array.end(); ++it)
 			{
-				if (it->first == secretAttribs[i].type)
+				CK_ATTRIBUTE* attr = NULL;
+				for (CK_ULONG i = 0; i < secretAttribsCount; ++i)
 				{
-					if (attr != NULL)
-						return CKR_TEMPLATE_INCONSISTENT;
-					attr = &secretAttribs[i];
-					ByteString value;
-					it->second.peekValue(value);
-					if (attr->ulValueLen != value.size())
-						return CKR_TEMPLATE_INCONSISTENT;
-					if (memcmp(attr->pValue, value.const_byte_str(), value.size()) != 0)
-						return CKR_TEMPLATE_INCONSISTENT;
+					if (it->first == secretAttribs[i].type)
+					{
+						if (attr != NULL)
+						{
+							return CKR_TEMPLATE_INCONSISTENT;
+						}
+						attr = &secretAttribs[i];
+						ByteString value;
+						it->second.peekValue(value);
+						if (attr->ulValueLen != value.size())
+						{
+							return CKR_TEMPLATE_INCONSISTENT;
+						}
+						if (memcmp(attr->pValue, value.const_byte_str(), value.size()) != 0)
+						{
+							return CKR_TEMPLATE_INCONSISTENT;
+						}
+					}
+				}
+				if (attr == NULL)
+				{
+					return CKR_TEMPLATE_INCONSISTENT;
 				}
 			}
-			if (attr == NULL)
-				return CKR_TEMPLATE_INCONSISTENT;
 		}
 	}
 
@@ -5541,9 +5564,9 @@ CK_RV SoftHSM::C_UnwrapKey
 	// Unwrap the key
 	ByteString wrapped(pWrappedKey, ulWrappedKeyLen);
 	ByteString keydata;
-	if (unwrapKey->getAttribute(CKA_CLASS)->getUnsignedLongValue() == CKO_SECRET_KEY)
+	if (unwrapKey->getUnsignedLongValue(CKA_CLASS, CKO_VENDOR_DEFINED) == CKO_SECRET_KEY)
 		rv = UnwrapKeySym(pMechanism, wrapped, token, unwrapKey, keydata);
-	else if (unwrapKey->getAttribute(CKA_CLASS)->getUnsignedLongValue() == CKO_PRIVATE_KEY)
+	else if (unwrapKey->getUnsignedLongValue(CKA_CLASS, CKO_VENDOR_DEFINED) == CKO_PRIVATE_KEY)
 		rv = UnwrapKeyAsym(pMechanism, wrapped, token, unwrapKey, keydata);
 	else
 		rv = CKR_UNWRAPPING_KEY_TYPE_INCONSISTENT;
@@ -5669,8 +5692,8 @@ CK_RV SoftHSM::C_DeriveKey
 	OSObject *key = (OSObject *)handleManager->getObject(hBaseKey);
 	if (key == NULL_PTR || !key->isValid()) return CKR_OBJECT_HANDLE_INVALID;
 
-	CK_BBOOL isKeyOnToken = key->getAttribute(CKA_TOKEN)->getBooleanValue();
-	CK_BBOOL isKeyPrivate = key->getAttribute(CKA_PRIVATE)->getBooleanValue();
+	CK_BBOOL isKeyOnToken = key->getBooleanValue(CKA_TOKEN, false);
+	CK_BBOOL isKeyPrivate = key->getBooleanValue(CKA_PRIVATE, true);
 
 	// Check user credentials
 	CK_RV rv = haveRead(session->getState(), isKeyOnToken, isKeyPrivate);
@@ -5683,15 +5706,15 @@ CK_RV SoftHSM::C_DeriveKey
 	}
 
 	// Check key class and type
-	if (key->getAttribute(CKA_CLASS)->getUnsignedLongValue() != CKO_PRIVATE_KEY)
+	if (key->getUnsignedLongValue(CKA_CLASS, CKO_VENDOR_DEFINED) != CKO_PRIVATE_KEY)
 		return CKR_KEY_TYPE_INCONSISTENT;
-	if (pMechanism->mechanism == CKM_DH_PKCS_DERIVE && key->getAttribute(CKA_KEY_TYPE)->getUnsignedLongValue() != CKK_DH)
+	if (pMechanism->mechanism == CKM_DH_PKCS_DERIVE && key->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED) != CKK_DH)
 		return CKR_KEY_TYPE_INCONSISTENT;
-	if (pMechanism->mechanism == CKM_ECDH1_DERIVE && key->getAttribute(CKA_KEY_TYPE)->getUnsignedLongValue() != CKK_EC)
+	if (pMechanism->mechanism == CKM_ECDH1_DERIVE && key->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED) != CKK_EC)
 		return CKR_KEY_TYPE_INCONSISTENT;
 
 	// Check if key can be used for derive
-        if (!key->attributeExists(CKA_DERIVE) || key->getAttribute(CKA_DERIVE)->getBooleanValue() == false)
+        if (!key->getBooleanValue(CKA_DERIVE, false))
 		return CKR_KEY_FUNCTION_NOT_PERMITTED;
 
 	// Extract information from the template that is needed to create the object.
@@ -5935,9 +5958,9 @@ CK_RV SoftHSM::generateAES
 			bOK = bOK && osobject->setAttribute(CKA_KEY_GEN_MECHANISM,ulKeyGenMechanism);
 
 			// Common Secret Key Attributes
-			bool bAlwaysSensitive = osobject->getAttribute(CKA_SENSITIVE)->getBooleanValue();
+			bool bAlwaysSensitive = osobject->getBooleanValue(CKA_SENSITIVE, false);
 			bOK = bOK && osobject->setAttribute(CKA_ALWAYS_SENSITIVE,bAlwaysSensitive);
-			bool bNeverExtractable =  osobject->getAttribute(CKA_EXTRACTABLE)->getBooleanValue() == false;
+			bool bNeverExtractable = osobject->getBooleanValue(CKA_EXTRACTABLE, false) == false;
 			bOK = bOK && osobject->setAttribute(CKA_NEVER_EXTRACTABLE, bNeverExtractable);
 
 			// AES Secret Key Attributes
@@ -6062,9 +6085,9 @@ CK_RV SoftHSM::generateDES
 			bOK = bOK && osobject->setAttribute(CKA_KEY_GEN_MECHANISM,ulKeyGenMechanism);
 
 			// Common Secret Key Attributes
-			bool bAlwaysSensitive = osobject->getAttribute(CKA_SENSITIVE)->getBooleanValue();
+			bool bAlwaysSensitive = osobject->getBooleanValue(CKA_SENSITIVE, false);
 			bOK = bOK && osobject->setAttribute(CKA_ALWAYS_SENSITIVE,bAlwaysSensitive);
-			bool bNeverExtractable =  osobject->getAttribute(CKA_EXTRACTABLE)->getBooleanValue() == false;
+			bool bNeverExtractable = osobject->getBooleanValue(CKA_EXTRACTABLE, false) == false;
 			bOK = bOK && osobject->setAttribute(CKA_NEVER_EXTRACTABLE, bNeverExtractable);
 
 			// DES Secret Key Attributes
@@ -6189,9 +6212,9 @@ CK_RV SoftHSM::generateDES2
 			bOK = bOK && osobject->setAttribute(CKA_KEY_GEN_MECHANISM,ulKeyGenMechanism);
 
 			// Common Secret Key Attributes
-			bool bAlwaysSensitive = osobject->getAttribute(CKA_SENSITIVE)->getBooleanValue();
+			bool bAlwaysSensitive = osobject->getBooleanValue(CKA_SENSITIVE, false);
 			bOK = bOK && osobject->setAttribute(CKA_ALWAYS_SENSITIVE,bAlwaysSensitive);
-			bool bNeverExtractable =  osobject->getAttribute(CKA_EXTRACTABLE)->getBooleanValue() == false;
+			bool bNeverExtractable = osobject->getBooleanValue(CKA_EXTRACTABLE, false) == false;
 			bOK = bOK && osobject->setAttribute(CKA_NEVER_EXTRACTABLE, bNeverExtractable);
 
 			// DES Secret Key Attributes
@@ -6316,9 +6339,9 @@ CK_RV SoftHSM::generateDES3
 			bOK = bOK && osobject->setAttribute(CKA_KEY_GEN_MECHANISM,ulKeyGenMechanism);
 
 			// Common Secret Key Attributes
-			bool bAlwaysSensitive = osobject->getAttribute(CKA_SENSITIVE)->getBooleanValue();
+			bool bAlwaysSensitive = osobject->getBooleanValue(CKA_SENSITIVE, false);
 			bOK = bOK && osobject->setAttribute(CKA_ALWAYS_SENSITIVE,bAlwaysSensitive);
-			bool bNeverExtractable =  osobject->getAttribute(CKA_EXTRACTABLE)->getBooleanValue() == false;
+			bool bNeverExtractable = osobject->getBooleanValue(CKA_EXTRACTABLE, false) == false;
 			bOK = bOK && osobject->setAttribute(CKA_NEVER_EXTRACTABLE, bNeverExtractable);
 
 			// DES Secret Key Attributes
@@ -6562,9 +6585,9 @@ CK_RV SoftHSM::generateRSA
 				bOK = bOK && osobject->setAttribute(CKA_KEY_GEN_MECHANISM,ulKeyGenMechanism);
 
 				// Common Private Key Attributes
-				bool bAlwaysSensitive = osobject->getAttribute(CKA_SENSITIVE)->getBooleanValue();
+				bool bAlwaysSensitive = osobject->getBooleanValue(CKA_SENSITIVE, false);
 				bOK = bOK && osobject->setAttribute(CKA_ALWAYS_SENSITIVE,bAlwaysSensitive);
-				bool bNeverExtractable =  osobject->getAttribute(CKA_EXTRACTABLE)->getBooleanValue() == false;
+				bool bNeverExtractable = osobject->getBooleanValue(CKA_EXTRACTABLE, false) == false;
 				bOK = bOK && osobject->setAttribute(CKA_NEVER_EXTRACTABLE, bNeverExtractable);
 
 				// RSA Private Key Attributes
@@ -6842,9 +6865,9 @@ CK_RV SoftHSM::generateDSA
 				bOK = bOK && osobject->setAttribute(CKA_KEY_GEN_MECHANISM,ulKeyGenMechanism);
 
 				// Common Private Key Attributes
-				bool bAlwaysSensitive = osobject->getAttribute(CKA_SENSITIVE)->getBooleanValue();
+				bool bAlwaysSensitive = osobject->getBooleanValue(CKA_SENSITIVE, false);
 				bOK = bOK && osobject->setAttribute(CKA_ALWAYS_SENSITIVE,bAlwaysSensitive);
-				bool bNeverExtractable =  osobject->getAttribute(CKA_EXTRACTABLE)->getBooleanValue() == false;
+				bool bNeverExtractable = osobject->getBooleanValue(CKA_EXTRACTABLE, false) == false;
 				bOK = bOK && osobject->setAttribute(CKA_NEVER_EXTRACTABLE, bNeverExtractable);
 
 				// DSA Private Key Attributes
@@ -7270,9 +7293,9 @@ CK_RV SoftHSM::generateEC
 				bOK = bOK && osobject->setAttribute(CKA_KEY_GEN_MECHANISM,ulKeyGenMechanism);
 
 				// Common Private Key Attributes
-				bool bAlwaysSensitive = osobject->getAttribute(CKA_SENSITIVE)->getBooleanValue();
+				bool bAlwaysSensitive = osobject->getBooleanValue(CKA_SENSITIVE, false);
 				bOK = bOK && osobject->setAttribute(CKA_ALWAYS_SENSITIVE,bAlwaysSensitive);
-				bool bNeverExtractable =  osobject->getAttribute(CKA_EXTRACTABLE)->getBooleanValue() == false;
+				bool bNeverExtractable = osobject->getBooleanValue(CKA_EXTRACTABLE, false) == false;
 				bOK = bOK && osobject->setAttribute(CKA_NEVER_EXTRACTABLE, bNeverExtractable);
 
 				// EC Private Key Attributes
@@ -7536,9 +7559,9 @@ CK_RV SoftHSM::generateDH
 				bOK = bOK && osobject->setAttribute(CKA_KEY_GEN_MECHANISM,ulKeyGenMechanism);
 
 				// Common Private Key Attributes
-				bool bAlwaysSensitive = osobject->getAttribute(CKA_SENSITIVE)->getBooleanValue();
+				bool bAlwaysSensitive = osobject->getBooleanValue(CKA_SENSITIVE, false);
 				bOK = bOK && osobject->setAttribute(CKA_ALWAYS_SENSITIVE,bAlwaysSensitive);
-				bool bNeverExtractable =  osobject->getAttribute(CKA_EXTRACTABLE)->getBooleanValue() == false;
+				bool bNeverExtractable = osobject->getBooleanValue(CKA_EXTRACTABLE, false) == false;
 				bOK = bOK && osobject->setAttribute(CKA_NEVER_EXTRACTABLE, bNeverExtractable);
 
 				// DH Private Key Attributes
@@ -7953,9 +7976,9 @@ CK_RV SoftHSM::generateGOST
 				bOK = bOK && osobject->setAttribute(CKA_KEY_GEN_MECHANISM,ulKeyGenMechanism);
 
 				// Common Private Key Attributes
-				bool bAlwaysSensitive = osobject->getAttribute(CKA_SENSITIVE)->getBooleanValue();
+				bool bAlwaysSensitive = osobject->getBooleanValue(CKA_SENSITIVE, false);
 				bOK = bOK && osobject->setAttribute(CKA_ALWAYS_SENSITIVE,bAlwaysSensitive);
-				bool bNeverExtractable =  osobject->getAttribute(CKA_EXTRACTABLE)->getBooleanValue() == false;
+				bool bNeverExtractable = osobject->getBooleanValue(CKA_EXTRACTABLE, false) == false;
 				bOK = bOK && osobject->setAttribute(CKA_NEVER_EXTRACTABLE, bNeverExtractable);
 
 				// GOST Private Key Attributes
@@ -8165,18 +8188,18 @@ CK_RV SoftHSM::deriveDH
 			bOK = bOK && osobject->setAttribute(CKA_LOCAL,false);
 
 			// Common Secret Key Attributes
-			if (baseKey->attributeExists(CKA_ALWAYS_SENSITIVE) && baseKey->getAttribute(CKA_ALWAYS_SENSITIVE)->getBooleanValue())
+			if (baseKey->getBooleanValue(CKA_ALWAYS_SENSITIVE, false))
 			{
-				bool bAlwaysSensitive = osobject->getAttribute(CKA_SENSITIVE)->getBooleanValue();
+				bool bAlwaysSensitive = osobject->getBooleanValue(CKA_SENSITIVE, false);
 				bOK = bOK && osobject->setAttribute(CKA_ALWAYS_SENSITIVE,bAlwaysSensitive);
 			}
 			else
 			{
 				bOK = bOK && osobject->setAttribute(CKA_ALWAYS_SENSITIVE,false);
 			}
-			if (!baseKey->attributeExists(CKA_NEVER_EXTRACTABLE) || baseKey->getAttribute(CKA_NEVER_EXTRACTABLE)->getBooleanValue())
+			if (baseKey->getBooleanValue(CKA_NEVER_EXTRACTABLE, true))
 			{
-				bool bNeverExtractable = osobject->getAttribute(CKA_EXTRACTABLE)->getBooleanValue() == false;
+				bool bNeverExtractable = osobject->getBooleanValue(CKA_EXTRACTABLE, false) == false;
 				bOK = bOK && osobject->setAttribute(CKA_NEVER_EXTRACTABLE,bNeverExtractable);
 			}
 			else
@@ -8397,18 +8420,18 @@ CK_RV SoftHSM::deriveECDH
 			bOK = bOK && osobject->setAttribute(CKA_LOCAL,false);
 
 			// Common Secret Key Attributes
-			if (baseKey->attributeExists(CKA_ALWAYS_SENSITIVE) && baseKey->getAttribute(CKA_ALWAYS_SENSITIVE)->getBooleanValue())
+			if (baseKey->getBooleanValue(CKA_ALWAYS_SENSITIVE, false))
 			{
-				bool bAlwaysSensitive = osobject->getAttribute(CKA_SENSITIVE)->getBooleanValue();
+				bool bAlwaysSensitive = osobject->getBooleanValue(CKA_SENSITIVE, false);
 				bOK = bOK && osobject->setAttribute(CKA_ALWAYS_SENSITIVE,bAlwaysSensitive);
 			}
 			else
 			{
 				bOK = bOK && osobject->setAttribute(CKA_ALWAYS_SENSITIVE,false);
 			}
-			if (!baseKey->attributeExists(CKA_NEVER_EXTRACTABLE) || baseKey->getAttribute(CKA_NEVER_EXTRACTABLE)->getBooleanValue())
+			if (baseKey->getBooleanValue(CKA_NEVER_EXTRACTABLE, true))
 			{
-				bool bNeverExtractable = osobject->getAttribute(CKA_EXTRACTABLE)->getBooleanValue() == false;
+				bool bNeverExtractable = osobject->getBooleanValue(CKA_EXTRACTABLE, false) == false;
 				bOK = bOK && osobject->setAttribute(CKA_NEVER_EXTRACTABLE,bNeverExtractable);
 			}
 			else
@@ -8548,8 +8571,7 @@ CK_RV SoftHSM::getRSAPrivateKey(RSAPrivateKey* privateKey, Token* token, OSObjec
 	if (key == NULL) return CKR_ARGUMENTS_BAD;
 
 	// Get the CKA_PRIVATE attribute, when the attribute is not present use default false
-	OSAttribute* attr = key->getAttribute(CKA_PRIVATE);
-	bool isKeyPrivate = (attr != NULL && attr->getBooleanValue());
+	bool isKeyPrivate = key->getBooleanValue(CKA_PRIVATE, false);
 
 	// RSA Private Key Attributes
 	ByteString modulus;
@@ -8563,27 +8585,27 @@ CK_RV SoftHSM::getRSAPrivateKey(RSAPrivateKey* privateKey, Token* token, OSObjec
 	if (isKeyPrivate)
 	{
 		bool bOK = true;
-		bOK = bOK && token->decrypt(key->getAttribute(CKA_MODULUS)->getByteStringValue(), modulus);
-		bOK = bOK && token->decrypt(key->getAttribute(CKA_PUBLIC_EXPONENT)->getByteStringValue(), publicExponent);
-		bOK = bOK && token->decrypt(key->getAttribute(CKA_PRIVATE_EXPONENT)->getByteStringValue(), privateExponent);
-		bOK = bOK && token->decrypt(key->getAttribute(CKA_PRIME_1)->getByteStringValue(), prime1);
-		bOK = bOK && token->decrypt(key->getAttribute(CKA_PRIME_2)->getByteStringValue(), prime2);
-		bOK = bOK && token->decrypt(key->getAttribute(CKA_EXPONENT_1)->getByteStringValue(), exponent1);
-		bOK = bOK && token->decrypt(key->getAttribute(CKA_EXPONENT_2)->getByteStringValue(), exponent2);
-		bOK = bOK && token->decrypt(key->getAttribute(CKA_COEFFICIENT)->getByteStringValue(), coefficient);
+		bOK = bOK && token->decrypt(key->getByteStringValue(CKA_MODULUS), modulus);
+		bOK = bOK && token->decrypt(key->getByteStringValue(CKA_PUBLIC_EXPONENT), publicExponent);
+		bOK = bOK && token->decrypt(key->getByteStringValue(CKA_PRIVATE_EXPONENT), privateExponent);
+		bOK = bOK && token->decrypt(key->getByteStringValue(CKA_PRIME_1), prime1);
+		bOK = bOK && token->decrypt(key->getByteStringValue(CKA_PRIME_2), prime2);
+		bOK = bOK && token->decrypt(key->getByteStringValue(CKA_EXPONENT_1), exponent1);
+		bOK = bOK && token->decrypt(key->getByteStringValue(CKA_EXPONENT_2), exponent2);
+		bOK = bOK && token->decrypt(key->getByteStringValue(CKA_COEFFICIENT), coefficient);
 		if (!bOK)
 			return CKR_GENERAL_ERROR;
 	}
 	else
 	{
-		modulus = key->getAttribute(CKA_MODULUS)->getByteStringValue();
-		publicExponent = key->getAttribute(CKA_PUBLIC_EXPONENT)->getByteStringValue();
-		privateExponent = key->getAttribute(CKA_PRIVATE_EXPONENT)->getByteStringValue();
-		prime1 = key->getAttribute(CKA_PRIME_1)->getByteStringValue();
-		prime2 = key->getAttribute(CKA_PRIME_2)->getByteStringValue();
-		exponent1 =  key->getAttribute(CKA_EXPONENT_1)->getByteStringValue();
-		exponent2 = key->getAttribute(CKA_EXPONENT_2)->getByteStringValue();
-		coefficient = key->getAttribute(CKA_COEFFICIENT)->getByteStringValue();
+		modulus = key->getByteStringValue(CKA_MODULUS);
+		publicExponent = key->getByteStringValue(CKA_PUBLIC_EXPONENT);
+		privateExponent = key->getByteStringValue(CKA_PRIVATE_EXPONENT);
+		prime1 = key->getByteStringValue(CKA_PRIME_1);
+		prime2 = key->getByteStringValue(CKA_PRIME_2);
+		exponent1 =  key->getByteStringValue(CKA_EXPONENT_1);
+		exponent2 = key->getByteStringValue(CKA_EXPONENT_2);
+		coefficient = key->getByteStringValue(CKA_COEFFICIENT);
 	}
 
 	privateKey->setN(modulus);
@@ -8605,8 +8627,7 @@ CK_RV SoftHSM::getRSAPublicKey(RSAPublicKey* publicKey, Token* token, OSObject* 
 	if (key == NULL) return CKR_ARGUMENTS_BAD;
 
 	// Get the CKA_PRIVATE attribute, when the attribute is not present use default false
-	OSAttribute* attr = key->getAttribute(CKA_PRIVATE);
-	bool isKeyPrivate = (attr != NULL && attr->getBooleanValue());
+	bool isKeyPrivate = key->getBooleanValue(CKA_PRIVATE, false);
 
 	// RSA Public Key Attributes
 	ByteString modulus;
@@ -8614,15 +8635,15 @@ CK_RV SoftHSM::getRSAPublicKey(RSAPublicKey* publicKey, Token* token, OSObject* 
 	if (isKeyPrivate)
 	{
 		bool bOK = true;
-		bOK = bOK && token->decrypt(key->getAttribute(CKA_MODULUS)->getByteStringValue(), modulus);
-		bOK = bOK && token->decrypt(key->getAttribute(CKA_PUBLIC_EXPONENT)->getByteStringValue(), publicExponent);
+		bOK = bOK && token->decrypt(key->getByteStringValue(CKA_MODULUS), modulus);
+		bOK = bOK && token->decrypt(key->getByteStringValue(CKA_PUBLIC_EXPONENT), publicExponent);
 		if (!bOK)
 			return CKR_GENERAL_ERROR;
 	}
 	else
 	{
-		modulus = key->getAttribute(CKA_MODULUS)->getByteStringValue();
-		publicExponent = key->getAttribute(CKA_PUBLIC_EXPONENT)->getByteStringValue();
+		modulus = key->getByteStringValue(CKA_MODULUS);
+		publicExponent = key->getByteStringValue(CKA_PUBLIC_EXPONENT);
 	}
 
 	publicKey->setN(modulus);
@@ -8638,8 +8659,7 @@ CK_RV SoftHSM::getDSAPrivateKey(DSAPrivateKey* privateKey, Token* token, OSObjec
 	if (key == NULL) return CKR_ARGUMENTS_BAD;
 
 	// Get the CKA_PRIVATE attribute, when the attribute is not present use default false
-	OSAttribute* attr = key->getAttribute(CKA_PRIVATE);
-	bool isKeyPrivate = (attr != NULL && attr->getBooleanValue());
+	bool isKeyPrivate = key->getBooleanValue(CKA_PRIVATE, false);
 
 	// DSA Private Key Attributes
 	ByteString prime;
@@ -8649,19 +8669,19 @@ CK_RV SoftHSM::getDSAPrivateKey(DSAPrivateKey* privateKey, Token* token, OSObjec
 	if (isKeyPrivate)
 	{
 		bool bOK = true;
-		bOK = bOK && token->decrypt(key->getAttribute(CKA_PRIME)->getByteStringValue(), prime);
-		bOK = bOK && token->decrypt(key->getAttribute(CKA_SUBPRIME)->getByteStringValue(), subprime);
-		bOK = bOK && token->decrypt(key->getAttribute(CKA_BASE)->getByteStringValue(), generator);
-		bOK = bOK && token->decrypt(key->getAttribute(CKA_VALUE)->getByteStringValue(), value);
+		bOK = bOK && token->decrypt(key->getByteStringValue(CKA_PRIME), prime);
+		bOK = bOK && token->decrypt(key->getByteStringValue(CKA_SUBPRIME), subprime);
+		bOK = bOK && token->decrypt(key->getByteStringValue(CKA_BASE), generator);
+		bOK = bOK && token->decrypt(key->getByteStringValue(CKA_VALUE), value);
 		if (!bOK)
 			return CKR_GENERAL_ERROR;
 	}
 	else
 	{
-		prime = key->getAttribute(CKA_PRIME)->getByteStringValue();
-		subprime = key->getAttribute(CKA_SUBPRIME)->getByteStringValue();
-		generator = key->getAttribute(CKA_BASE)->getByteStringValue();
-		value = key->getAttribute(CKA_VALUE)->getByteStringValue();
+		prime = key->getByteStringValue(CKA_PRIME);
+		subprime = key->getByteStringValue(CKA_SUBPRIME);
+		generator = key->getByteStringValue(CKA_BASE);
+		value = key->getByteStringValue(CKA_VALUE);
 	}
 
 	privateKey->setP(prime);
@@ -8679,8 +8699,7 @@ CK_RV SoftHSM::getDSAPublicKey(DSAPublicKey* publicKey, Token* token, OSObject* 
 	if (key == NULL) return CKR_ARGUMENTS_BAD;
 
 	// Get the CKA_PRIVATE attribute, when the attribute is not present use default false
-	OSAttribute* attr = key->getAttribute(CKA_PRIVATE);
-	bool isKeyPrivate = (attr != NULL && attr->getBooleanValue());
+	bool isKeyPrivate = key->getBooleanValue(CKA_PRIVATE, false);
 
 	// DSA Public Key Attributes
 	ByteString prime;
@@ -8690,19 +8709,19 @@ CK_RV SoftHSM::getDSAPublicKey(DSAPublicKey* publicKey, Token* token, OSObject* 
 	if (isKeyPrivate)
 	{
 		bool bOK = true;
-		bOK = bOK && token->decrypt(key->getAttribute(CKA_PRIME)->getByteStringValue(), prime);
-		bOK = bOK && token->decrypt(key->getAttribute(CKA_SUBPRIME)->getByteStringValue(), subprime);
-		bOK = bOK && token->decrypt(key->getAttribute(CKA_BASE)->getByteStringValue(), generator);
-		bOK = bOK && token->decrypt(key->getAttribute(CKA_VALUE)->getByteStringValue(), value);
+		bOK = bOK && token->decrypt(key->getByteStringValue(CKA_PRIME), prime);
+		bOK = bOK && token->decrypt(key->getByteStringValue(CKA_SUBPRIME), subprime);
+		bOK = bOK && token->decrypt(key->getByteStringValue(CKA_BASE), generator);
+		bOK = bOK && token->decrypt(key->getByteStringValue(CKA_VALUE), value);
 		if (!bOK)
 			return CKR_GENERAL_ERROR;
 	}
 	else
 	{
-		prime = key->getAttribute(CKA_PRIME)->getByteStringValue();
-		subprime = key->getAttribute(CKA_SUBPRIME)->getByteStringValue();
-		generator = key->getAttribute(CKA_BASE)->getByteStringValue();
-		value = key->getAttribute(CKA_VALUE)->getByteStringValue();
+		prime = key->getByteStringValue(CKA_PRIME);
+		subprime = key->getByteStringValue(CKA_SUBPRIME);
+		generator = key->getByteStringValue(CKA_BASE);
+		value = key->getByteStringValue(CKA_VALUE);
 	}
 
 	publicKey->setP(prime);
@@ -8720,8 +8739,7 @@ CK_RV SoftHSM::getECPrivateKey(ECPrivateKey* privateKey, Token* token, OSObject*
 	if (key == NULL) return CKR_ARGUMENTS_BAD;
 
 	// Get the CKA_PRIVATE attribute, when the attribute is not present use default false
-	OSAttribute* attr = key->getAttribute(CKA_PRIVATE);
-	bool isKeyPrivate = (attr != NULL && attr->getBooleanValue());
+	bool isKeyPrivate = key->getBooleanValue(CKA_PRIVATE, false);
 
 	// EC Private Key Attributes
 	ByteString group;
@@ -8729,15 +8747,15 @@ CK_RV SoftHSM::getECPrivateKey(ECPrivateKey* privateKey, Token* token, OSObject*
 	if (isKeyPrivate)
 	{
 		bool bOK = true;
-		bOK = bOK && token->decrypt(key->getAttribute(CKA_EC_PARAMS)->getByteStringValue(), group);
-		bOK = bOK && token->decrypt(key->getAttribute(CKA_VALUE)->getByteStringValue(), value);
+		bOK = bOK && token->decrypt(key->getByteStringValue(CKA_EC_PARAMS), group);
+		bOK = bOK && token->decrypt(key->getByteStringValue(CKA_VALUE), value);
 		if (!bOK)
 			return CKR_GENERAL_ERROR;
 	}
 	else
 	{
-		group = key->getAttribute(CKA_EC_PARAMS)->getByteStringValue();
-		value = key->getAttribute(CKA_VALUE)->getByteStringValue();
+		group = key->getByteStringValue(CKA_EC_PARAMS);
+		value = key->getByteStringValue(CKA_VALUE);
 	}
 
 	privateKey->setEC(group);
@@ -8753,8 +8771,7 @@ CK_RV SoftHSM::getECPublicKey(ECPublicKey* publicKey, Token* token, OSObject* ke
 	if (key == NULL) return CKR_ARGUMENTS_BAD;
 
 	// Get the CKA_PRIVATE attribute, when the attribute is not present use default false
-	OSAttribute* attr = key->getAttribute(CKA_PRIVATE);
-	bool isKeyPrivate = (attr != NULL && attr->getBooleanValue());
+	bool isKeyPrivate = key->getBooleanValue(CKA_PRIVATE, false);
 
 	// EC Public Key Attributes
 	ByteString group;
@@ -8762,15 +8779,15 @@ CK_RV SoftHSM::getECPublicKey(ECPublicKey* publicKey, Token* token, OSObject* ke
 	if (isKeyPrivate)
 	{
 		bool bOK = true;
-		bOK = bOK && token->decrypt(key->getAttribute(CKA_EC_PARAMS)->getByteStringValue(), group);
-		bOK = bOK && token->decrypt(key->getAttribute(CKA_EC_POINT)->getByteStringValue(), point);
+		bOK = bOK && token->decrypt(key->getByteStringValue(CKA_EC_PARAMS), group);
+		bOK = bOK && token->decrypt(key->getByteStringValue(CKA_EC_POINT), point);
 		if (!bOK)
 			return CKR_GENERAL_ERROR;
 	}
 	else
 	{
-		group = key->getAttribute(CKA_EC_PARAMS)->getByteStringValue();
-		point = key->getAttribute(CKA_EC_POINT)->getByteStringValue();
+		group = key->getByteStringValue(CKA_EC_PARAMS);
+		point = key->getByteStringValue(CKA_EC_POINT);
 	}
 
 	publicKey->setEC(group);
@@ -8786,8 +8803,7 @@ CK_RV SoftHSM::getDHPrivateKey(DHPrivateKey* privateKey, Token* token, OSObject*
 	if (key == NULL) return CKR_ARGUMENTS_BAD;
 
 	// Get the CKA_PRIVATE attribute, when the attribute is not present use default false
-	OSAttribute* attr = key->getAttribute(CKA_PRIVATE);
-	bool isKeyPrivate = (attr != NULL && attr->getBooleanValue());
+	bool isKeyPrivate = key->getBooleanValue(CKA_PRIVATE, false);
 
 	// DH Private Key Attributes
 	ByteString prime;
@@ -8796,17 +8812,17 @@ CK_RV SoftHSM::getDHPrivateKey(DHPrivateKey* privateKey, Token* token, OSObject*
 	if (isKeyPrivate)
 	{
 		bool bOK = true;
-		bOK = bOK && token->decrypt(key->getAttribute(CKA_PRIME)->getByteStringValue(), prime);
-		bOK = bOK && token->decrypt(key->getAttribute(CKA_BASE)->getByteStringValue(), generator);
-		bOK = bOK && token->decrypt(key->getAttribute(CKA_VALUE)->getByteStringValue(), value);
+		bOK = bOK && token->decrypt(key->getByteStringValue(CKA_PRIME), prime);
+		bOK = bOK && token->decrypt(key->getByteStringValue(CKA_BASE), generator);
+		bOK = bOK && token->decrypt(key->getByteStringValue(CKA_VALUE), value);
 		if (!bOK)
 			return CKR_GENERAL_ERROR;
 	}
 	else
 	{
-		prime = key->getAttribute(CKA_PRIME)->getByteStringValue();
-		generator = key->getAttribute(CKA_BASE)->getByteStringValue();
-		value = key->getAttribute(CKA_VALUE)->getByteStringValue();
+		prime = key->getByteStringValue(CKA_PRIME);
+		generator = key->getByteStringValue(CKA_BASE);
+		value = key->getByteStringValue(CKA_VALUE);
 	}
 
 	privateKey->setP(prime);
@@ -8852,8 +8868,7 @@ CK_RV SoftHSM::getGOSTPrivateKey(GOSTPrivateKey* privateKey, Token* token, OSObj
 	if (key == NULL) return CKR_ARGUMENTS_BAD;
 
 	// Get the CKA_PRIVATE attribute, when the attribute is not present use default false
-	OSAttribute* attr = key->getAttribute(CKA_PRIVATE);
-	bool isKeyPrivate = (attr != NULL && attr->getBooleanValue());
+	bool isKeyPrivate = key->getBooleanValue(CKA_PRIVATE, false);
 
 	// GOST Private Key Attributes
 	ByteString value;
@@ -8861,15 +8876,15 @@ CK_RV SoftHSM::getGOSTPrivateKey(GOSTPrivateKey* privateKey, Token* token, OSObj
 	if (isKeyPrivate)
 	{
 		bool bOK = true;
-		bOK = bOK && token->decrypt(key->getAttribute(CKA_VALUE)->getByteStringValue(), value);
-		bOK = bOK && token->decrypt(key->getAttribute(CKA_GOSTR3410_PARAMS)->getByteStringValue(), param);
+		bOK = bOK && token->decrypt(key->getByteStringValue(CKA_VALUE), value);
+		bOK = bOK && token->decrypt(key->getByteStringValue(CKA_GOSTR3410_PARAMS), param);
 		if (!bOK)
 			return CKR_GENERAL_ERROR;
 	}
 	else
 	{
-		value = key->getAttribute(CKA_VALUE)->getByteStringValue();
-		param = key->getAttribute(CKA_GOSTR3410_PARAMS)->getByteStringValue();
+		value = key->getByteStringValue(CKA_VALUE);
+		param = key->getByteStringValue(CKA_GOSTR3410_PARAMS);
 	}
 
 	privateKey->setD(value);
@@ -8885,8 +8900,7 @@ CK_RV SoftHSM::getGOSTPublicKey(GOSTPublicKey* publicKey, Token* token, OSObject
 	if (key == NULL) return CKR_ARGUMENTS_BAD;
 
 	// Get the CKA_PRIVATE attribute, when the attribute is not present use default false
-	OSAttribute* attr = key->getAttribute(CKA_PRIVATE);
-	bool isKeyPrivate = (attr != NULL && attr->getBooleanValue());
+	bool isKeyPrivate = key->getBooleanValue(CKA_PRIVATE, false);
 
 	// GOST Public Key Attributes
 	ByteString point;
@@ -8894,15 +8908,15 @@ CK_RV SoftHSM::getGOSTPublicKey(GOSTPublicKey* publicKey, Token* token, OSObject
 	if (isKeyPrivate)
 	{
 		bool bOK = true;
-		bOK = bOK && token->decrypt(key->getAttribute(CKA_VALUE)->getByteStringValue(), point);
-		bOK = bOK && token->decrypt(key->getAttribute(CKA_GOSTR3410_PARAMS)->getByteStringValue(), param);
+		bOK = bOK && token->decrypt(key->getByteStringValue(CKA_VALUE), point);
+		bOK = bOK && token->decrypt(key->getByteStringValue(CKA_GOSTR3410_PARAMS), param);
 		if (!bOK)
 			return CKR_GENERAL_ERROR;
 	}
 	else
 	{
-		point = key->getAttribute(CKA_VALUE)->getByteStringValue();
-		param = key->getAttribute(CKA_GOSTR3410_PARAMS)->getByteStringValue();
+		point = key->getByteStringValue(CKA_VALUE);
+		param = key->getByteStringValue(CKA_GOSTR3410_PARAMS);
 	}
 
 	publicKey->setQ(point);
@@ -8918,18 +8932,17 @@ CK_RV SoftHSM::getSymmetricKey(SymmetricKey* skey, Token* token, OSObject* key)
 	if (key == NULL) return CKR_ARGUMENTS_BAD;
 
 	// Get the CKA_PRIVATE attribute, when the attribute is not present use default false
-	OSAttribute* attr = key->getAttribute(CKA_PRIVATE);
-	bool isKeyPrivate = (attr != NULL && attr->getBooleanValue());
+	bool isKeyPrivate = key->getBooleanValue(CKA_PRIVATE, false);
 
 	ByteString keybits;
 	if (isKeyPrivate)
 	{
-		if (!token->decrypt(key->getAttribute(CKA_VALUE)->getByteStringValue(), keybits))
+		if (!token->decrypt(key->getByteStringValue(CKA_VALUE), keybits))
 			return CKR_GENERAL_ERROR;
 	}
 	else
 	{
-		keybits = key->getAttribute(CKA_VALUE)->getByteStringValue();
+		keybits = key->getByteStringValue(CKA_VALUE);
 	}
 
 	skey->setKeyBits(keybits);
