@@ -47,6 +47,29 @@ ByteString BotanUtil::bigInt2ByteString(const Botan::BigInt& bigInt)
 	return rv;
 }
 
+// Used when extracting little-endian data
+ByteString BotanUtil::bigInt2ByteStringPrefix(const Botan::BigInt& bigInt, size_t size)
+{
+	ByteString rv;
+
+	if (size > bigInt.bytes())
+	{
+		size_t diff = size - bigInt.bytes();
+		rv.resize(size);
+
+		memset(&rv[0], '\0', diff);
+
+		bigInt.binary_encode(&rv[0] + diff);
+	}
+	else
+	{
+		rv.resize(bigInt.bytes());
+		bigInt.binary_encode(&rv[0]);
+	}
+
+	return rv;
+}
+
 // Convert a ByteString to an Botan BigInt
 Botan::BigInt BotanUtil::byteString2bigInt(const ByteString& byteString)
 {
