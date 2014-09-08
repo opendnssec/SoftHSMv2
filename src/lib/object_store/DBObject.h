@@ -58,7 +58,7 @@ public:
 
 	// Will drop any internal references to the connection
 	void dropConnection();
-	
+
 	// create tables to support storage of attributes for the object.
 	bool createTables();
 
@@ -81,7 +81,10 @@ public:
 	virtual bool attributeExists(CK_ATTRIBUTE_TYPE type);
 
 	// Retrieve the specified attribute
-	virtual OSAttribute* getAttribute(CK_ATTRIBUTE_TYPE type);
+	virtual OSAttribute getAttribute(CK_ATTRIBUTE_TYPE type);
+	virtual bool getBooleanValue(CK_ATTRIBUTE_TYPE type, bool val);
+	virtual unsigned long getUnsignedLongValue(CK_ATTRIBUTE_TYPE type, unsigned long val);
+	virtual ByteString getByteStringValue(CK_ATTRIBUTE_TYPE type);
 
 	// Retrieve the next attribute type
 	virtual CK_ATTRIBUTE_TYPE nextAttributeType(CK_ATTRIBUTE_TYPE type);
@@ -120,7 +123,7 @@ private:
 
 	// Mutex object for thread-safeness
 	Mutex* _mutex;
-	
+
 	DB::Connection *_connection;
 	ObjectStoreToken *_token;
 	long long _objectId;
@@ -128,7 +131,8 @@ private:
 	std::map<CK_ATTRIBUTE_TYPE,OSAttribute*> _attributes;
 	std::map<CK_ATTRIBUTE_TYPE,OSAttribute*> *_transaction;
 
-	OSAttribute *accessAttribute(CK_ATTRIBUTE_TYPE type);
+	OSAttribute* getAttributeDB(CK_ATTRIBUTE_TYPE type);
+	OSAttribute* accessAttribute(CK_ATTRIBUTE_TYPE type);
 };
 
 #endif // !_SOFTHSM_V2_DBOBJECT_H

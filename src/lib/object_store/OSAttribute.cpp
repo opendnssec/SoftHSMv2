@@ -113,27 +113,6 @@ const std::map<CK_ATTRIBUTE_TYPE,OSAttribute>& OSAttribute::getArrayValue() cons
 	return arrayValue;
 }
 
-// Set the attribute value
-void OSAttribute::setBooleanValue(const bool value)
-{
-	boolValue = value;
-}
-
-void OSAttribute::setUnsignedLongValue(const unsigned long value)
-{
-	ulongValue = value;
-}
-
-void OSAttribute::setByteStringValue(const ByteString& value)
-{
-	byteStrValue = value;
-}
-
-void OSAttribute::setArrayValue(const std::map<CK_ATTRIBUTE_TYPE,OSAttribute>& value)
-{
-	arrayValue = value;
-}
-
 // Helper for template (aka array) matching
 
 bool OSAttribute::peekValue(ByteString& value) const
