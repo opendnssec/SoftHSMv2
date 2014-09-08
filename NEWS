@@ -5,6 +5,8 @@ SoftHSM develop
 * SOFTHSM-84: Check that all mandatory attributes are given during
   the creation process.
 * SOFTHSM-92: Enable -fvisibility=hidden on per default
+* SUPPORT-137: Implement C_EncryptUpdate and C_EncryptFinal
+  (Patch from Martin Paljak)
 
 Bugfixes:
 * SOFTHSM-93: Invalid C++ object recycling.
