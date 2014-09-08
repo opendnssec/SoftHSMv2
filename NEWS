@@ -14,6 +14,7 @@ Bugfixes:
 * SOFTHSM-97: Check if Botan has already been initialized.
 * SOFTHSM-98: Handle mandatory attributes for DSA, DH, and ECDSA
   correctly.
+* SOFTHSM-99: Binary encoding of GOST values.
 * SUPPORT-136: softhsm2-keyconv creates files with sensitive material
   in insecure way.
 
