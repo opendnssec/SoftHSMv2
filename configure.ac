@@ -9,7 +9,7 @@
 define([SOFTHSM_VERSION_MAJOR], [2])
 define([SOFTHSM_VERSION_MINOR], [0])
 define([SOFTHSM_VERSION_FIX], [0])
-define([PACKAGE_SUFFIX], [a2])
+define([PACKAGE_SUFFIX], [b1])
 
 # Library version
 
