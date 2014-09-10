@@ -1,6 +1,6 @@
 NEWS for SoftHSM -- History of user visible changes
 
-SoftHSM 2.0.0b1 - 2014-09-09
+SoftHSM 2.0.0b1 - 2014-09-10
 
 * SOFTHSM-84: Check that all mandatory attributes are given during
   the creation process.
