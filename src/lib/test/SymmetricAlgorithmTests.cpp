@@ -172,6 +172,9 @@ void SymmetricAlgorithmTests::aesEncryptDecrypt(CK_MECHANISM_TYPE mechanismType,
 	CK_BYTE plainText[256];
 	CK_BYTE cipherText[300];
 	CK_ULONG ulCipherTextLen;
+	CK_BYTE cipherTextMulti[300];
+	CK_ULONG ulCipherTextMultiLen;
+	CK_ULONG ulCipherTextMultiPartLen;
 	CK_BYTE recoveredText[300];
 	CK_ULONG ulRecoveredTextLen;
 	CK_RV rv;
@@ -187,6 +190,7 @@ void SymmetricAlgorithmTests::aesEncryptDecrypt(CK_MECHANISM_TYPE mechanismType,
 		mechanism.ulParameterLen = sizeof(iv);
 	}
 
+	// Single-part encryption
 	rv = C_EncryptInit(hSession,&mechanism,hKey);
 	CPPUNIT_ASSERT(rv==CKR_OK);
 
@@ -195,6 +199,27 @@ void SymmetricAlgorithmTests::aesEncryptDecrypt(CK_MECHANISM_TYPE mechanismType,
 	CPPUNIT_ASSERT(rv==CKR_OK);
 	CPPUNIT_ASSERT(ulCipherTextLen==sizeof(plainText));
 
+	// Multi-part encryption
+	rv = C_EncryptInit(hSession,&mechanism,hKey);
+	CPPUNIT_ASSERT(rv==CKR_OK);
+
+	ulCipherTextMultiLen = sizeof(cipherTextMulti);
+	rv = C_EncryptUpdate(hSession,plainText,sizeof(plainText)/2,cipherTextMulti,&ulCipherTextMultiLen);
+	CPPUNIT_ASSERT(rv==CKR_OK);
+
+	ulCipherTextMultiPartLen = sizeof(cipherTextMulti) - ulCipherTextMultiLen;
+	rv = C_EncryptUpdate(hSession,plainText+sizeof(plainText)/2,sizeof(plainText)/2,cipherTextMulti+ulCipherTextMultiLen,&ulCipherTextMultiPartLen);
+	CPPUNIT_ASSERT(rv==CKR_OK);
+	ulCipherTextMultiLen += ulCipherTextMultiPartLen;
+
+	ulCipherTextMultiPartLen = sizeof(cipherTextMulti) - ulCipherTextMultiLen;
+	rv = C_EncryptFinal(hSession,cipherTextMulti+ulCipherTextMultiLen,&ulCipherTextMultiPartLen);
+	CPPUNIT_ASSERT(rv==CKR_OK);
+	ulCipherTextMultiLen += ulCipherTextMultiPartLen;
+	CPPUNIT_ASSERT(ulCipherTextLen==ulCipherTextMultiLen);
+	CPPUNIT_ASSERT(memcmp(cipherText, cipherTextMulti, ulCipherTextLen) == 0);
+
+	// Single-part decryption
 	rv = C_DecryptInit(hSession,&mechanism,hKey);
 	CPPUNIT_ASSERT(rv==CKR_OK);
 
@@ -213,6 +238,9 @@ void SymmetricAlgorithmTests::desEncryptDecrypt(CK_MECHANISM_TYPE mechanismType,
 	CK_BYTE plainText[256];
 	CK_BYTE cipherText[300];
 	CK_ULONG ulCipherTextLen;
+	CK_BYTE cipherTextMulti[300];
+	CK_ULONG ulCipherTextMultiLen;
+	CK_ULONG ulCipherTextMultiPartLen;
 	CK_BYTE recoveredText[300];
 	CK_ULONG ulRecoveredTextLen;
 	CK_RV rv;
@@ -228,6 +256,7 @@ void SymmetricAlgorithmTests::desEncryptDecrypt(CK_MECHANISM_TYPE mechanismType,
 		mechanism.ulParameterLen = sizeof(iv);
 	}
 
+	// Single-part encryption
 	rv = C_EncryptInit(hSession,&mechanism,hKey);
 	CPPUNIT_ASSERT(rv==CKR_OK);
 
@@ -236,6 +265,27 @@ void SymmetricAlgorithmTests::desEncryptDecrypt(CK_MECHANISM_TYPE mechanismType,
 	CPPUNIT_ASSERT(rv==CKR_OK);
 	CPPUNIT_ASSERT(ulCipherTextLen==sizeof(plainText));
 
+	// Multi-part encryption
+	rv = C_EncryptInit(hSession,&mechanism,hKey);
+	CPPUNIT_ASSERT(rv==CKR_OK);
+
+	ulCipherTextMultiLen = sizeof(cipherTextMulti);
+	rv = C_EncryptUpdate(hSession,plainText,sizeof(plainText)/2,cipherTextMulti,&ulCipherTextMultiLen);
+	CPPUNIT_ASSERT(rv==CKR_OK);
+
+	ulCipherTextMultiPartLen = sizeof(cipherTextMulti) - ulCipherTextMultiLen;
+	rv = C_EncryptUpdate(hSession,plainText+sizeof(plainText)/2,sizeof(plainText)/2,cipherTextMulti+ulCipherTextMultiLen,&ulCipherTextMultiPartLen);
+	CPPUNIT_ASSERT(rv==CKR_OK);
+	ulCipherTextMultiLen += ulCipherTextMultiPartLen;
+
+	ulCipherTextMultiPartLen = sizeof(cipherTextMulti) - ulCipherTextMultiLen;
+	rv = C_EncryptFinal(hSession,cipherTextMulti+ulCipherTextMultiLen,&ulCipherTextMultiPartLen);
+	CPPUNIT_ASSERT(rv==CKR_OK);
+	ulCipherTextMultiLen += ulCipherTextMultiPartLen;
+	CPPUNIT_ASSERT(ulCipherTextLen==ulCipherTextMultiLen);
+	CPPUNIT_ASSERT(memcmp(cipherText, cipherTextMulti, ulCipherTextLen) == 0);
+
+	// Single-part decryption
 	rv = C_DecryptInit(hSession,&mechanism,hKey);
 	CPPUNIT_ASSERT(rv==CKR_OK);
 
@@ -254,6 +304,9 @@ void SymmetricAlgorithmTests::des3EncryptDecrypt(CK_MECHANISM_TYPE mechanismType
 	CK_BYTE plainText[256];
 	CK_BYTE cipherText[300];
 	CK_ULONG ulCipherTextLen;
+	CK_BYTE cipherTextMulti[300];
+	CK_ULONG ulCipherTextMultiLen;
+	CK_ULONG ulCipherTextMultiPartLen;
 	CK_BYTE recoveredText[300];
 	CK_ULONG ulRecoveredTextLen;
 	CK_RV rv;
@@ -269,6 +322,7 @@ void SymmetricAlgorithmTests::des3EncryptDecrypt(CK_MECHANISM_TYPE mechanismType
 		mechanism.ulParameterLen = sizeof(iv);
 	}
 
+	// Single-part encryption
 	rv = C_EncryptInit(hSession,&mechanism,hKey);
 	CPPUNIT_ASSERT(rv==CKR_OK);
 
@@ -277,6 +331,27 @@ void SymmetricAlgorithmTests::des3EncryptDecrypt(CK_MECHANISM_TYPE mechanismType
 	CPPUNIT_ASSERT(rv==CKR_OK);
 	CPPUNIT_ASSERT(ulCipherTextLen==sizeof(plainText));
 
+	// Multi-part encryption
+	rv = C_EncryptInit(hSession,&mechanism,hKey);
+	CPPUNIT_ASSERT(rv==CKR_OK);
+
+	ulCipherTextMultiLen = sizeof(cipherTextMulti);
+	rv = C_EncryptUpdate(hSession,plainText,sizeof(plainText)/2,cipherTextMulti,&ulCipherTextMultiLen);
+	CPPUNIT_ASSERT(rv==CKR_OK);
+
+	ulCipherTextMultiPartLen = sizeof(cipherTextMulti) - ulCipherTextMultiLen;
+	rv = C_EncryptUpdate(hSession,plainText+sizeof(plainText)/2,sizeof(plainText)/2,cipherTextMulti+ulCipherTextMultiLen,&ulCipherTextMultiPartLen);
+	CPPUNIT_ASSERT(rv==CKR_OK);
+	ulCipherTextMultiLen += ulCipherTextMultiPartLen;
+
+	ulCipherTextMultiPartLen = sizeof(cipherTextMulti) - ulCipherTextMultiLen;
+	rv = C_EncryptFinal(hSession,cipherTextMulti+ulCipherTextMultiLen,&ulCipherTextMultiPartLen);
+	CPPUNIT_ASSERT(rv==CKR_OK);
+	ulCipherTextMultiLen += ulCipherTextMultiPartLen;
+	CPPUNIT_ASSERT(ulCipherTextLen==ulCipherTextMultiLen);
+	CPPUNIT_ASSERT(memcmp(cipherText, cipherTextMulti, ulCipherTextLen) == 0);
+
+	// Single-part decryption
 	rv = C_DecryptInit(hSession,&mechanism,hKey);
 	CPPUNIT_ASSERT(rv==CKR_OK);
 
@@ -351,7 +426,7 @@ void SymmetricAlgorithmTests::aesWrapUnwrap(CK_MECHANISM_TYPE mechanismType, CK_
 		{ CKA_KEY_TYPE, &genKeyType, sizeof(genKeyType) },
 		{ CKA_TOKEN, &bFalse, sizeof(bFalse) },
 		{ CKA_PRIVATE, &bTrue, sizeof(bTrue) },
-		{ CKA_SENSITIVE, &bFalse, sizeof(bFalse) },
+		{ CKA_SENSITIVE, &bTrue, sizeof(bTrue) }, // Wrapping is allowed even on sensitive objects
 		{ CKA_VALUE, keyPtr, keyLen }
 	};
 	CK_OBJECT_HANDLE hSecret;
@@ -367,6 +442,7 @@ void SymmetricAlgorithmTests::aesWrapUnwrap(CK_MECHANISM_TYPE mechanismType, CK_
 
 	CK_BYTE_PTR wrappedPtr = NULL_PTR;
 	CK_ULONG wrappedLen = 0UL;
+	CK_ULONG zero = 0UL;
 	CK_ULONG rndKeyLen = keyLen;
 	if (mechanismType == CKM_AES_KEY_WRAP_PAD)
 		rndKeyLen =  (keyLen + 7) & ~7;
@@ -382,14 +458,21 @@ void SymmetricAlgorithmTests::aesWrapUnwrap(CK_MECHANISM_TYPE mechanismType, CK_
 	CPPUNIT_ASSERT(rv == CKR_OK);
 	CPPUNIT_ASSERT(hSecret != CK_INVALID_HANDLE);
 
+	// Estimate wrapped length
 	rv = C_WrapKey(hSession, &mechanism, hKey, hSecret, wrappedPtr, &wrappedLen);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 	CPPUNIT_ASSERT(wrappedLen == rndKeyLen + 8);
+
 	wrappedPtr = (CK_BYTE_PTR) malloc(wrappedLen);
 	CPPUNIT_ASSERT(wrappedPtr != NULL_PTR);
 	rv = C_WrapKey(hSession, &mechanism, hKey, hSecret, wrappedPtr, &wrappedLen);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 	CPPUNIT_ASSERT(wrappedLen == rndKeyLen + 8);
+
+	// This should always fail because wrapped data have to be longer than 0 bytes
+	zero = 0;
+	rv = C_WrapKey(hSession, &mechanism, hKey, hSecret, wrappedPtr, &zero);
+	CPPUNIT_ASSERT(rv == CKR_BUFFER_TOO_SMALL);
 
 	CK_ATTRIBUTE nattribs[] = {
 		{ CKA_CLASS, &secretClass, sizeof(secretClass) },

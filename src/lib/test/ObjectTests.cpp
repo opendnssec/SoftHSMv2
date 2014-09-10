@@ -1780,14 +1780,15 @@ void ObjectTests::testSensitiveAttributes()
 
 	CK_MECHANISM mechanism = { CKM_RSA_PKCS_KEY_PAIR_GEN, NULL_PTR, 0 };
 	CK_ULONG bits = 1536;
-	CK_BBOOL bFalse = CK_FALSE;
+	CK_BBOOL bSensitive = CK_TRUE;
 	CK_BBOOL bTrue = CK_TRUE;
 	CK_ATTRIBUTE pukAttribs[] = {
 		{ CKA_MODULUS_BITS, &bits, sizeof(bits) }
 	};
+	// Sensitive attributes cannot be revealed in plaintext even if wrapping is allowed
 	CK_ATTRIBUTE prkAttribs[] = {
-		{ CKA_SENSITIVE, &bTrue, sizeof(bTrue) },
-		{ CKA_EXTRACTABLE, &bFalse, sizeof(bFalse) }
+		{ CKA_SENSITIVE, &bSensitive, sizeof(bSensitive) },
+		{ CKA_EXTRACTABLE, &bTrue, sizeof(bTrue) }
 	};
 	CK_ATTRIBUTE getTemplate[] = {
 		{ CKA_PRIVATE_EXPONENT, NULL_PTR, 0 },
@@ -1822,6 +1823,18 @@ void ObjectTests::testSensitiveAttributes()
 	{
 		rv = C_GetAttributeValue(hSession, hPrk, &getTemplate[i], 1);
 		CPPUNIT_ASSERT(rv == CKR_ATTRIBUTE_SENSITIVE);
+	}
+
+	// Retry with non-sensitive object
+	bSensitive = CK_FALSE;
+	rv = C_GenerateKeyPair(hSession, &mechanism, pukAttribs, 1, prkAttribs, 2, &hPuk, &hPrk);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Check value
+	for (int i = 0; i < 6; i++)
+	{
+		rv = C_GetAttributeValue(hSession, hPrk, &getTemplate[i], 1);
+		CPPUNIT_ASSERT(rv == CKR_OK);
 	}
 }
 

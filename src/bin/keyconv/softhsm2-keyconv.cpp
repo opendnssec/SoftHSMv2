@@ -50,6 +50,10 @@
 #include <iostream>
 #include <fstream>
 #include <stdint.h>
+#include <errno.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 void usage()
 {
@@ -273,6 +277,17 @@ int to_pkcs8(char* in_path, char* out_path, char* file_pin)
 		free_key_material(pkey);
 		return error;
 	}
+
+	// Create and set file permissions if the file does not exist.
+	int fd = open(out_path, O_CREAT, S_IRUSR | S_IWUSR);
+	if (fd == -1)
+	{
+		fprintf(stderr, "ERROR: Could not open the output file: %s (errno %i)\n",
+			out_path, errno);
+		free_key_material(pkey);
+		return 1;
+	}
+	::close(fd);
 
 	crypto_init();
 

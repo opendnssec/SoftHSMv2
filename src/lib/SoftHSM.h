@@ -370,5 +370,42 @@ private:
 	bool setDSAPrivateKey(OSObject* key, ByteString ber, Token* token, bool isPrivate);
 	bool setDHPrivateKey(OSObject* key, ByteString ber, Token* token, bool isPrivate);
 	bool setECPrivateKey(OSObject* key, ByteString ber, Token* token, bool isPrivate);
+
+
+	CK_RV WrapKeyAsym
+	(
+		CK_MECHANISM_PTR pMechanism,
+		Token *token,
+		OSObject *wrapKey,
+		ByteString &keydata,
+		ByteString &wrapped
+	);
+
+	CK_RV WrapKeySym
+	(
+		CK_MECHANISM_PTR pMechanism,
+		Token *token,
+		OSObject *wrapKey,
+		ByteString &keydata,
+		ByteString &wrapped
+	);
+
+	CK_RV UnwrapKeyAsym
+	(
+		CK_MECHANISM_PTR pMechanism,
+		ByteString &wrapped,
+		Token* token,
+		OSObject *unwrapKey,
+		ByteString &keydata
+	);
+
+	CK_RV UnwrapKeySym
+	(
+		CK_MECHANISM_PTR pMechanism,
+		ByteString &wrapped,
+		Token* token,
+		OSObject *unwrapKey,
+		ByteString &keydata
+	);
 };
 

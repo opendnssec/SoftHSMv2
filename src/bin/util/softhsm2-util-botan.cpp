@@ -47,23 +47,19 @@
 #include <botan/bigint.h>
 #include <botan/libstate.h>
 
-bool was_initialized = false;
+bool wasInitialized = false;
 
 // Init Botan
 void crypto_init()
 {
 	// The PKCS#11 library might be using Botan
 	// Check if it has already initialized Botan
-	Botan::Library_State* state = Botan::Global_State_Management::swap_global_state(0);
-	// now put it back
-	Botan::Global_State_Management::swap_global_state(state);
-
-	if (state)
+	if (Botan::Global_State_Management::global_state_exists())
 	{
-		was_initialized = true;
+		wasInitialized = true;
 	}
 
-	if (was_initialized == false)
+	if (!wasInitialized)
 	{
 		Botan::LibraryInitializer::initialize("thread_safe=true");
 	}
@@ -72,7 +68,7 @@ void crypto_init()
 // Final Botan
 void crypto_final()
 {
-	if (was_initialized == false)
+	if (!wasInitialized)
 	{
 		Botan::LibraryInitializer::deinitialize();
 	}

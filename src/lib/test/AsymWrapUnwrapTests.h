@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010 .SE (The Internet Infrastructure Foundation)
+ * Copyright (c) 2014 Red Hat
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,44 +25,34 @@
  */
 
 /*****************************************************************************
- BotanUtil.h
+ AsymWrapUnwrapTests.h
 
- Botan convenience functions
+ Contains test cases for C_WrapKey and C_UnwrapKey
+ using asymmetrical algorithms (RSA)
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_BOTANUTIL_H
-#define _SOFTHSM_V2_BOTANUTIL_H
+#ifndef _SOFTHSM_V2_ASYMWRAPUNWRAPTESTS_H
+#define _SOFTHSM_V2_ASYMWRAPUNWRAPTESTS_H
 
-#include "config.h"
-#include "ByteString.h"
-#include <botan/bigint.h>
-#if defined(WITH_ECC) || defined(WITH_GOST)
-#include <botan/ec_group.h>
-#endif
+#include <cppunit/extensions/HelperMacros.h>
+#include "cryptoki.h"
 
-namespace BotanUtil
+class AsymWrapUnwrapTests : public CppUnit::TestFixture
 {
-	// Convert a Botan BigInt to a ByteString
-	ByteString bigInt2ByteString(const Botan::BigInt& bigInt);
-	ByteString bigInt2ByteStringPrefix(const Botan::BigInt& bigInt, size_t size);
+	CPPUNIT_TEST_SUITE(AsymWrapUnwrapTests);
+	CPPUNIT_TEST(testRsaWrapUnwrap);
+	CPPUNIT_TEST_SUITE_END();
 
-	// Convert a ByteString to a Botan BigInt
-	Botan::BigInt byteString2bigInt(const ByteString& byteString);
+public:
+	void testRsaWrapUnwrap();
 
-#if defined(WITH_ECC) || defined(WITH_GOST)
-	// Convert a Botan EC group to a ByteString
-	ByteString ecGroup2ByteString(const Botan::EC_Group& ecGroup);
+	void setUp();
+	void tearDown();
 
-	// Convert a ByteString to a Botan EC group
-	Botan::EC_Group byteString2ECGroup(const ByteString& byteString);
+protected:
+	CK_RV generateAesKey(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE &hKey);
+	CK_RV generateRsaKeyPair(CK_SESSION_HANDLE hSession, CK_BBOOL bTokenPuk, CK_BBOOL bPrivatePuk, CK_BBOOL bTokenPrk, CK_BBOOL bPrivatePrk, CK_OBJECT_HANDLE &hPuk, CK_OBJECT_HANDLE &hPrk);
+	void rsaWrapUnwrap(CK_MECHANISM_TYPE mechanismType, CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hPublicKey, CK_OBJECT_HANDLE hPrivateKey);
+};
 
-	// Convert a Botan EC point to a ByteString
-	ByteString ecPoint2ByteString(const Botan::PointGFp& ecPoint);
-
-	// Convert a ByteString to a Botan EC point in the given EC group
-	Botan::PointGFp byteString2ECPoint(const ByteString& byteString, const Botan::EC_Group& ecGroup);
-#endif
-}
-
-#endif // !_SOFTHSM_V2_BOTANUTIL_H
-
+#endif // !_SOFTHSM_V2_ASYMWRAPUNWRAPTESTS_H

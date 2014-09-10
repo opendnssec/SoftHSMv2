@@ -307,8 +307,7 @@ bool DBToken::setSOPIN(const ByteString& soPINBlob)
 		return false;
 	}
 
-	OSAttribute* tokenFlags;
-	if ((tokenFlags = tokenObject.getAttribute(CKA_OS_TOKENFLAGS)) == NULL)
+	if (!tokenObject.attributeExists(CKA_OS_TOKENFLAGS))
 	{
 		ERROR_MSG("Error while getting TOKENFLAGS from token database at \"%s\"", _connection->dbpath().c_str());
 		tokenObject.abortTransaction();
@@ -316,7 +315,7 @@ bool DBToken::setSOPIN(const ByteString& soPINBlob)
 	}
 
 	// Retrieve flags from the database and reset flags related to tries and expiration of the SOPIN.
-	CK_ULONG flags = tokenFlags->getUnsignedLongValue()
+	CK_ULONG flags = tokenObject.getAttribute(CKA_OS_TOKENFLAGS).getUnsignedLongValue()
 					& ~(CKF_SO_PIN_COUNT_LOW | CKF_SO_PIN_FINAL_TRY | CKF_SO_PIN_LOCKED | CKF_SO_PIN_TO_BE_CHANGED);
 
 	OSAttribute changedTokenFlags(flags);
@@ -359,8 +358,7 @@ bool DBToken::getSOPIN(ByteString& soPINBlob)
 		return false;
 	}
 
-	OSAttribute* soPIN;
-	if ((soPIN = tokenObject.getAttribute(CKA_OS_SOPIN)) == NULL)
+	if (!tokenObject.attributeExists(CKA_OS_SOPIN))
 	{
 		ERROR_MSG("Error while getting SOPIN from token database at \"%s\"", _connection->dbpath().c_str());
 		tokenObject.abortTransaction();
@@ -368,7 +366,7 @@ bool DBToken::getSOPIN(ByteString& soPINBlob)
 	}
 
 	tokenObject.commitTransaction();
-	soPINBlob = soPIN->getByteStringValue();
+	soPINBlob = tokenObject.getAttribute(CKA_OS_SOPIN).getByteStringValue();
 	return true;
 }
 
@@ -402,8 +400,7 @@ bool DBToken::setUserPIN(ByteString userPINBlob)
 		return false;
 	}
 
-	OSAttribute* tokenFlags;
-	if ((tokenFlags = tokenObject.getAttribute(CKA_OS_TOKENFLAGS)) == NULL)
+	if (!tokenObject.attributeExists(CKA_OS_TOKENFLAGS))
 	{
 		ERROR_MSG("Error while getting TOKENFLAGS from token database at \"%s\"", _connection->dbpath().c_str());
 		tokenObject.abortTransaction();
@@ -411,7 +408,7 @@ bool DBToken::setUserPIN(ByteString userPINBlob)
 	}
 
 	// Retrieve flags from the database and reset flags related to tries and expiration of the SOPIN.
-	CK_ULONG flags = tokenFlags->getUnsignedLongValue()
+	CK_ULONG flags = tokenObject.getAttribute(CKA_OS_TOKENFLAGS).getUnsignedLongValue()
 					| (CKF_USER_PIN_INITIALIZED & ~(CKF_USER_PIN_COUNT_LOW | CKF_USER_PIN_FINAL_TRY | CKF_USER_PIN_LOCKED | CKF_USER_PIN_TO_BE_CHANGED));
 
 	OSAttribute changedTokenFlags(flags);
@@ -454,8 +451,7 @@ bool DBToken::getUserPIN(ByteString& userPINBlob)
 		return false;
 	}
 
-	OSAttribute* userPIN;
-	if ((userPIN = tokenObject.getAttribute(CKA_OS_USERPIN)) == NULL)
+	if (!tokenObject.attributeExists(CKA_OS_USERPIN))
 	{
 		ERROR_MSG("Error while getting USERPIN from token database at \"%s\"", _connection->dbpath().c_str());
 		tokenObject.abortTransaction();
@@ -463,7 +459,7 @@ bool DBToken::getUserPIN(ByteString& userPINBlob)
 	}
 
 	tokenObject.commitTransaction();
-	userPINBlob = userPIN->getByteStringValue();
+	userPINBlob = tokenObject.getAttribute(CKA_OS_USERPIN).getByteStringValue();
 	return true;
 }
 
@@ -489,8 +485,7 @@ bool DBToken::getTokenLabel(ByteString& label)
 		return false;
 	}
 
-	OSAttribute* tokenLabel;
-	if ((tokenLabel = tokenObject.getAttribute(CKA_OS_TOKENLABEL)) == NULL)
+	if (!tokenObject.attributeExists(CKA_OS_TOKENLABEL))
 	{
 		ERROR_MSG("Error while getting TOKENLABEL from token database at \"%s\"", _connection->dbpath().c_str());
 		tokenObject.abortTransaction();
@@ -498,7 +493,7 @@ bool DBToken::getTokenLabel(ByteString& label)
 	}
 
 	tokenObject.commitTransaction();
-	label = tokenLabel->getByteStringValue();
+	label = tokenObject.getAttribute(CKA_OS_TOKENLABEL).getByteStringValue();
 	return true;
 }
 
@@ -524,8 +519,7 @@ bool DBToken::getTokenSerial(ByteString& serial)
 		return false;
 	}
 
-	OSAttribute* tokenSerial;
-	if ((tokenSerial = tokenObject.getAttribute(CKA_OS_TOKENSERIAL)) == NULL)
+	if (!tokenObject.attributeExists(CKA_OS_TOKENSERIAL))
 	{
 		ERROR_MSG("Error while getting TOKENSERIAL from token database at \"%s\"", _connection->dbpath().c_str());
 		tokenObject.abortTransaction();
@@ -533,7 +527,7 @@ bool DBToken::getTokenSerial(ByteString& serial)
 	}
 
 	tokenObject.commitTransaction();
-	serial = tokenSerial->getByteStringValue();
+	serial = tokenObject.getAttribute(CKA_OS_TOKENSERIAL).getByteStringValue();
 	return true;
 }
 
@@ -559,8 +553,7 @@ bool DBToken::getTokenFlags(CK_ULONG& flags)
 		return false;
 	}
 
-	OSAttribute* tokenFlags;
-	if ((tokenFlags = tokenObject.getAttribute(CKA_OS_TOKENFLAGS)) == NULL)
+	if (!tokenObject.attributeExists(CKA_OS_TOKENFLAGS))
 	{
 		ERROR_MSG("Error while getting TOKENFLAGS from token database at \"%s\"", _connection->dbpath().c_str());
 		tokenObject.abortTransaction();
@@ -568,7 +561,7 @@ bool DBToken::getTokenFlags(CK_ULONG& flags)
 	}
 
 	tokenObject.commitTransaction();
-	flags = tokenFlags->getUnsignedLongValue();
+	flags = tokenObject.getAttribute(CKA_OS_TOKENFLAGS).getUnsignedLongValue();
 	return true;
 }
 

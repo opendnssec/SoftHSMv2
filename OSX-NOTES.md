@@ -44,6 +44,7 @@ Now we need to install some dependencies
 	$ brew install automake
 	$ brew install openssl
 	$ brew install sqlite
+	$ brew install cppunit
 
 Because both openssl and sqlite are pre-installed on the system, the new
 downloads are stored in an alternative location. /usr/local/opt
