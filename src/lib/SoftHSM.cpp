@@ -4909,12 +4909,14 @@ CK_RV SoftHSM::WrapKeySym
 	size_t bb = 8;
 	CK_ULONG wrappedlen = keydata.size();
 	switch(pMechanism->mechanism) {
+#ifdef HAVE_AES_KEY_WRAP
 		case CKM_AES_KEY_WRAP:
 			if ((wrappedlen < 16) || ((wrappedlen % 8) != 0))
 				return CKR_KEY_SIZE_RANGE;
 			algo = SymAlgo::AES;
 			mode = SymWrap::AES_KEYWRAP;
 			break;
+#endif
 #ifdef HAVE_AES_KEY_WRAP_PAD
 		case CKM_AES_KEY_WRAP_PAD:
 			algo = SymAlgo::AES;
@@ -5051,7 +5053,9 @@ CK_RV SoftHSM::C_WrapKey
 	// Check the mechanism, only accept advanced AES key wrapping and RSA
 	switch(pMechanism->mechanism)
 	{
+#ifdef HAVE_AES_KEY_WRAP
 		case CKM_AES_KEY_WRAP:
+#endif
 #ifdef HAVE_AES_KEY_WRAP_PAD
 		case CKM_AES_KEY_WRAP_PAD:
 #endif
@@ -5272,10 +5276,12 @@ CK_RV SoftHSM::UnwrapKeySym
 	SymWrap::Type mode = SymWrap::Unknown;
 	size_t bb = 8;
 	switch(pMechanism->mechanism) {
+#ifdef HAVE_AES_KEY_WRAP
 		case CKM_AES_KEY_WRAP:
 			algo = SymAlgo::AES;
 			mode = SymWrap::AES_KEYWRAP;
 			break;
+#endif
 #ifdef HAVE_AES_KEY_WRAP_PAD
 		case CKM_AES_KEY_WRAP_PAD:
 			algo = SymAlgo::AES;
@@ -5395,6 +5401,7 @@ CK_RV SoftHSM::C_UnwrapKey
 	// Check the mechanism
 	switch(pMechanism->mechanism)
 	{
+#ifdef HAVE_AES_KEY_WRAP
 		case CKM_AES_KEY_WRAP:
 			if ((ulWrappedKeyLen < 24) || ((ulWrappedKeyLen % 8) != 0))
 				return CKR_WRAPPED_KEY_LEN_RANGE;
@@ -5403,6 +5410,7 @@ CK_RV SoftHSM::C_UnwrapKey
                             pMechanism->ulParameterLen != 0)
 				return CKR_ARGUMENTS_BAD;
 			break;
+#endif
 #ifdef HAVE_AES_KEY_WRAP_PAD
 		case CKM_AES_KEY_WRAP_PAD:
 			if ((ulWrappedKeyLen < 16) || ((ulWrappedKeyLen % 8) != 0))
