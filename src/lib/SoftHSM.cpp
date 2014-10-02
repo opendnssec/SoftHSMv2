@@ -815,7 +815,7 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 		case CKM_RSA_PKCS_OAEP:
 			pInfo->ulMinKeySize = rsaMinSize;
 			pInfo->ulMaxKeySize = rsaMaxSize;
-			pInfo->flags = CKF_ENCRYPT | CKF_DECRYPT;
+			pInfo->flags = CKF_ENCRYPT | CKF_DECRYPT | CKF_WRAP | CKF_UNWRAP;
 			break;
 		case CKM_DES_KEY_GEN:
 		case CKM_DES2_KEY_GEN:
@@ -4954,22 +4954,39 @@ CK_RV SoftHSM::WrapKeyAsym
 	ByteString& wrapped
 )
 {
-	size_t bb = 8;
+	const size_t bb = 8;
 	AsymAlgo::Type algo = AsymAlgo::Unknown;
 	AsymMech::Type mech = AsymMech::Unknown;
 
+	CK_ULONG modulus_length;
 	switch(pMechanism->mechanism) {
 		case CKM_RSA_PKCS:
+		case CKM_RSA_PKCS_OAEP:
 			algo = AsymAlgo::RSA;
-			mech = AsymMech::RSA_PKCS;
-			CK_ULONG modulus_length;
 			if (!wrapKey->attributeExists(CKA_MODULUS_BITS))
 				return CKR_GENERAL_ERROR;
 			modulus_length = wrapKey->getUnsignedLongValue(CKA_MODULUS_BITS, 0);
 			// adjust key bit length
 			modulus_length /= bb;
+			break;
+
+		default:
+			return CKR_MECHANISM_INVALID;
+	}
+
+	switch(pMechanism->mechanism) {
+		case CKM_RSA_PKCS:
+			mech = AsymMech::RSA_PKCS;
 			// RFC 3447 section 7.2.1
 			if (keydata.size() > modulus_length - 11)
+				return CKR_KEY_SIZE_RANGE;
+			break;
+
+		case CKM_RSA_PKCS_OAEP:
+			mech = AsymMech::RSA_PKCS_OAEP;
+			// SHA-1 is the only supported option
+			// PKCS#11 2.40 draft 2 section 2.1.8: input length <= k-2-2hashLen
+			if (keydata.size() > modulus_length - 2 - 2 * 160 / 8)
 				return CKR_KEY_SIZE_RANGE;
 			break;
 
@@ -4989,6 +5006,7 @@ CK_RV SoftHSM::WrapKeyAsym
 
 	switch(pMechanism->mechanism) {
 		case CKM_RSA_PKCS:
+		case CKM_RSA_PKCS_OAEP:
 			if (getRSAPublicKey((RSAPublicKey*)publicKey, token, wrapKey) != CKR_OK)
 			{
 				cipher->recyclePublicKey(publicKey);
@@ -5035,6 +5053,7 @@ CK_RV SoftHSM::C_WrapKey
 	Session* session = (Session*)handleManager->getSession(hSession);
 	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
 
+	CK_RV rv;
 	// Check the mechanism, only accept advanced AES key wrapping and RSA
 	switch(pMechanism->mechanism)
 	{
@@ -5048,6 +5067,12 @@ CK_RV SoftHSM::C_WrapKey
                             pMechanism->ulParameterLen != 0)
 				return CKR_ARGUMENTS_BAD;
 			break;
+		case CKM_RSA_PKCS_OAEP:
+			rv = MechParamCheckRSAPKCSOAEP(pMechanism);
+			if (rv != CKR_OK)
+				return rv;
+			break;
+
 		default:
 			return CKR_MECHANISM_INVALID;
 	}
@@ -5064,7 +5089,7 @@ CK_RV SoftHSM::C_WrapKey
 	CK_BBOOL isWrapKeyPrivate = wrapKey->getBooleanValue(CKA_PRIVATE, true);
 
 	// Check user credentials for the wrapping key
-	CK_RV rv = haveRead(session->getState(), isWrapKeyOnToken, isWrapKeyPrivate);
+	rv = haveRead(session->getState(), isWrapKeyOnToken, isWrapKeyPrivate);
 	if (rv != CKR_OK)
 	{
 		if (rv == CKR_USER_NOT_LOGGED_IN)
@@ -5076,13 +5101,13 @@ CK_RV SoftHSM::C_WrapKey
 	// Check wrapping key class and type
 	if ((pMechanism->mechanism == CKM_AES_KEY_WRAP || pMechanism->mechanism == CKM_AES_KEY_WRAP_PAD) && wrapKey->getUnsignedLongValue(CKA_CLASS, CKO_VENDOR_DEFINED) != CKO_SECRET_KEY)
 		return CKR_WRAPPING_KEY_TYPE_INCONSISTENT;
-	if (pMechanism->mechanism == CKM_RSA_PKCS && wrapKey->getUnsignedLongValue(CKA_CLASS, CKO_VENDOR_DEFINED) != CKO_PUBLIC_KEY)
+	if ((pMechanism->mechanism == CKM_RSA_PKCS || pMechanism->mechanism == CKM_RSA_PKCS_OAEP) && wrapKey->getUnsignedLongValue(CKA_CLASS, CKO_VENDOR_DEFINED) != CKO_PUBLIC_KEY)
 		return CKR_WRAPPING_KEY_TYPE_INCONSISTENT;
 	if (pMechanism->mechanism == CKM_AES_KEY_WRAP && wrapKey->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED) != CKK_AES)
 		return CKR_WRAPPING_KEY_TYPE_INCONSISTENT;
 	if (pMechanism->mechanism == CKM_AES_KEY_WRAP_PAD && wrapKey->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED) != CKK_AES)
 		return CKR_WRAPPING_KEY_TYPE_INCONSISTENT;
-	if (pMechanism->mechanism == CKM_RSA_PKCS && wrapKey->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED) != CKK_RSA)
+	if ((pMechanism->mechanism == CKM_RSA_PKCS || pMechanism->mechanism == CKM_RSA_PKCS_OAEP) && wrapKey->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED) != CKK_RSA)
 		return CKR_WRAPPING_KEY_TYPE_INCONSISTENT;
 
 	// Check if the wrapping key can be used for wrapping
@@ -5116,8 +5141,8 @@ CK_RV SoftHSM::C_WrapKey
 	CK_OBJECT_CLASS keyClass = key->getUnsignedLongValue(CKA_CLASS, CKO_VENDOR_DEFINED);
 	if (keyClass != CKO_SECRET_KEY && keyClass != CKO_PRIVATE_KEY)
 		return CKR_KEY_NOT_WRAPPABLE;
-	// CKM_RSA_PKCS can be used only on SECRET keys: PKCS#11 2.40 draft 2 section 2.1.6 PKCS #1 v1.5 RSA
-	if (pMechanism->mechanism == CKM_RSA_PKCS && keyClass != CKO_SECRET_KEY)
+	// CKM_RSA_PKCS and CKM_RSA_PKCS_OAEP can be used only on SECRET keys: PKCS#11 2.40 draft 2 section 2.1.6 PKCS #1 v1.5 RSA & section 2.1.8 PKCS #1 RSA OAEP
+	if ((pMechanism->mechanism == CKM_RSA_PKCS || pMechanism->mechanism == CKM_RSA_PKCS_OAEP) && keyClass != CKO_SECRET_KEY)
 		return CKR_KEY_NOT_WRAPPABLE;
 
 	// Verify the wrap template attribute
@@ -5319,6 +5344,12 @@ CK_RV SoftHSM::UnwrapKeyAsym
 			algo = AsymAlgo::RSA;
 			mode = AsymMech::RSA_PKCS;
 			break;
+
+		case CKM_RSA_PKCS_OAEP:
+			algo = AsymAlgo::RSA;
+			mode = AsymMech::RSA_PKCS_OAEP;
+			break;
+
 		default:
 			return CKR_MECHANISM_INVALID;
 	}
@@ -5334,6 +5365,7 @@ CK_RV SoftHSM::UnwrapKeyAsym
 
 	switch(pMechanism->mechanism) {
 		case CKM_RSA_PKCS:
+		case CKM_RSA_PKCS_OAEP:
 			if (getRSAPrivateKey((RSAPrivateKey*)unwrappingkey, token, unwrapKey) != CKR_OK)
 			{
 				cipher->recyclePrivateKey(unwrappingkey);
@@ -5379,6 +5411,7 @@ CK_RV SoftHSM::C_UnwrapKey
 	Session* session = (Session*)handleManager->getSession(hSession);
 	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
 
+	CK_RV rv;
 	// Check the mechanism
 	switch(pMechanism->mechanism)
 	{
@@ -5403,6 +5436,11 @@ CK_RV SoftHSM::C_UnwrapKey
 		case CKM_RSA_PKCS:
 			// Input length checks needs to be done later when unwrapping key is known
 			break;
+		case CKM_RSA_PKCS_OAEP:
+			rv = MechParamCheckRSAPKCSOAEP(pMechanism);
+			if (rv != CKR_OK)
+				return rv;
+			break;
 
 		default:
 			return CKR_MECHANISM_INVALID;
@@ -5420,7 +5458,7 @@ CK_RV SoftHSM::C_UnwrapKey
 	CK_BBOOL isUnwrapKeyPrivate = unwrapKey->getBooleanValue(CKA_PRIVATE, true);
 
 	// Check user credentials
-	CK_RV rv = haveRead(session->getState(), isUnwrapKeyOnToken, isUnwrapKeyPrivate);
+	rv = haveRead(session->getState(), isUnwrapKeyOnToken, isUnwrapKeyPrivate);
 	if (rv != CKR_OK)
 	{
 		if (rv == CKR_USER_NOT_LOGGED_IN)
@@ -5436,9 +5474,9 @@ CK_RV SoftHSM::C_UnwrapKey
 		return CKR_UNWRAPPING_KEY_TYPE_INCONSISTENT;
 	if (pMechanism->mechanism == CKM_AES_KEY_WRAP_PAD && unwrapKey->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED) != CKK_AES)
 		return CKR_UNWRAPPING_KEY_TYPE_INCONSISTENT;
-	if (pMechanism->mechanism == CKM_RSA_PKCS && unwrapKey->getUnsignedLongValue(CKA_CLASS, CKO_VENDOR_DEFINED) != CKO_PRIVATE_KEY)
+	if ((pMechanism->mechanism == CKM_RSA_PKCS || pMechanism->mechanism == CKM_RSA_PKCS_OAEP) && unwrapKey->getUnsignedLongValue(CKA_CLASS, CKO_VENDOR_DEFINED) != CKO_PRIVATE_KEY)
 		return CKR_UNWRAPPING_KEY_TYPE_INCONSISTENT;
-	if (pMechanism->mechanism == CKM_RSA_PKCS && unwrapKey->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED) != CKK_RSA)
+	if ((pMechanism->mechanism == CKM_RSA_PKCS || pMechanism->mechanism == CKM_RSA_PKCS_OAEP) && unwrapKey->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED) != CKK_RSA)
 		return CKR_UNWRAPPING_KEY_TYPE_INCONSISTENT;
 
 	// Check if the unwrapping key can be used for unwrapping
