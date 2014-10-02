@@ -1957,6 +1957,21 @@ CK_RV SoftHSM::AsymEncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMec
 				ERROR_MSG("mgf must be CKG_MGF1_SHA1");
 				return CKR_ARGUMENTS_BAD;
 			}
+			if (CK_RSA_PKCS_OAEP_PARAMS_PTR(pMechanism->pParameter)->source != CKZ_DATA_SPECIFIED)
+			{
+				ERROR_MSG("source must be CKZ_DATA_SPECIFIED");
+				return CKR_ARGUMENTS_BAD;
+			}
+			if (CK_RSA_PKCS_OAEP_PARAMS_PTR(pMechanism->pParameter)->pSourceData != NULL)
+			{
+				ERROR_MSG("pSourceData must be NULL");
+				return CKR_ARGUMENTS_BAD;
+			}
+			if (CK_RSA_PKCS_OAEP_PARAMS_PTR(pMechanism->pParameter)->ulSourceDataLen != 0)
+			{
+				ERROR_MSG("ulSourceDataLen must be 0");
+				return CKR_ARGUMENTS_BAD;
+			}
 
 			mechanism = AsymMech::RSA_PKCS_OAEP;
 			isRSA = true;

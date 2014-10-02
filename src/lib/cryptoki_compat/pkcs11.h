@@ -902,6 +902,8 @@ struct ck_mechanism_info
 #define CKG_MGF1_SHA512       (0x00000004)
 #define CKG_MGF1_SHA224       (0x00000005)
 
+#define CKZ_DATA_SPECIFIED    (0x00000001)
+
 struct ck_rsa_pkcs_oaep_params {
   ck_mechanism_type_t hash_alg;
   unsigned long mgf;
