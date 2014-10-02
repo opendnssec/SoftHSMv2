@@ -1941,37 +1941,9 @@ CK_RV SoftHSM::AsymEncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMec
 			isRSA = true;
 			break;
 		case CKM_RSA_PKCS_OAEP:
-			if (pMechanism->pParameter == NULL_PTR ||
-			    pMechanism->ulParameterLen != sizeof(CK_RSA_PKCS_OAEP_PARAMS))
-			{
-				ERROR_MSG("pParameter must be of type CK_RSA_PKCS_OAEP_PARAMS");
-				return CKR_ARGUMENTS_BAD;
-			}
-			if (CK_RSA_PKCS_OAEP_PARAMS_PTR(pMechanism->pParameter)->hashAlg != CKM_SHA_1)
-			{
-				ERROR_MSG("hashAlg must be CKM_SHA_1");
-				return CKR_ARGUMENTS_BAD;
-			}
-			if (CK_RSA_PKCS_OAEP_PARAMS_PTR(pMechanism->pParameter)->mgf != CKG_MGF1_SHA1)
-			{
-				ERROR_MSG("mgf must be CKG_MGF1_SHA1");
-				return CKR_ARGUMENTS_BAD;
-			}
-			if (CK_RSA_PKCS_OAEP_PARAMS_PTR(pMechanism->pParameter)->source != CKZ_DATA_SPECIFIED)
-			{
-				ERROR_MSG("source must be CKZ_DATA_SPECIFIED");
-				return CKR_ARGUMENTS_BAD;
-			}
-			if (CK_RSA_PKCS_OAEP_PARAMS_PTR(pMechanism->pParameter)->pSourceData != NULL)
-			{
-				ERROR_MSG("pSourceData must be NULL");
-				return CKR_ARGUMENTS_BAD;
-			}
-			if (CK_RSA_PKCS_OAEP_PARAMS_PTR(pMechanism->pParameter)->ulSourceDataLen != 0)
-			{
-				ERROR_MSG("ulSourceDataLen must be 0");
-				return CKR_ARGUMENTS_BAD;
-			}
+			rv = MechParamCheckRSAPKCSOAEP(pMechanism);
+			if (rv != CKR_OK)
+				return rv;
 
 			mechanism = AsymMech::RSA_PKCS_OAEP;
 			isRSA = true;
@@ -9158,4 +9130,48 @@ bool SoftHSM::setECPrivateKey(OSObject* key, ByteString ber, Token* token, bool 
 	CryptoFactory::i()->recycleAsymmetricAlgorithm(ecc);
 
 	return bOK;
+}
+
+CK_RV SoftHSM::MechParamCheckRSAPKCSOAEP(CK_MECHANISM_PTR pMechanism)
+{
+	// This is a programming error
+	if (pMechanism->mechanism != CKM_RSA_PKCS_OAEP) {
+		ERROR_MSG("MechParamCheckRSAPKCSOAEP called on wrong mechanism");
+		return CKR_GENERAL_ERROR;
+	}
+
+	if (pMechanism->pParameter == NULL_PTR ||
+	    pMechanism->ulParameterLen != sizeof(CK_RSA_PKCS_OAEP_PARAMS))
+	{
+		ERROR_MSG("pParameter must be of type CK_RSA_PKCS_OAEP_PARAMS");
+		return CKR_ARGUMENTS_BAD;
+	}
+
+	CK_RSA_PKCS_OAEP_PARAMS_PTR params = (CK_RSA_PKCS_OAEP_PARAMS_PTR)pMechanism->pParameter;
+	if (params->hashAlg != CKM_SHA_1)
+	{
+		ERROR_MSG("hashAlg must be CKM_SHA_1");
+		return CKR_ARGUMENTS_BAD;
+	}
+	if (params->mgf != CKG_MGF1_SHA1)
+	{
+		ERROR_MSG("mgf must be CKG_MGF1_SHA1");
+		return CKR_ARGUMENTS_BAD;
+	}
+	if (params->source != CKZ_DATA_SPECIFIED)
+	{
+		ERROR_MSG("source must be CKZ_DATA_SPECIFIED");
+		return CKR_ARGUMENTS_BAD;
+	}
+	if (params->pSourceData != NULL)
+	{
+		ERROR_MSG("pSourceData must be NULL");
+		return CKR_ARGUMENTS_BAD;
+	}
+	if (params->ulSourceDataLen != 0)
+	{
+		ERROR_MSG("ulSourceDataLen must be 0");
+		return CKR_ARGUMENTS_BAD;
+	}
+	return CKR_OK;
 }
