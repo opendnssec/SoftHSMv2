@@ -46,7 +46,7 @@ OSSLECPublicKey::OSSLECPublicKey()
 
 OSSLECPublicKey::OSSLECPublicKey(const EC_KEY* inECKEY)
 {
-	OSSLECPublicKey();
+	eckey = EC_KEY_new();
 
 	setFromOSSL(inECKEY);
 }

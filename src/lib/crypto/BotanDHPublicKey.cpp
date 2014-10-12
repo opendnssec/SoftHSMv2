@@ -44,7 +44,7 @@ BotanDHPublicKey::BotanDHPublicKey()
 
 BotanDHPublicKey::BotanDHPublicKey(const Botan::DH_PublicKey* inDH)
 {
-	BotanDHPublicKey();
+	dh = NULL;
 
 	setFromBotan(inDH);
 }

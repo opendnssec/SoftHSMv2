@@ -49,7 +49,10 @@ OSSLRSAPrivateKey::OSSLRSAPrivateKey()
 
 OSSLRSAPrivateKey::OSSLRSAPrivateKey(const RSA* inRSA)
 {
-	OSSLRSAPrivateKey();
+	rsa = RSA_new();
+
+	// Use the OpenSSL implementation and not any engine
+	RSA_set_method(rsa, RSA_PKCS1_SSLeay());
 
 	setFromOSSL(inRSA);
 }

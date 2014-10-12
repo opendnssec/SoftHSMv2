@@ -39,6 +39,7 @@
 P11Object::P11Object()
 {
 	initialized = false;
+	osobject = NULL;
 }
 
 // Destructor
@@ -87,6 +88,12 @@ bool P11Object::init(OSObject *osobject)
 	)
 	{
 		ERROR_MSG("Could not initialize the attribute");
+		delete attrClass;
+		delete attrToken;
+		delete attrPrivate;
+		delete attrModifiable;
+		delete attrLabel;
+		delete attrCopyable;
 		return false;
 	}
 
@@ -332,6 +339,9 @@ bool P11DataObj::init(OSObject *osobject)
 	)
 	{
 		ERROR_MSG("Could not initialize the attribute");
+		delete attrApplication;
+		delete attrObjectID;
+		delete attrValue;
 		return false;
 	}
 
@@ -390,6 +400,12 @@ bool P11CertificateObj::init(OSObject *osobject)
 	)
 	{
 		ERROR_MSG("Could not initialize the attribute");
+		delete attrCertificateType;
+		delete attrTrusted;
+		delete attrCertificateCategory;
+		delete attrCheckValue;
+		delete attrStartDate;
+		delete attrEndDate;
 		return false;
 	}
 
@@ -454,6 +470,16 @@ bool P11X509CertificateObj::init(OSObject *osobject)
 	)
 	{
 		ERROR_MSG("Could not initialize the attribute");
+		delete attrSubject;
+		delete attrID;
+		delete attrIssuer;
+		delete attrSerialNumber;
+		delete attrValue;
+		delete attrURL;
+		delete attrHashOfSubjectPublicKey;
+		delete attrHashOfIssuerPublicKey;
+		delete attrJavaMidpSecurityDomain;
+		delete attrNameHashAlgorithm;
 		return false;
 	}
 
@@ -513,6 +539,12 @@ bool P11OpenPGPPublicKeyObj::init(OSObject *osobject)
 	)
 	{
 		ERROR_MSG("Could not initialize the attribute");
+		delete attrSubject;
+		delete attrID;
+		delete attrIssuer;
+		delete attrSerialNumber;
+		delete attrValue;
+		delete attrURL;
 		return false;
 	}
 
@@ -565,6 +597,13 @@ bool P11KeyObj::init(OSObject *osobject)
 	)
 	{
 		ERROR_MSG("Could not initialize the attribute");
+		delete attrKeyType;
+		delete attrID;
+		delete attrStartDate;
+		delete attrEndDate;
+		delete attrDerive;
+		delete attrLocal;
+		delete attrKeyGenMechanism;
 		return false;
 	}
 
@@ -625,6 +664,13 @@ bool P11PublicKeyObj::init(OSObject *osobject)
 	)
 	{
 		ERROR_MSG("Could not initialize the attribute");
+		delete attrSubject;
+		delete attrEncrypt;
+		delete attrVerify;
+		delete attrVerifyRecover;
+		delete attrWrap;
+		delete attrTrusted;
+		delete attrWrapTemplate;
 		return false;
 	}
 
@@ -675,6 +721,9 @@ bool P11RSAPublicKeyObj::init(OSObject *osobject)
 	)
 	{
 		ERROR_MSG("Could not initialize the attribute");
+		delete attrModulus;
+		delete attrModulusBits;
+		delete attrPublicExponent;
 		return false;
 	}
 
@@ -723,6 +772,10 @@ bool P11DSAPublicKeyObj::init(OSObject *osobject)
 	)
 	{
 		ERROR_MSG("Could not initialize the attribute");
+		delete attrPrime;
+		delete attrSubPrime;
+		delete attrBase;
+		delete attrValue;
 		return false;
 	}
 
@@ -768,6 +821,8 @@ bool P11ECPublicKeyObj::init(OSObject *osobject)
 	)
 	{
 		ERROR_MSG("Could not initialize the attribute");
+		delete attrEcParams;
+		delete attrEcPoint;
 		return false;
 	}
 
@@ -813,6 +868,9 @@ bool P11DHPublicKeyObj::init(OSObject *osobject)
 	)
 	{
 		ERROR_MSG("Could not initialize the attribute");
+		delete attrPrime;
+		delete attrBase;
+		delete attrValue;
 		return false;
 	}
 
@@ -861,6 +919,10 @@ bool P11GOSTPublicKeyObj::init(OSObject *osobject)
 	)
 	{
 		ERROR_MSG("Could not initialize the attribute");
+		delete attrValue;
+		delete attrGostR3410Params;
+		delete attrGostR3411Params;
+		delete attrGost28147Params;
 		return false;
 	}
 
@@ -926,6 +988,18 @@ bool P11PrivateKeyObj::init(OSObject *osobject)
 	)
 	{
 		ERROR_MSG("Could not initialize the attribute");
+		delete attrSubject;
+		delete attrSensitive;
+		delete attrDecrypt;
+		delete attrSign;
+		delete attrSignRecover;
+		delete attrUnwrap;
+		delete attrExtractable;
+		delete attrAlwaysSensitive;
+		delete attrNeverExtractable;
+		delete attrWrapWithTrusted;
+		delete attrUnwrapTemplate;
+		delete attrAlwaysAuthenticate;
 		return false;
 	}
 
@@ -990,6 +1064,14 @@ bool P11RSAPrivateKeyObj::init(OSObject *osobject)
 	)
 	{
 		ERROR_MSG("Could not initialize the attribute");
+		delete attrModulus;
+		delete attrPublicExponent;
+		delete attrPrivateExponent;
+		delete attrPrime1;
+		delete attrPrime2;
+		delete attrExponent1;
+		delete attrExponent2;
+		delete attrCoefficient;
 		return false;
 	}
 
@@ -1042,6 +1124,10 @@ bool P11DSAPrivateKeyObj::init(OSObject *osobject)
 	)
 	{
 		ERROR_MSG("Could not initialize the attribute");
+		delete attrPrime;
+		delete attrSubPrime;
+		delete attrBase;
+		delete attrValue;
 		return false;
 	}
 
@@ -1086,6 +1172,8 @@ bool P11ECPrivateKeyObj::init(OSObject *osobject)
 	)
 	{
 		ERROR_MSG("Could not initialize the attribute");
+		delete attrEcParams;
+		delete attrValue;
 		return false;
 	}
 
@@ -1132,6 +1220,10 @@ bool P11DHPrivateKeyObj::init(OSObject *osobject)
 	)
 	{
 		ERROR_MSG("Could not initialize the attribute");
+		delete attrPrime;
+		delete attrBase;
+		delete attrValue;
+		delete attrValueBits;
 		return false;
 	}
 
@@ -1180,6 +1272,10 @@ bool P11GOSTPrivateKeyObj::init(OSObject *osobject)
 	)
 	{
 		ERROR_MSG("Could not initialize the attribute");
+		delete attrValue;
+		delete attrGostR3410Params;
+		delete attrGostR3411Params;
+		delete attrGost28147Params;
 		return false;
 	}
 
@@ -1252,6 +1348,21 @@ bool P11SecretKeyObj::init(OSObject *osobject)
 	)
 	{
 		ERROR_MSG("Could not initialize the attribute");
+		delete attrSensitive;
+		delete attrEncrypt;
+		delete attrDecrypt;
+		delete attrSign;
+		delete attrVerify;
+		delete attrWrap;
+		delete attrUnwrap;
+		delete attrExtractable;
+		delete attrAlwaysSensitive;
+		delete attrNeverExtractable;
+		delete attrCheckValue;
+		delete attrWrapWithTrusted;
+		delete attrTrusted;
+		delete attrWrapTemplate;
+		delete attrUnwrapTemplate;
 		return false;
 	}
 
@@ -1280,6 +1391,7 @@ bool P11SecretKeyObj::init(OSObject *osobject)
 P11GenericSecretKeyObj::P11GenericSecretKeyObj()
 {
 	initialized = false;
+	keytype = CKK_VENDOR_DEFINED;
 }
 
 // Add attributes
@@ -1308,6 +1420,8 @@ bool P11GenericSecretKeyObj::init(OSObject *osobject)
 	)
 	{
 		ERROR_MSG("Could not initialize the attribute");
+		delete attrValue;
+		delete attrValueLen;
 		return false;
 	}
 
@@ -1369,6 +1483,8 @@ bool P11AESSecretKeyObj::init(OSObject *osobject)
 	)
 	{
 		ERROR_MSG("Could not initialize the attribute");
+		delete attrValue;
+		delete attrValueLen;
 		return false;
 	}
 
@@ -1384,6 +1500,7 @@ bool P11AESSecretKeyObj::init(OSObject *osobject)
 P11DESSecretKeyObj::P11DESSecretKeyObj()
 {
 	initialized = false;
+	keytype = CKK_VENDOR_DEFINED;
 }
 
 // Add attributes
@@ -1407,6 +1524,7 @@ bool P11DESSecretKeyObj::init(OSObject *osobject)
 	if (!attrValue->init())
 	{
 		ERROR_MSG("Could not initialize the attribute");
+		delete attrValue;
 		return false;
 	}
 
@@ -1467,6 +1585,8 @@ bool P11GOSTSecretKeyObj::init(OSObject *osobject)
 	)
 	{
 		ERROR_MSG("Could not initialize the attribute");
+		delete attrValue;
+		delete attrGost28147Params;
 		return false;
 	}
 
@@ -1510,6 +1630,8 @@ bool P11DomainObj::init(OSObject *osobject)
 	)
 	{
 		ERROR_MSG("Could not initialize the attribute");
+		delete attrKeyType;
+		delete attrLocal;
 		return false;
 	}
 
@@ -1557,6 +1679,10 @@ bool P11DSADomainObj::init(OSObject *osobject)
 	)
 	{
 		ERROR_MSG("Could not initialize the attribute");
+		delete attrPrime;
+		delete attrSubPrime;
+		delete attrBase;
+		delete attrPrimeBits;
 		return false;
 	}
 
@@ -1604,6 +1730,9 @@ bool P11DHDomainObj::init(OSObject *osobject)
 	)
 	{
 		ERROR_MSG("Could not initialize the attribute");
+		delete attrPrime;
+		delete attrBase;
+		delete attrPrimeBits;
 		return false;
 	}
 

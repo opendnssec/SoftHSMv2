@@ -45,7 +45,7 @@ BotanECDSAPublicKey::BotanECDSAPublicKey()
 
 BotanECDSAPublicKey::BotanECDSAPublicKey(const Botan::ECDSA_PublicKey* inECKEY)
 {
-	BotanECDSAPublicKey();
+	eckey = NULL;
 
 	setFromBotan(inECKEY);
 }

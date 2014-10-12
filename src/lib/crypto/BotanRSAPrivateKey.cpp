@@ -51,7 +51,7 @@ BotanRSAPrivateKey::BotanRSAPrivateKey()
 
 BotanRSAPrivateKey::BotanRSAPrivateKey(const Botan::RSA_PrivateKey* inRSA)
 {
-	BotanRSAPrivateKey();
+	rsa = NULL;
 
 	setFromBotan(inRSA);
 }
