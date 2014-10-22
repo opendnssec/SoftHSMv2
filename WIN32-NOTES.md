@@ -1,11 +1,11 @@
 # WIN32 Specific Notes
 
 Works and checked on Visual Studio 2010 C++ Express, should work with any
-Visual Studio 2010 or 2012 Desktop.
+Visual Studio 2010, 2012 or 2013 Desktop.
 
-OpenSSL in ssl directory at the same level, Botan in btn, if you want Debug
-versions you need ssl+dbg and botand.{lib,dll}. Note openssl.exe should be in
-the PATH for cryptotest.exe.
+OpenSSL in ssl directory at the same level, Botan in btn, CppUnit in cu,
+if you want Debug versions you need ssl+dbg, botand.{lib,dll} and cppunitd*.
+Note openssl.exe should be in the PATH for cryptotest.exe.
 
 win32+openssl and win32+botan, flags in config.h, solution file in softhsm2.
 
@@ -17,12 +17,14 @@ win32+openssl and win32+botan, flags in config.h, solution file in softhsm2.
 - p11test, cryptotest, datamgrtest, handlemgrtest, objstoretest,
   sessionmgrtest, slotmgrtest: checking tools
 
+(keyconv is currently broken and BTW useless)
+
 ## C4996 "unsafe" functions
 
 - fopen
 - getenv
 - gmtime
-- _snprint
+- _snprintf (or snprintf on Visual Studio 14)
 - sprintf
 - sscanf
 - strncpy

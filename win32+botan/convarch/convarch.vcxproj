@@ -78,6 +78,7 @@
     <ClInclude Include="..\..\src\lib\crypto\GOSTPublicKey.h" />
     <ClInclude Include="..\..\src\lib\crypto\HashAlgorithm.h" />
     <ClInclude Include="..\..\src\lib\crypto\MacAlgorithm.h" />
+    <ClInclude Include="..\..\src\lib\crypto\odd.h" />
     <ClInclude Include="..\..\src\lib\crypto\PrivateKey.h" />
     <ClInclude Include="..\..\src\lib\crypto\PublicKey.h" />
     <ClInclude Include="..\..\src\lib\crypto\RNG.h" />

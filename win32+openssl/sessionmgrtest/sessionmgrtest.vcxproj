@@ -50,12 +50,12 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..;..\..\src\lib;..\..\src\lib\session_mgr;..\..\src\lib\common;..\..\src\lib\cryptoki_compat;..\..\src\lib\crypto;..\..\src\lib\data_mgr;..\..\src\lib\slot_mgr;..\..\src\lib\object_store;..\..\src\lib\win32;..\..\..\cu\include;..\..\..\ssl\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..;..\..\src\lib;..\..\src\lib\session_mgr;..\..\src\lib\common;..\..\src\lib\cryptoki_compat;..\..\src\lib\crypto;..\..\src\lib\data_mgr;..\..\src\lib\slot_mgr;..\..\src\lib\object_store;..\..\src\lib\win32;..\..\..\cu\include;..\..\..\ssl+dbg\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>..\$(Configuration);..\..\..\cu\lib;..\..\..\ssl\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\$(Configuration);..\..\..\cu\lib;..\..\..\ssl+dbg\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>convarch.lib;cppunitd.lib;libeay32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>

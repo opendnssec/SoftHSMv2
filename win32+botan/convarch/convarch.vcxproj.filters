@@ -152,6 +152,9 @@
     <ClInclude Include="..\..\src\lib\crypto\MacAlgorithm.h">
       <Filter>Crypto Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\odd.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\src\lib\crypto\PrivateKey.h">
       <Filter>Crypto Header Files</Filter>
     </ClInclude>

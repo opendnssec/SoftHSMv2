@@ -106,6 +106,7 @@ copy ..\..\src\lib\test\tokens\dummy.in  ..\..\"win32+botan"\p11test\tokens\dumm
     <ClInclude Include="..\..\src\lib\P11Objects.h" />
     <ClInclude Include="..\..\src\lib\SoftHSM.h" />
     <ClInclude Include="..\..\src\lib\test\AsymEncryptDecryptTests.h" />
+    <ClInclude Include="..\..\src\lib\test\AsymWrapUnwrapTests.h" />
     <ClInclude Include="..\..\src\lib\test\DigestTests.h" />
     <ClInclude Include="..\..\src\lib\test\InfoTests.h" />
     <ClInclude Include="..\..\src\lib\test\InitTests.h" />
@@ -126,6 +127,7 @@ copy ..\..\src\lib\test\tokens\dummy.in  ..\..\"win32+botan"\p11test\tokens\dumm
     <ClCompile Include="..\..\src\lib\P11Objects.cpp" />
     <ClCompile Include="..\..\src\lib\SoftHSM.cpp" />
     <ClCompile Include="..\..\src\lib\test\AsymEncryptDecryptTests.cpp" />
+    <ClCompile Include="..\..\src\lib\test\AsymWrapUnwrapTests.cpp" />
     <ClCompile Include="..\..\src\lib\test\DigestTests.cpp" />
     <ClCompile Include="..\..\src\lib\test\InfoTests.cpp" />
     <ClCompile Include="..\..\src\lib\test\InitTests.cpp" />

@@ -38,6 +38,7 @@
     <ClInclude Include="..\..\src\lib\crypto\GOSTPublicKey.h" />
     <ClInclude Include="..\..\src\lib\crypto\HashAlgorithm.h" />
     <ClInclude Include="..\..\src\lib\crypto\MacAlgorithm.h" />
+    <ClInclude Include="..\..\src\lib\crypto\odd.h" />
     <ClInclude Include="..\..\src\lib\crypto\OSSLAES.h" />
     <ClInclude Include="..\..\src\lib\crypto\OSSLCryptoFactory.h" />
     <ClInclude Include="..\..\src\lib\crypto\OSSLDES.h" />
@@ -240,7 +241,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..;..\..\src\lib;..\..\src\lib\cryptoki_compat;..\..\src\lib\common;..\..\src\lib\object_store;..\..\src\lib\slot_mgr;..\..\src\lib\session_mgr;..\..\src\lib\handle_mgr;..\..\src\lib\crypto;..\..\src\lib\win32;..\..\src\lib\data_mgr;..\..\..\ssl\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..;..\..\src\lib;..\..\src\lib\cryptoki_compat;..\..\src\lib\common;..\..\src\lib\object_store;..\..\src\lib\slot_mgr;..\..\src\lib\session_mgr;..\..\src\lib\handle_mgr;..\..\src\lib\crypto;..\..\src\lib\win32;..\..\src\lib\data_mgr;..\..\..\ssl+dbg\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>

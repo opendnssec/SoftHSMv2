@@ -107,7 +107,9 @@ int setenv(const char *name, const char *value, int overwrite);
 #define _WIN32_WINNT 0x0600
 #endif
 
+#if _MSC_VER < 1900
 #define snprintf _snprintf
+#endif
 #define strcasecmp _stricmp
 #define strncasecmp _strnicmp
 

@@ -34,6 +34,9 @@
     <ClInclude Include="..\..\src\lib\test\AsymEncryptDecryptTests.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\lib\test\AsymWrapUnwrapTests.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\src\lib\test\DigestTests.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -91,6 +94,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\lib\test\AsymEncryptDecryptTests.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\test\AsymWrapUnwrapTests.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\lib\test\DigestTests.cpp">
