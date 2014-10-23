@@ -17,8 +17,6 @@ win32+openssl and win32+botan, flags in config.h, solution file in softhsm2.
 - p11test, cryptotest, datamgrtest, handlemgrtest, objstoretest,
   sessionmgrtest, slotmgrtest: checking tools
 
-(keyconv is currently broken and BTW useless)
-
 ## C4996 "unsafe" functions
 
 - fopen
