@@ -4,18 +4,19 @@ Works and checked on Visual Studio 2010 C++ Express, should work with any
 Visual Studio 2010, 2012 or 2013 Desktop.
 
 OpenSSL in ssl directory at the same level, Botan in btn, CppUnit in cu,
-if you want Debug versions you need ssl_d, botand.{lib,dll} (*) and
-cppunitd*. Note openssl.exe should be in the PATH for cryptotest.exe.
-(*) change LIBNAME in the Makefile. BTW --link-method=copy can help
-when the current user may not create symbolic links.
+if you want Debug versions you need ssl_d, btn_d and cu/lib/cppunitd*.
+Note openssl.exe should be in the PATH for cryptotest.exe even
+with the Botan crypto backend.
 
-win32+openssl and win32+botan, flags in config.h, solution file in softhsm2.
+win32+openssl and win32+botan, flags in config.h, solution file in
+softhsm2.sln .
 
 ## Project List
 
-- convarch: internal static library
+- convarch: internal "convenience" static library
 - softhsm2 (main project): softhsm2.dll
-- keyconv, util, dump: softhsm2-keyconv.exe, softhsm2-util.exe, and softhsm2-dump-file.exe tools
+- keyconv, util, dump: softhsm2-keyconv.exe, softhsm2-util.exe, and
+ softhsm2-dump-file.exe tools
 - p11test, cryptotest, datamgrtest, handlemgrtest, objstoretest,
   sessionmgrtest, slotmgrtest: checking tools
 
