@@ -190,7 +190,7 @@ sub myenable {
         if ($val eq "no") {
             $unknown_value = "disable-" . $key;
         } else {
-            $unknown_value = "enable-". $key;
+            $unknown_value = "enable-" . $key;
         }
     }
 }
@@ -222,14 +222,14 @@ sub mywith {
     } elsif ($key =~ /^botan$/i) {
         if ($val =~ /^no$/i) {
             $want_unknown = "yes";
-            $unknown_value = "without-botan doesn't make sense)";
+            $unknown_value = "without-botan doesn't make sense\n";
         } elsif ($val !~ /^yes$/i) {
             $botan_path = $val;
         }
     } elsif ($key =~ /^openssl$/i) {
         if ($val =~ /^no$/i) {
             $want_unknown = "yes";
-            $unknown_value = "without-openssl doesn't make sense)";
+            $unknown_value = "without-openssl doesn't make sense\n";
         } elsif ($val !~ /^yes$/i) {
             $openssl_path = $val;
         }
@@ -242,7 +242,7 @@ sub mywith {
     } elsif ($key =~ /^loglevel$/i) {
         if ($val =~ /^no$/i) {
             $want_unknown = "yes";
-            $unknown_value = "without-loglevel doesn't make sense)";
+            $unknown_value = "without-loglevel doesn't make sense\n";
         } elsif ($val !~ /^yes$/i) {
             if ($val eq "0") {
                 $loglevel = 0;
