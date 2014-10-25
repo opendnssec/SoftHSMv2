@@ -8,8 +8,8 @@ if you want Debug versions you need ssl_d, btn_d and cu/lib/cppunitd*.
 Note openssl.exe should be in the PATH for cryptotest.exe even
 with the Botan crypto backend.
 
-win32+openssl and win32+botan, flags in config.h, solution file in
-softhsm2.sln .
+Configure scripts in win32, same syntax than autotools but without --,
+e.g., 'perl Configure.pl with-platform=win32 with-crypto-backend=botan'.
 
 ## Project List
 

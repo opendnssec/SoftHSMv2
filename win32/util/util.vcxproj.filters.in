@@ -40,6 +40,11 @@
     <ClInclude Include="..\..\src\bin\util\softhsm2-util.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+@IF BOTAN
+    <ClInclude Include="..\..\src\bin\util\softhsm2-util-botan.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+@END BOTAN
 @IF OPENSSL
     <ClInclude Include="..\..\src\bin\util\softhsm2-util-ossl.h">
       <Filter>Header Files</Filter>
@@ -51,11 +56,6 @@
     <ClInclude Include="..\..\src\bin\win32\getopt.h">
       <Filter>Win32 Header Files</Filter>
     </ClInclude>
-@IF BOTAN
-    <ClInclude Include="..\..\src\bin\util\softhsm2-util-botan.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-@END BOTAN
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\bin\common\getpw.cpp">
@@ -67,6 +67,11 @@
     <ClCompile Include="..\..\src\bin\util\softhsm2-util.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+@IF BOTAN
+    <ClCompile Include="..\..\src\bin\util\softhsm2-util-botan.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+@END BOTAN
 @IF OPENSSL
     <ClCompile Include="..\..\src\bin\util\softhsm2-util-ossl.cpp">
       <Filter>Source Files</Filter>
@@ -78,10 +83,5 @@
     <ClCompile Include="..\..\src\bin\win32\getpassphase.cpp">
       <Filter>Win32 Source Files</Filter>
     </ClCompile>
-@IF BOTAN
-    <ClCompile Include="..\..\src\bin\util\softhsm2-util-botan.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-@END BOTAN
   </ItemGroup>
 </Project>

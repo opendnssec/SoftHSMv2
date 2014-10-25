@@ -69,16 +69,9 @@
 mkdir ..\..\tokens 2&gt; nul
 copy ..\..\src\lib\test\tokens\dummy.in ..\..\tokens\dummy
 
-@IF BOTAN
-copy ..\..\src\lib\test\softhsm2.conf.win32 ..\..\"win32+botan"\p11test\softhsm2.conf
-mkdir  ..\..\"win32+botan"\p11test\tokens 2&gt; nul
-copy ..\..\src\lib\test\tokens\dummy.in  ..\..\"win32+botan"\p11test\tokens\dummy</Command>
-@END BOTAN
-@IF OPENSSL
-copy ..\..\src\lib\test\softhsm2.conf.win32 ..\..\"win32+openssl"\p11test\softhsm2.conf
-mkdir  ..\..\"win32+openssl"\p11test\tokens 2&gt; nul
-copy ..\..\src\lib\test\tokens\dummy.in  ..\..\"win32+openssl"\p11test\tokens\dummy</Command>
-@END OPENSSL
+copy ..\..\src\lib\test\softhsm2.conf.win32 ..\..\win32\p11test\softhsm2.conf
+mkdir  ..\..\win32\p11test\tokens 2&gt; nul
+copy ..\..\src\lib\test\tokens\dummy.in  ..\..\win32\p11test\tokens\dummy</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -111,16 +104,9 @@ copy ..\..\src\lib\test\tokens\dummy.in  ..\..\"win32+openssl"\p11test\tokens\du
 mkdir ..\..\tokens 2&gt; nul
 copy ..\..\src\lib\test\tokens\dummy.in ..\..\tokens\dummy
 
-@IF BOTAN
-copy ..\..\src\lib\test\softhsm2.conf.win32 ..\..\"win32+botan"\p11test\softhsm2.conf
-mkdir  ..\..\"win32+botan"\p11test\tokens 2&gt; nul
-copy ..\..\src\lib\test\tokens\dummy.in  ..\..\"win32+botan"\p11test\tokens\dummy</Command>
-@END BOTAN
-@IF OPENSSL
-copy ..\..\src\lib\test\softhsm2.conf.win32 ..\..\"win32+openssl"\p11test\softhsm2.conf
-mkdir  ..\..\"win32+openssl"\p11test\tokens 2&gt; nul
-copy ..\..\src\lib\test\tokens\dummy.in  ..\..\"win32+openssl"\p11test\tokens\dummy</Command>
-@END OPENSSL
+copy ..\..\src\lib\test\softhsm2.conf.win32 ..\..\win32\p11test\softhsm2.conf
+mkdir  ..\..\win32\p11test\tokens 2&gt; nul
+copy ..\..\src\lib\test\tokens\dummy.in  ..\..\win32\p11test\tokens\dummy</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>

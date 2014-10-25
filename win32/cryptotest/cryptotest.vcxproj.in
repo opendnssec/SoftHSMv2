@@ -69,11 +69,6 @@
       <AdditionalDependencies>convarch.lib;cppunitd.lib;libeay32.lib;%(AdditionalDependencies)</AdditionalDependencies>
 @END OPENSSL
     </Link>
-@IF OPENSSL
-    <PreBuildEvent>
-      <Command>..\..\..\ssl\bin\openssl version</Command>
-    </PreBuildEvent>
-@END OPENSSL
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -105,11 +100,6 @@
       <AdditionalDependencies>convarch.lib;cppunit.lib;libeay32.lib;%(AdditionalDependencies)</AdditionalDependencies>
 @END OPENSSL
     </Link>
-@IF OPENSSL
-    <PreBuildEvent>
-      <Command>..\..\..\ssl\bin\openssl version</Command>
-    </PreBuildEvent>
-@END OPENSSL
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\lib\cryptoki_compat\pkcs11.h" />

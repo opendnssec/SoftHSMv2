@@ -107,6 +107,128 @@
     <ClInclude Include="..\..\src\lib\crypto\AsymmetricParameters.h">
       <Filter>Crypto Header Files</Filter>
     </ClInclude>
+@IF BOTAN
+    <ClInclude Include="..\..\src\lib\crypto\BotanAES.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\BotanCryptoFactory.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\BotanDES.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\BotanDH.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\BotanDHKeyPair.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\BotanDHPrivateKey.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\BotanDHPublicKey.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\BotanDSA.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\BotanDSAKeyPair.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\BotanDSAPublicKey.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\BotanECDH.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\BotanECDHKeyPair.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\BotanECDHPrivateKey.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\BotanECDHPublicKey.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\BotanECDSA.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\BotanECDSAKeyPair.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\BotanECDSAPrivateKey.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\BotanECDSAPublicKey.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\BotanGOST.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\BotanGOSTKeyPair.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\BotanGOSTPrivateKey.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\BotanGOSTPublicKey.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\BotanGOSTR3411.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\BotanHashAlgorithm.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\BotanHMAC.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\BotanMacAlgorithm.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\BotanMD5.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\BotanRNG.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\BotanDSAPrivateKey.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\BotanRSA.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\BotanRSAKeyPair.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\BotanRSAPrivateKey.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\BotanRSAPublicKey.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\BotanSHA1.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\BotanSHA224.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\BotanSHA256.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\BotanSHA384.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\BotanSHA512.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\BotanSymmetricAlgorithm.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\BotanUtil.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
+@END BOTAN
     <ClInclude Include="..\..\src\lib\crypto\CryptoFactory.h">
       <Filter>Crypto Header Files</Filter>
     </ClInclude>
@@ -379,128 +501,6 @@
     <ClInclude Include="..\..\src\lib\win32\syslog.h">
       <Filter>Win32 Header Files</Filter>
     </ClInclude>
-@IF BOTAN
-    <ClInclude Include="..\..\src\lib\crypto\BotanAES.h">
-      <Filter>Crypto Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\lib\crypto\BotanCryptoFactory.h">
-      <Filter>Crypto Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\lib\crypto\BotanDES.h">
-      <Filter>Crypto Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\lib\crypto\BotanDH.h">
-      <Filter>Crypto Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\lib\crypto\BotanDHKeyPair.h">
-      <Filter>Crypto Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\lib\crypto\BotanDHPrivateKey.h">
-      <Filter>Crypto Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\lib\crypto\BotanDHPublicKey.h">
-      <Filter>Crypto Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\lib\crypto\BotanDSA.h">
-      <Filter>Crypto Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\lib\crypto\BotanDSAKeyPair.h">
-      <Filter>Crypto Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\lib\crypto\BotanDSAPublicKey.h">
-      <Filter>Crypto Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\lib\crypto\BotanECDH.h">
-      <Filter>Crypto Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\lib\crypto\BotanECDHKeyPair.h">
-      <Filter>Crypto Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\lib\crypto\BotanECDHPrivateKey.h">
-      <Filter>Crypto Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\lib\crypto\BotanECDHPublicKey.h">
-      <Filter>Crypto Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\lib\crypto\BotanECDSA.h">
-      <Filter>Crypto Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\lib\crypto\BotanECDSAKeyPair.h">
-      <Filter>Crypto Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\lib\crypto\BotanECDSAPrivateKey.h">
-      <Filter>Crypto Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\lib\crypto\BotanECDSAPublicKey.h">
-      <Filter>Crypto Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\lib\crypto\BotanGOST.h">
-      <Filter>Crypto Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\lib\crypto\BotanGOSTKeyPair.h">
-      <Filter>Crypto Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\lib\crypto\BotanGOSTPrivateKey.h">
-      <Filter>Crypto Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\lib\crypto\BotanGOSTPublicKey.h">
-      <Filter>Crypto Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\lib\crypto\BotanGOSTR3411.h">
-      <Filter>Crypto Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\lib\crypto\BotanHashAlgorithm.h">
-      <Filter>Crypto Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\lib\crypto\BotanHMAC.h">
-      <Filter>Crypto Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\lib\crypto\BotanMacAlgorithm.h">
-      <Filter>Crypto Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\lib\crypto\BotanMD5.h">
-      <Filter>Crypto Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\lib\crypto\BotanRNG.h">
-      <Filter>Crypto Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\lib\crypto\BotanDSAPrivateKey.h">
-      <Filter>Crypto Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\lib\crypto\BotanRSA.h">
-      <Filter>Crypto Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\lib\crypto\BotanRSAKeyPair.h">
-      <Filter>Crypto Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\lib\crypto\BotanRSAPrivateKey.h">
-      <Filter>Crypto Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\lib\crypto\BotanRSAPublicKey.h">
-      <Filter>Crypto Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\lib\crypto\BotanSHA1.h">
-      <Filter>Crypto Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\lib\crypto\BotanSHA224.h">
-      <Filter>Crypto Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\lib\crypto\BotanSHA256.h">
-      <Filter>Crypto Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\lib\crypto\BotanSHA384.h">
-      <Filter>Crypto Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\lib\crypto\BotanSHA512.h">
-      <Filter>Crypto Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\lib\crypto\BotanSymmetricAlgorithm.h">
-      <Filter>Crypto Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\lib\crypto\BotanUtil.h">
-      <Filter>Crypto Header Files</Filter>
-    </ClInclude>
-@END BOTAN
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\lib\common\Configuration.cpp">
@@ -527,6 +527,128 @@
     <ClCompile Include="..\..\src\lib\crypto\AsymmetricKeyPair.cpp">
       <Filter>Crypto Source Files</Filter>
     </ClCompile>
+@IF BOTAN
+    <ClCompile Include="..\..\src\lib\crypto\BotanAES.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\BotanCryptoFactory.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\BotanDES.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\BotanDH.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\BotanDHKeyPair.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\BotanDHPrivateKey.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\BotanDHPublicKey.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\BotanDSA.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\BotanDSAKeyPair.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\BotanDSAPrivateKey.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\BotanDSAPublicKey.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\BotanECDH.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\BotanECDHKeyPair.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\BotanECDHPrivateKey.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\BotanECDHPublicKey.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\BotanECDSA.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\BotanECDSAKeyPair.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\BotanECDSAPrivateKey.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\BotanECDSAPublicKey.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\BotanGOST.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\BotanGOSTKeyPair.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\BotanGOSTPrivateKey.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\BotanGOSTPublicKey.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\BotanGOSTR3411.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\BotanHashAlgorithm.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\BotanHMAC.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\BotanMacAlgorithm.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\BotanMD5.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\BotanRNG.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\BotanRSA.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\BotanRSAKeyPair.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\BotanRSAPrivateKey.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\BotanRSAPublicKey.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\BotanSHA1.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\BotanSHA224.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\BotanSHA256.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\BotanSHA384.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\BotanSHA512.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\BotanSymmetricAlgorithm.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\BotanUtil.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+@END BOTAN
     <ClCompile Include="..\..\src\lib\crypto\CryptoFactory.cpp">
       <Filter>Crypto Source Files</Filter>
     </ClCompile>
@@ -663,6 +785,9 @@
      <ClCompile Include="..\..\src\lib\crypto\OSSLRSAPrivateKey.cpp">
        <Filter>Crypto Source Files</Filter>
      </ClCompile>
+     <ClCompile Include="..\..\src\lib\crypto\OSSLRSAPublicKey.cpp">
+       <Filter>Crypto Source Files</Filter>
+     </ClCompile>
      <ClCompile Include="..\..\src\lib\crypto\OSSLSHA1.cpp">
        <Filter>Crypto Source Files</Filter>
      </ClCompile>
@@ -772,132 +897,5 @@
     <ClCompile Include="..\..\src\lib\win32\syslog.cpp">
       <Filter>Win32 Source Files</Filter>
     </ClCompile>
-@IF OPENSSL
-    <ClCompile Include="..\..\src\lib\crypto\OSSLRSAPublicKey.cpp">
-      <Filter>Crypto Source Files</Filter>
-    </ClCompile>
-@END OPENSSL
-@IF BOTAN
-    <ClCompile Include="..\..\src\lib\crypto\BotanAES.cpp">
-      <Filter>Crypto Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\lib\crypto\BotanCryptoFactory.cpp">
-      <Filter>Crypto Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\lib\crypto\BotanDES.cpp">
-      <Filter>Crypto Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\lib\crypto\BotanDH.cpp">
-      <Filter>Crypto Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\lib\crypto\BotanDHKeyPair.cpp">
-      <Filter>Crypto Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\lib\crypto\BotanDHPrivateKey.cpp">
-      <Filter>Crypto Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\lib\crypto\BotanDHPublicKey.cpp">
-      <Filter>Crypto Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\lib\crypto\BotanDSA.cpp">
-      <Filter>Crypto Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\lib\crypto\BotanDSAKeyPair.cpp">
-      <Filter>Crypto Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\lib\crypto\BotanDSAPrivateKey.cpp">
-      <Filter>Crypto Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\lib\crypto\BotanDSAPublicKey.cpp">
-      <Filter>Crypto Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\lib\crypto\BotanECDH.cpp">
-      <Filter>Crypto Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\lib\crypto\BotanECDHKeyPair.cpp">
-      <Filter>Crypto Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\lib\crypto\BotanECDHPrivateKey.cpp">
-      <Filter>Crypto Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\lib\crypto\BotanECDHPublicKey.cpp">
-      <Filter>Crypto Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\lib\crypto\BotanECDSA.cpp">
-      <Filter>Crypto Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\lib\crypto\BotanECDSAKeyPair.cpp">
-      <Filter>Crypto Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\lib\crypto\BotanECDSAPrivateKey.cpp">
-      <Filter>Crypto Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\lib\crypto\BotanECDSAPublicKey.cpp">
-      <Filter>Crypto Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\lib\crypto\BotanGOST.cpp">
-      <Filter>Crypto Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\lib\crypto\BotanGOSTKeyPair.cpp">
-      <Filter>Crypto Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\lib\crypto\BotanGOSTPrivateKey.cpp">
-      <Filter>Crypto Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\lib\crypto\BotanGOSTPublicKey.cpp">
-      <Filter>Crypto Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\lib\crypto\BotanGOSTR3411.cpp">
-      <Filter>Crypto Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\lib\crypto\BotanHashAlgorithm.cpp">
-      <Filter>Crypto Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\lib\crypto\BotanHMAC.cpp">
-      <Filter>Crypto Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\lib\crypto\BotanMacAlgorithm.cpp">
-      <Filter>Crypto Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\lib\crypto\BotanMD5.cpp">
-      <Filter>Crypto Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\lib\crypto\BotanRNG.cpp">
-      <Filter>Crypto Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\lib\crypto\BotanRSA.cpp">
-      <Filter>Crypto Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\lib\crypto\BotanRSAKeyPair.cpp">
-      <Filter>Crypto Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\lib\crypto\BotanRSAPrivateKey.cpp">
-      <Filter>Crypto Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\lib\crypto\BotanRSAPublicKey.cpp">
-      <Filter>Crypto Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\lib\crypto\BotanSHA1.cpp">
-      <Filter>Crypto Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\lib\crypto\BotanSHA224.cpp">
-      <Filter>Crypto Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\lib\crypto\BotanSHA256.cpp">
-      <Filter>Crypto Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\lib\crypto\BotanSHA384.cpp">
-      <Filter>Crypto Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\lib\crypto\BotanSHA512.cpp">
-      <Filter>Crypto Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\lib\crypto\BotanSymmetricAlgorithm.cpp">
-      <Filter>Crypto Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\lib\crypto\BotanUtil.cpp">
-      <Filter>Crypto Source Files</Filter>
-    </ClCompile>
-@END BOTAN
   </ItemGroup>
 </Project>

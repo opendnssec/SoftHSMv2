@@ -51,6 +51,11 @@
     <ClCompile Include="..\..\src\bin\keyconv\softhsm2-keyconv.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+@IF BOTAN
+    <ClCompile Include="..\..\src\bin\keyconv\softhsm2-keyconv-botan.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+@END BOTAN
 @IF OPENSSL
     <ClCompile Include="..\..\src\bin\keyconv\softhsm2-keyconv-ossl.cpp">
       <Filter>Source Files</Filter>
@@ -71,10 +76,5 @@
     <ClCompile Include="..\..\src\bin\win32\getpassphase.cpp">
       <Filter>Win32 Source Files</Filter>
     </ClCompile>
-@IF BOTAN
-    <ClCompile Include="..\..\src\bin\keyconv\softhsm2-keyconv-botan.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-@END BOTAN
   </ItemGroup>
 </Project>
