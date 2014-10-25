@@ -56,11 +56,11 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
 @IF BOTAN
-      <AdditionalLibraryDirectories>..\$(Configuration);..\..\..\cu\lib;..\..\..\btn_d;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\@PLATFORMDIR@$(Configuration);..\..\..\cu\lib;..\..\..\btn_d;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>convarch.lib;cppunitd.lib;botan.lib;%(AdditionalDependencies)</AdditionalDependencies>
 @END BOTAN
 @IF OPENSSL
-      <AdditionalLibraryDirectories>..\$(Configuration);..\..\..\cu\lib;..\..\..\ssl_d\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\@PLATFORMDIR@$(Configuration);..\..\..\cu\lib;..\..\..\ssl_d\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>convarch.lib;cppunitd.lib;libeay32.lib;%(AdditionalDependencies)</AdditionalDependencies>
 @END OPENSSL
     </Link>
@@ -82,11 +82,11 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
 @IF BOTAN
-      <AdditionalLibraryDirectories>..\$(Configuration);..\..\..\cu\lib;..\..\..\btn;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\@PLATFORMDIR@$(Configuration);..\..\..\cu\lib;..\..\..\btn;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>convarch.lib;cppunit.lib;botan.lib;%(AdditionalDependencies)</AdditionalDependencies>
 @END BOTAN
 @IF OPENSSL
-      <AdditionalLibraryDirectories>..\$(Configuration);..\..\..\cu\lib;..\..\..\ssl\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\@PLATFORMDIR@$(Configuration);..\..\..\cu\lib;..\..\..\ssl\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>convarch.lib;cppunit.lib;libeay32.lib;%(AdditionalDependencies)</AdditionalDependencies>
 @END OPENSSL
     </Link>

@@ -32,7 +32,9 @@ my @filelist = ("config.h",
 
 my %varvals;
 
-my @varnames = ("DLLPATH",
+my @varnames = ("DEBUGDLLPATH",
+                "DEBUGLIBPATH",
+                "DLLPATH",
                 "INCLUDEPATH",
                 "LIBPATH",
                 "PLATFORM",
@@ -363,8 +365,29 @@ if ($platform eq "win32") {
 
 if ($crypto_backend eq "botan") {
     $condvals{"BOTAN"} = 1;
+    $botan_path = File::Spec->rel2abs($botan_path);
+    $varvals{"DLLPATH"} = File::Spec->catfile($botan_path, "botan.dll");
+    if ($enable_debug eq "yes") {
+        $debug_botan_path = File::Spec->rel2abs($debug_botan_path);
+        $varvals{"DEBUGDLLPATH"} =
+            File::Spec->catfile($debug_botan_path, "botan.dll");
+    } else {
+        $debug_botan_path = $botan_path;
+        $varvals{"DEBUGDLLPATH"} = $varvals{"DLLPATH"};
+    }
 } else {
     $condvals{"OPENSSL"} = 1;
+    $openssl_path = File::Spec->rel2abs($openssl_path);
+    $varvals{"DLLPATH"} =
+        File::Spec->catfile($openssl_path, "bin\\libeay32.dll");
+    if ($enable_debug eq "yes") {
+        $debug_openssl_path = File::Spec->rel2abs($debug_openssl_path);
+        $varvals{"DEBUGDLLPATH"} =
+            File::Spec->catfile($debug_openssl_path, "bin\\libeay32.dll");
+    } else {
+        $debug_openssl_path = $openssl_path;
+        $varvals{"DEBUGDLLPATH"} = $varvals{"DLLPATH"};
+    }
 }
 
 # escape spaces

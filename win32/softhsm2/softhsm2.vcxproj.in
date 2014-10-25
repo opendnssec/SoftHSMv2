@@ -56,11 +56,11 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
 @IF BOTAN
-      <AdditionalLibraryDirectories>..\$(Configuration);..\..\..\btn_d;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\@PLATFORMDIR@$(Configuration);..\..\..\btn_d;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>convarch.lib;botan.lib;%(AdditionalDependencies)</AdditionalDependencies>
 @END BOTAN
 @IF OPENSSL
-      <AdditionalLibraryDirectories>..\$(Configuration);..\..\..\ssl_d\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\@PLATFORMDIR@$(Configuration);..\..\..\ssl_d\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>convarch.lib;libeay32.lib;%(AdditionalDependencies)</AdditionalDependencies>
 @END OPENSSL
     </Link>
@@ -82,11 +82,11 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
 @IF BOTAN
-      <AdditionalLibraryDirectories>..\$(Configuration);..\..\..\btn;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\@PLATFORMDIR@$(Configuration);..\..\..\btn;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>convarch.lib;botan.lib;%(AdditionalDependencies)</AdditionalDependencies>
 @END BOTAN
 @IF OPENSSL
-      <AdditionalLibraryDirectories>..\$(Configuration);..\..\..\ssl\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\@PLATFORMDIR@$(Configuration);..\..\..\ssl\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>convarch.lib;libeay32.lib;%(AdditionalDependencies)</AdditionalDependencies>
 @END OPENSSL
     </Link>

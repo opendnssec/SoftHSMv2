@@ -71,6 +71,9 @@
       <AdditionalDependencies>libeay32.lib;%(AdditionalDependencies)</AdditionalDependencies>
 @END OPENSSL
     </Link>
+    <PostBuildEvent>
+      <Command>if exist @DEBUGDLLPATH@ copy @DEBUGDLLPATH ..\@PLATFORMDIR@$(Configuration)</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -102,6 +105,9 @@
       <AdditionalDependencies>libeay32.lib;%(AdditionalDependencies)</AdditionalDependencies>
 @END OPENSSL
     </Link>
+    <PostBuildEvent>
+      <Command>if exist @DLLPATH@ copy @DLLPATH ..\@PLATFORMDIR@$(Configuration)</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\bin\common\getpw.h" />

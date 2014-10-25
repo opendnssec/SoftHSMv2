@@ -32,7 +32,9 @@ filelist = [ "config.h",
 
 varvals = {}
 
-varnames = [ "DLLPATH",
+varnames = [ "DEBUGDLLPATH",
+             "DEBUGLIBPATH",
+             "DLLPATH",
              "INCLUDEPATH",
              "LIBPATH",
              "PLATFORM",
@@ -317,6 +319,10 @@ def doconfig():
     global varvals
     global crypto_backend
     global condvals
+    global botan_path
+    global debug_botan_path
+    global openssl_path
+    global openssl_botan_path
 
     # configure the platform
     if platform == "win32":
@@ -328,8 +334,26 @@ def doconfig():
     # configure the crypto
     if crypto_backend == "botan":
         condvals["BOTAN"] = True
+        botan_path = os.path.abspath(botan_path)
+        varvals["DLLPATH"] = os.path.join(botan_path, "botan.dll")
+        if enable_debug:
+            debug_botan_path = os.path.abspath(debug_botan_path)
+            varvals["DEBUGDLLPATH"] = \
+                os.path.join(debug_botan_path, "botan.dll")
+        else:
+            debug_botan_path = botan_path
+            varvals["DEBUGDLLPATH"] = varvals["DLLPATH"]
     else:
         condvals["OPENSSL"] = True
+        openssl_path = os.path.abspath(openssl_path)
+        varvals["DLLPATH"] = os.path.join(openssl_path, "bin\\libeay32.dll")
+        if enable_debug:
+            debug_openssl_path = os.path.abspath(debug_openssl_path)
+            varvals["DEBUGDLLPATH"] = \
+                os.path.join(debug_openssl_path, "bin\\libeay32.dll")
+        else:
+            debug_openssl_path = openssl_path
+            varvals["DEBUGDLLPATH"] = varvals["DLLPATH"]
 
 def kw(path):
     """escape spaces"""
