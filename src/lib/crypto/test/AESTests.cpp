@@ -510,7 +510,7 @@ void AESTests::testECB()
 
 			// Test 128-bit key
 
-			// First, use the OpenSSL command line tool to encrypt the test data
+			// Get the reference for the encrypted data
 			cipherText = ByteString(testResult[i][j][0]);
 
 			// Now, do the same thing using our AES implementation

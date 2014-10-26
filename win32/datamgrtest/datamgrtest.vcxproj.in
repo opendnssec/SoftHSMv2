@@ -50,19 +50,13 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..;..\..\src\lib;..\..\src\lib\data_mgr;..\..\src\lib\common;..\..\src\lib\cryptoki_compat;..\..\src\lib\crypto;..\..\src\lib\object_store;..\..\src\lib\session_mgr;..\..\src\lib\slot_mgr;..\..\src\lib\win32;..\..\..\cu\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..;..\..\src\lib;..\..\src\lib\data_mgr;..\..\src\lib\common;..\..\src\lib\cryptoki_compat;..\..\src\lib\crypto;..\..\src\lib\object_store;..\..\src\lib\session_mgr;..\..\src\lib\slot_mgr;..\..\src\lib\win32;@CUINCPATH@;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-@IF BOTAN
-      <AdditionalLibraryDirectories>..\@PLATFORMDIR@$(Configuration);..\..\..\cu\lib;..\..\..\btn_d;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>convarch.lib;cppunitd.lib;botan.lib;%(AdditionalDependencies)</AdditionalDependencies>
-@END BOTAN
-@IF OPENSSL
-      <AdditionalLibraryDirectories>..\@PLATFORMDIR@$(Configuration);..\..\..\cu\lib;..\..\..\ssl_d\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>convarch.lib;cppunitd.lib;libeay32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-@END OPENSSL
+      <AdditionalLibraryDirectories>..\@PLATFORMDIR@$(Configuration);@CULIBPATH@;@DEBUGLIBPATH@;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>convarch.lib;cppunitd.lib;@LIBNAME@;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|@PLATFORM@'">
@@ -74,21 +68,15 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..;..\..\src\lib;..\..\src\lib\data_mgr;..\..\src\lib\common;..\..\src\lib\cryptoki_compat;..\..\src\lib\crypto;..\..\src\lib\object_store;..\..\src\lib\session_mgr;..\..\src\lib\slot_mgr;..\..\src\lib\win32;..\..\..\cu\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..;..\..\src\lib;..\..\src\lib\data_mgr;..\..\src\lib\common;..\..\src\lib\cryptoki_compat;..\..\src\lib\crypto;..\..\src\lib\object_store;..\..\src\lib\session_mgr;..\..\src\lib\slot_mgr;..\..\src\lib\win32;@CUINCPATH@;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-@IF BOTAN
-      <AdditionalLibraryDirectories>..\@PLATFORMDIR@$(Configuration);..\..\..\cu\lib;..\..\..\btn;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>convarch.lib;cppunit.lib;botan.lib;%(AdditionalDependencies)</AdditionalDependencies>
-@END BOTAN
-@IF OPENSSL
-      <AdditionalLibraryDirectories>..\@PLATFORMDIR@$(Configuration);..\..\..\cu\lib;..\..\..\ssl\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>convarch.lib;cppunit.lib;libeay32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-@END OPENSSL
+      <AdditionalLibraryDirectories>..\@PLATFORMDIR@$(Configuration);@CULIBPATH@;@LIBPATH@;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>convarch.lib;cppunit.lib;@LIBNAME@;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>

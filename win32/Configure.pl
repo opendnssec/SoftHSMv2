@@ -33,11 +33,16 @@ my @filelist = ("config.h",
 
 my %varvals;
 
-my @varnames = ("DEBUGDLLPATH",
+my @varnames = ("CUINCPATH",
+                "CULIBPATH",
+                "DEBUGDLLPATH",
+                "DEBUGINCPATH",
                 "DEBUGLIBPATH",
                 "DLLPATH",
                 "INCLUDEPATH",
+                "LIBNAME",
                 "LIBPATH",
+		"LOGLEVEL",
                 "PLATFORM",
                 "PLATFORMDIR");
 
@@ -46,6 +51,8 @@ my @varnames = ("DEBUGDLLPATH",
 my %condvals;
 
 my @condnames = ("BOTAN",
+                 "ECC",
+                 "GOST",
                  "OPENSSL",
                  "TESTS");
 
@@ -362,34 +369,120 @@ if ($platform eq "win32") {
     $varvals{"PLATFORMDIR"} = "x64\\";
 }
 
+# configure ECC and GOST
+
+if ($enable_ecc eq "yes") {
+    $condvals{"ECC"} = 1;
+}
+if ($enable_gost eq "yes") {
+    $condvals{"GOST"} = 1;
+}
+
 # configure the crypto
 
 if ($crypto_backend eq "botan") {
     $condvals{"BOTAN"} = 1;
+    $varvals{"LIBNAME"} = "botan.lib";
     $botan_path = File::Spec->rel2abs($botan_path);
     $varvals{"DLLPATH"} = File::Spec->catfile($botan_path, "botan.dll");
+    my $botan_inc = File::Spec->catfile($botan_path, "include");
+    if (!-f File::Spec->catfile($botan_inc, "botan\\init.h")) {
+        die "can't find Botan includes\n";
+    }
+    $varvals{"INCLUDEPATH"} = $botan_inc;
+    if (!-f File::Spec->catfile($botan_path, "botan.lib")) {
+        die "can't find Botan library\n";
+    }
+    $varvals{"LIBPATH"} = $botan_path;
     if ($enable_debug eq "yes") {
         $debug_botan_path = File::Spec->rel2abs($debug_botan_path);
         $varvals{"DEBUGDLLPATH"} =
             File::Spec->catfile($debug_botan_path, "botan.dll");
+        my $debug_botan_inc =
+            File::Spec->catfile($debug_botan_path, "include");
+        if (!-f File::Spec->catfile($debug_botan_inc, "botan\\init.h")) {
+            die "can't find debug Botan includes\n";
+        }
+        $varvals{"DEBUGINCPATH"} = $debug_botan_inc;
+        if (!-f File::Spec->catfile($debug_botan_path, "botan.lib")) {
+            die "can't find debug Botan library\n";
+        }
+        $varvals{"DEBUGLIBPATH"} = $debug_botan_path;
     } else {
         $debug_botan_path = $botan_path;
         $varvals{"DEBUGDLLPATH"} = $varvals{"DLLPATH"};
+        $varvals{"DEBUGINCPATH"} = $varvals{"INCLUDEPATH"};
+        $varvals{"DEBUGLIBPATH"} = $varvals{"LIBPATH"};
     }
 } else {
     $condvals{"OPENSSL"} = 1;
+    $varvals{"LIBNAME"} = "libeay32.lib";
     $openssl_path = File::Spec->rel2abs($openssl_path);
     $varvals{"DLLPATH"} =
         File::Spec->catfile($openssl_path, "bin\\libeay32.dll");
+    my $openssl_inc = File::Spec->catfile($openssl_path, "include");
+    if (!-f File::Spec->catfile($openssl_inc, "openssl\\ssl.h")) {
+        die "can't find OpenSSL headers\n";
+    }
+    $varvals{"INCLUDEPATH"} = $openssl_inc;
+    my $openssl_lib = File::Spec->catfile($openssl_path, "lib");
+    if (!-f File::Spec->catfile($openssl_lib, "libeay32.lib")) {
+        die "can't find OpenSSL library\n";
+    }
+    $varvals{"LIBPATH"} = $openssl_lib;
     if ($enable_debug eq "yes") {
         $debug_openssl_path = File::Spec->rel2abs($debug_openssl_path);
         $varvals{"DEBUGDLLPATH"} =
             File::Spec->catfile($debug_openssl_path, "bin\\libeay32.dll");
+        my $debug_openssl_inc =
+            File::Spec->catfile($debug_openssl_path, "include");
+        if (!-f File::Spec->catfile($debug_openssl_inc, "openssl\\ssl.h")) {
+            die "can't find debug OpenSSL headers\n";
+        }
+        $varvals{"DEBUGINCPATH"} = $debug_openssl_inc;
+        my $debug_openssl_lib =
+            File::Spec->catfile($debug_openssl_path, "lib");
+        if (!-f File::Spec->catfile($debug_openssl_lib, "libeay32.lib")) {
+            die "can't find debug OpenSSL library\n";
+        }
+        $varvals{"DEBUGLIBPATH"} = $debug_openssl_lib;
+
     } else {
         $debug_openssl_path = $openssl_path;
         $varvals{"DEBUGDLLPATH"} = $varvals{"DLLPATH"};
+        $varvals{"DEBUGINCPATH"} = $varvals{"INCLUDEPATH"};
+        $varvals{"DEBUGLIBPATH"} = $varvals{"LIBPATH"};
     }
 }
+
+# configure CppUnit
+
+if ($want_tests eq "yes") {
+    $condvals{"TESTS"} = 1;
+    $cppunit_path = File::Spec->rel2abs($cppunit_path);
+    my $cppunit_inc = File::Spec->catfile($cppunit_path, "include");
+    if (!-f File::Spec->catfile($cppunit_inc, "cppunit\\Test.h"))  {
+        die "can't find CppUnit headers\n";
+    }
+    $varvals{"CUINCPATH"} = $cppunit_inc;
+    my $cppunit_lib = File::Spec->catfile($cppunit_path, "lib");
+    if (!-f File::Spec->catfile($cppunit_lib, "cppunit.lib")) {
+        $cppunit_lib = $cppunit_path;
+    }
+    if (!-f File::Spec->catfile($cppunit_lib, "cppunit.lib")) {
+        die "can't find CppUnit library\n";
+    }
+    if ($enable_debug eq "yes") {
+        if (!-f File::Spec->catfile($cppunit_lib, "cppunitd.lib")) {
+            die "can't find debug CppUnit library\n";
+        }
+    }
+    $varvals{"CULIBPATH"} = $cppunit_lib;
+}
+
+# configure loglevel
+
+$varvals{"LOGLEVEL"} = "$loglevel";
 
 # escape spaces
 

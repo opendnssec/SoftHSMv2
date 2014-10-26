@@ -8,6 +8,7 @@ import sys
 import os
 import os.path
 import re
+import subprocess
 
 # files to configure
 
@@ -33,11 +34,16 @@ filelist = [ "config.h",
 
 varvals = {}
 
-varnames = [ "DEBUGDLLPATH",
+varnames = [ "CUINCPATH",
+             "CULIBPATH",
+             "DEBUGDLLPATH",
+             "DEBUGINCPATH",
              "DEBUGLIBPATH",
              "DLLPATH",
              "INCLUDEPATH",
+             "LIBNAME",
              "LIBPATH",
+             "LOGLEVEL",
              "PLATFORM",
              "PLATFORMDIR" ]
 
@@ -46,6 +52,8 @@ varnames = [ "DEBUGDLLPATH",
 condvals = {}
 
 condnames = [ "BOTAN",
+              "ECC",
+              "GOST",
               "OPENSSL",
               "TESTS" ]
 
@@ -316,14 +324,19 @@ def dounknown():
 
 def doconfig():
     """config itself"""
+    global botan_path
+    global condvals
+    global cppunit_path
+    global crypto_backend
+    global debug_botan_path
+    global enable_ecc
+    global enable_gost
+    global loglevel
+    global openssl_botan_path
+    global openssl_path
     global platform
     global varvals
-    global crypto_backend
-    global condvals
-    global botan_path
-    global debug_botan_path
-    global openssl_path
-    global openssl_botan_path
+    global want_tests
 
     # configure the platform
     if platform == "win32":
@@ -332,29 +345,106 @@ def doconfig():
         varvals["PLATFORM"] = "x64"
         varvals["PLATFORMDIR"] = "x64\\"
 
+    # configure ECC and GOST
+    if enable_ecc:
+        condvals["ECC"] = True
+    if enable_gost:
+        condvals["GOST"] = True
+
     # configure the crypto
     if crypto_backend == "botan":
         condvals["BOTAN"] = True
+        varvals["LIBNAME"] = "botan.lib"
         botan_path = os.path.abspath(botan_path)
         varvals["DLLPATH"] = os.path.join(botan_path, "botan.dll")
+        botan_inc = os.path.join(botan_path, "include")
+        if not os.path.exists(os.path.join(botan_inc, "botan\\init.h")):
+            print >> sys.stderr, "can't find Botan includes"
+            sys.exit(1)
+        varvals["INCLUDEPATH"] = botan_inc
+        if not os.path.exists(os.path.join(botan_path, "botan.lib")):
+            print >> sys.stderr, "can't find Botan library"
+            sys.exit(1)
+        varvals["LIBPATH"] = botan_path
         if enable_debug:
             debug_botan_path = os.path.abspath(debug_botan_path)
             varvals["DEBUGDLLPATH"] = \
                 os.path.join(debug_botan_path, "botan.dll")
+            debug_botan_inc = os.path.join(debug_botan_path, "include")
+            if not os.path.exists(os.path.join(debug_botan_inc,
+                                               "botan\\init.h")):
+                print >> sys.stderr, "can't find debug Botan includes"
+                sys.exit(1)
+            varvals["DEBUGINCPATH"] = debug_botan_inc
+            if not os.path.exists(os.path.join(debug_botan_path, "botan.lib")):
+                print >> sys.stderr, "can't find debug Botan library"
+                sys.exit(1)
+            varvals["DEBUGLIBPATH"] = debug_botan_path
         else:
             debug_botan_path = botan_path
             varvals["DEBUGDLLPATH"] = varvals["DLLPATH"]
+            varvals["DEBUGINCPATH"] = varvals["INCLUDEPATH"]
+            varvals["DEBUGLIBPATH"] = varvals["LIBPATH"]
     else:
         condvals["OPENSSL"] = True
+        varvals["LIBNAME"] = "libeay32.lib"
         openssl_path = os.path.abspath(openssl_path)
         varvals["DLLPATH"] = os.path.join(openssl_path, "bin\\libeay32.dll")
+        openssl_inc = os.path.join(openssl_path, "include")
+        if not os.path.exists(os.path.join(openssl_inc, "openssl\\ssl.h")):
+            print >> sys.stderr, "can't find OpenSSL headers"
+            sys.exit(1)
+        varvals["INCLUDEPATH"] = openssl_inc
+        openssl_lib = os.path.join(openssl_path, "lib")
+        if not os.path.exists(os.path.join(openssl_lib, "libeay32.lib")):
+            print >> sys.stderr, "can't find OpenSSL library"
+            sys.exit(1)
+        varvals["LIBPATH"] = openssl_lib
         if enable_debug:
             debug_openssl_path = os.path.abspath(debug_openssl_path)
             varvals["DEBUGDLLPATH"] = \
                 os.path.join(debug_openssl_path, "bin\\libeay32.dll")
+            debug_openssl_inc = os.path.join(debug_openssl_path, "include")
+            if not os.path.exists(os.path.join(debug_openssl_inc,
+                                               "openssl\\ssl.h")):
+                print >> sys.stderr, "can't find debug OpenSSL headers"
+                sys.exit(1)
+            varvals["DEBUGINCPATH"] = debug_openssl_inc
+            debug_openssl_lib = os.path.join(debug_openssl_path, "lib")
+            if not os.path.exists(os.path.join(debug_openssl_lib,
+                                               "libeay32.lib")):
+                print >> sys.stderr, "can't find debug OpenSSL library"
+                sys.exit(1)
+            varvals["DEBUGLIBPATH"] = debug_openssl_lib
         else:
             debug_openssl_path = openssl_path
             varvals["DEBUGDLLPATH"] = varvals["DLLPATH"]
+            varvals["DEBUGINCPATH"] = varvals["INCLUDEPATH"]
+            varvals["DEBUGLIBPATH"] = varvals["LIBPATH"]
+
+    # configure CppUnit
+    if want_tests:
+        condvals["TESTS"] = True
+        cppunit_path = os.path.abspath(cppunit_path)
+        cppunit_inc = os.path.join(cppunit_path, "include")
+        if not os.path.exists(os.path.join(cppunit_inc, "cppunit\\Test.h")):
+            print >> sys.stderr, "can't find CppUnit headers"
+            sys.exit(1)
+        varvals["CUINCPATH"] = cppunit_inc
+        cppunit_lib = os.path.join(cppunit_path, "lib")
+        if not os.path.exists(os.path.join(cppunit_lib, "cppunit.lib")):
+            cppunit_lib = cppunit_path
+        if not os.path.exists(os.path.join(cppunit_lib,"cppunit.lib")):
+            print >> sys.stderr, "can't find CppUnit library"
+            sys.exit(1)
+        if enable_debug:
+            if not os.path.exists(os.path.join(cppunit_lib,"cppunitd.lib")):
+                print >> sys.stderr, "can't find debug CppUnit library"
+                sys.exit(1)
+        varvals["CULIBPATH"] = cppunit_lib
+
+    # configure loglevel
+    varvals["LOGLEVEL"] = str(loglevel)
 
 def kw(path):
     """escape spaces"""

@@ -329,12 +329,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-@IF BOTAN
-      <AdditionalIncludeDirectories>..;..\..\src\lib;..\..\src\lib\cryptoki_compat;..\..\src\lib\common;..\..\src\lib\object_store;..\..\src\lib\slot_mgr;..\..\src\lib\session_mgr;..\..\src\lib\handle_mgr;..\..\src\lib\crypto;..\..\src\lib\win32;..\..\src\lib\data_mgr;..\..\..\btn_d\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-@END BOTAN
-@IF OPENSSL
-      <AdditionalIncludeDirectories>..;..\..\src\lib;..\..\src\lib\cryptoki_compat;..\..\src\lib\common;..\..\src\lib\object_store;..\..\src\lib\slot_mgr;..\..\src\lib\session_mgr;..\..\src\lib\handle_mgr;..\..\src\lib\crypto;..\..\src\lib\win32;..\..\src\lib\data_mgr;..\..\..\ssl_d\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-@END OPENSSL
+      <AdditionalIncludeDirectories>..;..\..\src\lib;..\..\src\lib\cryptoki_compat;..\..\src\lib\common;..\..\src\lib\object_store;..\..\src\lib\slot_mgr;..\..\src\lib\session_mgr;..\..\src\lib\handle_mgr;..\..\src\lib\crypto;..\..\src\lib\win32;..\..\src\lib\data_mgr;@DEBUGINCPATH@;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -350,12 +345,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-@IF BOTAN
-      <AdditionalIncludeDirectories>..;..\..\src\lib;..\..\src\lib\cryptoki_compat;..\..\src\lib\common;..\..\src\lib\object_store;..\..\src\lib\slot_mgr;..\..\src\lib\session_mgr;..\..\src\lib\handle_mgr;..\..\src\lib\crypto;..\..\src\lib\win32;..\..\src\lib\data_mgr;..\..\..\btn\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-@END BOTAN
-@IF OPENSSL
-      <AdditionalIncludeDirectories>..;..\..\src\lib;..\..\src\lib\cryptoki_compat;..\..\src\lib\common;..\..\src\lib\object_store;..\..\src\lib\slot_mgr;..\..\src\lib\session_mgr;..\..\src\lib\handle_mgr;..\..\src\lib\crypto;..\..\src\lib\win32;..\..\src\lib\data_mgr;..\..\..\ssl\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-@END OPENSSL
+      <AdditionalIncludeDirectories>..;..\..\src\lib;..\..\src\lib\cryptoki_compat;..\..\src\lib\common;..\..\src\lib\object_store;..\..\src\lib\slot_mgr;..\..\src\lib\session_mgr;..\..\src\lib\handle_mgr;..\..\src\lib\crypto;..\..\src\lib\win32;..\..\src\lib\data_mgr;@INCLUDEPATH@;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
