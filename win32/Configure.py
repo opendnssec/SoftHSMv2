@@ -620,3 +620,17 @@ def main(args):
     sys.exit(0)
 
 main(sys.argv)
+
+# Notes: Unix configure.ac options
+#  --enable-64bit supported
+#  --enable-ecc supported (TODO auto detection)
+#  --enable-gost supported (TODO auto detection)
+#  --enable-non-paged-memory (TODO)
+#  --enable-visibility (enforced by DLLS)
+#  --with-crypto-backend supported
+#  --with-openssl supported (TODO build check)
+#  --with-botan supported (TODO build check)
+#  --with-loglevel supported
+#  --with-migrate (useless as SoftHSMv1 is not supported)
+#  --with-objectstore-backend-db (TODO)
+#  --with-sqlite3 (TODO)
