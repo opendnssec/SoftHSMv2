@@ -407,5 +407,7 @@ private:
 		OSObject *unwrapKey,
 		ByteString &keydata
 	);
+
+	CK_RV MechParamCheckRSAPKCSOAEP(CK_MECHANISM_PTR pMechanism);
 };
 
