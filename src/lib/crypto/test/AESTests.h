@@ -42,14 +42,20 @@ class AESTests : public CppUnit::TestFixture
 	CPPUNIT_TEST(testBlockSize);
 	CPPUNIT_TEST(testCBC);
 	CPPUNIT_TEST(testECB);
-	CPPUNIT_TEST(testWrap);
+#ifdef HAVE_AES_KEY_WRAP
+	CPPUNIT_TEST(testWrapWoPad);
+#endif
+#ifdef HAVE_AES_KEY_WRAP_PAD
+	CPPUNIT_TEST(testWrapPad);
+#endif
 	CPPUNIT_TEST_SUITE_END();
 
 public:
 	void testBlockSize();
 	void testCBC();
 	void testECB();
-	void testWrap();
+	void testWrapWoPad();
+	void testWrapPad();
 
 	void setUp();
 	void tearDown();
@@ -57,6 +63,7 @@ public:
 private:
 	// AES instance
 	SymmetricAlgorithm* aes;
+	void testWrap(const char testKeK[][128], const char testKey[][128], const char testCt[][128], const int testCnt, SymWrap::Type mode);
 };
 
 #endif // !_SOFTHSM_V2_AESTESTS_H
