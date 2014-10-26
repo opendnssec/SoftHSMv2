@@ -98,7 +98,7 @@ BotanDHPrivateKey::BotanDHPrivateKey()
 
 BotanDHPrivateKey::BotanDHPrivateKey(const BotanDH_PrivateKey* inDH)
 {
-	BotanDHPrivateKey();
+	dh = NULL;
 
 	setFromBotan(inDH);
 }

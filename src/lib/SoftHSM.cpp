@@ -1643,7 +1643,10 @@ CK_RV SoftHSM::C_FindObjectsInit(CK_SESSION_HANDLE hSession, CK_ATTRIBUTE_PTR pT
 						if (isPrivateObject && attr.getByteStringValue().size() != 0)
 						{
 							if (!token->decrypt(attr.getByteStringValue(), bsAttrValue))
+							{
+								delete findOp;
 								return CKR_GENERAL_ERROR;
+							}
 						}
 						else
 							bsAttrValue = attr.getByteStringValue();
@@ -1677,7 +1680,10 @@ CK_RV SoftHSM::C_FindObjectsInit(CK_SESSION_HANDLE hSession, CK_ATTRIBUTE_PTR pT
 			else
 				hObject = handleManager->addSessionObject(slotID,hSession,isPrivate,*it);
 			if (hObject == CK_INVALID_HANDLE)
+			{
+				delete findOp;
 				return CKR_GENERAL_ERROR;
+			}
 			handles.insert(hObject);
 		}
 	}
@@ -5167,7 +5173,8 @@ CK_RV SoftHSM::C_WrapKey
 	{
 		if (isKeyPrivate)
 		{
-			token->decrypt(key->getByteStringValue(CKA_VALUE), keydata);
+			bool bOK = token->decrypt(key->getByteStringValue(CKA_VALUE), keydata);
+			if (!bOK) return CKR_GENERAL_ERROR;
 		}
 		else
 		{
@@ -5898,9 +5905,20 @@ CK_RV SoftHSM::generateAES
 	// Generate the secret key
 	AESKey* key = new AESKey(keyLen * 8);
 	SymmetricAlgorithm* aes = CryptoFactory::i()->getSymmetricAlgorithm(SymAlgo::AES);
-	if (aes == NULL) return CKR_GENERAL_ERROR;
+	if (aes == NULL)
+	{
+		ERROR_MSG("Could not get SymmetricAlgorithm");
+		delete key;
+		return CKR_GENERAL_ERROR;
+	}
 	RNG* rng = CryptoFactory::i()->getRNG();
-	if (rng == NULL) return CKR_GENERAL_ERROR;
+	if (rng == NULL)
+	{
+		ERROR_MSG("Could not get RNG");
+		aes->recycleKey(key);
+		CryptoFactory::i()->recycleSymmetricAlgorithm(aes);
+		return CKR_GENERAL_ERROR;
+	}
 	if (!aes->generateKey(*key, rng))
 	{
 		ERROR_MSG("Could not generate AES secret key");
@@ -6025,9 +6043,20 @@ CK_RV SoftHSM::generateDES
 	// Generate the secret key
 	DESKey* key = new DESKey(56);
 	SymmetricAlgorithm* des = CryptoFactory::i()->getSymmetricAlgorithm(SymAlgo::DES);
-	if (des == NULL) return CKR_GENERAL_ERROR;
+	if (des == NULL)
+	{
+		ERROR_MSG("Could not get SymmetricAlgorithm");
+		delete key;
+		return CKR_GENERAL_ERROR;
+	}
 	RNG* rng = CryptoFactory::i()->getRNG();
-	if (rng == NULL) return CKR_GENERAL_ERROR;
+	if (rng == NULL)
+	{
+		ERROR_MSG("Could not get RNG");
+		des->recycleKey(key);
+		CryptoFactory::i()->recycleSymmetricAlgorithm(des);
+		return CKR_GENERAL_ERROR;
+	}
 	if (!des->generateKey(*key, rng))
 	{
 		ERROR_MSG("Could not generate DES secret key");
@@ -6152,9 +6181,20 @@ CK_RV SoftHSM::generateDES2
 	// Generate the secret key
 	DESKey* key = new DESKey(112);
 	SymmetricAlgorithm* des = CryptoFactory::i()->getSymmetricAlgorithm(SymAlgo::DES3);
-	if (des == NULL) return CKR_GENERAL_ERROR;
+	if (des == NULL)
+	{
+		ERROR_MSG("Could not get SymmetricAlgorith");
+		delete key;
+		return CKR_GENERAL_ERROR;
+	}
 	RNG* rng = CryptoFactory::i()->getRNG();
-	if (rng == NULL) return CKR_GENERAL_ERROR;
+	if (rng == NULL)
+	{
+		ERROR_MSG("Could not get RNG");
+		des->recycleKey(key);
+		CryptoFactory::i()->recycleSymmetricAlgorithm(des);
+		return CKR_GENERAL_ERROR;
+	}
 	if (!des->generateKey(*key, rng))
 	{
 		ERROR_MSG("Could not generate DES secret key");
@@ -6279,9 +6319,20 @@ CK_RV SoftHSM::generateDES3
 	// Generate the secret key
 	DESKey* key = new DESKey(168);
 	SymmetricAlgorithm* des = CryptoFactory::i()->getSymmetricAlgorithm(SymAlgo::DES3);
-	if (des == NULL) return CKR_GENERAL_ERROR;
+	if (des == NULL)
+	{
+		ERROR_MSG("Could not get SymmetricAlgorithm");
+		delete key;
+		return CKR_GENERAL_ERROR;
+	}
 	RNG* rng = CryptoFactory::i()->getRNG();
-	if (rng == NULL) return CKR_GENERAL_ERROR;
+	if (rng == NULL)
+	{
+		ERROR_MSG("Could not get RNG");
+		des->recycleKey(key);
+		CryptoFactory::i()->recycleSymmetricAlgorithm(des);
+		return CKR_GENERAL_ERROR;
+	}
 	if (!des->generateKey(*key, rng))
 	{
 		ERROR_MSG("Could not generate DES secret key");
@@ -8094,7 +8145,7 @@ CK_RV SoftHSM::deriveDH
 
 	// Get the base key handle
 	OSObject *baseKey = (OSObject *)handleManager->getObject(hBaseKey);
-	if (baseKey == NULL && !baseKey->isValid())
+	if (baseKey == NULL || !baseKey->isValid())
 		return CKR_KEY_HANDLE_INVALID;
 
 	// Get the DH algorithm handler
@@ -8547,9 +8598,9 @@ CK_RV SoftHSM::CreateObject(CK_SESSION_HANDLE hSession, CK_ATTRIBUTE_PTR pTempla
 	{
 		object = sessionObjectStore->createObject(slot->getSlotID(), hSession, isPrivate != CK_FALSE);
 	}
-	if (object == NULL) return CKR_GENERAL_ERROR;
 
-	p11object->init(object);
+	if (object == NULL) return CKR_GENERAL_ERROR;
+	if (!p11object->init(object)) return CKR_GENERAL_ERROR;
 
 	rv = p11object->saveTemplate(token, isPrivate != CK_FALSE, pTemplate,ulCount,op);
 	if (rv != CKR_OK)

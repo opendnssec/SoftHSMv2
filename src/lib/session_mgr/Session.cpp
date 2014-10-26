@@ -48,6 +48,9 @@ Session::Session(Slot* slot, bool isReadWrite, CK_VOID_PTR pApplication, CK_NOTI
 	macOp = NULL;
 	asymmetricCryptoOp = NULL;
 	symmetricCryptoOp = NULL;
+	mechanism = AsymMech::Unknown;
+	allowSinglePartOp = false;
+	allowMultiPartOp = false;
 	publicKey = NULL;
 	privateKey = NULL;
 	symmetricKey = NULL;
@@ -70,6 +73,9 @@ Session::Session()
 	macOp = NULL;
 	asymmetricCryptoOp = NULL;
 	symmetricCryptoOp = NULL;
+	mechanism = AsymMech::Unknown;
+	allowSinglePartOp = false;
+	allowMultiPartOp = false;
 	publicKey = NULL;
 	privateKey = NULL;
 	symmetricKey = NULL;

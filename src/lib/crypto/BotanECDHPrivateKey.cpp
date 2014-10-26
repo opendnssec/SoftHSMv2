@@ -52,7 +52,7 @@ BotanECDHPrivateKey::BotanECDHPrivateKey()
 
 BotanECDHPrivateKey::BotanECDHPrivateKey(const Botan::ECDH_PrivateKey* inECKEY)
 {
-	BotanECDHPrivateKey();
+	eckey = NULL;
 
 	setFromBotan(inECKEY);
 }
