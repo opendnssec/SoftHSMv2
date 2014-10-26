@@ -42,7 +42,7 @@ my @varnames = ("CUINCPATH",
                 "INCLUDEPATH",
                 "LIBNAME",
                 "LIBPATH",
-		"LOGLEVEL",
+                "LOGLEVEL",
                 "PLATFORM",
                 "PLATFORMDIR");
 
@@ -58,7 +58,8 @@ my @condnames = ("BOTAN",
 
 # enable-xxx/disable-xxx arguments
 
-my @enablelist = ("debug",
+my @enablelist = ("64bit",
+                  "debug",
                   "ecc",
                   "gost");
 
@@ -68,8 +69,7 @@ my @withlist = ("botan",
                 "cppunit",
                 "crypto-backend",
                 "loglevel",
-                "openssl",
-                "platform");
+                "openssl");
 
 # general arguments
 
@@ -92,11 +92,11 @@ my @help = (
 "  clean               (command) clean up generated files\n",
 "  <none>              (command) print a summary of the configuration\n",
 "\nOptional Features:\n",
+"  enable-64bit        enable 64-bit compiling [default=no]\n",
 "  enable-debug        enable build of Debug config [default=yes]\n",
 "  enable-ecc          enable support for ECC [default=yes]\n",
 "  enable-gost         enable support for GOST [default=yes]\n",
-"\nRequired Packages:\n",
-"  with-platform       select the platform [win32|x64]\n",
+"\nRequired Package:\n",
 "  with-crypto-backend select the crypto backend [botan|openssl]\n",
 "\nOptional Packages:\n",
 "  with-botan=PATH     speficy prefix of path of Botan\n",
@@ -115,7 +115,7 @@ my $unknown_value;
 my $enable_debug = "yes";
 my $enable_ecc = "yes";
 my $enable_gost = "yes";
-my $platform = "none";
+my $platform = "win32";
 my $crypto_backend = "none";
 my $botan_path = "..\\..\\btn";
 my $debug_botan_path = "..\\..\\btn_d";
@@ -183,7 +183,11 @@ sub myenable {
     my $key = $_[0];
     my $val = $_[1];
 
-    if ($key =~ /^debug$/i) {
+    if ($key =~ /^64bit$/i) {
+        if ($val =~ /^yes$/i) {
+            $platform = "x64";
+        }
+    } elsif ($key =~ /^debug$/i) {
         if ($val =~ /^no$/i) {
             $enable_debug = "no";
         }
@@ -211,16 +215,7 @@ sub mywith {
     my $key = $_[0];
     my $val = $_[1];
 
-    if ($key =~ /^platform$/i) {
-        if ($val =~ /^win32$/i) {
-            $platform = "win32";
-        } elsif ($val =~ /^x64$/i) {
-            $platform = "x64";
-        } else {
-            $want_unknown = "yes";
-            $unknown_value = "with-platform=" . $val;
-        }
-    } elsif ($key =~ /^crypto-backend$/i) {
+    if ($key =~ /^crypto-backend$/i) {
         if ($val =~ /^botan$/i) {
             $crypto_backend = "botan";
         } elsif($val =~ /^openssl$/i) {
@@ -307,10 +302,6 @@ if ($want_unknown ne "no") {
 
 # required
 
-if ($platform eq "none") {
-    print STDERR "with-platform=[win32|x64] is REQUIRED\n";
-    exit 1;
-}
 if ($crypto_backend eq "none") {
     print STDERR "with-crypto-backend=[botan|openssl] is REQUIRED\n";
     exit 1;
@@ -326,6 +317,11 @@ if ($enable_debug eq "yes") {
 # verbose
 
 if ($verbose) {
+    if ($platform eq "x64") {
+        print "64bit: enabled\n";
+    } else {
+        print "64bit: disabled\n";
+    }
     if ($enable_debug eq "yes") {
         print "debug: enabled\n";
     } else {
@@ -341,7 +337,6 @@ if ($verbose) {
     } else {
         print "gost: disabled\n";
     }
-    print "platform: $platform\n";
     print "crypto-backend: $crypto_backend\n";
     if ($crypto_backend eq "botan") {
         print "botan-path: $botan_path\n";

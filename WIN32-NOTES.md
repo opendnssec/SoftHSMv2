@@ -3,13 +3,17 @@
 Works and checked on Visual Studio 2010 C++ Express, should work with any
 Visual Studio 2010, 2012 or 2013 Desktop.
 
+Default locations and names are:
 OpenSSL in ssl directory at the same level, Botan in btn, CppUnit in cu,
-if you want Debug versions you need ssl_d, btn_d and cu/lib/cppunitd*.
-Note openssl.exe should be in the PATH for cryptotest.exe even
-with the Botan crypto backend.
+if you want Debug versions you need ssl_d, btn_d and cu/lib/cppunitd.lib
+or cu/cppunitd.lib. You can use the DLL or the static library for
+Botan and OpenSSL, if it exists the DLL is copied in the Configuration
+(i.e., Release or Debug) directory so is at the same place than
+other binaries.
 
 Configure scripts in win32, same syntax than autotools but without --,
-e.g., 'perl Configure.pl with-platform=win32 with-crypto-backend=botan'.
+e.g., 'perl Configure.pl with-crypto-backend=botan' (or if you prefer
+Python 2 'python Configure.py with-crypto-backend=botan').
 
 ## Project List
 

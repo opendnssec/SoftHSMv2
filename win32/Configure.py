@@ -59,7 +59,8 @@ condnames = [ "BOTAN",
 
 # enable-xxx/disable-xxx arguments
 
-enablelist = [ "debug",
+enablelist = [ "64bit",
+               "debug",
                "ecc",
                "gost" ]
 
@@ -69,8 +70,7 @@ withlist = [ "botan",
              "cppunit",
              "crypto-backend",
              "loglevel",
-             "openssl",
-             "platform" ]
+             "openssl" ]
 
 # general arguments
 
@@ -93,11 +93,11 @@ usage,
 "  clean               (command) clean up generated files",
 "  <none>              (command) print a summary of the configuration",
 "\nOptional Features:",
+"  enable-64bit        enable 64-bit compiling [default=no]\n",
 "  enable-debug        enable build of Debug config [default=yes]",
 "  enable-ecc          enable support for ECC [default=yes]",
 "  enable-gost         enable support for GOST [default=yes]",
-"\nRequired Packages:",
-"  with-platform       select the platform [win32|x64]",
+"\nRequired Package:",
 "  with-crypto-backend select the crypto backend [botan|openssl]",
 "\nOptional Packages:",
 "  with-botan=PATH     speficy prefix of path of Botan",
@@ -116,7 +116,7 @@ unknown_value = None
 enable_debug = True
 enable_ecc = True
 enable_gost = True
-platform = None
+platform = 32
 crypto_backend = None
 botan_path = "..\\..\\btn"
 debug_botan_path = "..\\..\\btn_d"
@@ -195,11 +195,16 @@ def appargs(arg):
 
 def myenable(key, val):
     """parse enable/disable"""
+    global platform
     global enable_debug
     global enable_ecc
     global enable_gost
     global want_unknown
     global unknown_value
+    if key.lower() == "64bit":
+        if val:
+            platform = 64
+        return
     if key.lower() == "debug":
         if not val:
             enable_debug = False
@@ -220,7 +225,6 @@ def myenable(key, val):
 
 def mywith(key, val, detail = None):
     """parse with/without"""
-    global platform
     global crypto_backend
     global botan_path
     global openssl_path
@@ -228,16 +232,6 @@ def mywith(key, val, detail = None):
     global loglevel
     global want_unknown
     global unknown_value
-    if key.lower() == "platform":
-        if val and (detail.lower() == "win32"):
-            platform = "win32"
-            return
-        if val and (detail.lower() == "x64"):
-            platform = "x64"
-            return
-        want_unknown = True
-        unknown_value = "with-platform=" + detail
-        return
     if key.lower() == "crypto-backend":
         if val and (detail.lower() == "botan"):
             crypto_backend = "botan"
@@ -339,7 +333,7 @@ def doconfig():
     global want_tests
 
     # configure the platform
-    if platform == "win32":
+    if platform == 32:
         varvals["PLATFORM"] = "Win32"
     else:
         varvals["PLATFORM"] = "x64"
@@ -536,8 +530,8 @@ def main(args):
     global want_help
     global want_clean
     global want_unknown
-    global platform
     global crypto_backend
+    global platform
     global enable_debug
     global enable_ecc
     global enable_gost
@@ -566,9 +560,6 @@ def main(args):
 
     # required
 
-    if platform is None:
-        print >> sys.stderr, "with-platform=[win32|x64] is REQUIRED"
-        sys.exit(1)
     if crypto_backend is None:
         print >> sys.stderr, "with-crypto-backend=[botan|openssl] is REQUIRED"
         sys.exit(1)
@@ -576,6 +567,10 @@ def main(args):
     # status before config
 
     if verbose:
+        if platform == 64:
+            print "64bit: enabled"
+        else:
+            print "64bit: disabled"
         if enable_debug:
             print "debug: enabled"
         else:
@@ -588,7 +583,6 @@ def main(args):
             print "gost: enabled"
         else:
             print "gost: disabled"
-        print "platform: " + platform
         print "crypto-backend: " + crypto_backend
         if crypto_backend == "botan":
             print "botan-path: " + botan_path
