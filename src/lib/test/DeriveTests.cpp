@@ -186,7 +186,7 @@ bool DeriveTests::compareSecret(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hKe
 	rv = C_GetAttributeValue(hSession, hKey2, &valAttrib, 1);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 	CPPUNIT_ASSERT(valAttrib.ulValueLen == 100);
-	return std::memcmp(val1, val2, 100)==0;
+	return memcmp(val1, val2, 100) == 0;
 }
 
 void DeriveTests::testDhDerive()
