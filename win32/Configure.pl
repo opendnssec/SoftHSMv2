@@ -379,7 +379,8 @@ if ($crypto_backend eq "botan") {
     $condvals{"BOTAN"} = 1;
     $varvals{"LIBNAME"} = "botan.lib";
     $botan_path = File::Spec->rel2abs($botan_path);
-    $varvals{"DLLPATH"} = File::Spec->catfile($botan_path, "botan.dll");
+    my $botan_dll = File::Spec->catfile($botan_path, "botan.dll");
+    $varvals{"DLLPATH"} = $botan_dll;
     my $botan_inc = File::Spec->catfile($botan_path, "include");
     if (!-f File::Spec->catfile($botan_inc, "botan\\init.h")) {
         die "can't find Botan includes\n";
@@ -409,12 +410,124 @@ if ($crypto_backend eq "botan") {
         $varvals{"DEBUGINCPATH"} = $varvals{"INCLUDEPATH"};
         $varvals{"DEBUGLIBPATH"} = $varvals{"LIBPATH"};
     }
+    if ($verbose) {
+        print "checking Botan version\n";
+    }
+    `copy "$botan_dll" .`;
+    my $inc = $botan_inc;
+    my $lib = File::Spec->catfile($botan_path, "botan.lib");
+    open F, ">testbotan.cpp" || die $!;
+    print F << 'EOF';
+#include <botan/init.h>
+#include <botan/pipe.h>
+#include <botan/filters.h>
+#include <botan/hex.h>
+#include <botan/sha2_32.h>
+#include <botan/emsa3.h>
+#include <botan/version.h>
+int main() {
+ using namespace Botan;
+ LibraryInitializer::initialize();
+ new EMSA3_Raw();
+#if BOTAN_VERSION_CODE < BOTAN_VERSION_CODE_FOR(1,10,0)
+ return 1;
+#endif
+#if BOTAN_VERSION_CODE > BOTAN_VERSION_CODE_FOR(1,11,0)
+ return 2;
+#endif
+ return 0;
+}
+EOF
+    close F;
+    my $compret = `cl /nologo /MD /I "$inc" testbotan.cpp "$lib"`;
+    if (grep { -f and -x } ".\\testbotan.exe") {
+        `.\\testbotan.exe`;
+        if ($? == 1) {
+            die "Botan version too old\n";
+        } elsif ($? == 2) {
+            die "Botan version 11 not yet supported\n";
+        } elsif ($? != 0) {
+            die "Botan test failed\n";
+        }
+    } else {
+        die "can't compile Botan test: $compret\n";
+    }
+    if ($enable_ecc eq "yes") {
+        if ($verbose) {
+            print "checking ECC support\n";
+        }
+        open F, ">testecc.cpp" || die $!;
+        print F << 'EOF';
+#include <botan/init.h>
+#include <botan/ec_group.h>
+#include <botan/oids.h>
+int main() {
+ Botan::LibraryInitializer::initialize();
+ const std::string name("secp256r1");
+ const Botan::OID oid(Botan::OIDS::lookup(name));
+ const Botan::EC_Group ecg(oid);
+ try {
+  const Botan::SecureVector<Botan::byte> der =
+   ecg.DER_encode(Botan::EC_DOMPAR_ENC_OID);
+ } catch(...) {
+  return 1;
+ }
+ return 0;
+}
+EOF
+        close F;
+        $compret = `cl /nologo /MD /I "$inc" testecc.cpp "$lib"`;
+        if (grep { -f and -x } ".\\testecc.exe") {
+            `.\\testecc.exe`;
+            if ($? != 0) {
+                die "can't find P256: upgrade to Botan >= 1.10.6\n";
+            }
+        } else {
+            die "can't compile ECC test: $compret\n";
+        }
+    }
+    if ($enable_gost eq "yes") {
+        if ($verbose) {
+            print "checking GOST support\n";
+        }
+        open F, ">testgost.cpp" || die $!;
+        print F << 'EOF';
+#include <botan/init.h>
+#include <botan/gost_3410.h>
+#include <botan/oids.h>
+int main() {
+ Botan::LibraryInitializer::initialize();
+ const std::string name("gost_256A");
+ const Botan::OID oid(Botan::OIDS::lookup(name));
+ const Botan::EC_Group ecg(oid);
+ try {
+  const Botan::SecureVector<Botan::byte> der =
+   ecg.DER_encode(Botan::EC_DOMPAR_ENC_OID);
+ } catch(...) {
+  return 1;
+ }
+ return 0;
+}
+EOF
+        close F;
+        $compret = `cl /nologo /MD /I "$inc" testgost.cpp "$lib"`;
+        if (grep { -f and -x } ".\\testgost.exe") {
+            `.\\testgost.exe`;
+            if ($? != 0) {
+                die "can't find GOST: upgrade to Botan >= 1.10.6\n";
+            }
+        } else {
+            die "can't compile GOST test: $compret\n";
+        }
+    }
+    # TODO: Botan GNU MP support
+    # TODO: Botan AES key wrap with pad
 } else {
     $condvals{"OPENSSL"} = 1;
     $varvals{"LIBNAME"} = "libeay32.lib";
     $openssl_path = File::Spec->rel2abs($openssl_path);
-    $varvals{"DLLPATH"} =
-        File::Spec->catfile($openssl_path, "bin\\libeay32.dll");
+    my $openssl_dll = File::Spec->catfile($openssl_path, "bin\\libeay32.dll");
+    $varvals{"DLLPATH"} = $openssl_dll;
     my $openssl_inc = File::Spec->catfile($openssl_path, "include");
     if (!-f File::Spec->catfile($openssl_inc, "openssl\\ssl.h")) {
         die "can't find OpenSSL headers\n";
@@ -448,6 +561,119 @@ if ($crypto_backend eq "botan") {
         $varvals{"DEBUGINCPATH"} = $varvals{"INCLUDEPATH"};
         $varvals{"DEBUGLIBPATH"} = $varvals{"LIBPATH"};
     }
+    if ($verbose) {
+        print "checking OpenSSL\n";
+    }
+    `copy "$openssl_dll" .`;
+    my $inc = $openssl_inc;
+    my $lib = File::Spec->catfile($openssl_lib, "libeay32.lib");
+    open F, ">testossl.c" || die $!;
+    print F << 'EOF';
+#include <openssl/err.h>
+int main() {
+ ERR_clear_error();
+ return 0;
+}
+EOF
+    close F;
+    my $compret = `cl /nologo /MD /I "$inc" testossl.c "$lib"`;
+    if (grep { -f and -x } ".\\testossl.exe") {
+        `.\\testossl.exe`;
+        if ($? != 0) {
+            die "OpenSSL test failed\n";
+        }
+    } else {
+        die "can't compile OpenSSL test: $compret\n";
+    }
+    if ($verbose) {
+        print "checking OpenSSL version\n";
+    }
+    open F, ">testosslv.c" || die $!;
+    print F << 'EOF';
+#include <openssl/ssl.h>
+#include <openssl/opensslv.h>
+int main() {
+#ifndef OPENSSL_VERSION_NUMBER
+ return -1;
+#endif
+#if OPENSSL_VERSION_NUMBER >= 0x010000000L
+ return 0;
+#else
+ return 1;
+#endif
+}
+EOF
+    close F;
+    $compret = `cl /nologo /MD /I "$inc" testosslv.c "$lib"`;
+    if (grep { -f and -x } ".\\testosslv.exe") {
+        `.\\testosslv.exe`;
+        if ($? != 0) {
+            die "OpenSLL version too old (1.0.0 or later required)\n";
+        }
+    } else {
+        die "can't compile OpenSSL version test: $compret\n";
+    }
+    if ($enable_ecc eq "yes") {
+        if ($verbose) {
+            print "checking ECC support\n";
+        }
+        open F, ">testecc.c" || die $!;
+        print F << 'EOF';
+#include <openssl/ecdsa.h>
+#include <openssl/objects.h>
+int main() {
+ EC_KEY *ec256, *ec384;
+ ec256 = EC_KEY_new_by_curve_name(NID_X9_62_prime256v1);
+ ec384 = EC_KEY_new_by_curve_name(NID_secp384r1);
+ if (ec256 == NULL || ec384 == NULL)
+  return 1;
+ return 0;
+}
+EOF
+        close F;
+        $compret = `cl /nologo /MD /I "$inc" testecc.c "$lib"`;
+        if (grep { -f and -x } ".\\testecc.exe") {
+            `.\\testecc.exe`;
+            if ($? != 0) {
+                die "can't find P256 or P384: no ECC support\n";
+            }
+        } else {
+            die "can't compile ECC test: $compret\n";
+        }
+    }
+    if ($enable_gost eq "yes") {
+        if ($verbose) {
+            print "checking GOST support\n";
+        }
+        open F, ">testgost.c" || die $!;
+        print F << 'EOF';
+#include <openssl/conf.h>
+#include <openssl/engine.h>
+int main() {
+ ENGINE *e;
+ EC_KEY *ek;
+ ek = NULL;
+ OPENSSL_config(NULL);
+ e = ENGINE_by_id("gost");
+ if (e == NULL)
+  return 1;
+ if (ENGINE_init(e) <= 0)
+  return 1;
+ return 0;
+}
+EOF
+        close F;
+        $compret = `cl /nologo /MD /I "$inc" testgost.c "$lib"`;
+        if (grep { -f and -x } ".\\testgost.exe") {
+            `.\\testgost.exe`;
+            if ($? != 0) {
+                die "can't find GOST: no GOST support\n";
+            }
+        } else {
+            die "can't compile GOST test: $compret\n";
+        }
+    }
+    # TODO: Openssl AES key wrap with pad
 }
 
 # configure CppUnit
@@ -614,8 +840,8 @@ exit 0;
 
 # Notes: Unix configure.ac options
 #  --enable-64bit supported
-#  --enable-ecc supported (TODO auto detection)
-#  --enable-gost supported (TODO auto detection)
+#  --enable-ecc supported (no auto detection)
+#  --enable-gost supported (no auto detection)
 #  --enable-non-paged-memory (TODO)
 #  --enable-visibility (enforced by DLLS)
 #  --with-crypto-backend supported
