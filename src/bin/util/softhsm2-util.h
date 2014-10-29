@@ -39,7 +39,7 @@
 // Main functions
 
 void usage();
-int initToken(char* slot, char* label, char* soPIN, char* userPIN);
+int initToken(char* slot, int free, char* label, char* soPIN, char* userPIN);
 int showSlots();
 int importKeyPair(char* filePath, char* filePIN, char* slot, char* userPIN, char* objectLabel, char* objectID, int forceExec, int noPublicKey);
 int crypto_import_key_pair(CK_SESSION_HANDLE hSession, char* filePath, char* filePIN, char* label, char* objID, size_t objIDLen, int noPublicKey);
@@ -48,6 +48,7 @@ int crypto_import_key_pair(CK_SESSION_HANDLE hSession, char* filePath, char* fil
 
 void crypto_init();
 void crypto_final();
+int getFirstFreeToken(CK_SLOT_ID &slot);
 
 /// Hex
 char* hexStrToBin(char* objectID, int idLength, size_t* newLen);
