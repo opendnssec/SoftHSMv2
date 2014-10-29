@@ -138,7 +138,7 @@ int main(int argc, char* argv[])
 	char* objectID = NULL;
 	char* slot = NULL;
 	int forceExec = 0;
-	int free = 0;
+	int freeToken = 0;
 	int noPublicKey = 0;
 
 	int doInitToken = 0;
@@ -196,7 +196,7 @@ int main(int argc, char* argv[])
 				forceExec = 1;
 				break;
 			case OPT_FREE:
-				free = 1;
+				freeToken = 1;
 				break;
 			case OPT_VERSION:
 			case 'v':
@@ -242,7 +242,7 @@ int main(int argc, char* argv[])
 	// We should create the token.
 	if (doInitToken)
 	{
-		rv = initToken(slot, free, label, soPIN, userPIN);
+		rv = initToken(slot, freeToken, label, soPIN, userPIN);
 	}
 
 	// Show all available slots
@@ -269,18 +269,18 @@ int main(int argc, char* argv[])
 }
 
 // Initialize the token
-int initToken(char* slot, int free, char* label, char* soPIN, char* userPIN)
+int initToken(char* slot, int freeToken, char* label, char* soPIN, char* userPIN)
 {
 	char so_pin_copy[MAX_PIN_LEN+1];
 	char user_pin_copy[MAX_PIN_LEN+1];
 
-	if (slot != NULL && free == 1)
+	if (slot != NULL && freeToken == 1)
 	{
 		fprintf(stderr, "ERROR: Select --slot <number> or --free\n");
 		return 1;
 	}
 
-	if (slot == NULL && free != 1)
+	if (slot == NULL && freeToken != 1)
 	{
 		fprintf(stderr, "ERROR: A slot number must be supplied. "
 				"Use --slot <number> or --free\n");
