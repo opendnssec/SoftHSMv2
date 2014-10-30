@@ -19,11 +19,11 @@ AC_DEFUN([ACX_OPENSSL_EVPAESWRAP],[
 			}
 		]])
 	],[
-		AC_MSG_RESULT([RFC 3349 is supported])
+		AC_MSG_RESULT([RFC 3394 is supported])
 		AC_DEFINE([HAVE_AES_KEY_WRAP], [1],
 		          [Define if advanced AES key wrap without pad is supported in EVP interface])
 	],[
-		AC_MSG_RESULT([RFC 3349 is not supported])
+		AC_MSG_RESULT([RFC 3394 is not supported])
 	])
 
 	AC_MSG_CHECKING(OpenSSL EVP interface for AES key wrapping)
