@@ -8257,7 +8257,7 @@ CK_RV SoftHSM::deriveDH
 	}
 
 	if (rv == CKR_OK)
-		rv = this->CreateObject(hSession, secretAttribs, secretAttribsCount, phKey, OBJECT_OP_GENERATE);
+		rv = this->CreateObject(hSession, secretAttribs, secretAttribsCount, phKey, OBJECT_OP_DERIVE);
 
 	// Store the attributes that are being supplied
 	if (rv == CKR_OK)
@@ -8489,7 +8489,7 @@ CK_RV SoftHSM::deriveECDH
 	}
 
 	if (rv == CKR_OK)
-		rv = this->CreateObject(hSession, secretAttribs, secretAttribsCount, phKey, OBJECT_OP_GENERATE);
+		rv = this->CreateObject(hSession, secretAttribs, secretAttribsCount, phKey, OBJECT_OP_DERIVE);
 
 	// Store the attributes that are being supplied
 	if (rv == CKR_OK)
