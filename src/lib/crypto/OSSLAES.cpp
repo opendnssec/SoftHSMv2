@@ -65,7 +65,7 @@ bool OSSLAES::unwrapKey(const SymmetricKey* key, const SymWrap::Type mode, const
 }
 
 #ifdef HAVE_AES_KEY_WRAP
-// RFC 3349 wrapping and all unwrapping algorithms require aligned blocks
+// RFC 3394 wrapping and all unwrapping algorithms require aligned blocks
 bool OSSLAES::checkLength(const int insize, const int minsize, const char * const operation) const
 {
 	if (insize < minsize)
