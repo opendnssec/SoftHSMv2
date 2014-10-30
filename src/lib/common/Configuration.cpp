@@ -42,6 +42,7 @@ std::auto_ptr<Configuration> Configuration::instance(NULL);
 const struct config Configuration::valid_config[] = {
 	{ "directories.tokendir",	CONFIG_TYPE_STRING },
 	{ "objectstore.backend",	CONFIG_TYPE_STRING },
+	{ "log.level",			CONFIG_TYPE_STRING },
 	{ "",				CONFIG_TYPE_UNSUPPORTED }
 };
 

@@ -4,12 +4,14 @@ SoftHSM develop
 
 * SOFTHSM-100: Use --free with softhsm2-util to initialize the first
   free token.
+* SOFTHSM-103: Allow runtime configuration of log level.
 * Add support for CKM_RSA_PKCS_OAEP key un/wrapping.
   (Patch from Petr Spacek)
 * Use OpenSSL EVP interface for AES key wrapping.
   (Patch from Petr Spacek)
 
 Bugfixes:
+* SOFTHSM-102: C_DeriveKey() uses OBJECT_OP_GENERATE.
 * Coverity found a number of issues.
 
 

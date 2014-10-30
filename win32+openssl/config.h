@@ -1,5 +1,8 @@
 /* config.h for WIN32 */
 
+/* The default log level */
+#define DEFAULT_LOG_LEVEL "INFO"
+
 /* Default storage backend for token objects */
 #define DEFAULT_OBJECTSTORE_BACKEND "file"
 
@@ -65,9 +68,6 @@
 
 /* Non-paged memory for secure storage */
 #undef SENSITIVE_NON_PAGE
-
-/* The log level set by the user */
-#define SOFTLOGLEVEL 3
 
 /* Define to 1 if you have the ANSI C header files. */
 #undef STDC_HEADERS

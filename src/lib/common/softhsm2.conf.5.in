@@ -1,4 +1,4 @@
-.TH softhsm2.conf 5 "20 March 2014" "SoftHSM"
+.TH softhsm2.conf 5 "30 October 2014" "SoftHSM"
 .SH NAME
 softhsm2.conf \- SoftHSM configuration file
 .SH SYNOPSIS
@@ -43,6 +43,15 @@ In order to use the "db" backend, the SoftHSM build needs to be configured with 
 .RS
 .nf
 objectstore.backend = file
+.fi
+.RE
+.LP
+.SH LOG.LEVEL
+The log level which can be set to ERROR, WARNING, INFO or DEBUG.
+.LP
+.RS
+.nf
+log.level = INFO
 .fi
 .RE
 .LP
