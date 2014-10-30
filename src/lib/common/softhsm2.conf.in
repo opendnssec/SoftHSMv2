@@ -2,3 +2,6 @@
 
 directories.tokendir = @softhsmtokendir@
 objectstore.backend = file
+
+# ERROR, WARNING, INFO, DEBUG
+log.level = INFO

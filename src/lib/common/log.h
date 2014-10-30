@@ -35,19 +35,10 @@
 #ifndef _SOFTHSM_V2_LOG_H
 #define _SOFTHSM_V2_LOG_H
 
-#include <syslog.h>
 #include "config.h"
 
-/* The log levels */
-#define SOFTERROR	1
-#define SOFTWARNING	2
-#define SOFTINFO	3
-#define SOFTDEBUG	4
-
-/* Set the default loglevel if none is set */
-#ifndef SOFTLOGLEVEL
-#define SOFTLOGLEVEL	SOFTDEBUG
-#endif /* !SOFTLOGLEVEL */
+#include <syslog.h>
+#include <string>
 
 /* Unset this define if you don't want to log the source file name and line number */
 #define SOFTHSM_LOG_FILE_AND_LINE
@@ -59,50 +50,35 @@
 /* #define DEBUG_LOG_STDERR */
 
 /* Logging errors */
-#if SOFTLOGLEVEL >= SOFTERROR
 #ifndef _WIN32
 #define ERROR_MSG(...) softHSMLog(LOG_ERR, __func__, __FILE__, __LINE__, __VA_ARGS__);
 #else
 #define ERROR_MSG(...) softHSMLog(LOG_ERR, __FUNCTION__, __FILE__, __LINE__, __VA_ARGS__);
 #endif
-#else
-#define ERROR_MSG(...)
-#endif
 
 /* Logging warnings */
-#if SOFTLOGLEVEL >= SOFTWARNING
 #ifndef _WIN32
 #define WARNING_MSG(...) softHSMLog(LOG_WARNING, __func__, __FILE__, __LINE__, __VA_ARGS__);
 #else
 #define WARNING_MSG(...) softHSMLog(LOG_WARNING, __FUNCTION__, __FILE__, __LINE__, __VA_ARGS__);
 #endif
-#else
-#define WARNING_MSG(...)
-#endif
 
 /* Logging information */
-#if SOFTLOGLEVEL >= SOFTINFO
 #ifndef _WIN32
 #define INFO_MSG(...) softHSMLog(LOG_INFO, __func__, __FILE__, __LINE__, __VA_ARGS__);
 #else
 #define INFO_MSG(...) softHSMLog(LOG_INFO, __FUNCTION__, __FILE__, __LINE__, __VA_ARGS__);
 #endif
-#else
-#define INFO_MSG(...)
-#endif
 
 /* Logging debug information */
-#if SOFTLOGLEVEL >= SOFTDEBUG
 #ifndef _WIN32
 #define DEBUG_MSG(...) softHSMLog(LOG_DEBUG, __func__, __FILE__, __LINE__, __VA_ARGS__);
 #else
 #define DEBUG_MSG(...) softHSMLog(LOG_DEBUG, __FUNCTION__, __FILE__, __LINE__, __VA_ARGS__);
 #endif
-#else
-#define DEBUG_MSG(...)
-#endif
 
 /* Function definitions */
+bool setLogLevel(const std::string &loglevel);
 void softHSMLog(const int loglevel, const char* functionName, const char* fileName, const int lineNo, const char* format, ...);
 
 #endif /* !_SOFTHSM_V2_LOG_H */

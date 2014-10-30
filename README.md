@@ -61,8 +61,6 @@ Options:
 	--with-crypto-backend	Select crypto backend (openssl|botan)
 	--with-openssl=PATH	Specify prefix of path of OpenSSL
 	--with-botan=PATH	Specify prefix of path of Botan
-	--with-loglevel=INT	The log level. 0=No log 1=Error 2=Warning
-				3=Info 4=Debug (default INT=3)
 	--with-migrate		Build the migration tool. Used when migrating
 				a SoftHSM v1 token database. Requires SQLite3
 	--with-objectstore-backend-db
