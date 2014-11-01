@@ -337,7 +337,7 @@ CK_RV P11Attribute::retrieve(Token *token, bool isPrivate, CK_VOID_PTR pValue, C
 				const unsigned char* attrPtr = value.const_byte_str();
 				memcpy(pValue,attrPtr,attrSize);
 			}
-			else
+			else if (attr.getByteStringValue().size() != 0)
 			{
 				const unsigned char* attrPtr = attr.getByteStringValue().const_byte_str();
 				memcpy(pValue,attrPtr,attrSize);
