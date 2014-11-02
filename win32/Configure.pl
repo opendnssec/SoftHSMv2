@@ -29,6 +29,14 @@ my @filelist = ("config.h",
                 "util\\util.vcxproj.filters",
                 "util\\util.vcxproj");
 
+# test files
+
+my @testlist = ("botan",
+                "ecc",
+                "gost",
+                "ossl",
+                "osslv");
+
 # variables to expand
 
 my %varvals;
@@ -63,7 +71,9 @@ my @condnames = ("BOTAN",
 my @enablelist = ("64bit",
                   "debug",
                   "ecc",
-                  "gost");
+                  "gost",
+                  "keep",
+                  "verbose");
 
 # with-xxx/without-xxx arguments
 
@@ -72,9 +82,9 @@ my @withlist = ("botan",
                 "crypto-backend",
                 "openssl");
 
-# general arguments
+# general commands
 
-my @optionlist = ("help", "verbose", "clean");
+my @commandlist = ("help", "clean");
 
 # usage
 
@@ -87,12 +97,13 @@ my @usage = ("Usage: perl Configure.pl help\n",
 my @help = (
 "'perl Configure.pl' configures SoftHSMv2 build files.\n\n",
 @usage,
-"\nGeneral Options and Commands:\n",
-"  verbose             (options) print messages\n",
-"  help                (command) print this help\n",
-"  clean               (command) clean up generated files\n",
+"\nGeneral Commands:\n",
+"  help                print this help\n",
+"  clean               clean up generated files\n",
 "  <none>              (command) print a summary of the configuration\n",
 "\nOptional Features:\n",
+"  enable-verbose      print messages [default=no]\n",
+"  enable-keep         keep test files after configuration [default=no]\n",
 "  enable-64bit        enable 64-bit compiling [default=no]\n",
 "  enable-debug        enable build of Debug config [default=yes]\n",
 "  enable-ecc          enable support for ECC [default=yes]\n",
@@ -106,12 +117,13 @@ my @help = (
 
 # variables for parsing
 
-my $configargs;
 my $verbose = 0;
+my $configargs;
 my $want_help = "no";
 my $want_clean = "no";
 my $want_unknown = "no";
 my $unknown_value;
+my $enable_keep = "no";
 my $enable_debug = "yes";
 my $enable_ecc = "yes";
 my $enable_gost = "yes";
@@ -138,6 +150,9 @@ if ($#ARGV < 0) {
 foreach (@ARGV) {
     if (/^verbose$/i) {
         $verbose = 1;
+    } elsif (/^keep$/i) {
+        appargs($_);
+        $enable_keep = "yes";
     } elsif (/^help$/i) {
         $want_help = "yes";
     } elsif (/^disable-(.*)$/i) {
@@ -197,6 +212,14 @@ sub myenable {
     } elsif ($key =~ /^gost$/i) {
         if ($val =~ /^no$/i) {
             $enable_gost = "no";
+        }
+    } elsif ($key =~ /^keep$/i) {
+        if ($val =~ /^yes$/i) {
+            $enable_keep = "yes";
+        }
+    } elsif ($key =~ /^verbose$/i) {
+        if ($val =~ /^yes$/i) {
+            $verbose = 1;
         }
     } else {
         $want_unknown = "yes";
@@ -264,8 +287,21 @@ if ($want_help ne "no") {
 
 # clean
 
+sub cleantest {
+    my $file;
+    foreach $file (@testlist) {
+        unlink("test" . $file . ".c");
+        unlink("test" . $file . ".cpp");
+        unlink("test" . $file . ".obj");
+        unlink("test" . $file . ".exe");
+    }
+    unlink("botan.dll");
+    unlink("libeay32.dll");
+}
+
 if ($want_clean eq "yes") {
     my $file;
+    cleantest();
     foreach $file (@filelist) {
         unlink($file);
     }
@@ -315,6 +351,11 @@ if ($verbose) {
         print "gost: enabled\n";
     } else {
         print "gost: disabled\n";
+    }
+    if ($enable_keep eq "yes") {
+        print "keep: enabled\n";
+    } else {
+        print "keep: disabled\n";
     }
     print "crypto-backend: $crypto_backend\n";
     if ($crypto_backend eq "botan") {
@@ -819,6 +860,12 @@ my $file;
 
 foreach $file (@filelist) {
     setupfile($file);
+}
+
+# clean test files
+
+if ($enable_keep ne "yes") {
+    cleantest();
 }
 
 print "Configured.\n";

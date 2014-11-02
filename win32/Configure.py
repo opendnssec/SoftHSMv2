@@ -30,6 +30,13 @@ filelist = ["config.h",
             "util\\util.vcxproj.filters",
             "util\\util.vcxproj"]
 
+# test files
+testlist = ["botan",
+            "ecc",
+            "gost",
+            "ossl",
+            "osslv"]
+
 # variables to expand
 
 varvals = {}
@@ -64,7 +71,9 @@ condnames = ["BOTAN",
 enablelist = ["64bit",
               "debug",
               "ecc",
-              "gost"]
+              "gost",
+              "keep",
+              "verbose"]
 
 # with-xxx/without-xxx arguments
 
@@ -73,28 +82,28 @@ withlist = ["botan",
             "crypto-backend",
             "openssl"]
 
-# general arguments
+# general commands
 
-optionlist = ["help", "verbose", "clean"]
+commandlist = ["help", "clean"]
 
 # usage
 
-usage = ["Usage: perl Configure.pl help",
-         "       perl Configure.pl options*",
-         "       perl Configure.pl clean"]
+usage = ["Usage: python Configure.pl help",
+         "       python Configure.pl options*",
+         "       python Configure.pl clean"]
 
 # help
 
-myhelp = [\
-"'perl Configure.pl' configures SoftHSMv2 build files.\n",
-usage,
-"\nGeneral Options and Commands:",
-"  verbose             (options) print messages",
-"  help                (command) print this help",
-"  clean               (command) clean up generated files",
-"  <none>              (command) print a summary of the configuration",
+myhelp = ["'python Configure.pl' configures SoftHSMv2 build files.\n"] +\
+usage + [\
+"\nGeneral Commands:",
+"  help                print this help",
+"  clean               clean up generated files",
+"  <none>              print a summary of the configuration",
 "\nOptional Features:",
-"  enable-64bit        enable 64-bit compiling [default=no]\n",
+"  enable-verbose      print messages [default=no]",
+"  enable-keep         keep test files after configuration [default=no]",
+"  enable-64bit        enable 64-bit compiling [default=no]",
 "  enable-debug        enable build of Debug config [default=yes]",
 "  enable-ecc          enable support for ECC [default=yes]",
 "  enable-gost         enable support for GOST [default=yes]",
@@ -107,12 +116,13 @@ usage,
 
 # variables for parsing
 
+verbose = False
 configargs = None
-verbose = 0
 want_help = False
 want_clean = False
 want_unknown = False
 unknown_value = None
+enable_keep = False
 enable_debug = True
 enable_ecc = True
 enable_gost = True
@@ -128,6 +138,7 @@ cppunit_path = "..\\..\\cu"
 def parseargs(args):
     """parse arguments"""
     global verbose
+    global enable_keep
     global want_help
     global want_clean
     global want_unknown
@@ -136,7 +147,10 @@ def parseargs(args):
     global debug_openssl_path
     for arg in args:
         if arg.lower() == "verbose":
-            verbose = 1
+            verbose = True
+            continue
+        if arg.lower() == "keep":
+            enable_keep = True
             continue
         if arg.lower() == "help":
             want_help = True
@@ -200,6 +214,8 @@ def myenable(key, val):
     global enable_debug
     global enable_ecc
     global enable_gost
+    global enable_keep
+    global verbose
     global want_unknown
     global unknown_value
     if key.lower() == "64bit":
@@ -217,6 +233,14 @@ def myenable(key, val):
     if key.lower() == "gost":
         if not val:
             enable_gost = False
+        return
+    if key.lower() == "keep":
+        if val:
+            enable_keep = True
+        return
+    if key.lower() == "verbose":
+        if val:
+            verbose = True
         return
     want_unknown = True
     if not val:
@@ -278,10 +302,32 @@ def dohelp():
         print line
     sys.exit(1)
 
+def docleantest():
+    """clean test files"""
+    for basename in testlist:
+        filename = "test" + basename + ".c"
+        if os.path.isfile(filename):
+            os.unlink(filename)
+        filename = "test" + basename + ".cpp"
+        if os.path.isfile(filename):
+            os.unlink(filename)
+        filename = "test" + basename + ".obj"
+        if os.path.isfile(filename):
+            os.unlink(filename)
+        filename = "test" + basename + ".exe"
+        if os.path.isfile(filename):
+            os.unlink(filename)
+    if os.path.isfile("botan.dll"):
+        os.unlink("botan.dll")
+    if os.path.isfile("libeay32.dll"):
+        os.unlink("libeay32.dll")
+
 def doclean():
     """clean"""
+    docleantest()
     for filename in filelist:
-        os.unlink(filename)
+        if os.path.isfile(filename):
+            os.unlink(filename)
     sys.exit(0)
 
 def dounknown():
@@ -746,6 +792,10 @@ def main(args):
             print "gost: enabled"
         else:
             print "gost: disabled"
+        if enable_keep:
+            print "keep: enabled"
+        else:
+            print "keep: disabled"
         print "crypto-backend: " + crypto_backend
         if crypto_backend == "botan":
             print "botan-path: " + botan_path
@@ -778,6 +828,11 @@ def main(args):
 
     for filename in filelist:
         setupfile(filename)
+
+    # clean test file
+    if not enable_keep:
+        cleantest()
+
     print "Configured."
     sys.exit(0)
 
