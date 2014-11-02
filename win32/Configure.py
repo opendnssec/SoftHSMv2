@@ -40,6 +40,7 @@ varnames = ["CUINCPATH",
             "DEBUGINCPATH",
             "DEBUGLIBPATH",
             "DLLPATH",
+            "EXTRALIBS",
             "INCLUDEPATH",
             "LIBNAME",
             "LIBPATH",
@@ -346,7 +347,11 @@ def doconfig():
             varvals["DEBUGLIBPATH"] = varvals["LIBPATH"]
         if verbose:
             print "checking Botan version"
-        subprocess.call(["copy", botan_dll, "."], shell=True)
+        system_libs = []
+        if os.path.exists(botan_dll):
+            subprocess.call(["copy", botan_dll, "."], shell=True)
+        else:
+            system_libs = ["user32.lib", "advapi32.lib"]
         inc = botan_inc
         lib = os.path.join(botan_path, "botan.lib")
         testfile = open("testbotan.cpp", "w")
@@ -371,9 +376,9 @@ int main() {\n\
  return 0;\n\
 }'
         testfile.close()
-        subprocess.check_output(
-            ["cl", "/nologo", "/MD", "/I", inc, "testbotan.cpp", lib],
-            stderr=subprocess.STDOUT)
+        command = ["cl", "/nologo", "/MD", "/I", inc, "testbotan.cpp", lib]
+        command.extend(system_libs)
+        subprocess.check_output(command, stderr=subprocess.STDOUT)
         if not os.path.exists(".\\testbotan.exe"):
             print >> sys.stderr, "can't create .\\testbotan.exe"
             sys.exit(1)
@@ -409,9 +414,9 @@ int main() {\n\
  return 0;\n\
 }'
             testfile.close()
-            subprocess.check_output(
-                ["cl", "/nologo", "/MD", "/I", inc, "testecc.cpp", lib],
-                stderr=subprocess.STDOUT)
+            command = ["cl", "/nologo", "/MD", "/I", inc, "testecc.cpp", lib]
+            command.extend(system_libs)
+            subprocess.check_output(command, stderr=subprocess.STDOUT)
             if not os.path.exists(".\\testecc.exe"):
                 print >> sys.stderr, "can't create .\\testecc.exe"
                 sys.exit(1)
@@ -441,9 +446,9 @@ int main() {\n\
  return 0;\n\
 }'
             testfile.close()
-            subprocess.check_output(
-                ["cl", "/nologo", "/MD", "/I", inc, "testgost.cpp", lib],
-                stderr=subprocess.STDOUT)
+            command = ["cl", "/nologo", "/MD", "/I", inc, "testgost.cpp", lib]
+            command.extend(system_libs)
+            subprocess.check_output(command, stderr=subprocess.STDOUT)
             if not os.path.exists(".\\testgost.exe"):
                 print >> sys.stderr, "can't create .\\testgost.exe"
                 sys.exit(1)
@@ -457,6 +462,7 @@ int main() {\n\
     else:
         condvals["OPENSSL"] = True
         varvals["LIBNAME"] = "libeay32.lib"
+        varvals["EXTRALIBS"] = "crypt32.lib;"
         openssl_path = os.path.abspath(openssl_path)
         openssl_dll = os.path.join(openssl_path, "bin\\libeay32.dll")
         varvals["DLLPATH"] = openssl_dll
@@ -493,7 +499,11 @@ int main() {\n\
             varvals["DEBUGLIBPATH"] = varvals["LIBPATH"]
         if verbose:
             print "checking OpenSSL"
-        subprocess.call(["copy", openssl_dll, "."], shell=True)
+        system_libs = []
+        if os.path.exists(openssl_dll):
+            subprocess.call(["copy", openssl_dll, "."], shell=True)
+        else:
+            system_libs = ["user32.lib", "advapi32.lib", "gdi32.lib", "crypt32.lib"]
         inc = openssl_inc
         lib = os.path.join(openssl_lib, "libeay32.lib")
         testfile = open("testossl.c", "w")
@@ -504,9 +514,9 @@ int main() {\n\
  return 0;\n\
 }'
         testfile.close()
-        subprocess.check_output(
-            ["cl", "/nologo", "/MD", "/I", inc, "testossl.c", lib],
-            stderr=subprocess.STDOUT)
+        command = ["cl", "/nologo", "/MD", "/I", inc, "testossl.c", lib]
+        command.extend(system_libs)
+        subprocess.check_output(command, stderr=subprocess.STDOUT)
         if not os.path.exists(".\\testossl.exe"):
             print >> sys.stderr, "can't create .\\testossl.exe"
             sys.exit(1)
@@ -530,9 +540,9 @@ int main() {\n\
 #endif\n\
 }'
         testfile.close()
-        subprocess.check_output(
-            ["cl", "/nologo", "/MD", "/I", inc, "testosslv.c", lib],
-            stderr=subprocess.STDOUT)
+        command = ["cl", "/nologo", "/MD", "/I", inc, "testosslv.c", lib]
+        command.extend(system_libs)
+        subprocess.check_output(command, stderr=subprocess.STDOUT)
         if not os.path.exists(".\\testosslv.exe"):
             print >> sys.stderr, "can't create .\\testosslv.exe"
             sys.exit(1)
@@ -556,9 +566,9 @@ int main() {\n\
  return 0;\n\
 }'
             testfile.close()
-            subprocess.check_output(
-                ["cl", "/nologo", "/MD", "/I", inc, "testecc.c", lib],
-                stderr=subprocess.STDOUT)
+            command = ["cl", "/nologo", "/MD", "/I", inc, "testecc.c", lib]
+            command.extend(system_libs)
+            subprocess.check_output(command, stderr=subprocess.STDOUT)
             if not os.path.exists(".\\testecc.exe"):
                 print >> sys.stderr, "can't create .\\testecc.exe"
                 sys.exit(1)
@@ -585,9 +595,9 @@ int main() {\n\
  return 0;\n\
 }'
             testfile.close()
-            subprocess.check_output(
-                ["cl", "/nologo", "/MD", "/I", inc, "testgost.c", lib],
-                stderr=subprocess.STDOUT)
+            command = ["cl", "/nologo", "/MD", "/I", inc, "testgost.c", lib]
+            command.extend(system_libs)
+            subprocess.check_output(command, stderr=subprocess.STDOUT)
             if not os.path.exists(".\\testgost.exe"):
                 print >> sys.stderr, "can't create .\\testgost.exe"
                 sys.exit(1)
@@ -775,13 +785,13 @@ main(sys.argv)
 
 # Notes: Unix configure.ac options
 #  --enable-64bit supported
-#  --enable-ecc supported (no auto detection)
-#  --enable-gost supported (no auto detection)
+#  --enable-ecc supported
+#  --enable-gost supported
 #  --enable-non-paged-memory (TODO)
-#  --enable-visibility (enforced by DLLS)
+#  --enable-visibility (enforced by DLLs)
 #  --with-crypto-backend supported
-#  --with-openssl supported (TODO build check)
-#  --with-botan supported (TODO build check)
+#  --with-openssl supported (finish build check)
+#  --with-botan supported (finish build check)
 #  --with-migrate (useless as SoftHSMv1 is not supported)
 #  --with-objectstore-backend-db (TODO)
 #  --with-sqlite3 (TODO)

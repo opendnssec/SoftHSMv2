@@ -39,6 +39,7 @@ my @varnames = ("CUINCPATH",
                 "DEBUGINCPATH",
                 "DEBUGLIBPATH",
                 "DLLPATH",
+                "EXTRALIBS",
                 "INCLUDEPATH",
                 "LIBNAME",
                 "LIBPATH",
@@ -390,7 +391,12 @@ if ($crypto_backend eq "botan") {
     if ($verbose) {
         print "checking Botan version\n";
     }
-    `copy "$botan_dll" .`;
+    my $system_libs = "";
+    if (-f $botan_dll) {
+        `copy "$botan_dll" .`;
+    } else {
+        $system_libs = " user32.lib advapi32.lib";
+    }
     my $inc = $botan_inc;
     my $lib = File::Spec->catfile($botan_path, "botan.lib");
     open F, ">testbotan.cpp" || die $!;
@@ -416,7 +422,7 @@ int main() {
 }
 EOF
     close F;
-    my $compret = `cl /nologo /MD /I "$inc" testbotan.cpp "$lib"`;
+    my $compret = `cl /nologo /MD /I "$inc" testbotan.cpp "$lib"$system_libs`;
     if (grep { -f and -x } ".\\testbotan.exe") {
         `.\\testbotan.exe`;
         if ($? == 1) {
@@ -453,7 +459,7 @@ int main() {
 }
 EOF
         close F;
-        $compret = `cl /nologo /MD /I "$inc" testecc.cpp "$lib"`;
+        $compret = `cl /nologo /MD /I "$inc" testecc.cpp "$lib"$system_libs`;
         if (grep { -f and -x } ".\\testecc.exe") {
             `.\\testecc.exe`;
             if ($? != 0) {
@@ -487,7 +493,7 @@ int main() {
 }
 EOF
         close F;
-        $compret = `cl /nologo /MD /I "$inc" testgost.cpp "$lib"`;
+        $compret = `cl /nologo /MD /I "$inc" testgost.cpp "$lib"$system_libs`;
         if (grep { -f and -x } ".\\testgost.exe") {
             `.\\testgost.exe`;
             if ($? != 0) {
@@ -503,6 +509,7 @@ EOF
 } else {
     $condvals{"OPENSSL"} = 1;
     $varvals{"LIBNAME"} = "libeay32.lib";
+    $varvals{"EXTRALIBS"} = "crypt32.lib;";
     $openssl_path = File::Spec->rel2abs($openssl_path);
     my $openssl_dll = File::Spec->catfile($openssl_path, "bin\\libeay32.dll");
     $varvals{"DLLPATH"} = $openssl_dll;
@@ -542,7 +549,12 @@ EOF
     if ($verbose) {
         print "checking OpenSSL\n";
     }
-    `copy "$openssl_dll" .`;
+    my $system_libs = "";
+    if (-f $openssl_dll) {
+        `copy "$openssl_dll" .`;
+    } else {
+        $system_libs = " user32.lib advapi32.lib gdi32.lib crypt32.lib";
+    }
     my $inc = $openssl_inc;
     my $lib = File::Spec->catfile($openssl_lib, "libeay32.lib");
     open F, ">testossl.c" || die $!;
@@ -554,7 +566,7 @@ int main() {
 }
 EOF
     close F;
-    my $compret = `cl /nologo /MD /I "$inc" testossl.c "$lib"`;
+    my $compret = `cl /nologo /MD /I "$inc" testossl.c "$lib"$system_libs`;
     if (grep { -f and -x } ".\\testossl.exe") {
         `.\\testossl.exe`;
         if ($? != 0) {
@@ -582,7 +594,7 @@ int main() {
 }
 EOF
     close F;
-    $compret = `cl /nologo /MD /I "$inc" testosslv.c "$lib"`;
+    $compret = `cl /nologo /MD /I "$inc" testosslv.c "$lib"$system_libs`;
     if (grep { -f and -x } ".\\testosslv.exe") {
         `.\\testosslv.exe`;
         if ($? != 0) {
@@ -609,7 +621,7 @@ int main() {
 }
 EOF
         close F;
-        $compret = `cl /nologo /MD /I "$inc" testecc.c "$lib"`;
+        $compret = `cl /nologo /MD /I "$inc" testecc.c "$lib"$system_libs`;
         if (grep { -f and -x } ".\\testecc.exe") {
             `.\\testecc.exe`;
             if ($? != 0) {
@@ -641,7 +653,7 @@ int main() {
 }
 EOF
         close F;
-        $compret = `cl /nologo /MD /I "$inc" testgost.c "$lib"`;
+        $compret = `cl /nologo /MD /I "$inc" testgost.c "$lib"$system_libs`;
         if (grep { -f and -x } ".\\testgost.exe") {
             `.\\testgost.exe`;
             if ($? != 0) {
@@ -815,13 +827,13 @@ exit 0;
 
 # Notes: Unix configure.ac options
 #  --enable-64bit supported
-#  --enable-ecc supported (no auto detection)
-#  --enable-gost supported (no auto detection)
+#  --enable-ecc supported
+#  --enable-gost supported
 #  --enable-non-paged-memory (TODO)
-#  --enable-visibility (enforced by DLLS)
+#  --enable-visibility (enforced by DLLs)
 #  --with-crypto-backend supported
-#  --with-openssl supported (TODO build check)
-#  --with-botan supported (TODO build check)
+#  --with-openssl supported (finish build check)
+#  --with-botan supported (finish build check)
 #  --with-migrate (useless as SoftHSMv1 is not supported)
 #  --with-objectstore-backend-db (TODO)
 #  --with-sqlite3 (TODO)
