@@ -33,9 +33,12 @@ filelist = ["config.h",
 # test files
 testlist = ["botan",
             "ecc",
+            "gnump",
             "gost",
             "ossl",
-            "osslv"]
+            "osslv",
+            "rfc3394",
+            "rfc5649"]
 
 # variables to expand
 
@@ -61,6 +64,7 @@ condvals = {}
 condnames = ["BOTAN",
              "ECC",
              "GOST",
+             "NONPAGE",
              "OPENSSL",
              "RFC3394",
              "RFC5649",
@@ -73,6 +77,7 @@ enablelist = ["64bit",
               "ecc",
               "gost",
               "keep",
+              "non-paged-memory",
               "verbose"]
 
 # with-xxx/without-xxx arguments
@@ -80,11 +85,13 @@ enablelist = ["64bit",
 withlist = ["botan",
             "cppunit",
             "crypto-backend",
+            "debug-botan",
+            "debug-openssl",
             "openssl"]
 
 # general commands
 
-commandlist = ["help", "clean"]
+commandlist = ["help", "clean"] # verbose, keep
 
 # usage
 
@@ -97,22 +104,24 @@ usage = ["Usage: python Configure.pl help",
 myhelp = ["'python Configure.pl' configures SoftHSMv2 build files.\n"] +\
 usage + [\
 "\nGeneral Commands:",
-"  help                print this help",
-"  clean               clean up generated files",
-"  <none>              print a summary of the configuration",
+"  help                     print this help",
+"  clean                    clean up generated files",
+"  <none>                   print a summary of the configuration",
 "\nOptional Features:",
-"  enable-verbose      print messages [default=no]",
-"  enable-keep         keep test files after configuration [default=no]",
-"  enable-64bit        enable 64-bit compiling [default=no]",
-"  enable-debug        enable build of Debug config [default=yes]",
-"  enable-ecc          enable support for ECC [default=yes]",
-"  enable-gost         enable support for GOST [default=yes]",
-"\nRequired Package:",
-"  with-crypto-backend select the crypto backend [botan|openssl]",
+"  enable-verbose           print messages [default=no]",
+"  enable-keep              keep test files after config [default=no]",
+"  enable-64bit             enable 64-bit compiling [default=no]",
+"  enable-debug             enable build of Debug config [default=yes]",
+"  enable-ecc               enable support for ECC [default=yes]",
+"  enable-gost              enable support for GOST [default=yes]",
+"  enable-non-paged-memory  enable non-paged memory [default=yes]",
 "\nOptional Packages:",
-"  with-botan=PATH     speficy prefix of path of Botan",
-"  with-openssl=PATH   speficy prefix of path of OpenSSL",
-"  with-cppunit=PATH   specify prefix of path of CppUnit"]
+"  with-crypto-backend      select the crypto backend [openssl|botan]",
+"  with-botan=PATH          speficy prefix of path of Botan (Release)",
+"  with-debug-botan=PATH    speficy prefix of path of Botan (Debug)",
+"  with-openssl=PATH        speficy prefix of path of OpenSSL (Release)",
+"  with-debug-openssl=PATH  speficy prefix of path of OpenSSL (Debug)",
+"  with-cppunit=PATH        specify prefix of path of CppUnit"]
 
 # variables for parsing
 
@@ -126,12 +135,13 @@ enable_keep = False
 enable_debug = True
 enable_ecc = True
 enable_gost = True
+enable_non_paged = True
 platform = 32
-crypto_backend = None
+crypto_backend = "openssl"
 botan_path = "..\\..\\btn"
-debug_botan_path = "..\\..\\btn_d"
+debug_botan_path = None
 openssl_path = "..\\..\\ssl"
-debug_openssl_path = "..\\..\\ssl_d"
+debug_openssl_path = None
 want_tests = True
 cppunit_path = "..\\..\\cu"
 
@@ -189,10 +199,13 @@ def parseargs(args):
         want_unknown = True
         unknown_value = arg
         break
+
     # debug
     if enable_debug:
-        debug_botan_path = botan_path + "_d"
-        debug_openssl_path = openssl_path + "_d"
+        if debug_botan_path is None:
+            debug_botan_path = botan_path + "_d"
+        if debug_openssl_path is None:
+            debug_openssl_path = openssl_path + "_d"
 
 def appargs(arg):
     """append seen arguments to configargs"""
@@ -214,6 +227,7 @@ def myenable(key, val):
     global enable_debug
     global enable_ecc
     global enable_gost
+    global enable_non_paged
     global enable_keep
     global verbose
     global want_unknown
@@ -234,6 +248,10 @@ def myenable(key, val):
         if not val:
             enable_gost = False
         return
+    if key.lower() == "non-paged-memory":
+        if not val:
+            enable_non_paged = False
+        return
     if key.lower() == "keep":
         if val:
             enable_keep = True
@@ -252,17 +270,19 @@ def mywith(key, val, detail=None):
     """parse with/without"""
     global crypto_backend
     global botan_path
+    global debug_botan_path
     global openssl_path
+    global debug_openssl_path
     global want_tests
     global cppunit_path
     global want_unknown
     global unknown_value
     if key.lower() == "crypto-backend":
-        if val and (detail.lower() == "botan"):
-            crypto_backend = "botan"
-            return
         if val and (detail.lower() == "openssl"):
             crypto_backend = "openssl"
+            return
+        if val and (detail.lower() == "botan"):
+            crypto_backend = "botan"
             return
         want_unknown = True
         unknown_value = "with-crypto-backend=" + detail
@@ -275,6 +295,14 @@ def mywith(key, val, detail=None):
         if detail.lower() != "yes":
             botan_path = detail
         return
+    if key.lower() == "debug-botan":
+        if not val:
+            want_unknown = True
+            unknown_value = "without-debug-botan doesn't make sense"
+            return
+        if detail.lower() != "yes":
+            debug_botan_path = detail
+        return
     if key.lower() == "openssl":
         if not val:
             want_unknown = True
@@ -282,6 +310,14 @@ def mywith(key, val, detail=None):
             return
         if detail.lower() != "yes":
             openssl_path = detail
+        return
+    if key.lower() == "debug-openssl":
+        if not val:
+            want_unknown = True
+            unknown_value = "without-debug-openssl doesn't make sense"
+            return
+        if detail.lower() != "yes":
+            debug_openssl_path = detail
         return
     if key.lower() == "cppunit":
         if not val:
@@ -387,10 +423,11 @@ def doconfig():
                 sys.exit(1)
             varvals["DEBUGLIBPATH"] = debug_botan_path
         else:
-            debug_botan_path = botan_path
             varvals["DEBUGDLLPATH"] = varvals["DLLPATH"]
             varvals["DEBUGINCPATH"] = varvals["INCLUDEPATH"]
             varvals["DEBUGLIBPATH"] = varvals["LIBPATH"]
+
+        # Botan version
         if verbose:
             print "checking Botan version"
         system_libs = []
@@ -438,9 +475,11 @@ int main() {\n\
         if ret != 0:
             print >> sys.stderr, "Botan test failed"
             sys.exit(1)
+
+        # Botan ECC support
         if enable_ecc:
             if verbose:
-                print "checking ECC support"
+                print "checking Botan ECC support"
             testfile = open("testecc.cpp", "w")
             print >>testfile, '\
 #include <botan/init.h>\n\
@@ -470,9 +509,11 @@ int main() {\n\
                 print >> sys.stderr, \
                     "can't find P256: upgrade to Botan >= 1.10.6"
                 sys.exit(1)
+
+        # Botan GOST support
         if enable_gost:
             if verbose:
-                print "checking GOST support"
+                print "checking Botan GOST support"
             testfile = open("testgost.cpp", "w")
             print >>testfile, '\
 #include <botan/init.h>\n\
@@ -502,10 +543,61 @@ int main() {\n\
                 print >> sys.stderr, \
                     "can't find GOST: upgrade to Botan >= 1.10.6"
                 sys.exit(1)
+
+        # no check for Botan RFC3394 support
         condvals["RFC3394"] = True
-        # TODO: Botan AES key wrap with pad
-        # TODO: Botan GNU MP support
+
+        # Botan RFC5649 support
+        if verbose:
+            print "checking Botan RFC5649 support"
+        testfile = open("testrfc5649.cpp", "w")
+        print >>testfile, '\
+#include <botan/botan.h>\n\
+#include <botan/rfc3394.h>\n\
+int main() {\n\
+ using namespace Botan;\n\
+ SecureVector<byte> key(10);\n\
+ SymmetricKey kek("AABB");\n\
+ Algorithm_Factory& af = global_state().algorithm_factory();\n\
+ SecureVector<byte> x = rfc5649_keywrap(key, kek, af);\n\
+ return 1;\n\
+}'
+        testfile.close()
+        command = ["cl", "/nologo", "/MD", "/I", inc, "testrfc5649.cpp", lib]
+        command.extend(system_libs)
+        subprocess.call(command)
+        if not os.path.exists(".\\testrfc5649.exe"):
+            if verbose:
+                print "Found AES key wrap with pad"
+            condvals["RFC5649"] = True
+        else:
+            if verbose:
+                print "can't compile Botan AES key wrap with pad"
+
+        # Botan GNU MP support
+        if verbose:
+            print "checking Botan GNU MP support"
+        testfile = open("testgnump.cpp", "w")
+        print >>testfile, '\
+#include <botan/build.h>\n\
+int main() {\n\
+#ifndef BOTAN_HAS_ENGINE_GNU_MP\n\
+#error "No GNU MP support";\n\
+#endif\n\
+}'
+        testfile.close()
+        command = ["cl", "/nologo", "/MD", "/I", inc, "testgnump.cpp", lib]
+        command.extend(system_libs)
+        subprocess.call(command)
+        if not os.path.exists(".\\testgnump.exe"):
+            if verbose:
+                print "Botan GNU MP is supported"
+        else:
+            if verbose:
+                print "Botan GNU MP is not supported"
+
     else:
+
         condvals["OPENSSL"] = True
         varvals["LIBNAME"] = "libeay32.lib"
         varvals["EXTRALIBS"] = "crypt32.lib;"
@@ -539,10 +631,11 @@ int main() {\n\
                 sys.exit(1)
             varvals["DEBUGLIBPATH"] = debug_openssl_lib
         else:
-            debug_openssl_path = openssl_path
             varvals["DEBUGDLLPATH"] = varvals["DLLPATH"]
             varvals["DEBUGINCPATH"] = varvals["INCLUDEPATH"]
             varvals["DEBUGLIBPATH"] = varvals["LIBPATH"]
+
+        # OpenSSL support
         if verbose:
             print "checking OpenSSL"
         system_libs = []
@@ -569,6 +662,8 @@ int main() {\n\
         if subprocess.call(".\\testossl.exe") != 0:
             print >> sys.stderr, "OpenSSL test failed"
             sys.exit(1)
+
+        # OpenSSL version
         if verbose:
             print "checking OpenSSL version"
         testfile = open("testosslv.c", "w")
@@ -596,9 +691,11 @@ int main() {\n\
             print >> sys.stderr, \
                 "OpenSLL version too old (1.0.0 or later required)"
             sys.exit(1)
+
+        # OpenSSL ECC support
         if enable_ecc:
             if verbose:
-                print "checking ECC support"
+                print "checking OpenSSL ECC support"
             testfile = open("testecc.c", "w")
             print >>testfile, '\
 #include <openssl/ecdsa.h>\n\
@@ -621,9 +718,11 @@ int main() {\n\
             if subprocess.call(".\\testecc.exe") != 0:
                 print >> sys.stderr, "can't find P256 or P384: no ECC support"
                 sys.exit(1)
+
+        # OpenSSL GOST support
         if enable_gost:
             if verbose:
-                print "checking GOST support"
+                print "checking OpenSSL GOST support"
             testfile = open("testgost.c", "w")
             print >>testfile, '\
 #include <openssl/conf.h>\n\
@@ -650,9 +749,51 @@ int main() {\n\
             if subprocess.call(".\\testgost.exe") != 0:
                 print >> sys.stderr, "can't find GOST: no GOST support"
                 sys.exit(1)
-        # TODO: OpenSSL AES key wrap (aka RFC 3394)
-        # TODO: OpenSSL AES key wrap with pad (aka RFC 5649)
 
+        # OpenSSL EVP interface for AES key wrapping (aka RFC 3394)
+        if verbose:
+            print "checking OpenSSL EVP interface for AES key wrapping"
+        testfile = open("testrfc3394.c", "w")
+        print >>testfile, '\
+#include <openssl/evp.h>\n\
+int main() {\n\
+ EVP_aes_128_wrap();\n\
+ return 1;\n\
+}'
+        testfile.close()
+        command = ["cl", "/nologo", "/MD", "/I", inc, "testrfc3394.c", lib]
+        command.extend(system_libs)
+        subprocess.call(command)
+        if os.path.exists(".\\testrfc3394.exe"):
+            if verbose:
+                print "RFC 3394 is supported"
+            condvals["RFC3394"] = True
+        else:
+            if verbose:
+                print "can't compile OpenSSL RFC 3394"
+
+        # OpenSSL EVP interface for AES key wrap with pad (aka RFC 5649)
+        if verbose:
+            print "checking OpenSSL EVP interface for AES key wrapping with pad"
+        testfile = open("testrfc5649.c", "w")
+        print >>testfile, '\
+#include <openssl/evp.h>\n\
+int main() {\n\
+ EVP_aes_128_wrap_pad();\n\
+ return 1;\n\
+}'
+        testfile.close()
+        command = ["cl", "/nologo", "/MD", "/I", inc, "testrfc5649.c", lib]
+        command.extend(system_libs)
+        subprocess.call(command)
+        if os.path.exists(".\\testrfc5649.exe"):
+            if verbose:
+                print "RFC 5649 is supported"
+            condvals["RFC5649"] = True
+        else:
+            if verbose:
+                print "can't compile OpenSSL RFC 5649"
+        
     # configure CppUnit
     if want_tests:
         condvals["TESTS"] = True
@@ -673,6 +814,10 @@ int main() {\n\
                 print >> sys.stderr, "can't find debug CppUnit library"
                 sys.exit(1)
         varvals["CULIBPATH"] = cppunit_lib
+
+    # misc
+    if enable_non_paged:
+        condvals["NONPAGE"] = True
 
 def kw(path):
     """escape spaces"""
@@ -767,15 +912,13 @@ def main(args):
     if want_unknown:
         dounknown()
 
-    # required
-
-    if crypto_backend is None:
-        print >> sys.stderr, "with-crypto-backend=[botan|openssl] is REQUIRED"
-        sys.exit(1)
-
     # status before config
 
     if verbose:
+        if enable_keep:
+            print "keep: enabled"
+        else:
+            print "keep: disabled"
         if platform == 64:
             print "64bit: enabled"
         else:
@@ -792,10 +935,10 @@ def main(args):
             print "gost: enabled"
         else:
             print "gost: disabled"
-        if enable_keep:
-            print "keep: enabled"
+        if enable_non_paged:
+            print "non-paged-memory: enabled"
         else:
-            print "keep: disabled"
+            print "non-paged-memory: disabled"
         print "crypto-backend: " + crypto_backend
         if crypto_backend == "botan":
             print "botan-path: " + botan_path
@@ -842,11 +985,11 @@ main(sys.argv)
 #  --enable-64bit supported
 #  --enable-ecc supported
 #  --enable-gost supported
-#  --enable-non-paged-memory (TODO)
+#  --enable-non-paged-memory supported
 #  --enable-visibility (enforced by DLLs)
 #  --with-crypto-backend supported
-#  --with-openssl supported (finish build check)
-#  --with-botan supported (finish build check)
+#  --with-botan supported (Release and Debug)
+#  --with-openssl supported (Release and Debug)
 #  --with-migrate (useless as SoftHSMv1 is not supported)
 #  --with-objectstore-backend-db (TODO)
-#  --with-sqlite3 (TODO)
+#  --with-sqlite3 (useless until objectstore backend can be chosen)

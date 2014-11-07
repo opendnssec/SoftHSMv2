@@ -13,7 +13,41 @@ other binaries.
 
 Configure scripts in win32, same syntax than autotools but without --,
 e.g., 'perl Configure.pl with-crypto-backend=botan' (or if you prefer
-Python 2 'python Configure.py with-crypto-backend=botan').
+Python 2 'python Configure.py with-crypto-backend=botan') in a
+Visual Studio Command Prompt windows (which is a command.exe windows
+where the script <VS>\VC\vcvarsall.bat was invoked).
+
+After you can open the softhsm2.sln file with the Visual Studio GUI
+or invoke MSBuild for instance with:
+msbuild /t:Build /p:Configuration=Release softhsm2.sln
+
+## Botan build
+
+python configure.py --cpu=x86_32 --cc=msvc --link-mode=copy --prefix=...
+ options: --cpu=x86_64 --enable-debug --disable-shared
+ GNU MP: --with-gnump could be fine but GNU MP is not available on WIN32
+nmake /f Makefile
+nmake /f Makefile check
+.\check --validate
+name /f Makefile install
+
+## OpenSSL build
+
+perl Configure --prefix=... enable-static-engine VC-WIN32
+ options: VC-WIN64A debug-VS-WIN*
+ms\do_ms (or ms\do_win64a)
+nmake /f ms\ntdll.mak (or ms\nt.make)
+nmake /f ms\ntdll.mak test
+nmake /f ms\ntdll.mak install
+
+## CppUnit build
+
+Get a recent CppUnit distrib, for instance the 1.13.2 version.
+Open with the Visual Studio GUI the src\CppUnitLibraries2010.sln solution file.
+The interesting project is the cppunit one which builds the needed
+cppunit.lib and cppunitd.lib static libraries. Note there is no installation
+tool so you have to copy include and library files at the right place
+yourselves.
 
 ## Project List
 
@@ -29,6 +63,7 @@ Python 2 'python Configure.py with-crypto-backend=botan').
 - fopen
 - getenv
 - gmtime
+_ _open
 - _snprintf (or snprintf on Visual Studio 14)
 - sprintf
 - sscanf

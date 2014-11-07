@@ -78,7 +78,11 @@
 #define PACKAGE_VERSION  "2.0.0b1"
 
 /* Non-paged memory for secure storage */
+@IF NONPAGE
+#define SENSITIVE_NON_PAGE 1
+@ELSE NONPAGE
 #undef SENSITIVE_NON_PAGE
+@END NONPAGE
 
 /* Define to 1 if you have the ANSI C header files. */
 #undef STDC_HEADERS

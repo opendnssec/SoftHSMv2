@@ -33,9 +33,12 @@ my @filelist = ("config.h",
 
 my @testlist = ("botan",
                 "ecc",
+                "gnump",
                 "gost",
                 "ossl",
-                "osslv");
+                "osslv",
+                "rfc3394",
+                "rfc5649");
 
 # variables to expand
 
@@ -61,6 +64,7 @@ my %condvals;
 my @condnames = ("BOTAN",
                  "ECC",
                  "GOST",
+                 "NONPAGE",
                  "OPENSSL",
                  "RFC3394",
                  "RFC5649",
@@ -73,6 +77,7 @@ my @enablelist = ("64bit",
                   "ecc",
                   "gost",
                   "keep",
+                  "non-paged-memory",
                   "verbose");
 
 # with-xxx/without-xxx arguments
@@ -80,11 +85,13 @@ my @enablelist = ("64bit",
 my @withlist = ("botan",
                 "cppunit",
                 "crypto-backend",
+                "debug-botan",
+                "debug-openssl",
                 "openssl");
 
 # general commands
 
-my @commandlist = ("help", "clean");
+my @commandlist = ("help", "clean"); # verbose, keep
 
 # usage
 
@@ -98,22 +105,24 @@ my @help = (
 "'perl Configure.pl' configures SoftHSMv2 build files.\n\n",
 @usage,
 "\nGeneral Commands:\n",
-"  help                print this help\n",
-"  clean               clean up generated files\n",
-"  <none>              (command) print a summary of the configuration\n",
+"  help                     print this help\n",
+"  clean                    clean up generated files\n",
+"  <none>                   print a summary of the configuration\n",
 "\nOptional Features:\n",
-"  enable-verbose      print messages [default=no]\n",
-"  enable-keep         keep test files after configuration [default=no]\n",
-"  enable-64bit        enable 64-bit compiling [default=no]\n",
-"  enable-debug        enable build of Debug config [default=yes]\n",
-"  enable-ecc          enable support for ECC [default=yes]\n",
-"  enable-gost         enable support for GOST [default=yes]\n",
-"\nRequired Package:\n",
-"  with-crypto-backend select the crypto backend [botan|openssl]\n",
+"  enable-verbose           print messages [default=no]\n",
+"  enable-keep              keep test files after config [default=no]\n",
+"  enable-64bit             enable 64-bit compiling [default=no]\n",
+"  enable-debug             enable build of Debug config [default=yes]\n",
+"  enable-ecc               enable support for ECC [default=yes]\n",
+"  enable-gost              enable support for GOST [default=yes]\n",
+"  enable-non-paged-memory  enable non-paged memory [default=yes]\n",
 "\nOptional Packages:\n",
-"  with-botan=PATH     speficy prefix of path of Botan\n",
-"  with-openssl=PATH   speficy prefix of path of OpenSSL\n",
-"  with-cppunit=PATH   specify prefix of path of CppUnit\n");
+"  with-crypto-backend      select the crypto backend [openssl|botan]\n",
+"  with-botan=PATH          speficy prefix of path of Botan (Release)\n",
+"  with-debug-botan=PATH    speficy prefix of path of Botan (Debug)\n",
+"  with-openssl=PATH        speficy prefix of path of OpenSSL (Release)\n",
+"  with-debug-openssl=PATH  speficy prefix of path of OpenSSL (Debug)\n",
+"  with-cppunit=PATH        specify prefix of path of CppUnit\n");
 
 # variables for parsing
 
@@ -127,12 +136,13 @@ my $enable_keep = "no";
 my $enable_debug = "yes";
 my $enable_ecc = "yes";
 my $enable_gost = "yes";
+my $enable_non_paged = "yes";
 my $platform = "win32";
-my $crypto_backend = "none";
+my $crypto_backend = "openssl";
 my $botan_path = "..\\..\\btn";
-my $debug_botan_path = "..\\..\\btn_d";
+my $debug_botan_path;
 my $openssl_path = "..\\..\\ssl";
-my $debug_openssl_path = "..\\..\\ssl_d";
+my $debug_openssl_path;
 my $want_tests = "yes";
 my $cppunit_path = "..\\..\\cu";
 
@@ -213,6 +223,10 @@ sub myenable {
         if ($val =~ /^no$/i) {
             $enable_gost = "no";
         }
+    } elsif ($key =~ /^non-paged-memory$/i) {
+        if ($val =~ /^no$/i) {
+            $enable_non_paged = "no";
+        }
     } elsif ($key =~ /^keep$/i) {
         if ($val =~ /^yes$/i) {
             $enable_keep = "yes";
@@ -238,10 +252,10 @@ sub mywith {
     my $val = $_[1];
 
     if ($key =~ /^crypto-backend$/i) {
-        if ($val =~ /^botan$/i) {
-            $crypto_backend = "botan";
-        } elsif($val =~ /^openssl$/i) {
+        if ($val =~ /^openssl$/i) {
             $crypto_backend = "openssl";
+        } elsif ($val =~ /^botan$/i) {
+            $crypto_backend = "botan";
         } else {
             $want_unknown = "yes";
             $unknown_value = "with-crypto-backend=" . $val;
@@ -253,12 +267,26 @@ sub mywith {
         } elsif ($val !~ /^yes$/i) {
             $botan_path = $val;
         }
+    } elsif ($key =~ /^debug-botan$/i) {
+        if ($val =~ /^no$/i) {
+            $want_unknown = "yes";
+            $unknown_value = "without-debug-botan doesn't make sense\n";
+        } elsif ($val !~ /^yes$/i) {
+            $debug_botan_path = $val;
+        }
     } elsif ($key =~ /^openssl$/i) {
         if ($val =~ /^no$/i) {
             $want_unknown = "yes";
             $unknown_value = "without-openssl doesn't make sense\n";
         } elsif ($val !~ /^yes$/i) {
             $openssl_path = $val;
+        }
+    } elsif ($key =~ /^debug-openssl$/i) {
+        if ($val =~ /^no$/i) {
+            $want_unknown = "yes";
+            $unknown_value = "without-debug-openssl doesn't make sense\n";
+        } elsif ($val !~ /^yes$/i) {
+            $debug_openssl_path = $val;
         }
     } elsif ($key =~ /^cppunit$/i) {
         if ($val =~ /^no$/i) {
@@ -315,23 +343,25 @@ if ($want_unknown ne "no") {
     exit 1;
 }
 
-# required
-
-if ($crypto_backend eq "none") {
-    print STDERR "with-crypto-backend=[botan|openssl] is REQUIRED\n";
-    exit 1;
-}
-
 # debug
 
 if ($enable_debug eq "yes") {
-    $debug_botan_path = $botan_path . "_d";
-    $debug_openssl_path = $openssl_path . "_d";
+    if (!defined($debug_botan_path)) {
+        $debug_botan_path = $botan_path . "_d";
+    }
+    if (!defined($debug_openssl_path)) {
+        $debug_openssl_path = $openssl_path . "_d";
+    }
 }
 
 # verbose
 
 if ($verbose) {
+    if ($enable_keep eq "yes") {
+        print "keep: enabled\n";
+    } else {
+        print "keep: disabled\n";
+    }
     if ($platform eq "x64") {
         print "64bit: enabled\n";
     } else {
@@ -352,10 +382,10 @@ if ($verbose) {
     } else {
         print "gost: disabled\n";
     }
-    if ($enable_keep eq "yes") {
-        print "keep: enabled\n";
+    if ($enable_non_paged eq "yes") {
+        print "non-paged-memory: enabled\n";
     } else {
-        print "keep: disabled\n";
+        print "non-paged-memory: disabled\n";
     }
     print "crypto-backend: $crypto_backend\n";
     if ($crypto_backend eq "botan") {
@@ -424,11 +454,12 @@ if ($crypto_backend eq "botan") {
         }
         $varvals{"DEBUGLIBPATH"} = $debug_botan_path;
     } else {
-        $debug_botan_path = $botan_path;
         $varvals{"DEBUGDLLPATH"} = $varvals{"DLLPATH"};
         $varvals{"DEBUGINCPATH"} = $varvals{"INCLUDEPATH"};
         $varvals{"DEBUGLIBPATH"} = $varvals{"LIBPATH"};
     }
+
+    # Botan version
     if ($verbose) {
         print "checking Botan version\n";
     }
@@ -476,9 +507,11 @@ EOF
     } else {
         die "can't compile Botan test: $compret\n";
     }
+
+    # Botan ECC support
     if ($enable_ecc eq "yes") {
         if ($verbose) {
-            print "checking ECC support\n";
+            print "checking Botan ECC support\n";
         }
         open F, ">testecc.cpp" || die $!;
         print F << 'EOF';
@@ -510,9 +543,11 @@ EOF
             die "can't compile ECC test: $compret\n";
         }
     }
+
+    # Botan GOST support
     if ($enable_gost eq "yes") {
         if ($verbose) {
-            print "checking GOST support\n";
+            print "checking Botan GOST support\n";
         }
         open F, ">testgost.cpp" || die $!;
         print F << 'EOF';
@@ -544,10 +579,67 @@ EOF
             die "can't compile GOST test: $compret\n";
         }
     }
+
+    # no check for Botan RFC3394 support
     $condvals{"RFC3394"} = 1;
-    # TODO: Botan AES key wrap with pad
-    # TODO: Botan GNU MP support
+
+    # Botan RFC5649 support
+    if ($verbose) {
+        print "checking Botan RFC5649 support\n";
+    }
+    open F, ">testrfc5649.cpp" || die $!;
+    print F << 'EOF';
+#include <botan/botan.h>
+#include <botan/rfc3394.h>
+int main() {
+ using namespace Botan;
+ SecureVector<byte> key(10);
+ SymmetricKey kek("AABB");
+ Algorithm_Factory& af = global_state().algorithm_factory();
+ SecureVector<byte> x = rfc5649_keywrap(key, kek, af);
+ return 1;
+}
+EOF
+    close F;
+    `cl /nologo /MD /I "$inc" testrfc5649.cpp "$lib"$system_libs`;
+    if (grep { -f and -x } ".\\testrfc5649.exe") {
+        if ($verbose) {
+            print "Found AES key wrap with pad\n";
+        }
+        $condvals{"RFC5649"} = 1;
+    } else {
+        if ($verbose) {
+            print "can't compile Botan AES key wrap with pad\n";
+        }
+    }
+
+    # Botan GNU MP support 
+    if ($verbose) {
+        print "checking Botan GNU MP support\n";
+    }
+    open F, ">testgnump.cpp" || die $!;
+    print F << 'EOF';
+#include <botan/build.h>
+int main() {
+#ifndef BOTAN_HAS_ENGINE_GNU_MP
+#error "No GNU MP support";
+#endif
+}
+EOF
+    close F;
+    `cl /nologo /MD /I "$inc" testgnump.cpp "$lib"$system_libs`;
+    if (grep { -f and -x } ".\\testgnump.exe") {
+        if ($verbose) {
+            print "Botan GNU MP is supported\n";
+        }
+    } else {
+        if ($verbose) {
+            print "Botan GNU MP is not supported\n";
+        }
+    }
+
 } else {
+
     $condvals{"OPENSSL"} = 1;
     $varvals{"LIBNAME"} = "libeay32.lib";
     $varvals{"EXTRALIBS"} = "crypt32.lib;";
@@ -582,11 +674,12 @@ EOF
         $varvals{"DEBUGLIBPATH"} = $debug_openssl_lib;
 
     } else {
-        $debug_openssl_path = $openssl_path;
         $varvals{"DEBUGDLLPATH"} = $varvals{"DLLPATH"};
         $varvals{"DEBUGINCPATH"} = $varvals{"INCLUDEPATH"};
         $varvals{"DEBUGLIBPATH"} = $varvals{"LIBPATH"};
     }
+
+    # OpenSSL support
     if ($verbose) {
         print "checking OpenSSL\n";
     }
@@ -616,6 +709,8 @@ EOF
     } else {
         die "can't compile OpenSSL test: $compret\n";
     }
+
+    # OpenSSL version
     if ($verbose) {
         print "checking OpenSSL version\n";
     }
@@ -644,9 +739,11 @@ EOF
     } else {
         die "can't compile OpenSSL version test: $compret\n";
     }
+
+    # OpenSSL ECC support
     if ($enable_ecc eq "yes") {
         if ($verbose) {
-            print "checking ECC support\n";
+            print "checking OpenSSL ECC support\n";
         }
         open F, ">testecc.c" || die $!;
         print F << 'EOF';
@@ -672,9 +769,11 @@ EOF
             die "can't compile ECC test: $compret\n";
         }
     }
+
+    # OpenSSL GOST support
     if ($enable_gost eq "yes") {
         if ($verbose) {
-            print "checking GOST support\n";
+            print "checking OpenSSL GOST support\n";
         }
         open F, ">testgost.c" || die $!;
         print F << 'EOF';
@@ -704,8 +803,56 @@ EOF
             die "can't compile GOST test: $compret\n";
         }
     }
-    # TODO: OpenSSL AES key wrap (aka RFC 3394)
-    # TODO: OpenSSL AES key wrap with pad (aka RFC 5649)
+
+    # OpenSSL EVP interface for AES key wrapping (aka RFC 3394)
+    if ($verbose) {
+        print "checking OpenSSL EVP interface for AES key wrapping\n";
+    }
+    open F, ">testrfc3394.c" || die $!;
+    print F << 'EOF';
+#include <openssl/evp.h>
+int main() {
+ EVP_aes_128_wrap();
+ return 1;
+}
+EOF
+    close F;
+    `cl /nologo /MD /I "$inc" testrfc3394.c "$lib"$system_libs`;
+    if (grep { -f and -x } ".\\testrfc3394.exe") {
+        if ($verbose) {
+            print "RFC 3394 is supported\n";
+        }
+        $condvals{"RFC3394"} = 1;
+    } else {
+        if ($verbose) {
+            print "can't compile OpenSSL RFC 3394\n";
+        }
+    }
+
+    # OpenSSL EVP interface for AES key wrap with pad (aka RFC 5649)
+    if ($verbose) {
+        print "checking OpenSSL EVP interface for AES key wrapping with pad\n";
+    }
+    open F, ">testrfc5649.c" || die $!;
+    print F << 'EOF';
+#include <openssl/evp.h>
+int main() {
+ EVP_aes_128_wrap_pad();
+ return 1;
+}
+EOF
+    close F;
+    `cl /nologo /MD /I "$inc" testrfc5649.c "$lib"$system_libs`;
+    if (grep { -f and -x } ".\\testrfc5649.exe") {
+        if ($verbose) {
+            print "RFC 5649 is supported\n";
+        }
+        $condvals{"RFC5649"} = 1;
+    } else {
+        if ($verbose) {
+            print "can't compile OpenSSL RFC 5649\n";
+        }
+    }
 }
 
 # configure CppUnit
@@ -731,6 +878,12 @@ if ($want_tests eq "yes") {
         }
     }
     $varvals{"CULIBPATH"} = $cppunit_lib;
+}
+
+# misc
+
+if ($enable_non_paged eq "yes") {
+    $condvals{"NONPAGE"} = 1;
 }
 
 # escape spaces
@@ -876,11 +1029,11 @@ exit 0;
 #  --enable-64bit supported
 #  --enable-ecc supported
 #  --enable-gost supported
-#  --enable-non-paged-memory (TODO)
+#  --enable-non-paged-memory supported
 #  --enable-visibility (enforced by DLLs)
 #  --with-crypto-backend supported
-#  --with-openssl supported (finish build check)
-#  --with-botan supported (finish build check)
+#  --with-botan supported (Release and Debug)
+#  --with-openssl supported (Release and Debug)
 #  --with-migrate (useless as SoftHSMv1 is not supported)
 #  --with-objectstore-backend-db (TODO)
-#  --with-sqlite3 (TODO)
+#  --with-sqlite3 (useless until objectstore backend can be chosen)
