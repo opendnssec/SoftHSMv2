@@ -46,6 +46,12 @@
 #include <string.h>
 #ifndef _WIN32
 #include <unistd.h>
+#else
+#include <io.h>
+#define S_IRUSR 0400
+#define S_IWUSR 0200
+#define open _open
+#define close _close
 #endif
 #include <iostream>
 #include <fstream>

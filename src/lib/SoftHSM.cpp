@@ -2257,7 +2257,10 @@ static CK_RV SymEncryptFinal(Session* session, CK_BYTE_PTR pEncryptedData, CK_UL
 		return CKR_GENERAL_ERROR;
 	}
 
-	memcpy(pEncryptedData, encryptedFinal.byte_str(), encryptedFinal.size());
+	if (encryptedFinal.size() != 0)
+	{
+		memcpy(pEncryptedData, encryptedFinal.byte_str(), encryptedFinal.size());
+	}
 	*pulEncryptedDataLen = encryptedFinal.size();
 
 	session->resetOp();

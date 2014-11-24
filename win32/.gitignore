@@ -1,0 +1,10 @@
+# get back config.h.in
+!config.h.in
+
+# Visual Studio
+*.sdf
+*.suo
+
+# Object files
+*.obj
+*.exe

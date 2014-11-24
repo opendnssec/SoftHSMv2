@@ -138,7 +138,11 @@ bool BotanGOST::signUpdate(const ByteString& dataToSign)
 
 	try
 	{
-		signer->update(dataToSign.const_byte_str(), dataToSign.size());
+		if (dataToSign.size() != 0)
+		{
+			signer->update(dataToSign.const_byte_str(),
+				       dataToSign.size());
+		}
 	}
 	catch (...)
 	{
@@ -276,7 +280,11 @@ bool BotanGOST::verifyUpdate(const ByteString& originalData)
 
 	try
 	{
-		verifier->update(originalData.const_byte_str(), originalData.size());
+		if (originalData.size() != 0)
+		{
+			verifier->update(originalData.const_byte_str(),
+					 originalData.size());
+		}
 	}
 	catch (...)
 	{

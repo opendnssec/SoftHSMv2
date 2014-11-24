@@ -108,7 +108,11 @@ bool BotanMacAlgorithm::signUpdate(const ByteString& dataToSign)
 
 	try
 	{
-		hmac->update(dataToSign.const_byte_str(), dataToSign.size());
+		if (dataToSign.size() != 0)
+		{
+			hmac->update(dataToSign.const_byte_str(),
+				     dataToSign.size());
+		}
 	}
 	catch (...)
 	{
@@ -223,7 +227,11 @@ bool BotanMacAlgorithm::verifyUpdate(const ByteString& originalData)
 
 	try
 	{
-		hmac->update(originalData.const_byte_str(), originalData.size());
+		if (originalData.size() != 0)
+		{
+			hmac->update(originalData.const_byte_str(),
+				     originalData.size());
+		}
 	}
 	catch (...)
 	{

@@ -1,0 +1,119 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|@PLATFORM@">
+      <Configuration>Debug</Configuration>
+      <Platform>@PLATFORM@</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|@PLATFORM@">
+      <Configuration>Release</Configuration>
+      <Platform>@PLATFORM@</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{05901466-4184-47C8-9D6C-3BB99BBF5378}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>util</RootNamespace>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|@PLATFORM@'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|@PLATFORM@'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|@PLATFORM@'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|@PLATFORM@'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|@PLATFORM@'">
+    <LinkIncremental>true</LinkIncremental>
+    <TargetName>softhsm2-util</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|@PLATFORM@'">
+    <LinkIncremental>false</LinkIncremental>
+    <TargetName>softhsm2-util</TargetName>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|@PLATFORM@'">
+    <ClCompile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..;..\..\src\bin\common;..\..\src\bin\win32;..\..\src\lib\cryptoki_compat;@DEBUGINCPATH@;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>@DEBUGLIBPATH@;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>@LIBNAME@;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+    <PostBuildEvent>
+      <Command>if exist @DEBUGDLLPATH@ copy @DEBUGDLLPATH@ ..\@PLATFORMDIR@$(Configuration)</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|@PLATFORM@'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..;..\..\src\bin\common;..\..\src\bin\win32;..\..\src\lib\cryptoki_compat;@INCLUDEPATH@;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalLibraryDirectories>@LIBPATH@;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>@LIBNAME@;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+    <PostBuildEvent>
+      <Command>if exist @DLLPATH@ copy @DLLPATH@ ..\@PLATFORMDIR@$(Configuration)</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\src\bin\common\getpw.h" />
+    <ClInclude Include="..\..\src\bin\common\library.h" />
+@IF BOTAN
+    <ClInclude Include="..\..\src\bin\util\softhsm2-util-botan.h" />
+@END BOTAN
+@IF OPENSSL
+    <ClInclude Include="..\..\src\bin\util\softhsm2-util-ossl.h" />
+@END OPENSSL
+    <ClInclude Include="..\..\src\bin\util\softhsm2-util.h" />
+    <ClInclude Include="..\..\src\bin\win32\getopt.h" />
+    <ClInclude Include="..\..\src\lib\cryptoki_compat\pkcs11.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\src\bin\common\getpw.cpp" />
+    <ClCompile Include="..\..\src\bin\common\library.cpp" />
+@IF BOTAN
+    <ClCompile Include="..\..\src\bin\util\softhsm2-util-botan.cpp" />
+@END BOTAN
+@IF OPENSSL
+    <ClCompile Include="..\..\src\bin\util\softhsm2-util-ossl.cpp" />
+@END OPENSSL
+    <ClCompile Include="..\..\src\bin\util\softhsm2-util.cpp" />
+    <ClCompile Include="..\..\src\bin\win32\getopt.cpp" />
+    <ClCompile Include="..\..\src\bin\win32\getpassphase.cpp" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

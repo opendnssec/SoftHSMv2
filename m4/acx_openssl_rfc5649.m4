@@ -26,7 +26,7 @@ AC_DEFUN([ACX_OPENSSL_EVPAESWRAP],[
 		AC_MSG_RESULT([RFC 3394 is not supported])
 	])
 
-	AC_MSG_CHECKING(OpenSSL EVP interface for AES key wrapping)
+	AC_MSG_CHECKING(OpenSSL EVP interface for AES key wrapping with pad)
 	AC_LINK_IFELSE([
 		AC_LANG_SOURCE([[
 			#include <openssl/evp.h>
