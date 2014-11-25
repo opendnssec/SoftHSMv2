@@ -473,6 +473,9 @@ bool OSSLDSA::generateKeyPair(AsymmetricKeyPair** ppKeyPair, AsymmetricParameter
 		return false;
 	}
 
+	// Use the OpenSSL implementation and not any engine
+	DSA_set_method(dsa, DSA_get_default_method());
+
 	dsa->p = OSSL::byteString2bn(params->getP());
 	dsa->q = OSSL::byteString2bn(params->getQ());
 	dsa->g = OSSL::byteString2bn(params->getG());
@@ -502,7 +505,12 @@ bool OSSLDSA::generateKeyPair(AsymmetricKeyPair** ppKeyPair, AsymmetricParameter
 
 unsigned long OSSLDSA::getMinKeySize()
 {
+#ifdef WITH_FIPS
+	// OPENSSL_DSA_FIPS_MIN_MODULUS_BITS is 1024
+	return 1024;
+#else
 	return 512;
+#endif
 }
 
 unsigned long OSSLDSA::getMaxKeySize()

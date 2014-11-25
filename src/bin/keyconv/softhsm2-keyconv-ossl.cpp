@@ -51,6 +51,13 @@
 void crypto_init()
 {
 	OpenSSL_add_all_algorithms();
+#ifdef WITH_FIPS
+	if (!FIPS_mode_set(1))
+	{
+		fprintf(stderr, "ERROR: can't enter into FIPS mode.\n");
+		exit(0);
+	}
+#endif
 }
 
 // Final OpenSSL
