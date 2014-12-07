@@ -156,3 +156,12 @@ bool SymmetricAlgorithm::reconstructKey(SymmetricKey& key, const ByteString& ser
 	return key.setKeyBits(serialisedData);
 }
 
+SymMode::Type SymmetricAlgorithm::getCipherMode()
+{
+	return currentCipherMode;
+}
+
+bool SymmetricAlgorithm::getPaddingMode()
+{
+	return currentPaddingMode;
+}

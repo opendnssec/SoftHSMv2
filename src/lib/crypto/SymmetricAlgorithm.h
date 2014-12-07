@@ -100,8 +100,10 @@ public:
 	virtual bool generateKey(SymmetricKey& key, RNG* rng = NULL);
 	virtual bool reconstructKey(SymmetricKey& key, const ByteString& serialisedData);
 
-	// Return the block size
+	// Return cipher information
 	virtual size_t getBlockSize() const = 0;
+	virtual SymMode::Type getCipherMode();
+	virtual bool getPaddingMode();
 
 protected:
 	// The current key

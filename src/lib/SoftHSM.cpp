@@ -2057,7 +2057,10 @@ static CK_RV SymEncrypt(Session* session, CK_BYTE_PTR pData, CK_ULONG ulDataLen,
 	}
 
 	// Check data size
-	if (ulDataLen % cipher->getBlockSize() != 0)
+	SymMode::Type mode = cipher->getCipherMode();
+	if ((mode == SymMode::ECB || mode == SymMode::CBC) &&
+	    cipher->getPaddingMode() == false &&
+	    ulDataLen % cipher->getBlockSize() != 0)
 	{
 		session->resetOp();
 		return CKR_DATA_LEN_RANGE;
@@ -2200,7 +2203,10 @@ static CK_RV SymEncryptUpdate(Session* session, CK_BYTE_PTR pData, CK_ULONG ulDa
 	}
 
 	// Check data size
-	if (ulDataLen % cipher->getBlockSize() != 0)
+	SymMode::Type mode = cipher->getCipherMode();
+	if ((mode == SymMode::ECB || mode == SymMode::CBC) &&
+	    cipher->getPaddingMode() == false &&
+	    ulDataLen % cipher->getBlockSize() != 0)
 	{
 		session->resetOp();
 		return CKR_DATA_LEN_RANGE;

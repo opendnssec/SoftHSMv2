@@ -196,6 +196,17 @@ void SymmetricAlgorithmTests::aesEncryptDecrypt(CK_MECHANISM_TYPE mechanismType,
 	rv = C_EncryptInit(hSession,&mechanism,hKey);
 	CPPUNIT_ASSERT(rv==CKR_OK);
 
+	// Test invalid plain text size
+	if (mechanismType == CKM_AES_ECB ||
+	    mechanismType == CKM_AES_CBC)
+	{
+		ulCipherTextLen = sizeof(cipherText);
+		rv = C_Encrypt(hSession,plainText,sizeof(plainText)-1,cipherText,&ulCipherTextLen);
+		CPPUNIT_ASSERT(rv==CKR_DATA_LEN_RANGE);
+		rv = C_EncryptInit(hSession,&mechanism,hKey);
+		CPPUNIT_ASSERT(rv==CKR_OK);
+	}
+
 	ulCipherTextLen = sizeof(cipherText);
 	rv = C_Encrypt(hSession,plainText,sizeof(plainText),cipherText,&ulCipherTextLen);
 	CPPUNIT_ASSERT(rv==CKR_OK);
@@ -204,6 +215,17 @@ void SymmetricAlgorithmTests::aesEncryptDecrypt(CK_MECHANISM_TYPE mechanismType,
 	// Multi-part encryption
 	rv = C_EncryptInit(hSession,&mechanism,hKey);
 	CPPUNIT_ASSERT(rv==CKR_OK);
+
+	// Test invalid plain text size
+	if (mechanismType == CKM_AES_ECB ||
+	    mechanismType == CKM_AES_CBC)
+	{
+		ulCipherTextMultiLen = sizeof(cipherTextMulti);
+		rv = C_EncryptUpdate(hSession,plainText,sizeof(plainText)/2-1,cipherTextMulti,&ulCipherTextMultiLen);
+		CPPUNIT_ASSERT(rv==CKR_DATA_LEN_RANGE);
+		rv = C_EncryptInit(hSession,&mechanism,hKey);
+		CPPUNIT_ASSERT(rv==CKR_OK);
+	}
 
 	ulCipherTextMultiLen = sizeof(cipherTextMulti);
 	rv = C_EncryptUpdate(hSession,plainText,sizeof(plainText)/2,cipherTextMulti,&ulCipherTextMultiLen);
@@ -263,6 +285,17 @@ void SymmetricAlgorithmTests::desEncryptDecrypt(CK_MECHANISM_TYPE mechanismType,
 	rv = C_EncryptInit(hSession,&mechanism,hKey);
 	CPPUNIT_ASSERT(rv==CKR_OK);
 
+	// Test invalid plain text size
+	if (mechanismType == CKM_DES_ECB ||
+	    mechanismType == CKM_DES_CBC)
+	{
+		ulCipherTextLen = sizeof(cipherText);
+		rv = C_Encrypt(hSession,plainText,sizeof(plainText)-1,cipherText,&ulCipherTextLen);
+		CPPUNIT_ASSERT(rv==CKR_DATA_LEN_RANGE);
+		rv = C_EncryptInit(hSession,&mechanism,hKey);
+		CPPUNIT_ASSERT(rv==CKR_OK);
+	}
+
 	ulCipherTextLen = sizeof(cipherText);
 	rv = C_Encrypt(hSession,plainText,sizeof(plainText),cipherText,&ulCipherTextLen);
 	CPPUNIT_ASSERT(rv==CKR_OK);
@@ -271,6 +304,17 @@ void SymmetricAlgorithmTests::desEncryptDecrypt(CK_MECHANISM_TYPE mechanismType,
 	// Multi-part encryption
 	rv = C_EncryptInit(hSession,&mechanism,hKey);
 	CPPUNIT_ASSERT(rv==CKR_OK);
+
+	// Test invalid plain text size
+	if (mechanismType == CKM_DES_ECB ||
+	    mechanismType == CKM_DES_CBC)
+	{
+		ulCipherTextMultiLen = sizeof(cipherTextMulti);
+		rv = C_EncryptUpdate(hSession,plainText,sizeof(plainText)/2-1,cipherTextMulti,&ulCipherTextMultiLen);
+		CPPUNIT_ASSERT(rv==CKR_DATA_LEN_RANGE);
+		rv = C_EncryptInit(hSession,&mechanism,hKey);
+		CPPUNIT_ASSERT(rv==CKR_OK);
+	}
 
 	ulCipherTextMultiLen = sizeof(cipherTextMulti);
 	rv = C_EncryptUpdate(hSession,plainText,sizeof(plainText)/2,cipherTextMulti,&ulCipherTextMultiLen);
@@ -330,6 +374,17 @@ void SymmetricAlgorithmTests::des3EncryptDecrypt(CK_MECHANISM_TYPE mechanismType
 	rv = C_EncryptInit(hSession,&mechanism,hKey);
 	CPPUNIT_ASSERT(rv==CKR_OK);
 
+	// Test invalid plain text size
+	if (mechanismType == CKM_DES3_ECB ||
+	    mechanismType == CKM_DES3_CBC)
+	{
+		ulCipherTextLen = sizeof(cipherText);
+		rv = C_Encrypt(hSession,plainText,sizeof(plainText)-1,cipherText,&ulCipherTextLen);
+		CPPUNIT_ASSERT(rv==CKR_DATA_LEN_RANGE);
+		rv = C_EncryptInit(hSession,&mechanism,hKey);
+		CPPUNIT_ASSERT(rv==CKR_OK);
+	}
+
 	ulCipherTextLen = sizeof(cipherText);
 	rv = C_Encrypt(hSession,plainText,sizeof(plainText),cipherText,&ulCipherTextLen);
 	CPPUNIT_ASSERT(rv==CKR_OK);
@@ -338,6 +393,17 @@ void SymmetricAlgorithmTests::des3EncryptDecrypt(CK_MECHANISM_TYPE mechanismType
 	// Multi-part encryption
 	rv = C_EncryptInit(hSession,&mechanism,hKey);
 	CPPUNIT_ASSERT(rv==CKR_OK);
+
+	// Test invalid plain text size
+	if (mechanismType == CKM_DES3_ECB ||
+	    mechanismType == CKM_DES3_CBC)
+	{
+		ulCipherTextMultiLen = sizeof(cipherTextMulti);
+		rv = C_EncryptUpdate(hSession,plainText,sizeof(plainText)/2-1,cipherTextMulti,&ulCipherTextMultiLen);
+		CPPUNIT_ASSERT(rv==CKR_DATA_LEN_RANGE);
+		rv = C_EncryptInit(hSession,&mechanism,hKey);
+		CPPUNIT_ASSERT(rv==CKR_OK);
+	}
 
 	ulCipherTextMultiLen = sizeof(cipherTextMulti);
 	rv = C_EncryptUpdate(hSession,plainText,sizeof(plainText)/2,cipherTextMulti,&ulCipherTextMultiLen);
