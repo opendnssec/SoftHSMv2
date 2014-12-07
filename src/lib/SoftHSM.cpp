@@ -572,12 +572,12 @@ CK_RV SoftHSM::C_GetTokenInfo(CK_SLOT_ID slotID, CK_TOKEN_INFO_PTR pInfo)
 CK_RV SoftHSM::C_GetMechanismList(CK_SLOT_ID slotID, CK_MECHANISM_TYPE_PTR pMechanismList, CK_ULONG_PTR pulCount)
 {
 	// A list with the supported mechanisms
-	CK_ULONG nrSupportedMechanisms = 49;
+	CK_ULONG nrSupportedMechanisms = 52;
 #ifdef WITH_ECC
 	nrSupportedMechanisms += 3;
 #endif
 #ifdef WITH_FIPS
-	nrSupportedMechanisms -= 6;
+	nrSupportedMechanisms -= 7;
 #endif
 #ifdef WITH_GOST
 	nrSupportedMechanisms += 5;
@@ -628,12 +628,15 @@ CK_RV SoftHSM::C_GetMechanismList(CK_SLOT_ID slotID, CK_MECHANISM_TYPE_PTR pMech
 #ifndef WITH_FIPS
 		CKM_DES_ECB,
 		CKM_DES_CBC,
+		CKM_DES_CBC_PAD,
 #endif
 		CKM_DES3_ECB,
 		CKM_DES3_CBC,
+		CKM_DES3_CBC_PAD,
 		CKM_AES_KEY_GEN,
 		CKM_AES_ECB,
 		CKM_AES_CBC,
+		CKM_AES_CBC_PAD,
 		CKM_AES_KEY_WRAP,
 #ifdef HAVE_AES_KEY_WRAP_PAD
 		CKM_AES_KEY_WRAP_PAD,
@@ -867,9 +870,11 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 #ifndef WITH_FIPS
 		case CKM_DES_ECB:
 		case CKM_DES_CBC:
+		case CKM_DES_CBC_PAD:
 #endif
 		case CKM_DES3_ECB:
 		case CKM_DES3_CBC:
+		case CKM_DES3_CBC_PAD:
 			// Key size is not in use
 			pInfo->ulMinKeySize = 0;
 			pInfo->ulMaxKeySize = 0;
@@ -882,6 +887,7 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 			break;
 		case CKM_AES_ECB:
 		case CKM_AES_CBC:
+		case CKM_AES_CBC_PAD:
 			pInfo->ulMinKeySize = 16;
 			pInfo->ulMaxKeySize = 32;
 			pInfo->flags = CKF_ENCRYPT | CKF_DECRYPT;
@@ -1789,10 +1795,13 @@ static bool isSymMechanism(CK_MECHANISM_PTR pMechanism)
 	switch(pMechanism->mechanism) {
 		case CKM_DES_ECB:
 		case CKM_DES_CBC:
+		case CKM_DES_CBC_PAD:
 		case CKM_DES3_ECB:
 		case CKM_DES3_CBC:
+		case CKM_DES3_CBC_PAD:
 		case CKM_AES_ECB:
 		case CKM_AES_CBC:
+		case CKM_AES_CBC_PAD:
 			return true;
 		default:
 			return false;
@@ -1841,6 +1850,7 @@ CK_RV SoftHSM::SymEncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 	// Get the symmetric algorithm matching the mechanism
 	SymAlgo::Type algo = SymAlgo::Unknown;
 	SymMode::Type mode = SymMode::Unknown;
+	bool padding = false;
 	ByteString iv;
 	size_t bb = 8;
 	switch(pMechanism->mechanism) {
@@ -1853,6 +1863,20 @@ CK_RV SoftHSM::SymEncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 		case CKM_DES_CBC:
 			algo = SymAlgo::DES;
 			mode = SymMode::CBC;
+			if (pMechanism->pParameter == NULL_PTR ||
+			    pMechanism->ulParameterLen == 0)
+			{
+				DEBUG_MSG("CBC mode requires an init vector");
+				return CKR_ARGUMENTS_BAD;
+			}
+			iv.resize(pMechanism->ulParameterLen);
+			memcpy(&iv[0], pMechanism->pParameter, pMechanism->ulParameterLen);
+			bb = 7;
+			break;
+		case CKM_DES_CBC_PAD:
+			algo = SymAlgo::DES;
+			mode = SymMode::CBC;
+			padding = true;
 			if (pMechanism->pParameter == NULL_PTR ||
 			    pMechanism->ulParameterLen == 0)
 			{
@@ -1882,6 +1906,20 @@ CK_RV SoftHSM::SymEncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 			memcpy(&iv[0], pMechanism->pParameter, pMechanism->ulParameterLen);
 			bb = 7;
 			break;
+		case CKM_DES3_CBC_PAD:
+			algo = SymAlgo::DES3;
+			mode = SymMode::CBC;
+			padding = true;
+			if (pMechanism->pParameter == NULL_PTR ||
+			    pMechanism->ulParameterLen == 0)
+			{
+				DEBUG_MSG("CBC mode requires an init vector");
+				return CKR_ARGUMENTS_BAD;
+			}
+			iv.resize(pMechanism->ulParameterLen);
+			memcpy(&iv[0], pMechanism->pParameter, pMechanism->ulParameterLen);
+			bb = 7;
+			break;
 		case CKM_AES_ECB:
 			algo = SymAlgo::AES;
 			mode = SymMode::ECB;
@@ -1889,6 +1927,19 @@ CK_RV SoftHSM::SymEncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 		case CKM_AES_CBC:
 			algo = SymAlgo::AES;
 			mode = SymMode::CBC;
+			if (pMechanism->pParameter == NULL_PTR ||
+			    pMechanism->ulParameterLen == 0)
+			{
+				DEBUG_MSG("CBC mode requires an init vector");
+				return CKR_ARGUMENTS_BAD;
+			}
+			iv.resize(pMechanism->ulParameterLen);
+			memcpy(&iv[0], pMechanism->pParameter, pMechanism->ulParameterLen);
+			break;
+		case CKM_AES_CBC_PAD:
+			algo = SymAlgo::AES;
+			mode = SymMode::CBC;
+			padding = true;
 			if (pMechanism->pParameter == NULL_PTR ||
 			    pMechanism->ulParameterLen == 0)
 			{
@@ -1922,7 +1973,7 @@ CK_RV SoftHSM::SymEncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 	secretkey->setBitLen(secretkey->getKeyBits().size() * bb);
 
 	// Initialize encryption
-	if (!cipher->encryptInit(secretkey, mode, iv, false))
+	if (!cipher->encryptInit(secretkey, mode, iv, padding))
 	{
 		cipher->recycleKey(secretkey);
 		CryptoFactory::i()->recycleSymmetricAlgorithm(cipher);
@@ -2058,24 +2109,36 @@ static CK_RV SymEncrypt(Session* session, CK_BYTE_PTR pData, CK_ULONG ulDataLen,
 
 	// Check data size
 	SymMode::Type mode = cipher->getCipherMode();
+	CK_ULONG remainder = ulDataLen % cipher->getBlockSize();
 	if ((mode == SymMode::ECB || mode == SymMode::CBC) &&
 	    cipher->getPaddingMode() == false &&
-	    ulDataLen % cipher->getBlockSize() != 0)
+	    remainder != 0)
 	{
 		session->resetOp();
 		return CKR_DATA_LEN_RANGE;
 	}
 
+	// Round up to block size
+	CK_ULONG maxSize = ulDataLen;
+	if (remainder != 0)
+	{
+		maxSize = ulDataLen + cipher->getBlockSize() - remainder;
+	}
+	else if (cipher->getPaddingMode() == true)
+	{
+		maxSize = ulDataLen + cipher->getBlockSize();
+	}
+
 	if (pEncryptedData == NULL_PTR)
 	{
-		*pulEncryptedDataLen = ulDataLen;
+		*pulEncryptedDataLen = maxSize;
 		return CKR_OK;
 	}
 
 	// Check buffer size
-	if (*pulEncryptedDataLen < ulDataLen)
+	if (*pulEncryptedDataLen < maxSize)
 	{
-		*pulEncryptedDataLen = ulDataLen;
+		*pulEncryptedDataLen = maxSize;
 		return CKR_BUFFER_TOO_SMALL;
 	}
 
@@ -2098,7 +2161,7 @@ static CK_RV SymEncrypt(Session* session, CK_BYTE_PTR pData, CK_ULONG ulDataLen,
 		return CKR_GENERAL_ERROR;
 	}
 	encryptedData += encryptedFinal;
-	encryptedData.resize(ulDataLen);
+	encryptedData.resize(maxSize);
 
 	memcpy(pEncryptedData, encryptedData.byte_str(), encryptedData.size());
 	*pulEncryptedDataLen = encryptedData.size();
@@ -2204,24 +2267,32 @@ static CK_RV SymEncryptUpdate(Session* session, CK_BYTE_PTR pData, CK_ULONG ulDa
 
 	// Check data size
 	SymMode::Type mode = cipher->getCipherMode();
+	CK_ULONG remainder = ulDataLen % cipher->getBlockSize();
 	if ((mode == SymMode::ECB || mode == SymMode::CBC) &&
 	    cipher->getPaddingMode() == false &&
-	    ulDataLen % cipher->getBlockSize() != 0)
+	    remainder != 0)
 	{
 		session->resetOp();
 		return CKR_DATA_LEN_RANGE;
 	}
 
+	// Round up to block size
+	CK_ULONG maxSize = ulDataLen;
+	if (remainder != 0)
+	{
+		maxSize = ulDataLen + cipher->getBlockSize() - remainder;
+	}
+
 	if (pEncryptedData == NULL_PTR)
 	{
-		*pulEncryptedDataLen = ulDataLen;
+		*pulEncryptedDataLen = maxSize;
 		return CKR_OK;
 	}
 
 	// Check buffer size
-	if (*pulEncryptedDataLen < ulDataLen)
+	if (*pulEncryptedDataLen < maxSize)
 	{
-		*pulEncryptedDataLen = ulDataLen;
+		*pulEncryptedDataLen = maxSize;
 		return CKR_BUFFER_TOO_SMALL;
 	}
 
@@ -2276,8 +2347,11 @@ static CK_RV SymEncryptFinal(Session* session, CK_BYTE_PTR pEncryptedData, CK_UL
 	}
 
 	// Size of the encrypted data
-	// There is no final part for the supported algorithms.
 	CK_ULONG size = 0;
+	if (cipher->getPaddingMode() == true)
+	{
+		size = cipher->getBlockSize();
+	}
 
 	if (pEncryptedData == NULL_PTR)
 	{
@@ -2370,6 +2444,7 @@ CK_RV SoftHSM::SymDecryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 	// Get the symmetric algorithm matching the mechanism
 	SymAlgo::Type algo = SymAlgo::Unknown;
 	SymMode::Type mode = SymMode::Unknown;
+	bool padding = false;
 	ByteString iv;
 	size_t bb = 8;
 	switch(pMechanism->mechanism) {
@@ -2382,6 +2457,20 @@ CK_RV SoftHSM::SymDecryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 		case CKM_DES_CBC:
 			algo = SymAlgo::DES;
 			mode = SymMode::CBC;
+			if (pMechanism->pParameter == NULL_PTR ||
+			    pMechanism->ulParameterLen == 0)
+			{
+				DEBUG_MSG("CBC mode requires an init vector");
+				return CKR_ARGUMENTS_BAD;
+			}
+			iv.resize(pMechanism->ulParameterLen);
+			memcpy(&iv[0], pMechanism->pParameter, pMechanism->ulParameterLen);
+			bb = 7;
+			break;
+		case CKM_DES_CBC_PAD:
+			algo = SymAlgo::DES;
+			mode = SymMode::CBC;
+			padding = true;
 			if (pMechanism->pParameter == NULL_PTR ||
 			    pMechanism->ulParameterLen == 0)
 			{
@@ -2411,6 +2500,20 @@ CK_RV SoftHSM::SymDecryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 			memcpy(&iv[0], pMechanism->pParameter, pMechanism->ulParameterLen);
 			bb = 7;
 			break;
+		case CKM_DES3_CBC_PAD:
+			algo = SymAlgo::DES3;
+			mode = SymMode::CBC;
+			padding = true;
+			if (pMechanism->pParameter == NULL_PTR ||
+			    pMechanism->ulParameterLen == 0)
+			{
+				DEBUG_MSG("CBC mode requires an init vector");
+				return CKR_ARGUMENTS_BAD;
+			}
+			iv.resize(pMechanism->ulParameterLen);
+			memcpy(&iv[0], pMechanism->pParameter, pMechanism->ulParameterLen);
+			bb = 7;
+			break;
 		case CKM_AES_ECB:
 			algo = SymAlgo::AES;
 			mode = SymMode::ECB;
@@ -2418,6 +2521,19 @@ CK_RV SoftHSM::SymDecryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 		case CKM_AES_CBC:
 			algo = SymAlgo::AES;
 			mode = SymMode::CBC;
+			if (pMechanism->pParameter == NULL_PTR ||
+			    pMechanism->ulParameterLen == 0)
+			{
+				DEBUG_MSG("CBC mode requires an init vector");
+				return CKR_ARGUMENTS_BAD;
+			}
+			iv.resize(pMechanism->ulParameterLen);
+			memcpy(&iv[0], pMechanism->pParameter, pMechanism->ulParameterLen);
+			break;
+		case CKM_AES_CBC_PAD:
+			algo = SymAlgo::AES;
+			mode = SymMode::CBC;
+			padding = true;
 			if (pMechanism->pParameter == NULL_PTR ||
 			    pMechanism->ulParameterLen == 0)
 			{
@@ -2451,7 +2567,7 @@ CK_RV SoftHSM::SymDecryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 	secretkey->setBitLen(secretkey->getKeyBits().size() * bb);
 
 	// Initialize decryption
-	if (!cipher->decryptInit(secretkey, mode, iv, false))
+	if (!cipher->decryptInit(secretkey, mode, iv, padding))
 	{
 		cipher->recycleKey(secretkey);
 		CryptoFactory::i()->recycleSymmetricAlgorithm(cipher);
@@ -2637,7 +2753,10 @@ static CK_RV SymDecrypt(Session* session, CK_BYTE_PTR pEncryptedData, CK_ULONG u
 		return CKR_GENERAL_ERROR;
 	}
 	data += dataFinal;
-	data.resize(ulEncryptedDataLen);
+	if (data.size() > ulEncryptedDataLen)
+	{
+		data.resize(ulEncryptedDataLen);
+	}
 
 	memcpy(pData, data.byte_str(), data.size());
 	*pulDataLen = data.size();

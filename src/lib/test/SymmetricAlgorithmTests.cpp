@@ -184,7 +184,8 @@ void SymmetricAlgorithmTests::aesEncryptDecrypt(CK_MECHANISM_TYPE mechanismType,
 	rv = C_GenerateRandom(hSession, plainText, sizeof(plainText));
 	CPPUNIT_ASSERT(rv==CKR_OK);
 
-	if (mechanismType == CKM_AES_CBC)
+	if (mechanismType == CKM_AES_CBC ||
+	    mechanismType == CKM_AES_CBC_PAD)
 	{
 		rv = C_GenerateRandom(hSession, iv, sizeof(iv));
 		CPPUNIT_ASSERT(rv==CKR_OK);
@@ -210,7 +211,14 @@ void SymmetricAlgorithmTests::aesEncryptDecrypt(CK_MECHANISM_TYPE mechanismType,
 	ulCipherTextLen = sizeof(cipherText);
 	rv = C_Encrypt(hSession,plainText,sizeof(plainText),cipherText,&ulCipherTextLen);
 	CPPUNIT_ASSERT(rv==CKR_OK);
-	CPPUNIT_ASSERT(ulCipherTextLen==sizeof(plainText));
+	if (mechanismType == CKM_AES_CBC_PAD)
+	{
+		CPPUNIT_ASSERT(ulCipherTextLen==(sizeof(plainText)+16));
+	}
+	else
+	{
+		CPPUNIT_ASSERT(ulCipherTextLen==sizeof(plainText));
+	}
 
 	// Multi-part encryption
 	rv = C_EncryptInit(hSession,&mechanism,hKey);
@@ -273,7 +281,8 @@ void SymmetricAlgorithmTests::desEncryptDecrypt(CK_MECHANISM_TYPE mechanismType,
 	rv = C_GenerateRandom(hSession, plainText, sizeof(plainText));
 	CPPUNIT_ASSERT(rv==CKR_OK);
 
-	if (mechanismType == CKM_DES_CBC)
+	if (mechanismType == CKM_DES_CBC ||
+	    mechanismType == CKM_DES_CBC_PAD)
 	{
 		rv = C_GenerateRandom(hSession, iv, sizeof(iv));
 		CPPUNIT_ASSERT(rv==CKR_OK);
@@ -299,7 +308,14 @@ void SymmetricAlgorithmTests::desEncryptDecrypt(CK_MECHANISM_TYPE mechanismType,
 	ulCipherTextLen = sizeof(cipherText);
 	rv = C_Encrypt(hSession,plainText,sizeof(plainText),cipherText,&ulCipherTextLen);
 	CPPUNIT_ASSERT(rv==CKR_OK);
-	CPPUNIT_ASSERT(ulCipherTextLen==sizeof(plainText));
+	if (mechanismType == CKM_DES_CBC_PAD)
+	{
+		CPPUNIT_ASSERT(ulCipherTextLen==(sizeof(plainText)+8));
+	}
+	else
+	{
+		CPPUNIT_ASSERT(ulCipherTextLen==sizeof(plainText));
+	}
 
 	// Multi-part encryption
 	rv = C_EncryptInit(hSession,&mechanism,hKey);
@@ -362,7 +378,8 @@ void SymmetricAlgorithmTests::des3EncryptDecrypt(CK_MECHANISM_TYPE mechanismType
 	rv = C_GenerateRandom(hSession, plainText, sizeof(plainText));
 	CPPUNIT_ASSERT(rv==CKR_OK);
 
-	if (mechanismType == CKM_DES3_CBC)
+	if (mechanismType == CKM_DES3_CBC ||
+	    mechanismType == CKM_DES3_CBC_PAD)
 	{
 		rv = C_GenerateRandom(hSession, iv, sizeof(iv));
 		CPPUNIT_ASSERT(rv==CKR_OK);
@@ -388,7 +405,14 @@ void SymmetricAlgorithmTests::des3EncryptDecrypt(CK_MECHANISM_TYPE mechanismType
 	ulCipherTextLen = sizeof(cipherText);
 	rv = C_Encrypt(hSession,plainText,sizeof(plainText),cipherText,&ulCipherTextLen);
 	CPPUNIT_ASSERT(rv==CKR_OK);
-	CPPUNIT_ASSERT(ulCipherTextLen==sizeof(plainText));
+	if (mechanismType == CKM_DES3_CBC_PAD)
+	{
+		CPPUNIT_ASSERT(ulCipherTextLen==(sizeof(plainText)+8));
+	}
+	else
+	{
+		CPPUNIT_ASSERT(ulCipherTextLen==sizeof(plainText));
+	}
 
 	// Multi-part encryption
 	rv = C_EncryptInit(hSession,&mechanism,hKey);
@@ -689,6 +713,7 @@ void SymmetricAlgorithmTests::testAesEncryptDecrypt()
 
 	aesEncryptDecrypt(CKM_AES_ECB,hSessionRO,hKey);
 	aesEncryptDecrypt(CKM_AES_CBC,hSessionRO,hKey);
+	aesEncryptDecrypt(CKM_AES_CBC_PAD,hSessionRO,hKey);
 }
 
 void SymmetricAlgorithmTests::testAesWrapUnwrap()
@@ -769,6 +794,7 @@ void SymmetricAlgorithmTests::testDesEncryptDecrypt()
 
 	desEncryptDecrypt(CKM_DES_ECB,hSessionRO,hKey);
 	desEncryptDecrypt(CKM_DES_CBC,hSessionRO,hKey);
+	desEncryptDecrypt(CKM_DES_CBC_PAD,hSessionRO,hKey);
 
 	CK_OBJECT_HANDLE hKey2 = CK_INVALID_HANDLE;
 
@@ -778,6 +804,7 @@ void SymmetricAlgorithmTests::testDesEncryptDecrypt()
 
 	des3EncryptDecrypt(CKM_DES3_ECB,hSessionRO,hKey2);
 	des3EncryptDecrypt(CKM_DES3_CBC,hSessionRO,hKey2);
+	des3EncryptDecrypt(CKM_DES3_CBC_PAD,hSessionRO,hKey2);
 #endif
 
 	CK_OBJECT_HANDLE hKey3 = CK_INVALID_HANDLE;
@@ -788,6 +815,7 @@ void SymmetricAlgorithmTests::testDesEncryptDecrypt()
 
 	des3EncryptDecrypt(CKM_DES3_ECB,hSessionRO,hKey3);
 	des3EncryptDecrypt(CKM_DES3_CBC,hSessionRO,hKey3);
+	des3EncryptDecrypt(CKM_DES3_CBC_PAD,hSessionRO,hKey3);
 }
 
 void SymmetricAlgorithmTests::testNullTemplate()
