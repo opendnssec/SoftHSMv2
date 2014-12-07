@@ -2,4 +2,4 @@
 
 directories.tokendir = @builddir@/tokens
 objectstore.backend = file
-log.level = DEBUG
+log.level = INFO
