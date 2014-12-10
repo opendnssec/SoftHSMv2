@@ -40,6 +40,7 @@ SymmetricAlgorithm::SymmetricAlgorithm()
 	currentCipherMode = SymMode::Unknown;
 	currentPaddingMode = true;
 	currentOperation = NONE;
+	currentBufferSize = 0;
 }
 
 bool SymmetricAlgorithm::encryptInit(const SymmetricKey* key, const SymMode::Type mode /* = SymMode::CBC */, const ByteString& /*IV = ByteString() */, bool padding /* = true */)
@@ -53,16 +54,19 @@ bool SymmetricAlgorithm::encryptInit(const SymmetricKey* key, const SymMode::Typ
 	currentCipherMode = mode;
 	currentPaddingMode = padding;
 	currentOperation = ENCRYPT;
+	currentBufferSize = 0;
 
 	return true;
 }
 
-bool SymmetricAlgorithm::encryptUpdate(const ByteString& /*data*/, ByteString& /*encryptedData*/)
+bool SymmetricAlgorithm::encryptUpdate(const ByteString& data, ByteString& /*encryptedData*/)
 {
 	if (currentOperation != ENCRYPT)
 	{
 		return false;
 	}
+
+	currentBufferSize += data.size();
 
 	return true;
 }
@@ -78,6 +82,7 @@ bool SymmetricAlgorithm::encryptFinal(ByteString& /*encryptedData*/)
 	currentCipherMode = SymMode::Unknown;
 	currentPaddingMode = true;
 	currentOperation = NONE;
+	currentBufferSize = 0;
 
 	return true;
 }
@@ -93,17 +98,20 @@ bool SymmetricAlgorithm::decryptInit(const SymmetricKey* key, const SymMode::Typ
 	currentCipherMode = mode;
 	currentPaddingMode = padding;
 	currentOperation = DECRYPT;
+	currentBufferSize = 0;
 
 	return true;
 }
 
 
-bool SymmetricAlgorithm::decryptUpdate(const ByteString& /*encryptedData*/, ByteString& /*data*/)
+bool SymmetricAlgorithm::decryptUpdate(const ByteString& encryptedData, ByteString& /*data*/)
 {
 	if (currentOperation != DECRYPT)
 	{
 		return false;
 	}
+
+	currentBufferSize += encryptedData.size();
 
 	return true;
 }
@@ -119,6 +127,7 @@ bool SymmetricAlgorithm::decryptFinal(ByteString& /*data*/)
 	currentCipherMode = SymMode::Unknown;
 	currentPaddingMode = true;
 	currentOperation = NONE;
+	currentBufferSize = 0;
 
 	return true;
 }
@@ -164,4 +173,9 @@ SymMode::Type SymmetricAlgorithm::getCipherMode()
 bool SymmetricAlgorithm::getPaddingMode()
 {
 	return currentPaddingMode;
+}
+
+unsigned long SymmetricAlgorithm::getBufferSize()
+{
+	return currentBufferSize;
 }

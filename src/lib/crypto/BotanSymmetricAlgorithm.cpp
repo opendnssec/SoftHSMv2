@@ -181,6 +181,7 @@ bool BotanSymmetricAlgorithm::encryptUpdate(const ByteString& data, ByteString& 
 
 	// Resize the output block
 	encryptedData.resize(bytesRead);
+	currentBufferSize -= bytedRead;
 
 	return true;
 }
@@ -353,6 +354,7 @@ bool BotanSymmetricAlgorithm::decryptUpdate(const ByteString& encryptedData, Byt
 
 	// Resize the output block
 	data.resize(bytesRead);
+	currentBufferSize -= bytesRead;
 
 	return true;
 }

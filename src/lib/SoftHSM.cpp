@@ -2276,11 +2276,11 @@ static CK_RV SymEncryptUpdate(Session* session, CK_BYTE_PTR pData, CK_ULONG ulDa
 		return CKR_DATA_LEN_RANGE;
 	}
 
-	// Round up to block size
-	CK_ULONG maxSize = ulDataLen;
-	if (remainder != 0)
+	// Round down/up to block size
+	CK_ULONG maxSize = ulDataLen - remainder;
+	if (remainder + cipher->getBufferSize() > cipher->getBlockSize())
 	{
-		maxSize = ulDataLen + cipher->getBlockSize() - remainder;
+		maxSize += cipher->getBlockSize();
 	}
 
 	if (pEncryptedData == NULL_PTR)
