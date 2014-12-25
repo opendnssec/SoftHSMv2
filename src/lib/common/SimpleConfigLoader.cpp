@@ -34,7 +34,13 @@
 #include <string.h>
 #include <stdlib.h>
 #include <algorithm>
+#include <limits.h>
+#include <unistd.h>
 #include "config.h"
+#if defined(HAVE_GETPWUID_R)
+# include <sys/types.h>
+# include <pwd.h>
+#endif
 #include "SimpleConfigLoader.h"
 #include "log.h"
 #include "Configuration.h"
@@ -61,15 +67,17 @@ SimpleConfigLoader::SimpleConfigLoader()
 // Load the configuration
 bool SimpleConfigLoader::loadConfiguration()
 {
-	const char* configPath = getConfigPath();
+	char* configPath = getConfigPath();
 
 	FILE* fp = fopen(configPath,"r");
 
 	if (fp == NULL)
 	{
 		ERROR_MSG("Could not open the config file: %s", configPath);
+		free(configPath);
 		return false;
 	}
+	free(configPath);
 
 	char fileBuf[1024];
 
@@ -171,15 +179,59 @@ bool SimpleConfigLoader::string2bool(std::string stringValue, bool* boolValue)
 	return false;
 }
 
-const char* SimpleConfigLoader::getConfigPath()
+#define CONFIG_FILE ".config/softhsm2/softhsm2.conf"
+
+/* Returns a user-specific path for configuration.
+ */
+static char *get_user_path(void)
+{
+	char path[_POSIX_PATH_MAX];
+	const char *home_dir = getenv("HOME");
+
+	if (home_dir != NULL && home_dir[0] != 0) {
+		snprintf(path, sizeof(path), "%s/" CONFIG_FILE, home_dir);
+		if (access(path, R_OK) == 0)
+			return strdup(path);
+		else
+			goto fail;
+	}
+
+#if defined(HAVE_GETPWUID_R)
+	if (home_dir == NULL || home_dir[0] == '\0') {
+		struct passwd *pwd;
+		struct passwd _pwd;
+		int ret;
+		char tmp[512];
+
+		ret = getpwuid_r(getuid(), &_pwd, tmp, sizeof(tmp), &pwd);
+		if (ret == 0 && pwd != NULL) {
+			snprintf(path, sizeof(path), "%s/" CONFIG_FILE, pwd->pw_dir);
+			if (access(path, R_OK) == 0)
+				return strdup(path);
+			else
+				goto fail;
+		}
+	}
+#endif
+
+ fail:
+	return NULL;
+}
+
+char* SimpleConfigLoader::getConfigPath()
 {
 	const char* configPath = getenv("SOFTHSM2_CONF");
+	char *tpath;
 
 	if (configPath == NULL) {
+		tpath = get_user_path();
+		if (tpath != NULL) {
+			return tpath;
+		}
 		configPath = DEFAULT_SOFTHSM2_CONF;
 	}
 
-	return configPath;
+	return strdup(configPath);
 } 
 
 char* SimpleConfigLoader::trimString(char* text)

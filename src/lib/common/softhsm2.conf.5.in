@@ -61,8 +61,11 @@ SOFTHSM2_CONF
 When defined, the value will be used as path to the configuration file.
 .SH FILES
 .TP
+.I ~/.config/softhsm2/softhsm2.conf
+default user-specific location of the SoftHSM configuration file; if it exists it will override the system wide configuration
+.TP
 .I @default_softhsm2_conf@
-default location of the SoftHSM configuration file
+default system-wide location of the SoftHSM configuration file
 .TP
 .I @default_softhsm2_conf@.sample
 an example of a SoftHSM configuration file
