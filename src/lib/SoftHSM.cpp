@@ -416,6 +416,14 @@ CK_RV SoftHSM::C_Initialize(CK_VOID_PTR pInitArgs)
 		return CKR_GENERAL_ERROR;
 	}
 
+#ifdef WITH_FIPS
+	// Check the FIPS status
+	if (!CryptoFactory::i()->getFipsSelfTestStatus())
+	{
+		return CKR_FIPS_SELF_TEST_FAILED;
+	}
+#endif
+
 	// (Re)load the configuration
 	if (!Configuration::i()->reload(SimpleConfigLoader::i()))
 	{
@@ -507,7 +515,11 @@ CK_RV SoftHSM::C_GetInfo(CK_INFO_PTR pInfo)
 	memcpy(pInfo->manufacturerID, "SoftHSM", 7);
 	pInfo->flags = 0;
 	memset(pInfo->libraryDescription, ' ', 32);
+#ifdef WITH_FIPS
+	memcpy(pInfo->libraryDescription, "Implementation of PKCS11+FIPS", 29);
+#else
 	memcpy(pInfo->libraryDescription, "Implementation of PKCS11", 24);
+#endif
 	pInfo->libraryVersion.major = VERSION_MAJOR;
 	pInfo->libraryVersion.minor = VERSION_MINOR;
 
@@ -564,6 +576,9 @@ CK_RV SoftHSM::C_GetMechanismList(CK_SLOT_ID slotID, CK_MECHANISM_TYPE_PTR pMech
 #ifdef WITH_ECC
 	nrSupportedMechanisms += 3;
 #endif
+#ifdef WITH_FIPS
+	nrSupportedMechanisms -= 6;
+#endif
 #ifdef WITH_GOST
 	nrSupportedMechanisms += 5;
 #endif
@@ -572,13 +587,17 @@ CK_RV SoftHSM::C_GetMechanismList(CK_SLOT_ID slotID, CK_MECHANISM_TYPE_PTR pMech
 #endif
 	CK_MECHANISM_TYPE supportedMechanisms[] =
 	{
+#ifndef WITH_FIPS
 		CKM_MD5,
+#endif
 		CKM_SHA_1,
 		CKM_SHA224,
 		CKM_SHA256,
 		CKM_SHA384,
 		CKM_SHA512,
+#ifndef WITH_FIPS
 		CKM_MD5_HMAC,
+#endif
 		CKM_SHA_1_HMAC,
 		CKM_SHA224_HMAC,
 		CKM_SHA256_HMAC,
@@ -587,7 +606,9 @@ CK_RV SoftHSM::C_GetMechanismList(CK_SLOT_ID slotID, CK_MECHANISM_TYPE_PTR pMech
 		CKM_RSA_PKCS_KEY_PAIR_GEN,
 		CKM_RSA_PKCS,
 		CKM_RSA_X_509,
+#ifndef WITH_FIPS
 		CKM_MD5_RSA_PKCS,
+#endif
 		CKM_SHA1_RSA_PKCS,
 		CKM_RSA_PKCS_OAEP,
 		CKM_SHA224_RSA_PKCS,
@@ -599,11 +620,15 @@ CK_RV SoftHSM::C_GetMechanismList(CK_SLOT_ID slotID, CK_MECHANISM_TYPE_PTR pMech
 		CKM_SHA256_RSA_PKCS_PSS,
 		CKM_SHA384_RSA_PKCS_PSS,
 		CKM_SHA512_RSA_PKCS_PSS,
+#ifndef WITH_FIPS
 		CKM_DES_KEY_GEN,
+#endif
 		CKM_DES2_KEY_GEN,
 		CKM_DES3_KEY_GEN,
+#ifndef WITH_FIPS
 		CKM_DES_ECB,
 		CKM_DES_CBC,
+#endif
 		CKM_DES3_ECB,
 		CKM_DES3_CBC,
 		CKM_AES_KEY_GEN,
@@ -766,7 +791,9 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 
 	switch (type)
 	{
+#ifndef WITH_FIPS
 		case CKM_MD5:
+#endif
 		case CKM_SHA_1:
 		case CKM_SHA224:
 		case CKM_SHA256:
@@ -777,7 +804,9 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 			pInfo->ulMaxKeySize = 0;
 			pInfo->flags = CKF_DIGEST;
 			break;
+#ifndef WITH_FIPS
 		case CKM_MD5_HMAC:
+#endif
 		case CKM_SHA_1_HMAC:
 		case CKM_SHA224_HMAC:
 		case CKM_SHA256_HMAC:
@@ -803,7 +832,9 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 			pInfo->ulMaxKeySize = rsaMaxSize;
 			pInfo->flags = CKF_SIGN | CKF_VERIFY | CKF_ENCRYPT | CKF_DECRYPT;
 			break;
+#ifndef WITH_FIPS
 		case CKM_MD5_RSA_PKCS:
+#endif
 		case CKM_SHA1_RSA_PKCS:
 		case CKM_SHA224_RSA_PKCS:
 		case CKM_SHA256_RSA_PKCS:
@@ -823,7 +854,9 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 			pInfo->ulMaxKeySize = rsaMaxSize;
 			pInfo->flags = CKF_ENCRYPT | CKF_DECRYPT | CKF_WRAP | CKF_UNWRAP;
 			break;
+#ifndef WITH_FIPS
 		case CKM_DES_KEY_GEN:
+#endif
 		case CKM_DES2_KEY_GEN:
 		case CKM_DES3_KEY_GEN:
 			// Key size is not in use
@@ -831,8 +864,10 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 			pInfo->ulMaxKeySize = 0;
 			pInfo->flags = CKF_GENERATE;
 			break;
+#ifndef WITH_FIPS
 		case CKM_DES_ECB:
 		case CKM_DES_CBC:
+#endif
 		case CKM_DES3_ECB:
 		case CKM_DES3_CBC:
 			// Key size is not in use
@@ -1809,6 +1844,7 @@ CK_RV SoftHSM::SymEncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 	ByteString iv;
 	size_t bb = 8;
 	switch(pMechanism->mechanism) {
+#ifndef WITH_FIPS
 		case CKM_DES_ECB:
 			algo = SymAlgo::DES;
 			mode = SymMode::ECB;
@@ -1827,6 +1863,7 @@ CK_RV SoftHSM::SymEncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 			memcpy(&iv[0], pMechanism->pParameter, pMechanism->ulParameterLen);
 			bb = 7;
 			break;
+#endif
 		case CKM_DES3_ECB:
 			algo = SymAlgo::DES3;
 			mode = SymMode::ECB;
@@ -2330,6 +2367,7 @@ CK_RV SoftHSM::SymDecryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 	ByteString iv;
 	size_t bb = 8;
 	switch(pMechanism->mechanism) {
+#ifndef WITH_FIPS
 		case CKM_DES_ECB:
 			algo = SymAlgo::DES;
 			mode = SymMode::ECB;
@@ -2348,6 +2386,7 @@ CK_RV SoftHSM::SymDecryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 			memcpy(&iv[0], pMechanism->pParameter, pMechanism->ulParameterLen);
 			bb = 7;
 			break;
+#endif
 		case CKM_DES3_ECB:
 			algo = SymAlgo::DES3;
 			mode = SymMode::ECB;
@@ -2724,9 +2763,11 @@ CK_RV SoftHSM::C_DigestInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechan
 	// Get the mechanism
 	HashAlgo::Type algo = HashAlgo::Unknown;
 	switch(pMechanism->mechanism) {
+#ifndef WITH_FIPS
 		case CKM_MD5:
 			algo = HashAlgo::MD5;
 			break;
+#endif
 		case CKM_SHA_1:
 			algo = HashAlgo::SHA1;
 			break;
@@ -3036,9 +3077,11 @@ CK_RV SoftHSM::MacSignInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechani
 	// Get the MAC algorithm matching the mechanism
 	MacAlgo::Type algo = MacAlgo::Unknown;
 	switch(pMechanism->mechanism) {
+#ifndef WITH_FIPS
 		case CKM_MD5_HMAC:
 			algo = MacAlgo::HMAC_MD5;
 			break;
+#endif
 		case CKM_SHA_1_HMAC:
 			algo = MacAlgo::HMAC_SHA1;
 			break;
@@ -3155,11 +3198,13 @@ CK_RV SoftHSM::AsymSignInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechan
 			bAllowMultiPartOp = false;
 			isRSA = true;
 			break;
+#ifndef WITH_FIPS
 		case CKM_MD5_RSA_PKCS:
 			mechanism = AsymMech::RSA_MD5_PKCS;
 			bAllowMultiPartOp = true;
 			isRSA = true;
 			break;
+#endif
 		case CKM_SHA1_RSA_PKCS:
 			mechanism = AsymMech::RSA_SHA1_PKCS;
 			bAllowMultiPartOp = true;
@@ -3845,9 +3890,11 @@ CK_RV SoftHSM::MacVerifyInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMecha
 	// Get the MAC algorithm matching the mechanism
 	MacAlgo::Type algo = MacAlgo::Unknown;
 	switch(pMechanism->mechanism) {
+#ifndef WITH_FIPS
 		case CKM_MD5_HMAC:
 			algo = MacAlgo::HMAC_MD5;
 			break;
+#endif
 		case CKM_SHA_1_HMAC:
 			algo = MacAlgo::HMAC_SHA1;
 			break;
@@ -3964,11 +4011,13 @@ CK_RV SoftHSM::AsymVerifyInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 			bAllowMultiPartOp = false;
 			isRSA = true;
 			break;
+#ifndef WITH_FIPS
 		case CKM_MD5_RSA_PKCS:
 			mechanism = AsymMech::RSA_MD5_PKCS;
 			bAllowMultiPartOp = true;
 			isRSA = true;
 			break;
+#endif
 		case CKM_SHA1_RSA_PKCS:
 			mechanism = AsymMech::RSA_SHA1_PKCS;
 			bAllowMultiPartOp = true;
@@ -4578,7 +4627,8 @@ CK_RV SoftHSM::C_DigestEncryptUpdate(CK_SESSION_HANDLE hSession, CK_BYTE_PTR /*p
 
 // Update a running multi-part decryption and digesting operation
 CK_RV SoftHSM::C_DecryptDigestUpdate(CK_SESSION_HANDLE hSession, CK_BYTE_PTR /*pPart*/, CK_ULONG /*ulPartLen*/, CK_BYTE_PTR /*pDecryptedPart*/, CK_ULONG_PTR /*pulDecryptedPartLen*/)
-{	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
+{
+	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
 
 	// Get the session
 	Session* session = (Session*)handleManager->getSession(hSession);
@@ -4637,10 +4687,12 @@ CK_RV SoftHSM::C_GenerateKey(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMecha
 			objClass = CKO_DOMAIN_PARAMETERS;
 			keyType = CKK_DH;
 			break;
+#ifndef WITH_FIPS
 		case CKM_DES_KEY_GEN:
 			objClass = CKO_SECRET_KEY;
 			keyType = CKK_DES;
 			break;
+#endif
 		case CKM_DES2_KEY_GEN:
 			objClass = CKO_SECRET_KEY;
 			keyType = CKK_DES2;

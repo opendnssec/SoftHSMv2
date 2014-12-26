@@ -70,10 +70,14 @@ void DSATests::testKeyGeneration()
 
 	// Key sizes to test
 	std::vector<size_t> keySizes;
+#ifndef WITH_FIPS
 	keySizes.push_back(512);
 	keySizes.push_back(768);
 	keySizes.push_back(1024);
 	keySizes.push_back(1536);
+#else
+	keySizes.push_back(1024);
+#endif
 #ifndef WITH_BOTAN
 	keySizes.push_back(2048);
 #endif
@@ -201,10 +205,14 @@ void DSATests::testSigningVerifying()
 
 	// Key sizes to test
 	std::vector<size_t> keySizes;
+#ifndef WITH_FIPS
 	keySizes.push_back(512);
 	keySizes.push_back(768);
 	keySizes.push_back(1024);
 	keySizes.push_back(1536);
+#else
+	keySizes.push_back(1024);
+#endif
 #ifndef WITH_BOTAN
 	keySizes.push_back(2048);
 #endif

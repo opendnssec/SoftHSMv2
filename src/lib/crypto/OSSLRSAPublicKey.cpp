@@ -34,8 +34,8 @@
 #include "log.h"
 #include "OSSLRSAPublicKey.h"
 #include "OSSLUtil.h"
-#include <openssl/bn.h>
 #include <string.h>
+#include <openssl/bn.h>
 
 // Constructors
 OSSLRSAPublicKey::OSSLRSAPublicKey()
@@ -43,7 +43,7 @@ OSSLRSAPublicKey::OSSLRSAPublicKey()
 	rsa = RSA_new();
 
 	// Use the OpenSSL implementation and not any engine
-	RSA_set_method(rsa, RSA_PKCS1_SSLeay());
+	RSA_set_method(rsa, RSA_get_default_method());
 }
 
 OSSLRSAPublicKey::OSSLRSAPublicKey(const RSA* inRSA)

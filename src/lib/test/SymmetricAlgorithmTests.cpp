@@ -111,6 +111,7 @@ CK_RV SymmetricAlgorithmTests::generateAesKey(CK_SESSION_HANDLE hSession, CK_BBO
 			     &hKey);
 }
 
+#ifndef WITH_FIPS
 CK_RV SymmetricAlgorithmTests::generateDesKey(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_OBJECT_HANDLE &hKey)
 {
 	CK_MECHANISM mechanism = { CKM_DES_KEY_GEN, NULL_PTR, 0 };
@@ -146,6 +147,7 @@ CK_RV SymmetricAlgorithmTests::generateDes2Key(CK_SESSION_HANDLE hSession, CK_BB
 			     keyAttribs, sizeof(keyAttribs)/sizeof(CK_ATTRIBUTE),
 			     &hKey);
 }
+#endif
 
 CK_RV SymmetricAlgorithmTests::generateDes3Key(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_OBJECT_HANDLE &hKey)
 {
@@ -231,6 +233,7 @@ void SymmetricAlgorithmTests::aesEncryptDecrypt(CK_MECHANISM_TYPE mechanismType,
 	CPPUNIT_ASSERT(memcmp(plainText, recoveredText, sizeof(plainText)) == 0);
 }
 
+#ifndef WITH_FIPS
 void SymmetricAlgorithmTests::desEncryptDecrypt(CK_MECHANISM_TYPE mechanismType, CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hKey)
 {
 	CK_MECHANISM mechanism = { mechanismType, NULL_PTR, 0 };
@@ -296,6 +299,7 @@ void SymmetricAlgorithmTests::desEncryptDecrypt(CK_MECHANISM_TYPE mechanismType,
 
 	CPPUNIT_ASSERT(memcmp(plainText, recoveredText, sizeof(plainText)) == 0);
 }
+#endif
 
 void SymmetricAlgorithmTests::des3EncryptDecrypt(CK_MECHANISM_TYPE mechanismType, CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hKey)
 {
@@ -690,6 +694,7 @@ void SymmetricAlgorithmTests::testDesEncryptDecrypt()
 	rv = C_Login(hSessionRO,CKU_USER,pin,pinLength);
 	CPPUNIT_ASSERT(rv==CKR_OK);
 
+#ifndef WITH_FIPS
 	CK_OBJECT_HANDLE hKey = CK_INVALID_HANDLE;
 
 	// Generate all combinations of session/token keys.
@@ -707,6 +712,7 @@ void SymmetricAlgorithmTests::testDesEncryptDecrypt()
 
 	des3EncryptDecrypt(CKM_DES3_ECB,hSessionRO,hKey2);
 	des3EncryptDecrypt(CKM_DES3_CBC,hSessionRO,hKey2);
+#endif
 
 	CK_OBJECT_HANDLE hKey3 = CK_INVALID_HANDLE;
 
@@ -724,7 +730,7 @@ void SymmetricAlgorithmTests::testNullTemplate()
 	CK_UTF8CHAR pin[] = SLOT_0_USER1_PIN;
 	CK_ULONG pinLength = sizeof(pin) - 1;
 	CK_SESSION_HANDLE hSession;
-	CK_MECHANISM mechanism1 = { CKM_DES_KEY_GEN, NULL_PTR, 0 };
+	CK_MECHANISM mechanism1 = { CKM_DES3_KEY_GEN, NULL_PTR, 0 };
 	CK_MECHANISM mechanism2 = { CKM_AES_KEY_GEN, NULL_PTR, 0 };
 	CK_OBJECT_HANDLE hKey = CK_INVALID_HANDLE;
 

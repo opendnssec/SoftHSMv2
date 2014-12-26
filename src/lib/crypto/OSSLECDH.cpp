@@ -184,8 +184,8 @@ bool OSSLECDH::deriveKey(SymmetricKey **ppSymmetricKey, PublicKey* publicKey, Pr
 	}
 
 	// Use the OpenSSL implementation and not any engine
-	ECDH_set_method(pub, ECDH_OpenSSL());
-	ECDH_set_method(priv, ECDH_OpenSSL());
+	ECDH_set_method(pub, ECDH_get_default_method());
+	ECDH_set_method(priv, ECDH_get_default_method());
 
 	// Derive the secret
 	ByteString secret;

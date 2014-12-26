@@ -44,7 +44,7 @@ OSSLDSAPrivateKey::OSSLDSAPrivateKey()
 	dsa = DSA_new();
 
 	// Use the OpenSSL implementation and not any engine
-	DSA_set_method(dsa, DSA_OpenSSL());
+	DSA_set_method(dsa, DSA_get_default_method());
 }
 
 OSSLDSAPrivateKey::OSSLDSAPrivateKey(const DSA* inDSA)
