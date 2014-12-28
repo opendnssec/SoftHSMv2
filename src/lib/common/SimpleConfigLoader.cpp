@@ -35,7 +35,11 @@
 #include <stdlib.h>
 #include <algorithm>
 #include <limits.h>
-#include <unistd.h>
+#ifdef _WIN32
+# include <io.h>
+#else
+# include <unistd.h>
+#endif
 #include "config.h"
 #if defined(HAVE_GETPWUID_R)
 # include <sys/types.h>
@@ -185,6 +189,19 @@ bool SimpleConfigLoader::string2bool(std::string stringValue, bool* boolValue)
  */
 static char *get_user_path(void)
 {
+#ifdef _WIN32
+	char path[512];
+	const char *home_drive = getenv("HOMEDRIVE");
+	const char *home_path = getenv("HOMEPATH");
+
+	if (home_drive && home_path) {
+		snprintf(path, sizeof(path), "%s%s\\softhsm2.conf", home_drive, home_path);
+
+		if (_access(path, 0) == 0)
+			return strdup(path);
+	}
+	goto fail;
+#else
 	char path[_POSIX_PATH_MAX];
 	const char *home_dir = getenv("HOME");
 
@@ -196,7 +213,7 @@ static char *get_user_path(void)
 			goto fail;
 	}
 
-#if defined(HAVE_GETPWUID_R)
+# if defined(HAVE_GETPWUID_R)
 	if (home_dir == NULL || home_dir[0] == '\0') {
 		struct passwd *pwd;
 		struct passwd _pwd;
@@ -212,6 +229,7 @@ static char *get_user_path(void)
 				goto fail;
 		}
 	}
+# endif
 #endif
 
  fail:
