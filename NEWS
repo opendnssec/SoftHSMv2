@@ -12,6 +12,7 @@ SoftHSM develop
   (Patch from Petr Spacek)
 * Use OpenSSL EVP interface for AES key wrapping.
   (Patch from Petr Spacek)
+* Allow reading configuration file from user's home directory.
 
 Bugfixes:
 * SOFTHSM-102: C_DeriveKey() uses OBJECT_OP_GENERATE.
