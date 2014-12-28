@@ -124,6 +124,9 @@ softhsmtokendir=${full_localstatedir}/lib/softhsm/tokens/
 full_libdir="$full_libdir/softhsm"
 libdir=$full_libdir
 
+# For getConfigPath()
+AC_CHECK_FUNCS([getpwuid_r])
+
 # Define some variables for the code
 AC_DEFINE_UNQUOTED(
 	[VERSION_MAJOR],
