@@ -2,9 +2,12 @@ NEWS for SoftHSM -- History of user visible changes
 
 SoftHSM develop
 
+* SOFTHSM-50: OpenSSL FIPS support.
+* SOFTHSM-64: Updated build script for Windows.
 * SOFTHSM-100: Use --free with softhsm2-util to initialize the first
   free token.
 * SOFTHSM-103: Allow runtime configuration of log level.
+* SOFTHSM-107: Support for CKM_<symcipher>_CBC_PAD.
 * Add support for CKM_RSA_PKCS_OAEP key un/wrapping.
   (Patch from Petr Spacek)
 * Use OpenSSL EVP interface for AES key wrapping.
