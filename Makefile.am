@@ -12,7 +12,6 @@ MAINTAINERCLEANFILES = \
 SUBDIRS = src
 
 EXTRA_DIST =	$(srcdir)/aes_wrap_key_with_pad/botan-diff \
-		$(srcdir)/aes_wrap_key_with_pad/openssl-diff \
 		$(srcdir)/aes_wrap_key_with_pad/README \
 		$(srcdir)/LICENSE \
 		$(srcdir)/m4/*.m4 \
