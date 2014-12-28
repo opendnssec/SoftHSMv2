@@ -1,6 +1,6 @@
 NEWS for SoftHSM -- History of user visible changes
 
-SoftHSM develop
+SoftHSM 2.0.0b2 - 2014-12-28
 
 * SOFTHSM-50: OpenSSL FIPS support.
 * SOFTHSM-64: Updated build script for Windows.
@@ -13,6 +13,7 @@ SoftHSM develop
 * Use OpenSSL EVP interface for AES key wrapping.
   (Patch from Petr Spacek)
 * Allow reading configuration file from user's home directory.
+  (Patch from Nikos Mavrogiannopoulos)
 
 Bugfixes:
 * SOFTHSM-102: C_DeriveKey() uses OBJECT_OP_GENERATE.
