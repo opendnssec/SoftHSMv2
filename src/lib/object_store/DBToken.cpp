@@ -243,15 +243,15 @@ DBToken *DBToken::createToken(const std::string basePath, const std::string toke
 		delete token;
 		return NULL;
 	}
-	
-	DEBUG_MSG("Created new token %s", tokenName.c_str());
+
+	DEBUG_MSG("Created new token %s", tokenDir.c_str());
 
 	return token;
 }
 
 DBToken *DBToken::accessToken(const std::string &basePath, const std::string &tokenDir)
 {
-	return new DBToken(basePath, tokenDir);	
+	return new DBToken(basePath, tokenDir);
 }
 
 // Destructor

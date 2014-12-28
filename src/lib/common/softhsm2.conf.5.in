@@ -1,4 +1,4 @@
-.TH softhsm2.conf 5 "20 March 2014" "SoftHSM"
+.TH softhsm2.conf 5 "30 October 2014" "SoftHSM"
 .SH NAME
 softhsm2.conf \- SoftHSM configuration file
 .SH SYNOPSIS
@@ -46,14 +46,26 @@ objectstore.backend = file
 .fi
 .RE
 .LP
+.SH LOG.LEVEL
+The log level which can be set to ERROR, WARNING, INFO or DEBUG.
+.LP
+.RS
+.nf
+log.level = INFO
+.fi
+.RE
+.LP
 .SH ENVIRONMENT
 .TP
 SOFTHSM2_CONF
 When defined, the value will be used as path to the configuration file.
 .SH FILES
 .TP
+.I ~/.config/softhsm2/softhsm2.conf
+default user-specific location of the SoftHSM configuration file; if it exists it will override the system wide configuration
+.TP
 .I @default_softhsm2_conf@
-default location of the SoftHSM configuration file
+default system-wide location of the SoftHSM configuration file
 .TP
 .I @default_softhsm2_conf@.sample
 an example of a SoftHSM configuration file

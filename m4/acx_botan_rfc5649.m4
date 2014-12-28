@@ -7,6 +7,8 @@ AC_DEFUN([ACX_BOTAN_RFC5649],[
 	CPPFLAGS="$CPPFLAGS $CRYPTO_INCLUDES"
 	LIBS="$LIBS $CRYPTO_LIBS"
 
+	AC_DEFINE([HAVE_AES_KEY_WRAP], [1],
+		  [Define if advanced AES key wrap without pad is supported])
 	AC_LANG_PUSH([C++])
 	AC_LINK_IFELSE([
 		AC_LANG_SOURCE([[

@@ -51,6 +51,16 @@ void crypto_init()
 {
 	// We do not need to do this one
 	// OpenSSL_add_all_algorithms();
+#ifdef WITH_FIPS
+	// The PKCS#11 library might be using a FIPS capable OpenSSL
+	if (FIPS_mode())
+		return;
+	if (!FIPS_mode_set(1))
+	{
+		fprintf(stderr, "ERROR: can't enter into FIPS mode.\n");
+		exit(0);
+	}
+#endif
 }
 
 // Final OpenSSL

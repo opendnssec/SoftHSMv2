@@ -72,6 +72,7 @@ File::File(std::string path, bool forRead /* = true */, bool forWrite /* = false
 	locked = false;
 
 	this->path = path;
+	valid = false;
 
 	if (forRead || forWrite)
 	{
@@ -125,7 +126,7 @@ File::File(std::string path, bool forRead /* = true */, bool forWrite /* = false
 }
 
 // Destructor
-File::~File() 
+File::~File()
 {
 	if (locked)
 	{

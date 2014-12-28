@@ -45,7 +45,7 @@ BotanECDHPublicKey::BotanECDHPublicKey()
 
 BotanECDHPublicKey::BotanECDHPublicKey(const Botan::ECDH_PublicKey* inECKEY)
 {
-	BotanECDHPublicKey();
+	eckey = NULL;
 
 	setFromBotan(inECKEY);
 }

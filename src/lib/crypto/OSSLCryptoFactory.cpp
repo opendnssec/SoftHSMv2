@@ -62,12 +62,18 @@
 #include <string.h>
 #include <openssl/ssl.h>
 #include <openssl/err.h>
+#include <openssl/rand.h>
 #ifdef WITH_GOST
 #include <openssl/objects.h>
 #endif
 
 // Initialise the one-and-only instance
 std::auto_ptr<OSSLCryptoFactory> OSSLCryptoFactory::instance(NULL);
+
+#ifdef WITH_FIPS
+// Initialise the FIPS 140-2 selftest status
+bool OSSLCryptoFactory::FipsSelfTestStatus = false;
+#endif
 
 // Thread ID callback
 #ifdef HAVE_PTHREAD_H
@@ -117,6 +123,23 @@ OSSLCryptoFactory::OSSLCryptoFactory()
 	CRYPTO_set_id_callback(id_callback);
 #endif
 	CRYPTO_set_locking_callback(lock_callback);
+
+#ifdef WITH_FIPS
+	// Already in FIPS mode on reenter (avoiding selftests)
+	if (!FIPS_mode())
+	{
+		FipsSelfTestStatus = false;
+		if (!FIPS_mode_set(1))
+		{
+			ERROR_MSG("can't enter into FIPS mode");
+			return;
+		}
+	} else {
+		// Undo RAND_cleanup()
+		RAND_init_fips();
+	}
+	FipsSelfTestStatus = true;
+#endif
 
 	// Initialise OpenSSL
 	OpenSSL_add_all_algorithms();
@@ -193,6 +216,7 @@ OSSLCryptoFactory::~OSSLCryptoFactory()
 
 	// Clean up OpenSSL
 	ERR_remove_state(0);
+	RAND_cleanup();
 	EVP_cleanup();
 	CRYPTO_cleanup_all_ex_data();
 	ERR_free_strings();
@@ -222,6 +246,13 @@ void OSSLCryptoFactory::reset()
 {
 	instance.reset();
 }
+
+#ifdef WITH_FIPS
+bool OSSLCryptoFactory::getFipsSelfTestStatus() const
+{
+	return FipsSelfTestStatus;
+}
+#endif
 
 // Create a concrete instance of a symmetric algorithm
 SymmetricAlgorithm* OSSLCryptoFactory::getSymmetricAlgorithm(SymAlgo::Type algorithm)

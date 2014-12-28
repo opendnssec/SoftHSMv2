@@ -1,4 +1,4 @@
-.TH SOFTHSM2-UTIL 1 "20 March 2014" "SoftHSM"
+.TH SOFTHSM2-UTIL 1 "29 October 2014" "SoftHSM"
 .SH NAME
 softhsm2-util \- support tool for libsofthsm2
 .SH SYNOPSIS
@@ -118,8 +118,10 @@ The matching Security Officer (SO) PIN must also
 be provided when doing reinitialization.
 .br
 Use with
-.BR \-\-slot ,
-.BR \-\-label .
+.BR \-\-slot
+or
+.BR \-\-free ,
+.BR \-\-label ,
 .BR \-\-so-pin ,
 and
 .BR \-\-pin .
@@ -140,6 +142,9 @@ If not given then the PKCS#8 file is assumed to be unencrypted.
 .TP
 .B \-\-force 
 Use this option to override the warnings and force the given action.
+.TP
+.B \-\-free
+Initialize the first free token.
 .TP
 .B \-\-id \fIhex\fR
 Choose an ID of the key pair.

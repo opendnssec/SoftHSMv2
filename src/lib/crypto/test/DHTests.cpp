@@ -70,9 +70,13 @@ void DHTests::testKeyGeneration()
 
 	// Key sizes to test
 	std::vector<size_t> keySizes;
+#ifdef WITH_FIPS
+	keySizes.push_back(1024);
+#else
 	keySizes.push_back(512);
 	//keySizes.push_back(768);
 	//keySizes.push_back(1024);
+#endif
 
 	for (std::vector<size_t>::iterator k = keySizes.begin(); k != keySizes.end(); k++)
 	{
@@ -221,9 +225,13 @@ void DHTests::testDerivation()
 
 	// Key sizes to test
 	std::vector<size_t> keySizes;
+#ifdef WITH_FIPS
+	keySizes.push_back(1024);
+#else
 	keySizes.push_back(512);
 	//keySizes.push_back(768);
 	//keySizes.push_back(1024);
+#endif
 
 	for (std::vector<size_t>::iterator k = keySizes.begin(); k != keySizes.end(); k++)
 	{

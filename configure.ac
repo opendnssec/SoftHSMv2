@@ -9,7 +9,7 @@
 define([SOFTHSM_VERSION_MAJOR], [2])
 define([SOFTHSM_VERSION_MINOR], [0])
 define([SOFTHSM_VERSION_FIX], [0])
-define([PACKAGE_SUFFIX], [b1])
+define([PACKAGE_SUFFIX], [b2])
 
 # Library version
 
@@ -61,14 +61,6 @@ ACX_CRYPTO_BACKEND
 
 # Non-paged memory for secure storage
 ACX_NON_PAGED_MEMORY
-
-# Log level
-AC_ARG_WITH(
-	[loglevel],
-	[AS_HELP_STRING([--with-loglevel=INT],[The log level. 0=No log 1=Error 2=Warning 3=Info 4=Debug (default INT=3)])],
-	[SOFTLOGLEVEL="$withval"],
-	[SOFTLOGLEVEL=3]
-)
 
 # If the user want to have the migration tool
 # Requires SQLite3
@@ -132,6 +124,9 @@ softhsmtokendir=${full_localstatedir}/lib/softhsm/tokens/
 full_libdir="$full_libdir/softhsm"
 libdir=$full_libdir
 
+# For getConfigPath()
+AC_CHECK_FUNCS([getpwuid_r])
+
 # Define some variables for the code
 AC_DEFINE_UNQUOTED(
 	[VERSION_MAJOR],
@@ -142,11 +137,6 @@ AC_DEFINE_UNQUOTED(
 	[VERSION_MINOR],
 	[SOFTHSM_VERSION_MINOR],
 	[SoftHSM minor version number via PKCS#11]
-)
-AC_DEFINE_UNQUOTED(
-	[SOFTLOGLEVEL],
-	[$SOFTLOGLEVEL],
-	[The log level set by the user]
 )
 AC_DEFINE_UNQUOTED(
 	[MAX_PIN_LEN],
@@ -172,6 +162,11 @@ AC_DEFINE_UNQUOTED(
 	[DEFAULT_OBJECTSTORE_BACKEND],
 	["file"],
 	[Default storage backend for token objects]
+)
+AC_DEFINE_UNQUOTED(
+	[DEFAULT_LOG_LEVEL],
+	["INFO"],
+	[The default log level]
 )
 AC_DEFINE_UNQUOTED(
 	[DEFAULT_PKCS11_LIB],

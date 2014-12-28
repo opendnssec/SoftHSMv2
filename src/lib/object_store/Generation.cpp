@@ -84,7 +84,7 @@ bool Generation::sync(File &objectFile)
 
 	return objectFile.seek(0L);
 }
-		      
+
 // Check if the target was updated
 bool Generation::wasUpdated()
 {
@@ -237,6 +237,7 @@ Generation::Generation(const std::string path, bool isToken)
 	this->isToken = isToken;
 	pendingUpdate = false;
 	currentValue = 0;
+	genMutex = NULL;
 
 	if (isToken)
 	{

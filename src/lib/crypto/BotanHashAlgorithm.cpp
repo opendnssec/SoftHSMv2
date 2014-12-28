@@ -89,7 +89,10 @@ bool BotanHashAlgorithm::hashUpdate(const ByteString& data)
 	// Continue digesting
 	try
 	{
-		hash->update(data.const_byte_str(), data.size());
+		if (data.size() != 0)
+		{
+			hash->update(data.const_byte_str(), data.size());
+		}
 	}
 	catch (...)
 	{

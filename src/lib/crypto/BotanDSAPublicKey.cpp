@@ -44,7 +44,7 @@ BotanDSAPublicKey::BotanDSAPublicKey()
 
 BotanDSAPublicKey::BotanDSAPublicKey(const Botan::DSA_PublicKey* inDSA)
 {
-	BotanDSAPublicKey();
+	dsa = NULL;
 
 	setFromBotan(inDSA);
 }

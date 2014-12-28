@@ -337,7 +337,7 @@ CK_RV P11Attribute::retrieve(Token *token, bool isPrivate, CK_VOID_PTR pValue, C
 				const unsigned char* attrPtr = value.const_byte_str();
 				memcpy(pValue,attrPtr,attrSize);
 			}
-			else
+			else if (attr.getByteStringValue().size() != 0)
 			{
 				const unsigned char* attrPtr = attr.getByteStringValue().const_byte_str();
 				memcpy(pValue,attrPtr,attrSize);
@@ -594,6 +594,7 @@ CK_RV P11AttrToken::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR
 	// Attribute specific checks
 
 	if (op != OBJECT_OP_GENERATE &&
+	    op != OBJECT_OP_DERIVE &&
 	    op != OBJECT_OP_CREATE &&
 	    op != OBJECT_OP_COPY &&
 	    op != OBJECT_OP_UNWRAP)
@@ -640,6 +641,7 @@ CK_RV P11AttrPrivate::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_P
 	// Attribute specific checks
 
 	if (op != OBJECT_OP_GENERATE &&
+	    op != OBJECT_OP_DERIVE &&
 	    op != OBJECT_OP_CREATE &&
 	    op != OBJECT_OP_COPY &&
 	    op != OBJECT_OP_UNWRAP)
@@ -686,6 +688,7 @@ CK_RV P11AttrModifiable::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOI
 	// Attribute specific checks
 
 	if (op != OBJECT_OP_GENERATE &&
+	    op != OBJECT_OP_DERIVE &&
 	    op != OBJECT_OP_CREATE &&
 	    op != OBJECT_OP_COPY &&
 	    op != OBJECT_OP_UNWRAP)
@@ -743,6 +746,7 @@ CK_RV P11AttrCopyable::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_
 	// Attribute specific checks
 
 	if (op != OBJECT_OP_GENERATE &&
+	    op != OBJECT_OP_DERIVE &&
 	    op != OBJECT_OP_CREATE &&
 	    op != OBJECT_OP_COPY &&
 	    op != OBJECT_OP_UNWRAP)
@@ -1585,7 +1589,7 @@ CK_RV P11AttrSensitive::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID
 		osobject->setAttribute(type, attrTrue);
 
 		// This is so that generated keys get the correct value
-		if (op == OBJECT_OP_GENERATE)
+		if (op == OBJECT_OP_GENERATE || op == OBJECT_OP_DERIVE)
 		{
 			osobject->setAttribute(CKA_ALWAYS_SENSITIVE, attrTrue);
 		}
@@ -2093,7 +2097,7 @@ CK_RV P11AttrValueLen::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_
 {
 	// Attribute specific checks
 
-	if (op != OBJECT_OP_GENERATE)
+	if (op != OBJECT_OP_GENERATE && op != OBJECT_OP_DERIVE)
 	{
 		return CKR_ATTRIBUTE_READ_ONLY;
 	}

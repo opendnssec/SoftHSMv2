@@ -100,8 +100,11 @@ public:
 	virtual bool generateKey(SymmetricKey& key, RNG* rng = NULL);
 	virtual bool reconstructKey(SymmetricKey& key, const ByteString& serialisedData);
 
-	// Return the block size
+	// Return cipher information
 	virtual size_t getBlockSize() const = 0;
+	virtual SymMode::Type getCipherMode();
+	virtual bool getPaddingMode();
+	virtual unsigned long getBufferSize();
 
 protected:
 	// The current key
@@ -121,6 +124,9 @@ protected:
 		DECRYPT
 	}
 	currentOperation;
+
+	// The current number of bytes in buffer
+	unsigned long currentBufferSize;
 };
 
 #endif // !_SOFTHSM_V2_SYMMETRICALGORITHM_H

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010 SURFnet bv
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -10,7 +10,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -27,7 +27,7 @@
 /*****************************************************************************
  log.cpp
 
- Implements logging functions. This file is based on the concepts from 
+ Implements logging functions. This file is based on the concepts from
  SoftHSM v1 but extends the logging functions with support for a variable
  argument list as defined in stdarg (3).
  *****************************************************************************/
@@ -40,8 +40,39 @@
 #include <vector>
 #include "log.h"
 
+int softLogLevel = LOG_DEBUG;
+
+bool setLogLevel(const std::string &loglevel)
+{
+	if (loglevel == "ERROR")
+	{
+		softLogLevel = LOG_ERR;
+	}
+	else if (loglevel == "WARNING")
+	{
+		softLogLevel = LOG_WARNING;
+	}
+	else if (loglevel == "INFO")
+	{
+		softLogLevel = LOG_INFO;
+	}
+	else if (loglevel == "DEBUG")
+	{
+		softLogLevel = LOG_DEBUG;
+	}
+	else
+	{
+		ERROR_MSG("Unknown value (%s) for log.level in configuration", loglevel.c_str());
+		return false;
+	}
+
+	return true;
+}
+
 void softHSMLog(const int loglevel, const char* functionName, const char* fileName, const int lineNo, const char* format, ...)
 {
+	if (loglevel > softLogLevel) return;
+
 	std::stringstream prepend;
 
 #ifdef SOFTHSM_LOG_FILE_AND_LINE

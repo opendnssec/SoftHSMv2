@@ -48,6 +48,8 @@ OSAttribute::OSAttribute(const bool value)
 {
 	boolValue = value;
 	attributeType = BOOL;
+
+	ulongValue = 0;
 }
 
 // Constructor for an unsigned long type attribute
@@ -55,6 +57,8 @@ OSAttribute::OSAttribute(const unsigned long value)
 {
 	ulongValue = value;
 	attributeType = ULONG;
+
+	boolValue = false;
 }
 
 // Constructor for a byte string type attribute
@@ -62,6 +66,9 @@ OSAttribute::OSAttribute(const ByteString& value)
 {
 	byteStrValue = value;
 	attributeType = BYTESTR;
+
+	boolValue = false;
+	ulongValue = 0;
 }
 
 // Constructor for an array type attribute
@@ -69,6 +76,9 @@ OSAttribute::OSAttribute(const std::map<CK_ATTRIBUTE_TYPE,OSAttribute>& value)
 {
 	arrayValue = value;
 	attributeType = ARRAY;
+
+	boolValue = false;
+	ulongValue = 0;
 }
 
 // Check the attribute type

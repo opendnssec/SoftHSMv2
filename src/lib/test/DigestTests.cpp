@@ -315,7 +315,9 @@ void DigestTests::testDigestAll()
 	CK_RV rv;
 	CK_SESSION_HANDLE hSession;
 	CK_MECHANISM mechanisms[] = {
+#ifndef WITH_FIPS
 		{ CKM_MD5, NULL_PTR, 0 },
+#endif
 		{ CKM_SHA_1, NULL_PTR, 0 },
 		{ CKM_SHA224, NULL_PTR, 0 },
 		{ CKM_SHA256, NULL_PTR, 0 },
@@ -338,7 +340,7 @@ void DigestTests::testDigestAll()
 	rv = C_OpenSession(SLOT_INIT_TOKEN, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSession);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	for (int i = 0; i < 6; i++)
+	for (int i = 0; i < sizeof(mechanisms)/sizeof(CK_MECHANISM); i++)
 	{
 		rv = C_DigestInit(hSession, &mechanisms[i]);
 		CPPUNIT_ASSERT(rv == CKR_OK);

@@ -43,12 +43,15 @@ OSSLDHPublicKey::OSSLDHPublicKey()
 	dh = DH_new();
 
 	// Use the OpenSSL implementation and not any engine
-	DH_set_method(dh, DH_OpenSSL());
+	DH_set_method(dh, DH_get_default_method());
 }
 
 OSSLDHPublicKey::OSSLDHPublicKey(const DH* inDH)
 {
-	OSSLDHPublicKey();
+	dh = DH_new();
+
+	// Use the OpenSSL implementation and not any engine
+	DH_set_method(dh, DH_OpenSSL());
 
 	setFromOSSL(inDH);
 }

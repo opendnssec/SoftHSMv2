@@ -52,7 +52,7 @@ BotanECDSAPrivateKey::BotanECDSAPrivateKey()
 
 BotanECDSAPrivateKey::BotanECDSAPrivateKey(const Botan::ECDSA_PrivateKey* inECKEY)
 {
-	BotanECDSAPrivateKey();
+	eckey = NULL;
 
 	setFromBotan(inECKEY);
 }

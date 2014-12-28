@@ -43,12 +43,15 @@ OSSLDSAPublicKey::OSSLDSAPublicKey()
 	dsa = DSA_new();
 
 	// Use the OpenSSL implementation and not any engine
-	DSA_set_method(dsa, DSA_OpenSSL());
+	DSA_set_method(dsa, DSA_get_default_method());
 }
 
 OSSLDSAPublicKey::OSSLDSAPublicKey(const DSA* inDSA)
 {
-	OSSLDSAPublicKey();
+	dsa = DSA_new();
+
+	// Use the OpenSSL implementation and not any engine
+	DSA_set_method(dsa, DSA_OpenSSL());
 
 	setFromOSSL(inDSA);
 }

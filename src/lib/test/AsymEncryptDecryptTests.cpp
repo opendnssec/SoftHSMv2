@@ -165,6 +165,51 @@ void AsymEncryptDecryptTests::rsaEncryptDecrypt(CK_MECHANISM_TYPE mechanismType,
 	CPPUNIT_ASSERT(memcmp(plainText, &recoveredText[ulRecoveredTextLen-sizeof(plainText)], sizeof(plainText)) == 0);
 }
 
+// Check that RSA OAEP mechanism properly validates all input parameters
+void AsymEncryptDecryptTests::rsaOAEPParams(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hPublicKey)
+{
+	// This is only supported combination of parameters
+	CK_RSA_PKCS_OAEP_PARAMS oaepParams = { CKM_SHA_1, CKG_MGF1_SHA1, CKZ_DATA_SPECIFIED, NULL_PTR, 0 };
+	CK_MECHANISM mechanism = { CKM_RSA_PKCS_OAEP, NULL, 0 };
+	CK_RV rv;
+
+	rv = C_EncryptInit(hSession,&mechanism,hPublicKey);
+	CPPUNIT_ASSERT(rv==CKR_ARGUMENTS_BAD);
+
+	mechanism.pParameter = &oaepParams;
+	rv = C_EncryptInit(hSession,&mechanism,hPublicKey);
+	CPPUNIT_ASSERT(rv==CKR_ARGUMENTS_BAD);
+
+	mechanism.ulParameterLen = sizeof(oaepParams);
+
+	oaepParams.hashAlg = CKM_AES_CBC;
+	rv = C_EncryptInit(hSession,&mechanism,hPublicKey);
+	CPPUNIT_ASSERT(rv==CKR_ARGUMENTS_BAD);
+
+	oaepParams.hashAlg = CKM_SHA_1;
+	oaepParams.mgf = CKG_MGF1_SHA256;
+	rv = C_EncryptInit(hSession,&mechanism,hPublicKey);
+	CPPUNIT_ASSERT(rv==CKR_ARGUMENTS_BAD);
+
+	oaepParams.mgf = CKG_MGF1_SHA1;
+	oaepParams.source = CKZ_DATA_SPECIFIED - 1;
+	rv = C_EncryptInit(hSession,&mechanism,hPublicKey);
+	CPPUNIT_ASSERT(rv==CKR_ARGUMENTS_BAD);
+
+	oaepParams.source = CKZ_DATA_SPECIFIED;
+	oaepParams.pSourceData = &oaepParams;
+	rv = C_EncryptInit(hSession,&mechanism,hPublicKey);
+	CPPUNIT_ASSERT(rv==CKR_ARGUMENTS_BAD);
+
+	oaepParams.ulSourceDataLen = sizeof(oaepParams);
+	rv = C_EncryptInit(hSession,&mechanism,hPublicKey);
+	CPPUNIT_ASSERT(rv==CKR_ARGUMENTS_BAD);
+
+	oaepParams.pSourceData = NULL;
+	rv = C_EncryptInit(hSession,&mechanism,hPublicKey);
+	CPPUNIT_ASSERT(rv==CKR_ARGUMENTS_BAD);
+}
+
 void AsymEncryptDecryptTests::testRsaEncryptDecrypt()
 {
 	CK_RV rv;
@@ -203,6 +248,7 @@ void AsymEncryptDecryptTests::testRsaEncryptDecrypt()
 	rv = generateRsaKeyPair(hSessionRW,IN_SESSION,IS_PUBLIC,IN_SESSION,IS_PUBLIC,hPublicKey,hPrivateKey);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
+	rsaOAEPParams(hSessionRO,hPublicKey);
 	rsaEncryptDecrypt(CKM_RSA_PKCS,hSessionRO,hPublicKey,hPrivateKey);
 	rsaEncryptDecrypt(CKM_RSA_X_509,hSessionRO,hPublicKey,hPrivateKey);
 	rsaEncryptDecrypt(CKM_RSA_PKCS_OAEP,hSessionRO,hPublicKey,hPrivateKey);
