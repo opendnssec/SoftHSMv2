@@ -401,7 +401,7 @@ CK_RV P11Attribute::update(Token* token, bool isPrivate, CK_VOID_PTR pValue, CK_
 	}
 
 	// Attributes cannot be modified if CKA_TRUSTED is true on a certificate object.
-	if (isTrusted()) {
+	if (isTrusted() && op != OBJECT_OP_CREATE) {
 		if (osobject->getUnsignedLongValue(CKA_CLASS, CKO_VENDOR_DEFINED) == CKO_CERTIFICATE)
 		{
 			ERROR_MSG("A trusted certificate cannot be modified");
