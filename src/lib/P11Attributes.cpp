@@ -395,7 +395,7 @@ CK_RV P11Attribute::update(Token* token, bool isPrivate, CK_VOID_PTR pValue, CK_
 
 
 	// Attributes cannot be changed if CKA_MODIFIABLE is set to false
-	if (!isModifiable()) {
+	if (!isModifiable() && op != OBJECT_OP_GENERATE && op != OBJECT_OP_CREATE) {
 		ERROR_MSG("An object is with CKA_MODIFIABLE set to false is not modifiable");
 		return CKR_ATTRIBUTE_READ_ONLY;
 	}
