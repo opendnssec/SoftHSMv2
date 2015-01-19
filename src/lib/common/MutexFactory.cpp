@@ -43,7 +43,7 @@
 // Constructor
 Mutex::Mutex()
 {
-	isValid = (MutexFactory::i()->createMutex(&handle) == CKR_OK);	
+	isValid = (MutexFactory::i()->CreateMutex(&handle) == CKR_OK);
 }
 
 // Destructor
@@ -51,14 +51,14 @@ Mutex::~Mutex()
 {
 	if (isValid)
 	{
-		MutexFactory::i()->destroyMutex(handle);
+		MutexFactory::i()->DestroyMutex(handle);
 	}
 }
 
 // Lock the mutex
 bool Mutex::lock()
 {
-	return (isValid && (MutexFactory::i()->lockMutex(handle) == CKR_OK));
+	return (isValid && (MutexFactory::i()->LockMutex(handle) == CKR_OK));
 }
 	 
 // Unlock the mutex
@@ -66,7 +66,7 @@ void Mutex::unlock()
 {
 	if (isValid) 
 	{
-		MutexFactory::i()->unlockMutex(handle);
+		MutexFactory::i()->UnlockMutex(handle);
 	}
 }
 
