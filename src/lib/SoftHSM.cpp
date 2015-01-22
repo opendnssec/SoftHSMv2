@@ -468,8 +468,14 @@ CK_RV SoftHSM::C_Initialize(CK_VOID_PTR pInitArgs)
 	// Set the state to initialised
 	isInitialised = true;
 
-	// Hook cleanup on dlclose() or exit()
+#ifndef CRYPTOKI_EXPORTS
+	// Install cleanup hook on app exit() unless we are shared library
+
+	// atexit() handler it called when an app exits and NOT when a library is unloaded.
+	// Because the app most likely unloads the library before calling atexit() handler, 
+	// we end up calling a function from the already unloaded lib, which will result in crash.
 	atexit(libcleanup);
+#endif
 
 	return CKR_OK;
 }
