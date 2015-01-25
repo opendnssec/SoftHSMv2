@@ -4,6 +4,7 @@ SoftHSM develop
 
 Bugfixes:
 * SOFTHSM-108: A marked as trusted certificate cannot be imported.
+* SUPPORT-154: A marked as non-modifiable object cannot be generated.
 
 
 SoftHSM 2.0.0b2 - 2014-12-28

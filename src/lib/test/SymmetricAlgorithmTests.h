@@ -45,6 +45,7 @@ class SymmetricAlgorithmTests : public CppUnit::TestFixture
 	CPPUNIT_TEST(testAesWrapUnwrap);
 #endif
 	CPPUNIT_TEST(testNullTemplate);
+	CPPUNIT_TEST(testNonModifiableDesKeyGeneration);
 	CPPUNIT_TEST_SUITE_END();
 
 public:
@@ -52,6 +53,7 @@ public:
 	void testDesEncryptDecrypt();
 	void testAesWrapUnwrap();
 	void testNullTemplate();
+	void testNonModifiableDesKeyGeneration();
 
 	void setUp();
 	void tearDown();
