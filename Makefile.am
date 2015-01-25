@@ -13,6 +13,7 @@ SUBDIRS = src
 
 EXTRA_DIST =	$(srcdir)/aes_wrap_key_with_pad/botan-diff \
 		$(srcdir)/aes_wrap_key_with_pad/README \
+		$(srcdir)/FIPS-NOTES.md \
 		$(srcdir)/LICENSE \
 		$(srcdir)/m4/*.m4 \
 		$(srcdir)/OSX-NOTES.md \
