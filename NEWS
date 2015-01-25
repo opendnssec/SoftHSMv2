@@ -1,5 +1,11 @@
 NEWS for SoftHSM -- History of user visible changes
 
+SoftHSM develop
+
+Bugfixes:
+* SOFTHSM-108: A marked as trusted certificate cannot be imported.
+
+
 SoftHSM 2.0.0b2 - 2014-12-28
 
 * SOFTHSM-50: OpenSSL FIPS support.
