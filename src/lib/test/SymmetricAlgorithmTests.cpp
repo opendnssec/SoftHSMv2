@@ -852,3 +852,85 @@ void SymmetricAlgorithmTests::testNullTemplate()
 	rv = C_GenerateKey(hSession, &mechanism2, NULL_PTR, 0, &hKey);
 	CPPUNIT_ASSERT(rv == CKR_TEMPLATE_INCOMPLETE);
 }
+
+void SymmetricAlgorithmTests::testNonModifiableDesKeyGeneration()
+{
+	CK_RV rv;
+	CK_UTF8CHAR pin[] = SLOT_0_USER1_PIN;
+	CK_ULONG pinLength = sizeof(pin) - 1;
+	CK_SESSION_HANDLE hSession;
+	CK_MECHANISM mechanism = { CKM_DES3_KEY_GEN, NULL_PTR, 0 };
+	CK_OBJECT_HANDLE hKey = CK_INVALID_HANDLE;
+	CK_BBOOL bFalse = CK_FALSE;
+	CK_BBOOL bTrue = CK_TRUE;
+	CK_BBOOL bToken = IN_SESSION;
+
+	CK_ATTRIBUTE keyAttribs[] =
+		{
+		{ CKA_TOKEN, &bToken, sizeof(bToken) },
+		{ CKA_PRIVATE, &bTrue, sizeof(bTrue) },
+		{ CKA_MODIFIABLE, &bTrue, sizeof(bTrue) },
+		{ CKA_ENCRYPT, &bTrue, sizeof(bTrue) },
+		{ CKA_DECRYPT, &bTrue, sizeof(bTrue) },
+		{ CKA_WRAP, &bTrue, sizeof(bTrue) }
+	};
+
+	// Just make sure that we finalize any previous tests
+	C_Finalize(NULL_PTR);
+
+	// Initialize the library and start the test.
+	rv = C_Initialize(NULL_PTR);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Open read-write session
+	rv = C_OpenSession(SLOT_INIT_TOKEN, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSession);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Login USER into the sessions so we can create a private objects
+	rv = C_Login(hSession, CKU_USER, pin, pinLength);
+	CPPUNIT_ASSERT(rv==CKR_OK);
+
+	rv = C_GenerateKey(hSession, &mechanism,
+		keyAttribs, sizeof(keyAttribs)/sizeof(CK_ATTRIBUTE),
+		&hKey);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	rv = C_DestroyObject(hSession, hKey);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// The C_GenerateKey call failed if CKA_MODIFIABLE was bFalse
+	// This was a bug in the SoftHSM implementation
+	keyAttribs[2].pValue = &bFalse;
+	keyAttribs[2].ulValueLen = sizeof(bFalse);
+
+	rv = C_GenerateKey(hSession, &mechanism,
+		keyAttribs, sizeof(keyAttribs) / sizeof(CK_ATTRIBUTE),
+		&hKey);
+	// The call would fail with CKR_ATTRIBUTE_READ_ONLY
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Now create a template where the CKA_MODIFIABLE attribute is last in the list
+	CK_ATTRIBUTE keyAttribs1[] =
+	{
+		{ CKA_TOKEN, &bToken, sizeof(bToken) },
+		{ CKA_PRIVATE, &bTrue, sizeof(bTrue) },
+		{ CKA_ENCRYPT, &bTrue, sizeof(bTrue) },
+		{ CKA_DECRYPT, &bTrue, sizeof(bTrue) },
+		{ CKA_WRAP, &bTrue, sizeof(bTrue) },
+		{ CKA_MODIFIABLE, &bTrue, sizeof(bTrue) }
+	};
+
+	rv = C_GenerateKey(hSession, &mechanism,
+		keyAttribs1, sizeof(keyAttribs1) / sizeof(CK_ATTRIBUTE),
+		&hKey);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Now when CKA_MODIFIABLE is bFalse the key generation succeeds
+	keyAttribs1[2].pValue = &bFalse;
+	keyAttribs1[2].ulValueLen = sizeof(bFalse);
+
+	rv = C_GenerateKey(hSession, &mechanism,
+		keyAttribs1, sizeof(keyAttribs1) / sizeof(CK_ATTRIBUTE),
+		&hKey);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+}
