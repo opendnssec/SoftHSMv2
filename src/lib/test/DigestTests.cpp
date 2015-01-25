@@ -340,7 +340,7 @@ void DigestTests::testDigestAll()
 	rv = C_OpenSession(SLOT_INIT_TOKEN, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSession);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	for (int i = 0; i < sizeof(mechanisms)/sizeof(CK_MECHANISM); i++)
+	for (unsigned int i = 0; i < sizeof(mechanisms)/sizeof(CK_MECHANISM); i++)
 	{
 		rv = C_DigestInit(hSession, &mechanisms[i]);
 		CPPUNIT_ASSERT(rv == CKR_OK);
