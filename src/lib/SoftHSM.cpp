@@ -5086,10 +5086,10 @@ CK_RV SoftHSM::WrapKeySym
 	SymAlgo::Type algo = SymAlgo::Unknown;
 	SymWrap::Type mode = SymWrap::Unknown;
 	size_t bb = 8;
-	CK_ULONG wrappedlen = keydata.size();
 	switch(pMechanism->mechanism) {
 #ifdef HAVE_AES_KEY_WRAP
 		case CKM_AES_KEY_WRAP:
+			CK_ULONG wrappedlen = keydata.size();
 			if ((wrappedlen < 16) || ((wrappedlen % 8) != 0))
 				return CKR_KEY_SIZE_RANGE;
 			algo = SymAlgo::AES;
