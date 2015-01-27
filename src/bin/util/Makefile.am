@@ -8,6 +8,8 @@ dist_man_MANS =		softhsm2-util.1
 
 bin_PROGRAMS =		softhsm2-util
 
+AUTOMAKE_OPTIONS =	subdir-objects
+
 softhsm2_util_SOURCES =	softhsm2-util.cpp \
 			../common/getpw.cpp \
 			../common/library.cpp
