@@ -37,32 +37,38 @@
 #include "salloc.h"
 
 // Wrap/Unwrap keys
+#ifdef HAVE_AES_KEY_WRAP
 bool OSSLAES::wrapKey(const SymmetricKey* key, const SymWrap::Type mode, const ByteString& in, ByteString& out)
 {
-#ifdef HAVE_AES_KEY_WRAP
 	// RFC 3394 input length checks do not apply to RFC 5649 mode with padding
 	if (mode == SymWrap::AES_KEYWRAP && !checkLength(in.size(), 16, "wrap"))
 		return false;
 
 	return wrapUnwrapKey(key, mode, in, out, 1);
-#else
-	return false;
-#endif
 }
+#else
+bool OSSLAES::wrapKey(const SymmetricKey* /*key*/, const SymWrap::Type /*mode*/, const ByteString& /*in*/, ByteString& /*out*/)
+{
+	return false;
+}
+#endif
 
+#ifdef HAVE_AES_KEY_WRAP
 bool OSSLAES::unwrapKey(const SymmetricKey* key, const SymWrap::Type mode, const ByteString& in, ByteString& out)
 {
-#ifdef HAVE_AES_KEY_WRAP
 	// RFC 3394 algorithm produce at least 3 blocks of data
 	if ((mode == SymWrap::AES_KEYWRAP && !checkLength(in.size(), 24, "unwrap")) ||
 	// RFC 5649 algorithm produce at least 2 blocks of data
 	    (mode == SymWrap::AES_KEYWRAP_PAD && !checkLength(in.size(), 16, "unwrap")))
 		return false;
 	return wrapUnwrapKey(key, mode, in, out, 0);
-#else
-	return false;
-#endif
 }
+#else
+bool OSSLAES::unwrapKey(const SymmetricKey* /*key*/, const SymWrap::Type /*mode*/, const ByteString& /*in*/, ByteString& /*out*/)
+{
+	return false;
+}
+#endif
 
 #ifdef HAVE_AES_KEY_WRAP
 // RFC 3394 wrapping and all unwrapping algorithms require aligned blocks
