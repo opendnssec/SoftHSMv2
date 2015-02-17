@@ -40,12 +40,15 @@
 #endif
 
 // Load the PKCS#11 library
-CK_C_GetFunctionList loadLibrary(char* module, void** moduleHandle)
+CK_C_GetFunctionList loadLibrary(char* module, void** moduleHandle,
+				char **pErrMsg)
 {
 	CK_C_GetFunctionList pGetFunctionList = NULL;
 
 #if defined(HAVE_LOADLIBRARY)
 	HINSTANCE hDLL = NULL;
+	DWORD dw = NULL;
+	static const char errMsg[100];
 
 	// Load PKCS #11 library
 	if (module)
@@ -60,11 +63,24 @@ CK_C_GetFunctionList loadLibrary(char* module, void** moduleHandle)
 	if (hDLL == NULL)
 	{
 		// Failed to load the PKCS #11 library
+		dw = GetLastError();
+		snprintf(errMsg, sizeof(errMsg), "LoadLibraryA failed: 0x%x", dw);
+		pErrMsg = &errMsg;
 		return NULL;
+	}
+	else
+	{
+		pErrMsg = NULL;
 	}
 
 	// Retrieve the entry point for C_GetFunctionList
 	pGetFunctionList = (CK_C_GetFunctionList) GetProcAddress(hDLL, "C_GetFunctionList");
+	if (pGetFunctionList == NULL)
+	{
+		dw = GetLastError();
+		snprintf(errMsg, sizeof(errMsg), "getProcAddress failed: 0x%x", dw);
+		pErrMsg = &errMsg;
+	}
 
 	// Store the handle so we can FreeLibrary it later
 	*moduleHandle = hDLL;
@@ -82,7 +98,8 @@ CK_C_GetFunctionList loadLibrary(char* module, void** moduleHandle)
 		pDynLib = dlopen(DEFAULT_PKCS11_LIB, RTLD_NOW | RTLD_LOCAL);
 	}
 
-	if (pDynLib == NULL)
+	*pErrMsg = dlerror();
+	if (pDynLib == NULL || *pErrMsg != NULL)
 	{
 		// Failed to load the PKCS #11 library
 		return NULL;
@@ -93,6 +110,9 @@ CK_C_GetFunctionList loadLibrary(char* module, void** moduleHandle)
 
 	// Store the handle so we can dlclose it later
 	*moduleHandle = pDynLib;
+	*pErrMsg = dlerror();
+	if (*pErrMsg != NULL) // An error occured during dlsym()
+		return NULL;
 
 #else
 	fprintf(stderr, "ERROR: Not compiled with library support.\n");

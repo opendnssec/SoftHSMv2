@@ -137,6 +137,7 @@ int main(int argc, char* argv[])
 	char* module = NULL;
 	char* objectID = NULL;
 	char* slot = NULL;
+	char* errMsg = NULL;
 	int forceExec = 0;
 	int freeToken = 0;
 	int noPublicKey = 0;
@@ -220,10 +221,10 @@ int main(int argc, char* argv[])
 	else
 	{
 		// Get a pointer to the function list for PKCS#11 library
-		CK_C_GetFunctionList pGetFunctionList = loadLibrary(module, &moduleHandle);
+		CK_C_GetFunctionList pGetFunctionList = loadLibrary(module, &moduleHandle, &errMsg);
 		if (!pGetFunctionList)
 		{
-			fprintf(stderr, "ERROR: Could not load the library.\n");
+			fprintf(stderr, "ERROR: Could not load the library: %s\n", errMsg);
 			exit(1);
 		}
 
