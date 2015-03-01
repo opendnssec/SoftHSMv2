@@ -474,16 +474,10 @@ if ($crypto_backend eq "botan") {
     open F, ">testbotan.cpp" || die $!;
     print F << 'EOF';
 #include <botan/init.h>
-#include <botan/pipe.h>
-#include <botan/filters.h>
-#include <botan/hex.h>
-#include <botan/sha2_32.h>
-#include <botan/emsa3.h>
 #include <botan/version.h>
 int main() {
  using namespace Botan;
  LibraryInitializer::initialize();
- new EMSA3_Raw();
 #if BOTAN_VERSION_CODE < BOTAN_VERSION_CODE_FOR(1,10,0)
  return 1;
 #endif

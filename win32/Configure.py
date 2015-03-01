@@ -440,16 +440,10 @@ def doconfig():
         testfile = open("testbotan.cpp", "w")
         print >>testfile, '\
 #include <botan/init.h>\n\
-#include <botan/pipe.h>\n\
-#include <botan/filters.h>\n\
-#include <botan/hex.h>\n\
-#include <botan/sha2_32.h>\n\
-#include <botan/emsa3.h>\n\
 #include <botan/version.h>\n\
 int main() {\n\
  using namespace Botan;\n\
  LibraryInitializer::initialize();\n\
- new EMSA3_Raw();\n\
 #if BOTAN_VERSION_CODE < BOTAN_VERSION_CODE_FOR(1,10,0)\n\
  return 1;\n\
 #endif\n\
