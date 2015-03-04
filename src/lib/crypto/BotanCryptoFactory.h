@@ -48,6 +48,7 @@
 #include "MutexFactory.h"
 #include <memory>
 #include <map>
+#include <botan/version.h>
 
 class BotanCryptoFactory : public CryptoFactory
 {
@@ -91,7 +92,9 @@ private:
 #endif
         Mutex* rngsMutex;
 
+#if BOTAN_VERSION_CODE < BOTAN_VERSION_CODE_FOR(1,11,14)
 	bool wasInitialized;
+#endif
 };
 
 #endif // !_SOFTHSM_V2_BOTANCRYPTOFACTORY_H
