@@ -39,6 +39,11 @@
 
 #include <botan/symkey.h>
 #include <botan/botan.h>
+#include <botan/version.h>
+
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,14)
+#include <botan/key_filt.h>
+#endif
 
 // Constructor
 BotanSymmetricAlgorithm::BotanSymmetricAlgorithm()
