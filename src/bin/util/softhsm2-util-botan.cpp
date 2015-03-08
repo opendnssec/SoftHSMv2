@@ -45,13 +45,17 @@
 #include <botan/auto_rng.h>
 #include <botan/pkcs8.h>
 #include <botan/bigint.h>
-#include <botan/libstate.h>
+#include <botan/version.h>
 
+#if BOTAN_VERSION_CODE < BOTAN_VERSION_CODE_FOR(1,11,14)
+#include <botan/libstate.h>
 bool wasInitialized = false;
+#endif
 
 // Init Botan
 void crypto_init()
 {
+#if BOTAN_VERSION_CODE < BOTAN_VERSION_CODE_FOR(1,11,14)
 	// The PKCS#11 library might be using Botan
 	// Check if it has already initialized Botan
 	if (Botan::Global_State_Management::global_state_exists())
@@ -63,15 +67,22 @@ void crypto_init()
 	{
 		Botan::LibraryInitializer::initialize("thread_safe=true");
 	}
+#else
+	Botan::LibraryInitializer::initialize("thread_safe=true");
+#endif
 }
 
 // Final Botan
 void crypto_final()
 {
+#if BOTAN_VERSION_CODE < BOTAN_VERSION_CODE_FOR(1,11,14)
 	if (!wasInitialized)
 	{
 		Botan::LibraryInitializer::deinitialize();
 	}
+#else
+	Botan::LibraryInitializer::deinitialize();
+#endif
 }
 
 // Import a key pair from given path

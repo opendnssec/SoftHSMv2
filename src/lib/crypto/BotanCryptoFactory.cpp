@@ -56,7 +56,10 @@
 #include "BotanHMAC.h"
 
 #include <botan/init.h>
+
+#if BOTAN_VERSION_CODE < BOTAN_VERSION_CODE_FOR(1,11,14)
 #include <botan/libstate.h>
+#endif
 
 // Initialise the one-and-only instance
 std::auto_ptr<BotanCryptoFactory> BotanCryptoFactory::instance(NULL);
@@ -64,6 +67,7 @@ std::auto_ptr<BotanCryptoFactory> BotanCryptoFactory::instance(NULL);
 // Constructor
 BotanCryptoFactory::BotanCryptoFactory()
 {
+#if BOTAN_VERSION_CODE < BOTAN_VERSION_CODE_FOR(1,11,14)
 	wasInitialized = false;
 
 	// Check if Botan has already been initialized
@@ -77,6 +81,9 @@ BotanCryptoFactory::BotanCryptoFactory()
 	{
 		Botan::LibraryInitializer::initialize("thread_safe=true");
 	}
+#else
+	Botan::LibraryInitializer::initialize("thread_safe=true");
+#endif
 
 	// Create mutex
 	rngsMutex = MutexFactory::i()->getMutex();
@@ -104,10 +111,14 @@ BotanCryptoFactory::~BotanCryptoFactory()
 	MutexFactory::i()->recycleMutex(rngsMutex);
 
 	// Deinitialize the Botan crypto lib
+#if BOTAN_VERSION_CODE < BOTAN_VERSION_CODE_FOR(1,11,14)
 	if (!wasInitialized)
 	{
 		Botan::LibraryInitializer::deinitialize();
 	}
+#else
+	Botan::LibraryInitializer::deinitialize();
+#endif
 }
 
 // Return the one-and-only instance
