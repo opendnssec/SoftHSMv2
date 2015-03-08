@@ -463,6 +463,7 @@ if ($crypto_backend eq "botan") {
     if ($verbose) {
         print "checking Botan version\n";
     }
+    my $botan_version_minor = 0;
     my $system_libs = "";
     if (-f $botan_dll) {
         `copy "$botan_dll" .`;
@@ -494,9 +495,12 @@ EOF
         if ($? == 1) {
             die "Botan version too old\n";
         } elsif ($? == 2) {
+            $botan_version_minor = 11;
             die "Botan version 11 not yet supported\n";
         } elsif ($? != 0) {
             die "Botan test failed\n";
+        } else {
+            $botan_version_minor = 10;
         }
     } else {
         die "can't compile Botan test: $compret\n";
@@ -607,12 +611,13 @@ EOF
         }
     }
 
-    # Botan GNU MP support 
-    if ($verbose) {
-        print "checking Botan GNU MP support\n";
-    }
-    open F, ">testgnump.cpp" || die $!;
-    print F << 'EOF';
+    # Botan GNU MP support
+    if ($botan_version_minor == 10) {
+        if ($verbose) {
+            print "checking Botan GNU MP support\n";
+        }
+        open F, ">testgnump.cpp" || die $!;
+        print F << 'EOF';
 #include <botan/build.h>
 int main() {
 #ifndef BOTAN_HAS_ENGINE_GNU_MP
@@ -620,15 +625,16 @@ int main() {
 #endif
 }
 EOF
-    close F;
-    `cl /nologo /MD /I "$inc" testgnump.cpp "$lib"$system_libs`;
-    if (grep { -f and -x } ".\\testgnump.exe") {
-        if ($verbose) {
-            print "Botan GNU MP is supported\n";
-        }
-    } else {
-        if ($verbose) {
-            print "Botan GNU MP is not supported\n";
+        close F;
+        `cl /nologo /MD /I "$inc" testgnump.cpp "$lib"$system_libs`;
+        if (grep { -f and -x } ".\\testgnump.exe") {
+            if ($verbose) {
+                print "Botan GNU MP is supported\n";
+            }
+        } else {
+            if ($verbose) {
+                print "Botan GNU MP is not supported\n";
+            }
         }
     }
 

@@ -430,6 +430,7 @@ def doconfig():
         # Botan version
         if verbose:
             print "checking Botan version"
+        botan_version_minor = 0
         system_libs = []
         if os.path.exists(botan_dll):
             subprocess.call(["copy", botan_dll, "."], shell=True)
@@ -464,11 +465,14 @@ int main() {\n\
             print >> sys.stderr, "Botan version too old"
             sys.exit(1)
         if ret == 2:
+            botan_version_minor = 11
             print >> sys.stderr, "Botan version 11 not yet supported"
             sys.exit(1)
         if ret != 0:
             print >> sys.stderr, "Botan test failed"
             sys.exit(1)
+        else:
+            botan_version_minor = 10
 
         # Botan ECC support
         if enable_ecc:
@@ -569,26 +573,27 @@ int main() {\n\
                 print "can't compile Botan AES key wrap with pad"
 
         # Botan GNU MP support
-        if verbose:
-            print "checking Botan GNU MP support"
-        testfile = open("testgnump.cpp", "w")
-        print >>testfile, '\
+        if botan_version_minor == 10:
+            if verbose:
+                print "checking Botan GNU MP support"
+            testfile = open("testgnump.cpp", "w")
+            print >>testfile, '\
 #include <botan/build.h>\n\
 int main() {\n\
 #ifndef BOTAN_HAS_ENGINE_GNU_MP\n\
 #error "No GNU MP support";\n\
 #endif\n\
 }'
-        testfile.close()
-        command = ["cl", "/nologo", "/MD", "/I", inc, "testgnump.cpp", lib]
-        command.extend(system_libs)
-        subprocess.call(command)
-        if not os.path.exists(".\\testgnump.exe"):
-            if verbose:
-                print "Botan GNU MP is supported"
-        else:
-            if verbose:
-                print "Botan GNU MP is not supported"
+            testfile.close()
+            command = ["cl", "/nologo", "/MD", "/I", inc, "testgnump.cpp", lib]
+            command.extend(system_libs)
+            subprocess.call(command)
+            if not os.path.exists(".\\testgnump.exe"):
+                if verbose:
+                    print "Botan GNU MP is supported"
+            else:
+                if verbose:
+                    print "Botan GNU MP is not supported"
 
     else:
 
