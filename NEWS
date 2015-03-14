@@ -2,7 +2,7 @@ NEWS for SoftHSM -- History of user visible changes
 
 SoftHSM develop
 
-SOFTHSM-113: Support for Botan 1.11.14
+SOFTHSM-113: Support for Botan 1.11.15
 
 Bugfixes:
 * SOFTHSM-108: A marked as trusted certificate cannot be imported.
