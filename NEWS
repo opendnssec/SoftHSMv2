@@ -12,6 +12,10 @@ Bugfixes:
 * SOFTHSM-112: CKM_AES_KEY_WRAP* conflict in pkcs11.h.
 * SOFTHSM-114: Fix memory leak in a test script.
 * SUPPORT-154: A marked as non-modifiable object cannot be generated.
+* Mutex should call MutexFactory wrapper functions.
+  (Patch from Jerry Lundström)
+* Return detailed error message to loadLibrary().
+  (Patch from Petr Spacek)
 
 
 SoftHSM 2.0.0b2 - 2014-12-28
