@@ -10,6 +10,7 @@ Bugfixes:
 * SOFTHSM-110: subdir-objects warnings from autoreconf.
 * SOFTHSM-111: Include FIPS-NOTES.md in dist.
 * SOFTHSM-112: CKM_AES_KEY_WRAP* conflict in pkcs11.h.
+* SOFTHSM-114: Fix memory leak in a test script.
 * SUPPORT-154: A marked as non-modifiable object cannot be generated.
 
 

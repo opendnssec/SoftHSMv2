@@ -168,6 +168,7 @@ void DeriveTests::dhDerive(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hPublicK
 	rv = C_DeriveKey(hSession, &mechanism, hPrivateKey,
 			 keyAttribs, sizeof(keyAttribs)/sizeof(CK_ATTRIBUTE),
 			 &hKey);
+	free(valAttrib.pValue);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 }
 
