@@ -11,6 +11,8 @@ Bugfixes:
 * SOFTHSM-111: Include FIPS-NOTES.md in dist.
 * SOFTHSM-112: CKM_AES_KEY_WRAP* conflict in pkcs11.h.
 * SUPPORT-154: A marked as non-modifiable object cannot be generated.
+* SUPPORT-157: Derived secrets were truncated after encryption and
+  could thus not be decrypted.
 
 
 SoftHSM 2.0.0b2 - 2014-12-28
