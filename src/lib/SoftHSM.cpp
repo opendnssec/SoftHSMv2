@@ -8480,18 +8480,21 @@ CK_RV SoftHSM::deriveDH
 			}
 
 			// Secret Attributes
+			ByteString secretValue = secret->getKeyBits();
+
+			// Truncate value when requested
+			if (byteLen != 0 && byteLen < secretValue.size())
+				secretValue.resize(byteLen);
+
 			ByteString value;
 			if (isPrivate)
 			{
-				token->encrypt(secret->getKeyBits(), value);
+				token->encrypt(secretValue, value);
 			}
 			else
 			{
-				value = secret->getKeyBits();
+				value = secretValue;
 			}
-			// Truncate value when requested
-			if (byteLen != 0 && byteLen < value.size())
-				value.resize(byteLen);
 			bOK = bOK && osobject->setAttribute(CKA_VALUE, value);
 
 			if (bOK)
@@ -8712,18 +8715,21 @@ CK_RV SoftHSM::deriveECDH
 			}
 
 			// Secret Attributes
+			ByteString secretValue = secret->getKeyBits();
+
+			// Truncate value when requested
+			if (byteLen != 0 && byteLen < secretValue.size())
+				secretValue.resize(byteLen);
+
 			ByteString value;
 			if (isPrivate)
 			{
-				token->encrypt(secret->getKeyBits(), value);
+				token->encrypt(secretValue, value);
 			}
 			else
 			{
-				value = secret->getKeyBits();
+				value = secretValue;
 			}
-			// Truncate value when requested
-			if (byteLen != 0 && byteLen < value.size())
-				value.resize(byteLen);
 			bOK = bOK && osobject->setAttribute(CKA_VALUE, value);
 
 			if (bOK)
