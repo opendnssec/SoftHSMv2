@@ -45,22 +45,6 @@
 #include <map>
 #include <list>
 
-#if HAVE_SOS_SINGLETON
-// The one-and-only instance
-/*static*/ std::auto_ptr<SessionObjectStore> SessionObjectStore::_instance(NULL);
-
-// Get the one-and-only instance
-/*static*/ SessionObjectStore* SessionObjectStore::i()
-{
-	if (!_instance.get())
-	{
-		_instance = std::auto_ptr<SessionObjectStore>(new SessionObjectStore());
-	}
-
-	return _instance.get();
-}
-#endif
-
 // Constructor
 SessionObjectStore::SessionObjectStore()
 {
@@ -80,7 +64,6 @@ SessionObjectStore::~SessionObjectStore()
 		if ((*i) == NULL) continue;
 
 		SessionObject* that = *i;
-		
 		delete that;
 	}
 
@@ -94,27 +77,27 @@ std::set<SessionObject*> SessionObjectStore::getObjects()
 	// the object list when we return it
 	MutexLocker lock(storeMutex);
 
-    return objects;
+	return objects;
 }
 
 void SessionObjectStore::getObjects(CK_SLOT_ID slotID, std::set<OSObject*> &objects)
 {
-    // Make sure that no other thread is in the process of changing
-    // the object list when we return it
-    MutexLocker lock(storeMutex);
+	// Make sure that no other thread is in the process of changing
+	// the object list when we return it
+	MutexLocker lock(storeMutex);
 
-    std::set<SessionObject*>::iterator it;
-    for (it=this->objects.begin(); it!=this->objects.end(); ++it) {
-        if ((*it)->hasSlotID(slotID))
-            objects.insert(*it);
-    }
+	std::set<SessionObject*>::iterator it;
+	for (it=this->objects.begin(); it!=this->objects.end(); ++it) {
+		if ((*it)->hasSlotID(slotID))
+			objects.insert(*it);
+	}
 }
 
 // Create a new object
 SessionObject* SessionObjectStore::createObject(CK_SLOT_ID slotID, CK_SESSION_HANDLE hSession, bool isPrivate)
 {
 	// Create the new object file
-    SessionObject* newObject = new SessionObject(this, slotID, hSession, isPrivate);
+	SessionObject* newObject = new SessionObject(this, slotID, hSession, isPrivate);
 
 	if (!newObject->isValid())
 	{
@@ -178,38 +161,38 @@ void SessionObjectStore::sessionClosed(CK_SESSION_HANDLE hSession)
 
 void SessionObjectStore::allSessionsClosed(CK_SLOT_ID slotID)
 {
-    MutexLocker lock(storeMutex);
+	MutexLocker lock(storeMutex);
 
-    std::set<SessionObject*> checkObjects = objects;
+	std::set<SessionObject*> checkObjects = objects;
 
-    for (std::set<SessionObject*>::iterator i = checkObjects.begin(); i != checkObjects.end(); i++)
-    {
-        if ((*i)->removeOnAllSessionsClose(slotID))
-        {
-            // Since the object remains in the allObjects set, any pointers to it will
-            // remain valid but it will no longer be returned when the set of objects
-            // is requested
-            objects.erase(*i);
-        }
-    }
+	for (std::set<SessionObject*>::iterator i = checkObjects.begin(); i != checkObjects.end(); i++)
+	{
+		if ((*i)->removeOnAllSessionsClose(slotID))
+		{
+			// Since the object remains in the allObjects set, any pointers to it will
+			// remain valid but it will no longer be returned when the set of objects
+			// is requested
+			objects.erase(*i);
+		}
+	}
 }
 
 void SessionObjectStore::tokenLoggedOut(CK_SLOT_ID slotID)
 {
-    MutexLocker lock(storeMutex);
+	MutexLocker lock(storeMutex);
 
-    std::set<SessionObject*> checkObjects = objects;
+	std::set<SessionObject*> checkObjects = objects;
 
-    for (std::set<SessionObject*>::iterator i = checkObjects.begin(); i != checkObjects.end(); i++)
-    {
-        if ((*i)->removeOnTokenLogout(slotID))
-        {
-            // Since the object remains in the allObjects set, any pointers to it will
-            // remain valid but it will no longer be returned when the set of objects
-            // is requested
-            objects.erase(*i);
-        }
-    }
+	for (std::set<SessionObject*>::iterator i = checkObjects.begin(); i != checkObjects.end(); i++)
+	{
+		if ((*i)->removeOnTokenLogout(slotID))
+		{
+			// Since the object remains in the allObjects set, any pointers to it will
+			// remain valid but it will no longer be returned when the set of objects
+			// is requested
+			objects.erase(*i);
+		}
+	}
 }
 
 // Clear the whole store
