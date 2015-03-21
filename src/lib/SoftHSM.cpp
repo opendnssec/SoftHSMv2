@@ -68,46 +68,46 @@
 
 #include <stdlib.h>
 
-static CK_RV newP11Object(CK_OBJECT_CLASS objClass, CK_KEY_TYPE keyType, CK_CERTIFICATE_TYPE certType, std::auto_ptr< P11Object > &p11object)
+static CK_RV newP11Object(CK_OBJECT_CLASS objClass, CK_KEY_TYPE keyType, CK_CERTIFICATE_TYPE certType, P11Object **p11object)
 {
 	switch(objClass) {
 		case CKO_DATA:
-			p11object.reset( new P11DataObj);
+			*p11object = new P11DataObj();
 			break;
 		case CKO_CERTIFICATE:
 			if (certType == CKC_X_509)
-				p11object.reset( new P11X509CertificateObj );
+				*p11object = new P11X509CertificateObj();
 			else if (certType == CKC_OPENPGP)
-				p11object.reset( new P11OpenPGPPublicKeyObj );
+				*p11object = new P11OpenPGPPublicKeyObj();
 			else
 				return CKR_ATTRIBUTE_VALUE_INVALID;
 			break;
 		case CKO_PUBLIC_KEY:
 			if (keyType == CKK_RSA)
-				p11object.reset( new P11RSAPublicKeyObj );
+				*p11object = new P11RSAPublicKeyObj();
 			else if (keyType == CKK_DSA)
-				p11object.reset( new P11DSAPublicKeyObj );
+				*p11object = new P11DSAPublicKeyObj();
 			else if (keyType == CKK_EC)
-				p11object.reset( new P11ECPublicKeyObj );
+				*p11object = new P11ECPublicKeyObj();
 			else if (keyType == CKK_DH)
-				p11object.reset( new P11DHPublicKeyObj );
+				*p11object = new P11DHPublicKeyObj();
 			else if (keyType == CKK_GOSTR3410)
-				p11object.reset( new P11GOSTPublicKeyObj );
+				*p11object = new P11GOSTPublicKeyObj();
 			else
 				return CKR_ATTRIBUTE_VALUE_INVALID;
 			break;
 		case CKO_PRIVATE_KEY:
 			// we need to know the type too
 			if (keyType == CKK_RSA)
-				p11object.reset( new P11RSAPrivateKeyObj );
+				*p11object = new P11RSAPrivateKeyObj();
 			else if (keyType == CKK_DSA)
-				p11object.reset( new P11DSAPrivateKeyObj );
+				*p11object = new P11DSAPrivateKeyObj();
 			else if (keyType == CKK_EC)
-				p11object.reset( new P11ECPrivateKeyObj );
+				*p11object = new P11ECPrivateKeyObj();
 			else if (keyType == CKK_DH)
-				p11object.reset( new P11DHPrivateKeyObj );
+				*p11object = new P11DHPrivateKeyObj();
 			else if (keyType == CKK_GOSTR3410)
-				p11object.reset( new P11GOSTPrivateKeyObj );
+				*p11object = new P11GOSTPrivateKeyObj();
 			else
 				return CKR_ATTRIBUTE_VALUE_INVALID;
 			break;
@@ -120,34 +120,34 @@ static CK_RV newP11Object(CK_OBJECT_CLASS objClass, CK_KEY_TYPE keyType, CK_CERT
 			    (keyType == CKK_SHA384_HMAC) ||
 			    (keyType == CKK_SHA512_HMAC))
 			{
-				P11GenericSecretKeyObj* key = new P11GenericSecretKeyObj;
-				p11object.reset(key);
+				P11GenericSecretKeyObj* key = new P11GenericSecretKeyObj();
+				*p11object = key;
 				key->setKeyType(keyType);
 			}
 			else if (keyType == CKK_AES)
 			{
-				p11object.reset( new P11AESSecretKeyObj );
+				*p11object = new P11AESSecretKeyObj();
 			}
 			else if ((keyType == CKK_DES) ||
 				 (keyType == CKK_DES2) ||
 				 (keyType == CKK_DES3))
 			{
-				P11DESSecretKeyObj* key = new P11DESSecretKeyObj;
-				p11object.reset(key);
+				P11DESSecretKeyObj* key = new P11DESSecretKeyObj();
+				*p11object = key;
 				key->setKeyType(keyType);
 			}
 			else if (keyType == CKK_GOST28147)
 			{
-				p11object.reset( new P11GOSTSecretKeyObj );
+				*p11object = new P11GOSTSecretKeyObj();
 			}
 			else
 				return CKR_ATTRIBUTE_VALUE_INVALID;
 			break;
 		case CKO_DOMAIN_PARAMETERS:
 			if (keyType == CKK_DSA)
-				p11object.reset( new P11DSADomainObj );
+				*p11object = new P11DSADomainObj();
 			else if (keyType == CKK_DH)
-				p11object.reset( new P11DHDomainObj );
+				*p11object = new P11DHDomainObj();
 			else
 				return CKR_ATTRIBUTE_VALUE_INVALID;
 			break;
@@ -238,7 +238,7 @@ static CK_RV extractObjectInformation(CK_ATTRIBUTE_PTR pTemplate,
 	return CKR_OK;
 }
 
-static CK_RV newP11Object(OSObject *object, std::auto_ptr< P11Object > &p11object)
+static CK_RV newP11Object(OSObject *object, P11Object **p11object)
 {
 	CK_OBJECT_CLASS objClass = object->getUnsignedLongValue(CKA_CLASS, CKO_VENDOR_DEFINED);
 	CK_KEY_TYPE keyType = CKK_RSA;
@@ -250,7 +250,7 @@ static CK_RV newP11Object(OSObject *object, std::auto_ptr< P11Object > &p11objec
 	CK_RV rv = newP11Object(objClass,keyType,certType,p11object);
 	if (rv != CKR_OK)
 		return rv;
-	if (!p11object->init(object))
+	if (!(*p11object)->init(object))
 		return CKR_GENERAL_ERROR; // something went wrong that shouldn't have.
 	return CKR_OK;
 }
@@ -1413,8 +1413,8 @@ CK_RV SoftHSM::C_CopyObject(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject
 	}
 
 	// Get the new P11 object
-	std::auto_ptr< P11Object > newp11object;
-	rv = newP11Object(newobject,newp11object);
+	P11Object* newp11object = NULL;
+	rv = newP11Object(newobject,&newp11object);
 	if (rv != CKR_OK)
 	{
 		newobject->destroyObject();
@@ -1423,6 +1423,7 @@ CK_RV SoftHSM::C_CopyObject(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject
 
 	// Apply the template
 	rv = newp11object->saveTemplate(token, isPrivate != CK_FALSE, pTemplate, ulCount, OBJECT_OP_COPY);
+	delete newp11object;
 
 	if (rv != CKR_OK)
 	{
@@ -1545,13 +1546,15 @@ CK_RV SoftHSM::C_GetAttributeValue(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE 
 
 	// Wrap a P11Object around the OSObject so we can access the attributes in the
 	// context of the object in which it is defined.
-	std::auto_ptr< P11Object > p11object;
-	rv = newP11Object(object,p11object);
+	P11Object* p11object = NULL;
+	rv = newP11Object(object,&p11object);
 	if (rv != CKR_OK)
 		return rv;
 
 	// Ask the P11Object to fill the template with attribute values.
-	return p11object->loadTemplate(token, pTemplate,ulCount);
+	rv = p11object->loadTemplate(token, pTemplate,ulCount);
+	delete p11object;
+	return rv;
 }
 
 // Change or set the value of the specified attributes on the specified object
@@ -1590,13 +1593,15 @@ CK_RV SoftHSM::C_SetAttributeValue(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE 
 
 	// Wrap a P11Object around the OSObject so we can access the attributes in the
 	// context of the object in which it is defined.
-	std::auto_ptr< P11Object > p11object;
-	rv = newP11Object(object,p11object);
+	P11Object* p11object = NULL;
+	rv = newP11Object(object,&p11object);
 	if (rv != CKR_OK)
 		return rv;
 
 	// Ask the P11Object to save the template with attribute values.
-	return p11object->saveTemplate(token, isPrivate != CK_FALSE, pTemplate,ulCount,OBJECT_OP_SET);
+	rv = p11object->saveTemplate(token, isPrivate != CK_FALSE, pTemplate,ulCount,OBJECT_OP_SET);
+	delete p11object;
+	return rv;
 }
 
 // Initialise object search in the specified session using the specified attribute template as search parameters
@@ -8810,8 +8815,8 @@ CK_RV SoftHSM::CreateObject(CK_SESSION_HANDLE hSession, CK_ATTRIBUTE_PTR pTempla
 		return rv;
 	}
 
-	std::auto_ptr< P11Object > p11object;
-	rv = newP11Object(objClass,keyType,certType,p11object);
+	P11Object* p11object = NULL;
+	rv = newP11Object(objClass,keyType,certType,&p11object);
 	if (rv != CKR_OK)
 		return rv;
 
@@ -8826,14 +8831,19 @@ CK_RV SoftHSM::CreateObject(CK_SESSION_HANDLE hSession, CK_ATTRIBUTE_PTR pTempla
 		object = sessionObjectStore->createObject(slot->getSlotID(), hSession, isPrivate != CK_FALSE);
 	}
 
-	if (object == NULL) return CKR_GENERAL_ERROR;
-	if (!p11object->init(object)) return CKR_GENERAL_ERROR;
+	if (object == NULL || !p11object->init(object))
+	{
+		delete p11object;
+		return CKR_GENERAL_ERROR;
+	}
 
 	rv = p11object->saveTemplate(token, isPrivate != CK_FALSE, pTemplate,ulCount,op);
+	delete p11object;
 	if (rv != CKR_OK)
 		return rv;
 
-	if (isOnToken) {
+	if (isOnToken)
+	{
 		*phObject = handleManager->addTokenObject(slot->getSlotID(), isPrivate != CK_FALSE, object);
 	} else {
 		*phObject = handleManager->addSessionObject(slot->getSlotID(), hSession, isPrivate != CK_FALSE, object);
