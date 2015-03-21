@@ -273,14 +273,18 @@ static void libcleanup()
  *****************************************************************************/
 
 // Initialise the one-and-only instance
+#ifdef HAVE_CXX11
+std::unique_ptr<SoftHSM> SoftHSM::instance(nullptr);
+#else
 std::auto_ptr<SoftHSM> SoftHSM::instance(NULL);
+#endif
 
 // Return the one-and-only instance
 SoftHSM* SoftHSM::i()
 {
 	if (!instance.get())
 	{
-		instance = std::auto_ptr<SoftHSM>(new SoftHSM());
+		instance.reset(new SoftHSM());
 	}
 
 	return instance.get();

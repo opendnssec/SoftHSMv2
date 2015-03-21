@@ -36,7 +36,11 @@
 #include "log.h"
 
 // Initialise the one-and-only instance
+#ifdef HAVE_CXX11
+std::unique_ptr<Configuration> Configuration::instance(nullptr);
+#else
 std::auto_ptr<Configuration> Configuration::instance(NULL);
+#endif
 
 // Add all valid configurations
 const struct config Configuration::valid_config[] = {
@@ -51,7 +55,7 @@ Configuration* Configuration::i()
 {
 	if (instance.get() == NULL)
 	{
-		instance = std::auto_ptr<Configuration>(new Configuration());
+		instance.reset(new Configuration());
 	}
 
 	return instance.get();

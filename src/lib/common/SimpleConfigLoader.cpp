@@ -50,14 +50,18 @@
 #include "Configuration.h"
 
 // Initialise the one-and-only instance
+#ifdef HAVE_CXX11
+std::unique_ptr<SimpleConfigLoader> SimpleConfigLoader::instance(nullptr);
+#else
 std::auto_ptr<SimpleConfigLoader> SimpleConfigLoader::instance(NULL);
+#endif
 
 // Return the one-and-only instance
 SimpleConfigLoader* SimpleConfigLoader::i()
 {
 	if (instance.get() == NULL)
 	{
-		instance = std::auto_ptr<SimpleConfigLoader>(new SimpleConfigLoader());
+		instance.reset(new SimpleConfigLoader());
 	}
 
 	return instance.get();

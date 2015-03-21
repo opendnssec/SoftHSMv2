@@ -12,6 +12,7 @@ Bugfixes:
 * SOFTHSM-112: CKM_AES_KEY_WRAP* conflict in pkcs11.h.
 * SOFTHSM-114: Fix memory leak in a test script.
 * SUPPORT-154: A marked as non-modifiable object cannot be generated.
+* SUPPORT-155: auto_ptr is deprecated in C++11, use unique_ptr.
 * SUPPORT-157: Derived secrets were truncated after encryption and
   could thus not be decrypted.
 * Mutex should call MutexFactory wrapper functions.

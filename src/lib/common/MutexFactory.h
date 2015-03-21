@@ -49,7 +49,7 @@ public:
 
 	// Lock the mutex
 	bool lock();
-	 
+
 	// Unlock the mutex
 	void unlock();
 
@@ -113,7 +113,11 @@ private:
 	CK_RV UnlockMutex(CK_VOID_PTR mutex);
 
 	// The one-and-only instance
+#ifdef HAVE_CXX11
+	static std::unique_ptr<MutexFactory> instance;
+#else
 	static std::auto_ptr<MutexFactory> instance;
+#endif
 
 	// The function pointers
 	CK_CREATEMUTEX createMutex;

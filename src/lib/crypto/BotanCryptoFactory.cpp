@@ -30,7 +30,6 @@
 
  This is a Botan based cryptographic algorithm factory
  *****************************************************************************/
-
 #include "config.h"
 #include "BotanCryptoFactory.h"
 #include "BotanAES.h"
@@ -62,7 +61,11 @@
 #endif
 
 // Initialise the one-and-only instance
+#ifdef HAVE_CXX11
+std::unique_ptr<BotanCryptoFactory> BotanCryptoFactory::instance(nullptr);
+#else
 std::auto_ptr<BotanCryptoFactory> BotanCryptoFactory::instance(NULL);
+#endif
 
 // Constructor
 BotanCryptoFactory::BotanCryptoFactory()
@@ -126,7 +129,7 @@ BotanCryptoFactory* BotanCryptoFactory::i()
 {
 	if (!instance.get())
 	{
-		instance = std::auto_ptr<BotanCryptoFactory>(new BotanCryptoFactory());
+		instance.reset(new BotanCryptoFactory());
 	}
 
 	return instance.get();

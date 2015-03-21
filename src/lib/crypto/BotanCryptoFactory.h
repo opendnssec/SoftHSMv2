@@ -82,7 +82,11 @@ private:
 	BotanCryptoFactory();
 
 	// The one-and-only instance
+#ifdef HAVE_CXX11
+	static std::unique_ptr<BotanCryptoFactory> instance;
+#else
 	static std::auto_ptr<BotanCryptoFactory> instance;
+#endif
 
 	// Thread specific RNG
 #ifdef HAVE_PTHREAD_H

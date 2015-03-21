@@ -68,7 +68,11 @@
 #endif
 
 // Initialise the one-and-only instance
+#ifdef HAVE_CXX11
+std::unique_ptr<OSSLCryptoFactory> OSSLCryptoFactory::instance(nullptr);
+#else
 std::auto_ptr<OSSLCryptoFactory> OSSLCryptoFactory::instance(NULL);
+#endif
 
 #ifdef WITH_FIPS
 // Initialise the FIPS 140-2 selftest status
@@ -235,7 +239,7 @@ OSSLCryptoFactory* OSSLCryptoFactory::i()
 {
 	if (!instance.get())
 	{
-		instance = std::auto_ptr<OSSLCryptoFactory>(new OSSLCryptoFactory());
+		instance.reset(new OSSLCryptoFactory());
 	}
 
 	return instance.get();
