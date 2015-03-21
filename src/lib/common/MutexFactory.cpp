@@ -60,11 +60,11 @@ bool Mutex::lock()
 {
 	return (isValid && (MutexFactory::i()->LockMutex(handle) == CKR_OK));
 }
-	 
+
 // Unlock the mutex
 void Mutex::unlock()
 {
-	if (isValid) 
+	if (isValid)
 	{
 		MutexFactory::i()->UnlockMutex(handle);
 	}
@@ -93,7 +93,11 @@ MutexLocker::~MutexLocker()
  *****************************************************************************/
 
 // Initialise the one-and-only instance
+#ifdef HAVE_CXX11
+std::unique_ptr<MutexFactory> MutexFactory::instance(nullptr);
+#else
 std::auto_ptr<MutexFactory> MutexFactory::instance(NULL);
+#endif
 
 // Constructor
 MutexFactory::MutexFactory()
@@ -116,7 +120,7 @@ MutexFactory* MutexFactory::i()
 {
 	if (!instance.get())
 	{
-		instance = std::auto_ptr<MutexFactory>(new MutexFactory());
+		instance.reset(new MutexFactory());
 	}
 
 	return instance.get();

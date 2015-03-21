@@ -52,7 +52,11 @@ private:
 	char* trimString(char* text);
 	bool string2bool(std::string stringValue, bool* boolValue);
 
+#ifdef HAVE_CXX11
+	static std::unique_ptr<SimpleConfigLoader> instance;
+#else
 	static std::auto_ptr<SimpleConfigLoader> instance;
+#endif
 };
 
 #endif // !_SOFTHSM_V2_SIMPLECONFIGLOADER_H

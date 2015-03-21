@@ -175,7 +175,11 @@ private:
 	SoftHSM();
 
 	// The one-and-only instance
+#ifdef HAVE_CXX11
+	static std::unique_ptr<SoftHSM> instance;
+#else
 	static std::auto_ptr<SoftHSM> instance;
+#endif
 
 	// Is the SoftHSM PKCS #11 library initialised?
 	bool isInitialised;

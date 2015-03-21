@@ -88,7 +88,11 @@ private:
 	OSSLCryptoFactory();
 
 	// The one-and-only instance
+#ifdef HAVE_CXX11
+	static std::unique_ptr<OSSLCryptoFactory> instance;
+#else
 	static std::auto_ptr<OSSLCryptoFactory> instance;
+#endif
 
 #ifdef WITH_FIPS
 	// The FIPS 140-2 selftest status

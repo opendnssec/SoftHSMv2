@@ -38,7 +38,11 @@
 #include "SecureMemoryRegistry.h"
 
 // Initialise the one-and-only instance
+#ifdef HAVE_CXX11
+std::unique_ptr<SecureMemoryRegistry> SecureMemoryRegistry::instance(nullptr);
+#else
 std::auto_ptr<SecureMemoryRegistry> SecureMemoryRegistry::instance(NULL);
+#endif
 
 // Constructor
 SecureMemoryRegistry::SecureMemoryRegistry()
@@ -61,7 +65,7 @@ SecureMemoryRegistry* SecureMemoryRegistry::i()
 {
 	if (instance.get() == NULL)
 	{
-		instance = std::auto_ptr<SecureMemoryRegistry>(new SecureMemoryRegistry());
+		instance.reset(new SecureMemoryRegistry());
 
 		if (instance.get() == NULL)
 		{
