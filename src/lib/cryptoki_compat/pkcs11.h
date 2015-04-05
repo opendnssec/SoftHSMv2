@@ -192,6 +192,9 @@ extern "C" {
 #define other_info_len ulOtherInfoLen
 #define other_info pOtherInfo
 
+#define data pData
+#define len ulLen
+
 #define ck_rv_t CK_RV
 #define ck_notify_t CK_NOTIFY
 
@@ -1001,6 +1004,22 @@ struct ck_x9_42_mqv_derive_params {
   ck_object_handle_t public_key;
 };
 
+struct ck_des_cbc_encrypt_data_params {
+  unsigned char iv[8];
+  unsigned char *data;
+  unsigned long length;
+};
+
+struct ck_aes_cbc_encrypt_data_params {
+  unsigned char iv[16];
+  unsigned char *data;
+  unsigned long length;
+};
+
+struct ck_key_derivation_string_data {
+  unsigned char *data;
+  unsigned long len;
+};
 
 /* Flags for C_WaitForSlotEvent.  */
 #define CKF_DONT_BLOCK				(1)
@@ -1566,6 +1585,15 @@ typedef struct ck_rsa_pkcs_pss_params *CK_RSA_PKCS_PSS_PARAMS_PTR;
 typedef struct ck_ecdh1_derive_params CK_ECDH1_DERIVE_PARAMS;
 typedef struct ck_ecdh1_derive_params *CK_ECDH1_DERIVE_PARAMS_PTR;
 
+typedef struct ck_des_cbc_encrypt_data_params CK_DES_CBC_ENCRYPT_DATA_PARAMS;
+typedef struct ck_des_cbc_encrypt_data_params *CK_DES_CBC_ENCRYPT_DATA_PARAMS_PTR;
+
+typedef struct ck_aes_cbc_encrypt_data_params CK_AES_CBC_ENCRYPT_DATA_PARAMS;
+typedef struct ck_aes_cbc_encrypt_data_params *CK_AES_CBC_ENCRYPT_DATA_PARAMS_PTR;
+
+typedef struct ck_key_derivation_string_data CK_KEY_DERIVATION_STRING_DATA;
+typedef struct ck_key_derivation_string_data *CK_KEY_DERIVATION_STRING_DATA_PTR;
+
 typedef struct ck_function_list CK_FUNCTION_LIST;
 typedef struct ck_function_list *CK_FUNCTION_LIST_PTR;
 typedef struct ck_function_list **CK_FUNCTION_LIST_PTR_PTR;
@@ -1658,6 +1686,9 @@ typedef struct ck_c_initialize_args *CK_C_INITIALIZE_ARGS_PTR;
 #undef ck_x9_42_dh_kdf_type_t
 #undef other_info_len
 #undef other_info
+
+#undef data
+#undef len
 
 #undef ck_rv_t
 #undef ck_notify_t
