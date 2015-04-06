@@ -93,7 +93,7 @@ public:
 	bool reload();
 
 	// Reload the configuration using the specified configuration loader
-	bool reload(ConfigLoader* configLoader);
+	bool reload(ConfigLoader* inConfigLoader);
 
 private:
 	Configuration();

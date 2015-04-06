@@ -44,13 +44,13 @@ public:
 	static const char* type;
 
 	// Set the public prime p
-	void setP(const ByteString& p);
+	void setP(const ByteString& inP);
 
 	// Set the public subprime q
-	void setQ(const ByteString& q);
+	void setQ(const ByteString& inQ);
 
 	// Set the generator g
-	void setG(const ByteString& g);
+	void setG(const ByteString& inG);
 
 	// Get the public prime p
 	const ByteString& getP() const;
@@ -62,7 +62,7 @@ public:
 	const ByteString& getG() const;
 
 	// Are the parameters of the given type?
-	virtual bool areOfType(const char* type);
+	virtual bool areOfType(const char* inType);
 
 	// Serialisation
 	virtual ByteString serialise() const;

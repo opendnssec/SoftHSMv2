@@ -163,9 +163,9 @@ bool Configuration::reload()
 }
 
 // Reload the configuration using the specified configuration loader
-bool Configuration::reload(ConfigLoader* configLoader)
+bool Configuration::reload(ConfigLoader* inConfigLoader)
 {
-	this->configLoader = configLoader;
+	configLoader = inConfigLoader;
 
 	return reload();
 }

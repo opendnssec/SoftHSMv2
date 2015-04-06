@@ -75,17 +75,17 @@ void Mutex::unlock()
  *****************************************************************************/
 
 // Constructor
-MutexLocker::MutexLocker(Mutex* mutex)
+MutexLocker::MutexLocker(Mutex* inMutex)
 {
-	this->mutex = mutex;
+	mutex = inMutex;
 
-	if (this->mutex != NULL) this->mutex->lock();
+	if (mutex != NULL) mutex->lock();
 }
 
 // Destructor
 MutexLocker::~MutexLocker()
 {
-	if (this->mutex != NULL) this->mutex->unlock();
+	if (mutex != NULL) mutex->unlock();
 }
 
 /*****************************************************************************
@@ -139,24 +139,24 @@ void MutexFactory::recycleMutex(Mutex* mutex)
 }
 
 // Set the function pointers
-void MutexFactory::setCreateMutex(CK_CREATEMUTEX createMutex)
+void MutexFactory::setCreateMutex(CK_CREATEMUTEX inCreateMutex)
 {
-	this->createMutex = createMutex;
+	createMutex = inCreateMutex;
 }
 
-void MutexFactory::setDestroyMutex(CK_DESTROYMUTEX destroyMutex)
+void MutexFactory::setDestroyMutex(CK_DESTROYMUTEX inDestroyMutex)
 {
-	this->destroyMutex = destroyMutex;
+	destroyMutex = inDestroyMutex;
 }
 
-void MutexFactory::setLockMutex(CK_LOCKMUTEX lockMutex)
+void MutexFactory::setLockMutex(CK_LOCKMUTEX inLockMutex)
 {
-	this->lockMutex = lockMutex;
+	lockMutex = inLockMutex;
 }
 
-void MutexFactory::setUnlockMutex(CK_UNLOCKMUTEX unlockMutex)
+void MutexFactory::setUnlockMutex(CK_UNLOCKMUTEX inUnlockMutex)
 {
-	this->unlockMutex = unlockMutex;
+	unlockMutex = inUnlockMutex;
 }
 
 void MutexFactory::enable()

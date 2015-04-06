@@ -43,7 +43,7 @@ public:
 	static const char* type;
 
 	// Check if the key is of the given type
-	virtual bool isOfType(const char* type);
+	virtual bool isOfType(const char* inType);
 
 	// Get the bit length
 	virtual unsigned long getBitLength() const;
@@ -52,12 +52,12 @@ public:
 	virtual unsigned long getOutputLength() const;
 
 	// Setters for the DSA private key components
-	virtual void setX(const ByteString& x);
+	virtual void setX(const ByteString& inX);
 
 	// Setters for the DSA domain parameters
-	virtual void setP(const ByteString& p);
-	virtual void setQ(const ByteString& q);
-	virtual void setG(const ByteString& g);
+	virtual void setP(const ByteString& inP);
+	virtual void setQ(const ByteString& inQ);
+	virtual void setG(const ByteString& inG);
 
 	// Getters for the DSA private key components
 	virtual const ByteString& getX() const;

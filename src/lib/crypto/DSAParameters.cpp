@@ -39,21 +39,21 @@
 /*static*/ const char* DSAParameters::type = "Generic DSA parameters";
 
 // Set the public prime p
-void DSAParameters::setP(const ByteString& p)
+void DSAParameters::setP(const ByteString& inP)
 {
-	this->p = p;
+	p = inP;
 }
 
 // Set the public subprime q
-void DSAParameters::setQ(const ByteString& q)
+void DSAParameters::setQ(const ByteString& inQ)
 {
-	this->q = q;
+	q = inQ;
 }
 
 // Set the generator g
-void DSAParameters::setG(const ByteString& g)
+void DSAParameters::setG(const ByteString& inG)
 {
-	this->g = g;
+	g = inG;
 }
 
 // Get the public prime p
