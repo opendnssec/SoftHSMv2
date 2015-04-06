@@ -57,7 +57,7 @@ protected:
 
 public:
 	// Add attributes
-	virtual bool init(OSObject *osobject);
+	virtual bool init(OSObject *inobject);
 
 protected:
 	bool initialized;
@@ -81,7 +81,7 @@ public:
 	P11DataObj();
 
 	// Add attributes
-	virtual bool init(OSObject *osobject);
+	virtual bool init(OSObject *inobject);
 
 protected:
 	bool initialized;
@@ -94,7 +94,7 @@ protected:
 	P11CertificateObj();
 
 	// Add attributes
-	virtual bool init(OSObject *osobject);
+	virtual bool init(OSObject *inobject);
 	bool initialized;
 };
 
@@ -105,7 +105,7 @@ public:
 	P11X509CertificateObj();
 
 	// Add attributes
-	virtual bool init(OSObject *osobject);
+	virtual bool init(OSObject *inobject);
 
 protected:
 	bool initialized;
@@ -118,7 +118,7 @@ public:
 	P11OpenPGPPublicKeyObj();
 
 	// Add attributes
-	virtual bool init(OSObject *osobject);
+	virtual bool init(OSObject *inobject);
 
 protected:
 	bool initialized;
@@ -131,7 +131,7 @@ protected:
 	P11KeyObj();
 
 	// Add attributes
-	virtual bool init(OSObject *osobject);
+	virtual bool init(OSObject *inobject);
 	bool initialized;
 };
 
@@ -142,7 +142,7 @@ protected:
 	P11PublicKeyObj();
 
 	// Add attributes
-	virtual bool init(OSObject *osobject);
+	virtual bool init(OSObject *inobject);
 	bool initialized;
 };
 
@@ -153,7 +153,7 @@ public:
 	P11RSAPublicKeyObj();
 
 	// Add attributes
-	virtual bool init(OSObject *osobject);
+	virtual bool init(OSObject *inobject);
 
 protected:
 	bool initialized;
@@ -166,7 +166,7 @@ public:
 	P11DSAPublicKeyObj();
 
 	// Add attributes
-	virtual bool init(OSObject *osobject);
+	virtual bool init(OSObject *inobject);
 
 protected:
 	bool initialized;
@@ -179,7 +179,7 @@ public:
 	P11ECPublicKeyObj();
 
 	// Add attributes
-	virtual bool init(OSObject *osobject);
+	virtual bool init(OSObject *inobject);
 
 protected:
 	bool initialized;
@@ -192,7 +192,7 @@ public:
 	P11DHPublicKeyObj();
 
 	// Add attributes
-	virtual bool init(OSObject *osobject);
+	virtual bool init(OSObject *inobject);
 
 protected:
 	bool initialized;
@@ -205,7 +205,7 @@ public:
 	P11GOSTPublicKeyObj();
 
 	// Add attributes
-	virtual bool init(OSObject *osobject);
+	virtual bool init(OSObject *inobject);
 
 protected:
 	bool initialized;
@@ -218,7 +218,7 @@ protected:
 	P11PrivateKeyObj();
 
 	// Add attributes
-	virtual bool init(OSObject *osobject);
+	virtual bool init(OSObject *inobject);
 	bool initialized;
 };
 
@@ -229,7 +229,7 @@ public:
 	P11RSAPrivateKeyObj();
 
 	// Add attributes
-	virtual bool init(OSObject *osobject);
+	virtual bool init(OSObject *inobject);
 
 protected:
 	bool initialized;
@@ -242,7 +242,7 @@ public:
 	P11DSAPrivateKeyObj();
 
 	// Add attributes
-	virtual bool init(OSObject *osobject);
+	virtual bool init(OSObject *inobject);
 
 protected:
 	bool initialized;
@@ -255,7 +255,7 @@ public:
 	P11ECPrivateKeyObj();
 
 	// Add attributes
-	virtual bool init(OSObject *osobject);
+	virtual bool init(OSObject *inobject);
 
 protected:
 	bool initialized;
@@ -268,7 +268,7 @@ public:
 	P11DHPrivateKeyObj();
 
 	// Add attributes
-	virtual bool init(OSObject *osobject);
+	virtual bool init(OSObject *inobject);
 
 protected:
 	bool initialized;
@@ -281,7 +281,7 @@ public:
 	P11GOSTPrivateKeyObj();
 
 	// Add attributes
-	virtual bool init(OSObject *osobject);
+	virtual bool init(OSObject *inobject);
 
 protected:
 	bool initialized;
@@ -294,7 +294,7 @@ protected:
 	P11SecretKeyObj();
 
 	// Add attributes
-	virtual bool init(OSObject *osobject);
+	virtual bool init(OSObject *inobject);
 	bool initialized;
 };
 
@@ -305,7 +305,7 @@ public:
 	P11GenericSecretKeyObj();
 
 	// Add attributes
-	virtual bool init(OSObject *osobject);
+	virtual bool init(OSObject *inobject);
 
 	// Better than multiply subclasses
 	virtual bool setKeyType(CK_KEY_TYPE keytype);
@@ -323,7 +323,7 @@ public:
 	P11AESSecretKeyObj();
 
 	// Add attributes
-	virtual bool init(OSObject *osobject);
+	virtual bool init(OSObject *inobject);
 
 protected:
 	bool initialized;
@@ -336,7 +336,7 @@ public:
 	P11DESSecretKeyObj();
 
 	// Add attributes
-	virtual bool init(OSObject *osobject);
+	virtual bool init(OSObject *inobject);
 
 	// Better than multiply subclasses
 	virtual bool setKeyType(CK_KEY_TYPE keytype);
@@ -354,7 +354,7 @@ public:
 	P11GOSTSecretKeyObj();
 
 	// Add attributes
-	virtual bool init(OSObject *osobject);
+	virtual bool init(OSObject *inobject);
 
 protected:
 	bool initialized;
@@ -367,7 +367,7 @@ protected:
 	P11DomainObj();
 
 	// Add attributes
-	virtual bool init(OSObject *osobject);
+	virtual bool init(OSObject *inobject);
 	bool initialized;
 };
 
@@ -378,7 +378,7 @@ public:
 	P11DSADomainObj();
 
 	// Add attributes
-	virtual bool init(OSObject *osobject);
+	virtual bool init(OSObject *inobject);
 protected:
 	bool initialized;
 };
@@ -390,7 +390,7 @@ public:
 	P11DHDomainObj();
 
 	// Add attributes
-	virtual bool init(OSObject *osobject);
+	virtual bool init(OSObject *inobject);
 protected:
 	bool initialized;
 };
