@@ -856,20 +856,23 @@ CK_RV P11AttrValue::updateAttr(Token *token, bool isPrivate, CK_VOID_PTR pValue,
 
 	osobject->setAttribute(type, value);
 
-	// Set the CKA_VALUE_LEN during C_CreateObject
+	// Set the size during C_CreateObject and C_UnwrapKey.
 
-	if (op == OBJECT_OP_CREATE && osobject->attributeExists(CKA_VALUE_LEN))
+	if (op == OBJECT_OP_CREATE || op == OBJECT_OP_UNWRAP)
 	{
-		OSAttribute bytes((unsigned long)plaintext.size());
-		osobject->setAttribute(CKA_VALUE_LEN, bytes);
-	}
+		// Set the CKA_VALUE_LEN
+		if (osobject->attributeExists(CKA_VALUE_LEN))
+		{
+			OSAttribute bytes((unsigned long)plaintext.size());
+			osobject->setAttribute(CKA_VALUE_LEN, bytes);
+		}
 
-	// Set the CKA_VALUE_BITS during C_CreateObject
-
-	if (op == OBJECT_OP_CREATE && osobject->attributeExists(CKA_VALUE_BITS))
-	{
-		OSAttribute bits((unsigned long)plaintext.bits());
-		osobject->setAttribute(CKA_VALUE_BITS, bits);
+		// Set the CKA_VALUE_BITS
+		if (osobject->attributeExists(CKA_VALUE_BITS))
+		{
+			OSAttribute bits((unsigned long)plaintext.bits());
+			osobject->setAttribute(CKA_VALUE_BITS, bits);
+		}
 	}
 
 	return CKR_OK;
