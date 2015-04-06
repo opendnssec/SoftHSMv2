@@ -9378,9 +9378,9 @@ CK_RV SoftHSM::deriveSymmetric
 	{
 		if (*phKey != CK_INVALID_HANDLE)
 		{
-			OSObject* secret = (OSObject*)handleManager->getObject(*phKey);
+			OSObject* ossecret = (OSObject*)handleManager->getObject(*phKey);
 			handleManager->destroyObject(*phKey);
-			if (secret) secret->destroyObject();
+			if (ossecret) ossecret->destroyObject();
 			*phKey = CK_INVALID_HANDLE;
 		}
 	}
