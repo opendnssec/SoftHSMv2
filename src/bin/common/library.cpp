@@ -101,6 +101,8 @@ CK_C_GetFunctionList loadLibrary(char* module, void** moduleHandle,
 	*pErrMsg = dlerror();
 	if (pDynLib == NULL || *pErrMsg != NULL)
 	{
+		if (pDynLib != NULL) dlclose(pDynLib);
+
 		// Failed to load the PKCS #11 library
 		return NULL;
 	}
@@ -109,11 +111,16 @@ CK_C_GetFunctionList loadLibrary(char* module, void** moduleHandle,
 	pGetFunctionList = (CK_C_GetFunctionList) dlsym(pDynLib, "C_GetFunctionList");
 
 	// Store the handle so we can dlclose it later
-	*moduleHandle = pDynLib;
 	*pErrMsg = dlerror();
-	if (*pErrMsg != NULL) // An error occured during dlsym()
-		return NULL;
+	if (*pErrMsg != NULL)
+	{
+		dlclose(pDynLib);
 
+		// An error occured during dlsym()
+		return NULL;
+	}
+
+	*moduleHandle = pDynLib;
 #else
 	fprintf(stderr, "ERROR: Not compiled with library support.\n");
 
