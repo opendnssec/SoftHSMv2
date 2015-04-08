@@ -39,9 +39,9 @@
 /*static*/ const char* ECPublicKey::type = "Abstract EC public key";
 
 // Check if the key is of the given type
-bool ECPublicKey::isOfType(const char* type)
+bool ECPublicKey::isOfType(const char* inType)
 {
-	return !strcmp(this->type, type);
+	return !strcmp(type, inType);
 }
 
 // Get the bit length
@@ -57,14 +57,14 @@ unsigned long ECPublicKey::getOutputLength() const
 }
 
 // Setters for the EC public key components
-void ECPublicKey::setEC(const ByteString& ec)
+void ECPublicKey::setEC(const ByteString& inEC)
 {
-	this->ec = ec;
+	ec = inEC;
 }
 
-void ECPublicKey::setQ(const ByteString& q)
+void ECPublicKey::setQ(const ByteString& inQ)
 {
-	this->q = q;
+	q = inQ;
 }
 
 // Getters for the EC public key components

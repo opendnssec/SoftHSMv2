@@ -41,7 +41,7 @@ class SymmetricKey : public Serialisable
 {
 public:
 	// Base constructors
-	SymmetricKey(size_t bitLen = 0);
+	SymmetricKey(size_t inBitLen = 0);
 
 	SymmetricKey(const SymmetricKey& in);
 
@@ -58,7 +58,7 @@ public:
 	virtual ByteString serialise() const;
 
 	// Set the bit length
-	virtual void setBitLen(const size_t bitLen);
+	virtual void setBitLen(const size_t inBitLen);
 
 	// Retrieve the bit length
 	virtual size_t getBitLen() const;

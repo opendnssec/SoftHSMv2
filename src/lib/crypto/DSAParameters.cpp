@@ -75,9 +75,9 @@ const ByteString& DSAParameters::getG() const
 }
 
 // Are the parameters of the given type?
-bool DSAParameters::areOfType(const char* type)
+bool DSAParameters::areOfType(const char* inType)
 {
-	return (strcmp(type, DSAParameters::type) == 0);
+	return (strcmp(type, inType) == 0);
 }
 
 // Serialisation

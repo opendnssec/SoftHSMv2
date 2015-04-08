@@ -95,15 +95,15 @@ void OSSLGOSTPrivateKey::setFromOSSL(const EVP_PKEY* pkey)
 }
 
 // Check if the key is of the given type
-bool OSSLGOSTPrivateKey::isOfType(const char* type)
+bool OSSLGOSTPrivateKey::isOfType(const char* inType)
 {
-	return !strcmp(OSSLGOSTPrivateKey::type, type);
+	return !strcmp(type, inType);
 }
 
 // Setters for the GOST private key components
-void OSSLGOSTPrivateKey::setD(const ByteString& d)
+void OSSLGOSTPrivateKey::setD(const ByteString& inD)
 {
-	GOSTPrivateKey::setD(d);
+	GOSTPrivateKey::setD(inD);
 
 	EC_KEY* ec = (EC_KEY*) EVP_PKEY_get0((EVP_PKEY*) pkey);
 	if (ec == NULL)
@@ -118,7 +118,7 @@ void OSSLGOSTPrivateKey::setD(const ByteString& d)
 		ec = (EC_KEY*) EVP_PKEY_get0((EVP_PKEY*) pkey);
 	}
 
-	const BIGNUM* priv = OSSL::byteString2bn(d);
+	const BIGNUM* priv = OSSL::byteString2bn(inD);
 	if (EC_KEY_set_private_key(ec, priv) <= 0)
 	{
 		ERROR_MSG("EC_KEY_set_private_key failed");
@@ -129,13 +129,13 @@ void OSSLGOSTPrivateKey::setD(const ByteString& d)
 #ifdef notyet
 	if (gost2001_compute_public(ec) <= 0)
 		ERROR_MSG("gost2001_compute_public failed");
-#endif		
+#endif
 }
 
 // Setters for the GOST public key components
-void OSSLGOSTPrivateKey::setEC(const ByteString& ec)
+void OSSLGOSTPrivateKey::setEC(const ByteString& inEC)
 {
-        GOSTPrivateKey::setEC(ec);
+        GOSTPrivateKey::setEC(inEC);
 }
 
 // Retrieve the OpenSSL representation of the key

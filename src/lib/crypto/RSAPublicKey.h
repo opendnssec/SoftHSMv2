@@ -43,7 +43,7 @@ public:
 	static const char* type;
 
 	// Check if the key is of the given type
-	virtual bool isOfType(const char* type);
+	virtual bool isOfType(const char* inType);
 
 	// Get the bit length
 	virtual unsigned long getBitLength() const;
@@ -52,8 +52,8 @@ public:
 	virtual unsigned long getOutputLength() const;
 
 	// Setters for the RSA public key components
-	virtual void setN(const ByteString& n);
-	virtual void setE(const ByteString& e);
+	virtual void setN(const ByteString& inN);
+	virtual void setE(const ByteString& inE);
 
 	// Getters for the RSA public key components
 	virtual const ByteString& getN() const;

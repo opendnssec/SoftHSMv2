@@ -39,9 +39,9 @@
 /*static*/ const char* RSAPublicKey::type = "Abstract RSA public key";
 
 // Check if the key is of the given type
-bool RSAPublicKey::isOfType(const char* type)
+bool RSAPublicKey::isOfType(const char* inType)
 {
-	return !strcmp(this->type, type);
+	return !strcmp(type, inType);
 }
 
 // Get the bit length
@@ -58,14 +58,14 @@ unsigned long RSAPublicKey::getOutputLength() const
 }
 
 // Setters for the RSA public key components
-void RSAPublicKey::setN(const ByteString& n)
+void RSAPublicKey::setN(const ByteString& inN)
 {
-	this->n = n;
+	n = inN;
 }
 
-void RSAPublicKey::setE(const ByteString& e)
+void RSAPublicKey::setE(const ByteString& inE)
 {
-	this->e = e;
+	e = inE;
 }
 
 // Getters for the RSA public key components

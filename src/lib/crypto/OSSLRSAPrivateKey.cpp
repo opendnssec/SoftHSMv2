@@ -67,129 +67,161 @@ OSSLRSAPrivateKey::~OSSLRSAPrivateKey()
 /*static*/ const char* OSSLRSAPrivateKey::type = "OpenSSL RSA Private Key";
 
 // Set from OpenSSL representation
-void OSSLRSAPrivateKey::setFromOSSL(const RSA* rsa)
+void OSSLRSAPrivateKey::setFromOSSL(const RSA* inRSA)
 {
-	if (rsa->p) { ByteString p = OSSL::bn2ByteString(rsa->p); setP(p); }
-	if (rsa->q) { ByteString q = OSSL::bn2ByteString(rsa->q); setQ(q); }
-	if (rsa->dmp1) { ByteString dp1 = OSSL::bn2ByteString(rsa->dmp1); setDP1(dp1); }
-	if (rsa->dmq1) { ByteString dq1 = OSSL::bn2ByteString(rsa->dmq1); setDQ1(dq1); }
-	if (rsa->iqmp) { ByteString pq = OSSL::bn2ByteString(rsa->iqmp); setPQ(pq); }
-	if (rsa->d) { ByteString d = OSSL::bn2ByteString(rsa->d); setD(d); }
-	if (rsa->n) { ByteString n = OSSL::bn2ByteString(rsa->n); setN(n); }
-	if (rsa->e) { ByteString e = OSSL::bn2ByteString(rsa->e); setE(e); }
+	if (inRSA->p)
+	{
+		ByteString inP = OSSL::bn2ByteString(inRSA->p);
+		setP(inP);
+	}
+	if (inRSA->q)
+	{
+		ByteString inQ = OSSL::bn2ByteString(inRSA->q);
+		setQ(inQ);
+	}
+	if (inRSA->dmp1)
+	{
+		ByteString inDP1 = OSSL::bn2ByteString(inRSA->dmp1);
+		setDP1(inDP1);
+	}
+	if (inRSA->dmq1)
+	{
+		ByteString inDQ1 = OSSL::bn2ByteString(inRSA->dmq1);
+		setDQ1(inDQ1);
+	}
+	if (inRSA->iqmp)
+	{
+		ByteString inPQ = OSSL::bn2ByteString(inRSA->iqmp);
+		setPQ(inPQ);
+	}
+	if (inRSA->d)
+	{
+		ByteString inD = OSSL::bn2ByteString(inRSA->d);
+		setD(inD);
+	}
+	if (inRSA->n)
+	{
+		ByteString inN = OSSL::bn2ByteString(inRSA->n);
+		setN(inN);
+	}
+	if (inRSA->e)
+	{
+		ByteString inE = OSSL::bn2ByteString(inRSA->e);
+		setE(inE);
+	}
 }
 
 // Check if the key is of the given type
-bool OSSLRSAPrivateKey::isOfType(const char* type)
+bool OSSLRSAPrivateKey::isOfType(const char* inType)
 {
-	return !strcmp(OSSLRSAPrivateKey::type, type);
+	return !strcmp(type, inType);
 }
 
 // Setters for the RSA private key components
-void OSSLRSAPrivateKey::setP(const ByteString& p)
+void OSSLRSAPrivateKey::setP(const ByteString& inP)
 {
-	RSAPrivateKey::setP(p);
+	RSAPrivateKey::setP(inP);
 
-	if (rsa->p) 
+	if (rsa->p)
 	{
 		BN_clear_free(rsa->p);
 		rsa->p = NULL;
 	}
 
-	rsa->p = OSSL::byteString2bn(p);
+	rsa->p = OSSL::byteString2bn(inP);
 }
 
-void OSSLRSAPrivateKey::setQ(const ByteString& q)
+void OSSLRSAPrivateKey::setQ(const ByteString& inQ)
 {
-	RSAPrivateKey::setQ(q);
+	RSAPrivateKey::setQ(inQ);
 
-	if (rsa->q) 
+	if (rsa->q)
 	{
 		BN_clear_free(rsa->q);
 		rsa->q = NULL;
 	}
 
-	rsa->q = OSSL::byteString2bn(q);
+	rsa->q = OSSL::byteString2bn(inQ);
 }
 
-void OSSLRSAPrivateKey::setPQ(const ByteString& pq)
+void OSSLRSAPrivateKey::setPQ(const ByteString& inPQ)
 {
-	RSAPrivateKey::setPQ(pq);
+	RSAPrivateKey::setPQ(inPQ);
 
-	if (rsa->iqmp) 
+	if (rsa->iqmp)
 	{
 		BN_clear_free(rsa->iqmp);
 		rsa->iqmp = NULL;
 	}
 
-	rsa->iqmp = OSSL::byteString2bn(pq);
+	rsa->iqmp = OSSL::byteString2bn(inPQ);
 }
 
-void OSSLRSAPrivateKey::setDP1(const ByteString& dp1)
+void OSSLRSAPrivateKey::setDP1(const ByteString& inDP1)
 {
-	RSAPrivateKey::setDP1(dp1);
+	RSAPrivateKey::setDP1(inDP1);
 
-	if (rsa->dmp1) 
+	if (rsa->dmp1)
 	{
 		BN_clear_free(rsa->dmp1);
 		rsa->dmp1 = NULL;
 	}
 
-	rsa->dmp1 = OSSL::byteString2bn(dp1);
+	rsa->dmp1 = OSSL::byteString2bn(inDP1);
 }
 
-void OSSLRSAPrivateKey::setDQ1(const ByteString& dq1)
+void OSSLRSAPrivateKey::setDQ1(const ByteString& inDQ1)
 {
-	RSAPrivateKey::setDQ1(dq1);
+	RSAPrivateKey::setDQ1(inDQ1);
 
-	if (rsa->dmq1) 
+	if (rsa->dmq1)
 	{
 		BN_clear_free(rsa->dmq1);
 		rsa->dmq1 = NULL;
 	}
 
-	rsa->dmq1 = OSSL::byteString2bn(dq1);
+	rsa->dmq1 = OSSL::byteString2bn(inDQ1);
 }
 
-void OSSLRSAPrivateKey::setD(const ByteString& d)
+void OSSLRSAPrivateKey::setD(const ByteString& inD)
 {
-	RSAPrivateKey::setD(d);
+	RSAPrivateKey::setD(inD);
 
-	if (rsa->d) 
+	if (rsa->d)
 	{
 		BN_clear_free(rsa->d);
 		rsa->d = NULL;
 	}
 
-	rsa->d = OSSL::byteString2bn(d);
+	rsa->d = OSSL::byteString2bn(inD);
 }
 
 
 // Setters for the RSA public key components
-void OSSLRSAPrivateKey::setN(const ByteString& n)
+void OSSLRSAPrivateKey::setN(const ByteString& inN)
 {
-	RSAPrivateKey::setN(n);
+	RSAPrivateKey::setN(inN);
 
-	if (rsa->n) 
+	if (rsa->n)
 	{
 		BN_clear_free(rsa->n);
 		rsa->n = NULL;
 	}
 
-	rsa->n = OSSL::byteString2bn(n);
+	rsa->n = OSSL::byteString2bn(inN);
 }
 
-void OSSLRSAPrivateKey::setE(const ByteString& e)
+void OSSLRSAPrivateKey::setE(const ByteString& inE)
 {
-	RSAPrivateKey::setE(e);
+	RSAPrivateKey::setE(inE);
 
-	if (rsa->e) 
+	if (rsa->e)
 	{
 		BN_clear_free(rsa->e);
 		rsa->e = NULL;
 	}
 
-	rsa->e = OSSL::byteString2bn(e);
+	rsa->e = OSSL::byteString2bn(inE);
 }
 
 // Encode into PKCS#8 DER
@@ -214,8 +246,8 @@ ByteString OSSLRSAPrivateKey::PKCS8Encode()
 		return der;
 	}
 	der.resize(len);
-	unsigned char* p = &der[0];
-	int len2 = i2d_PKCS8_PRIV_KEY_INFO(p8inf, &p);
+	unsigned char* priv = &der[0];
+	int len2 = i2d_PKCS8_PRIV_KEY_INFO(p8inf, &priv);
 	PKCS8_PRIV_KEY_INFO_free(p8inf);
 	if (len2 != len) der.wipe();
 	return der;
@@ -226,8 +258,8 @@ bool OSSLRSAPrivateKey::PKCS8Decode(const ByteString& ber)
 {
 	int len = ber.size();
 	if (len <= 0) return false;
-	const unsigned char* p = ber.const_byte_str();
-	PKCS8_PRIV_KEY_INFO* p8 = d2i_PKCS8_PRIV_KEY_INFO(NULL, &p, len);
+	const unsigned char* priv = ber.const_byte_str();
+	PKCS8_PRIV_KEY_INFO* p8 = d2i_PKCS8_PRIV_KEY_INFO(NULL, &priv, len);
 	if (p8 == NULL) return false;
 	EVP_PKEY* pkey = EVP_PKCS82PKEY(p8);
 	PKCS8_PRIV_KEY_INFO_free(p8);

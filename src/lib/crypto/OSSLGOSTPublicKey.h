@@ -42,9 +42,9 @@ class OSSLGOSTPublicKey : public GOSTPublicKey
 public:
 	// Constructors
 	OSSLGOSTPublicKey();
-	
+
 	OSSLGOSTPublicKey(const EVP_PKEY* inPKEY);
-	
+
 	// Destructor
 	virtual ~OSSLGOSTPublicKey();
 
@@ -52,14 +52,14 @@ public:
 	static const char* type;
 
 	// Check if the key is of the given type
-	virtual bool isOfType(const char* type);
+	virtual bool isOfType(const char* inType);
 
 	// Get the output length
 	virtual unsigned long getOutputLength() const;
 
 	// Setters for the GOST public key components
-	virtual void setEC(const ByteString& ec);
-	virtual void setQ(const ByteString& q);
+	virtual void setEC(const ByteString& inEC);
+	virtual void setQ(const ByteString& inQ);
 
 	// Serialisation
 	virtual ByteString serialise() const;

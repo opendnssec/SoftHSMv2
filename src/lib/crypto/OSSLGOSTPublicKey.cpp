@@ -100,22 +100,22 @@ void OSSLGOSTPublicKey::setFromOSSL(const EVP_PKEY* pkey)
 }
 
 // Check if the key is of the given type
-bool OSSLGOSTPublicKey::isOfType(const char* type)
+bool OSSLGOSTPublicKey::isOfType(const char* inType)
 {
-	return !strcmp(OSSLGOSTPublicKey::type, type);
+	return !strcmp(type, inType);
 }
 
 // Setters for the GOST public key components
-void OSSLGOSTPublicKey::setEC(const ByteString& ec)
+void OSSLGOSTPublicKey::setEC(const ByteString& inEC)
 {
-        GOSTPublicKey::setEC(ec);
+        GOSTPublicKey::setEC(inEC);
 }
 
-void OSSLGOSTPublicKey::setQ(const ByteString& q)
+void OSSLGOSTPublicKey::setQ(const ByteString& inQ)
 {
-	this->q = q;
+	GOSTPublicKey::setQ(inQ);
 
-	if (q.size() != 64)
+	if (inQ.size() != 64)
 	{
 		ERROR_MSG("bad GOST public key size %zu", q.size());
 		return;
@@ -124,7 +124,7 @@ void OSSLGOSTPublicKey::setQ(const ByteString& q)
 	ByteString der;
 	der.resize(37 + 64);
 	memcpy(&der[0], gost_prefix, 37);
-	memcpy(&der[37], q.const_byte_str(), 64);
+	memcpy(&der[37], inQ.const_byte_str(), 64);
 	const unsigned char *p = &der[0];
 	if (d2i_PUBKEY(&pkey, &p, (long) der.size()) == NULL)
 		ERROR_MSG("d2i_PUBKEY failed");
