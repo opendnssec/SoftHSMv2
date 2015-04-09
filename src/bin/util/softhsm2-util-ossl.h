@@ -35,6 +35,7 @@
 
 #include <openssl/rsa.h>
 #include <openssl/dsa.h>
+#include <openssl/ec.h>
 
 typedef struct rsa_key_material_t {
 	CK_ULONG sizeE;
@@ -98,6 +99,25 @@ typedef struct dsa_key_material_t {
 	}
 } dsa_key_material_t;
 
+#ifdef WITH_ECC
+typedef struct ecdsa_key_material_t {
+	CK_ULONG sizeParams;
+	CK_ULONG sizeD;
+	CK_ULONG sizeQ;
+	CK_VOID_PTR derParams;
+	CK_VOID_PTR bigD;
+	CK_VOID_PTR derQ;
+	ecdsa_key_material_t() {
+		sizeParams = 0;
+		sizeD = 0;
+		sizeQ = 0;
+		derParams = NULL_PTR;
+		bigD = NULL_PTR;
+		derQ = NULL_PTR;
+	}
+} ecdsa_key_material_t;
+#endif
+
 EVP_PKEY* crypto_read_file(char* filePath, char* filePIN);
 
 // RSA
@@ -109,5 +129,12 @@ void crypto_free_rsa(rsa_key_material_t* keyMat);
 int crypto_save_dsa(CK_SESSION_HANDLE hSession, char* label, char* objID, size_t objIDLen, int noPublicKey, DSA* dsa);
 dsa_key_material_t* crypto_malloc_dsa(DSA* dsa);
 void crypto_free_dsa(dsa_key_material_t* keyMat);
+
+#ifdef WITH_ECC
+// ECDSA
+int crypto_save_ecdsa(CK_SESSION_HANDLE hSession, char* label, char* objID, size_t objIDLen, int noPublicKey, EC_KEY* ecdsa);
+ecdsa_key_material_t* crypto_malloc_ecdsa(EC_KEY* ecdsa);
+void crypto_free_ecdsa(ecdsa_key_material_t* keyMat);
+#endif
 
 #endif // !_SOFTHSM_V2_SOFTHSM2_UTIL_OSSL_H
