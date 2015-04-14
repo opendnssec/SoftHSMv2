@@ -80,16 +80,16 @@ std::set<SessionObject*> SessionObjectStore::getObjects()
 	return objects;
 }
 
-void SessionObjectStore::getObjects(CK_SLOT_ID slotID, std::set<OSObject*> &objects)
+void SessionObjectStore::getObjects(CK_SLOT_ID slotID, std::set<OSObject*> &inObjects)
 {
 	// Make sure that no other thread is in the process of changing
 	// the object list when we return it
 	MutexLocker lock(storeMutex);
 
 	std::set<SessionObject*>::iterator it;
-	for (it=this->objects.begin(); it!=this->objects.end(); ++it) {
+	for (it=objects.begin(); it!=objects.end(); ++it) {
 		if ((*it)->hasSlotID(slotID))
-			objects.insert(*it);
+			inObjects.insert(*it);
 	}
 }
 
