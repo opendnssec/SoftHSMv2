@@ -42,9 +42,9 @@ class BotanRSAPrivateKey : public RSAPrivateKey
 public:
 	// Constructors
 	BotanRSAPrivateKey();
-	
+
 	BotanRSAPrivateKey(const Botan::RSA_PrivateKey* inRSA);
-	
+
 	// Destructor
 	virtual ~BotanRSAPrivateKey();
 
@@ -52,19 +52,19 @@ public:
 	static const char* type;
 
 	// Check if the key is of the given type
-	virtual bool isOfType(const char* type);
+	virtual bool isOfType(const char* inType);
 
 	// Setters for the RSA private key components
-	virtual void setP(const ByteString& p);
-	virtual void setQ(const ByteString& q);
-	virtual void setPQ(const ByteString& pq);
-	virtual void setDP1(const ByteString& dp1);
-	virtual void setDQ1(const ByteString& dq1);
-	virtual void setD(const ByteString& d);
+	virtual void setP(const ByteString& inP);
+	virtual void setQ(const ByteString& inQ);
+	virtual void setPQ(const ByteString& inPQ);
+	virtual void setDP1(const ByteString& inDP1);
+	virtual void setDQ1(const ByteString& inDQ1);
+	virtual void setD(const ByteString& inD);
 
 	// Setters for the RSA public key components
-	virtual void setN(const ByteString& n);
-	virtual void setE(const ByteString& e);
+	virtual void setN(const ByteString& inN);
+	virtual void setE(const ByteString& inE);
 
 	// Encode into PKCS#8 DER
 	virtual ByteString PKCS8Encode();
@@ -73,7 +73,7 @@ public:
 	virtual bool PKCS8Decode(const ByteString& ber);
 
 	// Set from Botan representation
-	virtual void setFromBotan(const Botan::RSA_PrivateKey* rsa);
+	virtual void setFromBotan(const Botan::RSA_PrivateKey* inRSA);
 
 	// Retrieve the Botan representation of the key
 	Botan::RSA_PrivateKey* getBotanKey();

@@ -971,8 +971,8 @@ bool BotanRSA::generateKeyPair(AsymmetricKeyPair** ppKeyPair, AsymmetricParamete
 		BotanRNG* rng = (BotanRNG*)BotanCryptoFactory::i()->getRNG();
 		rsa = new Botan::RSA_PrivateKey(*rng->getRNG(),	params->getBitLength(),	e);
 	}
-	catch (std::exception& e) {
-		ERROR_MSG("RSA key generation failed: %s", e.what());
+	catch (std::exception& ex) {
+		ERROR_MSG("RSA key generation failed: %s", ex.what());
 
 		delete kp;
 

@@ -44,7 +44,7 @@ public:
 	BotanECDHPrivateKey();
 
 	BotanECDHPrivateKey(const Botan::ECDH_PrivateKey* inECKEY);
-	
+
 	// Destructor
 	virtual ~BotanECDHPrivateKey();
 
@@ -52,16 +52,16 @@ public:
 	static const char* type;
 
 	// Check if the key is of the given type
-	virtual bool isOfType(const char* type);
+	virtual bool isOfType(const char* inType);
 
 	// Get the base point order length
 	virtual unsigned long getOrderLength() const;
 
 	// Setters for the ECDH private key components
-	virtual void setD(const ByteString& d);
+	virtual void setD(const ByteString& inD);
 
 	// Setters for the ECDH public key components
-	virtual void setEC(const ByteString& ec);
+	virtual void setEC(const ByteString& inEC);
 
 	// Encode into PKCS#8 DER
 	virtual ByteString PKCS8Encode();
@@ -70,7 +70,7 @@ public:
 	virtual bool PKCS8Decode(const ByteString& ber);
 
 	// Set from Botan representation
-	virtual void setFromBotan(const Botan::ECDH_PrivateKey* eckey);
+	virtual void setFromBotan(const Botan::ECDH_PrivateKey* inECKEY);
 
 	// Retrieve the Botan representation of the key
 	Botan::ECDH_PrivateKey* getBotanKey();

@@ -36,11 +36,11 @@
 // Copy constructor
 OSAttribute::OSAttribute(const OSAttribute& in)
 {
-	this->attributeType = in.attributeType;
-	this->boolValue = in.boolValue;
-	this->ulongValue = in.ulongValue;
-	this->byteStrValue = in.byteStrValue;
-	this->arrayValue = in.arrayValue;
+	attributeType = in.attributeType;
+	boolValue = in.boolValue;
+	ulongValue = in.ulongValue;
+	byteStrValue = in.byteStrValue;
+	arrayValue = in.arrayValue;
 }
 
 // Constructor for a boolean type attribute

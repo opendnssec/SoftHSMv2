@@ -42,9 +42,9 @@ class BotanECDHPublicKey : public ECPublicKey
 public:
 	// Constructors
 	BotanECDHPublicKey();
-	
+
 	BotanECDHPublicKey(const Botan::ECDH_PublicKey* inECKEY);
-	
+
 	// Destructor
 	virtual ~BotanECDHPublicKey();
 
@@ -52,17 +52,17 @@ public:
 	static const char* type;
 
 	// Check if the key is of the given type
-	virtual bool isOfType(const char* type);
+	virtual bool isOfType(const char* inType);
 
 	// Get the base point order length
 	virtual unsigned long getOrderLength() const;
 
 	// Setters for the ECDH public key components
-	virtual void setEC(const ByteString& ec);
-	virtual void setQ(const ByteString& q);
+	virtual void setEC(const ByteString& inEC);
+	virtual void setQ(const ByteString& inQ);
 
 	// Set from Botan representation
-	virtual void setFromBotan(const Botan::ECDH_PublicKey* eckey);
+	virtual void setFromBotan(const Botan::ECDH_PublicKey* inECKEY);
 
 	// Retrieve the Botan representation of the key
 	Botan::ECDH_PublicKey* getBotanKey();

@@ -66,7 +66,7 @@ unsigned long BotanGOSTPrivateKey::getOrderLength() const
 {
 	try
 	{
-		Botan::EC_Group group = BotanUtil::byteString2ECGroup(this->ec);
+		Botan::EC_Group group = BotanUtil::byteString2ECGroup(ec);
 		return group.get_order().bytes();
 	}
 	catch (...)
@@ -80,28 +80,28 @@ unsigned long BotanGOSTPrivateKey::getOrderLength() const
 // Get the output length
 unsigned long BotanGOSTPrivateKey::getOutputLength() const
 {
-	return this->getOrderLength() * 2;
+	return getOrderLength() * 2;
 }
 
 // Set from Botan representation
-void BotanGOSTPrivateKey::setFromBotan(const Botan::GOST_3410_PrivateKey* eckey)
+void BotanGOSTPrivateKey::setFromBotan(const Botan::GOST_3410_PrivateKey* inECKEY)
 {
-	ByteString ec = BotanUtil::ecGroup2ByteString(eckey->domain());
-	setEC(ec);
-	ByteString d = BotanUtil::bigInt2ByteStringPrefix(eckey->private_value(), 32);
-	setD(d);
+	ByteString inEC = BotanUtil::ecGroup2ByteString(inECKEY->domain());
+	setEC(inEC);
+	ByteString inD = BotanUtil::bigInt2ByteStringPrefix(inECKEY->private_value(), 32);
+	setD(inD);
 }
 
 // Check if the key is of the given type
-bool BotanGOSTPrivateKey::isOfType(const char* type)
+bool BotanGOSTPrivateKey::isOfType(const char* inType)
 {
-	return !strcmp(BotanGOSTPrivateKey::type, type);
+	return !strcmp(type, inType);
 }
 
 // Setters for the GOST private key components
-void BotanGOSTPrivateKey::setD(const ByteString& d)
+void BotanGOSTPrivateKey::setD(const ByteString& inD)
 {
-	GOSTPrivateKey::setD(d);
+	GOSTPrivateKey::setD(inD);
 
 	if (eckey)
 	{
@@ -112,9 +112,9 @@ void BotanGOSTPrivateKey::setD(const ByteString& d)
 
 
 // Setters for the GOST public key components
-void BotanGOSTPrivateKey::setEC(const ByteString& ec)
+void BotanGOSTPrivateKey::setEC(const ByteString& inEC)
 {
-	GOSTPrivateKey::setEC(ec);
+	GOSTPrivateKey::setEC(inEC);
 
 	if (eckey)
 	{
@@ -175,8 +175,8 @@ Botan::GOST_3410_PrivateKey* BotanGOSTPrivateKey::getBotanKey()
 // Create the Botan representation of the key
 void BotanGOSTPrivateKey::createBotanKey()
 {
-	if (this->ec.size() != 0 &&
-	    this->d.size() != 0)
+	if (ec.size() != 0 &&
+	    d.size() != 0)
 	{
 		if (eckey)
 		{
@@ -187,10 +187,10 @@ void BotanGOSTPrivateKey::createBotanKey()
 		try
 		{
 			BotanRNG* rng = (BotanRNG*)BotanCryptoFactory::i()->getRNG();
-			Botan::EC_Group group = BotanUtil::byteString2ECGroup(this->ec);
+			Botan::EC_Group group = BotanUtil::byteString2ECGroup(ec);
 			eckey = new Botan::GOST_3410_PrivateKey(*rng->getRNG(),
 							group,
-							BotanUtil::byteString2bigInt(this->d));
+							BotanUtil::byteString2bigInt(d));
 		}
 		catch (...)
 		{

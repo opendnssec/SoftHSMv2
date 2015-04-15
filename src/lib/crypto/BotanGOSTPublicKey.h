@@ -42,9 +42,9 @@ class BotanGOSTPublicKey : public GOSTPublicKey
 public:
 	// Constructors
 	BotanGOSTPublicKey();
-	
+
 	BotanGOSTPublicKey(const Botan::GOST_3410_PublicKey* inECKEY);
-	
+
 	// Destructor
 	virtual ~BotanGOSTPublicKey();
 
@@ -52,7 +52,7 @@ public:
 	static const char* type;
 
 	// Check if the key is of the given type
-	virtual bool isOfType(const char* type);
+	virtual bool isOfType(const char* inType);
 
 	// Get the output length
 	virtual unsigned long getOutputLength() const;
@@ -61,15 +61,15 @@ public:
 	virtual unsigned long getOrderLength() const;
 
 	// Setters for the GOST public key components
-	virtual void setEC(const ByteString& ec);
-	virtual void setQ(const ByteString& q);
+	virtual void setEC(const ByteString& inEC);
+	virtual void setQ(const ByteString& inQ);
 
 	// Serialisation
 	virtual ByteString serialise() const;
 	virtual bool deserialise(ByteString& serialised);
 
 	// Set from Botan representation
-	virtual void setFromBotan(const Botan::GOST_3410_PublicKey* eckey);
+	virtual void setFromBotan(const Botan::GOST_3410_PublicKey* inECKEY);
 
 	// Retrieve the Botan representation of the key
 	Botan::GOST_3410_PublicKey* getBotanKey();

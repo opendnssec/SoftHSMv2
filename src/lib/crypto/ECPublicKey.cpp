@@ -53,7 +53,7 @@ unsigned long ECPublicKey::getBitLength() const
 // Get the output length
 unsigned long ECPublicKey::getOutputLength() const
 {
-	return this->getOrderLength() * 2;
+	return getOrderLength() * 2;
 }
 
 // Setters for the EC public key components

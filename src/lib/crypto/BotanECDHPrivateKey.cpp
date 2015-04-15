@@ -71,7 +71,7 @@ unsigned long BotanECDHPrivateKey::getOrderLength() const
 {
 	try
 	{
-		Botan::EC_Group group = BotanUtil::byteString2ECGroup(this->ec);
+		Botan::EC_Group group = BotanUtil::byteString2ECGroup(ec);
 		return group.get_order().bytes();
 	}
 	catch (...)
@@ -83,24 +83,24 @@ unsigned long BotanECDHPrivateKey::getOrderLength() const
 }
 
 // Set from Botan representation
-void BotanECDHPrivateKey::setFromBotan(const Botan::ECDH_PrivateKey* eckey)
+void BotanECDHPrivateKey::setFromBotan(const Botan::ECDH_PrivateKey* inECKEY)
 {
-	ByteString ec = BotanUtil::ecGroup2ByteString(eckey->domain());
-	setEC(ec);
-	ByteString d = BotanUtil::bigInt2ByteString(eckey->private_value());
-	setD(d);
+	ByteString inEC = BotanUtil::ecGroup2ByteString(inECKEY->domain());
+	setEC(inEC);
+	ByteString inD = BotanUtil::bigInt2ByteString(inECKEY->private_value());
+	setD(inD);
 }
 
 // Check if the key is of the given type
-bool BotanECDHPrivateKey::isOfType(const char* type)
+bool BotanECDHPrivateKey::isOfType(const char* inType)
 {
-	return !strcmp(BotanECDHPrivateKey::type, type);
+	return !strcmp(type, inType);
 }
 
 // Setters for the ECDH private key components
-void BotanECDHPrivateKey::setD(const ByteString& d)
+void BotanECDHPrivateKey::setD(const ByteString& inD)
 {
-	ECPrivateKey::setD(d);
+	ECPrivateKey::setD(inD);
 
 	if (eckey)
 	{
@@ -110,9 +110,9 @@ void BotanECDHPrivateKey::setD(const ByteString& d)
 }
 
 // Setters for the ECDH public key components
-void BotanECDHPrivateKey::setEC(const ByteString& ec)
+void BotanECDHPrivateKey::setEC(const ByteString& inEC)
 {
-	ECPrivateKey::setEC(ec);
+	ECPrivateKey::setEC(inEC);
 
 	if (eckey)
 	{
@@ -221,10 +221,10 @@ Botan::ECDH_PrivateKey* BotanECDHPrivateKey::getBotanKey()
 // Create the Botan representation of the key
 void BotanECDHPrivateKey::createBotanKey()
 {
-	if (this->ec.size() != 0 &&
-	    this->d.size() != 0)
+	if (ec.size() != 0 &&
+	    d.size() != 0)
 	{
-		if (eckey)   
+		if (eckey)
 		{
 			delete eckey;
 			eckey = NULL;
@@ -233,10 +233,10 @@ void BotanECDHPrivateKey::createBotanKey()
 		try
 		{
 			BotanRNG* rng = (BotanRNG*)BotanCryptoFactory::i()->getRNG();
-			Botan::EC_Group group = BotanUtil::byteString2ECGroup(this->ec);
+			Botan::EC_Group group = BotanUtil::byteString2ECGroup(ec);
 			eckey = new Botan::ECDH_PrivateKey(*rng->getRNG(),
 							group,
-							BotanUtil::byteString2bigInt(this->d));
+							BotanUtil::byteString2bigInt(d));
 		}
 		catch (...)
 		{

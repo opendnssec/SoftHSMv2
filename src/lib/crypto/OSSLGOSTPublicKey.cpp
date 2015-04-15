@@ -90,13 +90,13 @@ void OSSLGOSTPublicKey::setFromOSSL(const EVP_PKEY* pkey)
 	// can check: der is prefix + 64 bytes
 	setQ(der.substr(37));
 
-	ByteString ec;
+	ByteString inEC;
 	const EC_KEY* eckey = (const EC_KEY*) EVP_PKEY_get0((EVP_PKEY*) pkey);
 	int nid = EC_GROUP_get_curve_name(EC_KEY_get0_group(eckey));
-	ec.resize(i2d_ASN1_OBJECT(OBJ_nid2obj(nid), NULL));
-	p = &ec[0];
+	inEC.resize(i2d_ASN1_OBJECT(OBJ_nid2obj(nid), NULL));
+	p = &inEC[0];
 	i2d_ASN1_OBJECT(OBJ_nid2obj(nid), &p);
-	setEC(ec);
+	setEC(inEC);
 }
 
 // Check if the key is of the given type

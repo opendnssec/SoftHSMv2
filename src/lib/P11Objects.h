@@ -308,7 +308,7 @@ public:
 	virtual bool init(OSObject *inobject);
 
 	// Better than multiply subclasses
-	virtual bool setKeyType(CK_KEY_TYPE keytype);
+	virtual bool setKeyType(CK_KEY_TYPE inKeytype);
 	virtual CK_KEY_TYPE getKeyType();
 
 protected:
@@ -339,7 +339,7 @@ public:
 	virtual bool init(OSObject *inobject);
 
 	// Better than multiply subclasses
-	virtual bool setKeyType(CK_KEY_TYPE keytype);
+	virtual bool setKeyType(CK_KEY_TYPE inKeytype);
 	virtual CK_KEY_TYPE getKeyType();
 
 protected:

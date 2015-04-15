@@ -1440,11 +1440,11 @@ bool P11GenericSecretKeyObj::init(OSObject *inobject)
 }
 
 // Set Key Type
-bool P11GenericSecretKeyObj::setKeyType(CK_KEY_TYPE keytype)
+bool P11GenericSecretKeyObj::setKeyType(CK_KEY_TYPE inKeytype)
 {
 	if (!initialized)
 	{
-		this->keytype = keytype;
+		keytype = inKeytype;
 		return true;
 	}
 	else
@@ -1454,7 +1454,7 @@ bool P11GenericSecretKeyObj::setKeyType(CK_KEY_TYPE keytype)
 // Get Key Type
 CK_KEY_TYPE P11GenericSecretKeyObj::getKeyType()
 {
-	return this->keytype;
+	return keytype;
 }
 
 // Constructor
@@ -1542,11 +1542,11 @@ bool P11DESSecretKeyObj::init(OSObject *inobject)
 }
 
 // Set Key Type
-bool P11DESSecretKeyObj::setKeyType(CK_KEY_TYPE keytype)
+bool P11DESSecretKeyObj::setKeyType(CK_KEY_TYPE inKeytype)
 {
 	if (!initialized)
 	{
-		this->keytype = keytype;
+		keytype = inKeytype;
 		return true;
 	}
 	else
@@ -1556,7 +1556,7 @@ bool P11DESSecretKeyObj::setKeyType(CK_KEY_TYPE keytype)
 // Get Key Type
 CK_KEY_TYPE P11DESSecretKeyObj::getKeyType()
 {
-	return this->keytype;
+	return keytype;
 }
 
 // Constructor
