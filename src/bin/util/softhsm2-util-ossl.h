@@ -35,7 +35,9 @@
 
 #include <openssl/rsa.h>
 #include <openssl/dsa.h>
+#ifdef WITH_ECC
 #include <openssl/ec.h>
+#endif
 
 typedef struct rsa_key_material_t {
 	CK_ULONG sizeE;
