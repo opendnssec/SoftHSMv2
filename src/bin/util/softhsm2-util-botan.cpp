@@ -46,6 +46,7 @@
 #include <botan/pkcs8.h>
 #include <botan/bigint.h>
 #include <botan/version.h>
+#include <botan/der_enc.h>
 
 #if BOTAN_VERSION_CODE < BOTAN_VERSION_CODE_FOR(1,11,14)
 #include <botan/libstate.h>
@@ -105,6 +106,9 @@ int crypto_import_key_pair
 
 	Botan::RSA_PrivateKey* rsa = NULL;
 	Botan::DSA_PrivateKey* dsa = NULL;
+#ifdef WITH_ECC
+	Botan::ECDSA_PrivateKey* ecdsa = NULL;
+#endif
 
 	if (pkey->algo_name().compare("RSA") == 0)
 	{
@@ -114,6 +118,12 @@ int crypto_import_key_pair
 	{
 		dsa = dynamic_cast<Botan::DSA_PrivateKey*>(pkey);
 	}
+#ifdef WITH_ECC
+	else if (pkey->algo_name().compare("ECDSA") == 0)
+	{
+		ecdsa = dynamic_cast<Botan::ECDSA_PrivateKey*>(pkey);
+	}
+#endif
 	else
 	{
 		fprintf(stderr, "ERROR: %s is not a supported algorithm.\n",
@@ -132,6 +142,12 @@ int crypto_import_key_pair
 	{
 		result = crypto_save_dsa(hSession, label, objID, objIDLen, noPublicKey, dsa);
 	}
+#ifdef WITH_ECC
+	else if (ecdsa)
+	{
+		result = crypto_save_ecdsa(hSession, label, objID, objIDLen, noPublicKey, ecdsa);
+	}
+#endif
 	else
 	{
 		fprintf(stderr, "ERROR: Could not get the key material.\n");
@@ -481,3 +497,155 @@ void crypto_free_dsa(dsa_key_material_t* keyMat)
 	if (keyMat->bigY) free(keyMat->bigY);
 	free(keyMat);
 }
+
+#ifdef WITH_ECC
+// Save the key data in PKCS#11
+int crypto_save_ecdsa
+(
+	CK_SESSION_HANDLE hSession,
+	char* label,
+	char* objID,
+	size_t objIDLen,
+	int noPublicKey,
+	Botan::ECDSA_PrivateKey* ecdsa
+)
+{
+	ecdsa_key_material_t* keyMat = crypto_malloc_ecdsa(ecdsa);
+	if (keyMat == NULL)
+	{
+		fprintf(stderr, "ERROR: Could not convert the key material to binary information.\n");
+		return 1;
+	}
+
+	CK_OBJECT_CLASS pubClass = CKO_PUBLIC_KEY, privClass = CKO_PRIVATE_KEY;
+	CK_KEY_TYPE keyType = CKK_ECDSA;
+	CK_BBOOL ckTrue = CK_TRUE, ckFalse = CK_FALSE, ckToken = CK_TRUE;
+	if (noPublicKey)
+	{
+		ckToken = CK_FALSE;
+	}
+	CK_ATTRIBUTE pubTemplate[] = {
+		{ CKA_CLASS,          &pubClass,         sizeof(pubClass) },
+		{ CKA_KEY_TYPE,       &keyType,          sizeof(keyType) },
+		{ CKA_LABEL,          label,             strlen(label) },
+		{ CKA_ID,             objID,             objIDLen },
+		{ CKA_TOKEN,          &ckToken,          sizeof(ckToken) },
+		{ CKA_VERIFY,         &ckTrue,           sizeof(ckTrue) },
+		{ CKA_ENCRYPT,        &ckFalse,          sizeof(ckFalse) },
+		{ CKA_WRAP,           &ckFalse,          sizeof(ckFalse) },
+		{ CKA_EC_PARAMS,      keyMat->derParams, keyMat->sizeParams },
+		{ CKA_EC_POINT,       keyMat->derQ,      keyMat->sizeQ }
+	};
+	CK_ATTRIBUTE privTemplate[] = {
+		{ CKA_CLASS,          &privClass,        sizeof(privClass) },
+		{ CKA_KEY_TYPE,       &keyType,          sizeof(keyType) },
+		{ CKA_LABEL,          label,             strlen(label) },
+		{ CKA_ID,             objID,             objIDLen },
+		{ CKA_SIGN,           &ckTrue,           sizeof(ckTrue) },
+		{ CKA_DECRYPT,        &ckFalse,          sizeof(ckFalse) },
+		{ CKA_UNWRAP,         &ckFalse,          sizeof(ckFalse) },
+		{ CKA_SENSITIVE,      &ckTrue,           sizeof(ckTrue) },
+		{ CKA_TOKEN,          &ckTrue,           sizeof(ckTrue) },
+		{ CKA_PRIVATE,        &ckTrue,           sizeof(ckTrue) },
+		{ CKA_EXTRACTABLE,    &ckFalse,          sizeof(ckFalse) },
+		{ CKA_EC_PARAMS,      keyMat->derParams, keyMat->sizeParams },
+		{ CKA_VALUE,          keyMat->bigD,      keyMat->sizeD }
+	};
+
+	CK_OBJECT_HANDLE hKey1, hKey2;
+	CK_RV rv = p11->C_CreateObject(hSession, privTemplate, 13, &hKey1);
+	if (rv != CKR_OK)
+	{
+		fprintf(stderr, "ERROR: Could not save the private key in the token. "
+				"Maybe the algorithm is not supported.\n");
+		crypto_free_ecdsa(keyMat);
+		return 1;
+	}
+
+	rv = p11->C_CreateObject(hSession, pubTemplate, 10, &hKey2);
+	crypto_free_ecdsa(keyMat);
+
+	if (rv != CKR_OK)
+	{
+		p11->C_DestroyObject(hSession, hKey1);
+		fprintf(stderr, "ERROR: Could not save the public key in the token.\n");
+		return 1;
+	}
+
+	printf("The key pair has been imported.\n");
+
+	return 0;
+}
+
+// Convert the Botan key to binary
+ecdsa_key_material_t* crypto_malloc_ecdsa(Botan::ECDSA_PrivateKey* ecdsa)
+{
+	if (ecdsa == NULL)
+	{
+		return NULL;
+	}
+
+	ecdsa_key_material_t *keyMat = (ecdsa_key_material_t *)malloc(sizeof(ecdsa_key_material_t));
+	if (keyMat == NULL)
+	{
+		return NULL;
+	}
+
+#if BOTAN_VERSION_MINOR == 11
+	std::vector<Botan::byte> derEC = ecdsa->domain().DER_encode(Botan::EC_DOMPAR_ENC_OID);
+	Botan::secure_vector<Botan::byte> derPoint;
+#else
+	Botan::SecureVector<Botan::byte> derEC = ecdsa->domain().DER_encode(Botan::EC_DOMPAR_ENC_OID);
+	Botan::SecureVector<Botan::byte> derPoint;
+#endif
+
+	try
+	{
+#if BOTAN_VERSION_MINOR == 11
+		Botan::secure_vector<Botan::byte> repr = Botan::EC2OSP(ecdsa->public_point(),
+			Botan::PointGFp::UNCOMPRESSED);
+#else
+		Botan::SecureVector<Botan::byte> repr = Botan::EC2OSP(ecdsa->public_point(),
+			Botan::PointGFp::UNCOMPRESSED);
+#endif
+
+		derPoint = Botan::DER_Encoder()
+			.encode(repr, Botan::OCTET_STRING)
+			.get_contents();
+        }
+	catch (...)
+	{
+		return NULL;
+	}
+
+	keyMat->sizeParams = derEC.size();
+	keyMat->sizeD = ecdsa->private_value().bytes();
+	keyMat->sizeQ = derPoint.size();
+
+	keyMat->derParams = (CK_VOID_PTR)malloc(keyMat->sizeParams);
+	keyMat->bigD = (CK_VOID_PTR)malloc(keyMat->sizeD);
+	keyMat->derQ = (CK_VOID_PTR)malloc(keyMat->sizeQ);
+
+	if (!keyMat->derParams || !keyMat->bigD || !keyMat->derQ)
+	{
+		crypto_free_ecdsa(keyMat);
+		return NULL;
+	}
+
+	memcpy(keyMat->derParams, &derEC[0], derEC.size());
+	ecdsa->private_value().binary_encode((Botan::byte*)keyMat->bigD);
+	memcpy(keyMat->derQ, &derPoint[0], derPoint.size());
+
+	return keyMat;
+}
+
+// Free the memory of the key
+void crypto_free_ecdsa(ecdsa_key_material_t* keyMat)
+{
+	if (keyMat == NULL) return;
+	if (keyMat->derParams) free(keyMat->derParams);
+	if (keyMat->bigD) free(keyMat->bigD);
+	if (keyMat->derQ) free(keyMat->derQ);
+	free(keyMat);
+}
+#endif

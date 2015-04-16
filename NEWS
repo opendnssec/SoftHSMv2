@@ -3,6 +3,8 @@ NEWS for SoftHSM -- History of user visible changes
 SoftHSM develop
 
 * SOFTHSM-113: Support for Botan 1.11.15
+* SOFTHSM-119: softhsm2-util: Support ECDSA key import
+  (Patch from Magnus Ahltorp)
 * SUPPORT-139: Support deriving generic secrets, DES, DES2, DES3, and AES.
   Using DH, ECDH or symmetric encryption.
 
@@ -13,6 +15,7 @@ Bugfixes:
 * SOFTHSM-111: Include FIPS-NOTES.md in dist.
 * SOFTHSM-112: CKM_AES_KEY_WRAP* conflict in pkcs11.h.
 * SOFTHSM-114: Fix memory leak in a test script.
+* SOFTHSM-115: Fix static analysis warnings.
 * SUPPORT-154: A marked as non-modifiable object cannot be generated.
 * SUPPORT-155: auto_ptr is deprecated in C++11, use unique_ptr.
 * SUPPORT-157: Derived secrets were truncated after encryption and
