@@ -47,16 +47,16 @@
 #define ARRAY_ATTR			0x4
 
 // Constructor
-ObjectFile::ObjectFile(OSToken* parent, std::string path, std::string lockpath, bool isNew /* = false */)
+ObjectFile::ObjectFile(OSToken* parent, std::string inPath, std::string inLockpath, bool isNew /* = false */)
 {
-	this->path = path;
+	path = inPath;
 	gen = Generation::create(path);
 	objectMutex = MutexFactory::i()->getMutex();
 	valid = (gen != NULL) && (objectMutex != NULL);
 	token = parent;
 	inTransaction = false;
 	transactionLockFile = NULL;
-	this->lockpath = lockpath;
+	lockpath = inLockpath;
 
 	if (!valid) return;
 

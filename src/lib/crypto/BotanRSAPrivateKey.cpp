@@ -66,36 +66,36 @@ BotanRSAPrivateKey::~BotanRSAPrivateKey()
 /*static*/ const char* BotanRSAPrivateKey::type = "Botan RSA Private Key";
 
 // Set from Botan representation
-void BotanRSAPrivateKey::setFromBotan(const Botan::RSA_PrivateKey* rsa)
+void BotanRSAPrivateKey::setFromBotan(const Botan::RSA_PrivateKey* inRSA)
 {
-	ByteString p = BotanUtil::bigInt2ByteString(rsa->get_p());
-	setP(p);
-	ByteString q = BotanUtil::bigInt2ByteString(rsa->get_q());
-	setQ(q);
-	ByteString dp1 = BotanUtil::bigInt2ByteString(rsa->get_d1());
-	setDP1(dp1);
-	ByteString dq1 = BotanUtil::bigInt2ByteString(rsa->get_d2());
-	setDQ1(dq1);
-	ByteString pq = BotanUtil::bigInt2ByteString(rsa->get_c());
-	setPQ(pq);
-	ByteString d = BotanUtil::bigInt2ByteString(rsa->get_d());
-	setD(d);
-	ByteString n = BotanUtil::bigInt2ByteString(rsa->get_n());
-	setN(n);
-	ByteString e = BotanUtil::bigInt2ByteString(rsa->get_e());
-	setE(e);
+	ByteString inP = BotanUtil::bigInt2ByteString(inRSA->get_p());
+	setP(inP);
+	ByteString inQ = BotanUtil::bigInt2ByteString(inRSA->get_q());
+	setQ(inQ);
+	ByteString inDP1 = BotanUtil::bigInt2ByteString(inRSA->get_d1());
+	setDP1(inDP1);
+	ByteString inDQ1 = BotanUtil::bigInt2ByteString(inRSA->get_d2());
+	setDQ1(inDQ1);
+	ByteString inPQ = BotanUtil::bigInt2ByteString(inRSA->get_c());
+	setPQ(inPQ);
+	ByteString inD = BotanUtil::bigInt2ByteString(inRSA->get_d());
+	setD(inD);
+	ByteString inN = BotanUtil::bigInt2ByteString(inRSA->get_n());
+	setN(inN);
+	ByteString inE = BotanUtil::bigInt2ByteString(inRSA->get_e());
+	setE(inE);
 }
 
 // Check if the key is of the given type
-bool BotanRSAPrivateKey::isOfType(const char* type)
+bool BotanRSAPrivateKey::isOfType(const char* inType)
 {
-	return !strcmp(BotanRSAPrivateKey::type, type);
+	return !strcmp(type, inType);
 }
 
 // Setters for the RSA private key components
-void BotanRSAPrivateKey::setP(const ByteString& p)
+void BotanRSAPrivateKey::setP(const ByteString& inP)
 {
-	RSAPrivateKey::setP(p);
+	RSAPrivateKey::setP(inP);
 
 	if (rsa)
 	{
@@ -104,9 +104,9 @@ void BotanRSAPrivateKey::setP(const ByteString& p)
 	}
 }
 
-void BotanRSAPrivateKey::setQ(const ByteString& q)
+void BotanRSAPrivateKey::setQ(const ByteString& inQ)
 {
-	RSAPrivateKey::setQ(q);
+	RSAPrivateKey::setQ(inQ);
 
 	if (rsa)
 	{
@@ -115,9 +115,9 @@ void BotanRSAPrivateKey::setQ(const ByteString& q)
 	}
 }
 
-void BotanRSAPrivateKey::setPQ(const ByteString& pq)
+void BotanRSAPrivateKey::setPQ(const ByteString& inPQ)
 {
-	RSAPrivateKey::setPQ(pq);
+	RSAPrivateKey::setPQ(inPQ);
 
 	if (rsa)
 	{
@@ -126,9 +126,9 @@ void BotanRSAPrivateKey::setPQ(const ByteString& pq)
 	}
 }
 
-void BotanRSAPrivateKey::setDP1(const ByteString& dp1)
+void BotanRSAPrivateKey::setDP1(const ByteString& inDP1)
 {
-	RSAPrivateKey::setDP1(dp1);
+	RSAPrivateKey::setDP1(inDP1);
 
 	if (rsa)
 	{
@@ -137,9 +137,9 @@ void BotanRSAPrivateKey::setDP1(const ByteString& dp1)
 	}
 }
 
-void BotanRSAPrivateKey::setDQ1(const ByteString& dq1)
+void BotanRSAPrivateKey::setDQ1(const ByteString& inDQ1)
 {
-	RSAPrivateKey::setDQ1(dq1);
+	RSAPrivateKey::setDQ1(inDQ1);
 
 	if (rsa)
 	{
@@ -148,9 +148,9 @@ void BotanRSAPrivateKey::setDQ1(const ByteString& dq1)
 	}
 }
 
-void BotanRSAPrivateKey::setD(const ByteString& d)
+void BotanRSAPrivateKey::setD(const ByteString& inD)
 {
-	RSAPrivateKey::setD(d);
+	RSAPrivateKey::setD(inD);
 
 	if (rsa)
 	{
@@ -161,9 +161,9 @@ void BotanRSAPrivateKey::setD(const ByteString& d)
 
 
 // Setters for the RSA public key components
-void BotanRSAPrivateKey::setN(const ByteString& n)
+void BotanRSAPrivateKey::setN(const ByteString& inN)
 {
-	RSAPrivateKey::setN(n);
+	RSAPrivateKey::setN(inN);
 
 	if (rsa)
 	{
@@ -172,9 +172,9 @@ void BotanRSAPrivateKey::setN(const ByteString& n)
 	}
 }
 
-void BotanRSAPrivateKey::setE(const ByteString& e)
+void BotanRSAPrivateKey::setE(const ByteString& inE)
 {
-	RSAPrivateKey::setE(e);
+	RSAPrivateKey::setE(inE);
 
 	if (rsa)
 	{
@@ -262,9 +262,9 @@ Botan::RSA_PrivateKey* BotanRSAPrivateKey::getBotanKey()
 void BotanRSAPrivateKey::createBotanKey()
 {
 	// d and n is not needed, they can be calculated
-	if (this->p.size() != 0 &&
-	    this->q.size() != 0 &&
-	    this->e.size() != 0)
+	if (p.size() != 0 &&
+	    q.size() != 0 &&
+	    e.size() != 0)
 	{
 		if (rsa)
 		{
@@ -276,11 +276,11 @@ void BotanRSAPrivateKey::createBotanKey()
 		{
 			BotanRNG* rng = (BotanRNG*)BotanCryptoFactory::i()->getRNG();
 			rsa = new Botan::RSA_PrivateKey(*rng->getRNG(),
-						BotanUtil::byteString2bigInt(this->p), 
-						BotanUtil::byteString2bigInt(this->q), 
-						BotanUtil::byteString2bigInt(this->e), 
-						BotanUtil::byteString2bigInt(this->d), 
-						BotanUtil::byteString2bigInt(this->n));
+						BotanUtil::byteString2bigInt(p),
+						BotanUtil::byteString2bigInt(q),
+						BotanUtil::byteString2bigInt(e),
+						BotanUtil::byteString2bigInt(d),
+						BotanUtil::byteString2bigInt(n));
 		}
 		catch (...)
 		{

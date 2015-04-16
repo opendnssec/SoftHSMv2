@@ -59,26 +59,26 @@ BotanDHPublicKey::~BotanDHPublicKey()
 /*static*/ const char* BotanDHPublicKey::type = "Botan DH Public Key";
 
 // Set from Botan representation
-void BotanDHPublicKey::setFromBotan(const Botan::DH_PublicKey* dh)
+void BotanDHPublicKey::setFromBotan(const Botan::DH_PublicKey* inDH)
 {
-	ByteString p = BotanUtil::bigInt2ByteString(dh->group_p());
-	setP(p);
-	ByteString g = BotanUtil::bigInt2ByteString(dh->group_g());
-	setG(g);
-	ByteString y = BotanUtil::bigInt2ByteString(dh->get_y());
-	setY(y);
+	ByteString inP = BotanUtil::bigInt2ByteString(inDH->group_p());
+	setP(inP);
+	ByteString inG = BotanUtil::bigInt2ByteString(inDH->group_g());
+	setG(inG);
+	ByteString inY = BotanUtil::bigInt2ByteString(inDH->get_y());
+	setY(inY);
 }
 
 // Check if the key is of the given type
-bool BotanDHPublicKey::isOfType(const char* type)
+bool BotanDHPublicKey::isOfType(const char* inType)
 {
-	return !strcmp(BotanDHPublicKey::type, type);
+	return !strcmp(type, inType);
 }
 
 // Setters for the DH public key components
-void BotanDHPublicKey::setP(const ByteString& p)
+void BotanDHPublicKey::setP(const ByteString& inP)
 {
-	DHPublicKey::setP(p);
+	DHPublicKey::setP(inP);
 
 	if (dh)
 	{
@@ -87,9 +87,9 @@ void BotanDHPublicKey::setP(const ByteString& p)
 	}
 }
 
-void BotanDHPublicKey::setG(const ByteString& g)
+void BotanDHPublicKey::setG(const ByteString& inG)
 {
-	DHPublicKey::setG(g);
+	DHPublicKey::setG(inG);
 
 	if (dh)
 	{
@@ -98,9 +98,9 @@ void BotanDHPublicKey::setG(const ByteString& g)
 	}
 }
 
-void BotanDHPublicKey::setY(const ByteString& y)
+void BotanDHPublicKey::setY(const ByteString& inY)
 {
-	DHPublicKey::setY(y);
+	DHPublicKey::setY(inY);
 
 	if (dh)
 	{
@@ -119,12 +119,12 @@ Botan::DH_PublicKey* BotanDHPublicKey::getBotanKey()
 
 	return dh;
 }
- 
+
 // Create the Botan representation of the key
 void BotanDHPublicKey::createBotanKey()
 {
 	// We actually do not need to check q, since it can be set zero
-	if (this->p.size() != 0 && this->y.size() != 0)
+	if (p.size() != 0 && y.size() != 0)
 	{
 		if (dh)
 		{
@@ -134,9 +134,9 @@ void BotanDHPublicKey::createBotanKey()
 
 		try
 		{
-			dh = new Botan::DH_PublicKey(Botan::DL_Group(BotanUtil::byteString2bigInt(this->p),
-							BotanUtil::byteString2bigInt(this->g)),
-							BotanUtil::byteString2bigInt(this->y));
+			dh = new Botan::DH_PublicKey(Botan::DL_Group(BotanUtil::byteString2bigInt(p),
+							BotanUtil::byteString2bigInt(g)),
+							BotanUtil::byteString2bigInt(y));
 		}
 		catch (...)
 		{

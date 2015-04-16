@@ -53,14 +53,14 @@ class OSToken : public ObjectStoreToken
 {
 public:
 	// Constructor
-	OSToken(const std::string tokenPath);
+	OSToken(const std::string inTokenPath);
 
 	// Create a new token
 	static OSToken* createToken(const std::string basePath, const std::string tokenDir, const ByteString& label, const ByteString& serial);
 
 	// Access an existing token
 	static OSToken* accessToken(const std::string &basePath, const std::string &tokenDir);
-	
+
 	// Constructor for new tokens
 	OSToken(const std::string tokenPath, const ByteString& label, const ByteString& serialNumber);
 
@@ -92,7 +92,7 @@ public:
 	virtual std::set<OSObject*> getObjects();
 
 	// Insert objects into the given set
-	virtual void getObjects(std::set<OSObject*> &objects);
+	virtual void getObjects(std::set<OSObject*> &inObjects);
 
 	// Create a new object
 	virtual OSObject* createObject();

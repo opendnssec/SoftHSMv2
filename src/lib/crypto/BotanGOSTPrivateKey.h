@@ -44,7 +44,7 @@ public:
 	BotanGOSTPrivateKey();
 
 	BotanGOSTPrivateKey(const Botan::GOST_3410_PrivateKey* inECKEY);
-	
+
 	// Destructor
 	virtual ~BotanGOSTPrivateKey();
 
@@ -52,7 +52,7 @@ public:
 	static const char* type;
 
 	// Check if the key is of the given type
-	virtual bool isOfType(const char* type);
+	virtual bool isOfType(const char* inType);
 
 	// Get the output length
 	virtual unsigned long getOutputLength() const;
@@ -61,10 +61,10 @@ public:
 	virtual unsigned long getOrderLength() const;
 
 	// Setters for the GOST private key components
-	virtual void setD(const ByteString& d);
+	virtual void setD(const ByteString& inD);
 
 	// Setters for the GOST public key components
-	virtual void setEC(const ByteString& ec);
+	virtual void setEC(const ByteString& inEC);
 
 	// Serialisation
 	virtual ByteString serialise() const;
@@ -77,7 +77,7 @@ public:
 	virtual bool PKCS8Decode(const ByteString& ber);
 
 	// Set from Botan representation
-	virtual void setFromBotan(const Botan::GOST_3410_PrivateKey* eckey);
+	virtual void setFromBotan(const Botan::GOST_3410_PrivateKey* inECKEY);
 
 	// Retrieve the Botan representation of the key
 	Botan::GOST_3410_PrivateKey* getBotanKey();

@@ -64,9 +64,8 @@ unsigned long BotanECDSAPublicKey::getOrderLength() const
 {
 	try
 	{
-		Botan::EC_Group group = BotanUtil::byteString2ECGroup(this->ec);
+		Botan::EC_Group group = BotanUtil::byteString2ECGroup(ec);
 		return group.get_order().bytes();
-			
 	}
 	catch (...)
 	{
@@ -77,24 +76,24 @@ unsigned long BotanECDSAPublicKey::getOrderLength() const
 }
 
 // Set from Botan representation
-void BotanECDSAPublicKey::setFromBotan(const Botan::ECDSA_PublicKey* eckey)
+void BotanECDSAPublicKey::setFromBotan(const Botan::ECDSA_PublicKey* inECKEY)
 {
-	ByteString ec = BotanUtil::ecGroup2ByteString(eckey->domain());
-	setEC(ec);
-	ByteString q = BotanUtil::ecPoint2ByteString(eckey->public_point());
-	setQ(q);
+	ByteString inEC = BotanUtil::ecGroup2ByteString(inECKEY->domain());
+	setEC(inEC);
+	ByteString inQ = BotanUtil::ecPoint2ByteString(inECKEY->public_point());
+	setQ(inQ);
 }
 
 // Check if the key is of the given type
-bool BotanECDSAPublicKey::isOfType(const char* type)
+bool BotanECDSAPublicKey::isOfType(const char* inType)
 {
-	return !strcmp(BotanECDSAPublicKey::type, type);
+	return !strcmp(type, inType);
 }
 
 // Setters for the ECDSA public key components
-void BotanECDSAPublicKey::setEC(const ByteString& ec)
+void BotanECDSAPublicKey::setEC(const ByteString& inEC)
 {
-	ECPublicKey::setEC(ec);
+	ECPublicKey::setEC(inEC);
 
 	if (eckey)
 	{
@@ -103,9 +102,9 @@ void BotanECDSAPublicKey::setEC(const ByteString& ec)
 	}
 }
 
-void BotanECDSAPublicKey::setQ(const ByteString& q)
+void BotanECDSAPublicKey::setQ(const ByteString& inQ)
 {
-	ECPublicKey::setQ(q);
+	ECPublicKey::setQ(inQ);
 
 	if (eckey)
 	{
@@ -128,8 +127,8 @@ Botan::ECDSA_PublicKey* BotanECDSAPublicKey::getBotanKey()
 // Create the Botan representation of the key
 void BotanECDSAPublicKey::createBotanKey()
 {
-	if (this->ec.size() != 0 &&
-	    this->q.size() != 0)
+	if (ec.size() != 0 &&
+	    q.size() != 0)
 	{
 		if (eckey)
 		{
@@ -139,8 +138,8 @@ void BotanECDSAPublicKey::createBotanKey()
 
 		try
 		{
-			Botan::EC_Group group = BotanUtil::byteString2ECGroup(this->ec);
-			Botan::PointGFp point = BotanUtil::byteString2ECPoint(this->q, group);
+			Botan::EC_Group group = BotanUtil::byteString2ECGroup(ec);
+			Botan::PointGFp point = BotanUtil::byteString2ECPoint(q, group);
 			eckey = new Botan::ECDSA_PublicKey(group, point);
 		}
 		catch (...)

@@ -34,14 +34,14 @@
 #include "Session.h"
 
 // Constructor
-Session::Session(Slot* slot, bool isReadWrite, CK_VOID_PTR pApplication, CK_NOTIFY notify)
+Session::Session(Slot* inSlot, bool inIsReadWrite, CK_VOID_PTR inPApplication, CK_NOTIFY inNotify)
 {
-	this->slot = slot;
-	this->token = slot->getToken();
-	this->isReadWrite = isReadWrite;
+	slot = inSlot;
+	token = slot->getToken();
+	isReadWrite = inIsReadWrite;
 	hSession = CK_INVALID_HANDLE;
-	this->pApplication = pApplication;
-	this->notify = notify;
+	pApplication = inPApplication;
+	notify = inNotify;
 	operation = SESSION_OP_NONE;
 	findOp = NULL;
 	digestOp = NULL;
@@ -143,9 +143,9 @@ CK_STATE Session::getState()
 	}
 }
 
-void Session::setHandle(CK_SESSION_HANDLE hSession)
+void Session::setHandle(CK_SESSION_HANDLE inHSession)
 {
-	this->hSession = hSession;
+	hSession = inHSession;
 }
 
 CK_SESSION_HANDLE Session::getHandle()
@@ -166,9 +166,9 @@ Token* Session::getToken()
 }
 
 // Set the operation type
-void Session::setOpType(int operation)
+void Session::setOpType(int inOperation)
 {
-	this->operation = operation;
+	operation = inOperation;
 }
 
 // Get the operation type
@@ -236,12 +236,12 @@ void Session::resetOp()
 	operation = SESSION_OP_NONE;
 }
 
-void Session::setFindOp(FindOperation *findOp)
+void Session::setFindOp(FindOperation *inFindOp)
 {
-	if (this->findOp != NULL) {
-		delete this->findOp;
+	if (findOp != NULL) {
+		delete findOp;
 	}
-	this->findOp = findOp;
+	findOp = inFindOp;
 }
 
 FindOperation *Session::getFindOp()
@@ -250,14 +250,14 @@ FindOperation *Session::getFindOp()
 }
 
 // Set the digesting operator
-void Session::setDigestOp(HashAlgorithm* digestOp)
+void Session::setDigestOp(HashAlgorithm* inDigestOp)
 {
-	if (this->digestOp != NULL)
+	if (digestOp != NULL)
 	{
-		CryptoFactory::i()->recycleHashAlgorithm(this->digestOp);
+		CryptoFactory::i()->recycleHashAlgorithm(digestOp);
 	}
 
-	this->digestOp = digestOp;
+	digestOp = inDigestOp;
 }
 
 // Get the digesting operator
@@ -267,15 +267,15 @@ HashAlgorithm* Session::getDigestOp()
 }
 
 // Set the MACing operator
-void Session::setMacOp(MacAlgorithm *macOp)
+void Session::setMacOp(MacAlgorithm *inMacOp)
 {
-	if (this->macOp != NULL)
+	if (macOp != NULL)
 	{
 		setSymmetricKey(NULL);
-		CryptoFactory::i()->recycleMacAlgorithm(this->macOp);
+		CryptoFactory::i()->recycleMacAlgorithm(macOp);
 	}
 
-	this->macOp = macOp;
+	macOp = inMacOp;
 }
 
 // Get the MACing operator
@@ -284,16 +284,16 @@ MacAlgorithm *Session::getMacOp()
 	return macOp;
 }
 
-void Session::setAsymmetricCryptoOp(AsymmetricAlgorithm *asymmetricCryptoOp)
+void Session::setAsymmetricCryptoOp(AsymmetricAlgorithm *inAsymmetricCryptoOp)
 {
-	if (this->asymmetricCryptoOp != NULL)
+	if (asymmetricCryptoOp != NULL)
 	{
 		setPublicKey(NULL);
 		setPrivateKey(NULL);
-		CryptoFactory::i()->recycleAsymmetricAlgorithm(this->asymmetricCryptoOp);
+		CryptoFactory::i()->recycleAsymmetricAlgorithm(asymmetricCryptoOp);
 	}
 
-	this->asymmetricCryptoOp = asymmetricCryptoOp;
+	asymmetricCryptoOp = inAsymmetricCryptoOp;
 }
 
 AsymmetricAlgorithm *Session::getAsymmetricCryptoOp()
@@ -301,15 +301,15 @@ AsymmetricAlgorithm *Session::getAsymmetricCryptoOp()
 	return asymmetricCryptoOp;
 }
 
-void Session::setSymmetricCryptoOp(SymmetricAlgorithm *symmetricCryptoOp)
+void Session::setSymmetricCryptoOp(SymmetricAlgorithm *inSymmetricCryptoOp)
 {
-	if (this->symmetricCryptoOp != NULL)
+	if (symmetricCryptoOp != NULL)
 	{
 		setSymmetricKey(NULL);
-		CryptoFactory::i()->recycleSymmetricAlgorithm(this->symmetricCryptoOp);
+		CryptoFactory::i()->recycleSymmetricAlgorithm(symmetricCryptoOp);
 	}
 
-	this->symmetricCryptoOp = symmetricCryptoOp;
+	symmetricCryptoOp = inSymmetricCryptoOp;
 }
 
 SymmetricAlgorithm *Session::getSymmetricCryptoOp()
@@ -317,9 +317,9 @@ SymmetricAlgorithm *Session::getSymmetricCryptoOp()
 	return symmetricCryptoOp;
 }
 
-void Session::setMechanism(AsymMech::Type mechanism)
+void Session::setMechanism(AsymMech::Type inMechanism)
 {
-	this->mechanism = mechanism;
+	mechanism = inMechanism;
 }
 
 AsymMech::Type Session::getMechanism()
@@ -327,33 +327,33 @@ AsymMech::Type Session::getMechanism()
 	return mechanism;
 }
 
-void Session::setParameters(void* param, size_t paramLen)
+void Session::setParameters(void* inParam, size_t inParamLen)
 {
-	if (param == NULL || paramLen == 0) return;
+	if (inParam == NULL || inParamLen == 0) return;
 
-	if (this->param != NULL)
+	if (param != NULL)
 	{
-		free(this->param);
-		this->paramLen = 0;
+		free(param);
+		paramLen = 0;
 	}
 
-	this->param = malloc(paramLen);
-	if (this->param != NULL)
+	param = malloc(inParamLen);
+	if (param != NULL)
 	{
-		memcpy(this->param, param, paramLen);
-		this->paramLen = paramLen;
+		memcpy(param, inParam, inParamLen);
+		paramLen = inParamLen;
 	}
 }
 
-void* Session::getParameters(size_t& paramLen)
+void* Session::getParameters(size_t& inParamLen)
 {
-	paramLen = this->paramLen;
-	return this->param;
+	inParamLen = paramLen;
+	return param;
 }
 
-void Session::setAllowMultiPartOp(bool allowMultiPartOp)
+void Session::setAllowMultiPartOp(bool inAllowMultiPartOp)
 {
-	this->allowMultiPartOp = allowMultiPartOp;
+	allowMultiPartOp = inAllowMultiPartOp;
 }
 
 bool Session::getAllowMultiPartOp()
@@ -361,9 +361,9 @@ bool Session::getAllowMultiPartOp()
 	return allowMultiPartOp;
 }
 
-void Session::setAllowSinglePartOp(bool allowSinglePartOp)
+void Session::setAllowSinglePartOp(bool inAllowSinglePartOp)
 {
-	this->allowSinglePartOp = allowSinglePartOp;
+	allowSinglePartOp = inAllowSinglePartOp;
 }
 
 bool Session::getAllowSinglePartOp()
@@ -371,17 +371,17 @@ bool Session::getAllowSinglePartOp()
 	return allowSinglePartOp;
 }
 
-void Session::setPublicKey(PublicKey* publicKey)
+void Session::setPublicKey(PublicKey* inPublicKey)
 {
 	if (asymmetricCryptoOp == NULL)
 		return;
 
-	if (this->publicKey != NULL)
+	if (publicKey != NULL)
 	{
-		asymmetricCryptoOp->recyclePublicKey(this->publicKey);
+		asymmetricCryptoOp->recyclePublicKey(publicKey);
 	}
 
-	this->publicKey = publicKey;
+	publicKey = inPublicKey;
 }
 
 PublicKey* Session::getPublicKey()
@@ -389,17 +389,17 @@ PublicKey* Session::getPublicKey()
 	return publicKey;
 }
 
-void Session::setPrivateKey(PrivateKey* privateKey)
+void Session::setPrivateKey(PrivateKey* inPrivateKey)
 {
 	if (asymmetricCryptoOp == NULL)
 		return;
 
-	if (this->privateKey != NULL)
+	if (privateKey != NULL)
 	{
-		asymmetricCryptoOp->recyclePrivateKey(this->privateKey);
+		asymmetricCryptoOp->recyclePrivateKey(privateKey);
 	}
 
-	this->privateKey = privateKey;
+	privateKey = inPrivateKey;
 }
 
 PrivateKey* Session::getPrivateKey()
@@ -407,20 +407,20 @@ PrivateKey* Session::getPrivateKey()
 	return privateKey;
 }
 
-void Session::setSymmetricKey(SymmetricKey* symmetricKey)
+void Session::setSymmetricKey(SymmetricKey* inSymmetricKey)
 {
-	if (this->symmetricKey != NULL)
+	if (symmetricKey != NULL)
 	{
 		if (macOp) {
-			macOp->recycleKey(this->symmetricKey);
+			macOp->recycleKey(symmetricKey);
 		} else if (symmetricCryptoOp) {
-			symmetricCryptoOp->recycleKey(this->symmetricKey);
+			symmetricCryptoOp->recycleKey(symmetricKey);
 		} else {
 			return;
 		}
 	}
 
-	this->symmetricKey = symmetricKey;
+	symmetricKey = inSymmetricKey;
 }
 
 SymmetricKey* Session::getSymmetricKey()

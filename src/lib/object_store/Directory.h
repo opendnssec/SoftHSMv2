@@ -42,7 +42,7 @@ class Directory
 {
 public:
 	// Constructor
-	Directory(std::string path);
+	Directory(std::string inPath);
 
 	// Destructor
 	virtual ~Directory();

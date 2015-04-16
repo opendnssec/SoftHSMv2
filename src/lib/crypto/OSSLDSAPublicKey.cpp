@@ -66,71 +66,87 @@ OSSLDSAPublicKey::~OSSLDSAPublicKey()
 /*static*/ const char* OSSLDSAPublicKey::type = "OpenSSL DSA Public Key";
 
 // Set from OpenSSL representation
-void OSSLDSAPublicKey::setFromOSSL(const DSA* dsa)
+void OSSLDSAPublicKey::setFromOSSL(const DSA* inDSA)
 {
-	if (dsa->p) { ByteString p = OSSL::bn2ByteString(dsa->p); setP(p); }
-	if (dsa->q) { ByteString q = OSSL::bn2ByteString(dsa->q); setQ(q); }
-	if (dsa->g) { ByteString g = OSSL::bn2ByteString(dsa->g); setG(g); }
-	if (dsa->pub_key) { ByteString y = OSSL::bn2ByteString(dsa->pub_key); setY(y); }
+	if (inDSA->p)
+	{
+		ByteString inP = OSSL::bn2ByteString(inDSA->p);
+		setP(inP);
+	}
+	if (inDSA->q)
+	{
+		ByteString inQ = OSSL::bn2ByteString(inDSA->q);
+		setQ(inQ);
+	}
+	if (inDSA->g)
+	{
+		ByteString inG = OSSL::bn2ByteString(inDSA->g);
+		setG(inG);
+	}
+	if (inDSA->pub_key)
+	{
+		ByteString inY = OSSL::bn2ByteString(inDSA->pub_key);
+		setY(inY);
+	}
 }
 
 // Check if the key is of the given type
-bool OSSLDSAPublicKey::isOfType(const char* type)
+bool OSSLDSAPublicKey::isOfType(const char* inType)
 {
-	return !strcmp(OSSLDSAPublicKey::type, type);
+	return !strcmp(type, inType);
 }
 
 // Setters for the DSA public key components
-void OSSLDSAPublicKey::setP(const ByteString& p)
+void OSSLDSAPublicKey::setP(const ByteString& inP)
 {
-	DSAPublicKey::setP(p);
+	DSAPublicKey::setP(inP);
 
-	if (dsa->p) 
+	if (dsa->p)
 	{
 		BN_clear_free(dsa->p);
 		dsa->p = NULL;
 	}
 
-	dsa->p = OSSL::byteString2bn(p);
+	dsa->p = OSSL::byteString2bn(inP);
 }
 
-void OSSLDSAPublicKey::setQ(const ByteString& q)
+void OSSLDSAPublicKey::setQ(const ByteString& inQ)
 {
-	DSAPublicKey::setQ(q);
+	DSAPublicKey::setQ(inQ);
 
-	if (dsa->q) 
+	if (dsa->q)
 	{
 		BN_clear_free(dsa->q);
 		dsa->q = NULL;
 	}
 
-	dsa->q = OSSL::byteString2bn(q);
+	dsa->q = OSSL::byteString2bn(inQ);
 }
 
-void OSSLDSAPublicKey::setG(const ByteString& g)
+void OSSLDSAPublicKey::setG(const ByteString& inG)
 {
-	DSAPublicKey::setG(g);
+	DSAPublicKey::setG(inG);
 
-	if (dsa->g) 
+	if (dsa->g)
 	{
 		BN_clear_free(dsa->g);
 		dsa->g = NULL;
 	}
 
-	dsa->g = OSSL::byteString2bn(g);
+	dsa->g = OSSL::byteString2bn(inG);
 }
 
-void OSSLDSAPublicKey::setY(const ByteString& y)
+void OSSLDSAPublicKey::setY(const ByteString& inY)
 {
-	DSAPublicKey::setY(y);
+	DSAPublicKey::setY(inY);
 
-	if (dsa->pub_key) 
+	if (dsa->pub_key)
 	{
 		BN_clear_free(dsa->pub_key);
 		dsa->pub_key = NULL;
 	}
 
-	dsa->pub_key = OSSL::byteString2bn(y);
+	dsa->pub_key = OSSL::byteString2bn(inY);
 }
 
 // Retrieve the OpenSSL representation of the key

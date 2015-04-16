@@ -47,10 +47,10 @@ public:
 	static const char* type;
 
 	// Set the public exponent
-	void setE(const ByteString& e);
+	void setE(const ByteString& inE);
 
 	// Set the bit length
-	void setBitLength(const size_t bitLen);
+	void setBitLength(const size_t inBitLen);
 
 	// Get the public exponent
 	const ByteString& getE() const;
@@ -59,7 +59,7 @@ public:
 	size_t getBitLength() const;
 
 	// Are the parameters of the given type?
-	virtual bool areOfType(const char* type);
+	virtual bool areOfType(const char* inType);
 
 	// Serialisation
 	virtual ByteString serialise() const;

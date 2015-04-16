@@ -42,9 +42,9 @@ class OSSLRSAPublicKey : public RSAPublicKey
 public:
 	// Constructors
 	OSSLRSAPublicKey();
-	
+
 	OSSLRSAPublicKey(const RSA* inRSA);
-	
+
 	// Destructor
 	virtual ~OSSLRSAPublicKey();
 
@@ -52,14 +52,14 @@ public:
 	static const char* type;
 
 	// Check if the key is of the given type
-	virtual bool isOfType(const char* type);
+	virtual bool isOfType(const char* inType);
 
 	// Setters for the RSA public key components
-	virtual void setN(const ByteString& n);
-	virtual void setE(const ByteString& e);
+	virtual void setN(const ByteString& inN);
+	virtual void setE(const ByteString& inE);
 
 	// Set from OpenSSL representation
-	virtual void setFromOSSL(const RSA* rsa);
+	virtual void setFromOSSL(const RSA* inRSA);
 
 	// Retrieve the OpenSSL representation of the key
 	RSA* getOSSLKey();

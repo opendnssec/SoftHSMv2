@@ -42,9 +42,9 @@ class BotanDHPublicKey : public DHPublicKey
 public:
 	// Constructors
 	BotanDHPublicKey();
-	
+
 	BotanDHPublicKey(const Botan::DH_PublicKey* inDH);
-	
+
 	// Destructor
 	virtual ~BotanDHPublicKey();
 
@@ -52,15 +52,15 @@ public:
 	static const char* type;
 
 	// Check if the key is of the given type
-	virtual bool isOfType(const char* type);
+	virtual bool isOfType(const char* inType);
 
 	// Setters for the DH public key components
-	virtual void setP(const ByteString& p);
-	virtual void setG(const ByteString& g);
-	virtual void setY(const ByteString& y);
+	virtual void setP(const ByteString& inP);
+	virtual void setG(const ByteString& inG);
+	virtual void setY(const ByteString& inY);
 
 	// Set from Botan representation
-	virtual void setFromBotan(const Botan::DH_PublicKey* dh);
+	virtual void setFromBotan(const Botan::DH_PublicKey* inDH);
 
 	// Retrieve the Botan representation of the key
 	Botan::DH_PublicKey* getBotanKey();

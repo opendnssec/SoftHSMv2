@@ -39,18 +39,18 @@
 #include <string.h>
 
 // Constructor
-Slot::Slot(ObjectStore* objectStore, size_t slotID, ObjectStoreToken* token /* = NULL */)
+Slot::Slot(ObjectStore* inObjectStore, size_t inSlotID, ObjectStoreToken* inToken /* = NULL */)
 {
-	this->objectStore = objectStore;
-	this->slotID = slotID;
+	objectStore = inObjectStore;
+	slotID = inSlotID;
 
-	if (token != NULL)
+	if (inToken != NULL)
 	{
-		this->token = new Token(token);
+		token = new Token(inToken);
 	}
 	else
 	{
-		this->token = new Token();
+		token = new Token();
 	}
 }
 

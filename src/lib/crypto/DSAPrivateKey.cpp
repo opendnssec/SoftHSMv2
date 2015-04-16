@@ -39,9 +39,9 @@
 /*static*/ const char* DSAPrivateKey::type = "Abstract DSA private key";
 
 // Check if the key is of the given type
-bool DSAPrivateKey::isOfType(const char* type)
+bool DSAPrivateKey::isOfType(const char* inType)
 {
-	return !strcmp(this->type, type);
+	return !strcmp(type, inType);
 }
 
 // Get the bit length
@@ -57,25 +57,25 @@ unsigned long DSAPrivateKey::getOutputLength() const
 }
 
 // Setters for the DSA private key components
-void DSAPrivateKey::setX(const ByteString& x)
+void DSAPrivateKey::setX(const ByteString& inX)
 {
-	this->x = x;
+	x = inX;
 }
 
 // Setters for the DSA domain parameters
-void DSAPrivateKey::setP(const ByteString& p)
+void DSAPrivateKey::setP(const ByteString& inP)
 {
-	this->p = p;
+	p = inP;
 }
 
-void DSAPrivateKey::setQ(const ByteString& q)
+void DSAPrivateKey::setQ(const ByteString& inQ)
 {
-	this->q = q;
+	q = inQ;
 }
 
-void DSAPrivateKey::setG(const ByteString& g)
+void DSAPrivateKey::setG(const ByteString& inG)
 {
-	this->g = g;
+	g = inG;
 }
 
 // Getters for the DSA private key components

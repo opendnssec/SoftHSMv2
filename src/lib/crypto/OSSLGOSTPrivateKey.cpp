@@ -86,27 +86,27 @@ void OSSLGOSTPrivateKey::setFromOSSL(const EVP_PKEY* pkey)
 	const BIGNUM* priv = EC_KEY_get0_private_key(eckey);
 	setD(OSSL::bn2ByteString(priv));
 
-	ByteString ec;
+	ByteString inEC;
 	int nid = EC_GROUP_get_curve_name(EC_KEY_get0_group(eckey));
 	ec.resize(i2d_ASN1_OBJECT(OBJ_nid2obj(nid), NULL));
-	unsigned char *p = &ec[0];
+	unsigned char *p = &inEC[0];
 	i2d_ASN1_OBJECT(OBJ_nid2obj(nid), &p);
-	setEC(ec);
+	setEC(inEC);
 }
 
 // Check if the key is of the given type
-bool OSSLGOSTPrivateKey::isOfType(const char* type)
+bool OSSLGOSTPrivateKey::isOfType(const char* inType)
 {
-	return !strcmp(OSSLGOSTPrivateKey::type, type);
+	return !strcmp(type, inType);
 }
 
 // Setters for the GOST private key components
-void OSSLGOSTPrivateKey::setD(const ByteString& d)
+void OSSLGOSTPrivateKey::setD(const ByteString& inD)
 {
-	GOSTPrivateKey::setD(d);
+	GOSTPrivateKey::setD(inD);
 
-	EC_KEY* ec = (EC_KEY*) EVP_PKEY_get0((EVP_PKEY*) pkey);
-	if (ec == NULL)
+	EC_KEY* inEC = (EC_KEY*) EVP_PKEY_get0((EVP_PKEY*) pkey);
+	if (inEC == NULL)
 	{
 		const unsigned char* p = dummyKey;
 		if (d2i_PrivateKey(NID_id_GostR3410_2001, &pkey, &p, (long) sizeof(dummyKey)) == NULL)
@@ -115,11 +115,11 @@ void OSSLGOSTPrivateKey::setD(const ByteString& d)
 
 			return;
 		}
-		ec = (EC_KEY*) EVP_PKEY_get0((EVP_PKEY*) pkey);
+		inEC = (EC_KEY*) EVP_PKEY_get0((EVP_PKEY*) pkey);
 	}
 
-	const BIGNUM* priv = OSSL::byteString2bn(d);
-	if (EC_KEY_set_private_key(ec, priv) <= 0)
+	const BIGNUM* priv = OSSL::byteString2bn(inD);
+	if (EC_KEY_set_private_key(inEC, priv) <= 0)
 	{
 		ERROR_MSG("EC_KEY_set_private_key failed");
 		return;
@@ -127,15 +127,15 @@ void OSSLGOSTPrivateKey::setD(const ByteString& d)
 	BN_clear_free((BIGNUM*)priv);
 
 #ifdef notyet
-	if (gost2001_compute_public(ec) <= 0)
+	if (gost2001_compute_public(inEC) <= 0)
 		ERROR_MSG("gost2001_compute_public failed");
-#endif		
+#endif
 }
 
 // Setters for the GOST public key components
-void OSSLGOSTPrivateKey::setEC(const ByteString& ec)
+void OSSLGOSTPrivateKey::setEC(const ByteString& inEC)
 {
-        GOSTPrivateKey::setEC(ec);
+        GOSTPrivateKey::setEC(inEC);
 }
 
 // Retrieve the OpenSSL representation of the key

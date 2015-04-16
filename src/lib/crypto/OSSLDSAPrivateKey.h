@@ -42,9 +42,9 @@ class OSSLDSAPrivateKey : public DSAPrivateKey
 public:
 	// Constructors
 	OSSLDSAPrivateKey();
-	
+
 	OSSLDSAPrivateKey(const DSA* inDSA);
-	
+
 	// Destructor
 	virtual ~OSSLDSAPrivateKey();
 
@@ -52,15 +52,15 @@ public:
 	static const char* type;
 
 	// Check if the key is of the given type
-	virtual bool isOfType(const char* type);
+	virtual bool isOfType(const char* inType);
 
 	// Setters for the DSA private key components
-	virtual void setX(const ByteString& x);
+	virtual void setX(const ByteString& inX);
 
 	// Setters for the DSA domain parameters
-	virtual void setP(const ByteString& p);
-	virtual void setQ(const ByteString& q);
-	virtual void setG(const ByteString& g);
+	virtual void setP(const ByteString& inP);
+	virtual void setQ(const ByteString& inQ);
+	virtual void setG(const ByteString& inG);
 
 	// Encode into PKCS#8 DER
 	virtual ByteString PKCS8Encode();
@@ -69,7 +69,7 @@ public:
 	virtual bool PKCS8Decode(const ByteString& ber);
 
 	// Set from OpenSSL representation
-	virtual void setFromOSSL(const DSA* dsa);
+	virtual void setFromOSSL(const DSA* inDSA);
 
 	// Retrieve the OpenSSL representation of the key
 	DSA* getOSSLKey();

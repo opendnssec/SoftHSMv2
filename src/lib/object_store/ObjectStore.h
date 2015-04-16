@@ -47,7 +47,7 @@ class ObjectStore
 {
 public:
 	// Constructor
-	ObjectStore(std::string storePath);
+	ObjectStore(std::string inStorePath);
 
 	// Destructor
 	virtual ~ObjectStore();

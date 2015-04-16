@@ -39,9 +39,9 @@
 /*static*/ const char* DHPrivateKey::type = "Abstract DH private key";
 
 // Check if the key is of the given type
-bool DHPrivateKey::isOfType(const char* type)
+bool DHPrivateKey::isOfType(const char* inType)
 {
-	return !strcmp(this->type, type);
+	return !strcmp(type, inType);
 }
 
 // Get the bit length
@@ -57,20 +57,20 @@ unsigned long DHPrivateKey::getOutputLength() const
 }
 
 // Setters for the DH private key components
-void DHPrivateKey::setX(const ByteString& x)
+void DHPrivateKey::setX(const ByteString& inX)
 {
-	this->x = x;
+	x = inX;
 }
 
 // Setters for the DH public key components
-void DHPrivateKey::setP(const ByteString& p)
+void DHPrivateKey::setP(const ByteString& inP)
 {
-	this->p = p;
+	p = inP;
 }
 
-void DHPrivateKey::setG(const ByteString& g)
+void DHPrivateKey::setG(const ByteString& inG)
 {
-	this->g = g;
+	g = inG;
 }
 
 // Getters for the DH private key components

@@ -82,43 +82,43 @@ unsigned long OSSLECPublicKey::getOrderLength() const
 }
 
 // Set from OpenSSL representation
-void OSSLECPublicKey::setFromOSSL(const EC_KEY* eckey)
+void OSSLECPublicKey::setFromOSSL(const EC_KEY* inECKEY)
 {
-	const EC_GROUP* grp = EC_KEY_get0_group(eckey);
+	const EC_GROUP* grp = EC_KEY_get0_group(inECKEY);
 	if (grp != NULL)
 	{
-		ByteString ec = OSSL::grp2ByteString(grp);
-		setEC(ec);
+		ByteString inEC = OSSL::grp2ByteString(grp);
+		setEC(inEC);
 	}
-	const EC_POINT* pub = EC_KEY_get0_public_key(eckey);
+	const EC_POINT* pub = EC_KEY_get0_public_key(inECKEY);
 	if (pub != NULL && grp != NULL)
 	{
-		ByteString q = OSSL::pt2ByteString(pub, grp);
-		setQ(q);
+		ByteString inQ = OSSL::pt2ByteString(pub, grp);
+		setQ(inQ);
 	}
 }
 
 // Check if the key is of the given type
-bool OSSLECPublicKey::isOfType(const char* type)
+bool OSSLECPublicKey::isOfType(const char* inType)
 {
-	return !strcmp(OSSLECPublicKey::type, type);
+	return !strcmp(type, inType);
 }
 
 // Setters for the EC public key components
-void OSSLECPublicKey::setEC(const ByteString& ec)
+void OSSLECPublicKey::setEC(const ByteString& inEC)
 {
-	ECPublicKey::setEC(ec);
+	ECPublicKey::setEC(inEC);
 
-	EC_GROUP* grp = OSSL::byteString2grp(ec);
+	EC_GROUP* grp = OSSL::byteString2grp(inEC);
 	EC_KEY_set_group(eckey, grp);
 	EC_GROUP_free(grp);
 }
 
-void OSSLECPublicKey::setQ(const ByteString& q)
+void OSSLECPublicKey::setQ(const ByteString& inQ)
 {
-	ECPublicKey::setQ(q);
+	ECPublicKey::setQ(inQ);
 
-	EC_POINT* pub = OSSL::byteString2pt(q, EC_KEY_get0_group(eckey));
+	EC_POINT* pub = OSSL::byteString2pt(inQ, EC_KEY_get0_group(eckey));
 	EC_KEY_set_public_key(eckey, pub);
 	EC_POINT_free(pub);
 }

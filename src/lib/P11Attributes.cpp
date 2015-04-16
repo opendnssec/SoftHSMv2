@@ -37,9 +37,9 @@
 #include <stdlib.h>
 
 // Constructor
-P11Attribute::P11Attribute(OSObject* osobject)
+P11Attribute::P11Attribute(OSObject* inobject)
 {
-	this->osobject = osobject;
+	osobject = inobject;
 	type = CKA_VENDOR_DEFINED;
 	size = (CK_ULONG)-1;
 	checks = 0;

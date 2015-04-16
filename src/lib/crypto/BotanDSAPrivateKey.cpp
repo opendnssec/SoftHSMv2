@@ -65,28 +65,28 @@ BotanDSAPrivateKey::~BotanDSAPrivateKey()
 /*static*/ const char* BotanDSAPrivateKey::type = "Botan DSA Private Key";
 
 // Set from Botan representation
-void BotanDSAPrivateKey::setFromBotan(const Botan::DSA_PrivateKey* dsa)
+void BotanDSAPrivateKey::setFromBotan(const Botan::DSA_PrivateKey* inDSA)
 {
-	ByteString p = BotanUtil::bigInt2ByteString(dsa->group_p());
-	setP(p);
-	ByteString q = BotanUtil::bigInt2ByteString(dsa->group_q());
-	setQ(q);
-	ByteString g = BotanUtil::bigInt2ByteString(dsa->group_g());
-	setG(g);
-	ByteString x = BotanUtil::bigInt2ByteString(dsa->get_x());
-	setX(x);
+	ByteString inP = BotanUtil::bigInt2ByteString(inDSA->group_p());
+	setP(inP);
+	ByteString inQ = BotanUtil::bigInt2ByteString(inDSA->group_q());
+	setQ(inQ);
+	ByteString inG = BotanUtil::bigInt2ByteString(inDSA->group_g());
+	setG(inG);
+	ByteString inX = BotanUtil::bigInt2ByteString(inDSA->get_x());
+	setX(inX);
 }
 
 // Check if the key is of the given type
-bool BotanDSAPrivateKey::isOfType(const char* type)
+bool BotanDSAPrivateKey::isOfType(const char* inType)
 {
-	return !strcmp(BotanDSAPrivateKey::type, type);
+	return !strcmp(type, inType);
 }
 
 // Setters for the DSA private key components
-void BotanDSAPrivateKey::setX(const ByteString& x)
+void BotanDSAPrivateKey::setX(const ByteString& inX)
 {
-	DSAPrivateKey::setX(x);
+	DSAPrivateKey::setX(inX);
 
 	if (dsa)
 	{
@@ -97,9 +97,9 @@ void BotanDSAPrivateKey::setX(const ByteString& x)
 
 
 // Setters for the DSA domain parameters
-void BotanDSAPrivateKey::setP(const ByteString& p)
+void BotanDSAPrivateKey::setP(const ByteString& inP)
 {
-	DSAPrivateKey::setP(p);
+	DSAPrivateKey::setP(inP);
 
 	if (dsa)
 	{
@@ -108,9 +108,9 @@ void BotanDSAPrivateKey::setP(const ByteString& p)
 	}
 }
 
-void BotanDSAPrivateKey::setQ(const ByteString& q)
+void BotanDSAPrivateKey::setQ(const ByteString& inQ)
 {
-	DSAPrivateKey::setQ(q);
+	DSAPrivateKey::setQ(inQ);
 
 	if (dsa)
 	{
@@ -119,9 +119,9 @@ void BotanDSAPrivateKey::setQ(const ByteString& q)
 	}
 }
 
-void BotanDSAPrivateKey::setG(const ByteString& g)
+void BotanDSAPrivateKey::setG(const ByteString& inG)
 {
-	DSAPrivateKey::setG(g);
+	DSAPrivateKey::setG(inG);
 
 	if (dsa)
 	{
@@ -210,12 +210,12 @@ void BotanDSAPrivateKey::createBotanKey()
 {
 	// y is not needed
 	// Todo: Either q or x is needed. Both is not needed
-	if (this->p.size() != 0 &&
-	    this->q.size() != 0 &&
-	    this->g.size() != 0 &&
-	    this->x.size() != 0)
+	if (p.size() != 0 &&
+	    q.size() != 0 &&
+	    g.size() != 0 &&
+	    x.size() != 0)
 	{
-		if (dsa)   
+		if (dsa)
 		{
 			delete dsa;
 			dsa = NULL;
@@ -225,10 +225,10 @@ void BotanDSAPrivateKey::createBotanKey()
 		{
 			BotanRNG* rng = (BotanRNG*)BotanCryptoFactory::i()->getRNG();
 			dsa = new Botan::DSA_PrivateKey(*rng->getRNG(),
-							Botan::DL_Group(BotanUtil::byteString2bigInt(this->p),
-							BotanUtil::byteString2bigInt(this->q),
-							BotanUtil::byteString2bigInt(this->g)),
-							BotanUtil::byteString2bigInt(this->x));
+							Botan::DL_Group(BotanUtil::byteString2bigInt(p),
+							BotanUtil::byteString2bigInt(q),
+							BotanUtil::byteString2bigInt(g)),
+							BotanUtil::byteString2bigInt(x));
 		}
 		catch (...)
 		{

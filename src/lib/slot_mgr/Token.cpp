@@ -50,11 +50,11 @@ Token::Token()
 }
 
 // Constructor
-Token::Token(ObjectStoreToken* token)
+Token::Token(ObjectStoreToken* inToken)
 {
 	tokenMutex = MutexFactory::i()->getMutex();
 
-	this->token = token;
+	token = inToken;
 
 	ByteString soPINBlob, userPINBlob;
 

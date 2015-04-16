@@ -231,10 +231,10 @@ void Generation::rollback()
 }
 
 // Constructor
-Generation::Generation(const std::string path, bool isToken)
+Generation::Generation(const std::string inPath, bool inIsToken)
 {
-	this->path = path;
-	this->isToken = isToken;
+	path = inPath;
+	isToken = inIsToken;
 	pendingUpdate = false;
 	currentValue = 0;
 	genMutex = NULL;

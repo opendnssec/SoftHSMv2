@@ -42,8 +42,8 @@ class DESKey : public SymmetricKey
 {
 public:
 	// Base constructor
-	DESKey(size_t bitLen = 0) : SymmetricKey(bitLen) { }
-	
+	DESKey(size_t inBitLen = 0) : SymmetricKey(inBitLen) { }
+
 	// Set the key
 	virtual bool setKeyBits(const ByteString& keybits);
 };

@@ -45,12 +45,12 @@
 #if BOTAN_VERSION_MINOR == 11
 std::vector<Botan::byte> BotanDH_PrivateKey::public_value() const
 {
-	return this->impl->public_value();
+	return impl->public_value();
 }
 #else
 Botan::MemoryVector<Botan::byte> BotanDH_PrivateKey::public_value() const
 {
-	return this->impl->public_value();
+	return impl->public_value();
 }
 #endif
 
@@ -113,26 +113,26 @@ BotanDHPrivateKey::~BotanDHPrivateKey()
 /*static*/ const char* BotanDHPrivateKey::type = "Botan DH Private Key";
 
 // Set from Botan representation
-void BotanDHPrivateKey::setFromBotan(const BotanDH_PrivateKey* dh)
+void BotanDHPrivateKey::setFromBotan(const BotanDH_PrivateKey* inDH)
 {
-	ByteString p = BotanUtil::bigInt2ByteString(dh->impl->group_p());
-	setP(p);
-	ByteString g = BotanUtil::bigInt2ByteString(dh->impl->group_g());
-	setG(g);
-	ByteString x = BotanUtil::bigInt2ByteString(dh->impl->get_x());
-	setX(x);
+	ByteString inP = BotanUtil::bigInt2ByteString(inDH->impl->group_p());
+	setP(inP);
+	ByteString inG = BotanUtil::bigInt2ByteString(inDH->impl->group_g());
+	setG(inG);
+	ByteString inX = BotanUtil::bigInt2ByteString(inDH->impl->get_x());
+	setX(inX);
 }
 
 // Check if the key is of the given type
-bool BotanDHPrivateKey::isOfType(const char* type)
+bool BotanDHPrivateKey::isOfType(const char* inType)
 {
-	return !strcmp(BotanDHPrivateKey::type, type);
+	return !strcmp(type, inType);
 }
 
 // Setters for the DH private key components
-void BotanDHPrivateKey::setX(const ByteString& x)
+void BotanDHPrivateKey::setX(const ByteString& inX)
 {
-	DHPrivateKey::setX(x);
+	DHPrivateKey::setX(inX);
 
 	if (dh)
 	{
@@ -142,9 +142,9 @@ void BotanDHPrivateKey::setX(const ByteString& x)
 }
 
 // Setters for the DH public key components
-void BotanDHPrivateKey::setP(const ByteString& p)
+void BotanDHPrivateKey::setP(const ByteString& inP)
 {
-	DHPrivateKey::setP(p);
+	DHPrivateKey::setP(inP);
 
 	if (dh)
 	{
@@ -153,9 +153,9 @@ void BotanDHPrivateKey::setP(const ByteString& p)
 	}
 }
 
-void BotanDHPrivateKey::setG(const ByteString& g)
+void BotanDHPrivateKey::setG(const ByteString& inG)
 {
-	DHPrivateKey::setG(g);
+	DHPrivateKey::setG(inG);
 
 	if (dh)
 	{
@@ -262,9 +262,9 @@ BotanDH_PrivateKey* BotanDHPrivateKey::getBotanKey()
 void BotanDHPrivateKey::createBotanKey()
 {
 	// y is not needed
-	if (this->p.size() != 0 &&
-	    this->g.size() != 0 &&
-	    this->x.size() != 0)
+	if (p.size() != 0 &&
+	    g.size() != 0 &&
+	    x.size() != 0)
 	{
 		if (dh)
 		{
@@ -276,9 +276,9 @@ void BotanDHPrivateKey::createBotanKey()
 		{
 			BotanRNG* rng = (BotanRNG*)BotanCryptoFactory::i()->getRNG();
 			dh = new BotanDH_PrivateKey(*rng->getRNG(),
-				Botan::DL_Group(BotanUtil::byteString2bigInt(this->p),
-						BotanUtil::byteString2bigInt(this->g)),
-				BotanUtil::byteString2bigInt(this->x));
+				Botan::DL_Group(BotanUtil::byteString2bigInt(p),
+						BotanUtil::byteString2bigInt(g)),
+				BotanUtil::byteString2bigInt(x));
 		}
 		catch (...)
 		{

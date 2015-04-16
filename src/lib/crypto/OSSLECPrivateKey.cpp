@@ -88,45 +88,45 @@ unsigned long OSSLECPrivateKey::getOrderLength() const
 }
 
 // Set from OpenSSL representation
-void OSSLECPrivateKey::setFromOSSL(const EC_KEY* eckey)
+void OSSLECPrivateKey::setFromOSSL(const EC_KEY* inECKEY)
 {
-	const EC_GROUP* grp = EC_KEY_get0_group(eckey);
+	const EC_GROUP* grp = EC_KEY_get0_group(inECKEY);
 	if (grp != NULL)
 	{
-		ByteString ec = OSSL::grp2ByteString(grp);
-		setEC(ec);
+		ByteString inEC = OSSL::grp2ByteString(grp);
+		setEC(inEC);
 	}
-	const BIGNUM* pk = EC_KEY_get0_private_key(eckey);
+	const BIGNUM* pk = EC_KEY_get0_private_key(inECKEY);
 	if (pk != NULL)
 	{
-		ByteString d = OSSL::bn2ByteString(pk);
-		setD(d);
+		ByteString inD = OSSL::bn2ByteString(pk);
+		setD(inD);
 	}
 }
 
 // Check if the key is of the given type
-bool OSSLECPrivateKey::isOfType(const char* type)
+bool OSSLECPrivateKey::isOfType(const char* inType)
 {
-	return !strcmp(OSSLECPrivateKey::type, type);
+	return !strcmp(type, inType);
 }
 
 // Setters for the EC private key components
-void OSSLECPrivateKey::setD(const ByteString& d)
+void OSSLECPrivateKey::setD(const ByteString& inD)
 {
-	ECPrivateKey::setD(d);
+	ECPrivateKey::setD(inD);
 
-	BIGNUM* pk = OSSL::byteString2bn(d);
+	BIGNUM* pk = OSSL::byteString2bn(inD);
 	EC_KEY_set_private_key(eckey, pk);
 	BN_clear_free(pk);
 }
 
 
 // Setters for the EC public key components
-void OSSLECPrivateKey::setEC(const ByteString& ec)
+void OSSLECPrivateKey::setEC(const ByteString& inEC)
 {
-	ECPrivateKey::setEC(ec);
+	ECPrivateKey::setEC(inEC);
 
-	EC_GROUP* grp = OSSL::byteString2grp(ec);
+	EC_GROUP* grp = OSSL::byteString2grp(inEC);
 	EC_KEY_set_group(eckey, grp);
 	EC_GROUP_free(grp);
 }
@@ -153,8 +153,8 @@ ByteString OSSLECPrivateKey::PKCS8Encode()
 		return der;
 	}
 	der.resize(len);
-	unsigned char* p = &der[0];
-	int len2 = i2d_PKCS8_PRIV_KEY_INFO(p8inf, &p);
+	unsigned char* priv = &der[0];
+	int len2 = i2d_PKCS8_PRIV_KEY_INFO(p8inf, &priv);
 	PKCS8_PRIV_KEY_INFO_free(p8inf);
 	if (len2 != len) der.wipe();
 	return der;
@@ -165,8 +165,8 @@ bool OSSLECPrivateKey::PKCS8Decode(const ByteString& ber)
 {
 	int len = ber.size();
 	if (len <= 0) return false;
-	const unsigned char* p = ber.const_byte_str();
-	PKCS8_PRIV_KEY_INFO* p8 = d2i_PKCS8_PRIV_KEY_INFO(NULL, &p, len);
+	const unsigned char* priv = ber.const_byte_str();
+	PKCS8_PRIV_KEY_INFO* p8 = d2i_PKCS8_PRIV_KEY_INFO(NULL, &priv, len);
 	if (p8 == NULL) return false;
 	EVP_PKEY* pkey = EVP_PKCS82PKEY(p8);
 	PKCS8_PRIV_KEY_INFO_free(p8);

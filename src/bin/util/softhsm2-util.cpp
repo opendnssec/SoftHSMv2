@@ -232,8 +232,8 @@ int main(int argc, char* argv[])
 		(*pGetFunctionList)(&p11);
 
 		// Initialize the library
-		CK_RV rv = p11->C_Initialize(NULL_PTR);
-		if (rv != CKR_OK)
+		CK_RV p11rv = p11->C_Initialize(NULL_PTR);
+		if (p11rv != CKR_OK)
 		{
 			fprintf(stderr, "ERROR: Could not initialize the library.\n");
 			exit(1);

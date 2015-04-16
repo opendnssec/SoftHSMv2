@@ -102,7 +102,7 @@ public:
 	};
 protected:
 	// Constructor
-	P11Attribute(OSObject* osobject);
+	P11Attribute(OSObject* inobject);
 
 	// The object
 	OSObject* osobject;
@@ -137,7 +137,7 @@ class P11AttrClass : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrClass(OSObject* osobject) : P11Attribute(osobject) { type = CKA_CLASS; size = sizeof(CK_OBJECT_CLASS); checks = ck1; }
+	P11AttrClass(OSObject* inobject) : P11Attribute(inobject) { type = CKA_CLASS; size = sizeof(CK_OBJECT_CLASS); checks = ck1; }
 
 protected:
 	// Set the default value of the attribute
@@ -155,7 +155,7 @@ class P11AttrKeyType : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrKeyType(OSObject* osobject, CK_ULONG inchecks = 0) : P11Attribute(osobject) { type = CKA_KEY_TYPE; size = sizeof(CK_KEY_TYPE); checks = ck1|inchecks; }
+	P11AttrKeyType(OSObject* inobject, CK_ULONG inchecks = 0) : P11Attribute(inobject) { type = CKA_KEY_TYPE; size = sizeof(CK_KEY_TYPE); checks = ck1|inchecks; }
 
 protected:
 	// Set the default value of the attribute
@@ -173,7 +173,7 @@ class P11AttrCertificateType : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrCertificateType(OSObject* osobject) : P11Attribute(osobject) { type = CKA_CERTIFICATE_TYPE; size = sizeof(CK_CERTIFICATE_TYPE); checks = ck1; }
+	P11AttrCertificateType(OSObject* inobject) : P11Attribute(inobject) { type = CKA_CERTIFICATE_TYPE; size = sizeof(CK_CERTIFICATE_TYPE); checks = ck1; }
 
 protected:
 	// Set the default value of the attribute
@@ -191,7 +191,7 @@ class P11AttrToken : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrToken(OSObject* osobject) : P11Attribute(osobject) { type = CKA_TOKEN; size = sizeof(CK_BBOOL); checks = ck17; }
+	P11AttrToken(OSObject* inobject) : P11Attribute(inobject) { type = CKA_TOKEN; size = sizeof(CK_BBOOL); checks = ck17; }
 
 protected:
 	// Set the default value of the attribute
@@ -209,7 +209,7 @@ class P11AttrPrivate : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrPrivate(OSObject* osobject) : P11Attribute(osobject) { type = CKA_PRIVATE; size = sizeof(CK_BBOOL); checks = ck17; }
+	P11AttrPrivate(OSObject* inobject) : P11Attribute(inobject) { type = CKA_PRIVATE; size = sizeof(CK_BBOOL); checks = ck17; }
 
 protected:
 	// Set the default value of the attribute
@@ -227,7 +227,7 @@ class P11AttrModifiable : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrModifiable(OSObject* osobject) : P11Attribute(osobject) { type = CKA_MODIFIABLE; size = sizeof(CK_BBOOL); checks = ck17; }
+	P11AttrModifiable(OSObject* inobject) : P11Attribute(inobject) { type = CKA_MODIFIABLE; size = sizeof(CK_BBOOL); checks = ck17; }
 
 protected:
 	// Set the default value of the attribute
@@ -245,7 +245,7 @@ class P11AttrLabel : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrLabel(OSObject* osobject) : P11Attribute(osobject) { type = CKA_LABEL;  checks = ck8; }
+	P11AttrLabel(OSObject* inobject) : P11Attribute(inobject) { type = CKA_LABEL;  checks = ck8; }
 
 protected:
 	// Set the default value of the attribute
@@ -260,7 +260,7 @@ class P11AttrCopyable : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrCopyable(OSObject* osobject) : P11Attribute(osobject) { type = CKA_COPYABLE; size = sizeof(CK_BBOOL); checks = ck12; }
+	P11AttrCopyable(OSObject* inobject) : P11Attribute(inobject) { type = CKA_COPYABLE; size = sizeof(CK_BBOOL); checks = ck12; }
 
 protected:
 	// Set the default value of the attribute
@@ -278,7 +278,7 @@ class P11AttrApplication : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrApplication(OSObject* osobject) : P11Attribute(osobject) { type = CKA_APPLICATION; checks = 0; }
+	P11AttrApplication(OSObject* inobject) : P11Attribute(inobject) { type = CKA_APPLICATION; checks = 0; }
 
 protected:
 	// Set the default value of the attribute
@@ -293,7 +293,7 @@ class P11AttrObjectID : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrObjectID(OSObject* osobject) : P11Attribute(osobject) { type = CKA_OBJECT_ID; checks = 0; }
+	P11AttrObjectID(OSObject* inobject) : P11Attribute(inobject) { type = CKA_OBJECT_ID; checks = 0; }
 
 protected:
 	// Set the default value of the attribute
@@ -308,7 +308,7 @@ class P11AttrCheckValue : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrCheckValue(OSObject* osobject) : P11Attribute(osobject) { type = CKA_CHECK_VALUE; checks = 0; }
+	P11AttrCheckValue(OSObject* inobject) : P11Attribute(inobject) { type = CKA_CHECK_VALUE; checks = 0; }
 
 protected:
 	// Set the default value of the attribute
@@ -323,7 +323,7 @@ class P11AttrID : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrID(OSObject* osobject) : P11Attribute(osobject) { type = CKA_ID; checks = ck8; }
+	P11AttrID(OSObject* inobject) : P11Attribute(inobject) { type = CKA_ID; checks = ck8; }
 
 protected:
 	// Set the default value of the attribute
@@ -338,7 +338,7 @@ class P11AttrValue : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrValue(OSObject* osobject, CK_ULONG inchecks) : P11Attribute(osobject) { type = CKA_VALUE; checks = inchecks; }
+	P11AttrValue(OSObject* inobject, CK_ULONG inchecks) : P11Attribute(inobject) { type = CKA_VALUE; checks = inchecks; }
 
 protected:
 	// Set the default value of the attribute
@@ -356,7 +356,7 @@ class P11AttrSubject : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrSubject(OSObject* osobject, CK_ULONG inchecks) : P11Attribute(osobject) { type = CKA_SUBJECT; checks = inchecks; }
+	P11AttrSubject(OSObject* inobject, CK_ULONG inchecks) : P11Attribute(inobject) { type = CKA_SUBJECT; checks = inchecks; }
 
 protected:
 	// Set the default value of the attribute
@@ -371,7 +371,7 @@ class P11AttrIssuer : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrIssuer(OSObject* osobject) : P11Attribute(osobject) { type = CKA_ISSUER; checks = ck8; }
+	P11AttrIssuer(OSObject* inobject) : P11Attribute(inobject) { type = CKA_ISSUER; checks = ck8; }
 
 protected:
 	// Set the default value of the attribute
@@ -386,7 +386,7 @@ class P11AttrTrusted : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrTrusted(OSObject* osobject) : P11Attribute(osobject) { type = CKA_TRUSTED; size = sizeof(CK_BBOOL); checks = ck10; }
+	P11AttrTrusted(OSObject* inobject) : P11Attribute(inobject) { type = CKA_TRUSTED; size = sizeof(CK_BBOOL); checks = ck10; }
 
 protected:
 	// Set the default value of the attribute
@@ -404,7 +404,7 @@ class P11AttrCertificateCategory : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrCertificateCategory(OSObject* osobject) : P11Attribute(osobject) { type = CKA_CERTIFICATE_CATEGORY; size = sizeof(CK_ULONG); checks = 0; }
+	P11AttrCertificateCategory(OSObject* inobject) : P11Attribute(inobject) { type = CKA_CERTIFICATE_CATEGORY; size = sizeof(CK_ULONG); checks = 0; }
 
 protected:
 	// Set the default value of the attribute
@@ -422,7 +422,7 @@ class P11AttrStartDate : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrStartDate(OSObject* osobject, CK_ULONG inchecks) : P11Attribute(osobject) { type = CKA_START_DATE; checks = inchecks; }
+	P11AttrStartDate(OSObject* inobject, CK_ULONG inchecks) : P11Attribute(inobject) { type = CKA_START_DATE; checks = inchecks; }
 
 protected:
 	// Set the default value of the attribute
@@ -440,7 +440,7 @@ class P11AttrEndDate : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrEndDate(OSObject* osobject, CK_ULONG inchecks) : P11Attribute(osobject) { type = CKA_END_DATE; checks = inchecks; }
+	P11AttrEndDate(OSObject* inobject, CK_ULONG inchecks) : P11Attribute(inobject) { type = CKA_END_DATE; checks = inchecks; }
 
 protected:
 	// Set the default value of the attribute
@@ -458,7 +458,7 @@ class P11AttrSerialNumber : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrSerialNumber(OSObject* osobject) : P11Attribute(osobject) { type = CKA_SERIAL_NUMBER; checks = ck8; }
+	P11AttrSerialNumber(OSObject* inobject) : P11Attribute(inobject) { type = CKA_SERIAL_NUMBER; checks = ck8; }
 
 protected:
 	// Set the default value of the attribute
@@ -473,7 +473,7 @@ class P11AttrURL : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrURL(OSObject* osobject) : P11Attribute(osobject) { type = CKA_URL; checks = ck15; }
+	P11AttrURL(OSObject* inobject) : P11Attribute(inobject) { type = CKA_URL; checks = ck15; }
 
 protected:
 	// Set the default value of the attribute
@@ -488,7 +488,7 @@ class P11AttrHashOfSubjectPublicKey : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrHashOfSubjectPublicKey(OSObject* osobject) : P11Attribute(osobject) { type = CKA_HASH_OF_SUBJECT_PUBLIC_KEY; checks = ck16; }
+	P11AttrHashOfSubjectPublicKey(OSObject* inobject) : P11Attribute(inobject) { type = CKA_HASH_OF_SUBJECT_PUBLIC_KEY; checks = ck16; }
 
 protected:
 	// Set the default value of the attribute
@@ -503,7 +503,7 @@ class P11AttrHashOfIssuerPublicKey : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrHashOfIssuerPublicKey(OSObject* osobject) : P11Attribute(osobject) { type = CKA_HASH_OF_ISSUER_PUBLIC_KEY; checks = ck16; }
+	P11AttrHashOfIssuerPublicKey(OSObject* inobject) : P11Attribute(inobject) { type = CKA_HASH_OF_ISSUER_PUBLIC_KEY; checks = ck16; }
 
 protected:
 	// Set the default value of the attribute
@@ -518,7 +518,7 @@ class P11AttrJavaMidpSecurityDomain : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrJavaMidpSecurityDomain(OSObject* osobject) : P11Attribute(osobject) { type = CKA_JAVA_MIDP_SECURITY_DOMAIN; size = sizeof(CK_ULONG); checks = 0; }
+	P11AttrJavaMidpSecurityDomain(OSObject* inobject) : P11Attribute(inobject) { type = CKA_JAVA_MIDP_SECURITY_DOMAIN; size = sizeof(CK_ULONG); checks = 0; }
 
 protected:
 	// Set the default value of the attribute
@@ -536,7 +536,7 @@ class P11AttrNameHashAlgorithm : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrNameHashAlgorithm(OSObject* osobject) : P11Attribute(osobject) { type = CKA_NAME_HASH_ALGORITHM; size = sizeof(CK_MECHANISM_TYPE); checks = 0; }
+	P11AttrNameHashAlgorithm(OSObject* inobject) : P11Attribute(inobject) { type = CKA_NAME_HASH_ALGORITHM; size = sizeof(CK_MECHANISM_TYPE); checks = 0; }
 
 protected:
 	// Set the default value of the attribute
@@ -554,7 +554,7 @@ class P11AttrDerive : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrDerive(OSObject* osobject) : P11Attribute(osobject) { type = CKA_DERIVE; size = sizeof(CK_BBOOL); checks = ck8;}
+	P11AttrDerive(OSObject* inobject) : P11Attribute(inobject) { type = CKA_DERIVE; size = sizeof(CK_BBOOL); checks = ck8;}
 
 protected:
 	// Set the default value of the attribute
@@ -572,7 +572,7 @@ class P11AttrEncrypt : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrEncrypt(OSObject* osobject) : P11Attribute(osobject) { type = CKA_ENCRYPT; size = sizeof(CK_BBOOL); checks = ck8|ck9; }
+	P11AttrEncrypt(OSObject* inobject) : P11Attribute(inobject) { type = CKA_ENCRYPT; size = sizeof(CK_BBOOL); checks = ck8|ck9; }
 
 protected:
 	// Set the default value of the attribute
@@ -590,7 +590,7 @@ class P11AttrVerify : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrVerify(OSObject* osobject) : P11Attribute(osobject) { type = CKA_VERIFY; size = sizeof(CK_BBOOL); checks = ck8|ck9; }
+	P11AttrVerify(OSObject* inobject) : P11Attribute(inobject) { type = CKA_VERIFY; size = sizeof(CK_BBOOL); checks = ck8|ck9; }
 
 protected:
 	// Set the default value of the attribute
@@ -608,7 +608,7 @@ class P11AttrVerifyRecover : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrVerifyRecover(OSObject* osobject) : P11Attribute(osobject) { type = CKA_VERIFY_RECOVER; size = sizeof(CK_BBOOL); checks = ck8|ck9; }
+	P11AttrVerifyRecover(OSObject* inobject) : P11Attribute(inobject) { type = CKA_VERIFY_RECOVER; size = sizeof(CK_BBOOL); checks = ck8|ck9; }
 
 protected:
 	// Set the default value of the attribute
@@ -626,7 +626,7 @@ class P11AttrWrap : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrWrap(OSObject* osobject) : P11Attribute(osobject) { type = CKA_WRAP; size = sizeof(CK_BBOOL); checks = ck8|ck9; }
+	P11AttrWrap(OSObject* inobject) : P11Attribute(inobject) { type = CKA_WRAP; size = sizeof(CK_BBOOL); checks = ck8|ck9; }
 
 protected:
 	// Set the default value of the attribute
@@ -644,7 +644,7 @@ class P11AttrDecrypt : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrDecrypt(OSObject* osobject) : P11Attribute(osobject) { type = CKA_DECRYPT; size = sizeof(CK_BBOOL); checks = ck8|ck9; }
+	P11AttrDecrypt(OSObject* inobject) : P11Attribute(inobject) { type = CKA_DECRYPT; size = sizeof(CK_BBOOL); checks = ck8|ck9; }
 
 protected:
 	// Set the default value of the attribute
@@ -662,7 +662,7 @@ class P11AttrSign : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrSign(OSObject* osobject) : P11Attribute(osobject) { type = CKA_SIGN; size = sizeof(CK_BBOOL); checks = ck8|ck9; }
+	P11AttrSign(OSObject* inobject) : P11Attribute(inobject) { type = CKA_SIGN; size = sizeof(CK_BBOOL); checks = ck8|ck9; }
 
 protected:
 	// Set the default value of the attribute
@@ -680,7 +680,7 @@ class P11AttrSignRecover : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrSignRecover(OSObject* osobject) : P11Attribute(osobject) { type = CKA_SIGN_RECOVER; size = sizeof(CK_BBOOL); checks = ck8|ck9; }
+	P11AttrSignRecover(OSObject* inobject) : P11Attribute(inobject) { type = CKA_SIGN_RECOVER; size = sizeof(CK_BBOOL); checks = ck8|ck9; }
 
 protected:
 	// Set the default value of the attribute
@@ -698,7 +698,7 @@ class P11AttrUnwrap : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrUnwrap(OSObject* osobject) : P11Attribute(osobject) { type = CKA_UNWRAP; size = sizeof(CK_BBOOL); checks = ck8|ck9; }
+	P11AttrUnwrap(OSObject* inobject) : P11Attribute(inobject) { type = CKA_UNWRAP; size = sizeof(CK_BBOOL); checks = ck8|ck9; }
 
 protected:
 	// Set the default value of the attribute
@@ -716,7 +716,7 @@ class P11AttrLocal : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrLocal(OSObject* osobject, CK_ULONG inchecks = 0) : P11Attribute(osobject) { type = CKA_LOCAL; size = sizeof(CK_BBOOL); checks = ck2|ck4|inchecks; }
+	P11AttrLocal(OSObject* inobject, CK_ULONG inchecks = 0) : P11Attribute(inobject) { type = CKA_LOCAL; size = sizeof(CK_BBOOL); checks = ck2|ck4|inchecks; }
 
 protected:
 	// Set the default value of the attribute
@@ -734,7 +734,7 @@ class P11AttrKeyGenMechanism : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrKeyGenMechanism(OSObject* osobject) : P11Attribute(osobject) { type = CKA_KEY_GEN_MECHANISM; size = sizeof(CK_MECHANISM_TYPE); checks = ck2|ck4|ck6; }
+	P11AttrKeyGenMechanism(OSObject* inobject) : P11Attribute(inobject) { type = CKA_KEY_GEN_MECHANISM; size = sizeof(CK_MECHANISM_TYPE); checks = ck2|ck4|ck6; }
 
 protected:
 	// Set the default value of the attribute
@@ -752,7 +752,7 @@ class P11AttrAlwaysSensitive : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrAlwaysSensitive(OSObject* osobject) : P11Attribute(osobject) { type = CKA_ALWAYS_SENSITIVE; size = sizeof(CK_BBOOL); checks = ck2|ck4|ck6; }
+	P11AttrAlwaysSensitive(OSObject* inobject) : P11Attribute(inobject) { type = CKA_ALWAYS_SENSITIVE; size = sizeof(CK_BBOOL); checks = ck2|ck4|ck6; }
 
 protected:
 	// Set the default value of the attribute
@@ -770,7 +770,7 @@ class P11AttrNeverExtractable : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrNeverExtractable(OSObject* osobject) : P11Attribute(osobject) { type = CKA_NEVER_EXTRACTABLE; size = sizeof(CK_BBOOL); checks = ck2|ck4|ck6; }
+	P11AttrNeverExtractable(OSObject* inobject) : P11Attribute(inobject) { type = CKA_NEVER_EXTRACTABLE; size = sizeof(CK_BBOOL); checks = ck2|ck4|ck6; }
 
 protected:
 	// Set the default value of the attribute
@@ -788,7 +788,7 @@ class P11AttrSensitive : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrSensitive(OSObject* osobject) : P11Attribute(osobject) { type = CKA_SENSITIVE; size = sizeof(CK_BBOOL); checks = ck8|ck9|ck11; }
+	P11AttrSensitive(OSObject* inobject) : P11Attribute(inobject) { type = CKA_SENSITIVE; size = sizeof(CK_BBOOL); checks = ck8|ck9|ck11; }
 
 protected:
 	// Set the default value of the attribute
@@ -806,7 +806,7 @@ class P11AttrExtractable : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrExtractable(OSObject* osobject) : P11Attribute(osobject) { type = CKA_EXTRACTABLE; size = sizeof(CK_BBOOL); checks = ck8|ck9|ck12; }
+	P11AttrExtractable(OSObject* inobject) : P11Attribute(inobject) { type = CKA_EXTRACTABLE; size = sizeof(CK_BBOOL); checks = ck8|ck9|ck12; }
 
 protected:
 	// Set the default value of the attribute
@@ -824,7 +824,7 @@ class P11AttrWrapWithTrusted : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrWrapWithTrusted(OSObject* osobject) : P11Attribute(osobject) { type = CKA_WRAP_WITH_TRUSTED; size = sizeof(CK_BBOOL); checks = ck11; }
+	P11AttrWrapWithTrusted(OSObject* inobject) : P11Attribute(inobject) { type = CKA_WRAP_WITH_TRUSTED; size = sizeof(CK_BBOOL); checks = ck11; }
 
 protected:
 	// Set the default value of the attribute
@@ -842,7 +842,7 @@ class P11AttrAlwaysAuthenticate : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrAlwaysAuthenticate(OSObject* osobject) : P11Attribute(osobject) { type = CKA_ALWAYS_AUTHENTICATE; size = sizeof(CK_BBOOL); checks = 0; }
+	P11AttrAlwaysAuthenticate(OSObject* inobject) : P11Attribute(inobject) { type = CKA_ALWAYS_AUTHENTICATE; size = sizeof(CK_BBOOL); checks = 0; }
 
 protected:
 	// Set the default value of the attribute
@@ -860,7 +860,7 @@ class P11AttrModulus : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrModulus(OSObject* osobject, CK_ULONG inchecks = 0) : P11Attribute(osobject) { type = CKA_MODULUS; checks = ck1|ck4|inchecks; }
+	P11AttrModulus(OSObject* inobject, CK_ULONG inchecks = 0) : P11Attribute(inobject) { type = CKA_MODULUS; checks = ck1|ck4|inchecks; }
 
 protected:
 	// Set the default value of the attribute
@@ -878,7 +878,7 @@ class P11AttrPublicExponent : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrPublicExponent(OSObject* osobject, CK_ULONG inchecks) : P11Attribute(osobject) { type = CKA_PUBLIC_EXPONENT; checks = inchecks; }
+	P11AttrPublicExponent(OSObject* inobject, CK_ULONG inchecks) : P11Attribute(inobject) { type = CKA_PUBLIC_EXPONENT; checks = inchecks; }
 
 protected:
 	// Set the default value of the attribute
@@ -893,7 +893,7 @@ class P11AttrPrivateExponent : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrPrivateExponent(OSObject* osobject) : P11Attribute(osobject) { type = CKA_PRIVATE_EXPONENT; checks = ck1|ck4|ck6|ck7; }
+	P11AttrPrivateExponent(OSObject* inobject) : P11Attribute(inobject) { type = CKA_PRIVATE_EXPONENT; checks = ck1|ck4|ck6|ck7; }
 
 protected:
 	// Set the default value of the attribute
@@ -908,7 +908,7 @@ class P11AttrPrime1 : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrPrime1(OSObject* osobject) : P11Attribute(osobject) { type = CKA_PRIME_1; checks = ck4|ck6|ck7; }
+	P11AttrPrime1(OSObject* inobject) : P11Attribute(inobject) { type = CKA_PRIME_1; checks = ck4|ck6|ck7; }
 
 protected:
 	// Set the default value of the attribute
@@ -923,7 +923,7 @@ class P11AttrPrime2 : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrPrime2(OSObject* osobject) : P11Attribute(osobject) { type = CKA_PRIME_2; checks = ck4|ck6|ck7; }
+	P11AttrPrime2(OSObject* inobject) : P11Attribute(inobject) { type = CKA_PRIME_2; checks = ck4|ck6|ck7; }
 
 protected:
 	// Set the default value of the attribute
@@ -938,7 +938,7 @@ class P11AttrExponent1 : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrExponent1(OSObject* osobject) : P11Attribute(osobject) { type = CKA_EXPONENT_1; checks = ck4|ck6|ck7; }
+	P11AttrExponent1(OSObject* inobject) : P11Attribute(inobject) { type = CKA_EXPONENT_1; checks = ck4|ck6|ck7; }
 
 protected:
 	// Set the default value of the attribute
@@ -953,7 +953,7 @@ class P11AttrExponent2 : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrExponent2(OSObject* osobject) : P11Attribute(osobject) { type = CKA_EXPONENT_2; checks = ck4|ck6|ck7; }
+	P11AttrExponent2(OSObject* inobject) : P11Attribute(inobject) { type = CKA_EXPONENT_2; checks = ck4|ck6|ck7; }
 
 protected:
 	// Set the default value of the attribute
@@ -968,7 +968,7 @@ class P11AttrCoefficient : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrCoefficient(OSObject* osobject) : P11Attribute(osobject) { type = CKA_COEFFICIENT; checks = ck4|ck6|ck7; }
+	P11AttrCoefficient(OSObject* inobject) : P11Attribute(inobject) { type = CKA_COEFFICIENT; checks = ck4|ck6|ck7; }
 
 protected:
 	// Set the default value of the attribute
@@ -983,7 +983,7 @@ class P11AttrModulusBits : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrModulusBits(OSObject* osobject) : P11Attribute(osobject) { type = CKA_MODULUS_BITS; size = sizeof(CK_ULONG); checks = ck2|ck3;}
+	P11AttrModulusBits(OSObject* inobject) : P11Attribute(inobject) { type = CKA_MODULUS_BITS; size = sizeof(CK_ULONG); checks = ck2|ck3;}
 
 protected:
 	// Set the default value of the attribute
@@ -1001,7 +1001,7 @@ class P11AttrPrime : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrPrime(OSObject* osobject, CK_ULONG inchecks = 0) : P11Attribute(osobject) { type = CKA_PRIME; checks = ck1|inchecks; }
+	P11AttrPrime(OSObject* inobject, CK_ULONG inchecks = 0) : P11Attribute(inobject) { type = CKA_PRIME; checks = ck1|inchecks; }
 
 protected:
 	// Set the default value of the attribute
@@ -1019,7 +1019,7 @@ class P11AttrSubPrime : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrSubPrime(OSObject* osobject, CK_ULONG inchecks = 0) : P11Attribute(osobject) { type = CKA_SUBPRIME; checks = ck1|inchecks; }
+	P11AttrSubPrime(OSObject* inobject, CK_ULONG inchecks = 0) : P11Attribute(inobject) { type = CKA_SUBPRIME; checks = ck1|inchecks; }
 
 protected:
 	// Set the default value of the attribute
@@ -1034,7 +1034,7 @@ class P11AttrBase : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrBase(OSObject* osobject, CK_ULONG inchecks = 0) : P11Attribute(osobject) { type = CKA_BASE; checks = ck1|inchecks; }
+	P11AttrBase(OSObject* inobject, CK_ULONG inchecks = 0) : P11Attribute(inobject) { type = CKA_BASE; checks = ck1|inchecks; }
 
 protected:
 	// Set the default value of the attribute
@@ -1049,7 +1049,7 @@ class P11AttrPrimeBits : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrPrimeBits(OSObject* osobject) : P11Attribute(osobject) { type = CKA_PRIME_BITS; size = sizeof(CK_ULONG); checks = ck2|ck3;}
+	P11AttrPrimeBits(OSObject* inobject) : P11Attribute(inobject) { type = CKA_PRIME_BITS; size = sizeof(CK_ULONG); checks = ck2|ck3;}
 
 protected:
 	// Set the default value of the attribute
@@ -1067,7 +1067,7 @@ class P11AttrValueBits : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrValueBits(OSObject* osobject) : P11Attribute(osobject) { type = CKA_VALUE_BITS; size = sizeof(CK_ULONG); checks = ck2|ck6;}
+	P11AttrValueBits(OSObject* inobject) : P11Attribute(inobject) { type = CKA_VALUE_BITS; size = sizeof(CK_ULONG); checks = ck2|ck6;}
 
 protected:
 	// Set the default value of the attribute
@@ -1085,7 +1085,7 @@ class P11AttrEcParams : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrEcParams(OSObject* osobject, CK_ULONG inchecks = 0) : P11Attribute(osobject) { type = CKA_EC_PARAMS; checks = ck1|inchecks; }
+	P11AttrEcParams(OSObject* inobject, CK_ULONG inchecks = 0) : P11Attribute(inobject) { type = CKA_EC_PARAMS; checks = ck1|inchecks; }
 
 protected:
 	// Set the default value of the attribute
@@ -1100,7 +1100,7 @@ class P11AttrEcPoint : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrEcPoint(OSObject* osobject) : P11Attribute(osobject) { type = CKA_EC_POINT; checks = ck1|ck4; }
+	P11AttrEcPoint(OSObject* inobject) : P11Attribute(inobject) { type = CKA_EC_POINT; checks = ck1|ck4; }
 
 protected:
 	// Set the default value of the attribute
@@ -1115,7 +1115,7 @@ class P11AttrGostR3410Params : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrGostR3410Params(OSObject* osobject, CK_ULONG inchecks = 0) : P11Attribute(osobject) { type = CKA_GOSTR3410_PARAMS; checks = ck1|inchecks; }
+	P11AttrGostR3410Params(OSObject* inobject, CK_ULONG inchecks = 0) : P11Attribute(inobject) { type = CKA_GOSTR3410_PARAMS; checks = ck1|inchecks; }
 
 protected:
 	// Set the default value of the attribute
@@ -1130,7 +1130,7 @@ class P11AttrGostR3411Params : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrGostR3411Params(OSObject* osobject, CK_ULONG inchecks = 0) : P11Attribute(osobject) { type = CKA_GOSTR3411_PARAMS; checks = ck1|ck8|inchecks; }
+	P11AttrGostR3411Params(OSObject* inobject, CK_ULONG inchecks = 0) : P11Attribute(inobject) { type = CKA_GOSTR3411_PARAMS; checks = ck1|ck8|inchecks; }
 
 protected:
 	// Set the default value of the attribute
@@ -1145,7 +1145,7 @@ class P11AttrGost28147Params : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrGost28147Params(OSObject* osobject, CK_ULONG inchecks = 0) : P11Attribute(osobject) { type = CKA_GOST28147_PARAMS; checks = inchecks; }
+	P11AttrGost28147Params(OSObject* inobject, CK_ULONG inchecks = 0) : P11Attribute(inobject) { type = CKA_GOST28147_PARAMS; checks = inchecks; }
 
 protected:
 	// Set the default value of the attribute
@@ -1160,7 +1160,7 @@ class P11AttrValueLen : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrValueLen(OSObject* osobject, CK_ULONG inchecks = 0) : P11Attribute(osobject) { type = CKA_VALUE_LEN; size = sizeof(CK_ULONG); checks = ck2|ck3|inchecks; }
+	P11AttrValueLen(OSObject* inobject, CK_ULONG inchecks = 0) : P11Attribute(inobject) { type = CKA_VALUE_LEN; size = sizeof(CK_ULONG); checks = ck2|ck3|inchecks; }
 
 protected:
 	// Set the default value of the attribute
@@ -1178,7 +1178,7 @@ class P11AttrWrapTemplate : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrWrapTemplate(OSObject* osobject) : P11Attribute(osobject) { type = CKA_WRAP_TEMPLATE; checks = 0; }
+	P11AttrWrapTemplate(OSObject* inobject) : P11Attribute(inobject) { type = CKA_WRAP_TEMPLATE; checks = 0; }
 
 protected:
 	// Set the default value of the attribute
@@ -1196,7 +1196,7 @@ class P11AttrUnwrapTemplate : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrUnwrapTemplate(OSObject* osobject) : P11Attribute(osobject) { type = CKA_UNWRAP_TEMPLATE; checks = 0; }
+	P11AttrUnwrapTemplate(OSObject* inobject) : P11Attribute(inobject) { type = CKA_UNWRAP_TEMPLATE; checks = 0; }
 
 protected:
 	// Set the default value of the attribute

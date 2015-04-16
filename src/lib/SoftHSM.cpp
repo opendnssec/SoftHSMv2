@@ -6311,9 +6311,9 @@ CK_RV SoftHSM::generateAES
 	{
 		if (*phKey != CK_INVALID_HANDLE)
 		{
-			OSObject* key = (OSObject*)handleManager->getObject(*phKey);
+			OSObject* oskey = (OSObject*)handleManager->getObject(*phKey);
 			handleManager->destroyObject(*phKey);
-			if (key) key->destroyObject();
+			if (oskey) oskey->destroyObject();
 			*phKey = CK_INVALID_HANDLE;
 		}
 	}
@@ -6449,9 +6449,9 @@ CK_RV SoftHSM::generateDES
 	{
 		if (*phKey != CK_INVALID_HANDLE)
 		{
-			OSObject* key = (OSObject*)handleManager->getObject(*phKey);
+			OSObject* oskey = (OSObject*)handleManager->getObject(*phKey);
 			handleManager->destroyObject(*phKey);
-			if (key) key->destroyObject();
+			if (oskey) oskey->destroyObject();
 			*phKey = CK_INVALID_HANDLE;
 		}
 	}
@@ -6587,9 +6587,9 @@ CK_RV SoftHSM::generateDES2
 	{
 		if (*phKey != CK_INVALID_HANDLE)
 		{
-			OSObject* key = (OSObject*)handleManager->getObject(*phKey);
+			OSObject* oskey = (OSObject*)handleManager->getObject(*phKey);
 			handleManager->destroyObject(*phKey);
-			if (key) key->destroyObject();
+			if (oskey) oskey->destroyObject();
 			*phKey = CK_INVALID_HANDLE;
 		}
 	}
@@ -6725,9 +6725,9 @@ CK_RV SoftHSM::generateDES3
 	{
 		if (*phKey != CK_INVALID_HANDLE)
 		{
-			OSObject* key = (OSObject*)handleManager->getObject(*phKey);
+			OSObject* oskey = (OSObject*)handleManager->getObject(*phKey);
 			handleManager->destroyObject(*phKey);
-			if (key) key->destroyObject();
+			if (oskey) oskey->destroyObject();
 			*phKey = CK_INVALID_HANDLE;
 		}
 	}
@@ -7004,17 +7004,17 @@ CK_RV SoftHSM::generateRSA
 	{
 		if (*phPrivateKey != CK_INVALID_HANDLE)
 		{
-			OSObject* priv = (OSObject*)handleManager->getObject(*phPrivateKey);
+			OSObject* ospriv = (OSObject*)handleManager->getObject(*phPrivateKey);
 			handleManager->destroyObject(*phPrivateKey);
-			if (priv) priv->destroyObject();
+			if (ospriv) ospriv->destroyObject();
 			*phPrivateKey = CK_INVALID_HANDLE;
 		}
 
 		if (*phPublicKey != CK_INVALID_HANDLE)
 		{
-			OSObject* pub = (OSObject*)handleManager->getObject(*phPublicKey);
+			OSObject* ospub = (OSObject*)handleManager->getObject(*phPublicKey);
 			handleManager->destroyObject(*phPublicKey);
-			if (pub) pub->destroyObject();
+			if (ospub) ospub->destroyObject();
 			*phPublicKey = CK_INVALID_HANDLE;
 		}
 	}
@@ -7224,28 +7224,28 @@ CK_RV SoftHSM::generateDSA
 				bOK = bOK && osobject->setAttribute(CKA_NEVER_EXTRACTABLE, bNeverExtractable);
 
 				// DSA Private Key Attributes
-				ByteString prime;
-				ByteString subprime;
-				ByteString generator;
-				ByteString value;
+				ByteString bPrime;
+				ByteString bSubprime;
+				ByteString bGenerator;
+				ByteString bValue;
 				if (isPrivateKeyPrivate)
 				{
-					token->encrypt(priv->getP(), prime);
-					token->encrypt(priv->getQ(), subprime);
-					token->encrypt(priv->getG(), generator);
-					token->encrypt(priv->getX(), value);
+					token->encrypt(priv->getP(), bPrime);
+					token->encrypt(priv->getQ(), bSubprime);
+					token->encrypt(priv->getG(), bGenerator);
+					token->encrypt(priv->getX(), bValue);
 				}
 				else
 				{
-					prime = priv->getP();
-					subprime = priv->getQ();
-					generator = priv->getG();
-					value = priv->getX();
+					bPrime = priv->getP();
+					bSubprime = priv->getQ();
+					bGenerator = priv->getG();
+					bValue = priv->getX();
 				}
-				bOK = bOK && osobject->setAttribute(CKA_PRIME, prime);
-				bOK = bOK && osobject->setAttribute(CKA_SUBPRIME, subprime);
-				bOK = bOK && osobject->setAttribute(CKA_BASE, generator);
-				bOK = bOK && osobject->setAttribute(CKA_VALUE, value);
+				bOK = bOK && osobject->setAttribute(CKA_PRIME, bPrime);
+				bOK = bOK && osobject->setAttribute(CKA_SUBPRIME, bSubprime);
+				bOK = bOK && osobject->setAttribute(CKA_BASE, bGenerator);
+				bOK = bOK && osobject->setAttribute(CKA_VALUE, bValue);
 
 				if (bOK)
 					bOK = osobject->commitTransaction();
@@ -7268,17 +7268,17 @@ CK_RV SoftHSM::generateDSA
 	{
 		if (*phPrivateKey != CK_INVALID_HANDLE)
 		{
-			OSObject* priv = (OSObject*)handleManager->getObject(*phPrivateKey);
+			OSObject* ospriv = (OSObject*)handleManager->getObject(*phPrivateKey);
 			handleManager->destroyObject(*phPrivateKey);
-			if (priv) priv->destroyObject();
+			if (ospriv) ospriv->destroyObject();
 			*phPrivateKey = CK_INVALID_HANDLE;
 		}
 
 		if (*phPublicKey != CK_INVALID_HANDLE)
 		{
-			OSObject* pub = (OSObject*)handleManager->getObject(*phPublicKey);
+			OSObject* ospub = (OSObject*)handleManager->getObject(*phPublicKey);
 			handleManager->destroyObject(*phPublicKey);
-			if (pub) pub->destroyObject();
+			if (ospub) ospub->destroyObject();
 			*phPublicKey = CK_INVALID_HANDLE;
 		}
 	}
@@ -7450,9 +7450,9 @@ CK_RV SoftHSM::generateDSAParameters
 	{
 		if (*phKey != CK_INVALID_HANDLE)
 		{
-			OSObject* params = (OSObject*)handleManager->getObject(*phKey);
+			OSObject* osparams = (OSObject*)handleManager->getObject(*phKey);
 			handleManager->destroyObject(*phKey);
-			if (params) params->destroyObject();
+			if (osparams) osparams->destroyObject();
 			*phKey = CK_INVALID_HANDLE;
 		}
 	}
@@ -7688,17 +7688,17 @@ CK_RV SoftHSM::generateEC
 	{
 		if (*phPrivateKey != CK_INVALID_HANDLE)
 		{
-			OSObject* priv = (OSObject*)handleManager->getObject(*phPrivateKey);
+			OSObject* ospriv = (OSObject*)handleManager->getObject(*phPrivateKey);
 			handleManager->destroyObject(*phPrivateKey);
-			if (priv) priv->destroyObject();
+			if (ospriv) ospriv->destroyObject();
 			*phPrivateKey = CK_INVALID_HANDLE;
 		}
 
 		if (*phPublicKey != CK_INVALID_HANDLE)
 		{
-			OSObject* pub = (OSObject*)handleManager->getObject(*phPublicKey);
+			OSObject* ospub = (OSObject*)handleManager->getObject(*phPublicKey);
 			handleManager->destroyObject(*phPublicKey);
-			if (pub) pub->destroyObject();
+			if (ospub) ospub->destroyObject();
 			*phPublicKey = CK_INVALID_HANDLE;
 		}
 	}
@@ -7918,24 +7918,24 @@ CK_RV SoftHSM::generateDH
 				bOK = bOK && osobject->setAttribute(CKA_NEVER_EXTRACTABLE, bNeverExtractable);
 
 				// DH Private Key Attributes
-				ByteString prime;
-				ByteString generator;
-				ByteString value;
+				ByteString bPrime;
+				ByteString bGenerator;
+				ByteString bValue;
 				if (isPrivateKeyPrivate)
 				{
-					token->encrypt(priv->getP(), prime);
-					token->encrypt(priv->getG(), generator);
-					token->encrypt(priv->getX(), value);
+					token->encrypt(priv->getP(), bPrime);
+					token->encrypt(priv->getG(), bGenerator);
+					token->encrypt(priv->getX(), bValue);
 				}
 				else
 				{
-					prime = priv->getP();
-					generator = priv->getG();
-					value = priv->getX();
+					bPrime = priv->getP();
+					bGenerator = priv->getG();
+					bValue = priv->getX();
 				}
-				bOK = bOK && osobject->setAttribute(CKA_PRIME, prime);
-				bOK = bOK && osobject->setAttribute(CKA_BASE, generator);
-				bOK = bOK && osobject->setAttribute(CKA_VALUE, value);
+				bOK = bOK && osobject->setAttribute(CKA_PRIME, bPrime);
+				bOK = bOK && osobject->setAttribute(CKA_BASE, bGenerator);
+				bOK = bOK && osobject->setAttribute(CKA_VALUE, bValue);
 
 				if (bitLen == 0)
 				{
@@ -7963,17 +7963,17 @@ CK_RV SoftHSM::generateDH
 	{
 		if (*phPrivateKey != CK_INVALID_HANDLE)
 		{
-			OSObject* priv = (OSObject*)handleManager->getObject(*phPrivateKey);
+			OSObject* ospriv = (OSObject*)handleManager->getObject(*phPrivateKey);
 			handleManager->destroyObject(*phPrivateKey);
-			if (priv) priv->destroyObject();
+			if (ospriv) ospriv->destroyObject();
 			*phPrivateKey = CK_INVALID_HANDLE;
 		}
 
 		if (*phPublicKey != CK_INVALID_HANDLE)
 		{
-			OSObject* pub = (OSObject*)handleManager->getObject(*phPublicKey);
+			OSObject* ospub = (OSObject*)handleManager->getObject(*phPublicKey);
 			handleManager->destroyObject(*phPublicKey);
-			if (pub) pub->destroyObject();
+			if (ospub) ospub->destroyObject();
 			*phPublicKey = CK_INVALID_HANDLE;
 		}
 	}
@@ -8125,9 +8125,9 @@ CK_RV SoftHSM::generateDHParameters
 	{
 		if (*phKey != CK_INVALID_HANDLE)
 		{
-			OSObject* params = (OSObject*)handleManager->getObject(*phKey);
+			OSObject* osparams = (OSObject*)handleManager->getObject(*phKey);
 			handleManager->destroyObject(*phKey);
-			if (params) params->destroyObject();
+			if (osparams) osparams->destroyObject();
 			*phKey = CK_INVALID_HANDLE;
 		}
 	}
@@ -8379,17 +8379,17 @@ CK_RV SoftHSM::generateGOST
 	{
 		if (*phPrivateKey != CK_INVALID_HANDLE)
 		{
-			OSObject* priv = (OSObject*)handleManager->getObject(*phPrivateKey);
+			OSObject* ospriv = (OSObject*)handleManager->getObject(*phPrivateKey);
 			handleManager->destroyObject(*phPrivateKey);
-			if (priv) priv->destroyObject();
+			if (ospriv) ospriv->destroyObject();
 			*phPrivateKey = CK_INVALID_HANDLE;
 		}
 
 		if (*phPublicKey != CK_INVALID_HANDLE)
 		{
-			OSObject* pub = (OSObject*)handleManager->getObject(*phPublicKey);
+			OSObject* ospub = (OSObject*)handleManager->getObject(*phPublicKey);
 			handleManager->destroyObject(*phPublicKey);
-			if (pub) pub->destroyObject();
+			if (ospub) ospub->destroyObject();
 			*phPublicKey = CK_INVALID_HANDLE;
 		}
 	}
@@ -8660,9 +8660,9 @@ CK_RV SoftHSM::deriveDH
 	{
 		if (*phKey != CK_INVALID_HANDLE)
 		{
-			OSObject* secret = (OSObject*)handleManager->getObject(*phKey);
+			OSObject* ossecret = (OSObject*)handleManager->getObject(*phKey);
 			handleManager->destroyObject(*phKey);
-			if (secret) secret->destroyObject();
+			if (ossecret) ossecret->destroyObject();
 			*phKey = CK_INVALID_HANDLE;
 		}
 	}
@@ -8957,9 +8957,9 @@ CK_RV SoftHSM::deriveECDH
 	{
 		if (*phKey != CK_INVALID_HANDLE)
 		{
-			OSObject* secret = (OSObject*)handleManager->getObject(*phKey);
+			OSObject* ossecret = (OSObject*)handleManager->getObject(*phKey);
 			handleManager->destroyObject(*phKey);
-			if (secret) secret->destroyObject();
+			if (ossecret) ossecret->destroyObject();
 			*phKey = CK_INVALID_HANDLE;
 		}
 	}
