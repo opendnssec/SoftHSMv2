@@ -1,5 +1,51 @@
 NEWS for SoftHSM -- History of user visible changes
 
+SoftHSM 2.0.0b3 - 2015-04-17
+
+* SOFTHSM-113: Support for Botan 1.11.15
+* SOFTHSM-119: softhsm2-util: Support ECDSA key import
+  (Patch from Magnus Ahltorp)
+* SUPPORT-139: Support deriving generic secrets, DES, DES2, DES3, and AES.
+  Using DH, ECDH or symmetric encryption.
+
+Bugfixes:
+* SOFTHSM-108: A marked as trusted certificate cannot be imported.
+* SOFTHSM-109: Unused parameter and variable warnings.
+* SOFTHSM-110: subdir-objects warnings from autoreconf.
+* SOFTHSM-111: Include FIPS-NOTES.md in dist.
+* SOFTHSM-112: CKM_AES_KEY_WRAP* conflict in pkcs11.h.
+* SOFTHSM-114: Fix memory leak in a test script.
+* SOFTHSM-115: Fix static analysis warnings.
+* SUPPORT-154: A marked as non-modifiable object cannot be generated.
+* SUPPORT-155: auto_ptr is deprecated in C++11, use unique_ptr.
+* SUPPORT-157: Derived secrets were truncated after encryption and
+  could thus not be decrypted.
+* Mutex should call MutexFactory wrapper functions.
+  (Patch from Jerry Lundström)
+* Return detailed error message to loadLibrary().
+  (Patch from Petr Spacek)
+
+
+SoftHSM 2.0.0b2 - 2014-12-28
+
+* SOFTHSM-50: OpenSSL FIPS support.
+* SOFTHSM-64: Updated build script for Windows.
+* SOFTHSM-100: Use --free with softhsm2-util to initialize the first
+  free token.
+* SOFTHSM-103: Allow runtime configuration of log level.
+* SOFTHSM-107: Support for CKM_<symcipher>_CBC_PAD.
+* Add support for CKM_RSA_PKCS_OAEP key un/wrapping.
+  (Patch from Petr Spacek)
+* Use OpenSSL EVP interface for AES key wrapping.
+  (Patch from Petr Spacek)
+* Allow reading configuration file from user's home directory.
+  (Patch from Nikos Mavrogiannopoulos)
+
+Bugfixes:
+* SOFTHSM-102: C_DeriveKey() uses OBJECT_OP_GENERATE.
+* Coverity found a number of issues.
+
+
 SoftHSM 2.0.0b1 - 2014-09-10
 
 * SOFTHSM-84: Check that all mandatory attributes are given during

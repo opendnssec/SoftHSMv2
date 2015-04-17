@@ -39,9 +39,9 @@
 /*static*/ const char* ECParameters::type = "Generic EC parameters";
 
 // Set the curve OID ec
-void ECParameters::setEC(const ByteString& ec)
+void ECParameters::setEC(const ByteString& inEC)
 {
-	this->ec = ec;
+	ec = inEC;
 }
 
 // Get the curve OID ec
@@ -51,9 +51,9 @@ const ByteString& ECParameters::getEC() const
 }
 
 // Are the parameters of the given type?
-bool ECParameters::areOfType(const char* type)
+bool ECParameters::areOfType(const char* inType)
 {
-	return (strcmp(type, ECParameters::type) == 0);
+	return (strcmp(type, inType) == 0);
 }
 
 // Serialisation

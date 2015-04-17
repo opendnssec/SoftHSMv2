@@ -39,6 +39,11 @@
 
 #include <botan/symkey.h>
 #include <botan/botan.h>
+#include <botan/version.h>
+
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,14)
+#include <botan/key_filt.h>
+#endif
 
 // Constructor
 BotanSymmetricAlgorithm::BotanSymmetricAlgorithm()
@@ -101,13 +106,13 @@ bool BotanSymmetricAlgorithm::encryptInit(const SymmetricKey* key, const SymMode
 	try
 	{
 		Botan::SymmetricKey botanKey = Botan::SymmetricKey(key->getKeyBits().const_byte_str(), key->getKeyBits().size());
-		Botan::InitializationVector botanIV = Botan::InitializationVector(IV.const_byte_str(), IV.size());
 		if (mode == SymMode::ECB)
 		{
 			cryption = new Botan::Pipe(Botan::get_cipher(cipherName, botanKey, Botan::ENCRYPTION));
 		}
 		else
 		{
+			Botan::InitializationVector botanIV = Botan::InitializationVector(IV.const_byte_str(), IV.size());
 			cryption = new Botan::Pipe(Botan::get_cipher(cipherName, botanKey, botanIV, Botan::ENCRYPTION));
 		}
 		cryption->start_msg();
@@ -181,6 +186,7 @@ bool BotanSymmetricAlgorithm::encryptUpdate(const ByteString& data, ByteString& 
 
 	// Resize the output block
 	encryptedData.resize(bytesRead);
+	currentBufferSize -= bytesRead;
 
 	return true;
 }
@@ -273,13 +279,13 @@ bool BotanSymmetricAlgorithm::decryptInit(const SymmetricKey* key, const SymMode
 	try
 	{
 		Botan::SymmetricKey botanKey = Botan::SymmetricKey(key->getKeyBits().const_byte_str(), key->getKeyBits().size());
-		Botan::InitializationVector botanIV = Botan::InitializationVector(IV.const_byte_str(), IV.size());
 		if (mode == SymMode::ECB)
 		{
 			cryption = new Botan::Pipe(Botan::get_cipher(cipherName, botanKey, Botan::DECRYPTION));
 		}
 		else
 		{
+			Botan::InitializationVector botanIV = Botan::InitializationVector(IV.const_byte_str(), IV.size());
 			cryption = new Botan::Pipe(Botan::get_cipher(cipherName, botanKey, botanIV, Botan::DECRYPTION));
 		}
 		cryption->start_msg();
@@ -353,6 +359,7 @@ bool BotanSymmetricAlgorithm::decryptUpdate(const ByteString& encryptedData, Byt
 
 	// Resize the output block
 	data.resize(bytesRead);
+	currentBufferSize -= bytesRead;
 
 	return true;
 }

@@ -510,7 +510,7 @@ void AESTests::testECB()
 
 			// Test 128-bit key
 
-			// First, use the OpenSSL command line tool to encrypt the test data
+			// Get the reference for the encrypted data
 			cipherText = ByteString(testResult[i][j][0]);
 
 			// Now, do the same thing using our AES implementation
@@ -594,36 +594,87 @@ void AESTests::testECB()
 	}
 }
 
-void AESTests::testWrap()
+void AESTests::testWrap(const char testKeK[][128], const char testKey[][128], const char testCt[][128], const int testCnt, SymWrap::Type mode)
 {
-	char testKeK[33] = "000102030405060708090A0B0C0D0E0F";
-	char testKey[33] = "00112233445566778899AABBCCDDEEFF";
+	for (int i = 0; i < testCnt; i++)
+	{
+		ByteString kekData(testKeK[i]);
+		ByteString keyData(testKey[i]);
 
-	ByteString kekData(testKeK);
-	ByteString keyData(testKey);
-	ByteString wrapped;
+		AESKey aesKeK(kekData.size() * 8);
+		CPPUNIT_ASSERT(aesKeK.setKeyBits(kekData));
 
-	AESKey aesKeK(128);
-	CPPUNIT_ASSERT(aesKeK.setKeyBits(kekData));
+		ByteString wrapped;
+		ByteString expectedCt(testCt[i]);
+		CPPUNIT_ASSERT(aes->wrapKey(&aesKeK, mode, keyData, wrapped));
+		CPPUNIT_ASSERT(wrapped.size() == expectedCt.size());
+		CPPUNIT_ASSERT(wrapped == expectedCt);
 
-	CPPUNIT_ASSERT(aes->wrapKey(&aesKeK, SymWrap::AES_KEYWRAP, keyData, wrapped));
-	CPPUNIT_ASSERT(wrapped.size() == keyData.size() + 8);
+		ByteString unwrapped;
+		CPPUNIT_ASSERT(aes->unwrapKey(&aesKeK, mode, wrapped, unwrapped));
+		CPPUNIT_ASSERT(unwrapped.size() == keyData.size());
+		CPPUNIT_ASSERT(unwrapped == keyData);
+/*
+	#ifdef HAVE_AES_KEY_WRAP_PAD
+		keyData.resize(20);
+		ByteString padwrapped;
+		CPPUNIT_ASSERT(aes->wrapKey(&aesKeK, SymWrap::AES_KEYWRAP_PAD, keyData, padwrapped));
+		CPPUNIT_ASSERT(padwrapped.size() == 32);
 
-	ByteString expected("1FA68B0A8112B447AEF34BD8FB5A7B829D3E862371D2CFE5");
-	CPPUNIT_ASSERT(wrapped == expected);
+		ByteString padunwrapped;
+		CPPUNIT_ASSERT(aes->unwrapKey(&aesKeK, SymWrap::AES_KEYWRAP_PAD, padwrapped, padunwrapped));
+		CPPUNIT_ASSERT(padunwrapped == keyData);
+	#endif
+*/
+	}
+}
 
-	ByteString unwrapped;
-	CPPUNIT_ASSERT(aes->unwrapKey(&aesKeK, SymWrap::AES_KEYWRAP, wrapped, unwrapped));
-	CPPUNIT_ASSERT(unwrapped == keyData);
+// RFC 3394 tests
+void AESTests::testWrapWoPad()
+{
+	char testKeK[][128] = {
+		"000102030405060708090A0B0C0D0E0F", // section 4.1
+		"000102030405060708090A0B0C0D0E0F1011121314151617", // section 4.2
+		"000102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F", // section 4.3
+		"000102030405060708090A0B0C0D0E0F1011121314151617", // section 4.4
+		"000102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F", // section 4.5
+		"000102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F", // section 4.6
+	};
+	char testKey[][128] = {
+		"00112233445566778899AABBCCDDEEFF",
+		"00112233445566778899AABBCCDDEEFF",
+		"00112233445566778899AABBCCDDEEFF",
+		"00112233445566778899AABBCCDDEEFF0001020304050607",
+		"00112233445566778899AABBCCDDEEFF0001020304050607",
+		"00112233445566778899AABBCCDDEEFF000102030405060708090A0B0C0D0E0F"
+	};
+	char testCt[][128] = {
+		"1FA68B0A8112B447AEF34BD8FB5A7B829D3E862371D2CFE5",
+		"96778B25AE6CA435F92B5B97C050AED2468AB8A17AD84E5D",
+		"64E8C3F9CE0F5BA263E9777905818A2A93C8191E7D6E8AE7",
+		"031D33264E15D33268F24EC260743EDCE1C6C7DDEE725A936BA814915C6762D2",
+		"A8F9BC1612C68B3FF6E6F4FBE30E71E4769C8B80A32CB8958CD5D17D6B254DA1",
+		"28C9F404C4B810F4CBCCB35CFB87F8263F5786E2D80ED326CBC7F0E71A99F43BFB988B9B7A02DD21"
+	};
 
-#ifdef HAVE_AES_KEY_WRAP_PAD
-	keyData.resize(20);
-	ByteString padwrapped;
-	CPPUNIT_ASSERT(aes->wrapKey(&aesKeK, SymWrap::AES_KEYWRAP_PAD, keyData, padwrapped));
-	CPPUNIT_ASSERT(padwrapped.size() == 32);
+	testWrap(testKeK, testKey, testCt, sizeof(testKeK) / 128, SymWrap::AES_KEYWRAP);
+}
 
-	ByteString padunwrapped;
-	CPPUNIT_ASSERT(aes->unwrapKey(&aesKeK, SymWrap::AES_KEYWRAP_PAD, padwrapped, padunwrapped));
-	CPPUNIT_ASSERT(padunwrapped == keyData);
-#endif
+// RFC 5649 tests
+void AESTests::testWrapPad()
+{
+	char testKeK[][128] = {
+		"5840DF6E29B02AF1AB493B705BF16EA1AE8338F4DCC176A8", // section 6 example 1
+		"5840DF6E29B02AF1AB493B705BF16EA1AE8338F4DCC176A8", // section 6 example 2
+	};
+	char testKey[][128] = {
+		"C37B7E6492584340BED12207808941155068F738",
+		"466F7250617369"
+	};
+	char testCt[][128] = {
+		"138BDEAA9B8FA7FC61F97742E72248EE5AE6AE5360D1AE6A5F54F373FA543B6A",
+		"AFBEB0F07DFBF5419200F2CCB50BB24F"
+	};
+
+	testWrap(testKeK, testKey, testCt, sizeof(testKeK) / 128, SymWrap::AES_KEYWRAP_PAD);
 }

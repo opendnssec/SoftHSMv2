@@ -51,6 +51,11 @@ public:
 	// This will destroy the one-and-only instance.
 	static void reset();
 
+#ifdef WITH_FIPS
+	// Return the FIPS 140-2 selftest status
+	virtual bool getFipsSelfTestStatus() const = 0;
+#endif
+
 	// Create a concrete instance of a symmetric algorithm
 	virtual SymmetricAlgorithm* getSymmetricAlgorithm(SymAlgo::Type algorithm) = 0;
 

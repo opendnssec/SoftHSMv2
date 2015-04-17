@@ -42,7 +42,7 @@ class Generation
 {
 public:
 	// Factory
-	static Generation* create(const std::string path, bool isToken = false);
+	static Generation* create(const std::string inPath, bool inIsToken = false);
 
 	// Destructor
 	virtual ~Generation();

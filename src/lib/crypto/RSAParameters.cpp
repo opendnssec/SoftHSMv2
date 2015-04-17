@@ -39,15 +39,15 @@
 /*static*/ const char* RSAParameters::type = "Generic RSA parameters";
 
 // Set the public exponent
-void RSAParameters::setE(const ByteString& e)
+void RSAParameters::setE(const ByteString& inE)
 {
-	this->e = e;
+	e = inE;
 }
 
 // Set the bit length
-void RSAParameters::setBitLength(const size_t bitLen)
+void RSAParameters::setBitLength(const size_t inBitLen)
 {
-	this->bitLen = bitLen;
+	bitLen = inBitLen;
 }
 
 // Get the public exponent
@@ -63,9 +63,9 @@ size_t RSAParameters::getBitLength() const
 }
 
 // Are the parameters of the given type?
-bool RSAParameters::areOfType(const char* type)
+bool RSAParameters::areOfType(const char* inType)
 {
-	return (strcmp(type, RSAParameters::type) == 0);
+	return (strcmp(type, inType) == 0);
 }
 
 // Serialisation

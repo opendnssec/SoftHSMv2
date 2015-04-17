@@ -7,6 +7,8 @@ AM_CPPFLAGS = 			-I$(srcdir)/.. \
 
 check_PROGRAMS =		p11test
 
+AUTOMAKE_OPTIONS =		subdir-objects
+
 p11test_SOURCES =		p11test.cpp \
 				SymmetricAlgorithmTests.cpp \
 				DigestTests.cpp \
@@ -17,6 +19,7 @@ p11test_SOURCES =		p11test.cpp \
 				TokenTests.cpp \
 				UserTests.cpp \
 				ObjectTests.cpp \
+				DeriveTests.cpp \
 				SignVerifyTests.cpp \
 				AsymEncryptDecryptTests.cpp \
 				AsymWrapUnwrapTests.cpp \

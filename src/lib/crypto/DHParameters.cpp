@@ -39,21 +39,21 @@
 /*static*/ const char* DHParameters::type = "Generic DH parameters";
 
 // Set the public prime p
-void DHParameters::setP(const ByteString& p)
+void DHParameters::setP(const ByteString& inP)
 {
-	this->p = p;
+	p = inP;
 }
 
 // Set the generator g
-void DHParameters::setG(const ByteString& g)
+void DHParameters::setG(const ByteString& inG)
 {
-	this->g = g;
+	g = inG;
 }
 
 // Set the optional bit length
-void DHParameters::setXBitLength(const size_t bitLen)
+void DHParameters::setXBitLength(const size_t inBitLen)
 {
-	this->bitLen = bitLen;
+	bitLen = inBitLen;
 }
 
 
@@ -76,9 +76,9 @@ size_t DHParameters::getXBitLength() const
 }
 
 // Are the parameters of the given type?
-bool DHParameters::areOfType(const char* type)
+bool DHParameters::areOfType(const char* inType)
 {
-	return (strcmp(type, DHParameters::type) == 0);
+	return (strcmp(type, inType) == 0);
 }
 
 // Serialisation

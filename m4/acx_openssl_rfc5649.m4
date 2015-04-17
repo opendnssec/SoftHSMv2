@@ -1,5 +1,5 @@
-AC_DEFUN([ACX_OPENSSL_RFC5649],[
-	AC_MSG_CHECKING(for OpenSSL RFC5649 support)
+AC_DEFUN([ACX_OPENSSL_EVPAESWRAP],[
+	AC_MSG_CHECKING(OpenSSL EVP interface for AES key wrapping)
 
 	tmp_CPPFLAGS=$CPPFLAGS
 	tmp_LIBS=$LIBS
@@ -8,22 +8,42 @@ AC_DEFUN([ACX_OPENSSL_RFC5649],[
 	LIBS="$LIBS $CRYPTO_LIBS"
 
 	AC_LANG_PUSH([C])
+
 	AC_LINK_IFELSE([
 		AC_LANG_SOURCE([[
-			#include <openssl/aes.h>
+			#include <openssl/evp.h>
 			int main()
 			{
-				AES_wrap_key_withpad(NULL, NULL, NULL, NULL, 0);
+				EVP_aes_128_wrap();
 				return 1;
 			}
 		]])
 	],[
-		AC_MSG_RESULT([Found AES key wrap with pad])
-		AC_DEFINE([HAVE_AES_KEY_WRAP_PAD], [1],
-		          [Define if advanced AES key wrap with pad is supported])
+		AC_MSG_RESULT([RFC 3394 is supported])
+		AC_DEFINE([HAVE_AES_KEY_WRAP], [1],
+		          [Define if advanced AES key wrap without pad is supported in EVP interface])
 	],[
-		AC_MSG_RESULT([Cannot find AES key wrap with pad])
+		AC_MSG_RESULT([RFC 3394 is not supported])
 	])
+
+	AC_MSG_CHECKING(OpenSSL EVP interface for AES key wrapping with pad)
+	AC_LINK_IFELSE([
+		AC_LANG_SOURCE([[
+			#include <openssl/evp.h>
+			int main()
+			{
+				EVP_aes_128_wrap_pad();
+				return 1;
+			}
+		]])
+	],[
+		AC_MSG_RESULT([RFC 5649 is supported])
+		AC_DEFINE([HAVE_AES_KEY_WRAP_PAD], [1],
+		          [Define if advanced AES key wrap with pad is supported in EVP interface])
+	],[
+		AC_MSG_RESULT([RFC 5649 is not supported])
+	])
+
 	AC_LANG_POP([C])
 
 	CPPFLAGS=$tmp_CPPFLAGS

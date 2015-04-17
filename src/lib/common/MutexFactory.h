@@ -49,7 +49,7 @@ public:
 
 	// Lock the mutex
 	bool lock();
-	 
+
 	// Unlock the mutex
 	void unlock();
 
@@ -65,7 +65,7 @@ class MutexLocker
 {
 public:
 	// Constructor
-	MutexLocker(Mutex* mutex);
+	MutexLocker(Mutex* inMutex);
 
 	// Destructor
 	virtual ~MutexLocker();
@@ -91,10 +91,10 @@ public:
 	void recycleMutex(Mutex* mutex);
 
 	// Set the function pointers
-	void setCreateMutex(CK_CREATEMUTEX createMutex);
-	void setDestroyMutex(CK_DESTROYMUTEX destroyMutex);
-	void setLockMutex(CK_LOCKMUTEX lockMutex);
-	void setUnlockMutex(CK_UNLOCKMUTEX unlockMutex);
+	void setCreateMutex(CK_CREATEMUTEX inCreateMutex);
+	void setDestroyMutex(CK_DESTROYMUTEX inDestroyMutex);
+	void setLockMutex(CK_LOCKMUTEX inLockMutex);
+	void setUnlockMutex(CK_UNLOCKMUTEX inUnlockMutex);
 
 	// Enable/disable mutex handling
 	void enable();
@@ -113,7 +113,11 @@ private:
 	CK_RV UnlockMutex(CK_VOID_PTR mutex);
 
 	// The one-and-only instance
+#ifdef HAVE_CXX11
+	static std::unique_ptr<MutexFactory> instance;
+#else
 	static std::auto_ptr<MutexFactory> instance;
+#endif
 
 	// The function pointers
 	CK_CREATEMUTEX createMutex;

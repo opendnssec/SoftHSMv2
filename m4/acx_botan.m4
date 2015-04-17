@@ -36,15 +36,9 @@ AC_DEFUN([ACX_BOTAN],[
 	AC_LINK_IFELSE(
 		[AC_LANG_PROGRAM(
 			[#include <botan/init.h>
-			#include <botan/pipe.h>
-			#include <botan/filters.h>
-			#include <botan/hex.h>
-			#include <botan/sha2_32.h>
-			#include <botan/emsa3.h>
 			#include <botan/version.h>],
 			[using namespace Botan;
 			LibraryInitializer::initialize();
-			new EMSA3_Raw();
 			#if BOTAN_VERSION_CODE < BOTAN_VERSION_CODE_FOR($1,$2,$3)
 			#error "Botan version too old";
 			#endif])],

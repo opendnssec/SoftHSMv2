@@ -42,9 +42,9 @@ class BotanECDSAPublicKey : public ECPublicKey
 public:
 	// Constructors
 	BotanECDSAPublicKey();
-	
+
 	BotanECDSAPublicKey(const Botan::ECDSA_PublicKey* inECKEY);
-	
+
 	// Destructor
 	virtual ~BotanECDSAPublicKey();
 
@@ -52,17 +52,17 @@ public:
 	static const char* type;
 
 	// Check if the key is of the given type
-	virtual bool isOfType(const char* type);
+	virtual bool isOfType(const char* inType);
 
 	// Get the base point order length
 	virtual unsigned long getOrderLength() const;
 
 	// Setters for the ECDSA public key components
-	virtual void setEC(const ByteString& ec);
-	virtual void setQ(const ByteString& q);
+	virtual void setEC(const ByteString& inEC);
+	virtual void setQ(const ByteString& inQ);
 
 	// Set from Botan representation
-	virtual void setFromBotan(const Botan::ECDSA_PublicKey* eckey);
+	virtual void setFromBotan(const Botan::ECDSA_PublicKey* inECKEY);
 
 	// Retrieve the Botan representation of the key
 	Botan::ECDSA_PublicKey* getBotanKey();

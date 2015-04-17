@@ -34,8 +34,8 @@
 #include "log.h"
 #include "OSSLRSAPublicKey.h"
 #include "OSSLUtil.h"
-#include <openssl/bn.h>
 #include <string.h>
+#include <openssl/bn.h>
 
 // Constructors
 OSSLRSAPublicKey::OSSLRSAPublicKey()
@@ -43,12 +43,15 @@ OSSLRSAPublicKey::OSSLRSAPublicKey()
 	rsa = RSA_new();
 
 	// Use the OpenSSL implementation and not any engine
-	RSA_set_method(rsa, RSA_PKCS1_SSLeay());
+	RSA_set_method(rsa, RSA_get_default_method());
 }
 
 OSSLRSAPublicKey::OSSLRSAPublicKey(const RSA* inRSA)
 {
-	OSSLRSAPublicKey();
+	rsa = RSA_new();
+
+	// Use the OpenSSL implementation and not any engine
+	RSA_set_method(rsa, RSA_PKCS1_SSLeay());
 
 	setFromOSSL(inRSA);
 }
@@ -63,43 +66,51 @@ OSSLRSAPublicKey::~OSSLRSAPublicKey()
 /*static*/ const char* OSSLRSAPublicKey::type = "OpenSSL RSA Public Key";
 
 // Check if the key is of the given type
-bool OSSLRSAPublicKey::isOfType(const char* type)
+bool OSSLRSAPublicKey::isOfType(const char* inType)
 {
-	return !strcmp(OSSLRSAPublicKey::type, type);
+	return !strcmp(type, inType);
 }
 
 // Set from OpenSSL representation
-void OSSLRSAPublicKey::setFromOSSL(const RSA* rsa)
+void OSSLRSAPublicKey::setFromOSSL(const RSA* inRSA)
 {
-	if (rsa->n) { ByteString n = OSSL::bn2ByteString(rsa->n); setN(n); }
-	if (rsa->e) { ByteString e = OSSL::bn2ByteString(rsa->e); setE(e); }
+	if (inRSA->n)
+	{
+		ByteString inN = OSSL::bn2ByteString(inRSA->n);
+		setN(inN);
+	}
+	if (inRSA->e)
+	{
+		ByteString inE = OSSL::bn2ByteString(inRSA->e);
+		setE(inE);
+	}
 }
 
 // Setters for the RSA public key components
-void OSSLRSAPublicKey::setN(const ByteString& n)
+void OSSLRSAPublicKey::setN(const ByteString& inN)
 {
-	RSAPublicKey::setN(n);
+	RSAPublicKey::setN(inN);
 
-	if (rsa->n) 
+	if (rsa->n)
 	{
 		BN_clear_free(rsa->n);
 		rsa->n = NULL;
 	}
 
-	rsa->n = OSSL::byteString2bn(n);
+	rsa->n = OSSL::byteString2bn(inN);
 }
 
-void OSSLRSAPublicKey::setE(const ByteString& e)
+void OSSLRSAPublicKey::setE(const ByteString& inE)
 {
-	RSAPublicKey::setE(e);
+	RSAPublicKey::setE(inE);
 
-	if (rsa->e) 
+	if (rsa->e)
 	{
 		BN_clear_free(rsa->e);
 		rsa->e = NULL;
 	}
 
-	rsa->e = OSSL::byteString2bn(e);
+	rsa->e = OSSL::byteString2bn(inE);
 }
 
 // Retrieve the OpenSSL representation of the key

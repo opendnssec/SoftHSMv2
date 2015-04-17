@@ -35,14 +35,14 @@
 #include "SessionObjectStore.h"
 
 // Constructor
-SessionObject::SessionObject(SessionObjectStore* parent, CK_SLOT_ID slotID, CK_SESSION_HANDLE hSession, bool isPrivate)
+SessionObject::SessionObject(SessionObjectStore* inParent, CK_SLOT_ID inSlotID, CK_SESSION_HANDLE inHSession, bool inIsPrivate)
 {
-	this->hSession = hSession;
-	this->slotID = slotID;
-	this->isPrivate = isPrivate;
+	hSession = inHSession;
+	slotID = inSlotID;
+	isPrivate = inIsPrivate;
 	objectMutex = MutexFactory::i()->getMutex();
 	valid = (objectMutex != NULL);
-	this->parent = parent;
+	parent = inParent;
 }
 
 // Destructor
@@ -197,17 +197,17 @@ bool SessionObject::isValid()
     return valid;
 }
 
-bool SessionObject::hasSlotID(CK_SLOT_ID slotID)
+bool SessionObject::hasSlotID(CK_SLOT_ID inSlotID)
 {
-    return this->slotID == slotID;
+    return slotID == inSlotID;
 }
 
 // Called by the session object store when a session is closed. If it's the
 // session this object was associated with, the function returns true and the
 // object is invalidated
-bool SessionObject::removeOnSessionClose(CK_SESSION_HANDLE hSession)
+bool SessionObject::removeOnSessionClose(CK_SESSION_HANDLE inHSession)
 {
-	if (this->hSession == hSession)
+	if (hSession == inHSession)
 	{
 		// Save space
 		discardAttributes();
@@ -222,9 +222,9 @@ bool SessionObject::removeOnSessionClose(CK_SESSION_HANDLE hSession)
 
 // Called by the session object store when a token is logged out.
 // Remove when this session object is a private object for this token.
-bool SessionObject::removeOnAllSessionsClose(CK_SLOT_ID slotID)
+bool SessionObject::removeOnAllSessionsClose(CK_SLOT_ID inSlotID)
 {
-    if (this->slotID == slotID)
+    if (slotID == inSlotID)
     {
         discardAttributes();
 
@@ -238,9 +238,9 @@ bool SessionObject::removeOnAllSessionsClose(CK_SLOT_ID slotID)
 
 // Called by the session object store when a token is logged out.
 // Remove when this session object is a private object for this token.
-bool SessionObject::removeOnTokenLogout(CK_SLOT_ID slotID)
+bool SessionObject::removeOnTokenLogout(CK_SLOT_ID inSlotID)
 {
-    if (this->slotID == slotID && this->isPrivate)
+    if (slotID == inSlotID && isPrivate)
     {
         discardAttributes();
 

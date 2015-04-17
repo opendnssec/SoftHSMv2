@@ -227,7 +227,12 @@ bool OSSLDH::deriveKey(SymmetricKey **ppSymmetricKey, PublicKey* publicKey, Priv
 
 unsigned long OSSLDH::getMinKeySize()
 {
+#ifdef WITH_FIPS
+	// OPENSSL_DH_FIPS_MIN_MODULUS_BITS is 1024
+	return 1024;
+#else
 	return 512;
+#endif
 }
 
 unsigned long OSSLDH::getMaxKeySize()

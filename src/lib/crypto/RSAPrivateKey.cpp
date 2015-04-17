@@ -39,9 +39,9 @@
 /*static*/ const char* RSAPrivateKey::type = "Abstract RSA private key";
 
 // Check if the key is of the given type
-bool RSAPrivateKey::isOfType(const char* type)
+bool RSAPrivateKey::isOfType(const char* inType)
 {
-	return !strcmp(this->type, type);
+	return !strcmp(type, inType);
 }
 
 // Get the bit length
@@ -58,45 +58,45 @@ unsigned long RSAPrivateKey::getOutputLength() const
 }
 
 // Setters for the RSA private key components
-void RSAPrivateKey::setP(const ByteString& p)
+void RSAPrivateKey::setP(const ByteString& inP)
 {
-	this->p = p;
+	p = inP;
 }
 
-void RSAPrivateKey::setQ(const ByteString& q)
+void RSAPrivateKey::setQ(const ByteString& inQ)
 {
-	this->q = q;
+	q = inQ;
 }
 
-void RSAPrivateKey::setPQ(const ByteString& pq)
+void RSAPrivateKey::setPQ(const ByteString& inPQ)
 {
-	this->pq = pq;
+	pq = inPQ;
 }
 
-void RSAPrivateKey::setDP1(const ByteString& dp1)
+void RSAPrivateKey::setDP1(const ByteString& inDP1)
 {
-	this->dp1 = dp1;
+	dp1 = inDP1;
 }
 
-void RSAPrivateKey::setDQ1(const ByteString& dq1)
+void RSAPrivateKey::setDQ1(const ByteString& inDQ1)
 {
-	this->dq1 = dq1;
+	dq1 = inDQ1;
 }
 
-void RSAPrivateKey::setD(const ByteString& d)
+void RSAPrivateKey::setD(const ByteString& inD)
 {
-	this->d = d;
+	d = inD;
 }
 
 // Setters for the RSA public key components
-void RSAPrivateKey::setN(const ByteString& n)
+void RSAPrivateKey::setN(const ByteString& inN)
 {
-	this->n = n;
+	n = inN;
 }
 
-void RSAPrivateKey::setE(const ByteString& e)
+void RSAPrivateKey::setE(const ByteString& inE)
 {
-	this->e = e;
+	e = inE;
 }
 
 // Getters for the RSA private key components

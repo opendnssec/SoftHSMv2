@@ -155,7 +155,7 @@ CK_RV AsymWrapUnwrapTests::generateRsaKeyPair(CK_SESSION_HANDLE hSession, CK_BBO
 void AsymWrapUnwrapTests::rsaWrapUnwrap(CK_MECHANISM_TYPE mechanismType, CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hPublicKey, CK_OBJECT_HANDLE hPrivateKey)
 {
 	CK_MECHANISM mechanism = { mechanismType, NULL_PTR, 0 };
-	CK_RSA_PKCS_OAEP_PARAMS oaepParams = { CKM_SHA_1, CKG_MGF1_SHA1, 1, NULL_PTR, 0 };
+	CK_RSA_PKCS_OAEP_PARAMS oaepParams = { CKM_SHA_1, CKG_MGF1_SHA1, CKZ_DATA_SPECIFIED, NULL_PTR, 0 };
 	CK_BYTE cipherText[2048];
 	CK_ULONG ulCipherTextLen;
 	CK_BYTE symValue[64];
@@ -273,4 +273,5 @@ void AsymWrapUnwrapTests::testRsaWrapUnwrap()
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	rsaWrapUnwrap(CKM_RSA_PKCS,hSessionRO,hPublicKey,hPrivateKey);
+	rsaWrapUnwrap(CKM_RSA_PKCS_OAEP,hSessionRO,hPublicKey,hPrivateKey);
 }

@@ -36,9 +36,9 @@
 #include "SymmetricKey.h"
 
 // Base constructors
-SymmetricKey::SymmetricKey(size_t bitLen /* = 0 */)
+SymmetricKey::SymmetricKey(size_t inBitLen /* = 0 */)
 {
-	this->bitLen = bitLen;
+	bitLen = inBitLen;
 }
 
 SymmetricKey::SymmetricKey(const SymmetricKey& in)
@@ -73,9 +73,9 @@ ByteString SymmetricKey::serialise() const
 }
 
 // Set the bit length
-void SymmetricKey::setBitLen(const size_t bitLen)
+void SymmetricKey::setBitLen(const size_t inBitLen)
 {
-	this->bitLen = bitLen;
+	bitLen = inBitLen;
 }
 
 // Retrieve the bit length

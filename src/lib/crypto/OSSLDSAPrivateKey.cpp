@@ -44,12 +44,16 @@ OSSLDSAPrivateKey::OSSLDSAPrivateKey()
 	dsa = DSA_new();
 
 	// Use the OpenSSL implementation and not any engine
-	DSA_set_method(dsa, DSA_OpenSSL());
+	DSA_set_method(dsa, DSA_get_default_method());
 }
 
 OSSLDSAPrivateKey::OSSLDSAPrivateKey(const DSA* inDSA)
 {
-	OSSLDSAPrivateKey();
+	dsa = DSA_new();
+
+	// Use the OpenSSL implementation and not any engine
+	DSA_set_method(dsa, DSA_OpenSSL());
+
 	setFromOSSL(inDSA);
 }
 
@@ -63,73 +67,89 @@ OSSLDSAPrivateKey::~OSSLDSAPrivateKey()
 /*static*/ const char* OSSLDSAPrivateKey::type = "OpenSSL DSA Private Key";
 
 // Set from OpenSSL representation
-void OSSLDSAPrivateKey::setFromOSSL(const DSA* dsa)
+void OSSLDSAPrivateKey::setFromOSSL(const DSA* inDSA)
 {
-	if (dsa->p) { ByteString p = OSSL::bn2ByteString(dsa->p); setP(p); }
-	if (dsa->q) { ByteString q = OSSL::bn2ByteString(dsa->q); setQ(q); }
-	if (dsa->g) { ByteString g = OSSL::bn2ByteString(dsa->g); setG(g); }
-	if (dsa->priv_key) { ByteString x = OSSL::bn2ByteString(dsa->priv_key); setX(x); }
+	if (inDSA->p)
+	{
+		ByteString inP = OSSL::bn2ByteString(inDSA->p);
+		setP(inP);
+	}
+	if (inDSA->q)
+	{
+		ByteString inQ = OSSL::bn2ByteString(inDSA->q);
+		setQ(inQ);
+	}
+	if (inDSA->g)
+	{
+		ByteString inG = OSSL::bn2ByteString(inDSA->g);
+		setG(inG);
+	}
+	if (inDSA->priv_key)
+	{
+		ByteString inX = OSSL::bn2ByteString(inDSA->priv_key);
+		setX(inX);
+	}
 }
 
 // Check if the key is of the given type
-bool OSSLDSAPrivateKey::isOfType(const char* type)
+bool OSSLDSAPrivateKey::isOfType(const char* inType)
 {
-	return !strcmp(OSSLDSAPrivateKey::type, type);
+	return !strcmp(type, inType);
 }
 
 // Setters for the DSA private key components
-void OSSLDSAPrivateKey::setX(const ByteString& x)
+void OSSLDSAPrivateKey::setX(const ByteString& inX)
 {
-	DSAPrivateKey::setX(x);
+	DSAPrivateKey::setX(inX);
 
-	if (dsa->priv_key) 
+	if (dsa->priv_key)
 	{
 		BN_clear_free(dsa->priv_key);
 		dsa->priv_key = NULL;
 	}
 
-	dsa->priv_key = OSSL::byteString2bn(x);
+	dsa->priv_key = OSSL::byteString2bn(inX);
 }
 
 
 // Setters for the DSA domain parameters
-void OSSLDSAPrivateKey::setP(const ByteString& p)
+void OSSLDSAPrivateKey::setP(const ByteString& inP)
 {
-	DSAPrivateKey::setP(p);
+	DSAPrivateKey::setP(inP);
 
-	if (dsa->p) 
+	if (dsa->p)
 	{
 		BN_clear_free(dsa->p);
 		dsa->p = NULL;
 	}
 
-	dsa->p = OSSL::byteString2bn(p);
+	dsa->p = OSSL::byteString2bn(inP);
 }
 
-void OSSLDSAPrivateKey::setQ(const ByteString& q)
+void OSSLDSAPrivateKey::setQ(const ByteString& inQ)
 {
-	DSAPrivateKey::setQ(q);
+	DSAPrivateKey::setQ(inQ);
 
-	if (dsa->q) 
+	if (dsa->q)
 	{
 		BN_clear_free(dsa->q);
 		dsa->q = NULL;
 	}
 
-	dsa->q = OSSL::byteString2bn(q);
+	dsa->q = OSSL::byteString2bn(inQ);
 }
 
-void OSSLDSAPrivateKey::setG(const ByteString& g)
+void OSSLDSAPrivateKey::setG(const ByteString& inG)
 {
-	DSAPrivateKey::setG(g);
+	DSAPrivateKey::setG(inG);
 
-	if (dsa->g) 
+	if (dsa->g)
 	{
 		BN_clear_free(dsa->g);
 		dsa->g = NULL;
 	}
 
-	dsa->g = OSSL::byteString2bn(g);
+	dsa->g = OSSL::byteString2bn(inG);
 }
 
 // Encode into PKCS#8 DER
@@ -154,8 +174,8 @@ ByteString OSSLDSAPrivateKey::PKCS8Encode()
 		return der;
 	}
 	der.resize(len);
-	unsigned char* p = &der[0];
-	int len2 = i2d_PKCS8_PRIV_KEY_INFO(p8inf, &p);
+	unsigned char* priv = &der[0];
+	int len2 = i2d_PKCS8_PRIV_KEY_INFO(p8inf, &priv);
 	PKCS8_PRIV_KEY_INFO_free(p8inf);
 	if (len2 != len) der.wipe();
 	return der;
@@ -166,8 +186,8 @@ bool OSSLDSAPrivateKey::PKCS8Decode(const ByteString& ber)
 {
 	int len = ber.size();
 	if (len <= 0) return false;
-	const unsigned char* p = ber.const_byte_str();
-	PKCS8_PRIV_KEY_INFO* p8 = d2i_PKCS8_PRIV_KEY_INFO(NULL, &p, len);
+	const unsigned char* priv = ber.const_byte_str();
+	PKCS8_PRIV_KEY_INFO* p8 = d2i_PKCS8_PRIV_KEY_INFO(NULL, &priv, len);
 	if (p8 == NULL) return false;
 	EVP_PKEY* pkey = EVP_PKCS82PKEY(p8);
 	PKCS8_PRIV_KEY_INFO_free(p8);

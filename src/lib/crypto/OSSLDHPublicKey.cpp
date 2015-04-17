@@ -43,12 +43,15 @@ OSSLDHPublicKey::OSSLDHPublicKey()
 	dh = DH_new();
 
 	// Use the OpenSSL implementation and not any engine
-	DH_set_method(dh, DH_OpenSSL());
+	DH_set_method(dh, DH_get_default_method());
 }
 
 OSSLDHPublicKey::OSSLDHPublicKey(const DH* inDH)
 {
-	OSSLDHPublicKey();
+	dh = DH_new();
+
+	// Use the OpenSSL implementation and not any engine
+	DH_set_method(dh, DH_OpenSSL());
 
 	setFromOSSL(inDH);
 }
@@ -63,57 +66,69 @@ OSSLDHPublicKey::~OSSLDHPublicKey()
 /*static*/ const char* OSSLDHPublicKey::type = "OpenSSL DH Public Key";
 
 // Set from OpenSSL representation
-void OSSLDHPublicKey::setFromOSSL(const DH* dh)
+void OSSLDHPublicKey::setFromOSSL(const DH* inDH)
 {
-	if (dh->p) { ByteString p = OSSL::bn2ByteString(dh->p); setP(p); }
-	if (dh->g) { ByteString g = OSSL::bn2ByteString(dh->g); setG(g); }
-	if (dh->pub_key) { ByteString y = OSSL::bn2ByteString(dh->pub_key); setY(y); }
+	if (inDH->p)
+	{
+		ByteString inP = OSSL::bn2ByteString(inDH->p);
+		setP(inP);
+	}
+	if (inDH->g)
+	{
+		ByteString inG = OSSL::bn2ByteString(inDH->g);
+		setG(inG);
+	}
+	if (inDH->pub_key)
+	{
+		ByteString inY = OSSL::bn2ByteString(inDH->pub_key);
+		setY(inY);
+	}
 }
 
 // Check if the key is of the given type
-bool OSSLDHPublicKey::isOfType(const char* type)
+bool OSSLDHPublicKey::isOfType(const char* inType)
 {
-	return !strcmp(OSSLDHPublicKey::type, type);
+	return !strcmp(type, inType);
 }
 
 // Setters for the DH public key components
-void OSSLDHPublicKey::setP(const ByteString& p)
+void OSSLDHPublicKey::setP(const ByteString& inP)
 {
-	DHPublicKey::setP(p);
+	DHPublicKey::setP(inP);
 
-	if (dh->p) 
+	if (dh->p)
 	{
 		BN_clear_free(dh->p);
 		dh->p = NULL;
 	}
 
-	dh->p = OSSL::byteString2bn(p);
+	dh->p = OSSL::byteString2bn(inP);
 }
 
-void OSSLDHPublicKey::setG(const ByteString& g)
+void OSSLDHPublicKey::setG(const ByteString& inG)
 {
-	DHPublicKey::setG(g);
+	DHPublicKey::setG(inG);
 
-	if (dh->g) 
+	if (dh->g)
 	{
 		BN_clear_free(dh->g);
 		dh->g = NULL;
 	}
 
-	dh->g = OSSL::byteString2bn(g);
+	dh->g = OSSL::byteString2bn(inG);
 }
 
-void OSSLDHPublicKey::setY(const ByteString& y)
+void OSSLDHPublicKey::setY(const ByteString& inY)
 {
-	DHPublicKey::setY(y);
+	DHPublicKey::setY(inY);
 
-	if (dh->pub_key) 
+	if (dh->pub_key)
 	{
 		BN_clear_free(dh->pub_key);
 		dh->pub_key = NULL;
 	}
 
-	dh->pub_key = OSSL::byteString2bn(y);
+	dh->pub_key = OSSL::byteString2bn(inY);
 }
 
 // Retrieve the OpenSSL representation of the key

@@ -39,6 +39,7 @@
 P11Object::P11Object()
 {
 	initialized = false;
+	osobject = NULL;
 }
 
 // Destructor
@@ -60,12 +61,12 @@ P11Object::~P11Object()
 }
 
 // Add attributes
-bool P11Object::init(OSObject *osobject)
+bool P11Object::init(OSObject *inobject)
 {
 	if (initialized) return true;
-	if (osobject == NULL) return false;
+	if (inobject == NULL) return false;
 
-	this->osobject = osobject;
+	osobject = inobject;
 
 	// Create attributes
 	P11Attribute* attrClass = new P11AttrClass(osobject);
@@ -87,6 +88,12 @@ bool P11Object::init(OSObject *osobject)
 	)
 	{
 		ERROR_MSG("Could not initialize the attribute");
+		delete attrClass;
+		delete attrToken;
+		delete attrPrivate;
+		delete attrModifiable;
+		delete attrLabel;
+		delete attrCopyable;
 		return false;
 	}
 
@@ -300,19 +307,19 @@ P11DataObj::P11DataObj()
 }
 
 // Add attributes
-bool P11DataObj::init(OSObject *osobject)
+bool P11DataObj::init(OSObject *inobject)
 {
 	if (initialized) return true;
-	if (osobject == NULL) return false;
+	if (inobject == NULL) return false;
 
 	// Set default values for attributes that will be introduced in the parent
-	if (!osobject->attributeExists(CKA_CLASS) || osobject->getUnsignedLongValue(CKA_CLASS, CKO_VENDOR_DEFINED) != CKO_DATA) {
+	if (!inobject->attributeExists(CKA_CLASS) || inobject->getUnsignedLongValue(CKA_CLASS, CKO_VENDOR_DEFINED) != CKO_DATA) {
 		OSAttribute setClass((unsigned long)CKO_DATA);
-		osobject->setAttribute(CKA_CLASS, setClass);
+		inobject->setAttribute(CKA_CLASS, setClass);
 	}
 
 	// Create parent
-	if (!P11Object::init(osobject)) return false;
+	if (!P11Object::init(inobject)) return false;
 
 	// Create attributes
 	P11Attribute* attrApplication = new P11AttrApplication(osobject);
@@ -332,6 +339,9 @@ bool P11DataObj::init(OSObject *osobject)
 	)
 	{
 		ERROR_MSG("Could not initialize the attribute");
+		delete attrApplication;
+		delete attrObjectID;
+		delete attrValue;
 		return false;
 	}
 
@@ -351,19 +361,19 @@ P11CertificateObj::P11CertificateObj()
 }
 
 // Add attributes
-bool P11CertificateObj::init(OSObject *osobject)
+bool P11CertificateObj::init(OSObject *inobject)
 {
 	if (initialized) return true;
-	if (osobject == NULL) return false;
+	if (inobject == NULL) return false;
 
 	// Set default values for attributes that will be introduced in the parent
-	if (!osobject->attributeExists(CKA_CLASS) || osobject->getUnsignedLongValue(CKA_CLASS, CKO_VENDOR_DEFINED) != CKO_CERTIFICATE) {
+	if (!inobject->attributeExists(CKA_CLASS) || inobject->getUnsignedLongValue(CKA_CLASS, CKO_VENDOR_DEFINED) != CKO_CERTIFICATE) {
 		OSAttribute setClass((unsigned long)CKO_CERTIFICATE);
-		osobject->setAttribute(CKA_CLASS, setClass);
+		inobject->setAttribute(CKA_CLASS, setClass);
 	}
 
 	// Create parent
-	if (!P11Object::init(osobject)) return false;
+	if (!P11Object::init(inobject)) return false;
 
 	// Create attributes
 	P11Attribute* attrCertificateType = new P11AttrCertificateType(osobject);
@@ -390,6 +400,12 @@ bool P11CertificateObj::init(OSObject *osobject)
 	)
 	{
 		ERROR_MSG("Could not initialize the attribute");
+		delete attrCertificateType;
+		delete attrTrusted;
+		delete attrCertificateCategory;
+		delete attrCheckValue;
+		delete attrStartDate;
+		delete attrEndDate;
 		return false;
 	}
 
@@ -412,19 +428,19 @@ P11X509CertificateObj::P11X509CertificateObj()
 }
 
 // Add attributes
-bool P11X509CertificateObj::init(OSObject *osobject)
+bool P11X509CertificateObj::init(OSObject *inobject)
 {
 	if (initialized) return true;
-	if (osobject == NULL) return false;
+	if (inobject == NULL) return false;
 
 	// Set default values for attributes that will be introduced in the parent
-	if (!osobject->attributeExists(CKA_CERTIFICATE_TYPE) || osobject->getUnsignedLongValue(CKA_CERTIFICATE_TYPE, CKC_VENDOR_DEFINED) != CKC_X_509) {
+	if (!inobject->attributeExists(CKA_CERTIFICATE_TYPE) || inobject->getUnsignedLongValue(CKA_CERTIFICATE_TYPE, CKC_VENDOR_DEFINED) != CKC_X_509) {
 		OSAttribute setCertType((unsigned long)CKC_X_509);
-		osobject->setAttribute(CKA_CERTIFICATE_TYPE, setCertType);
+		inobject->setAttribute(CKA_CERTIFICATE_TYPE, setCertType);
 	}
 
 	// Create parent
-	if (!P11CertificateObj::init(osobject)) return false;
+	if (!P11CertificateObj::init(inobject)) return false;
 
 	// Create attributes
 	P11Attribute* attrSubject = new P11AttrSubject(osobject,P11Attribute::ck1);
@@ -454,6 +470,16 @@ bool P11X509CertificateObj::init(OSObject *osobject)
 	)
 	{
 		ERROR_MSG("Could not initialize the attribute");
+		delete attrSubject;
+		delete attrID;
+		delete attrIssuer;
+		delete attrSerialNumber;
+		delete attrValue;
+		delete attrURL;
+		delete attrHashOfSubjectPublicKey;
+		delete attrHashOfIssuerPublicKey;
+		delete attrJavaMidpSecurityDomain;
+		delete attrNameHashAlgorithm;
 		return false;
 	}
 
@@ -479,19 +505,19 @@ P11OpenPGPPublicKeyObj::P11OpenPGPPublicKeyObj()
 }
 
 // Add attributes
-bool P11OpenPGPPublicKeyObj::init(OSObject *osobject)
+bool P11OpenPGPPublicKeyObj::init(OSObject *inobject)
 {
 	if (initialized) return true;
-	if (osobject == NULL) return false;
+	if (inobject == NULL) return false;
 
 	// Set default values for attributes that will be introduced in the parent
-	if (!osobject->attributeExists(CKA_CERTIFICATE_TYPE) || osobject->getUnsignedLongValue(CKA_CERTIFICATE_TYPE, CKC_VENDOR_DEFINED) != CKC_OPENPGP) {
+	if (!inobject->attributeExists(CKA_CERTIFICATE_TYPE) || inobject->getUnsignedLongValue(CKA_CERTIFICATE_TYPE, CKC_VENDOR_DEFINED) != CKC_OPENPGP) {
 		OSAttribute setCertType((unsigned long)CKC_OPENPGP);
-		osobject->setAttribute(CKA_CERTIFICATE_TYPE, setCertType);
+		inobject->setAttribute(CKA_CERTIFICATE_TYPE, setCertType);
 	}
 
 	// Create parent
-	if (!P11CertificateObj::init(osobject)) return false;
+	if (!P11CertificateObj::init(inobject)) return false;
 
 	// Create attributes
 	P11Attribute* attrSubject = new P11AttrSubject(osobject,P11Attribute::ck1);
@@ -513,6 +539,12 @@ bool P11OpenPGPPublicKeyObj::init(OSObject *osobject)
 	)
 	{
 		ERROR_MSG("Could not initialize the attribute");
+		delete attrSubject;
+		delete attrID;
+		delete attrIssuer;
+		delete attrSerialNumber;
+		delete attrValue;
+		delete attrURL;
 		return false;
 	}
 
@@ -534,13 +566,13 @@ P11KeyObj::P11KeyObj()
 }
 
 // Add attributes
-bool P11KeyObj::init(OSObject *osobject)
+bool P11KeyObj::init(OSObject *inobject)
 {
 	if (initialized) return true;
-	if (osobject == NULL) return false;
+	if (inobject == NULL) return false;
 
 	// Create parent
-	if (!P11Object::init(osobject)) return false;
+	if (!P11Object::init(inobject)) return false;
 
 	// Create attributes
 	P11Attribute* attrKeyType = new P11AttrKeyType(osobject,P11Attribute::ck5);
@@ -565,6 +597,13 @@ bool P11KeyObj::init(OSObject *osobject)
 	)
 	{
 		ERROR_MSG("Could not initialize the attribute");
+		delete attrKeyType;
+		delete attrID;
+		delete attrStartDate;
+		delete attrEndDate;
+		delete attrDerive;
+		delete attrLocal;
+		delete attrKeyGenMechanism;
 		return false;
 	}
 
@@ -588,18 +627,18 @@ P11PublicKeyObj::P11PublicKeyObj()
 }
 
 // Add attributes
-bool P11PublicKeyObj::init(OSObject *osobject)
+bool P11PublicKeyObj::init(OSObject *inobject)
 {
 	if (initialized) return true;
-	if (osobject == NULL) return false;
+	if (inobject == NULL) return false;
 
-	if (!osobject->attributeExists(CKA_CLASS) || osobject->getUnsignedLongValue(CKA_CLASS, CKO_VENDOR_DEFINED) != CKO_PUBLIC_KEY) {
+	if (!inobject->attributeExists(CKA_CLASS) || inobject->getUnsignedLongValue(CKA_CLASS, CKO_VENDOR_DEFINED) != CKO_PUBLIC_KEY) {
 		OSAttribute setClass((unsigned long)CKO_PUBLIC_KEY);
-		osobject->setAttribute(CKA_CLASS, setClass);
+		inobject->setAttribute(CKA_CLASS, setClass);
 	}
 
 	// Create parent
-	if (!P11KeyObj::init(osobject)) return false;
+	if (!P11KeyObj::init(inobject)) return false;
 
 	if (initialized) return true;
 
@@ -625,6 +664,13 @@ bool P11PublicKeyObj::init(OSObject *osobject)
 	)
 	{
 		ERROR_MSG("Could not initialize the attribute");
+		delete attrSubject;
+		delete attrEncrypt;
+		delete attrVerify;
+		delete attrVerifyRecover;
+		delete attrWrap;
+		delete attrTrusted;
+		delete attrWrapTemplate;
 		return false;
 	}
 
@@ -648,18 +694,18 @@ P11RSAPublicKeyObj::P11RSAPublicKeyObj()
 }
 
 // Add attributes
-bool P11RSAPublicKeyObj::init(OSObject *osobject)
+bool P11RSAPublicKeyObj::init(OSObject *inobject)
 {
 	if (initialized) return true;
-	if (osobject == NULL) return false;
+	if (inobject == NULL) return false;
 
-	if (!osobject->attributeExists(CKA_KEY_TYPE) || osobject->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED) != CKK_RSA) {
+	if (!inobject->attributeExists(CKA_KEY_TYPE) || inobject->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED) != CKK_RSA) {
 		OSAttribute setKeyType((unsigned long)CKK_RSA);
-		osobject->setAttribute(CKA_KEY_TYPE, setKeyType);
+		inobject->setAttribute(CKA_KEY_TYPE, setKeyType);
 	}
 
 	// Create parent
-	if (!P11PublicKeyObj::init(osobject)) return false;
+	if (!P11PublicKeyObj::init(inobject)) return false;
 
 	// Create attributes
 	P11Attribute* attrModulus = new P11AttrModulus(osobject);
@@ -675,6 +721,9 @@ bool P11RSAPublicKeyObj::init(OSObject *osobject)
 	)
 	{
 		ERROR_MSG("Could not initialize the attribute");
+		delete attrModulus;
+		delete attrModulusBits;
+		delete attrPublicExponent;
 		return false;
 	}
 
@@ -694,18 +743,18 @@ P11DSAPublicKeyObj::P11DSAPublicKeyObj()
 }
 
 // Add attributes
-bool P11DSAPublicKeyObj::init(OSObject *osobject)
+bool P11DSAPublicKeyObj::init(OSObject *inobject)
 {
 	if (initialized) return true;
-	if (osobject == NULL) return false;
+	if (inobject == NULL) return false;
 
-	if (!osobject->attributeExists(CKA_KEY_TYPE) || osobject->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED) != CKK_DSA) {
+	if (!inobject->attributeExists(CKA_KEY_TYPE) || inobject->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED) != CKK_DSA) {
 		OSAttribute setKeyType((unsigned long)CKK_DSA);
-		osobject->setAttribute(CKA_KEY_TYPE, setKeyType);
+		inobject->setAttribute(CKA_KEY_TYPE, setKeyType);
 	}
 
 	// Create parent
-	if (!P11PublicKeyObj::init(osobject)) return false;
+	if (!P11PublicKeyObj::init(inobject)) return false;
 
 	// Create attributes
 	P11Attribute* attrPrime = new P11AttrPrime(osobject,P11Attribute::ck3);
@@ -723,6 +772,10 @@ bool P11DSAPublicKeyObj::init(OSObject *osobject)
 	)
 	{
 		ERROR_MSG("Could not initialize the attribute");
+		delete attrPrime;
+		delete attrSubPrime;
+		delete attrBase;
+		delete attrValue;
 		return false;
 	}
 
@@ -743,18 +796,18 @@ P11ECPublicKeyObj::P11ECPublicKeyObj()
 }
 
 // Add attributes
-bool P11ECPublicKeyObj::init(OSObject *osobject)
+bool P11ECPublicKeyObj::init(OSObject *inobject)
 {
 	if (initialized) return true;
-	if (osobject == NULL) return false;
+	if (inobject == NULL) return false;
 
-	if (!osobject->attributeExists(CKA_KEY_TYPE) || osobject->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED) != CKK_EC) {
+	if (!inobject->attributeExists(CKA_KEY_TYPE) || inobject->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED) != CKK_EC) {
 		OSAttribute setKeyType((unsigned long)CKK_EC);
-		osobject->setAttribute(CKA_KEY_TYPE, setKeyType);
+		inobject->setAttribute(CKA_KEY_TYPE, setKeyType);
 	}
 
 	// Create parent
-	if (!P11PublicKeyObj::init(osobject)) return false;
+	if (!P11PublicKeyObj::init(inobject)) return false;
 
 	// Create attributes
 	P11Attribute* attrEcParams = new P11AttrEcParams(osobject,P11Attribute::ck3);
@@ -768,6 +821,8 @@ bool P11ECPublicKeyObj::init(OSObject *osobject)
 	)
 	{
 		ERROR_MSG("Could not initialize the attribute");
+		delete attrEcParams;
+		delete attrEcPoint;
 		return false;
 	}
 
@@ -786,18 +841,18 @@ P11DHPublicKeyObj::P11DHPublicKeyObj()
 }
 
 // Add attributes
-bool P11DHPublicKeyObj::init(OSObject *osobject)
+bool P11DHPublicKeyObj::init(OSObject *inobject)
 {
 	if (initialized) return true;
-	if (osobject == NULL) return false;
+	if (inobject == NULL) return false;
 
-	if (!osobject->attributeExists(CKA_KEY_TYPE) || osobject->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED) != CKK_DH) {
+	if (!inobject->attributeExists(CKA_KEY_TYPE) || inobject->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED) != CKK_DH) {
 		OSAttribute setKeyType((unsigned long)CKK_DH);
-		osobject->setAttribute(CKA_KEY_TYPE, setKeyType);
+		inobject->setAttribute(CKA_KEY_TYPE, setKeyType);
 	}
 
 	// Create parent
-	if (!P11PublicKeyObj::init(osobject)) return false;
+	if (!P11PublicKeyObj::init(inobject)) return false;
 
 	// Create attributes
 	P11Attribute* attrPrime = new P11AttrPrime(osobject,P11Attribute::ck3);
@@ -813,6 +868,9 @@ bool P11DHPublicKeyObj::init(OSObject *osobject)
 	)
 	{
 		ERROR_MSG("Could not initialize the attribute");
+		delete attrPrime;
+		delete attrBase;
+		delete attrValue;
 		return false;
 	}
 
@@ -832,18 +890,18 @@ P11GOSTPublicKeyObj::P11GOSTPublicKeyObj()
 }
 
 // Add attributes
-bool P11GOSTPublicKeyObj::init(OSObject *osobject)
+bool P11GOSTPublicKeyObj::init(OSObject *inobject)
 {
 	if (initialized) return true;
-	if (osobject == NULL) return false;
+	if (inobject == NULL) return false;
 
-	if (!osobject->attributeExists(CKA_KEY_TYPE) || osobject->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED) != CKK_GOSTR3410) {
+	if (!inobject->attributeExists(CKA_KEY_TYPE) || inobject->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED) != CKK_GOSTR3410) {
 		OSAttribute setKeyType((unsigned long)CKK_GOSTR3410);
-		osobject->setAttribute(CKA_KEY_TYPE, setKeyType);
+		inobject->setAttribute(CKA_KEY_TYPE, setKeyType);
 	}
 
 	// Create parent
-	if (!P11PublicKeyObj::init(osobject)) return false;
+	if (!P11PublicKeyObj::init(inobject)) return false;
 
 	// Create attributes
 	P11Attribute* attrValue = new P11AttrValue(osobject,P11Attribute::ck1|P11Attribute::ck4);
@@ -861,6 +919,10 @@ bool P11GOSTPublicKeyObj::init(OSObject *osobject)
 	)
 	{
 		ERROR_MSG("Could not initialize the attribute");
+		delete attrValue;
+		delete attrGostR3410Params;
+		delete attrGostR3411Params;
+		delete attrGost28147Params;
 		return false;
 	}
 
@@ -881,17 +943,18 @@ P11PrivateKeyObj::P11PrivateKeyObj()
 }
 
 // Add attributes
-bool P11PrivateKeyObj::init(OSObject *osobject)
+bool P11PrivateKeyObj::init(OSObject *inobject)
 {
 	if (initialized) return true;
+	if (inobject == NULL) return false;
 
-	if (!osobject->attributeExists(CKA_CLASS) || osobject->getUnsignedLongValue(CKA_CLASS, CKO_VENDOR_DEFINED) != CKO_PRIVATE_KEY) {
+	if (!inobject->attributeExists(CKA_CLASS) || inobject->getUnsignedLongValue(CKA_CLASS, CKO_VENDOR_DEFINED) != CKO_PRIVATE_KEY) {
 		OSAttribute setClass((unsigned long)CKO_PRIVATE_KEY);
-		osobject->setAttribute(CKA_CLASS, setClass);
+		inobject->setAttribute(CKA_CLASS, setClass);
 	}
 
 	// Create parent
-	if (!P11KeyObj::init(osobject)) return false;
+	if (!P11KeyObj::init(inobject)) return false;
 
 	// Create attributes
 	P11Attribute* attrSubject = new P11AttrSubject(osobject,P11Attribute::ck8);
@@ -926,6 +989,18 @@ bool P11PrivateKeyObj::init(OSObject *osobject)
 	)
 	{
 		ERROR_MSG("Could not initialize the attribute");
+		delete attrSubject;
+		delete attrSensitive;
+		delete attrDecrypt;
+		delete attrSign;
+		delete attrSignRecover;
+		delete attrUnwrap;
+		delete attrExtractable;
+		delete attrAlwaysSensitive;
+		delete attrNeverExtractable;
+		delete attrWrapWithTrusted;
+		delete attrUnwrapTemplate;
+		delete attrAlwaysAuthenticate;
 		return false;
 	}
 
@@ -954,17 +1029,18 @@ P11RSAPrivateKeyObj::P11RSAPrivateKeyObj()
 }
 
 // Add attributes
-bool P11RSAPrivateKeyObj::init(OSObject *osobject)
+bool P11RSAPrivateKeyObj::init(OSObject *inobject)
 {
-	// Create parent
-	if (!P11PrivateKeyObj::init(osobject)) return false;
+	if (initialized) return true;
+	if (inobject == NULL) return false;
 
-	if (!osobject->attributeExists(CKA_KEY_TYPE) || osobject->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED) != CKK_RSA) {
+	if (!inobject->attributeExists(CKA_KEY_TYPE) || inobject->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED) != CKK_RSA) {
 		OSAttribute setKeyType((unsigned long)CKK_RSA);
-		osobject->setAttribute(CKA_KEY_TYPE, setKeyType);
+		inobject->setAttribute(CKA_KEY_TYPE, setKeyType);
 	}
 
-	if (initialized) return true;
+	// Create parent
+	if (!P11PrivateKeyObj::init(inobject)) return false;
 
 	// Create attributes
 	P11Attribute* attrModulus = new P11AttrModulus(osobject,P11Attribute::ck6);
@@ -990,6 +1066,14 @@ bool P11RSAPrivateKeyObj::init(OSObject *osobject)
 	)
 	{
 		ERROR_MSG("Could not initialize the attribute");
+		delete attrModulus;
+		delete attrPublicExponent;
+		delete attrPrivateExponent;
+		delete attrPrime1;
+		delete attrPrime2;
+		delete attrExponent1;
+		delete attrExponent2;
+		delete attrCoefficient;
 		return false;
 	}
 
@@ -1014,17 +1098,18 @@ P11DSAPrivateKeyObj::P11DSAPrivateKeyObj()
 }
 
 // Add attributes
-bool P11DSAPrivateKeyObj::init(OSObject *osobject)
+bool P11DSAPrivateKeyObj::init(OSObject *inobject)
 {
-	// Create parent
-	if (!P11PrivateKeyObj::init(osobject)) return false;
+	if (initialized) return true;
+	if (inobject == NULL) return false;
 
-	if (!osobject->attributeExists(CKA_KEY_TYPE) || osobject->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED) != CKK_DSA) {
+	if (!inobject->attributeExists(CKA_KEY_TYPE) || inobject->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED) != CKK_DSA) {
 		OSAttribute setKeyType((unsigned long)CKK_DSA);
-		osobject->setAttribute(CKA_KEY_TYPE, setKeyType);
+		inobject->setAttribute(CKA_KEY_TYPE, setKeyType);
 	}
 
-	if (initialized) return true;
+	// Create parent
+	if (!P11PrivateKeyObj::init(inobject)) return false;
 
 	// Create attributes
 	P11Attribute* attrPrime = new P11AttrPrime(osobject,P11Attribute::ck4|P11Attribute::ck6);
@@ -1042,6 +1127,10 @@ bool P11DSAPrivateKeyObj::init(OSObject *osobject)
 	)
 	{
 		ERROR_MSG("Could not initialize the attribute");
+		delete attrPrime;
+		delete attrSubPrime;
+		delete attrBase;
+		delete attrValue;
 		return false;
 	}
 
@@ -1062,17 +1151,18 @@ P11ECPrivateKeyObj::P11ECPrivateKeyObj()
 }
 
 // Add attributes
-bool P11ECPrivateKeyObj::init(OSObject *osobject)
+bool P11ECPrivateKeyObj::init(OSObject *inobject)
 {
-	// Create parent
-	if (!P11PrivateKeyObj::init(osobject)) return false;
+	if (initialized) return true;
+	if (inobject == NULL) return false;
 
-	if (!osobject->attributeExists(CKA_KEY_TYPE) || osobject->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED) != CKK_EC) {
+	if (!inobject->attributeExists(CKA_KEY_TYPE) || inobject->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED) != CKK_EC) {
 		OSAttribute setKeyType((unsigned long)CKK_EC);
-		osobject->setAttribute(CKA_KEY_TYPE, setKeyType);
+		inobject->setAttribute(CKA_KEY_TYPE, setKeyType);
 	}
 
-	if (initialized) return true;
+	// Create parent
+	if (!P11PrivateKeyObj::init(inobject)) return false;
 
 	// Create attributes
 	P11Attribute* attrEcParams = new P11AttrEcParams(osobject,P11Attribute::ck4|P11Attribute::ck6);
@@ -1086,6 +1176,8 @@ bool P11ECPrivateKeyObj::init(OSObject *osobject)
 	)
 	{
 		ERROR_MSG("Could not initialize the attribute");
+		delete attrEcParams;
+		delete attrValue;
 		return false;
 	}
 
@@ -1104,17 +1196,18 @@ P11DHPrivateKeyObj::P11DHPrivateKeyObj()
 }
 
 // Add attributes
-bool P11DHPrivateKeyObj::init(OSObject *osobject)
+bool P11DHPrivateKeyObj::init(OSObject *inobject)
 {
-	// Create parent
-	if (!P11PrivateKeyObj::init(osobject)) return false;
+	if (initialized) return true;
+	if (inobject == NULL) return false;
 
-	if (!osobject->attributeExists(CKA_KEY_TYPE) || osobject->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED) != CKK_DH) {
+	if (!inobject->attributeExists(CKA_KEY_TYPE) || inobject->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED) != CKK_DH) {
 		OSAttribute setKeyType((unsigned long)CKK_DH);
-		osobject->setAttribute(CKA_KEY_TYPE, setKeyType);
+		inobject->setAttribute(CKA_KEY_TYPE, setKeyType);
 	}
 
-	if (initialized) return true;
+	// Create parent
+	if (!P11PrivateKeyObj::init(inobject)) return false;
 
 	// Create attributes
 	P11Attribute* attrPrime = new P11AttrPrime(osobject,P11Attribute::ck4|P11Attribute::ck6);
@@ -1132,6 +1225,10 @@ bool P11DHPrivateKeyObj::init(OSObject *osobject)
 	)
 	{
 		ERROR_MSG("Could not initialize the attribute");
+		delete attrPrime;
+		delete attrBase;
+		delete attrValue;
+		delete attrValueBits;
 		return false;
 	}
 
@@ -1152,17 +1249,18 @@ P11GOSTPrivateKeyObj::P11GOSTPrivateKeyObj()
 }
 
 // Add attributes
-bool P11GOSTPrivateKeyObj::init(OSObject *osobject)
+bool P11GOSTPrivateKeyObj::init(OSObject *inobject)
 {
-	// Create parent
-	if (!P11PrivateKeyObj::init(osobject)) return false;
+	if (initialized) return true;
+	if (inobject == NULL) return false;
 
-	if (!osobject->attributeExists(CKA_KEY_TYPE) || osobject->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED) != CKK_GOSTR3410) {
+	if (!inobject->attributeExists(CKA_KEY_TYPE) || inobject->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED) != CKK_GOSTR3410) {
 		OSAttribute setKeyType((unsigned long)CKK_GOSTR3410);
-		osobject->setAttribute(CKA_KEY_TYPE, setKeyType);
+		inobject->setAttribute(CKA_KEY_TYPE, setKeyType);
 	}
 
-	if (initialized) return true;
+	// Create parent
+	if (!P11PrivateKeyObj::init(inobject)) return false;
 
 	// Create attributes
 	P11Attribute* attrValue = new P11AttrValue(osobject,P11Attribute::ck1|P11Attribute::ck4|P11Attribute::ck6|P11Attribute::ck7);
@@ -1180,6 +1278,10 @@ bool P11GOSTPrivateKeyObj::init(OSObject *osobject)
 	)
 	{
 		ERROR_MSG("Could not initialize the attribute");
+		delete attrValue;
+		delete attrGostR3410Params;
+		delete attrGostR3411Params;
+		delete attrGost28147Params;
 		return false;
 	}
 
@@ -1200,18 +1302,18 @@ P11SecretKeyObj::P11SecretKeyObj()
 }
 
 // Add attributes
-bool P11SecretKeyObj::init(OSObject *osobject)
+bool P11SecretKeyObj::init(OSObject *inobject)
 {
 	if (initialized) return true;
-	if (osobject == NULL) return false;
+	if (inobject == NULL) return false;
 
-	if (!osobject->attributeExists(CKA_CLASS) || osobject->getUnsignedLongValue(CKA_CLASS, CKO_VENDOR_DEFINED) != CKO_SECRET_KEY) {
+	if (!inobject->attributeExists(CKA_CLASS) || inobject->getUnsignedLongValue(CKA_CLASS, CKO_VENDOR_DEFINED) != CKO_SECRET_KEY) {
 		OSAttribute setClass((unsigned long)CKO_SECRET_KEY);
-		osobject->setAttribute(CKA_CLASS, setClass);
+		inobject->setAttribute(CKA_CLASS, setClass);
 	}
 
 	// Create parent
-	if (!P11KeyObj::init(osobject)) return false;
+	if (!P11KeyObj::init(inobject)) return false;
 
 	// Create attributes
 	P11Attribute* attrSensitive = new P11AttrSensitive(osobject);
@@ -1252,6 +1354,21 @@ bool P11SecretKeyObj::init(OSObject *osobject)
 	)
 	{
 		ERROR_MSG("Could not initialize the attribute");
+		delete attrSensitive;
+		delete attrEncrypt;
+		delete attrDecrypt;
+		delete attrSign;
+		delete attrVerify;
+		delete attrWrap;
+		delete attrUnwrap;
+		delete attrExtractable;
+		delete attrAlwaysSensitive;
+		delete attrNeverExtractable;
+		delete attrCheckValue;
+		delete attrWrapWithTrusted;
+		delete attrTrusted;
+		delete attrWrapTemplate;
+		delete attrUnwrapTemplate;
 		return false;
 	}
 
@@ -1280,21 +1397,22 @@ bool P11SecretKeyObj::init(OSObject *osobject)
 P11GenericSecretKeyObj::P11GenericSecretKeyObj()
 {
 	initialized = false;
+	keytype = CKK_VENDOR_DEFINED;
 }
 
 // Add attributes
-bool P11GenericSecretKeyObj::init(OSObject *osobject)
+bool P11GenericSecretKeyObj::init(OSObject *inobject)
 {
 	if (initialized) return true;
-	if (osobject == NULL) return false;
+	if (inobject == NULL) return false;
 
-	if (!osobject->attributeExists(CKA_KEY_TYPE) || osobject->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED) != keytype) {
+	if (!inobject->attributeExists(CKA_KEY_TYPE) || inobject->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED) != keytype) {
 		OSAttribute setKeyType(keytype);
-		osobject->setAttribute(CKA_KEY_TYPE, setKeyType);
+		inobject->setAttribute(CKA_KEY_TYPE, setKeyType);
 	}
 
 	// Create parent
-	if (!P11SecretKeyObj::init(osobject)) return false;
+	if (!P11SecretKeyObj::init(inobject)) return false;
 
 	// Create attributes
 	P11Attribute* attrValue = new P11AttrValue(osobject,P11Attribute::ck1|P11Attribute::ck4|P11Attribute::ck6|P11Attribute::ck7);
@@ -1308,6 +1426,8 @@ bool P11GenericSecretKeyObj::init(OSObject *osobject)
 	)
 	{
 		ERROR_MSG("Could not initialize the attribute");
+		delete attrValue;
+		delete attrValueLen;
 		return false;
 	}
 
@@ -1320,11 +1440,11 @@ bool P11GenericSecretKeyObj::init(OSObject *osobject)
 }
 
 // Set Key Type
-bool P11GenericSecretKeyObj::setKeyType(CK_KEY_TYPE keytype)
+bool P11GenericSecretKeyObj::setKeyType(CK_KEY_TYPE inKeytype)
 {
 	if (!initialized)
 	{
-		this->keytype = keytype;
+		keytype = inKeytype;
 		return true;
 	}
 	else
@@ -1334,7 +1454,7 @@ bool P11GenericSecretKeyObj::setKeyType(CK_KEY_TYPE keytype)
 // Get Key Type
 CK_KEY_TYPE P11GenericSecretKeyObj::getKeyType()
 {
-	return this->keytype;
+	return keytype;
 }
 
 // Constructor
@@ -1344,18 +1464,18 @@ P11AESSecretKeyObj::P11AESSecretKeyObj()
 }
 
 // Add attributes
-bool P11AESSecretKeyObj::init(OSObject *osobject)
+bool P11AESSecretKeyObj::init(OSObject *inobject)
 {
 	if (initialized) return true;
-	if (osobject == NULL) return false;
+	if (inobject == NULL) return false;
 
-	if (!osobject->attributeExists(CKA_KEY_TYPE) || osobject->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED) != CKK_AES) {
+	if (!inobject->attributeExists(CKA_KEY_TYPE) || inobject->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED) != CKK_AES) {
 		OSAttribute setKeyType((unsigned long)CKK_AES);
-		osobject->setAttribute(CKA_KEY_TYPE, setKeyType);
+		inobject->setAttribute(CKA_KEY_TYPE, setKeyType);
 	}
 
 	// Create parent
-	if (!P11SecretKeyObj::init(osobject)) return false;
+	if (!P11SecretKeyObj::init(inobject)) return false;
 
 	// Create attributes
 	P11Attribute* attrValue = new P11AttrValue(osobject,P11Attribute::ck1|P11Attribute::ck4|P11Attribute::ck6|P11Attribute::ck7);
@@ -1369,6 +1489,8 @@ bool P11AESSecretKeyObj::init(OSObject *osobject)
 	)
 	{
 		ERROR_MSG("Could not initialize the attribute");
+		delete attrValue;
+		delete attrValueLen;
 		return false;
 	}
 
@@ -1384,21 +1506,22 @@ bool P11AESSecretKeyObj::init(OSObject *osobject)
 P11DESSecretKeyObj::P11DESSecretKeyObj()
 {
 	initialized = false;
+	keytype = CKK_VENDOR_DEFINED;
 }
 
 // Add attributes
-bool P11DESSecretKeyObj::init(OSObject *osobject)
+bool P11DESSecretKeyObj::init(OSObject *inobject)
 {
 	if (initialized) return true;
-	if (osobject == NULL) return false;
+	if (inobject == NULL) return false;
 
-	if (!osobject->attributeExists(CKA_KEY_TYPE) || osobject->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED) != keytype) {
+	if (!inobject->attributeExists(CKA_KEY_TYPE) || inobject->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED) != keytype) {
 		OSAttribute setKeyType(keytype);
-		osobject->setAttribute(CKA_KEY_TYPE, setKeyType);
+		inobject->setAttribute(CKA_KEY_TYPE, setKeyType);
 	}
 
 	// Create parent
-	if (!P11SecretKeyObj::init(osobject)) return false;
+	if (!P11SecretKeyObj::init(inobject)) return false;
 
 	// Create attributes
 	P11Attribute* attrValue = new P11AttrValue(osobject,P11Attribute::ck1|P11Attribute::ck4|P11Attribute::ck6|P11Attribute::ck7);
@@ -1407,6 +1530,7 @@ bool P11DESSecretKeyObj::init(OSObject *osobject)
 	if (!attrValue->init())
 	{
 		ERROR_MSG("Could not initialize the attribute");
+		delete attrValue;
 		return false;
 	}
 
@@ -1418,11 +1542,11 @@ bool P11DESSecretKeyObj::init(OSObject *osobject)
 }
 
 // Set Key Type
-bool P11DESSecretKeyObj::setKeyType(CK_KEY_TYPE keytype)
+bool P11DESSecretKeyObj::setKeyType(CK_KEY_TYPE inKeytype)
 {
 	if (!initialized)
 	{
-		this->keytype = keytype;
+		keytype = inKeytype;
 		return true;
 	}
 	else
@@ -1432,7 +1556,7 @@ bool P11DESSecretKeyObj::setKeyType(CK_KEY_TYPE keytype)
 // Get Key Type
 CK_KEY_TYPE P11DESSecretKeyObj::getKeyType()
 {
-	return this->keytype;
+	return keytype;
 }
 
 // Constructor
@@ -1442,18 +1566,18 @@ P11GOSTSecretKeyObj::P11GOSTSecretKeyObj()
 }
 
 // Add attributes
-bool P11GOSTSecretKeyObj::init(OSObject *osobject)
+bool P11GOSTSecretKeyObj::init(OSObject *inobject)
 {
 	if (initialized) return true;
-	if (osobject == NULL) return false;
+	if (inobject == NULL) return false;
 
-	if (!osobject->attributeExists(CKA_KEY_TYPE) || osobject->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED) != CKK_GOST28147) {
+	if (!inobject->attributeExists(CKA_KEY_TYPE) || inobject->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED) != CKK_GOST28147) {
 		OSAttribute setKeyType((unsigned long)CKK_GOST28147);
-		osobject->setAttribute(CKA_KEY_TYPE, setKeyType);
+		inobject->setAttribute(CKA_KEY_TYPE, setKeyType);
 	}
 
 	// Create parent
-	if (!P11SecretKeyObj::init(osobject)) return false;
+	if (!P11SecretKeyObj::init(inobject)) return false;
 
 	// Create attributes
 	P11Attribute* attrValue = new P11AttrValue(osobject,P11Attribute::ck1|P11Attribute::ck4|P11Attribute::ck6|P11Attribute::ck7);
@@ -1467,6 +1591,8 @@ bool P11GOSTSecretKeyObj::init(OSObject *osobject)
 	)
 	{
 		ERROR_MSG("Could not initialize the attribute");
+		delete attrValue;
+		delete attrGost28147Params;
 		return false;
 	}
 
@@ -1485,18 +1611,18 @@ P11DomainObj::P11DomainObj()
 }
 
 // Add attributes
-bool P11DomainObj::init(OSObject *osobject)
+bool P11DomainObj::init(OSObject *inobject)
 {
 	if (initialized) return true;
-	if (osobject == NULL) return false;
+	if (inobject == NULL) return false;
 
-	if (!osobject->attributeExists(CKA_CLASS) || osobject->getUnsignedLongValue(CKA_CLASS, CKO_VENDOR_DEFINED) != CKO_DOMAIN_PARAMETERS) {
+	if (!inobject->attributeExists(CKA_CLASS) || inobject->getUnsignedLongValue(CKA_CLASS, CKO_VENDOR_DEFINED) != CKO_DOMAIN_PARAMETERS) {
 		OSAttribute setClass((unsigned long)CKO_DOMAIN_PARAMETERS);
-		osobject->setAttribute(CKA_CLASS, setClass);
+		inobject->setAttribute(CKA_CLASS, setClass);
 	}
 
 	// Create parent
-	if (!P11Object::init(osobject)) return false;
+	if (!P11Object::init(inobject)) return false;
 
 	// Create attributes
 	P11Attribute* attrKeyType = new P11AttrKeyType(osobject);
@@ -1510,6 +1636,8 @@ bool P11DomainObj::init(OSObject *osobject)
 	)
 	{
 		ERROR_MSG("Could not initialize the attribute");
+		delete attrKeyType;
+		delete attrLocal;
 		return false;
 	}
 
@@ -1528,18 +1656,18 @@ P11DSADomainObj::P11DSADomainObj()
 }
 
 // Add attributes
-bool P11DSADomainObj::init(OSObject *osobject)
+bool P11DSADomainObj::init(OSObject *inobject)
 {
 	if (initialized) return true;
-	if (osobject == NULL) return false;
+	if (inobject == NULL) return false;
 
-	if (!osobject->attributeExists(CKA_KEY_TYPE) || osobject->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED) != CKK_DSA) {
+	if (!inobject->attributeExists(CKA_KEY_TYPE) || inobject->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED) != CKK_DSA) {
 		OSAttribute setKeyType((unsigned long)CKK_DSA);
-		osobject->setAttribute(CKA_KEY_TYPE, setKeyType);
+		inobject->setAttribute(CKA_KEY_TYPE, setKeyType);
 	}
 
 	// Create parent
-	if (!P11DomainObj::init(osobject)) return false;
+	if (!P11DomainObj::init(inobject)) return false;
 
 	// Create attributes
 	P11Attribute* attrPrime = new P11AttrPrime(osobject,P11Attribute::ck4);
@@ -1557,6 +1685,10 @@ bool P11DSADomainObj::init(OSObject *osobject)
 	)
 	{
 		ERROR_MSG("Could not initialize the attribute");
+		delete attrPrime;
+		delete attrSubPrime;
+		delete attrBase;
+		delete attrPrimeBits;
 		return false;
 	}
 
@@ -1577,18 +1709,18 @@ P11DHDomainObj::P11DHDomainObj()
 }
 
 // Add attributes
-bool P11DHDomainObj::init(OSObject *osobject)
+bool P11DHDomainObj::init(OSObject *inobject)
 {
 	if (initialized) return true;
-	if (osobject == NULL) return false;
+	if (inobject == NULL) return false;
 
-	if (!osobject->attributeExists(CKA_KEY_TYPE) || osobject->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED) != CKK_DH) {
+	if (!inobject->attributeExists(CKA_KEY_TYPE) || inobject->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED) != CKK_DH) {
 		OSAttribute setKeyType((unsigned long)CKK_DH);
-		osobject->setAttribute(CKA_KEY_TYPE, setKeyType);
+		inobject->setAttribute(CKA_KEY_TYPE, setKeyType);
 	}
 
 	// Create parent
-	if (!P11DomainObj::init(osobject)) return false;
+	if (!P11DomainObj::init(inobject)) return false;
 
 	// Create attributes
 	P11Attribute* attrPrime = new P11AttrPrime(osobject,P11Attribute::ck4);
@@ -1604,6 +1736,9 @@ bool P11DHDomainObj::init(OSObject *osobject)
 	)
 	{
 		ERROR_MSG("Could not initialize the attribute");
+		delete attrPrime;
+		delete attrBase;
+		delete attrPrimeBits;
 		return false;
 	}
 

@@ -42,6 +42,7 @@
 #include "Directory.h"
 #include "OSAttribute.h"
 #include "OSAttributes.h"
+#include "CryptoFactory.h"
 #include "cryptoki.h"
 
 CPPUNIT_TEST_SUITE_REGISTRATION(SlotManagerTests);
@@ -59,6 +60,7 @@ void SlotManagerTests::tearDown()
 	CPPUNIT_ASSERT(!system("rmdir /s /q testdir 2> nul"));
 #endif
 
+	CryptoFactory::reset();
 	SecureMemoryRegistry::reset();
 }
 

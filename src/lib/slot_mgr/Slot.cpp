@@ -39,18 +39,18 @@
 #include <string.h>
 
 // Constructor
-Slot::Slot(ObjectStore* objectStore, size_t slotID, ObjectStoreToken* token /* = NULL */)
+Slot::Slot(ObjectStore* inObjectStore, size_t inSlotID, ObjectStoreToken* inToken /* = NULL */)
 {
-	this->objectStore = objectStore;
-	this->slotID = slotID;
-	
-	if (token != NULL)
+	objectStore = inObjectStore;
+	slotID = inSlotID;
+
+	if (inToken != NULL)
 	{
-		this->token = new Token(token);
+		token = new Token(inToken);
 	}
 	else
 	{
-		this->token = new Token();
+		token = new Token();
 	}
 }
 
@@ -88,8 +88,8 @@ CK_RV Slot::getSlotInfo(CK_SLOT_INFO_PTR info)
 
 	memset(info->slotDescription, ' ', 64);
 	memset(info->manufacturerID, ' ', 32);
-	strncpy((char*) info->slotDescription, description, strlen(description));
-	strncpy((char*) info->manufacturerID, mfgID, strlen(mfgID));
+	memcpy(info->slotDescription, description, strlen(description));
+	memcpy(info->manufacturerID, mfgID, strlen(mfgID));
 
 	info->flags = CKF_TOKEN_PRESENT;
 

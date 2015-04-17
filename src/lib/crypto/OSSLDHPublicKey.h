@@ -42,9 +42,9 @@ class OSSLDHPublicKey : public DHPublicKey
 public:
 	// Constructors
 	OSSLDHPublicKey();
-	
+
 	OSSLDHPublicKey(const DH* inDH);
-	
+
 	// Destructor
 	virtual ~OSSLDHPublicKey();
 
@@ -52,15 +52,15 @@ public:
 	static const char* type;
 
 	// Check if the key is of the given type
-	virtual bool isOfType(const char* type);
+	virtual bool isOfType(const char* inType);
 
 	// Setters for the DH public key components
-	virtual void setP(const ByteString& p);
-	virtual void setG(const ByteString& g);
-	virtual void setY(const ByteString& y);
+	virtual void setP(const ByteString& inP);
+	virtual void setG(const ByteString& inG);
+	virtual void setY(const ByteString& inY);
 
 	// Set from OpenSSL representation
-	virtual void setFromOSSL(const DH* dh);
+	virtual void setFromOSSL(const DH* inDH);
 
 	// Retrieve the OpenSSL representation of the key
 	DH* getOSSLKey();

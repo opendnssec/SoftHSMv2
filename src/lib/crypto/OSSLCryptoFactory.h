@@ -55,6 +55,11 @@ public:
 	// This will destroy the one-and-only instance.
 	static void reset();
 
+#ifdef WITH_FIPS
+	// Return the FIPS 140-2 selftest status
+	virtual bool getFipsSelfTestStatus() const;
+#endif
+
 	// Create a concrete instance of a symmetric algorithm
 	virtual SymmetricAlgorithm* getSymmetricAlgorithm(SymAlgo::Type algorithm);
 
@@ -83,7 +88,16 @@ private:
 	OSSLCryptoFactory();
 
 	// The one-and-only instance
+#ifdef HAVE_CXX11
+	static std::unique_ptr<OSSLCryptoFactory> instance;
+#else
 	static std::auto_ptr<OSSLCryptoFactory> instance;
+#endif
+
+#ifdef WITH_FIPS
+	// The FIPS 140-2 selftest status
+	static bool FipsSelfTestStatus;
+#endif
 
 	// The one-and-only RNG instance
 	RNG* rng;

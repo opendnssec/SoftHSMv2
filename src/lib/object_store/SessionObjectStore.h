@@ -49,37 +49,32 @@
 class SessionObjectStore
 {
 public:
-#if HAVE_SOS_SINGLETON
-    // Get the one-and-only instance
-	static SessionObjectStore* i();
-#else
-    // Constructor
-    SessionObjectStore();
-#endif
+	// Constructor
+	SessionObjectStore();
 
 	// Retrieve objects
 	std::set<SessionObject*> getObjects();
 
-    // Insert the session objects for the given slotID into the given OSObject set
-    void getObjects(CK_SLOT_ID slotID, std::set<OSObject*> &objects);
+	// Insert the session objects for the given slotID into the given OSObject set
+	void getObjects(CK_SLOT_ID slotID, std::set<OSObject*> &inObjects);
 
 	// Create a new object
-    SessionObject* createObject(CK_SLOT_ID slotID, CK_SESSION_HANDLE hSession, bool isPrivate = false);
+	SessionObject* createObject(CK_SLOT_ID slotID, CK_SESSION_HANDLE hSession, bool isPrivate = false);
 
 	// Delete an object
 	bool deleteObject(SessionObject* object);
 
-    // Indicate that a session has been closed; invalidates all objects
-    // associated with this session.
+	// Indicate that a session has been closed; invalidates all objects
+	// associated with this session.
 	void sessionClosed(CK_SESSION_HANDLE hSession);
 
-    // Indicate that for a token all sessions have been closed.
-    // Invalidates all objects associated with the token.
-    void allSessionsClosed(CK_SLOT_ID slotID);
+	// Indicate that for a token all sessions have been closed.
+	// Invalidates all objects associated with the token.
+	void allSessionsClosed(CK_SLOT_ID slotID);
 
-    // Indicate that a token has been logged out; invalidates all private
-    // objects associated with this token.
-    void tokenLoggedOut(CK_SLOT_ID slotID);
+	// Indicate that a token has been logged out; invalidates all private
+	// objects associated with this token.
+	void tokenLoggedOut(CK_SLOT_ID slotID);
 
 	// Destructor
 	virtual ~SessionObjectStore();
@@ -88,15 +83,7 @@ public:
 	void clearStore();
 
 private:
-#if HAVE_SOS_SINGLETON
-    // Constructor
-    SessionObjectStore();
-
-	// The one-and-only instance
-	static std::auto_ptr<SessionObjectStore> _instance;
-#endif
-
-    // The current objects in the store
+	// The current objects in the store
 	std::set<SessionObject*> objects;
 
 	// All the objects ever kept in the store

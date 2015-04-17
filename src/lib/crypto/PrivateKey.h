@@ -50,7 +50,7 @@ public:
 	virtual ~PrivateKey() { }
 
 	// Check if the private key is of the given type
-	virtual bool isOfType(const char* type) = 0;
+	virtual bool isOfType(const char* inType) = 0;
 
 	// Get the bit length
 	virtual unsigned long getBitLength() const = 0;

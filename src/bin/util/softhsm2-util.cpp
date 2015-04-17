@@ -61,7 +61,7 @@ void usage()
 	printf("                    Use with --file-pin, --slot, --label, --id,\n");
 	printf("                    --no-public-key, and --pin.\n");
 	printf("  --init-token      Initialize the token at a given slot.\n");
-	printf("                    Use with --slot, --label, --so-pin, and --pin.\n");
+	printf("                    Use with --slot or --free, --label, --so-pin, and --pin.\n");
 	printf("                    WARNING: Any content in token token will be erased.\n");
 	printf("  --show-slots      Display all the available slots.\n");
 	printf("  -v                Show version info.\n");
@@ -69,6 +69,7 @@ void usage()
 	printf("Options:\n");
 	printf("  --file-pin <PIN>  Supply a PIN if the file is encrypted.\n");
 	printf("  --force           Used to override a warning.\n");
+	printf("  --free            Initialize the first free token.\n");
 	printf("  --id <hex>        Defines the ID of the object. Hexadecimal characters.\n");
 	printf("                    Use with --force if multiple key pairs may share\n");
 	printf("                    the same ID.\n");
@@ -84,6 +85,7 @@ void usage()
 enum {
 	OPT_FILE_PIN = 0x100,
 	OPT_FORCE,
+	OPT_FREE,
 	OPT_HELP,
 	OPT_ID,
 	OPT_IMPORT,
@@ -102,6 +104,7 @@ enum {
 static const struct option long_options[] = {
 	{ "file-pin",        1, NULL, OPT_FILE_PIN },
 	{ "force",           0, NULL, OPT_FORCE },
+	{ "free",            0, NULL, OPT_FREE },
 	{ "help",            0, NULL, OPT_HELP },
 	{ "id",              1, NULL, OPT_ID },
 	{ "import",          1, NULL, OPT_IMPORT },
@@ -134,7 +137,9 @@ int main(int argc, char* argv[])
 	char* module = NULL;
 	char* objectID = NULL;
 	char* slot = NULL;
+	char* errMsg = NULL;
 	int forceExec = 0;
+	int freeToken = 0;
 	int noPublicKey = 0;
 
 	int doInitToken = 0;
@@ -191,6 +196,9 @@ int main(int argc, char* argv[])
 			case OPT_FORCE:
 				forceExec = 1;
 				break;
+			case OPT_FREE:
+				freeToken = 1;
+				break;
 			case OPT_VERSION:
 			case 'v':
 				printf("%s\n", PACKAGE_VERSION);
@@ -213,10 +221,10 @@ int main(int argc, char* argv[])
 	else
 	{
 		// Get a pointer to the function list for PKCS#11 library
-		CK_C_GetFunctionList pGetFunctionList = loadLibrary(module, &moduleHandle);
+		CK_C_GetFunctionList pGetFunctionList = loadLibrary(module, &moduleHandle, &errMsg);
 		if (!pGetFunctionList)
 		{
-			fprintf(stderr, "ERROR: Could not load the library.\n");
+			fprintf(stderr, "ERROR: Could not load the library: %s\n", errMsg);
 			exit(1);
 		}
 
@@ -224,8 +232,8 @@ int main(int argc, char* argv[])
 		(*pGetFunctionList)(&p11);
 
 		// Initialize the library
-		CK_RV rv = p11->C_Initialize(NULL_PTR);
-		if (rv != CKR_OK)
+		CK_RV p11rv = p11->C_Initialize(NULL_PTR);
+		if (p11rv != CKR_OK)
 		{
 			fprintf(stderr, "ERROR: Could not initialize the library.\n");
 			exit(1);
@@ -235,7 +243,7 @@ int main(int argc, char* argv[])
 	// We should create the token.
 	if (doInitToken)
 	{
-		rv = initToken(slot, label, soPIN, userPIN);
+		rv = initToken(slot, freeToken, label, soPIN, userPIN);
 	}
 
 	// Show all available slots
@@ -262,15 +270,21 @@ int main(int argc, char* argv[])
 }
 
 // Initialize the token
-int initToken(char* slot, char* label, char* soPIN, char* userPIN)
+int initToken(char* slot, int freeToken, char* label, char* soPIN, char* userPIN)
 {
 	char so_pin_copy[MAX_PIN_LEN+1];
 	char user_pin_copy[MAX_PIN_LEN+1];
 
-	if (slot == NULL)
+	if (slot != NULL && freeToken == 1)
+	{
+		fprintf(stderr, "ERROR: Select --slot <number> or --free\n");
+		return 1;
+	}
+
+	if (slot == NULL && freeToken != 1)
 	{
 		fprintf(stderr, "ERROR: A slot number must be supplied. "
-				"Use --slot <number>\n");
+				"Use --slot <number> or --free\n");
 		return 1;
 	}
 
@@ -293,10 +307,28 @@ int initToken(char* slot, char* label, char* soPIN, char* userPIN)
 	getPW(userPIN, user_pin_copy, CKU_USER);
 
 	// Load the variables
-	CK_SLOT_ID slotID = atoi(slot);
+	CK_SLOT_ID slotID = 0;
 	CK_UTF8CHAR paddedLabel[32];
 	memset(paddedLabel, ' ', sizeof(paddedLabel));
 	memcpy(paddedLabel, label, strlen(label));
+
+	if (slot != NULL)
+	{
+		int slotNumber = atoi(slot);
+		if (slotNumber < 0)
+		{
+			fprintf(stderr, "ERROR: The slot number is negative.\n");
+			return 1;
+		}
+
+		slotID = slotNumber;
+	}
+	else
+	{
+		CK_SLOT_ID slotNumber = 0;
+		if (getFirstFreeToken(slotNumber) != 0) return 1;
+		slotID = slotNumber;
+	}
 
 	CK_RV rv = p11->C_InitToken(slotID, (CK_UTF8CHAR_PTR)so_pin_copy, strlen(so_pin_copy), paddedLabel);
 
@@ -351,6 +383,60 @@ int initToken(char* slot, char* label, char* soPIN, char* userPIN)
 	return 0;
 }
 
+// Search and return the first free token
+int getFirstFreeToken(CK_SLOT_ID &slot)
+{
+	CK_ULONG ulSlotCount;
+	CK_RV rv = p11->C_GetSlotList(CK_TRUE, NULL_PTR, &ulSlotCount);
+	if (rv != CKR_OK)
+	{
+		fprintf(stderr, "ERROR: Could not get the number of slots.\n");
+		return -1;
+	}
+
+	CK_SLOT_ID_PTR pSlotList = (CK_SLOT_ID_PTR) malloc(ulSlotCount*sizeof(CK_SLOT_ID));
+	if (!pSlotList)
+	{
+		fprintf(stderr, "ERROR: Could not allocate memory.\n");
+		return -1;
+	}
+
+	rv = p11->C_GetSlotList(CK_FALSE, pSlotList, &ulSlotCount);
+	if (rv != CKR_OK)
+	{
+		fprintf(stderr, "ERROR: Could not get the slot list.\n");
+		free(pSlotList);
+		return -1;
+	}
+
+	for (CK_ULONG i = 0; i < ulSlotCount; i++)
+	{
+		CK_TOKEN_INFO tokenInfo;
+
+		rv = p11->C_GetTokenInfo(pSlotList[i], &tokenInfo);
+		if (rv != CKR_OK)
+		{
+			fprintf(stderr, "ERROR: Could not get info about the token in slot %lu.\n",
+				pSlotList[i]);
+			free(pSlotList);
+			return -1;
+		}
+
+		if ((tokenInfo.flags & CKF_TOKEN_INITIALIZED) == 0)
+		{
+			printf("Token %lu is free.\n", pSlotList[i]);
+			slot = pSlotList[i];
+			free(pSlotList);
+			return 0;
+		}
+	}
+
+	free(pSlotList);
+
+	fprintf(stderr, "ERROR: Could not find the first free token.\n");
+	return -1;
+}
+
 // Show what slots are available
 int showSlots()
 {
@@ -379,7 +465,7 @@ int showSlots()
 
 	printf("Available slots:\n");
 
-	for (unsigned int i = 0; i < ulSlotCount; i++)
+	for (CK_ULONG i = 0; i < ulSlotCount; i++)
 	{
 		CK_SLOT_INFO slotInfo;
 		CK_TOKEN_INFO tokenInfo;

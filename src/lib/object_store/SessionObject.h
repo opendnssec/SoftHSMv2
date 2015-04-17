@@ -49,7 +49,7 @@ class SessionObject : public OSObject
 {
 public:
 	// Constructor
-	SessionObject(SessionObjectStore* parent, CK_SLOT_ID slotID, CK_SESSION_HANDLE hSession, bool isPrivate = false);
+	SessionObject(SessionObjectStore* inParent, CK_SLOT_ID inSlotID, CK_SESSION_HANDLE inHSession, bool inIsPrivate = false);
 
 	// Destructor
 	virtual ~SessionObject();
@@ -72,20 +72,20 @@ public:
 	// The validity state of the object
 	virtual bool isValid();
 
-	bool hasSlotID(CK_SLOT_ID slotID);
+	bool hasSlotID(CK_SLOT_ID inSlotID);
 
 	// Called by the session object store when a session is closed. If it's the
 	// session this object was associated with, the function returns true and the
 	// object is invalidated
-	bool removeOnSessionClose(CK_SESSION_HANDLE hSession);
+	bool removeOnSessionClose(CK_SESSION_HANDLE inHSession);
 
 	// Called by the session object store when all the sessions for a token
 	// have been closed.
-	bool removeOnAllSessionsClose(CK_SLOT_ID slotID);
+	bool removeOnAllSessionsClose(CK_SLOT_ID inSlotID);
 
 	// Called by the session object store when a token is logged out.
 	// Remove when this session object is a private object for this token.
-	bool removeOnTokenLogout(CK_SLOT_ID slotID);
+	bool removeOnTokenLogout(CK_SLOT_ID inSlotID);
 
 	// These functions are just stubs for session objects
 	virtual bool startTransaction(Access access);

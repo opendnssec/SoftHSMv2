@@ -93,12 +93,16 @@ public:
 	bool reload();
 
 	// Reload the configuration using the specified configuration loader
-	bool reload(ConfigLoader* configLoader);
+	bool reload(ConfigLoader* inConfigLoader);
 
 private:
 	Configuration();
 
+#ifdef HAVE_CXX11
+	static std::unique_ptr<Configuration> instance;
+#else
 	static std::auto_ptr<Configuration> instance;
+#endif
 
 	std::map<std::string, std::string> stringConfiguration;
 	std::map<std::string, int> integerConfiguration;

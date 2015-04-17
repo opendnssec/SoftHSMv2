@@ -44,13 +44,13 @@ public:
 	static const char* type;
 
 	// Set the curve OID ec
-	void setEC(const ByteString& ec);
+	void setEC(const ByteString& inEC);
 
 	// Get the curve OID ec
 	const ByteString& getEC() const;
 
 	// Are the parameters of the given type?
-	virtual bool areOfType(const char* type);
+	virtual bool areOfType(const char* inType);
 
 	// Serialisation
 	virtual ByteString serialise() const;

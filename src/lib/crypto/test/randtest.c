@@ -80,7 +80,7 @@ void rt_init(int binmode)
 
 void rt_add(void *buf, int bufl)
 {
-    unsigned char *bp = buf;
+    unsigned char *bp = (unsigned char *)buf;
     int oc, c, bean;
 
     while (bean = 0, (bufl-- > 0)) {

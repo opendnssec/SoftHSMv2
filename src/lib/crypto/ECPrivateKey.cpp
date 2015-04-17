@@ -39,9 +39,9 @@
 /*static*/ const char* ECPrivateKey::type = "Abstract EC private key";
 
 // Check if the key is of the given type
-bool ECPrivateKey::isOfType(const char* type)
+bool ECPrivateKey::isOfType(const char* inType)
 {
-	return !strcmp(this->type, type);
+	return !strcmp(type, inType);
 }
 
 // Get the bit length
@@ -53,19 +53,19 @@ unsigned long ECPrivateKey::getBitLength() const
 // Get the output length
 unsigned long ECPrivateKey::getOutputLength() const
 {
-	return this->getOrderLength() * 2;
+	return getOrderLength() * 2;
 }
 
 // Setters for the EC private key components
-void ECPrivateKey::setD(const ByteString& d)
+void ECPrivateKey::setD(const ByteString& inD)
 {
-	this->d = d;
+	d = inD;
 }
 
 // Setters for the EC public key components
-void ECPrivateKey::setEC(const ByteString& ec)
+void ECPrivateKey::setEC(const ByteString& inEC)
 {
-	this->ec = ec;
+	ec = inEC;
 }
 
 // Getters for the EC private key components

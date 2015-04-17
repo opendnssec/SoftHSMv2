@@ -42,9 +42,9 @@ class OSSLECPublicKey : public ECPublicKey
 public:
 	// Constructors
 	OSSLECPublicKey();
-	
+
 	OSSLECPublicKey(const EC_KEY* inECKEY);
-	
+
 	// Destructor
 	virtual ~OSSLECPublicKey();
 
@@ -52,17 +52,17 @@ public:
 	static const char* type;
 
 	// Check if the key is of the given type
-	virtual bool isOfType(const char* type);
+	virtual bool isOfType(const char* inType);
 
 	// Get the base point order length
 	virtual unsigned long getOrderLength() const;
 
 	// Setters for the EC public key components
-	virtual void setEC(const ByteString& ec);
-	virtual void setQ(const ByteString& q);
+	virtual void setEC(const ByteString& inEC);
+	virtual void setQ(const ByteString& inQ);
 
 	// Set from OpenSSL representation
-	virtual void setFromOSSL(const EC_KEY* eckey);
+	virtual void setFromOSSL(const EC_KEY* inECKEY);
 
 	// Retrieve the OpenSSL representation of the key
 	EC_KEY* getOSSLKey();

@@ -39,9 +39,9 @@
 /*static*/ const char* GOSTPublicKey::type = "Abstract GOST public key";
 
 // Check if the key is of the given type
-bool GOSTPublicKey::isOfType(const char* type)
+bool GOSTPublicKey::isOfType(const char* inType)
 {
-	return !strcmp(this->type, type);
+	return !strcmp(type, inType);
 }
 
 // Get the bit length
@@ -51,15 +51,15 @@ unsigned long GOSTPublicKey::getBitLength() const
 }
 
 // Setters for the GOST public key components
-void GOSTPublicKey::setQ(const ByteString& q)
+void GOSTPublicKey::setQ(const ByteString& inQ)
 {
-	this->q = q;
+	q = inQ;
 }
 
 // Setters for the GOST public key components
-void GOSTPublicKey::setEC(const ByteString& ec)
+void GOSTPublicKey::setEC(const ByteString& inEC)
 {
-	this->ec = ec;
+	ec = inEC;
 }
 
 // Getters for the GOST public key components

@@ -79,7 +79,9 @@ void RSATests::testKeyGeneration()
 	// Key sizes to test
 	std::vector<size_t> keySizes;
 	keySizes.push_back(1024);
+#ifndef WITH_FIPS
 	keySizes.push_back(1025);
+#endif
 	keySizes.push_back(1280);
 	keySizes.push_back(2048);
 	//keySizes.push_back(4096);
@@ -258,7 +260,9 @@ void RSATests::testSigningVerifying()
 
 	// Mechanisms to test
 	std::vector<AsymMech::Type> mechanisms;
+#ifndef WITH_FIPS
 	mechanisms.push_back(AsymMech::RSA_MD5_PKCS);
+#endif
 	mechanisms.push_back(AsymMech::RSA_SHA1_PKCS);
 	mechanisms.push_back(AsymMech::RSA_SHA224_PKCS);
 	mechanisms.push_back(AsymMech::RSA_SHA256_PKCS);
@@ -269,7 +273,9 @@ void RSATests::testSigningVerifying()
 	mechanisms.push_back(AsymMech::RSA_SHA256_PKCS_PSS);
 	mechanisms.push_back(AsymMech::RSA_SHA384_PKCS_PSS);
 	mechanisms.push_back(AsymMech::RSA_SHA512_PKCS_PSS);
+#ifndef WITH_FIPS
 	mechanisms.push_back(AsymMech::RSA_SSL);
+#endif
 
 	/* Max salt length for SHA512 and 1024-bit RSA is 62 bytes */
 	RSA_PKCS_PSS_PARAMS pssParams[] = {
@@ -400,13 +406,20 @@ void RSATests::testSignVerifyKnownVector()
 	// These test vectors were taken from the Crypto++ set of test vectors
 	// Crypto++ can be downloaded from www.cryptopp.com
 
+#ifndef WITH_FIPS
 	RSAPublicKey* pubKey1 = (RSAPublicKey*) rsa->newPublicKey();
 	RSAPublicKey* pubKey2 = (RSAPublicKey*) rsa->newPublicKey();
+#endif
+	RSAPublicKey* pubKey3 = (RSAPublicKey*) rsa->newPublicKey();
+#ifndef WITH_FIPS
 	RSAPrivateKey* privKey1_1 = (RSAPrivateKey*) rsa->newPrivateKey();
 	RSAPrivateKey* privKey1_2 = (RSAPrivateKey*) rsa->newPrivateKey();
 	RSAPrivateKey* privKey2_1 = (RSAPrivateKey*) rsa->newPrivateKey();
 	RSAPrivateKey* privKey2_2 = (RSAPrivateKey*) rsa->newPrivateKey();
+#endif
+	RSAPrivateKey* privKey3 = (RSAPrivateKey*) rsa->newPrivateKey();
 
+#ifndef WITH_FIPS
 	// Reconstruct public and private key #1
 	ByteString n1	= "0A66791DC6988168DE7AB77419BB7FB0C001C62710270075142942E19A8D8C51D053B3E3782A1DE5DC5AF4EBE99468170114A1DFE67CDC9A9AF55D655620BBAB";
 	ByteString e1	= "010001";
@@ -458,7 +471,23 @@ void RSATests::testSignVerifyKnownVector()
 	privKey2_2->setN(n2);
 	privKey2_2->setE(e2);
 	privKey2_2->setD(d2);
+#endif
 
+	ByteString n3	= "A8D68ACD413C5E195D5EF04E1B4FAAF242365CB450196755E92E1215BA59802AAFBADBF2564DD550956ABB54F8B1C917844E5F36195D1088C600E07CADA5C080EDE679F50B3DE32CF4026E514542495C54B1903768791AAE9E36F082CD38E941ADA89BAECADA61AB0DD37AD536BCB0A0946271594836E92AB5517301D45176B5";
+	ByteString e3	= "03";
+	ByteString d3	= "1C23C1CCE034BA598F8FD2B7AF37F1D30B090F7362AEE68E5187ADAE49B9955C729F24A863B7A38D6E3C748E2972F6D940B7BA89043A2D6C2100256A1CF0F56A8CD35FC6EE205244876642F6F9C3820A3D9D2C8921DF7D82AAADCAF2D7334D398931DDBBA553190B3A416099F3AA07FD5B26214645A828419E122CFB857AD73B";
+	ByteString p3	= "C107a2fe924b76e206cb9bc4af2ab7008547c00846bf6d0680b3eac3ebcbd0c7fd7a54c2b9899b08f80cde1d3691eaaa2816b1eb11822d6be7beaf4e30977c49";
+	ByteString q3	= "DFEA984CE4307EAFC0D140C2BB82861E5DBAC4F8567CBC981D70440DD639492079031486315E305EB83E591C4A2E96064966F7C894C3CA351925B5CE82D8EF0D";
+
+	pubKey3->setN(n3);
+	pubKey3->setE(e3);
+	privKey3->setN(n3);
+	privKey3->setE(e3);
+	privKey3->setD(d3);
+	privKey3->setP(p3);
+	privKey3->setQ(q3);
+
+#ifndef WITH_FIPS
 	// Test with key #1
 	const char* testValue1 = "Everyone gets Friday off.";
 
@@ -510,13 +539,35 @@ void RSATests::testSignVerifyKnownVector()
 	CPPUNIT_ASSERT(rsa->verifyInit(pubKey2, AsymMech::RSA_SHA1_PKCS));
 	CPPUNIT_ASSERT(rsa->verifyUpdate(dataToSign2));
 	CPPUNIT_ASSERT(rsa->verifyFinal(expectedSignature2));
+#endif
 
+	// Test with key #3
+	ByteString dataToSign3 = "D73829497CDDBE41B705FAAC50E7899FDB5A38BF3A459E536357029E64F8796BA47F4FE96BA5A8B9A4396746E2164F55A25368DDD0B9A5188C7AC3DA2D1F742286C3BDEE697F9D546A25EFCFE53191D743FCC6B47833D993D08804DAECA78FB9076C3C017F53E33A90305AF06220974D46BF19ED3C9B84EDBAE98B45A8771258";
+	ByteString expectedSignature3 = "175015BDA50ABE0FA7D39A8353885CA01BE3A7E7FCC55045744111362EE1914473A48DC537D956294B9E20A1EF661D58537ACDC8DE908FA050630FCC272E6D001045E6FDEED2D10531C8603334C2E8DB39E73E6D9665EE1343F9E4198302D2201B44E8E8D06B3EF49CEE6197582163A8490089CA654C0012FCE1BA6511089750";
+	ByteString signature3;
+
+	CPPUNIT_ASSERT(rsa->signInit(privKey3, AsymMech::RSA_SHA1_PKCS));
+	CPPUNIT_ASSERT(rsa->signUpdate(dataToSign3));
+	CPPUNIT_ASSERT(rsa->signFinal(signature3));
+
+	CPPUNIT_ASSERT(signature3 == expectedSignature3);
+
+	CPPUNIT_ASSERT(rsa->verifyInit(pubKey3, AsymMech::RSA_SHA1_PKCS));
+	CPPUNIT_ASSERT(rsa->verifyUpdate(dataToSign3));
+	CPPUNIT_ASSERT(rsa->verifyFinal(expectedSignature3));
+
+#ifndef WITH_FIPS
 	rsa->recyclePublicKey(pubKey1);
 	rsa->recyclePublicKey(pubKey2);
+#endif
+	rsa->recyclePublicKey(pubKey3);
+#ifndef WITH_FIPS
 	rsa->recyclePrivateKey(privKey1_1);
 	rsa->recyclePrivateKey(privKey1_2);
 	rsa->recyclePrivateKey(privKey2_1);
 	rsa->recyclePrivateKey(privKey2_2);
+#endif
+	rsa->recyclePrivateKey(privKey3);
 }
 
 void RSATests::testEncryptDecrypt()

@@ -37,9 +37,9 @@
 #include <stdlib.h>
 
 // Constructor
-P11Attribute::P11Attribute(OSObject* osobject)
+P11Attribute::P11Attribute(OSObject* inobject)
 {
-	this->osobject = osobject;
+	osobject = inobject;
 	type = CKA_VENDOR_DEFINED;
 	size = (CK_ULONG)-1;
 	checks = 0;
@@ -337,7 +337,7 @@ CK_RV P11Attribute::retrieve(Token *token, bool isPrivate, CK_VOID_PTR pValue, C
 				const unsigned char* attrPtr = value.const_byte_str();
 				memcpy(pValue,attrPtr,attrSize);
 			}
-			else
+			else if (attr.getByteStringValue().size() != 0)
 			{
 				const unsigned char* attrPtr = attr.getByteStringValue().const_byte_str();
 				memcpy(pValue,attrPtr,attrSize);
@@ -395,13 +395,13 @@ CK_RV P11Attribute::update(Token* token, bool isPrivate, CK_VOID_PTR pValue, CK_
 
 
 	// Attributes cannot be changed if CKA_MODIFIABLE is set to false
-	if (!isModifiable()) {
+	if (!isModifiable() && op != OBJECT_OP_GENERATE && op != OBJECT_OP_CREATE) {
 		ERROR_MSG("An object is with CKA_MODIFIABLE set to false is not modifiable");
 		return CKR_ATTRIBUTE_READ_ONLY;
 	}
 
 	// Attributes cannot be modified if CKA_TRUSTED is true on a certificate object.
-	if (isTrusted()) {
+	if (isTrusted() && op != OBJECT_OP_GENERATE && op != OBJECT_OP_CREATE) {
 		if (osobject->getUnsignedLongValue(CKA_CLASS, CKO_VENDOR_DEFINED) == CKO_CERTIFICATE)
 		{
 			ERROR_MSG("A trusted certificate cannot be modified");
@@ -594,6 +594,7 @@ CK_RV P11AttrToken::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR
 	// Attribute specific checks
 
 	if (op != OBJECT_OP_GENERATE &&
+	    op != OBJECT_OP_DERIVE &&
 	    op != OBJECT_OP_CREATE &&
 	    op != OBJECT_OP_COPY &&
 	    op != OBJECT_OP_UNWRAP)
@@ -640,6 +641,7 @@ CK_RV P11AttrPrivate::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_P
 	// Attribute specific checks
 
 	if (op != OBJECT_OP_GENERATE &&
+	    op != OBJECT_OP_DERIVE &&
 	    op != OBJECT_OP_CREATE &&
 	    op != OBJECT_OP_COPY &&
 	    op != OBJECT_OP_UNWRAP)
@@ -686,6 +688,7 @@ CK_RV P11AttrModifiable::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOI
 	// Attribute specific checks
 
 	if (op != OBJECT_OP_GENERATE &&
+	    op != OBJECT_OP_DERIVE &&
 	    op != OBJECT_OP_CREATE &&
 	    op != OBJECT_OP_COPY &&
 	    op != OBJECT_OP_UNWRAP)
@@ -743,6 +746,7 @@ CK_RV P11AttrCopyable::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_
 	// Attribute specific checks
 
 	if (op != OBJECT_OP_GENERATE &&
+	    op != OBJECT_OP_DERIVE &&
 	    op != OBJECT_OP_CREATE &&
 	    op != OBJECT_OP_COPY &&
 	    op != OBJECT_OP_UNWRAP)
@@ -852,20 +856,23 @@ CK_RV P11AttrValue::updateAttr(Token *token, bool isPrivate, CK_VOID_PTR pValue,
 
 	osobject->setAttribute(type, value);
 
-	// Set the CKA_VALUE_LEN during C_CreateObject
+	// Set the size during C_CreateObject and C_UnwrapKey.
 
-	if (op == OBJECT_OP_CREATE && osobject->attributeExists(CKA_VALUE_LEN))
+	if (op == OBJECT_OP_CREATE || op == OBJECT_OP_UNWRAP)
 	{
-		OSAttribute bytes((unsigned long)plaintext.size());
-		osobject->setAttribute(CKA_VALUE_LEN, bytes);
-	}
+		// Set the CKA_VALUE_LEN
+		if (osobject->attributeExists(CKA_VALUE_LEN))
+		{
+			OSAttribute bytes((unsigned long)plaintext.size());
+			osobject->setAttribute(CKA_VALUE_LEN, bytes);
+		}
 
-	// Set the CKA_VALUE_BITS during C_CreateObject
-
-	if (op == OBJECT_OP_CREATE && osobject->attributeExists(CKA_VALUE_BITS))
-	{
-		OSAttribute bits((unsigned long)plaintext.bits());
-		osobject->setAttribute(CKA_VALUE_BITS, bits);
+		// Set the CKA_VALUE_BITS
+		if (osobject->attributeExists(CKA_VALUE_BITS))
+		{
+			OSAttribute bits((unsigned long)plaintext.bits());
+			osobject->setAttribute(CKA_VALUE_BITS, bits);
+		}
 	}
 
 	return CKR_OK;
@@ -1585,7 +1592,7 @@ CK_RV P11AttrSensitive::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID
 		osobject->setAttribute(type, attrTrue);
 
 		// This is so that generated keys get the correct value
-		if (op == OBJECT_OP_GENERATE)
+		if (op == OBJECT_OP_GENERATE || op == OBJECT_OP_DERIVE)
 		{
 			osobject->setAttribute(CKA_ALWAYS_SENSITIVE, attrTrue);
 		}
@@ -2093,7 +2100,7 @@ CK_RV P11AttrValueLen::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_
 {
 	// Attribute specific checks
 
-	if (op != OBJECT_OP_GENERATE)
+	if (op != OBJECT_OP_GENERATE && op != OBJECT_OP_DERIVE)
 	{
 		return CKR_ATTRIBUTE_READ_ONLY;
 	}

@@ -170,6 +170,7 @@ bool OSSLEVPSymmetricAlgorithm::encryptUpdate(const ByteString& data, ByteString
 
 	// Resize the output block
 	encryptedData.resize(outLen);
+	currentBufferSize -= outLen;
 
 	return true;
 }
@@ -331,6 +332,7 @@ bool OSSLEVPSymmetricAlgorithm::decryptUpdate(const ByteString& encryptedData, B
 
 	// Resize the output block
 	data.resize(outLen);
+	currentBufferSize -= outLen;
 
 	return true;
 }

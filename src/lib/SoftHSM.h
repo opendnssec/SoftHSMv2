@@ -175,7 +175,11 @@ private:
 	SoftHSM();
 
 	// The one-and-only instance
+#ifdef HAVE_CXX11
+	static std::unique_ptr<SoftHSM> instance;
+#else
 	static std::auto_ptr<SoftHSM> instance;
+#endif
 
 	// Is the SoftHSM PKCS #11 library initialised?
 	bool isInitialised;
@@ -330,6 +334,7 @@ private:
 		CK_ATTRIBUTE_PTR pTemplate,
 		CK_ULONG ulCount,
 		CK_OBJECT_HANDLE_PTR phKey,
+		CK_KEY_TYPE keyType,
 		CK_BBOOL isOnToken,
 		CK_BBOOL isPrivate
 	);
@@ -341,6 +346,19 @@ private:
 		CK_ATTRIBUTE_PTR pTemplate,
 		CK_ULONG ulCount,
 		CK_OBJECT_HANDLE_PTR phKey,
+		CK_KEY_TYPE keyType,
+		CK_BBOOL isOnToken,
+		CK_BBOOL isPrivate
+	);
+	CK_RV deriveSymmetric
+	(
+		CK_SESSION_HANDLE hSession,
+		CK_MECHANISM_PTR pMechanism,
+		CK_OBJECT_HANDLE hBaseKey,
+		CK_ATTRIBUTE_PTR pTemplate,
+		CK_ULONG ulCount,
+		CK_OBJECT_HANDLE_PTR phKey,
+		CK_KEY_TYPE keyType,
 		CK_BBOOL isOnToken,
 		CK_BBOOL isPrivate
 	);
@@ -407,5 +425,7 @@ private:
 		OSObject *unwrapKey,
 		ByteString &keydata
 	);
+
+	CK_RV MechParamCheckRSAPKCSOAEP(CK_MECHANISM_PTR pMechanism);
 };
 

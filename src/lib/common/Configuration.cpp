@@ -36,12 +36,17 @@
 #include "log.h"
 
 // Initialise the one-and-only instance
+#ifdef HAVE_CXX11
+std::unique_ptr<Configuration> Configuration::instance(nullptr);
+#else
 std::auto_ptr<Configuration> Configuration::instance(NULL);
+#endif
 
 // Add all valid configurations
 const struct config Configuration::valid_config[] = {
 	{ "directories.tokendir",	CONFIG_TYPE_STRING },
 	{ "objectstore.backend",	CONFIG_TYPE_STRING },
+	{ "log.level",			CONFIG_TYPE_STRING },
 	{ "",				CONFIG_TYPE_UNSUPPORTED }
 };
 
@@ -50,7 +55,7 @@ Configuration* Configuration::i()
 {
 	if (instance.get() == NULL)
 	{
-		instance = std::auto_ptr<Configuration>(new Configuration());
+		instance.reset(new Configuration());
 	}
 
 	return instance.get();
@@ -158,9 +163,9 @@ bool Configuration::reload()
 }
 
 // Reload the configuration using the specified configuration loader
-bool Configuration::reload(ConfigLoader* configLoader)
+bool Configuration::reload(ConfigLoader* inConfigLoader)
 {
-	this->configLoader = configLoader;
+	configLoader = inConfigLoader;
 
 	return reload();
 }

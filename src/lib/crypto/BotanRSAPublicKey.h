@@ -42,9 +42,9 @@ class BotanRSAPublicKey : public RSAPublicKey
 public:
 	// Constructors
 	BotanRSAPublicKey();
-	
+
 	BotanRSAPublicKey(const Botan::RSA_PublicKey* inRSA);
-	
+
 	// Destructor
 	virtual ~BotanRSAPublicKey();
 
@@ -52,14 +52,14 @@ public:
 	static const char* type;
 
 	// Check if the key is of the given type
-	virtual bool isOfType(const char* type);
+	virtual bool isOfType(const char* inType);
 
 	// Setters for the RSA public key components
-	virtual void setN(const ByteString& n);
-	virtual void setE(const ByteString& e);
+	virtual void setN(const ByteString& inN);
+	virtual void setE(const ByteString& inE);
 
 	// Set from Botan representation
-	virtual void setFromBotan(const Botan::RSA_PublicKey* rsa);
+	virtual void setFromBotan(const Botan::RSA_PublicKey* inRSA);
 
 	// Retrieve the Botan representation of the key
 	Botan::RSA_PublicKey* getBotanKey();
