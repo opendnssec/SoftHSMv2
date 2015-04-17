@@ -2,22 +2,22 @@ MAINTAINERCLEANFILES =	$(srcdir)/Makefile.in
 
 AM_CPPFLAGS =			@CRYPTO_INCLUDES@
 
-dist_man_MANS =			softhsm-keyconv.1
+dist_man_MANS =			softhsm2-keyconv.1
 
-bin_PROGRAMS =			softhsm-keyconv
+bin_PROGRAMS =			softhsm2-keyconv
 
-softhsm_keyconv_SOURCES =	softhsm-keyconv.cpp \
+softhsm2_keyconv_SOURCES =	softhsm2-keyconv.cpp \
 				base64.c
-softhsm_keyconv_LDADD =		@CRYPTO_LIBS@
+softhsm2_keyconv_LDADD =	@CRYPTO_LIBS@
 
 # Compile with OpenSSL support
 if WITH_OPENSSL
-softhsm_keyconv_SOURCES +=	softhsm-keyconv-ossl.cpp
+softhsm2_keyconv_SOURCES +=	softhsm2-keyconv-ossl.cpp
 endif
 
 # Compile with Botan support
 if WITH_BOTAN
-softhsm_keyconv_SOURCES +=	softhsm-keyconv-botan.cpp
+softhsm2_keyconv_SOURCES +=	softhsm2-keyconv-botan.cpp
 endif
 
 EXTRA_DIST =			$(srcdir)/*.h \

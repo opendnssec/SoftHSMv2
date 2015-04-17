@@ -38,18 +38,23 @@
 AsymmetricAlgorithm::AsymmetricAlgorithm()
 {
 	currentOperation = NONE;
+	currentMechanism = AsymMech::Unknown;
+	currentPadding = AsymMech::Unknown;
 	currentPublicKey = NULL;
 	currentPrivateKey = NULL;
 }
 
 // Signing functions
-bool AsymmetricAlgorithm::sign(PrivateKey* privateKey, const ByteString& dataToSign, ByteString& signature, const std::string mechanism)
+bool AsymmetricAlgorithm::sign(PrivateKey* privateKey, const ByteString& dataToSign,
+			       ByteString& signature, const AsymMech::Type mechanism,
+			       const void* param /* = NULL */, const size_t paramLen /* = 0 */)
 {
 	// Compose from multi-part operations
-	return (signInit(privateKey, mechanism) && signUpdate(dataToSign) && signFinal(signature));
+	return (signInit(privateKey, mechanism, param, paramLen) && signUpdate(dataToSign) && signFinal(signature));
 }
 
-bool AsymmetricAlgorithm::signInit(PrivateKey* privateKey, const std::string mechanism)
+bool AsymmetricAlgorithm::signInit(PrivateKey* privateKey, const AsymMech::Type mechanism,
+				   const void* /* param = NULL */, const size_t /* paramLen = 0 */)
 {
 	if ((currentOperation != NONE) || (privateKey == NULL))
 	{
@@ -82,19 +87,22 @@ bool AsymmetricAlgorithm::signFinal(ByteString& /*signature*/)
 
 	currentOperation = NONE;
 	currentPrivateKey = NULL;
-	currentMechanism = "";
+	currentMechanism = AsymMech::Unknown;
 
 	return true;
 }
 
 // Verification functions
-bool AsymmetricAlgorithm::verify(PublicKey* publicKey, const ByteString& originalData, const ByteString& signature, const std::string mechanism)
+bool AsymmetricAlgorithm::verify(PublicKey* publicKey, const ByteString& originalData,
+				 const ByteString& signature, const AsymMech::Type mechanism,
+				 const void* param /* = NULL */, const size_t paramLen /* = 0 */)
 {
 	// Compose from multi-part operations
-	return (verifyInit(publicKey, mechanism) && verifyUpdate(originalData) && verifyFinal(signature));
+	return (verifyInit(publicKey, mechanism, param, paramLen) && verifyUpdate(originalData) && verifyFinal(signature));
 }
 
-bool AsymmetricAlgorithm::verifyInit(PublicKey* publicKey, const std::string mechanism)
+bool AsymmetricAlgorithm::verifyInit(PublicKey* publicKey, const AsymMech::Type mechanism,
+				     const void* /* param = NULL */, const size_t /* paramLen = 0 */)
 {
 	if ((currentOperation != NONE) || (publicKey == NULL))
 	{
@@ -127,10 +135,43 @@ bool AsymmetricAlgorithm::verifyFinal(const ByteString& /*signature*/)
 
 	currentOperation = NONE;
 	currentPublicKey = NULL;
-	currentMechanism = "";
+	currentMechanism = AsymMech::Unknown;
 
 	return true;
 }
+
+// Returns true for mechanisms which have 'tick mark' in Wrap&Unwrap column in PKCS #11 Mechanisms v2.30
+bool AsymmetricAlgorithm::isWrappingMech(AsymMech::Type padding)
+{
+	switch (padding)
+	{
+		case AsymMech::RSA:
+		case AsymMech::RSA_PKCS:
+		case AsymMech::RSA_PKCS_OAEP:
+			return true;
+
+		default:
+			return false;
+	}
+}
+
+// Wrap/Unwrap keys
+bool AsymmetricAlgorithm::wrapKey(PublicKey* publicKey, const ByteString& data, ByteString& encryptedData, const AsymMech::Type padding)
+{
+	if (!isWrappingMech(padding))
+		return false;
+
+	return encrypt(publicKey, data, encryptedData, padding);
+}
+
+bool AsymmetricAlgorithm::unwrapKey(PrivateKey* privateKey, const ByteString& encryptedData, ByteString& data, const AsymMech::Type padding)
+{
+	if (!isWrappingMech(padding))
+		return false;
+
+	return decrypt(privateKey, encryptedData, data, padding);
+}
+
 
 bool AsymmetricAlgorithm::generateParameters(AsymmetricParameters** /*ppParams*/, void* /*parameters = NULL*/, RNG* /*rng = NULL*/)
 {

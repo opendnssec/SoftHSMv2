@@ -45,9 +45,9 @@ public:
 	virtual ~OSSLAES() { }
 
 	// Wrap/Unwrap keys
-	virtual bool wrapKey(const SymmetricKey* key, const std::string mode, const ByteString& in, ByteString& out);
+	virtual bool wrapKey(const SymmetricKey* key, const SymWrap::Type mode, const ByteString& in, ByteString& out);
 
-	virtual bool unwrapKey(const SymmetricKey* key, const std::string mode, const ByteString& in, ByteString& out);
+	virtual bool unwrapKey(const SymmetricKey* key, const SymWrap::Type mode, const ByteString& in, ByteString& out);
 
 	// Return the block size
 	virtual size_t getBlockSize() const;

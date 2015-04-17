@@ -57,24 +57,22 @@ BotanDSA::~BotanDSA()
 	delete signer;
 	delete verifier;
 }
-	
+
 // Signing functions
 bool BotanDSA::sign(PrivateKey* privateKey, const ByteString& dataToSign,
-		    ByteString& signature, const std::string mechanism)
+		    ByteString& signature, const AsymMech::Type mechanism,
+		    const void* param /* = NULL */, const size_t paramLen /* = 0 */)
 {
-	std::string lowerMechanism;
-	lowerMechanism.resize(mechanism.size());
-	std::transform(mechanism.begin(), mechanism.end(), lowerMechanism.begin(), tolower);
 	std::string emsa;
 
-	if (!lowerMechanism.compare("dsa"))
+	if (mechanism == AsymMech::DSA)
 	{
 		emsa = "Raw";
 	}
 	else
         {
 		// Call default implementation
-		return AsymmetricAlgorithm::sign(privateKey, dataToSign, signature, mechanism);
+		return AsymmetricAlgorithm::sign(privateKey, dataToSign, signature, mechanism, param, paramLen);
         }
 
 	// Check if the private key is the right type
@@ -96,7 +94,7 @@ bool BotanDSA::sign(PrivateKey* privateKey, const ByteString& dataToSign,
 	}
 
 	try
-	{       
+	{
 		signer = new Botan::PK_Signer(*botanKey, emsa);
 		// Should we add DISABLE_FAULT_PROTECTION? Makes this operation faster.
 	}
@@ -142,9 +140,10 @@ bool BotanDSA::sign(PrivateKey* privateKey, const ByteString& dataToSign,
 	return true;
 }
 
-bool BotanDSA::signInit(PrivateKey* privateKey, const std::string mechanism)
+bool BotanDSA::signInit(PrivateKey* privateKey, const AsymMech::Type mechanism,
+			const void* param /* = NULL */, const size_t paramLen /* = 0 */)
 {
-	if (!AsymmetricAlgorithm::signInit(privateKey, mechanism))
+	if (!AsymmetricAlgorithm::signInit(privateKey, mechanism, param, paramLen))
 	{
 		return false;
 	}
@@ -160,39 +159,32 @@ bool BotanDSA::signInit(PrivateKey* privateKey, const std::string mechanism)
 		return false;
 	}
 
-	std::string lowerMechanism;
-	lowerMechanism.resize(mechanism.size());
-	std::transform(mechanism.begin(), mechanism.end(), lowerMechanism.begin(), tolower);
 	std::string emsa;
 
-	if (!lowerMechanism.compare("dsa-sha1"))
+	switch (mechanism)
 	{
-		emsa = "EMSA1(SHA-160)";
-	}
-        else if (!lowerMechanism.compare("dsa-sha224"))
-	{
-		emsa = "EMSA1(SHA-224)";
-	}
-	else if (!lowerMechanism.compare("dsa-sha256"))
-	{
-		emsa = "EMSA1(SHA-256)";
-	}
-	else if (!lowerMechanism.compare("dsa-sha384"))
-	{
-		emsa = "EMSA1(SHA-384)";
-	}
-	else if (!lowerMechanism.compare("dsa-sha512"))
-	{
-		emsa = "EMSA1(SHA-512)";
-	}
-	else
-        {
-		ERROR_MSG("Invalid mechanism supplied (%s)", mechanism.c_str());
+		case AsymMech::DSA_SHA1:
+			emsa = "EMSA1(SHA-160)";
+			break;
+		case AsymMech::DSA_SHA224:
+			emsa = "EMSA1(SHA-224)";
+			break;
+		case AsymMech::DSA_SHA256:
+			emsa = "EMSA1(SHA-256)";
+			break;
+		case AsymMech::DSA_SHA384:
+			emsa = "EMSA1(SHA-384)";
+			break;
+		case AsymMech::DSA_SHA512:
+			emsa = "EMSA1(SHA-512)";
+			break;
+		default:
+			ERROR_MSG("Invalid mechanism supplied (%i)", mechanism);
 
-		ByteString dummy;
-		AsymmetricAlgorithm::signFinal(dummy);
+			ByteString dummy;
+			AsymmetricAlgorithm::signFinal(dummy);
 
-		return false;
+			return false;
         }
 
         BotanDSAPrivateKey* pk = (BotanDSAPrivateKey*) currentPrivateKey;
@@ -209,7 +201,7 @@ bool BotanDSA::signInit(PrivateKey* privateKey, const std::string mechanism)
 	}
 
 	try
-	{       
+	{
 		signer = new Botan::PK_Signer(*botanKey, emsa);
 		// Should we add DISABLE_FAULT_PROTECTION? Makes this operation faster.
 	}
@@ -297,21 +289,19 @@ bool BotanDSA::signFinal(ByteString& signature)
 
 // Verification functions
 bool BotanDSA::verify(PublicKey* publicKey, const ByteString& originalData,
-		      const ByteString& signature, const std::string mechanism)
+		      const ByteString& signature, const AsymMech::Type mechanism,
+		      const void* param /* = NULL */, const size_t paramLen /* = 0 */)
 {
-	std::string lowerMechanism;
-	lowerMechanism.resize(mechanism.size());
-	std::transform(mechanism.begin(), mechanism.end(), lowerMechanism.begin(), tolower);
 	std::string emsa;
 
-	if (!lowerMechanism.compare("dsa"))
+	if (mechanism == AsymMech::DSA)
 	{
 		emsa = "Raw";
 	}
         else
         {
 		// Call the generic function
-		return AsymmetricAlgorithm::verify(publicKey, originalData, signature, mechanism);
+		return AsymmetricAlgorithm::verify(publicKey, originalData, signature, mechanism, param, paramLen);
 	}
 
 	// Check if the public key is the right type
@@ -356,7 +346,7 @@ bool BotanDSA::verify(PublicKey* publicKey, const ByteString& originalData,
 	{
 		ERROR_MSG("Could not check the signature");
 
-		delete verifier;                     
+		delete verifier;
 		verifier = NULL;
 
 		return false;
@@ -368,9 +358,10 @@ bool BotanDSA::verify(PublicKey* publicKey, const ByteString& originalData,
 	return verResult;
 }
 
-bool BotanDSA::verifyInit(PublicKey* publicKey, const std::string mechanism)
+bool BotanDSA::verifyInit(PublicKey* publicKey, const AsymMech::Type mechanism,
+			  const void* param /* = NULL */, const size_t paramLen /* = 0 */)
 {
-	if (!AsymmetricAlgorithm::verifyInit(publicKey, mechanism))
+	if (!AsymmetricAlgorithm::verifyInit(publicKey, mechanism, param, paramLen))
 	{
 		return false;
 	}
@@ -386,40 +377,33 @@ bool BotanDSA::verifyInit(PublicKey* publicKey, const std::string mechanism)
 		return false;
 	}
 
-	std::string lowerMechanism;
-	lowerMechanism.resize(mechanism.size());
-	std::transform(mechanism.begin(), mechanism.end(), lowerMechanism.begin(), tolower);
 	std::string emsa;
 
-	if (!lowerMechanism.compare("dsa-sha1"))
+	switch (mechanism)
 	{
-		emsa = "EMSA1(SHA-160)";
-	}
-        else if (!lowerMechanism.compare("dsa-sha224"))
-	{
-		emsa = "EMSA1(SHA-224)";
-	}
-        else if (!lowerMechanism.compare("dsa-sha256"))
-	{
-		emsa = "EMSA1(SHA-256)";
-	}
-        else if (!lowerMechanism.compare("dsa-sha384"))
-	{
-		emsa = "EMSA1(SHA-384)";
-	}
-        else if (!lowerMechanism.compare("dsa-sha512"))
-	{
-		emsa = "EMSA1(SHA-512)";
-	}
-        else
-        {
-		ERROR_MSG("Invalid mechanism supplied (%s)", mechanism.c_str());
+		case AsymMech::DSA_SHA1:
+			emsa = "EMSA1(SHA-160)";
+			break;
+		case AsymMech::DSA_SHA224:
+			emsa = "EMSA1(SHA-224)";
+			break;
+		case AsymMech::DSA_SHA256:
+			emsa = "EMSA1(SHA-256)";
+			break;
+		case AsymMech::DSA_SHA384:
+			emsa = "EMSA1(SHA-384)";
+			break;
+		case AsymMech::DSA_SHA512:
+			emsa = "EMSA1(SHA-512)";
+			break;
+		default:
+			ERROR_MSG("Invalid mechanism supplied (%i)", mechanism);
 
-		ByteString dummy;
-		AsymmetricAlgorithm::verifyFinal(dummy);
+			ByteString dummy;
+			AsymmetricAlgorithm::verifyFinal(dummy);
 
-		return false;
-	}
+			return false;
+        }
 
 	BotanDSAPublicKey* pk = (BotanDSAPublicKey*) currentPublicKey;
 	Botan::DSA_PublicKey* botanKey = pk->getBotanKey();
@@ -495,7 +479,7 @@ bool BotanDSA::verifyFinal(const ByteString& signature)
 	{
 		ERROR_MSG("Could not check the signature");
 
-		delete verifier;                     
+		delete verifier;
 		verifier = NULL;
 
 		return false;
@@ -508,7 +492,8 @@ bool BotanDSA::verifyFinal(const ByteString& signature)
 }
 
 // Encryption functions
-bool BotanDSA::encrypt(PublicKey* /*publicKey*/, const ByteString& /*data*/, ByteString& /*encryptedData*/, const std::string /*padding*/)
+bool BotanDSA::encrypt(PublicKey* /*publicKey*/, const ByteString& /*data*/,
+		       ByteString& /*encryptedData*/, const AsymMech::Type /*padding*/)
 {
 	ERROR_MSG("DSA does not support encryption");
 
@@ -516,7 +501,8 @@ bool BotanDSA::encrypt(PublicKey* /*publicKey*/, const ByteString& /*data*/, Byt
 }
 
 // Decryption functions
-bool BotanDSA::decrypt(PrivateKey* /*privateKey*/, const ByteString& /*encryptedData*/, ByteString& /*data*/, const std::string /*padding*/)
+bool BotanDSA::decrypt(PrivateKey* /*privateKey*/, const ByteString& /*encryptedData*/,
+		       ByteString& /*data*/, const AsymMech::Type /*padding*/)
 {
 	ERROR_MSG("DSA does not support decryption");
 
@@ -595,7 +581,7 @@ bool BotanDSA::generateParameters(AsymmetricParameters** ppParams, void* paramet
 
 	if (bitLen < getMinKeySize() || bitLen > getMaxKeySize())
 	{
-		ERROR_MSG("This DSA key size is not supported"); 
+		ERROR_MSG("This DSA key size is not supported");
 
 		return false;
 	}
@@ -725,7 +711,7 @@ PrivateKey* BotanDSA::newPrivateKey()
 {
 	return (PrivateKey*) new BotanDSAPrivateKey();
 }
-	
+
 AsymmetricParameters* BotanDSA::newParameters()
 {
 	return (AsymmetricParameters*) new DSAParameters();

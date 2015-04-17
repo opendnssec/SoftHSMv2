@@ -62,7 +62,7 @@ void HashTests::testMD5()
 	char testResult[512] = "7299FE513582D71A3B9EA1E9F45F95FD";
 
 	// Get a MD5 hash instance
-	CPPUNIT_ASSERT((hash = CryptoFactory::i()->getHashAlgorithm("md5")) != NULL);
+	CPPUNIT_ASSERT((hash = CryptoFactory::i()->getHashAlgorithm(HashAlgo::MD5)) != NULL);
 
 	ByteString b(testData);
 	ByteString osslHash(testResult), shsmHash;
@@ -97,7 +97,7 @@ void HashTests::testSHA1()
 	char testResult[512] = "9A5BD96DC0CD3B0089FBB6BE7D56BEE638431F5A";
 
 	// Get a SHA1 hash instance
-	CPPUNIT_ASSERT((hash = CryptoFactory::i()->getHashAlgorithm("sha1")) != NULL);
+	CPPUNIT_ASSERT((hash = CryptoFactory::i()->getHashAlgorithm(HashAlgo::SHA1)) != NULL);
 
 	ByteString b(testData);
 	ByteString osslHash(testResult), shsmHash;
@@ -132,7 +132,7 @@ void HashTests::testSHA224()
 	char testResult[512] = "A4E71A239CED53E936011DF80B516A07DFF13BB5B05BE43C46C05CCD";
 
 	// Get a SHA224 hash instance
-	CPPUNIT_ASSERT((hash = CryptoFactory::i()->getHashAlgorithm("sha224")) != NULL);
+	CPPUNIT_ASSERT((hash = CryptoFactory::i()->getHashAlgorithm(HashAlgo::SHA224)) != NULL);
 
 	ByteString b(testData);
 	ByteString osslHash(testResult), shsmHash;
@@ -167,7 +167,7 @@ void HashTests::testSHA256()
 	char testResult[512] = "3902802C215A5271439FE3E81AC7F21DA55545F71193A8DA8BEB0EAC8046A43B";
 
 	// Get a SHA256 hash instance
-	CPPUNIT_ASSERT((hash = CryptoFactory::i()->getHashAlgorithm("sha256")) != NULL);
+	CPPUNIT_ASSERT((hash = CryptoFactory::i()->getHashAlgorithm(HashAlgo::SHA256)) != NULL);
 
 	ByteString b(testData);
 	ByteString osslHash(testResult), shsmHash;
@@ -202,7 +202,7 @@ void HashTests::testSHA384()
 	char testResult[512] = "753659D55E4198325A3FED0A35761EC45038E8963B7525BF00D5A6A5D904DD9FA3FC80AB020185E08B14992ECC36A744";
 
 	// Get a SHA384 hash instance
-	CPPUNIT_ASSERT((hash = CryptoFactory::i()->getHashAlgorithm("sha384")) != NULL);
+	CPPUNIT_ASSERT((hash = CryptoFactory::i()->getHashAlgorithm(HashAlgo::SHA384)) != NULL);
 
 	ByteString b(testData);
 	ByteString osslHash(testResult), shsmHash;
@@ -237,7 +237,7 @@ void HashTests::testSHA512()
 	char testResult[512] = "E1483A8525CE39705D14D60D8B19BD89087AED5FE6D8913AF8FC3F6F4EA2C1BB5957E205294B1EFAF20AE5EE39A9522F38B4514C3C15ED70BCBBD5821E385F95";
 
 	// Get a SHA512 hash instance
-	CPPUNIT_ASSERT((hash = CryptoFactory::i()->getHashAlgorithm("sha512")) != NULL);
+	CPPUNIT_ASSERT((hash = CryptoFactory::i()->getHashAlgorithm(HashAlgo::SHA512)) != NULL);
 
 	ByteString b(testData);
 	ByteString osslHash(testResult), shsmHash;

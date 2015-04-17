@@ -98,11 +98,86 @@ bool ObjectFile::attributeExists(CK_ATTRIBUTE_TYPE type)
 }
 
 // Retrieve the specified attribute
-OSAttribute* ObjectFile::getAttribute(CK_ATTRIBUTE_TYPE type)
+OSAttribute ObjectFile::getAttribute(CK_ATTRIBUTE_TYPE type)
 {
 	MutexLocker lock(objectMutex);
 
-	return attributes[type];
+	OSAttribute* attr = attributes[type];
+	if (attr == NULL)
+	{
+		ERROR_MSG("The attribute does not exist: 0x%08X", type);
+		return OSAttribute((unsigned long)0);
+	}
+
+	return *attr;
+}
+
+bool ObjectFile::getBooleanValue(CK_ATTRIBUTE_TYPE type, bool val)
+{
+	MutexLocker lock(objectMutex);
+
+	OSAttribute* attr = attributes[type];
+	if (attr == NULL)
+	{
+		ERROR_MSG("The attribute does not exist: 0x%08X", type);
+		return val;
+	}
+
+	if (attr->isBooleanAttribute())
+	{
+		return attr->getBooleanValue();
+	}
+	else
+	{
+		ERROR_MSG("The attribute is not a boolean: 0x%08X", type);
+		return val;
+	}
+}
+
+unsigned long ObjectFile::getUnsignedLongValue(CK_ATTRIBUTE_TYPE type, unsigned long val)
+{
+	MutexLocker lock(objectMutex);
+
+	OSAttribute* attr = attributes[type];
+	if (attr == NULL)
+	{
+		ERROR_MSG("The attribute does not exist: 0x%08X", type);
+		return val;
+	}
+
+	if (attr->isUnsignedLongAttribute())
+	{
+		return attr->getUnsignedLongValue();
+	}
+	else
+	{
+		ERROR_MSG("The attribute is not an unsigned long: 0x%08X", type);
+		return val;
+	}
+}
+
+ByteString ObjectFile::getByteStringValue(CK_ATTRIBUTE_TYPE type)
+{
+	MutexLocker lock(objectMutex);
+
+	ByteString val;
+
+	OSAttribute* attr = attributes[type];
+	if (attr == NULL)
+	{
+		ERROR_MSG("The attribute does not exist: 0x%08X", type);
+		return val;
+	}
+
+	if (attr->isByteStringAttribute())
+	{
+		return attr->getByteStringValue();
+	}
+	else
+	{
+		ERROR_MSG("The attribute is not a byte string: 0x%08X", type);
+		return val;
+	}
 }
 
 // Retrieve the next attribute type
@@ -116,7 +191,6 @@ CK_ATTRIBUTE_TYPE ObjectFile::nextAttributeType(CK_ATTRIBUTE_TYPE type)
 	while ((n != attributes.end()) && (n->second == NULL))
 		++n;
 
-	
 	// return type or CKA_CLASS (= 0)
 	if (n == attributes.end())
 	{
@@ -256,7 +330,7 @@ void ObjectFile::refresh(bool isFirstTime /* = false */)
 
 			return;
 		}
-			
+
 		if (!objectFile.readULong(osAttrType))
 		{
 			DEBUG_MSG("Corrupt object file %s", path.c_str());
@@ -304,7 +378,7 @@ void ObjectFile::refresh(bool isFirstTime /* = false */)
 			{
 				delete attributes[p11AttrType];
 			}
-			
+
 			attributes[p11AttrType] = new OSAttribute(value);
 		}
 		else if (osAttrType == BYTESTR_ATTR)
@@ -324,7 +398,7 @@ void ObjectFile::refresh(bool isFirstTime /* = false */)
 			{
 				delete attributes[p11AttrType];
 			}
-			
+
 			attributes[p11AttrType] = new OSAttribute(value);
 		}
 		else if (osAttrType == ARRAY_ATTR)
@@ -631,14 +705,14 @@ bool ObjectFile::commitTransaction()
 	{
 		return false;
 	}
-	
+
 	if (transactionLockFile == NULL)
 	{
 		ERROR_MSG("Transaction lock file instance invalid!");
-	
+
 		return false;
 	}
-	
+
 	// Special store case
 	store(true);
 
@@ -648,7 +722,7 @@ bool ObjectFile::commitTransaction()
 	}
 
 	transactionLockFile->unlock();
-	
+
 	delete transactionLockFile;
 	transactionLockFile = NULL;
 	inTransaction = false;

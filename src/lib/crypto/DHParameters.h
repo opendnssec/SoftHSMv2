@@ -40,6 +40,9 @@
 class DHParameters : public AsymmetricParameters
 {
 public:
+	// Base constructors
+	DHParameters() : bitLen(0) { }
+
 	// The type
 	static const char* type;
 
@@ -49,11 +52,17 @@ public:
 	// Set the generator g
 	void setG(const ByteString& g);
 
+	// Set the optional bit length
+	void setXBitLength(const size_t bitLen);
+
 	// Get the public prime p
 	const ByteString& getP() const;
 
 	// Get the generator g
 	const ByteString& getG() const;
+
+	// Get the optional bit length
+	size_t getXBitLength() const;
 
 	// Are the parameters of the given type?
 	virtual bool areOfType(const char* type);
@@ -65,6 +74,7 @@ public:
 private:
 	ByteString p;
 	ByteString g;
+	size_t bitLen;
 };
 
 #endif // !_SOFTHSM_V2_DHPARAMETERS_H

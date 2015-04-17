@@ -83,25 +83,25 @@ void SessionObjectTests::testBoolAttr()
 	CPPUNIT_ASSERT(testObject.attributeExists(CKA_SIGN));
 	CPPUNIT_ASSERT(!testObject.attributeExists(CKA_ID));
 
-	CPPUNIT_ASSERT(testObject.getAttribute(CKA_TOKEN)->isBooleanAttribute());
-	CPPUNIT_ASSERT(testObject.getAttribute(CKA_SENSITIVE)->isBooleanAttribute());
-	CPPUNIT_ASSERT(testObject.getAttribute(CKA_EXTRACTABLE)->isBooleanAttribute());
-	CPPUNIT_ASSERT(testObject.getAttribute(CKA_NEVER_EXTRACTABLE)->isBooleanAttribute());
-	CPPUNIT_ASSERT(testObject.getAttribute(CKA_SIGN)->isBooleanAttribute());
-	CPPUNIT_ASSERT(testObject.getAttribute(CKA_ID) == NULL);
+	CPPUNIT_ASSERT(testObject.getAttribute(CKA_TOKEN).isBooleanAttribute());
+	CPPUNIT_ASSERT(testObject.getAttribute(CKA_SENSITIVE).isBooleanAttribute());
+	CPPUNIT_ASSERT(testObject.getAttribute(CKA_EXTRACTABLE).isBooleanAttribute());
+	CPPUNIT_ASSERT(testObject.getAttribute(CKA_NEVER_EXTRACTABLE).isBooleanAttribute());
+	CPPUNIT_ASSERT(testObject.getAttribute(CKA_SIGN).isBooleanAttribute());
 
-	CPPUNIT_ASSERT(testObject.getAttribute(CKA_TOKEN)->getBooleanValue() == true);
-	CPPUNIT_ASSERT(testObject.getAttribute(CKA_SENSITIVE)->getBooleanValue() == false);
-	CPPUNIT_ASSERT(testObject.getAttribute(CKA_EXTRACTABLE)->getBooleanValue() == true);
-	CPPUNIT_ASSERT(testObject.getAttribute(CKA_NEVER_EXTRACTABLE)->getBooleanValue() == true);
-	CPPUNIT_ASSERT(testObject.getAttribute(CKA_SIGN)->getBooleanValue() == false);
+	CPPUNIT_ASSERT(testObject.getAttribute(CKA_TOKEN).getBooleanValue() == true);
+	CPPUNIT_ASSERT(testObject.getAttribute(CKA_SENSITIVE).getBooleanValue() == false);
+	CPPUNIT_ASSERT(testObject.getAttribute(CKA_EXTRACTABLE).getBooleanValue() == true);
+	CPPUNIT_ASSERT(testObject.getAttribute(CKA_NEVER_EXTRACTABLE).getBooleanValue() == true);
+	CPPUNIT_ASSERT(testObject.getAttribute(CKA_SIGN).getBooleanValue() == false);
 
 	bool value6 = true;
 	OSAttribute attr6(value6);
 
 	CPPUNIT_ASSERT(testObject.setAttribute(CKA_VERIFY, attr6));
-	CPPUNIT_ASSERT(testObject.getAttribute(CKA_VERIFY)->isBooleanAttribute());
-	CPPUNIT_ASSERT(testObject.getAttribute(CKA_VERIFY)->getBooleanValue() == value6);
+	CPPUNIT_ASSERT(testObject.getAttribute(CKA_VERIFY).isBooleanAttribute());
+	CPPUNIT_ASSERT(testObject.getAttribute(CKA_VERIFY).getBooleanValue() == value6);
+	CPPUNIT_ASSERT(testObject.getBooleanValue(CKA_VERIFY, false) == value6);
 }
 
 void SessionObjectTests::testULongAttr()
@@ -127,7 +127,7 @@ void SessionObjectTests::testULongAttr()
 	CPPUNIT_ASSERT(testObject.setAttribute(CKA_AUTH_PIN_FLAGS, attr3));
 	CPPUNIT_ASSERT(testObject.setAttribute(CKA_SUBPRIME_BITS, attr4));
 	CPPUNIT_ASSERT(testObject.setAttribute(CKA_KEY_TYPE, attr5));
-		
+
 	CPPUNIT_ASSERT(testObject.isValid());
 
 	CPPUNIT_ASSERT(testObject.attributeExists(CKA_MODULUS_BITS));
@@ -137,24 +137,25 @@ void SessionObjectTests::testULongAttr()
 	CPPUNIT_ASSERT(testObject.attributeExists(CKA_KEY_TYPE));
 	CPPUNIT_ASSERT(!testObject.attributeExists(CKA_ID));
 
-	CPPUNIT_ASSERT(testObject.getAttribute(CKA_MODULUS_BITS)->isUnsignedLongAttribute());
-	CPPUNIT_ASSERT(testObject.getAttribute(CKA_PRIME_BITS)->isUnsignedLongAttribute());
-	CPPUNIT_ASSERT(testObject.getAttribute(CKA_AUTH_PIN_FLAGS)->isUnsignedLongAttribute());
-	CPPUNIT_ASSERT(testObject.getAttribute(CKA_SUBPRIME_BITS)->isUnsignedLongAttribute());
-	CPPUNIT_ASSERT(testObject.getAttribute(CKA_KEY_TYPE)->isUnsignedLongAttribute());
+	CPPUNIT_ASSERT(testObject.getAttribute(CKA_MODULUS_BITS).isUnsignedLongAttribute());
+	CPPUNIT_ASSERT(testObject.getAttribute(CKA_PRIME_BITS).isUnsignedLongAttribute());
+	CPPUNIT_ASSERT(testObject.getAttribute(CKA_AUTH_PIN_FLAGS).isUnsignedLongAttribute());
+	CPPUNIT_ASSERT(testObject.getAttribute(CKA_SUBPRIME_BITS).isUnsignedLongAttribute());
+	CPPUNIT_ASSERT(testObject.getAttribute(CKA_KEY_TYPE).isUnsignedLongAttribute());
 
-	CPPUNIT_ASSERT(testObject.getAttribute(CKA_MODULUS_BITS)->getUnsignedLongValue() == 0x12345678);
-	CPPUNIT_ASSERT(testObject.getAttribute(CKA_PRIME_BITS)->getUnsignedLongValue() == 0x87654321);
-	CPPUNIT_ASSERT(testObject.getAttribute(CKA_AUTH_PIN_FLAGS)->getUnsignedLongValue() == 0x01010101);
-	CPPUNIT_ASSERT(testObject.getAttribute(CKA_SUBPRIME_BITS)->getUnsignedLongValue() == 0x10101010);
-	CPPUNIT_ASSERT(testObject.getAttribute(CKA_KEY_TYPE)->getUnsignedLongValue() == 0xABCDEF);
+	CPPUNIT_ASSERT(testObject.getAttribute(CKA_MODULUS_BITS).getUnsignedLongValue() == 0x12345678);
+	CPPUNIT_ASSERT(testObject.getAttribute(CKA_PRIME_BITS).getUnsignedLongValue() == 0x87654321);
+	CPPUNIT_ASSERT(testObject.getAttribute(CKA_AUTH_PIN_FLAGS).getUnsignedLongValue() == 0x01010101);
+	CPPUNIT_ASSERT(testObject.getAttribute(CKA_SUBPRIME_BITS).getUnsignedLongValue() == 0x10101010);
+	CPPUNIT_ASSERT(testObject.getAttribute(CKA_KEY_TYPE).getUnsignedLongValue() == 0xABCDEF);
 
 	unsigned long value6 = 0x90909090;
 	OSAttribute attr6(value6);
 
 	CPPUNIT_ASSERT(testObject.setAttribute(CKA_CLASS, attr6));
-	CPPUNIT_ASSERT(testObject.getAttribute(CKA_CLASS)->isUnsignedLongAttribute());
-	CPPUNIT_ASSERT(testObject.getAttribute(CKA_CLASS)->getUnsignedLongValue() == value6);
+	CPPUNIT_ASSERT(testObject.getAttribute(CKA_CLASS).isUnsignedLongAttribute());
+	CPPUNIT_ASSERT(testObject.getAttribute(CKA_CLASS).getUnsignedLongValue() == value6);
+	CPPUNIT_ASSERT(testObject.getUnsignedLongValue(CKA_CLASS, 0x0) == value6);
 }
 
 void SessionObjectTests::testByteStrAttr()
@@ -190,24 +191,24 @@ void SessionObjectTests::testByteStrAttr()
 	CPPUNIT_ASSERT(testObject.attributeExists(CKA_SUBJECT));
 	CPPUNIT_ASSERT(!testObject.attributeExists(CKA_ID));
 
-	CPPUNIT_ASSERT(testObject.getAttribute(CKA_MODULUS)->isByteStringAttribute());
-	CPPUNIT_ASSERT(testObject.getAttribute(CKA_COEFFICIENT)->isByteStringAttribute());
-	CPPUNIT_ASSERT(testObject.getAttribute(CKA_VALUE_BITS)->isByteStringAttribute());
-	CPPUNIT_ASSERT(testObject.getAttribute(CKA_PUBLIC_EXPONENT)->isByteStringAttribute());
-	CPPUNIT_ASSERT(testObject.getAttribute(CKA_SUBJECT)->isByteStringAttribute());
+	CPPUNIT_ASSERT(testObject.getAttribute(CKA_MODULUS).isByteStringAttribute());
+	CPPUNIT_ASSERT(testObject.getAttribute(CKA_COEFFICIENT).isByteStringAttribute());
+	CPPUNIT_ASSERT(testObject.getAttribute(CKA_VALUE_BITS).isByteStringAttribute());
+	CPPUNIT_ASSERT(testObject.getAttribute(CKA_PUBLIC_EXPONENT).isByteStringAttribute());
+	CPPUNIT_ASSERT(testObject.getAttribute(CKA_SUBJECT).isByteStringAttribute());
 
-	CPPUNIT_ASSERT(testObject.getAttribute(CKA_MODULUS)->getByteStringValue() == value1);
-	CPPUNIT_ASSERT(testObject.getAttribute(CKA_COEFFICIENT)->getByteStringValue() == value2);
-	CPPUNIT_ASSERT(testObject.getAttribute(CKA_VALUE_BITS)->getByteStringValue() == value3);
-	CPPUNIT_ASSERT(testObject.getAttribute(CKA_PUBLIC_EXPONENT)->getByteStringValue() == value4);
-	CPPUNIT_ASSERT(testObject.getAttribute(CKA_SUBJECT)->getByteStringValue() == value5);
+	CPPUNIT_ASSERT(testObject.getAttribute(CKA_MODULUS).getByteStringValue() == value1);
+	CPPUNIT_ASSERT(testObject.getAttribute(CKA_COEFFICIENT).getByteStringValue() == value2);
+	CPPUNIT_ASSERT(testObject.getAttribute(CKA_VALUE_BITS).getByteStringValue() == value3);
+	CPPUNIT_ASSERT(testObject.getAttribute(CKA_PUBLIC_EXPONENT).getByteStringValue() == value4);
+	CPPUNIT_ASSERT(testObject.getAttribute(CKA_SUBJECT).getByteStringValue() == value5);
 
 	ByteString value6 = "909090908080808080807070707070FF";
 	OSAttribute attr6(value6);
 
 	CPPUNIT_ASSERT(testObject.setAttribute(CKA_ISSUER, attr6));
-	CPPUNIT_ASSERT(testObject.getAttribute(CKA_ISSUER)->isByteStringAttribute());
-	CPPUNIT_ASSERT(testObject.getAttribute(CKA_ISSUER)->getByteStringValue() == value6);
+	CPPUNIT_ASSERT(testObject.getAttribute(CKA_ISSUER).isByteStringAttribute());
+	CPPUNIT_ASSERT(testObject.getByteStringValue(CKA_ISSUER) == value6);
 }
 
 void SessionObjectTests::testArrayAttr()
@@ -237,9 +238,9 @@ void SessionObjectTests::testArrayAttr()
 	CPPUNIT_ASSERT(testObject.attributeExists(CKA_WRAP_TEMPLATE));
 	CPPUNIT_ASSERT(!testObject.attributeExists(CKA_UNWRAP_TEMPLATE));
 
-	CPPUNIT_ASSERT(testObject.getAttribute(CKA_WRAP_TEMPLATE)->isArrayAttribute());
+	CPPUNIT_ASSERT(testObject.getAttribute(CKA_WRAP_TEMPLATE).isArrayAttribute());
 
-	std::map<CK_ATTRIBUTE_TYPE,OSAttribute> mattrb = testObject.getAttribute(CKA_WRAP_TEMPLATE)->getArrayValue();
+	std::map<CK_ATTRIBUTE_TYPE,OSAttribute> mattrb = testObject.getAttribute(CKA_WRAP_TEMPLATE).getArrayValue();
 	CPPUNIT_ASSERT(mattrb.size() == 3);
 	CPPUNIT_ASSERT(mattrb.find(CKA_TOKEN) != mattrb.end());
 	CPPUNIT_ASSERT(mattrb.at(CKA_TOKEN).isBooleanAttribute());
@@ -279,13 +280,13 @@ void SessionObjectTests::testMixedAttr()
 	CPPUNIT_ASSERT(testObject.attributeExists(CKA_VALUE_BITS));
 	CPPUNIT_ASSERT(!testObject.attributeExists(CKA_ID));
 
-	CPPUNIT_ASSERT(testObject.getAttribute(CKA_TOKEN)->isBooleanAttribute());
-	CPPUNIT_ASSERT(testObject.getAttribute(CKA_PRIME_BITS)->isUnsignedLongAttribute());
-	CPPUNIT_ASSERT(testObject.getAttribute(CKA_VALUE_BITS)->isByteStringAttribute());
+	CPPUNIT_ASSERT(testObject.getAttribute(CKA_TOKEN).isBooleanAttribute());
+	CPPUNIT_ASSERT(testObject.getAttribute(CKA_PRIME_BITS).isUnsignedLongAttribute());
+	CPPUNIT_ASSERT(testObject.getAttribute(CKA_VALUE_BITS).isByteStringAttribute());
 
-	CPPUNIT_ASSERT(testObject.getAttribute(CKA_TOKEN)->getBooleanValue() == true);
-	CPPUNIT_ASSERT(testObject.getAttribute(CKA_PRIME_BITS)->getUnsignedLongValue() == 0x87654321);
-	CPPUNIT_ASSERT(testObject.getAttribute(CKA_VALUE_BITS)->getByteStringValue() == value3);
+	CPPUNIT_ASSERT(testObject.getAttribute(CKA_TOKEN).getBooleanValue() == true);
+	CPPUNIT_ASSERT(testObject.getAttribute(CKA_PRIME_BITS).getUnsignedLongValue() == 0x87654321);
+	CPPUNIT_ASSERT(testObject.getAttribute(CKA_VALUE_BITS).getByteStringValue() == value3);
 }
 
 void SessionObjectTests::testDoubleAttr()
@@ -315,13 +316,13 @@ void SessionObjectTests::testDoubleAttr()
 	CPPUNIT_ASSERT(testObject.attributeExists(CKA_VALUE_BITS));
 	CPPUNIT_ASSERT(!testObject.attributeExists(CKA_ID));
 
-	CPPUNIT_ASSERT(testObject.getAttribute(CKA_TOKEN)->isBooleanAttribute());
-	CPPUNIT_ASSERT(testObject.getAttribute(CKA_PRIME_BITS)->isUnsignedLongAttribute());
-	CPPUNIT_ASSERT(testObject.getAttribute(CKA_VALUE_BITS)->isByteStringAttribute());
+	CPPUNIT_ASSERT(testObject.getAttribute(CKA_TOKEN).isBooleanAttribute());
+	CPPUNIT_ASSERT(testObject.getAttribute(CKA_PRIME_BITS).isUnsignedLongAttribute());
+	CPPUNIT_ASSERT(testObject.getAttribute(CKA_VALUE_BITS).isByteStringAttribute());
 
-	CPPUNIT_ASSERT(testObject.getAttribute(CKA_TOKEN)->getBooleanValue() == true);
-	CPPUNIT_ASSERT(testObject.getAttribute(CKA_PRIME_BITS)->getUnsignedLongValue() == 0x87654321);
-	CPPUNIT_ASSERT(testObject.getAttribute(CKA_VALUE_BITS)->getByteStringValue() == value3);
+	CPPUNIT_ASSERT(testObject.getAttribute(CKA_TOKEN).getBooleanValue() == true);
+	CPPUNIT_ASSERT(testObject.getAttribute(CKA_PRIME_BITS).getUnsignedLongValue() == 0x87654321);
+	CPPUNIT_ASSERT(testObject.getAttribute(CKA_VALUE_BITS).getByteStringValue() == value3);
 
 	bool value1a = false;
 	unsigned long value2a = 0x76767676;
@@ -338,13 +339,13 @@ void SessionObjectTests::testDoubleAttr()
 	CPPUNIT_ASSERT(testObject.setAttribute(CKA_VALUE_BITS, attr3a));
 
 	// Check the attributes
-	CPPUNIT_ASSERT(testObject.getAttribute(CKA_TOKEN)->isBooleanAttribute());
-	CPPUNIT_ASSERT(testObject.getAttribute(CKA_PRIME_BITS)->isUnsignedLongAttribute());
-	CPPUNIT_ASSERT(testObject.getAttribute(CKA_VALUE_BITS)->isByteStringAttribute());
+	CPPUNIT_ASSERT(testObject.getAttribute(CKA_TOKEN).isBooleanAttribute());
+	CPPUNIT_ASSERT(testObject.getAttribute(CKA_PRIME_BITS).isUnsignedLongAttribute());
+	CPPUNIT_ASSERT(testObject.getAttribute(CKA_VALUE_BITS).isByteStringAttribute());
 
-	CPPUNIT_ASSERT(testObject.getAttribute(CKA_TOKEN)->getBooleanValue() == value1a);
-	CPPUNIT_ASSERT(testObject.getAttribute(CKA_PRIME_BITS)->getUnsignedLongValue() == value2a);
-	CPPUNIT_ASSERT(testObject.getAttribute(CKA_VALUE_BITS)->getByteStringValue() == value3a);
+	CPPUNIT_ASSERT(testObject.getAttribute(CKA_TOKEN).getBooleanValue() == value1a);
+	CPPUNIT_ASSERT(testObject.getAttribute(CKA_PRIME_BITS).getUnsignedLongValue() == value2a);
+	CPPUNIT_ASSERT(testObject.getAttribute(CKA_VALUE_BITS).getByteStringValue() == value3a);
 
 	CPPUNIT_ASSERT(testObject.isValid());
 }
@@ -375,13 +376,13 @@ void SessionObjectTests::testCloseSession()
 	CPPUNIT_ASSERT(testObject.attributeExists(CKA_VALUE_BITS));
 	CPPUNIT_ASSERT(!testObject.attributeExists(CKA_ID));
 
-	CPPUNIT_ASSERT(testObject.getAttribute(CKA_TOKEN)->isBooleanAttribute());
-	CPPUNIT_ASSERT(testObject.getAttribute(CKA_PRIME_BITS)->isUnsignedLongAttribute());
-	CPPUNIT_ASSERT(testObject.getAttribute(CKA_VALUE_BITS)->isByteStringAttribute());
+	CPPUNIT_ASSERT(testObject.getAttribute(CKA_TOKEN).isBooleanAttribute());
+	CPPUNIT_ASSERT(testObject.getAttribute(CKA_PRIME_BITS).isUnsignedLongAttribute());
+	CPPUNIT_ASSERT(testObject.getAttribute(CKA_VALUE_BITS).isByteStringAttribute());
 
-	CPPUNIT_ASSERT(testObject.getAttribute(CKA_TOKEN)->getBooleanValue() == true);
-	CPPUNIT_ASSERT(testObject.getAttribute(CKA_PRIME_BITS)->getUnsignedLongValue() == 0x87654321);
-	CPPUNIT_ASSERT(testObject.getAttribute(CKA_VALUE_BITS)->getByteStringValue() == value3);
+	CPPUNIT_ASSERT(testObject.getAttribute(CKA_TOKEN).getBooleanValue() == true);
+	CPPUNIT_ASSERT(testObject.getAttribute(CKA_PRIME_BITS).getUnsignedLongValue() == 0x87654321);
+	CPPUNIT_ASSERT(testObject.getAttribute(CKA_VALUE_BITS).getByteStringValue() == value3);
 
 	// Now close the session
     testObject.removeOnSessionClose(1);

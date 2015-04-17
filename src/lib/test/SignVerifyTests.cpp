@@ -161,10 +161,10 @@ void SignVerifyTests::rsaPkcsSignVerify(CK_MECHANISM_TYPE mechanismType, CK_SESS
 	CPPUNIT_ASSERT(rv==CKR_OK);
 }
 
-void SignVerifyTests::digestRsaPkcsSignVerify(CK_MECHANISM_TYPE mechanismType, CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hPublicKey, CK_OBJECT_HANDLE hPrivateKey)
+void SignVerifyTests::digestRsaPkcsSignVerify(CK_MECHANISM_TYPE mechanismType, CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hPublicKey, CK_OBJECT_HANDLE hPrivateKey, CK_VOID_PTR param /* = NULL_PTR */, CK_ULONG paramLen /* = 0 */)
 {
 	CK_RV rv;
-	CK_MECHANISM mechanism = { mechanismType, NULL_PTR, 0 };
+	CK_MECHANISM mechanism = { mechanismType, param, paramLen };
 	CK_BYTE data[] = { 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B,0x0C, 0x0D, 0x0F };
 	CK_BYTE signature[256];
 	CK_ULONG ulSignatureLen = 0;
@@ -208,6 +208,13 @@ void SignVerifyTests::testRsaSignVerify()
 	CK_ULONG pinLength = sizeof(pin) - 1;
 	CK_SESSION_HANDLE hSessionRO;
 	CK_SESSION_HANDLE hSessionRW;
+	CK_RSA_PKCS_PSS_PARAMS params[] = {
+		{ CKM_SHA_1,  CKG_MGF1_SHA1,   0  },
+		{ CKM_SHA224, CKG_MGF1_SHA224, 28 },
+		{ CKM_SHA256, CKG_MGF1_SHA256, 32 },
+		{ CKM_SHA384, CKG_MGF1_SHA384, 0  },
+		{ CKM_SHA512, CKG_MGF1_SHA512, 0  }
+	};
 
 	// Just make sure that we finalize any previous tests
 	C_Finalize(NULL_PTR);
@@ -247,6 +254,11 @@ void SignVerifyTests::testRsaSignVerify()
 	digestRsaPkcsSignVerify(CKM_SHA256_RSA_PKCS, hSessionRO, hPuk,hPrk);
 	digestRsaPkcsSignVerify(CKM_SHA384_RSA_PKCS, hSessionRO, hPuk,hPrk);
 	digestRsaPkcsSignVerify(CKM_SHA512_RSA_PKCS, hSessionRO, hPuk,hPrk);
+	digestRsaPkcsSignVerify(CKM_SHA1_RSA_PKCS_PSS, hSessionRO, hPuk,hPrk, &params[0], sizeof(params[0]));
+	digestRsaPkcsSignVerify(CKM_SHA224_RSA_PKCS_PSS, hSessionRO, hPuk,hPrk, &params[1], sizeof(params[1]));
+	digestRsaPkcsSignVerify(CKM_SHA256_RSA_PKCS_PSS, hSessionRO, hPuk,hPrk, &params[2], sizeof(params[2]));
+	digestRsaPkcsSignVerify(CKM_SHA384_RSA_PKCS_PSS, hSessionRO, hPuk,hPrk, &params[3], sizeof(params[3]));
+	digestRsaPkcsSignVerify(CKM_SHA512_RSA_PKCS_PSS, hSessionRO, hPuk,hPrk, &params[4], sizeof(params[4]));
 
 	// Private Session Keys
 	rv = generateRsaKeyPair(hSessionRW,IN_SESSION,IS_PRIVATE,IN_SESSION,IS_PRIVATE,hPuk,hPrk);
@@ -260,6 +272,11 @@ void SignVerifyTests::testRsaSignVerify()
 	digestRsaPkcsSignVerify(CKM_SHA256_RSA_PKCS, hSessionRW, hPuk,hPrk);
 	digestRsaPkcsSignVerify(CKM_SHA384_RSA_PKCS, hSessionRW, hPuk,hPrk);
 	digestRsaPkcsSignVerify(CKM_SHA512_RSA_PKCS, hSessionRW, hPuk,hPrk);
+	digestRsaPkcsSignVerify(CKM_SHA1_RSA_PKCS_PSS, hSessionRW, hPuk,hPrk, &params[0], sizeof(params[0]));
+	digestRsaPkcsSignVerify(CKM_SHA224_RSA_PKCS_PSS, hSessionRW, hPuk,hPrk, &params[1], sizeof(params[1]));
+	digestRsaPkcsSignVerify(CKM_SHA256_RSA_PKCS_PSS, hSessionRW, hPuk,hPrk, &params[2], sizeof(params[2]));
+	digestRsaPkcsSignVerify(CKM_SHA384_RSA_PKCS_PSS, hSessionRW, hPuk,hPrk, &params[3], sizeof(params[3]));
+	digestRsaPkcsSignVerify(CKM_SHA512_RSA_PKCS_PSS, hSessionRW, hPuk,hPrk, &params[4], sizeof(params[4]));
 
 	// Public Token Keys
 	rv = generateRsaKeyPair(hSessionRW,ON_TOKEN,IS_PUBLIC,ON_TOKEN,IS_PUBLIC,hPuk,hPrk);
@@ -273,6 +290,11 @@ void SignVerifyTests::testRsaSignVerify()
 	digestRsaPkcsSignVerify(CKM_SHA256_RSA_PKCS, hSessionRW, hPuk,hPrk);
 	digestRsaPkcsSignVerify(CKM_SHA384_RSA_PKCS, hSessionRW, hPuk,hPrk);
 	digestRsaPkcsSignVerify(CKM_SHA512_RSA_PKCS, hSessionRW, hPuk,hPrk);
+	digestRsaPkcsSignVerify(CKM_SHA1_RSA_PKCS_PSS, hSessionRW, hPuk,hPrk, &params[0], sizeof(params[0]));
+	digestRsaPkcsSignVerify(CKM_SHA224_RSA_PKCS_PSS, hSessionRW, hPuk,hPrk, &params[1], sizeof(params[1]));
+	digestRsaPkcsSignVerify(CKM_SHA256_RSA_PKCS_PSS, hSessionRW, hPuk,hPrk, &params[2], sizeof(params[2]));
+	digestRsaPkcsSignVerify(CKM_SHA384_RSA_PKCS_PSS, hSessionRW, hPuk,hPrk, &params[3], sizeof(params[3]));
+	digestRsaPkcsSignVerify(CKM_SHA512_RSA_PKCS_PSS, hSessionRW, hPuk,hPrk, &params[4], sizeof(params[4]));
 
 	// Private Token Keys
 	rv = generateRsaKeyPair(hSessionRW,ON_TOKEN,IS_PRIVATE,ON_TOKEN,IS_PRIVATE,hPuk,hPrk);
@@ -286,6 +308,11 @@ void SignVerifyTests::testRsaSignVerify()
 	digestRsaPkcsSignVerify(CKM_SHA256_RSA_PKCS, hSessionRW, hPuk,hPrk);
 	digestRsaPkcsSignVerify(CKM_SHA384_RSA_PKCS, hSessionRW, hPuk,hPrk);
 	digestRsaPkcsSignVerify(CKM_SHA512_RSA_PKCS, hSessionRW, hPuk,hPrk);
+	digestRsaPkcsSignVerify(CKM_SHA1_RSA_PKCS_PSS, hSessionRW, hPuk,hPrk, &params[0], sizeof(params[0]));
+	digestRsaPkcsSignVerify(CKM_SHA224_RSA_PKCS_PSS, hSessionRW, hPuk,hPrk, &params[1], sizeof(params[1]));
+	digestRsaPkcsSignVerify(CKM_SHA256_RSA_PKCS_PSS, hSessionRW, hPuk,hPrk, &params[2], sizeof(params[2]));
+	digestRsaPkcsSignVerify(CKM_SHA384_RSA_PKCS_PSS, hSessionRW, hPuk,hPrk, &params[3], sizeof(params[3]));
+	digestRsaPkcsSignVerify(CKM_SHA512_RSA_PKCS_PSS, hSessionRW, hPuk,hPrk, &params[4], sizeof(params[4]));
 }
 
 CK_RV SignVerifyTests::generateKey(CK_SESSION_HANDLE hSession, CK_KEY_TYPE keyType, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_OBJECT_HANDLE &hKey)
@@ -300,6 +327,7 @@ CK_RV SignVerifyTests::generateKey(CK_SESSION_HANDLE hSession, CK_KEY_TYPE keyTy
 	CK_BYTE val[GEN_KEY_LEN];
 	//CK_BBOOL bFalse = CK_FALSE;
 	CK_BBOOL bTrue = CK_TRUE;
+	CK_BYTE oid[] = { 0x06, 0x07, 0x2A, 0x85, 0x03, 0x02, 0x02, 0x1F, 0x00 };
 	CK_ATTRIBUTE kAttribs[] = {
 		{ CKA_CLASS, &keyClass, sizeof(keyClass) },
 		{ CKA_KEY_TYPE, &keyType, sizeof(keyType) },
@@ -308,14 +336,22 @@ CK_RV SignVerifyTests::generateKey(CK_SESSION_HANDLE hSession, CK_KEY_TYPE keyTy
 		{ CKA_SENSITIVE, &bTrue, sizeof(bTrue) },
 		{ CKA_VERIFY, &bTrue, sizeof(bTrue) },
 		{ CKA_SIGN, &bTrue, sizeof(bTrue) },
-		{ CKA_VALUE, &val[0], sizeof(val) }
+		{ CKA_VALUE, val, sizeof(val) },
+		{ CKA_GOST28147_PARAMS, oid, sizeof(oid) }
 	};
 
 	rv = C_GenerateRandom(hSession, val, GEN_KEY_LEN);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	hKey = CK_INVALID_HANDLE;
-	return C_CreateObject(hSession, kAttribs, sizeof(kAttribs)/sizeof(CK_ATTRIBUTE), &hKey);
+	if (keyType == CKK_GOST28147)
+	{
+		return C_CreateObject(hSession, kAttribs, 9, &hKey);
+	}
+	else
+	{
+		return C_CreateObject(hSession, kAttribs, 8, &hKey);
+	}
 }
 
 void SignVerifyTests::hmacSignVerify(CK_MECHANISM_TYPE mechanismType, CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hKey)

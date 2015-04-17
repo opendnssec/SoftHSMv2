@@ -1,8 +1,8 @@
-.TH SOFTHSM-KEYCONV 1 "22 October 2012" "SoftHSM"
+.TH SOFTHSM2-KEYCONV 1 "20 March 2014" "SoftHSM"
 .SH NAME
-softhsm-keyconv \- converting from BIND to PKCS#8 key file format
+softhsm2-keyconv \- converting from BIND to PKCS#8 key file format
 .SH SYNOPSIS
-.B softhsm-keyconv
+.B softhsm2-keyconv
 .B \-\-in
 .I path
 .B \-\-out
@@ -10,11 +10,11 @@ softhsm-keyconv \- converting from BIND to PKCS#8 key file format
 .RB [ \-\-pin
 .IR PIN ]
 .SH DESCRIPTION
-.B softhsm-keyconv
+.B softhsm2-keyconv
 can convert BIND .private-key files to the PKCS#8 file format.
 This is so that you can import the PKCS#8 file into
 libsofthsm using the command
-.BR softhsm\-util .
+.BR softhsm2\-util .
 If you have another file format, then
 .B openssl
 probably can help you to convert it into the PKCS#8 file format.
@@ -45,17 +45,17 @@ The following command can be used to convert a BIND .private-key file to a PKCS#
 .LP
 .RS
 .nf
-softhsm-keyconv \-\-in Kexample.com.+007+05474.private \\
+softhsm2-keyconv \-\-in Kexample.com.+007+05474.private \\
 .ti +0.7i
 \-\-out rsa.pem
 .fi
 .RE
 .LP
 .SH AUTHORS
-Written by Rickard Bellgrim, René Post, and Roland van Rijswijk.
+Written by Rickard Bellgrim, Francis Dupont, René Post, and Roland van Rijswijk.
 .SH "SEE ALSO"
-.IR softhsm-migrate (1),
-.IR softhsm-util (1),
+.IR softhsm2-migrate (1),
+.IR softhsm2-util (1),
 .IR softhsm2.conf (5),
 .IR openssl (1),
 .IR named (1),

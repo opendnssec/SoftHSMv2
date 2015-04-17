@@ -19,13 +19,15 @@ p11test_SOURCES =		p11test.cpp \
 				ObjectTests.cpp \
 				SignVerifyTests.cpp \
 				AsymEncryptDecryptTests.cpp \
+				AsymWrapUnwrapTests.cpp \
 				../common/osmutex.cpp
 
-p11test_LDADD =			../libsofthsm.la 
+p11test_LDADD =			../libsofthsm2.la 
 
 p11test_LDFLAGS = 		@CRYPTO_LIBS@ -no-install `cppunit-config --libs` -pthread -static
 
 TESTS = 			p11test
 
 EXTRA_DIST =			$(srcdir)/*.h \
+				$(srcdir)/softhsm2.conf.win32 \
 				$(srcdir)/tokens/dummy.in

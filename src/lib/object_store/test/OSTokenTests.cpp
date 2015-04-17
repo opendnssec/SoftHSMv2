@@ -81,7 +81,7 @@ void OSTokenTests::testNewToken()
 
 	// Set the SO PIN
 	ByteString soPIN = "3132333435363738"; // 12345678
-	
+
 	CPPUNIT_ASSERT(newToken->setSOPIN(soPIN));
 
 	// Set the user PIN
@@ -105,7 +105,7 @@ void OSTokenTests::testNewToken()
 
 	// Retrieve the flags, user PIN and so PIN
 	ByteString retrievedSOPIN, retrievedUserPIN;
-	
+
 	CPPUNIT_ASSERT(reopenedToken.getSOPIN(retrievedSOPIN));
 	CPPUNIT_ASSERT(reopenedToken.getUserPIN(retrievedUserPIN));
 	CPPUNIT_ASSERT(reopenedToken.getTokenFlags(flags));
@@ -185,7 +185,7 @@ void OSTokenTests::testExistingToken()
 	// Retrieve SO PIN, user PIN, label, serial number and flags
 	ByteString retrievedSOPIN, retrievedUserPIN, retrievedLabel, retrievedSerial;
 	CK_ULONG flags;
-	
+
 	CPPUNIT_ASSERT(existingToken.getSOPIN(retrievedSOPIN));
 	CPPUNIT_ASSERT(existingToken.getUserPIN(retrievedUserPIN));
 	CPPUNIT_ASSERT(existingToken.getTokenLabel(retrievedLabel));
@@ -212,17 +212,17 @@ void OSTokenTests::testExistingToken()
 		CPPUNIT_ASSERT((*i)->isValid());
 		CPPUNIT_ASSERT((*i)->attributeExists(CKA_ID));
 
-		CPPUNIT_ASSERT((*i)->getAttribute(CKA_ID)->isByteStringAttribute());
+		CPPUNIT_ASSERT((*i)->getAttribute(CKA_ID).isByteStringAttribute());
 
-		if ((*i)->getAttribute(CKA_ID)->getByteStringValue() == id1)
+		if ((*i)->getAttribute(CKA_ID).getByteStringValue() == id1)
 		{
 			present[0] = true;
 		}
-		else if ((*i)->getAttribute(CKA_ID)->getByteStringValue() == id2)
+		else if ((*i)->getAttribute(CKA_ID).getByteStringValue() == id2)
 		{
 			present[1] = true;
 		}
-		else if ((*i)->getAttribute(CKA_ID)->getByteStringValue() == id3)
+		else if ((*i)->getAttribute(CKA_ID).getByteStringValue() == id3)
 		{
 			present[2] = true;
 		}
@@ -298,11 +298,11 @@ void OSTokenTests::testCreateDeleteObjects()
 		CPPUNIT_ASSERT((*i)->isValid());
 		CPPUNIT_ASSERT((*i)->attributeExists(CKA_ID));
 
-		CPPUNIT_ASSERT((*i)->getAttribute(CKA_ID)->isByteStringAttribute());
+		CPPUNIT_ASSERT((*i)->getAttribute(CKA_ID).isByteStringAttribute());
 
 		for (int j = 0; j < 3; j++)
 		{
-			if ((*i)->getAttribute(CKA_ID)->getByteStringValue() == id[j])
+			if ((*i)->getAttribute(CKA_ID).getByteStringValue() == id[j])
 			{
 				present1[j] = true;
 			}
@@ -327,11 +327,11 @@ void OSTokenTests::testCreateDeleteObjects()
 		CPPUNIT_ASSERT((*i)->isValid());
 		CPPUNIT_ASSERT((*i)->attributeExists(CKA_ID));
 
-		CPPUNIT_ASSERT((*i)->getAttribute(CKA_ID)->isByteStringAttribute());
+		CPPUNIT_ASSERT((*i)->getAttribute(CKA_ID).isByteStringAttribute());
 
 		for (int j = 0; j < 3; j++)
 		{
-			if ((*i)->getAttribute(CKA_ID)->getByteStringValue() == id[j])
+			if ((*i)->getAttribute(CKA_ID).getByteStringValue() == id[j])
 			{
 				present2[j] = true;
 			}
@@ -351,9 +351,9 @@ void OSTokenTests::testCreateDeleteObjects()
 		CPPUNIT_ASSERT((*i)->isValid());
 		CPPUNIT_ASSERT((*i)->attributeExists(CKA_ID));
 
-		CPPUNIT_ASSERT((*i)->getAttribute(CKA_ID)->isByteStringAttribute());
+		CPPUNIT_ASSERT((*i)->getAttribute(CKA_ID).isByteStringAttribute());
 
-		if ((*i)->getAttribute(CKA_ID)->getByteStringValue() == id[1])
+		if ((*i)->getAttribute(CKA_ID).getByteStringValue() == id[1])
 		{
 			CPPUNIT_ASSERT(testToken->deleteObject(*i));
 			break;
@@ -373,13 +373,13 @@ void OSTokenTests::testCreateDeleteObjects()
 		CPPUNIT_ASSERT((*i)->isValid());
 		CPPUNIT_ASSERT((*i)->attributeExists(CKA_ID));
 
-		CPPUNIT_ASSERT((*i)->getAttribute(CKA_ID)->isByteStringAttribute());
+		CPPUNIT_ASSERT((*i)->getAttribute(CKA_ID).isByteStringAttribute());
 
-		if ((*i)->getAttribute(CKA_ID)->getByteStringValue() == id[0])
+		if ((*i)->getAttribute(CKA_ID).getByteStringValue() == id[0])
 		{
 			present3[0] = true;
 		}
-		if ((*i)->getAttribute(CKA_ID)->getByteStringValue() == id[2])
+		if ((*i)->getAttribute(CKA_ID).getByteStringValue() == id[2])
 		{
 			present3[1] = true;
 		}
@@ -389,7 +389,7 @@ void OSTokenTests::testCreateDeleteObjects()
 	{
 		CPPUNIT_ASSERT(present3[j] == true);
 	}
-	
+
 	// Now check the other instance
 	CPPUNIT_ASSERT(sameToken.getObjects().size() == 2);
 
@@ -403,13 +403,13 @@ void OSTokenTests::testCreateDeleteObjects()
 		CPPUNIT_ASSERT((*i)->isValid());
 		CPPUNIT_ASSERT((*i)->attributeExists(CKA_ID));
 
-		CPPUNIT_ASSERT((*i)->getAttribute(CKA_ID)->isByteStringAttribute());
+		CPPUNIT_ASSERT((*i)->getAttribute(CKA_ID).isByteStringAttribute());
 
-		if ((*i)->getAttribute(CKA_ID)->getByteStringValue() == id[0])
+		if ((*i)->getAttribute(CKA_ID).getByteStringValue() == id[0])
 		{
 			present4[0] = true;
 		}
-		if ((*i)->getAttribute(CKA_ID)->getByteStringValue() == id[2])
+		if ((*i)->getAttribute(CKA_ID).getByteStringValue() == id[2])
 		{
 			present4[1] = true;
 		}

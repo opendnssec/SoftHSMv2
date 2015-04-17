@@ -204,17 +204,17 @@ void test_a_dbtoken::should_allow_object_enumeration()
 		CPPUNIT_ASSERT((*i)->isValid());
 		CPPUNIT_ASSERT((*i)->attributeExists(CKA_ID));
 
-		CPPUNIT_ASSERT((*i)->getAttribute(CKA_ID)->isByteStringAttribute());
+		CPPUNIT_ASSERT((*i)->getAttribute(CKA_ID).isByteStringAttribute());
 
-		if ((*i)->getAttribute(CKA_ID)->getByteStringValue() == id[0])
+		if ((*i)->getAttribute(CKA_ID).getByteStringValue() == id[0])
 		{
 			present[0] = true;
 		}
-		else if ((*i)->getAttribute(CKA_ID)->getByteStringValue() == id[1])
+		else if ((*i)->getAttribute(CKA_ID).getByteStringValue() == id[1])
 		{
 			present[1] = true;
 		}
-		else if ((*i)->getAttribute(CKA_ID)->getByteStringValue() == id[2])
+		else if ((*i)->getAttribute(CKA_ID).getByteStringValue() == id[2])
 		{
 			present[2] = true;
 		}
@@ -276,11 +276,11 @@ void test_a_dbtoken::support_create_delete_objects()
 		CPPUNIT_ASSERT((*i)->isValid());
 		CPPUNIT_ASSERT((*i)->attributeExists(CKA_ID));
 
-		CPPUNIT_ASSERT((*i)->getAttribute(CKA_ID)->isByteStringAttribute());
+		CPPUNIT_ASSERT((*i)->getAttribute(CKA_ID).isByteStringAttribute());
 
 		for (int j = 0; j < 3; j++)
 		{
-			if ((*i)->getAttribute(CKA_ID)->getByteStringValue() == id[j])
+			if ((*i)->getAttribute(CKA_ID).getByteStringValue() == id[j])
 			{
 				present1[j] = true;
 			}
@@ -305,11 +305,11 @@ void test_a_dbtoken::support_create_delete_objects()
 		CPPUNIT_ASSERT((*i)->isValid());
 		CPPUNIT_ASSERT((*i)->attributeExists(CKA_ID));
 
-		CPPUNIT_ASSERT((*i)->getAttribute(CKA_ID)->isByteStringAttribute());
+		CPPUNIT_ASSERT((*i)->getAttribute(CKA_ID).isByteStringAttribute());
 
 		for (int j = 0; j < 3; j++)
 		{
-			if ((*i)->getAttribute(CKA_ID)->getByteStringValue() == id[j])
+			if ((*i)->getAttribute(CKA_ID).getByteStringValue() == id[j])
 			{
 				present2[j] = true;
 			}
@@ -329,9 +329,9 @@ void test_a_dbtoken::support_create_delete_objects()
 		CPPUNIT_ASSERT((*i)->isValid());
 		CPPUNIT_ASSERT((*i)->attributeExists(CKA_ID));
 
-		CPPUNIT_ASSERT((*i)->getAttribute(CKA_ID)->isByteStringAttribute());
+		CPPUNIT_ASSERT((*i)->getAttribute(CKA_ID).isByteStringAttribute());
 
-		if ((*i)->getAttribute(CKA_ID)->getByteStringValue() == id[1])
+		if ((*i)->getAttribute(CKA_ID).getByteStringValue() == id[1])
 		{
 			CPPUNIT_ASSERT(testToken->deleteObject(*i));
 			break;
@@ -351,13 +351,13 @@ void test_a_dbtoken::support_create_delete_objects()
 		CPPUNIT_ASSERT((*i)->isValid());
 		CPPUNIT_ASSERT((*i)->attributeExists(CKA_ID));
 
-		CPPUNIT_ASSERT((*i)->getAttribute(CKA_ID)->isByteStringAttribute());
+		CPPUNIT_ASSERT((*i)->getAttribute(CKA_ID).isByteStringAttribute());
 
-		if ((*i)->getAttribute(CKA_ID)->getByteStringValue() == id[0])
+		if ((*i)->getAttribute(CKA_ID).getByteStringValue() == id[0])
 		{
 			present3[0] = true;
 		}
-		if ((*i)->getAttribute(CKA_ID)->getByteStringValue() == id[2])
+		if ((*i)->getAttribute(CKA_ID).getByteStringValue() == id[2])
 		{
 			present3[1] = true;
 		}
@@ -381,13 +381,13 @@ void test_a_dbtoken::support_create_delete_objects()
 		CPPUNIT_ASSERT((*i)->isValid());
 		CPPUNIT_ASSERT((*i)->attributeExists(CKA_ID));
 
-		CPPUNIT_ASSERT((*i)->getAttribute(CKA_ID)->isByteStringAttribute());
+		CPPUNIT_ASSERT((*i)->getAttribute(CKA_ID).isByteStringAttribute());
 
-		if ((*i)->getAttribute(CKA_ID)->getByteStringValue() == id[0])
+		if ((*i)->getAttribute(CKA_ID).getByteStringValue() == id[0])
 		{
 			present4[0] = true;
 		}
-		if ((*i)->getAttribute(CKA_ID)->getByteStringValue() == id[2])
+		if ((*i)->getAttribute(CKA_ID).getByteStringValue() == id[2])
 		{
 			present4[1] = true;
 		}

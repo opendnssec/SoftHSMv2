@@ -46,6 +46,7 @@ OSSLRSA::OSSLRSA()
 {
 	pCurrentHash = NULL;
 	pSecondHash = NULL;
+	sLen = 0;
 }
 
 // Destructor
@@ -55,7 +56,7 @@ OSSLRSA::~OSSLRSA()
 	{
 		delete pCurrentHash;
 	}
-	
+
 	if (pSecondHash != NULL)
 	{
 		delete pSecondHash;
@@ -63,14 +64,11 @@ OSSLRSA::~OSSLRSA()
 }
 
 // Signing functions
-bool OSSLRSA::sign(PrivateKey* privateKey, const ByteString& dataToSign, ByteString& signature, const std::string mechanism)
+bool OSSLRSA::sign(PrivateKey* privateKey, const ByteString& dataToSign,
+		   ByteString& signature, const AsymMech::Type mechanism,
+		   const void* param /* = NULL */, const size_t paramLen /* = 0 */)
 {
-
-	std::string lowerMechanism;
-	lowerMechanism.resize(mechanism.size());
-	std::transform(mechanism.begin(), mechanism.end(), lowerMechanism.begin(), tolower);
-
-	if (!lowerMechanism.compare("rsa-pkcs"))
+	if (mechanism == AsymMech::RSA_PKCS)
 	{
 		// Separate implementation for RSA PKCS #1 signing without hash computation
 
@@ -78,7 +76,7 @@ bool OSSLRSA::sign(PrivateKey* privateKey, const ByteString& dataToSign, ByteStr
 		if (!privateKey->isOfType(OSSLRSAPrivateKey::type))
 		{
 			ERROR_MSG("Invalid key type supplied");
-	
+
 			return false;
 		}
 
@@ -122,7 +120,7 @@ bool OSSLRSA::sign(PrivateKey* privateKey, const ByteString& dataToSign, ByteStr
 
 		return true;
 	}
-	else if (!lowerMechanism.compare("rsa-raw"))
+	else if (mechanism == AsymMech::RSA)
 	{
 		// Separate implementation for raw RSA signing
 
@@ -130,7 +128,7 @@ bool OSSLRSA::sign(PrivateKey* privateKey, const ByteString& dataToSign, ByteStr
 		if (!privateKey->isOfType(OSSLRSAPrivateKey::type))
 		{
 			ERROR_MSG("Invalid key type supplied");
-	
+
 			return false;
 		}
 
@@ -174,13 +172,14 @@ bool OSSLRSA::sign(PrivateKey* privateKey, const ByteString& dataToSign, ByteStr
 	else
 	{
 		// Call default implementation
-		return AsymmetricAlgorithm::sign(privateKey, dataToSign, signature, mechanism);
+		return AsymmetricAlgorithm::sign(privateKey, dataToSign, signature, mechanism, param, paramLen);
 	}
 }
-	
-bool OSSLRSA::signInit(PrivateKey* privateKey, const std::string mechanism)
+
+bool OSSLRSA::signInit(PrivateKey* privateKey, const AsymMech::Type mechanism,
+		       const void* param /* = NULL */, const size_t paramLen /* = 0 */)
 {
-	if (!AsymmetricAlgorithm::signInit(privateKey, mechanism))
+	if (!AsymmetricAlgorithm::signInit(privateKey, mechanism, param, paramLen))
 	{
 		return false;
 	}
@@ -196,97 +195,183 @@ bool OSSLRSA::signInit(PrivateKey* privateKey, const std::string mechanism)
 		return false;
 	}
 
-	std::string lowerMechanism;
-	lowerMechanism.resize(mechanism.size());
-	std::transform(mechanism.begin(), mechanism.end(), lowerMechanism.begin(), tolower);
+	HashAlgo::Type hash1 = HashAlgo::Unknown;
+	HashAlgo::Type hash2 = HashAlgo::Unknown;
 
-	if (!lowerMechanism.compare("rsa-md5-pkcs"))
+	switch (mechanism)
 	{
-		pCurrentHash = CryptoFactory::i()->getHashAlgorithm("md5");
+		case AsymMech::RSA_MD5_PKCS:
+			hash1 = HashAlgo::MD5;
+			break;
+		case AsymMech::RSA_SHA1_PKCS:
+			hash1 = HashAlgo::SHA1;
+			break;
+		case AsymMech::RSA_SHA224_PKCS:
+			hash1 = HashAlgo::SHA224;
+			break;
+		case AsymMech::RSA_SHA256_PKCS:
+			hash1 = HashAlgo::SHA256;
+			break;
+		case AsymMech::RSA_SHA384_PKCS:
+			hash1 = HashAlgo::SHA384;
+			break;
+		case AsymMech::RSA_SHA512_PKCS:
+			hash1 = HashAlgo::SHA512;
+			break;
+		case AsymMech::RSA_SHA1_PKCS_PSS:
+			if (param == NULL || paramLen != sizeof(RSA_PKCS_PSS_PARAMS) ||
+			    ((RSA_PKCS_PSS_PARAMS*) param)->hashAlg != HashAlgo::SHA1 ||
+			    ((RSA_PKCS_PSS_PARAMS*) param)->mgf != AsymRSAMGF::MGF1_SHA1)
+			{
+				ERROR_MSG("Invalid parameters");
+				ByteString dummy;
+				AsymmetricAlgorithm::signFinal(dummy);
+				return false;
+			}
+			sLen = ((RSA_PKCS_PSS_PARAMS*) param)->sLen;
+			if (sLen > ((privateKey->getBitLength()+6)/8-2-20))
+			{
+				ERROR_MSG("sLen (%lu) is too large for current key size (%lu)",
+					  (unsigned long)sLen, privateKey->getBitLength());
+				ByteString dummy;
+				AsymmetricAlgorithm::signFinal(dummy);
+				return false;
+			}
+			hash1 = HashAlgo::SHA1;
+			break;
+		case AsymMech::RSA_SHA224_PKCS_PSS:
+			if (param == NULL || paramLen != sizeof(RSA_PKCS_PSS_PARAMS) ||
+			    ((RSA_PKCS_PSS_PARAMS*) param)->hashAlg != HashAlgo::SHA224 ||
+			    ((RSA_PKCS_PSS_PARAMS*) param)->mgf != AsymRSAMGF::MGF1_SHA224)
+			{
+				ERROR_MSG("Invalid parameters");
+				ByteString dummy;
+				AsymmetricAlgorithm::signFinal(dummy);
+				return false;
+			}
+			sLen = ((RSA_PKCS_PSS_PARAMS*) param)->sLen;
+			if (sLen > ((privateKey->getBitLength()+6)/8-2-28))
+			{
+				ERROR_MSG("sLen (%lu) is too large for current key size (%lu)",
+					  (unsigned long)sLen, privateKey->getBitLength());
+				ByteString dummy;
+				AsymmetricAlgorithm::signFinal(dummy);
+				return false;
+			}
+			hash1 = HashAlgo::SHA224;
+			break;
+		case AsymMech::RSA_SHA256_PKCS_PSS:
+			if (param == NULL || paramLen != sizeof(RSA_PKCS_PSS_PARAMS) ||
+			    ((RSA_PKCS_PSS_PARAMS*) param)->hashAlg != HashAlgo::SHA256 ||
+			    ((RSA_PKCS_PSS_PARAMS*) param)->mgf != AsymRSAMGF::MGF1_SHA256)
+			{
+				ERROR_MSG("Invalid parameters");
+				ByteString dummy;
+				AsymmetricAlgorithm::signFinal(dummy);
+				return false;
+			}
+			sLen = ((RSA_PKCS_PSS_PARAMS*) param)->sLen;
+			if (sLen > ((privateKey->getBitLength()+6)/8-2-32))
+			{
+				ERROR_MSG("sLen (%lu) is too large for current key size (%lu)",
+					  (unsigned long)sLen, privateKey->getBitLength());
+				ByteString dummy;
+				AsymmetricAlgorithm::signFinal(dummy);
+				return false;
+			}
+			hash1 = HashAlgo::SHA256;
+			break;
+		case AsymMech::RSA_SHA384_PKCS_PSS:
+			if (param == NULL || paramLen != sizeof(RSA_PKCS_PSS_PARAMS) ||
+			    ((RSA_PKCS_PSS_PARAMS*) param)->hashAlg != HashAlgo::SHA384 ||
+			    ((RSA_PKCS_PSS_PARAMS*) param)->mgf != AsymRSAMGF::MGF1_SHA384)
+			{
+				ERROR_MSG("Invalid parameters");
+				ByteString dummy;
+				AsymmetricAlgorithm::signFinal(dummy);
+				return false;
+			}
+			sLen = ((RSA_PKCS_PSS_PARAMS*) param)->sLen;
+			if (sLen > ((privateKey->getBitLength()+6)/8-2-48))
+			{
+				ERROR_MSG("sLen (%lu) is too large for current key size (%lu)",
+					  (unsigned long)sLen, privateKey->getBitLength());
+				ByteString dummy;
+				AsymmetricAlgorithm::signFinal(dummy);
+				return false;
+			}
+			hash1 = HashAlgo::SHA384;
+			break;
+		case AsymMech::RSA_SHA512_PKCS_PSS:
+			if (param == NULL || paramLen != sizeof(RSA_PKCS_PSS_PARAMS) ||
+			    ((RSA_PKCS_PSS_PARAMS*) param)->hashAlg != HashAlgo::SHA512 ||
+			    ((RSA_PKCS_PSS_PARAMS*) param)->mgf != AsymRSAMGF::MGF1_SHA512)
+			{
+				ERROR_MSG("Invalid parameters");
+				ByteString dummy;
+				AsymmetricAlgorithm::signFinal(dummy);
+				return false;
+			}
+			sLen = ((RSA_PKCS_PSS_PARAMS*) param)->sLen;
+			if (sLen > ((privateKey->getBitLength()+6)/8-2-64))
+			{
+				ERROR_MSG("sLen (%lu) is too large for current key size (%lu)",
+					  (unsigned long)sLen, privateKey->getBitLength());
+				ByteString dummy;
+				AsymmetricAlgorithm::signFinal(dummy);
+				return false;
+			}
+			hash1 = HashAlgo::SHA512;
+			break;
+		case AsymMech::RSA_SSL:
+			hash1 = HashAlgo::MD5;
+			hash2 = HashAlgo::SHA1;
+			break;
+		default:
+			ERROR_MSG("Invalid mechanism supplied (%i)", mechanism);
 
-		if (!pCurrentHash->hashInit())
-		{
-			delete pCurrentHash;
-			pCurrentHash = NULL;
-		}
+			ByteString dummy;
+			AsymmetricAlgorithm::signFinal(dummy);
+
+			return false;
 	}
-	else if (!lowerMechanism.compare("rsa-sha1-pkcs"))
-	{
-		pCurrentHash = CryptoFactory::i()->getHashAlgorithm("sha1");
 
-		if (!pCurrentHash->hashInit())
-		{
-			delete pCurrentHash;
-			pCurrentHash = NULL;
-		}
-	}
-	else if (!lowerMechanism.compare("rsa-sha224-pkcs"))
-	{
-		pCurrentHash = CryptoFactory::i()->getHashAlgorithm("sha224");
+	pCurrentHash = CryptoFactory::i()->getHashAlgorithm(hash1);
 
-		if (!pCurrentHash->hashInit())
-		{
-			delete pCurrentHash;
-			pCurrentHash = NULL;
-		}
-	}
-	else if (!lowerMechanism.compare("rsa-sha256-pkcs"))
+	if (pCurrentHash == NULL || !pCurrentHash->hashInit())
 	{
-		pCurrentHash = CryptoFactory::i()->getHashAlgorithm("sha256");
-
-		if (!pCurrentHash->hashInit())
-		{
-			delete pCurrentHash;
-			pCurrentHash = NULL;
-		}
-	}
-	else if (!lowerMechanism.compare("rsa-sha384-pkcs"))
-	{
-		pCurrentHash = CryptoFactory::i()->getHashAlgorithm("sha384");
-
-		if (!pCurrentHash->hashInit())
-		{
-			delete pCurrentHash;
-			pCurrentHash = NULL;
-		}
-	}
-	else if (!lowerMechanism.compare("rsa-sha512-pkcs"))
-	{
-		pCurrentHash = CryptoFactory::i()->getHashAlgorithm("sha512");
-
-		if (!pCurrentHash->hashInit())
-		{
-			delete pCurrentHash;
-			pCurrentHash = NULL;
-		}
-	}
-	else if (!lowerMechanism.compare("rsa-ssl"))
-	{
-		pCurrentHash = CryptoFactory::i()->getHashAlgorithm("md5");
-		pSecondHash = CryptoFactory::i()->getHashAlgorithm("sha1");
-
-		if (!pCurrentHash->hashInit())
+		if (pCurrentHash != NULL)
 		{
 			delete pCurrentHash;
 			pCurrentHash = NULL;
 		}
 
-		if (!pSecondHash->hashInit())
-		{
-			delete pCurrentHash;
-			pCurrentHash = NULL;
-			
-			delete pSecondHash;
-			pSecondHash = NULL;
-		}
-	}
-
-	if (pCurrentHash == NULL)
-	{
 		ByteString dummy;
 		AsymmetricAlgorithm::signFinal(dummy);
 
 		return false;
+	}
+
+	if (hash2 != HashAlgo::Unknown)
+	{
+		pSecondHash = CryptoFactory::i()->getHashAlgorithm(hash2);
+
+		if (pSecondHash == NULL || !pSecondHash->hashInit())
+		{
+			delete pCurrentHash;
+			pCurrentHash = NULL;
+
+			if (pSecondHash != NULL)
+			{
+				delete pSecondHash;
+				pSecondHash = NULL;
+			}
+
+			ByteString dummy;
+			AsymmetricAlgorithm::signFinal(dummy);
+
+			return false;
+		}
 	}
 
 	return true;
@@ -328,13 +413,10 @@ bool OSSLRSA::signUpdate(const ByteString& dataToSign)
 }
 
 bool OSSLRSA::signFinal(ByteString& signature)
-{	
+{
 	// Save necessary state before calling super class signFinal
 	OSSLRSAPrivateKey* pk = (OSSLRSAPrivateKey*) currentPrivateKey;
-
-	std::string lowerMechanism;
-	lowerMechanism.resize(currentMechanism.size());
-	std::transform(currentMechanism.begin(), currentMechanism.end(), lowerMechanism.begin(), tolower);
+	AsymMech::Type mechanism = currentMechanism;
 
 	if (!AsymmetricAlgorithm::signFinal(signature))
 	{
@@ -360,7 +442,7 @@ bool OSSLRSA::signFinal(ByteString& signature)
 	{
 		return false;
 	}
-	
+
 	ByteString digest = firstHash + secondHash;
 
 	// Resize the data block for the signature to the modulus size of the key
@@ -368,34 +450,54 @@ bool OSSLRSA::signFinal(ByteString& signature)
 
 	// Determine the signature NID type
 	int type = 0;
+	bool isPSS = false;
+	const EVP_MD* hash = NULL;
 
-	if (!lowerMechanism.compare("rsa-md5-pkcs"))
+	switch (mechanism)
 	{
-		type = NID_md5;
-	}
-	else if (!lowerMechanism.compare("rsa-sha1-pkcs"))
-	{
-		type = NID_sha1;
-	}
-	else if (!lowerMechanism.compare("rsa-sha224-pkcs"))
-	{
-		type = NID_sha224;
-	}
-	else if (!lowerMechanism.compare("rsa-sha256-pkcs"))
-	{
-		type = NID_sha256;
-	}
-	else if (!lowerMechanism.compare("rsa-sha384-pkcs"))
-	{
-		type = NID_sha384;
-	}
-	else if (!lowerMechanism.compare("rsa-sha512-pkcs"))
-	{
-		type = NID_sha512;
-	}
-	else if (!lowerMechanism.compare("rsa-ssl"))
-	{
-		type = NID_md5_sha1;
+		case AsymMech::RSA_MD5_PKCS:
+			type = NID_md5;
+			break;
+		case AsymMech::RSA_SHA1_PKCS:
+			type = NID_sha1;
+			break;
+		case AsymMech::RSA_SHA224_PKCS:
+			type = NID_sha224;
+			break;
+		case AsymMech::RSA_SHA256_PKCS:
+			type = NID_sha256;
+			break;
+		case AsymMech::RSA_SHA384_PKCS:
+			type = NID_sha384;
+			break;
+		case AsymMech::RSA_SHA512_PKCS:
+			type = NID_sha512;
+			break;
+		case AsymMech::RSA_SHA1_PKCS_PSS:
+			isPSS = true;
+			hash = EVP_sha1();
+			break;
+		case AsymMech::RSA_SHA224_PKCS_PSS:
+			isPSS = true;
+			hash = EVP_sha224();
+			break;
+		case AsymMech::RSA_SHA256_PKCS_PSS:
+			isPSS = true;
+			hash = EVP_sha256();
+			break;
+		case AsymMech::RSA_SHA384_PKCS_PSS:
+			isPSS = true;
+			hash = EVP_sha384();
+			break;
+		case AsymMech::RSA_SHA512_PKCS_PSS:
+			isPSS = true;
+			hash = EVP_sha512();
+			break;
+		case AsymMech::RSA_SSL:
+			type = NID_md5_sha1;
+			break;
+		default:
+			break;
 	}
 
 	// Perform the signature operation
@@ -406,11 +508,44 @@ bool OSSLRSA::signFinal(ByteString& signature)
 	if (!RSA_blinding_on(rsa, NULL))
 	{
 		ERROR_MSG("Failed to turn blinding on for OpenSSL RSA key");
-	
+
 		return false;
 	}
 
-	bool rv = (RSA_sign(type, &digest[0], digest.size(), &signature[0], &sigLen, pk->getOSSLKey()) == 1);
+	bool rv;
+
+	if (isPSS)
+	{
+		ByteString em;
+		em.resize(pk->getN().size());
+
+		rv = (RSA_padding_add_PKCS1_PSS(pk->getOSSLKey(), &em[0], &digest[0],
+						hash, sLen) == 1);
+		if (!rv)
+		{
+			ERROR_MSG("RSA PSS padding failed (0x%08X)", ERR_get_error());
+		}
+		else
+		{
+			int result = RSA_private_encrypt(em.size(), &em[0], &signature[0],
+							 pk->getOSSLKey(), RSA_NO_PADDING);
+			if (result >= 0)
+			{
+				sigLen = result;
+				rv = true;
+			}
+			else
+			{
+				rv = false;
+				ERROR_MSG("RSA private encrypt failed (0x%08X)", ERR_get_error());
+			}
+		}
+	}
+	else
+	{
+		rv = (RSA_sign(type, &digest[0], digest.size(), &signature[0],
+			       &sigLen, pk->getOSSLKey()) == 1);
+	}
 
 	RSA_blinding_off(rsa);
 
@@ -420,13 +555,11 @@ bool OSSLRSA::signFinal(ByteString& signature)
 }
 
 // Verification functions
-bool OSSLRSA::verify(PublicKey* publicKey, const ByteString& originalData, const ByteString& signature, const std::string mechanism)
+bool OSSLRSA::verify(PublicKey* publicKey, const ByteString& originalData,
+		     const ByteString& signature, const AsymMech::Type mechanism,
+		     const void* param /* = NULL */, const size_t paramLen /* = 0 */)
 {
-	std::string lowerMechanism;
-	lowerMechanism.resize(mechanism.size());
-	std::transform(mechanism.begin(), mechanism.end(), lowerMechanism.begin(), tolower);
-
-	if (!lowerMechanism.compare("rsa-pkcs"))
+	if (mechanism == AsymMech::RSA_PKCS)
 	{
 		// Specific implementation for PKCS #1 only verification; originalData is assumed to contain
 		// a digestInfo structure and verification is performed by comparing originalData to the data
@@ -436,7 +569,7 @@ bool OSSLRSA::verify(PublicKey* publicKey, const ByteString& originalData, const
 		if (!publicKey->isOfType(OSSLRSAPublicKey::type))
 		{
 			ERROR_MSG("Invalid key type supplied");
-	
+
 			return false;
 		}
 
@@ -462,17 +595,17 @@ bool OSSLRSA::verify(PublicKey* publicKey, const ByteString& originalData, const
 
 		return (originalData == recoveredData);
 	}
-	else if (!lowerMechanism.compare("rsa-raw"))
+	else if (mechanism == AsymMech::RSA)
 	{
 		// Specific implementation for raw RSA verifiction; originalData is assumed to contain the
 		// full input data used to compute the signature and verification is performed by comparing
 		// originalData to the data recovered from the signature
-		
+
 		// Check if the public key is the right type
 		if (!publicKey->isOfType(OSSLRSAPublicKey::type))
 		{
 			ERROR_MSG("Invalid key type supplied");
-	
+
 			return false;
 		}
 
@@ -501,13 +634,14 @@ bool OSSLRSA::verify(PublicKey* publicKey, const ByteString& originalData, const
 	else
 	{
 		// Call the generic function
-		return AsymmetricAlgorithm::verify(publicKey, originalData, signature, mechanism);
+		return AsymmetricAlgorithm::verify(publicKey, originalData, signature, mechanism, param, paramLen);
 	}
 }
 
-bool OSSLRSA::verifyInit(PublicKey* publicKey, const std::string mechanism)
+bool OSSLRSA::verifyInit(PublicKey* publicKey, const AsymMech::Type mechanism,
+			 const void* param /* = NULL */, const size_t paramLen /* = 0 */)
 {
-	if (!AsymmetricAlgorithm::verifyInit(publicKey, mechanism))
+	if (!AsymmetricAlgorithm::verifyInit(publicKey, mechanism, param, paramLen))
 	{
 		return false;
 	}
@@ -523,97 +657,183 @@ bool OSSLRSA::verifyInit(PublicKey* publicKey, const std::string mechanism)
 		return false;
 	}
 
-	std::string lowerMechanism;
-	lowerMechanism.resize(mechanism.size());
-	std::transform(mechanism.begin(), mechanism.end(), lowerMechanism.begin(), tolower);
+	HashAlgo::Type hash1 = HashAlgo::Unknown;
+	HashAlgo::Type hash2 = HashAlgo::Unknown;
 
-	if (!lowerMechanism.compare("rsa-md5-pkcs"))
+	switch (mechanism)
 	{
-		pCurrentHash = CryptoFactory::i()->getHashAlgorithm("md5");
+		case AsymMech::RSA_MD5_PKCS:
+			hash1 = HashAlgo::MD5;
+			break;
+		case AsymMech::RSA_SHA1_PKCS:
+			hash1 = HashAlgo::SHA1;
+			break;
+		case AsymMech::RSA_SHA224_PKCS:
+			hash1 = HashAlgo::SHA224;
+			break;
+		case AsymMech::RSA_SHA256_PKCS:
+			hash1 = HashAlgo::SHA256;
+			break;
+		case AsymMech::RSA_SHA384_PKCS:
+			hash1 = HashAlgo::SHA384;
+			break;
+		case AsymMech::RSA_SHA512_PKCS:
+			hash1 = HashAlgo::SHA512;
+			break;
+		case AsymMech::RSA_SHA1_PKCS_PSS:
+			if (param == NULL || paramLen != sizeof(RSA_PKCS_PSS_PARAMS) ||
+			    ((RSA_PKCS_PSS_PARAMS*) param)->hashAlg != HashAlgo::SHA1 ||
+			    ((RSA_PKCS_PSS_PARAMS*) param)->mgf != AsymRSAMGF::MGF1_SHA1)
+			{
+				ERROR_MSG("Invalid parameters");
+				ByteString dummy;
+				AsymmetricAlgorithm::verifyFinal(dummy);
+				return false;
+			}
+			sLen = ((RSA_PKCS_PSS_PARAMS*) param)->sLen;
+			if (sLen > ((publicKey->getBitLength()+6)/8-2-20))
+			{
+				ERROR_MSG("sLen (%lu) is too large for current key size (%lu)",
+					  (unsigned long)sLen, publicKey->getBitLength());
+				ByteString dummy;
+				AsymmetricAlgorithm::verifyFinal(dummy);
+				return false;
+			}
+			hash1 = HashAlgo::SHA1;
+			break;
+		case AsymMech::RSA_SHA224_PKCS_PSS:
+			if (param == NULL || paramLen != sizeof(RSA_PKCS_PSS_PARAMS) ||
+			    ((RSA_PKCS_PSS_PARAMS*) param)->hashAlg != HashAlgo::SHA224 ||
+			    ((RSA_PKCS_PSS_PARAMS*) param)->mgf != AsymRSAMGF::MGF1_SHA224)
+			{
+				ERROR_MSG("Invalid parameters");
+				ByteString dummy;
+				AsymmetricAlgorithm::verifyFinal(dummy);
+				return false;
+			}
+			sLen = ((RSA_PKCS_PSS_PARAMS*) param)->sLen;
+			if (sLen > ((publicKey->getBitLength()+6)/8-2-28))
+			{
+				ERROR_MSG("sLen (%lu) is too large for current key size (%lu)",
+					  (unsigned long)sLen, publicKey->getBitLength());
+				ByteString dummy;
+				AsymmetricAlgorithm::verifyFinal(dummy);
+				return false;
+			}
+			hash1 = HashAlgo::SHA224;
+			break;
+		case AsymMech::RSA_SHA256_PKCS_PSS:
+			if (param == NULL || paramLen != sizeof(RSA_PKCS_PSS_PARAMS) ||
+			    ((RSA_PKCS_PSS_PARAMS*) param)->hashAlg != HashAlgo::SHA256 ||
+			    ((RSA_PKCS_PSS_PARAMS*) param)->mgf != AsymRSAMGF::MGF1_SHA256)
+			{
+				ERROR_MSG("Invalid parameters");
+				ByteString dummy;
+				AsymmetricAlgorithm::verifyFinal(dummy);
+				return false;
+			}
+			sLen = ((RSA_PKCS_PSS_PARAMS*) param)->sLen;
+			if (sLen > ((publicKey->getBitLength()+6)/8-2-32))
+			{
+				ERROR_MSG("sLen (%lu) is too large for current key size (%lu)",
+					  (unsigned long)sLen, publicKey->getBitLength());
+				ByteString dummy;
+				AsymmetricAlgorithm::verifyFinal(dummy);
+				return false;
+			}
+			hash1 = HashAlgo::SHA256;
+			break;
+		case AsymMech::RSA_SHA384_PKCS_PSS:
+			if (param == NULL || paramLen != sizeof(RSA_PKCS_PSS_PARAMS) ||
+			    ((RSA_PKCS_PSS_PARAMS*) param)->hashAlg != HashAlgo::SHA384 ||
+			    ((RSA_PKCS_PSS_PARAMS*) param)->mgf != AsymRSAMGF::MGF1_SHA384)
+			{
+				ERROR_MSG("Invalid parameters");
+				ByteString dummy;
+				AsymmetricAlgorithm::verifyFinal(dummy);
+				return false;
+			}
+			sLen = ((RSA_PKCS_PSS_PARAMS*) param)->sLen;
+			if (sLen > ((publicKey->getBitLength()+6)/8-2-48))
+			{
+				ERROR_MSG("sLen (%lu) is too large for current key size (%lu)",
+					  (unsigned long)sLen, publicKey->getBitLength());
+				ByteString dummy;
+				AsymmetricAlgorithm::verifyFinal(dummy);
+				return false;
+			}
+			hash1 = HashAlgo::SHA384;
+			break;
+		case AsymMech::RSA_SHA512_PKCS_PSS:
+			if (param == NULL || paramLen != sizeof(RSA_PKCS_PSS_PARAMS) ||
+			    ((RSA_PKCS_PSS_PARAMS*) param)->hashAlg != HashAlgo::SHA512 ||
+			    ((RSA_PKCS_PSS_PARAMS*) param)->mgf != AsymRSAMGF::MGF1_SHA512)
+			{
+				ERROR_MSG("Invalid parameters");
+				ByteString dummy;
+				AsymmetricAlgorithm::verifyFinal(dummy);
+				return false;
+			}
+			sLen = ((RSA_PKCS_PSS_PARAMS*) param)->sLen;
+			if (sLen > ((publicKey->getBitLength()+6)/8-2-64))
+			{
+				ERROR_MSG("sLen (%lu) is too large for current key size (%lu)",
+					  (unsigned long)sLen, publicKey->getBitLength());
+				ByteString dummy;
+				AsymmetricAlgorithm::verifyFinal(dummy);
+				return false;
+			}
+			hash1 = HashAlgo::SHA512;
+			break;
+		case AsymMech::RSA_SSL:
+			hash1 = HashAlgo::MD5;
+			hash2 = HashAlgo::SHA1;
+			break;
+		default:
+			ERROR_MSG("Invalid mechanism supplied (%i)", mechanism);
 
-		if (!pCurrentHash->hashInit())
-		{
-			delete pCurrentHash;
-			pCurrentHash = NULL;
-		}
+			ByteString dummy;
+			AsymmetricAlgorithm::verifyFinal(dummy);
+
+			return false;
 	}
-	else if (!lowerMechanism.compare("rsa-sha1-pkcs"))
-	{
-		pCurrentHash = CryptoFactory::i()->getHashAlgorithm("sha1");
 
-		if (!pCurrentHash->hashInit())
-		{
-			delete pCurrentHash;
-			pCurrentHash = NULL;
-		}
-	}
-	else if (!lowerMechanism.compare("rsa-sha224-pkcs"))
-	{
-		pCurrentHash = CryptoFactory::i()->getHashAlgorithm("sha224");
+	pCurrentHash = CryptoFactory::i()->getHashAlgorithm(hash1);
 
-		if (!pCurrentHash->hashInit())
-		{
-			delete pCurrentHash;
-			pCurrentHash = NULL;
-		}
-	}
-	else if (!lowerMechanism.compare("rsa-sha256-pkcs"))
+	if (pCurrentHash == NULL || !pCurrentHash->hashInit())
 	{
-		pCurrentHash = CryptoFactory::i()->getHashAlgorithm("sha256");
-
-		if (!pCurrentHash->hashInit())
-		{
-			delete pCurrentHash;
-			pCurrentHash = NULL;
-		}
-	}
-	else if (!lowerMechanism.compare("rsa-sha384-pkcs"))
-	{
-		pCurrentHash = CryptoFactory::i()->getHashAlgorithm("sha384");
-
-		if (!pCurrentHash->hashInit())
-		{
-			delete pCurrentHash;
-			pCurrentHash = NULL;
-		}
-	}
-	else if (!lowerMechanism.compare("rsa-sha512-pkcs"))
-	{
-		pCurrentHash = CryptoFactory::i()->getHashAlgorithm("sha512");
-
-		if (!pCurrentHash->hashInit())
-		{
-			delete pCurrentHash;
-			pCurrentHash = NULL;
-		}
-	}
-	else if (!lowerMechanism.compare("rsa-ssl"))
-	{
-		pCurrentHash = CryptoFactory::i()->getHashAlgorithm("md5");
-		pSecondHash = CryptoFactory::i()->getHashAlgorithm("sha1");
-
-		if (!pCurrentHash->hashInit())
+		if (pCurrentHash != NULL)
 		{
 			delete pCurrentHash;
 			pCurrentHash = NULL;
 		}
 
-		if (!pSecondHash->hashInit())
-		{
-			delete pCurrentHash;
-			pCurrentHash = NULL;
-			
-			delete pSecondHash;
-			pSecondHash = NULL;
-		}
-	}
-
-	if (pCurrentHash == NULL)
-	{
 		ByteString dummy;
 		AsymmetricAlgorithm::verifyFinal(dummy);
 
 		return false;
+	}
+
+	if (hash2 != HashAlgo::Unknown)
+	{
+		pSecondHash = CryptoFactory::i()->getHashAlgorithm(hash2);
+
+		if (pSecondHash == NULL || !pSecondHash->hashInit())
+		{
+			delete pCurrentHash;
+			pCurrentHash = NULL;
+
+			if (pSecondHash != NULL)
+			{
+				delete pSecondHash;
+				pSecondHash = NULL;
+			}
+
+			ByteString dummy;
+			AsymmetricAlgorithm::verifyFinal(dummy);
+
+			return false;
+		}
 	}
 
 	return true;
@@ -658,10 +878,7 @@ bool OSSLRSA::verifyFinal(const ByteString& signature)
 {
 	// Save necessary state before calling super class verifyFinal
 	OSSLRSAPublicKey* pk = (OSSLRSAPublicKey*) currentPublicKey;
-
-	std::string lowerMechanism;
-	lowerMechanism.resize(currentMechanism.size());
-	std::transform(currentMechanism.begin(), currentMechanism.end(), lowerMechanism.begin(), tolower);
+	AsymMech::Type mechanism = currentMechanism;
 
 	if (!AsymmetricAlgorithm::verifyFinal(signature))
 	{
@@ -687,51 +904,107 @@ bool OSSLRSA::verifyFinal(const ByteString& signature)
 	{
 		return false;
 	}
-	
+
 	ByteString digest = firstHash + secondHash;
 
 	// Determine the signature NID type
 	int type = 0;
+	bool isPSS = false;
+	const EVP_MD* hash = NULL;
 
-	if (!lowerMechanism.compare("rsa-md5-pkcs"))
+	switch (mechanism)
 	{
-		type = NID_md5;
-	}
-	else if (!lowerMechanism.compare("rsa-sha1-pkcs"))
-	{
-		type = NID_sha1;
-	}
-	else if (!lowerMechanism.compare("rsa-sha224-pkcs"))
-	{
-		type = NID_sha224;
-	}
-	else if (!lowerMechanism.compare("rsa-sha256-pkcs"))
-	{
-		type = NID_sha256;
-	}
-	else if (!lowerMechanism.compare("rsa-sha384-pkcs"))
-	{
-		type = NID_sha384;
-	}
-	else if (!lowerMechanism.compare("rsa-sha512-pkcs"))
-	{
-		type = NID_sha512;
-	}
-	else if (!lowerMechanism.compare("rsa-ssl"))
-	{
-		type = NID_md5_sha1;
+		case AsymMech::RSA_MD5_PKCS:
+			type = NID_md5;
+			break;
+		case AsymMech::RSA_SHA1_PKCS:
+			type = NID_sha1;
+			break;
+		case AsymMech::RSA_SHA224_PKCS:
+			type = NID_sha224;
+			break;
+		case AsymMech::RSA_SHA256_PKCS:
+			type = NID_sha256;
+			break;
+		case AsymMech::RSA_SHA384_PKCS:
+			type = NID_sha384;
+			break;
+		case AsymMech::RSA_SHA512_PKCS:
+			type = NID_sha512;
+			break;
+		case AsymMech::RSA_SHA1_PKCS_PSS:
+			isPSS = true;
+			hash = EVP_sha1();
+			break;
+		case AsymMech::RSA_SHA224_PKCS_PSS:
+			isPSS = true;
+			hash = EVP_sha224();
+			break;
+		case AsymMech::RSA_SHA256_PKCS_PSS:
+			isPSS = true;
+			hash = EVP_sha256();
+			break;
+		case AsymMech::RSA_SHA384_PKCS_PSS:
+			isPSS = true;
+			hash = EVP_sha384();
+			break;
+		case AsymMech::RSA_SHA512_PKCS_PSS:
+			isPSS = true;
+			hash = EVP_sha512();
+			break;
+		case AsymMech::RSA_SSL:
+			type = NID_md5_sha1;
+			break;
+		default:
+			break;
 	}
 
 	// Perform the verify operation
-	bool rv = (RSA_verify(type, &digest[0], digest.size(), (unsigned char*) signature.const_byte_str(), signature.size(), pk->getOSSLKey()) == 1);
+	bool rv;
 
-	if (!rv) ERROR_MSG("RSA verify failed (0x%08X)", ERR_get_error());
+	if (isPSS)
+	{
+		ByteString plain;
+		plain.resize(pk->getN().size());
+		int result = RSA_public_decrypt(signature.size(),
+						(unsigned char*) signature.const_byte_str(),
+						&plain[0],
+						pk->getOSSLKey(),
+						RSA_NO_PADDING);
+		if (result < 0)
+		{
+			rv = false;
+			ERROR_MSG("RSA public decrypt failed (0x%08X)", ERR_get_error());
+		}
+		else
+		{
+			plain.resize(result);
+			result = RSA_verify_PKCS1_PSS(pk->getOSSLKey(), &digest[0],
+						      hash, &plain[0], sLen);
+			if (result == 1)
+			{
+				rv = true;
+			}
+			else
+			{
+				rv = false;
+				ERROR_MSG("RSA PSS verify failed (0x%08X)", ERR_get_error());
+			}
+		}
+	}
+	else
+	{
+		rv = (RSA_verify(type, &digest[0], digest.size(), (unsigned char*) signature.const_byte_str(), signature.size(), pk->getOSSLKey()) == 1);
+
+		if (!rv) ERROR_MSG("RSA verify failed (0x%08X)", ERR_get_error());
+	}
 
 	return rv;
 }
 
 // Encryption functions
-bool OSSLRSA::encrypt(PublicKey* publicKey, const ByteString& data, ByteString& encryptedData, const std::string padding)
+bool OSSLRSA::encrypt(PublicKey* publicKey, const ByteString& data,
+		      ByteString& encryptedData, const AsymMech::Type padding)
 {
 	// Check if the public key is the right type
 	if (!publicKey->isOfType(OSSLRSAPublicKey::type))
@@ -741,17 +1014,13 @@ bool OSSLRSA::encrypt(PublicKey* publicKey, const ByteString& data, ByteString& 
 		return false;
 	}
 
-	std::string lowerPadding;
-	lowerPadding.resize(padding.size());
-	std::transform(padding.begin(), padding.end(), lowerPadding.begin(), tolower);
-
 	// Retrieve the OpenSSL key object
 	RSA* rsa = ((OSSLRSAPublicKey*) publicKey)->getOSSLKey();
 
 	// Check the data and padding algorithm
 	int osslPadding = 0;
 
-	if (!lowerPadding.compare("rsa-pkcs"))
+	if (padding == AsymMech::RSA_PKCS)
 	{
 		// The size of the input data cannot be more than the modulus
 		// length of the key - 11
@@ -764,7 +1033,7 @@ bool OSSLRSA::encrypt(PublicKey* publicKey, const ByteString& data, ByteString& 
 
 		osslPadding = RSA_PKCS1_PADDING;
 	}
-	else if (!lowerPadding.compare("rsa-pkcs-oaep"))
+	else if (padding == AsymMech::RSA_PKCS_OAEP)
 	{
 		// The size of the input data cannot be more than the modulus
 		// length of the key - 41
@@ -777,7 +1046,7 @@ bool OSSLRSA::encrypt(PublicKey* publicKey, const ByteString& data, ByteString& 
 
 		osslPadding = RSA_PKCS1_OAEP_PADDING;
 	}
-	else if (!lowerPadding.compare("rsa-raw"))
+	else if (padding == AsymMech::RSA)
 	{
 		// The size of the input data should be exactly equal to the modulus length
 		if (data.size() != (size_t) RSA_size(rsa))
@@ -791,7 +1060,7 @@ bool OSSLRSA::encrypt(PublicKey* publicKey, const ByteString& data, ByteString& 
 	}
 	else
 	{
-		ERROR_MSG("Invalid padding mechanism supplied (%s)", padding.c_str());
+		ERROR_MSG("Invalid padding mechanism supplied (%i)", padding);
 
 		return false;
 	}
@@ -810,7 +1079,8 @@ bool OSSLRSA::encrypt(PublicKey* publicKey, const ByteString& data, ByteString& 
 }
 
 // Decryption functions
-bool OSSLRSA::decrypt(PrivateKey* privateKey, const ByteString& encryptedData, ByteString& data, const std::string padding)
+bool OSSLRSA::decrypt(PrivateKey* privateKey, const ByteString& encryptedData,
+		      ByteString& data, const AsymMech::Type padding)
 {
 	// Check if the private key is the right type
 	if (!privateKey->isOfType(OSSLRSAPrivateKey::type))
@@ -831,35 +1101,28 @@ bool OSSLRSA::decrypt(PrivateKey* privateKey, const ByteString& encryptedData, B
 		return false;
 	}
 
-	std::string lowerPadding;
-	lowerPadding.resize(padding.size());
-	std::transform(padding.begin(), padding.end(), lowerPadding.begin(), tolower);
-
 	// Determine the OpenSSL padding algorithm
 	int osslPadding = 0;
 
-	if (!lowerPadding.compare("rsa-pkcs"))
+	switch (padding)
 	{
-		osslPadding = RSA_PKCS1_PADDING;
-	}
-	else if (!lowerPadding.compare("rsa-pkcs-oaep"))
-	{
-		osslPadding = RSA_PKCS1_OAEP_PADDING;
-	}
-	else if (!lowerPadding.compare("rsa-raw"))
-	{
-		osslPadding = RSA_NO_PADDING;
-	}
-	else
-	{
-		ERROR_MSG("Invalid padding mechanism supplied (%s)", padding.c_str());
-
-		return false;
+		case AsymMech::RSA_PKCS:
+			osslPadding = RSA_PKCS1_PADDING;
+			break;
+		case AsymMech::RSA_PKCS_OAEP:
+			osslPadding = RSA_PKCS1_OAEP_PADDING;
+			break;
+		case AsymMech::RSA:
+			osslPadding = RSA_NO_PADDING;
+			break;
+		default:
+			ERROR_MSG("Invalid padding mechanism supplied (%i)", padding);
+			return false;
 	}
 
 	// Perform the RSA operation
 	data.resize(RSA_size(rsa));
-	
+
 	int decSize = RSA_private_decrypt(encryptedData.size(), (unsigned char*) encryptedData.const_byte_str(), &data[0], rsa, osslPadding);
 
 	if (decSize == -1)
@@ -895,7 +1158,7 @@ bool OSSLRSA::generateKeyPair(AsymmetricKeyPair** ppKeyPair, AsymmetricParameter
 
 	if (params->getBitLength() < getMinKeySize() || params->getBitLength() > getMaxKeySize())
 	{
-		ERROR_MSG("This RSA key size is not supported"); 
+		ERROR_MSG("This RSA key size (%lu) is not supported", params->getBitLength());
 
 		return false;
 	}
@@ -941,13 +1204,13 @@ bool OSSLRSA::generateKeyPair(AsymmetricKeyPair** ppKeyPair, AsymmetricParameter
 	return true;
 }
 
-unsigned long OSSLRSA::getMinKeySize() 
-{ 
+unsigned long OSSLRSA::getMinKeySize()
+{
 	return 512;
 }
 
-unsigned long OSSLRSA::getMaxKeySize() 
-{ 
+unsigned long OSSLRSA::getMaxKeySize()
+{
 	return OPENSSL_RSA_MAX_MODULUS_BITS;
 }
 
@@ -1044,9 +1307,30 @@ PrivateKey* OSSLRSA::newPrivateKey()
 {
 	return (PrivateKey*) new OSSLRSAPrivateKey();
 }
-	
+
 AsymmetricParameters* OSSLRSA::newParameters()
 {
 	return (AsymmetricParameters*) new RSAParameters();
 }
 
+bool OSSLRSA::reconstructParameters(AsymmetricParameters** ppParams, ByteString& serialisedData)
+{
+	// Check input parameters
+	if ((ppParams == NULL) || (serialisedData.size() == 0))
+	{
+		return false;
+	}
+
+	RSAParameters* params = new RSAParameters();
+
+	if (!params->deserialise(serialisedData))
+	{
+		delete params;
+
+		return false;
+	}
+
+	*ppParams = params;
+
+	return true;
+}

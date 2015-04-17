@@ -9,21 +9,21 @@ AM_CPPFLAGS = 			-I$(srcdir)/cryptoki_compat \
 				-I$(srcdir)/handle_mgr \
 				-I$(srcdir)/crypto
 
-lib_LTLIBRARIES =		libsofthsm.la
+lib_LTLIBRARIES =		libsofthsm2.la
 
-libsofthsm_la_SOURCES =		access.cpp \
+libsofthsm2_la_SOURCES =	access.cpp \
 				main.cpp \
 				P11Attributes.cpp \
 				P11Objects.cpp \
 				SoftHSM.cpp
-libsofthsm_la_LIBADD =		common/libsofthsm_common.la \
+libsofthsm2_la_LIBADD =		common/libsofthsm_common.la \
 				crypto/libsofthsm_crypto.la \
 				data_mgr/libsofthsm_datamgr.la \
 				handle_mgr/libsofthsm_handlemgr.la \
 				object_store/libsofthsm_objectstore.la \
 				session_mgr/libsofthsm_sessionmgr.la \
 				slot_mgr/libsofthsm_slotmgr.la
-libsofthsm_la_LDFLAGS =		-version-info @VERSION_INFO@ \
+libsofthsm2_la_LDFLAGS =	-version-info @VERSION_INFO@ \
 				-avoid-version -module
 
 # Create a convenience library from all the other convenience library; this is
@@ -33,7 +33,7 @@ noinst_LTLIBRARIES =		libsofthsm_convarch.la
 
 libsofthsm_convarch_la_SOURCES =
 
-libsofthsm_convarch_la_LIBADD =	$(libsofthsm_la_LIBADD)
+libsofthsm_convarch_la_LIBADD =	$(libsofthsm2_la_LIBADD)
 
 SUBDIRS = 			common \
 				crypto \

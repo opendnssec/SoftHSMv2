@@ -556,7 +556,7 @@ bool File::truncate()
 #ifndef _WIN32
 	return (::ftruncate(fileno(stream), 0) == 0);
 #else
-	return (_chsize(fileno(stream), 0) == 0);
+	return (_chsize(_fileno(stream), 0) == 0);
 #endif
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010 SURFnet bv
+ * Copyright (c) 2014 Red Hat
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,50 +25,34 @@
  */
 
 /*****************************************************************************
- OSSLEVPSymmetricAlgorithm.h
+ AsymWrapUnwrapTests.h
 
- OpenSSL symmetric algorithm implementation
+ Contains test cases for C_WrapKey and C_UnwrapKey
+ using asymmetrical algorithms (RSA)
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_OSSLEVPSYMMETRICALGORITHM_H
-#define _SOFTHSM_V2_OSSLEVPSYMMETRICALGORITHM_H
+#ifndef _SOFTHSM_V2_ASYMWRAPUNWRAPTESTS_H
+#define _SOFTHSM_V2_ASYMWRAPUNWRAPTESTS_H
 
-#include <openssl/evp.h>
-#include <string>
-#include "config.h"
-#include "SymmetricKey.h"
-#include "SymmetricAlgorithm.h"
+#include <cppunit/extensions/HelperMacros.h>
+#include "cryptoki.h"
 
-class OSSLEVPSymmetricAlgorithm : public SymmetricAlgorithm
+class AsymWrapUnwrapTests : public CppUnit::TestFixture
 {
+	CPPUNIT_TEST_SUITE(AsymWrapUnwrapTests);
+	CPPUNIT_TEST(testRsaWrapUnwrap);
+	CPPUNIT_TEST_SUITE_END();
+
 public:
-	// Constructor
-	OSSLEVPSymmetricAlgorithm();
+	void testRsaWrapUnwrap();
 
-	// Destructor
-	virtual ~OSSLEVPSymmetricAlgorithm();
-
-	// Encryption functions
-	virtual bool encryptInit(const SymmetricKey* key, const SymMode::Type mode = SymMode::CBC, const ByteString& IV = ByteString(), bool padding = true);
-	virtual bool encryptUpdate(const ByteString& data, ByteString& encryptedData);
-	virtual bool encryptFinal(ByteString& encryptedData);
-
-	// Decryption functions
-	virtual bool decryptInit(const SymmetricKey* key, const SymMode::Type mode = SymMode::CBC, const ByteString& IV = ByteString(), bool padding = true);
-	virtual bool decryptUpdate(const ByteString& encryptedData, ByteString& data);
-	virtual bool decryptFinal(ByteString& data);
-
-	// Return the block size
-	virtual size_t getBlockSize() const = 0;
+	void setUp();
+	void tearDown();
 
 protected:
-	// Return the right EVP cipher for the operation
-	virtual const EVP_CIPHER* getCipher() const = 0;
-
-private:
-	// The current EVP context
-	EVP_CIPHER_CTX* pCurCTX;
+	CK_RV generateAesKey(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE &hKey);
+	CK_RV generateRsaKeyPair(CK_SESSION_HANDLE hSession, CK_BBOOL bTokenPuk, CK_BBOOL bPrivatePuk, CK_BBOOL bTokenPrk, CK_BBOOL bPrivatePrk, CK_OBJECT_HANDLE &hPuk, CK_OBJECT_HANDLE &hPrk);
+	void rsaWrapUnwrap(CK_MECHANISM_TYPE mechanismType, CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hPublicKey, CK_OBJECT_HANDLE hPrivateKey);
 };
 
-#endif // !_SOFTHSM_V2_OSSLEVPSYMMETRICALGORITHM_H
-
+#endif // !_SOFTHSM_V2_ASYMWRAPUNWRAPTESTS_H

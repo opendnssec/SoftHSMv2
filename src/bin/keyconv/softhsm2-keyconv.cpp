@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010 .SE (The Internet Infrastructure Foundation)
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -10,7 +10,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -26,19 +26,19 @@
 
 /************************************************************
 *
-* softhsm-keyconv
+* softhsm2-keyconv
 *
 * This program is for converting from BIND .private-key
 * format to PKCS#8 key file format. So that keys can be
 * imported from BIND to SoftHSM.
 *
-* Some of the design/code is from keyconv.c written by 
+* Some of the design/code is from keyconv.c written by
 * Hakan Olsson and Jakob Schlyter in 2000 and 2001.
 *
 ************************************************************/
 
 #include <config.h>
-#include "softhsm-keyconv.h"
+#include "softhsm2-keyconv.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -50,11 +50,15 @@
 #include <iostream>
 #include <fstream>
 #include <stdint.h>
+#include <errno.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 void usage()
 {
 	printf("Converting from BIND .private-key format to PKCS#8 key file format.\n");
-	printf("Usage: softhsm-keyconv [OPTIONS]\n");
+	printf("Usage: softhsm2-keyconv [OPTIONS]\n");
 	printf("Options:\n");
 	printf("  -h                  Shows this help screen.\n");
 	printf("  --help              Shows this help screen.\n");
@@ -273,6 +277,17 @@ int to_pkcs8(char* in_path, char* out_path, char* file_pin)
 		free_key_material(pkey);
 		return error;
 	}
+
+	// Create and set file permissions if the file does not exist.
+	int fd = open(out_path, O_CREAT, S_IRUSR | S_IWUSR);
+	if (fd == -1)
+	{
+		fprintf(stderr, "ERROR: Could not open the output file: %s (errno %i)\n",
+			out_path, errno);
+		free_key_material(pkey);
+		return 1;
+	}
+	::close(fd);
 
 	crypto_init();
 

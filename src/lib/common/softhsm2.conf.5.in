@@ -1,4 +1,4 @@
-.TH softhsm2.conf 5 "5 November 2013" "SoftHSM"
+.TH softhsm2.conf 5 "20 March 2014" "SoftHSM"
 .SH NAME
 softhsm2.conf \- SoftHSM configuration file
 .SH SYNOPSIS
@@ -58,8 +58,8 @@ default location of the SoftHSM configuration file
 .I @default_softhsm2_conf@.sample
 an example of a SoftHSM configuration file
 .SH AUTHOR
-Written by Rickard Bellgrim, René Post, and Roland van Rijswijk.
+Written by Rickard Bellgrim, Francis Dupont, René Post, and Roland van Rijswijk.
 .SH "SEE ALSO"
-.IR softhsm-keyconv (1),
-.IR softhsm-migrate (1),
-.IR softhsm-util (1)
+.IR softhsm2-keyconv (1),
+.IR softhsm2-migrate (1),
+.IR softhsm2-util (1)

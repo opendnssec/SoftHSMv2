@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010 .SE (The Internet Infrastructure Foundation)
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -10,7 +10,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -25,15 +25,15 @@
  */
 
 /*****************************************************************************
- softhsm-util-ossl.cpp
+ softhsm2-util-botan.cpp
 
- Code specific for OpenSSL
+ Code specific for Botan
  *****************************************************************************/
 
 #include <config.h>
-#define UTIL_OSSL
-#include "softhsm-util.h"
-#include "softhsm-util-ossl.h"
+#define UTIL_BOTAN
+#include "softhsm2-util.h"
+#include "softhsm2-util-botan.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -41,23 +41,37 @@
 #include <iostream>
 #include <fstream>
 
-#include <openssl/pem.h>
-#include <openssl/evp.h>
-#include <openssl/err.h>
-#include <openssl/pkcs12.h>
+#include <botan/init.h>
+#include <botan/auto_rng.h>
+#include <botan/pkcs8.h>
+#include <botan/bigint.h>
+#include <botan/libstate.h>
 
-// Init OpenSSL
+bool wasInitialized = false;
+
+// Init Botan
 void crypto_init()
 {
-	// We do not need to do this one
-	// OpenSSL_add_all_algorithms();
+	// The PKCS#11 library might be using Botan
+	// Check if it has already initialized Botan
+	if (Botan::Global_State_Management::global_state_exists())
+	{
+		wasInitialized = true;
+	}
+
+	if (!wasInitialized)
+	{
+		Botan::LibraryInitializer::initialize("thread_safe=true");
+	}
 }
-  
-// Final OpenSSL
+
+// Final Botan
 void crypto_final()
 {
-	// EVP_cleanup();
-	CRYPTO_cleanup_all_ex_data();
+	if (!wasInitialized)
+	{
+		Botan::LibraryInitializer::deinitialize();
+	}
 }
 
 // Import a key pair from given path
@@ -72,42 +86,40 @@ int crypto_import_key_pair
 	int noPublicKey
 )
 {
-	EVP_PKEY* pkey = crypto_read_file(filePath, filePIN);
+	Botan::Private_Key* pkey = crypto_read_file(filePath, filePIN);
 	if (pkey == NULL)
 	{
 		return 1;
 	}
 
-	RSA* rsa = NULL;
-	DSA* dsa = NULL;
+	Botan::RSA_PrivateKey* rsa = NULL;
+	Botan::DSA_PrivateKey* dsa = NULL;
 
-	switch (EVP_PKEY_type(pkey->type))
+	if (pkey->algo_name().compare("RSA") == 0)
 	{
-		case EVP_PKEY_RSA:
-			rsa = EVP_PKEY_get1_RSA(pkey);
-			break;
-		case EVP_PKEY_DSA:
-			dsa = EVP_PKEY_get1_DSA(pkey);
-			break;
-		default:
-			fprintf(stderr, "ERROR: Cannot handle this algorithm.\n");
-			EVP_PKEY_free(pkey);
-			return 1;
-			break;
+		rsa = dynamic_cast<Botan::RSA_PrivateKey*>(pkey);
 	}
-	EVP_PKEY_free(pkey);
+	else if (pkey->algo_name().compare("DSA") == 0)
+	{
+		dsa = dynamic_cast<Botan::DSA_PrivateKey*>(pkey);
+	}
+	else
+	{
+		fprintf(stderr, "ERROR: %s is not a supported algorithm.\n",
+				pkey->algo_name().c_str());
+		delete pkey;
+		return 1;
+	}
 
 	int result = 0;
 
 	if (rsa)
 	{
 		result = crypto_save_rsa(hSession, label, objID, objIDLen, noPublicKey, rsa);
-		RSA_free(rsa);
 	}
 	else if (dsa)
 	{
 		result = crypto_save_dsa(hSession, label, objID, objIDLen, noPublicKey, dsa);
-		DSA_free(dsa);
 	}
 	else
 	{
@@ -115,74 +127,52 @@ int crypto_import_key_pair
 		result = 1;
 	}
 
+	delete pkey;
 	return result;
 }
 
 // Read the key from file
-EVP_PKEY* crypto_read_file(char* filePath, char* filePIN)
+Botan::Private_Key* crypto_read_file(char* filePath, char* filePIN)
 {
-	BIO* in = NULL;
-	PKCS8_PRIV_KEY_INFO* p8inf = NULL;
-	EVP_PKEY* pkey = NULL;
-	X509_SIG* p8 = NULL;
-
-	if (!(in = BIO_new_file(filePath, "rb")))
+	if (filePath == NULL)
 	{
-		fprintf(stderr, "ERROR: Could open the PKCS#8 file: %s\n", filePath);
 		return NULL;
 	}
 
-	// The PKCS#8 file is encrypted
-	if (filePIN)
+	Botan::AutoSeeded_RNG* rng = new Botan::AutoSeeded_RNG();
+	Botan::Private_Key* pkey = NULL;
+
+	try
 	{
-		p8 = PEM_read_bio_PKCS8(in, NULL, NULL, NULL);
-		BIO_free(in);
-
-		if (!p8)
+#if BOTAN_VERSION_MINOR == 11
+		if (filePIN == NULL)
 		{
-			fprintf(stderr, "ERROR: Could not read the PKCS#8 file. "
-					"Maybe the file is not encrypted.\n");
-			return NULL;
+			pkey = Botan::PKCS8::load_key(std::string(filePath), *rng);
 		}
-
-		p8inf = PKCS8_decrypt(p8, filePIN, strlen(filePIN));
-		X509_SIG_free(p8);
-
-		if (!p8inf)
+		else
 		{
-			fprintf(stderr, "ERROR: Could not decrypt the PKCS#8 file. "
-					"Maybe wrong PIN to file (--file-pin <PIN>)\n");
-			return NULL;
+			pkey = Botan::PKCS8::load_key(std::string(filePath), *rng, std::string(filePIN));
 		}
+#else
+		if (filePIN == NULL)
+		{
+			pkey = Botan::PKCS8::load_key(filePath, *rng);
+		}
+		else
+		{
+			pkey = Botan::PKCS8::load_key(filePath, *rng, filePIN);
+		}
+#endif
 	}
-	else
+	catch (std::exception& e)
 	{
-		p8inf = PEM_read_bio_PKCS8_PRIV_KEY_INFO(in, NULL, NULL, NULL);
-		BIO_free(in);
-
-		if (!p8inf)
-		{
-			fprintf(stderr, "ERROR: Could not read the PKCS#8 file. "
-					"Maybe it is encypted (--file-pin <PIN>)\n");
-			return NULL;
-		}
-	}
-
-	if (p8inf->broken)
-	{
-		fprintf(stderr, "ERROR: Broken key encoding.\n");
-		PKCS8_PRIV_KEY_INFO_free(p8inf);
+		fprintf(stderr, "%s\n", e.what());
+		fprintf(stderr, "ERROR: Perhaps wrong path to file, wrong file format, "
+				"or wrong PIN to file (--file-pin <PIN>).\n");
+		delete rng;
 		return NULL;
 	}
-
-	// Convert the PKCS#8 to OpenSSL
-	pkey = EVP_PKCS82PKEY(p8inf);
-	PKCS8_PRIV_KEY_INFO_free(p8inf);
-	if (!pkey)
-	{
-		fprintf(stderr, "ERROR: Could not convert the key.\n");
-		return NULL;
-	}
+	delete rng;
 
 	return pkey;
 }
@@ -195,7 +185,7 @@ int crypto_save_rsa
 	char* objID,
 	size_t objIDLen,
 	int noPublicKey,
-	RSA* rsa
+	Botan::RSA_PrivateKey* rsa
 )
 {
 	rsa_key_material_t* keyMat = crypto_malloc_rsa(rsa);
@@ -271,8 +261,8 @@ int crypto_save_rsa
 	return 0;
 }
 
-// Convert the OpenSSL key to binary
-rsa_key_material_t* crypto_malloc_rsa(RSA* rsa)
+// Convert the Botan key to binary
+rsa_key_material_t* crypto_malloc_rsa(Botan::RSA_PrivateKey* rsa)
 {
 	if (rsa == NULL)
 	{
@@ -285,14 +275,14 @@ rsa_key_material_t* crypto_malloc_rsa(RSA* rsa)
 		return NULL;
 	}
 
-	keyMat->sizeE = BN_num_bytes(rsa->e);
-	keyMat->sizeN = BN_num_bytes(rsa->n);
-	keyMat->sizeD = BN_num_bytes(rsa->d);
-	keyMat->sizeP = BN_num_bytes(rsa->p);
-	keyMat->sizeQ = BN_num_bytes(rsa->q);
-	keyMat->sizeDMP1 = BN_num_bytes(rsa->dmp1);
-	keyMat->sizeDMQ1 = BN_num_bytes(rsa->dmq1);
-	keyMat->sizeIQMP = BN_num_bytes(rsa->iqmp);
+	keyMat->sizeE = rsa->get_e().bytes();
+	keyMat->sizeN = rsa->get_n().bytes();
+	keyMat->sizeD = rsa->get_d().bytes();
+	keyMat->sizeP = rsa->get_p().bytes();
+	keyMat->sizeQ = rsa->get_q().bytes();
+	keyMat->sizeDMP1 = rsa->get_d1().bytes();
+	keyMat->sizeDMQ1 = rsa->get_d2().bytes();
+	keyMat->sizeIQMP = rsa->get_c().bytes();
 
 	keyMat->bigE = (CK_VOID_PTR)malloc(keyMat->sizeE);
 	keyMat->bigN = (CK_VOID_PTR)malloc(keyMat->sizeN);
@@ -319,14 +309,14 @@ rsa_key_material_t* crypto_malloc_rsa(RSA* rsa)
 		return NULL;
 	}
 
-	BN_bn2bin(rsa->e, (unsigned char*)keyMat->bigE);
-	BN_bn2bin(rsa->n, (unsigned char*)keyMat->bigN);
-	BN_bn2bin(rsa->d, (unsigned char*)keyMat->bigD);
-	BN_bn2bin(rsa->p, (unsigned char*)keyMat->bigP);
-	BN_bn2bin(rsa->q, (unsigned char*)keyMat->bigQ);
-	BN_bn2bin(rsa->dmp1, (unsigned char*)keyMat->bigDMP1);
-	BN_bn2bin(rsa->dmq1, (unsigned char*)keyMat->bigDMQ1);
-	BN_bn2bin(rsa->iqmp, (unsigned char*)keyMat->bigIQMP);
+	rsa->get_e().binary_encode((Botan::byte*)keyMat->bigE);
+	rsa->get_n().binary_encode((Botan::byte*)keyMat->bigN);
+	rsa->get_d().binary_encode((Botan::byte*)keyMat->bigD);
+	rsa->get_p().binary_encode((Botan::byte*)keyMat->bigP);
+	rsa->get_q().binary_encode((Botan::byte*)keyMat->bigQ);
+	rsa->get_d1().binary_encode((Botan::byte*)keyMat->bigDMP1);
+	rsa->get_d2().binary_encode((Botan::byte*)keyMat->bigDMQ1);
+	rsa->get_c().binary_encode((Botan::byte*)keyMat->bigIQMP);
 
 	return keyMat;
 }
@@ -354,7 +344,7 @@ int crypto_save_dsa
 	char* objID,
 	size_t objIDLen,
 	int noPublicKey,
-	DSA* dsa
+	Botan::DSA_PrivateKey* dsa
 )
 {
 	dsa_key_material_t* keyMat = crypto_malloc_dsa(dsa);
@@ -428,25 +418,25 @@ int crypto_save_dsa
 	return 0;
 }
 
-// Convert the OpenSSL key to binary
-dsa_key_material_t* crypto_malloc_dsa(DSA* dsa)
+// Convert the Botan key to binary
+dsa_key_material_t* crypto_malloc_dsa(Botan::DSA_PrivateKey* dsa)
 {
 	if (dsa == NULL)
 	{
 		return NULL;
 	}
 
-	dsa_key_material_t* keyMat = (dsa_key_material_t*)malloc(sizeof(dsa_key_material_t));
+	dsa_key_material_t *keyMat = (dsa_key_material_t *)malloc(sizeof(dsa_key_material_t));
 	if (keyMat == NULL)
 	{
 		return NULL;
 	}
 
-	keyMat->sizeP = BN_num_bytes(dsa->p);
-	keyMat->sizeQ = BN_num_bytes(dsa->q);
-	keyMat->sizeG = BN_num_bytes(dsa->g);
-	keyMat->sizeX = BN_num_bytes(dsa->priv_key);
-	keyMat->sizeY = BN_num_bytes(dsa->pub_key);
+	keyMat->sizeP = dsa->group_p().bytes();
+	keyMat->sizeQ = dsa->group_q().bytes();
+	keyMat->sizeG = dsa->group_g().bytes();
+	keyMat->sizeX = dsa->get_x().bytes();
+	keyMat->sizeY = dsa->get_y().bytes();
 
 	keyMat->bigP = (CK_VOID_PTR)malloc(keyMat->sizeP);
 	keyMat->bigQ = (CK_VOID_PTR)malloc(keyMat->sizeQ);
@@ -460,11 +450,11 @@ dsa_key_material_t* crypto_malloc_dsa(DSA* dsa)
 		return NULL;
 	}
 
-	BN_bn2bin(dsa->p, (unsigned char*)keyMat->bigP);
-	BN_bn2bin(dsa->q, (unsigned char*)keyMat->bigQ);
-	BN_bn2bin(dsa->g, (unsigned char*)keyMat->bigG);
-	BN_bn2bin(dsa->priv_key, (unsigned char*)keyMat->bigX);
-	BN_bn2bin(dsa->pub_key, (unsigned char*)keyMat->bigY);
+	dsa->group_p().binary_encode((Botan::byte*)keyMat->bigP);
+	dsa->group_q().binary_encode((Botan::byte*)keyMat->bigQ);
+	dsa->group_g().binary_encode((Botan::byte*)keyMat->bigG);
+	dsa->get_x().binary_encode((Botan::byte*)keyMat->bigX);
+	dsa->get_y().binary_encode((Botan::byte*)keyMat->bigY);
 
 	return keyMat;
 }

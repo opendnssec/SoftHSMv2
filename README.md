@@ -57,8 +57,7 @@ Options:
 				(default enabled)
 	--disable-ecc		Disable support for ECC (default enabled)
 	--disable-gost		Disable support for GOST (default enabled)
-	--enable-visibility	Enable -fvisibility=hidden GCC flags so
-				only the PKCS#11 C_* entry points are kept
+	--disable-visibility	Disable hidden visibilty link mode [enabled]
 	--with-crypto-backend	Select crypto backend (openssl|botan)
 	--with-openssl=PATH	Specify prefix of path of OpenSSL
 	--with-botan=PATH	Specify prefix of path of Botan
@@ -96,13 +95,17 @@ can be change by setting the environment variable.
 
 Details on the configuration can be found in "man softhsm2.conf".
 
+Create the token directory you defined in your config file:
+
+      mkdir <token_dir>
+
 ### Initialize Tokens
 
-Use either softhsm-util or the PKCS#11 interface. The SO PIN can e.g. be used
+Use either softhsm2-util or the PKCS#11 interface. The SO PIN can e.g. be used
 to re-initialize the token and the user PIN is handed out to the application so
 it can interact with the token.
 
-      softhsm-util --init-token --slot 0 --label "My token 1"
+      softhsm2-util --init-token --slot 0 --label "My token 1"
 
 Type in SO PIN and user PIN. Once a token has been initialized, more slots will
 be added automatically with a new uninitialized token.

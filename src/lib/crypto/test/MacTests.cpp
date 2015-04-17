@@ -62,7 +62,7 @@ void MacTests::testHMACMD5()
 	char testResult[512] = "1026862877813E17E4371095271E1B56";
 
 	// Get a HMAC-MD5 instance
-	CPPUNIT_ASSERT((mac = CryptoFactory::i()->getMacAlgorithm("hmac-md5")) != NULL);
+	CPPUNIT_ASSERT((mac = CryptoFactory::i()->getMacAlgorithm(MacAlgo::HMAC_MD5)) != NULL);
 
 	// Key
 	char pk[] = "a_key_for_HMAC-MD5_test";
@@ -103,7 +103,7 @@ void MacTests::testHMACSHA1()
 	char testResult[512] = "C2FFE4BF83A6FE299CA4A187157F2442EC1527CE";
 
 	// Get a HMAC-SHA1 instance
-	CPPUNIT_ASSERT((mac = CryptoFactory::i()->getMacAlgorithm("hmac-sha1")) != NULL);
+	CPPUNIT_ASSERT((mac = CryptoFactory::i()->getMacAlgorithm(MacAlgo::HMAC_SHA1)) != NULL);
 
 	// Key
 	char pk[] = "a_key_for_HMAC-SHA1_test";
@@ -150,7 +150,7 @@ void MacTests::testHMACSHA224()
 	char testResult[512] = "4B089658FF932CA07BF7C42E6EC46BFF560BCAF295826D9D3C0BAE1C";
 
 	// Get a HMAC-SHA224 instance
-	CPPUNIT_ASSERT((mac = CryptoFactory::i()->getMacAlgorithm("hmac-sha224")) != NULL);
+	CPPUNIT_ASSERT((mac = CryptoFactory::i()->getMacAlgorithm(MacAlgo::HMAC_SHA224)) != NULL);
 
 	// Key
 	char pk[] = "a_key_for_HMAC-SHA224_test";
@@ -195,7 +195,7 @@ void MacTests::testHMACSHA256()
 	char testResult[512] = "90A49F8EB80D8ED405EFC8D658FCB9102314598939DCAA090756668056B0228A";
 
 	// Get a HMAC-SHA256 instance
-	CPPUNIT_ASSERT((mac = CryptoFactory::i()->getMacAlgorithm("hmac-sha256")) != NULL);
+	CPPUNIT_ASSERT((mac = CryptoFactory::i()->getMacAlgorithm(MacAlgo::HMAC_SHA256)) != NULL);
 
 	// Key
 	char pk[] = "a_key_for_HMAC-SHA256_test";
@@ -236,7 +236,7 @@ void MacTests::testHMACSHA384()
 	char testResult[512] = "AC387A4BB1E4E078C43C69087C206F49F56EC63CE244A429DA56B8EC3CAFBC987090DA7A8F6470874CA6049D20AC5154";
 
 	// Get a HMAC-SHA384 instance
-	CPPUNIT_ASSERT((mac = CryptoFactory::i()->getMacAlgorithm("hmac-sha384")) != NULL);
+	CPPUNIT_ASSERT((mac = CryptoFactory::i()->getMacAlgorithm(MacAlgo::HMAC_SHA384)) != NULL);
 
 	// Key
 	char pk[] = "a_key_for_HMAC-SHA384_test";
@@ -285,7 +285,7 @@ void MacTests::testHMACSHA512()
 	char testResult[512] = "93E3A4336693965FEEC902F3BDDB064DD63D83EA1E46AA13DA209F8F000C15F366D3F9BE4F8AF189EA96D191D0BDE4CF0FC6C462C214B55ABF78F33BD6DF3DD0";
 
 	// Get a HMAC-SHA512 instance
-	CPPUNIT_ASSERT((mac = CryptoFactory::i()->getMacAlgorithm("hmac-sha512")) != NULL);
+	CPPUNIT_ASSERT((mac = CryptoFactory::i()->getMacAlgorithm(MacAlgo::HMAC_SHA512)) != NULL);
 
 	// Key
 	char pk[] = "a_key_for_HMAC-SHA512_test";

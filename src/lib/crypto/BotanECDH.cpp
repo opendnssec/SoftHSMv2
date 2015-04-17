@@ -46,7 +46,8 @@
 #include <botan/pubkey.h>
 
 // Signing functions
-bool BotanECDH::signInit(PrivateKey* /*privateKey*/, const std::string /*mechanism*/)
+bool BotanECDH::signInit(PrivateKey* /*privateKey*/, const AsymMech::Type /*mechanism*/,
+			 const void* /* param = NULL */, const size_t /* paramLen = 0 */)
 {
 	ERROR_MSG("ECDH does not support signing");
 
@@ -68,7 +69,8 @@ bool BotanECDH::signFinal(ByteString& /*signature*/)
 }
 
 // Verification functions
-bool BotanECDH::verifyInit(PublicKey* /*publicKey*/, const std::string /*mechanism*/)
+bool BotanECDH::verifyInit(PublicKey* /*publicKey*/, const AsymMech::Type /*mechanism*/,
+			   const void* /* param = NULL */, const size_t /* paramLen = 0 */)
 {
 	ERROR_MSG("ECDH does not support verifying");
 
@@ -90,7 +92,8 @@ bool BotanECDH::verifyFinal(const ByteString& /*signature*/)
 }
 
 // Encryption functions
-bool BotanECDH::encrypt(PublicKey* /*publicKey*/, const ByteString& /*data*/, ByteString& /*encryptedData*/, const std::string /*padding*/)
+bool BotanECDH::encrypt(PublicKey* /*publicKey*/, const ByteString& /*data*/,
+			ByteString& /*encryptedData*/, const AsymMech::Type /*padding*/)
 {
 	ERROR_MSG("ECDH does not support encryption");
 
@@ -98,7 +101,8 @@ bool BotanECDH::encrypt(PublicKey* /*publicKey*/, const ByteString& /*data*/, By
 }
 
 // Decryption functions
-bool BotanECDH::decrypt(PrivateKey* /*privateKey*/, const ByteString& /*encryptedData*/, ByteString& /*data*/, const std::string /*padding*/)
+bool BotanECDH::decrypt(PrivateKey* /*privateKey*/, const ByteString& /*encryptedData*/,
+			ByteString& /*data*/, const AsymMech::Type /*padding*/)
 {
 	ERROR_MSG("ECDH does not support decryption");
 
@@ -312,7 +316,7 @@ PrivateKey* BotanECDH::newPrivateKey()
 {
 	return (PrivateKey*) new BotanECDHPrivateKey();
 }
-	
+
 AsymmetricParameters* BotanECDH::newParameters()
 {
 	return (AsymmetricParameters*) new ECParameters();

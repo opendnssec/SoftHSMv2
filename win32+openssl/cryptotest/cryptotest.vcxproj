@@ -59,8 +59,7 @@
       <AdditionalDependencies>convarch.lib;cppunitd.lib;libeay32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PreBuildEvent>
-      <Command>openssl version
-</Command>
+      <Command>..\..\..\ssl\bin\openssl version</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -83,8 +82,7 @@
       <AdditionalDependencies>convarch.lib;cppunit.lib;libeay32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PreBuildEvent>
-      <Command>openssl version
-</Command>
+      <Command>..\..\..\ssl\bin\openssl version</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>

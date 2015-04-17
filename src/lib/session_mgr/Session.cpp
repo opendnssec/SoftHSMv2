@@ -51,6 +51,8 @@ Session::Session(Slot* slot, bool isReadWrite, CK_VOID_PTR pApplication, CK_NOTI
 	publicKey = NULL;
 	privateKey = NULL;
 	symmetricKey = NULL;
+	param = NULL;
+	paramLen = 0;
 }
 
 // Constructor
@@ -71,6 +73,8 @@ Session::Session()
 	publicKey = NULL;
 	privateKey = NULL;
 	symmetricKey = NULL;
+	param = NULL;
+	paramLen = 0;
 }
 
 // Destructor
@@ -170,6 +174,13 @@ int Session::getOpType()
 // Reset the operations
 void Session::resetOp()
 {
+	if (param != NULL)
+	{
+		free(param);
+		param = NULL;
+		paramLen = 0;
+	}
+
 	if (digestOp != NULL)
 	{
 		CryptoFactory::i()->recycleHashAlgorithm(digestOp);
@@ -255,7 +266,7 @@ void Session::setMacOp(MacAlgorithm *macOp)
 	if (this->macOp != NULL)
 	{
 		setSymmetricKey(NULL);
-		CryptoFactory::i()->recycleMacAlgorithm(macOp);
+		CryptoFactory::i()->recycleMacAlgorithm(this->macOp);
 	}
 
 	this->macOp = macOp;
@@ -273,7 +284,7 @@ void Session::setAsymmetricCryptoOp(AsymmetricAlgorithm *asymmetricCryptoOp)
 	{
 		setPublicKey(NULL);
 		setPrivateKey(NULL);
-		CryptoFactory::i()->recycleAsymmetricAlgorithm(asymmetricCryptoOp);
+		CryptoFactory::i()->recycleAsymmetricAlgorithm(this->asymmetricCryptoOp);
 	}
 
 	this->asymmetricCryptoOp = asymmetricCryptoOp;
@@ -289,7 +300,7 @@ void Session::setSymmetricCryptoOp(SymmetricAlgorithm *symmetricCryptoOp)
 	if (this->symmetricCryptoOp != NULL)
 	{
 		setSymmetricKey(NULL);
-		CryptoFactory::i()->recycleSymmetricAlgorithm(symmetricCryptoOp);
+		CryptoFactory::i()->recycleSymmetricAlgorithm(this->symmetricCryptoOp);
 	}
 
 	this->symmetricCryptoOp = symmetricCryptoOp;
@@ -300,14 +311,38 @@ SymmetricAlgorithm *Session::getSymmetricCryptoOp()
 	return symmetricCryptoOp;
 }
 
-void Session::setMechanism(const char *mechanism)
+void Session::setMechanism(AsymMech::Type mechanism)
 {
 	this->mechanism = mechanism;
 }
 
-const char *Session::getMechanism()
+AsymMech::Type Session::getMechanism()
 {
 	return mechanism;
+}
+
+void Session::setParameters(void* param, size_t paramLen)
+{
+	if (param == NULL || paramLen == 0) return;
+
+	if (this->param != NULL)
+	{
+		free(this->param);
+		this->paramLen = 0;
+	}
+
+	this->param = malloc(paramLen);
+	if (this->param != NULL)
+	{
+		memcpy(this->param, param, paramLen);
+		this->paramLen = paramLen;
+	}
+}
+
+void* Session::getParameters(size_t& paramLen)
+{
+	paramLen = this->paramLen;
+	return this->param;
 }
 
 void Session::setAllowMultiPartOp(bool allowMultiPartOp)
@@ -337,7 +372,7 @@ void Session::setPublicKey(PublicKey* publicKey)
 
 	if (this->publicKey != NULL)
 	{
-		asymmetricCryptoOp->recyclePublicKey(publicKey);
+		asymmetricCryptoOp->recyclePublicKey(this->publicKey);
 	}
 
 	this->publicKey = publicKey;
@@ -355,7 +390,7 @@ void Session::setPrivateKey(PrivateKey* privateKey)
 
 	if (this->privateKey != NULL)
 	{
-		asymmetricCryptoOp->recyclePrivateKey(privateKey);
+		asymmetricCryptoOp->recyclePrivateKey(this->privateKey);
 	}
 
 	this->privateKey = privateKey;
@@ -371,9 +406,9 @@ void Session::setSymmetricKey(SymmetricKey* symmetricKey)
 	if (this->symmetricKey != NULL)
 	{
 		if (macOp) {
-			macOp->recycleKey(symmetricKey);
+			macOp->recycleKey(this->symmetricKey);
 		} else if (symmetricCryptoOp) {
-			symmetricCryptoOp->recycleKey(symmetricKey);
+			symmetricCryptoOp->recycleKey(this->symmetricKey);
 		} else {
 			return;
 		}

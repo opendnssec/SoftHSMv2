@@ -90,7 +90,7 @@ bool DBObject::createTables()
 		ERROR_MSG("Object is not connected to the database.");
 		return false;
 	}
-	
+
 	// Create the tables inside the database
 	DB::Statement cr_object = _connection->prepare("create table object (id integer primary key autoincrement);");
 	if (!_connection->execute(cr_object))
@@ -280,7 +280,7 @@ bool DBObject::dropTables()
 bool DBObject::find(long long objectId)
 {
 	MutexLocker lock(_mutex);
-	
+
 	if (_connection == NULL)
 	{
 		ERROR_MSG("Object is not connected to the database.");
@@ -314,7 +314,7 @@ bool DBObject::find(long long objectId)
 bool DBObject::insert()
 {
 	MutexLocker lock(_mutex);
-	
+
 	if (_connection == NULL)
 	{
 		ERROR_MSG("Object is not connected to the database.");
@@ -356,7 +356,7 @@ bool DBObject::remove()
 long long DBObject::objectId()
 {
 	MutexLocker lock(_mutex);
-	
+
 	return _objectId;
 }
 
@@ -364,23 +364,24 @@ static bool isModifiable(CK_ATTRIBUTE_TYPE type)
 {
 	switch (type) {
 	case CKA_LABEL:
+	case CKA_TRUSTED:
 	case CKA_ID:
 	case CKA_ISSUER:
 	case CKA_SERIAL_NUMBER:
+	case CKA_START_DATE:
+	case CKA_END_DATE:
 	case CKA_DERIVE:
+	case CKA_SUBJECT:
 	case CKA_ENCRYPT:
 	case CKA_VERIFY:
 	case CKA_VERIFY_RECOVER:
 	case CKA_WRAP:
+	case CKA_SENSITIVE:
 	case CKA_DECRYPT:
 	case CKA_SIGN:
 	case CKA_SIGN_RECOVER:
 	case CKA_UNWRAP:
-	case CKA_SENSITIVE:
 	case CKA_EXTRACTABLE:
-	case CKA_GOSTR3411_PARAMS:
-	case CKA_SUBJECT:
-	case CKA_GOST28147_PARAMS:
 	case CKA_OS_TOKENFLAGS:
 	case CKA_OS_SOPIN:
 	case CKA_OS_USERPIN:
@@ -462,7 +463,7 @@ static AttributeKind attributeKind(CK_ATTRIBUTE_TYPE type)
 	case CKA_COPYABLE: return akBoolean;
 	case CKA_ECDSA_PARAMS: return akBinary;
 	case CKA_EC_POINT: return akBinary;
-	case CKA_SECONDARY_AUTH: return akBoolean; 
+	case CKA_SECONDARY_AUTH: return akBoolean;
 	case CKA_AUTH_PIN_FLAGS: return akInteger;
 	case CKA_ALWAYS_AUTHENTICATE: return akBoolean;
 	case CKA_WRAP_WITH_TRUSTED: return akBoolean;
@@ -503,12 +504,12 @@ static AttributeKind attributeKind(CK_ATTRIBUTE_TYPE type)
 	case CKA_REQUIRED_CMS_ATTRIBUTES:
 	case CKA_DEFAULT_CMS_ATTRIBUTES:
 	case CKA_SUPPORTED_CMS_ATTRIBUTES:
-*/		
+*/
 	case CKA_WRAP_TEMPLATE: return akArray;
 	case CKA_UNWRAP_TEMPLATE: return akArray;
 	case CKA_DERIVE_TEMPLATE: return akArray;
 	case CKA_ALLOWED_MECHANISMS: return akArray;
-		
+
 	case CKA_OS_TOKENLABEL: return akBinary;
 	case CKA_OS_TOKENSERIAL: return akBinary;
 	case CKA_OS_TOKENFLAGS: return akInteger;
@@ -680,7 +681,7 @@ OSAttribute *DBObject::accessAttribute(CK_ATTRIBUTE_TYPE type)
 				return NULL;
 			}
 			// Store the attribute in the transaction when it is active.
-			std::map<CK_ATTRIBUTE_TYPE,OSAttribute*> *attrs = &_attributes;			
+			std::map<CK_ATTRIBUTE_TYPE,OSAttribute*> *attrs = &_attributes;
 			if (_transaction)
 				attrs = _transaction;
 
@@ -689,18 +690,12 @@ OSAttribute *DBObject::accessAttribute(CK_ATTRIBUTE_TYPE type)
 			OSAttribute *attr;
 			if (it != attrs->end())
 			{
-				if (it->second == NULL)
+				if (it->second != NULL)
 				{
-					ERROR_MSG("Expected attribute value pointer to be valid.");
-					return NULL;
+					delete it->second;
 				}
-				
-				if (!it->second->isBooleanAttribute())
-				{
-					ERROR_MSG("Trying to change the type of an attribute to boolean.");
-					return NULL;
-				}
-				it->second->setBooleanValue(value);
+
+				it->second = new OSAttribute(value);
 				attr = it->second;
 			}
 			else
@@ -727,21 +722,21 @@ OSAttribute *DBObject::accessAttribute(CK_ATTRIBUTE_TYPE type)
 				return NULL;
 			}
 			// Store the attribute in the transaction when it is active.
-			std::map<CK_ATTRIBUTE_TYPE,OSAttribute*> *attrs = &_attributes;			
+			std::map<CK_ATTRIBUTE_TYPE,OSAttribute*> *attrs = &_attributes;
 			if (_transaction)
 				attrs = _transaction;
-			
+
 			unsigned long value = result.getULongLong(1);
 			std::map<CK_ATTRIBUTE_TYPE,OSAttribute*>::iterator it =	 attrs->find(type);
 			OSAttribute *attr;
 			if (it != attrs->end())
 			{
-				if (!it->second->isUnsignedLongAttribute())
+				if (it->second != NULL)
 				{
-					ERROR_MSG("Trying to change the type of an attribute to unsigned long.");
-					return NULL;
+					delete it->second;
 				}
-				it->second->setUnsignedLongValue(value);
+
+				it->second = new OSAttribute(value);
 				attr = it->second;
 			}
 			else
@@ -768,7 +763,7 @@ OSAttribute *DBObject::accessAttribute(CK_ATTRIBUTE_TYPE type)
 				return NULL;
 			}
 			// Store the attribute in the transaction when it is active.
-			std::map<CK_ATTRIBUTE_TYPE,OSAttribute*> *attrs = &_attributes;			
+			std::map<CK_ATTRIBUTE_TYPE,OSAttribute*> *attrs = &_attributes;
 			if (_transaction)
 				attrs = _transaction;
 
@@ -778,12 +773,12 @@ OSAttribute *DBObject::accessAttribute(CK_ATTRIBUTE_TYPE type)
 			OSAttribute *attr;
 			if (it != attrs->end())
 			{
-				if (!it->second->isByteStringAttribute())
+				if (it->second != NULL)
 				{
-					ERROR_MSG("Trying to change the type of an attribute to binary.");
-					return NULL;
+					delete it->second;
 				}
-				it->second->setByteStringValue(ByteString(value,size));
+
+				it->second = new OSAttribute(ByteString(value,size));
 				attr = it->second;
 			}
 			else
@@ -811,7 +806,7 @@ OSAttribute *DBObject::accessAttribute(CK_ATTRIBUTE_TYPE type)
 				return NULL;
 			}
 			// Store the attribute in the transaction when it is active.
-			std::map<CK_ATTRIBUTE_TYPE,OSAttribute*> *attrs = &_attributes;			
+			std::map<CK_ATTRIBUTE_TYPE,OSAttribute*> *attrs = &_attributes;
 			if (_transaction)
 				attrs = _transaction;
 
@@ -821,17 +816,18 @@ OSAttribute *DBObject::accessAttribute(CK_ATTRIBUTE_TYPE type)
 			OSAttribute *attr;
 			if (it != attrs->end())
 			{
-				if (!it->second->isArrayAttribute())
-				{
-					ERROR_MSG("Trying to change the type of an attribute to array.");
-					return NULL;
-				}
 				std::map<CK_ATTRIBUTE_TYPE,OSAttribute> value;
 				if (!decodeArray(value,binary,size))
 				{
 					return NULL;
 				}
-				it->second->setArrayValue(value);
+
+				if (it->second != NULL)
+				{
+					delete it->second;
+				}
+
+				it->second = new OSAttribute(value);
 				attr = it->second;
 			}
 			else
@@ -848,48 +844,14 @@ OSAttribute *DBObject::accessAttribute(CK_ATTRIBUTE_TYPE type)
 			return attr;
 		}
 	}
-	
+
 	return NULL;
 }
 
-// Check if the specified attribute exists
-bool DBObject::attributeExists(CK_ATTRIBUTE_TYPE type)
+// Retrieve the specified attribute for internal use
+// Calling function must lock the mutex
+OSAttribute* DBObject::getAttributeDB(CK_ATTRIBUTE_TYPE type)
 {
-	MutexLocker lock(_mutex);
-
-	if (_connection == NULL)
-	{
-		ERROR_MSG("Object is not connected to the database.");
-		return false;
-	}
-
-	if (_objectId == 0)
-	{
-		ERROR_MSG("Cannot access invalid object.");
-		return false;
-	}
-
-	if (_transaction)
-	{
-		std::map<CK_ATTRIBUTE_TYPE,OSAttribute*>::iterator it =	 _transaction->find(type);
-		if (it != _transaction->end())
-			return true;
-	}
-		
-	std::map<CK_ATTRIBUTE_TYPE,OSAttribute*>::iterator it =	 _attributes.find(type);
-	if (it != _attributes.end())
-	{
-		return true;
-	}
-
-	return accessAttribute(type) != NULL;
-}
-
-// Retrieve the specified attribute
-OSAttribute* DBObject::getAttribute(CK_ATTRIBUTE_TYPE type)
-{
-	MutexLocker lock(_mutex);
-
 	if (_connection == NULL)
 	{
 		ERROR_MSG("Object is not connected to the database.");
@@ -923,6 +885,81 @@ OSAttribute* DBObject::getAttribute(CK_ATTRIBUTE_TYPE type)
 	return accessAttribute(type);
 }
 
+// Check if the specified attribute exists
+bool DBObject::attributeExists(CK_ATTRIBUTE_TYPE type)
+{
+	MutexLocker lock(_mutex);
+
+	return getAttributeDB(type) != NULL;
+}
+
+// Retrieve the specified attribute
+OSAttribute DBObject::getAttribute(CK_ATTRIBUTE_TYPE type)
+{
+	MutexLocker lock(_mutex);
+
+	OSAttribute* attr = getAttributeDB(type);
+	if (attr == NULL) return OSAttribute((unsigned long)0);
+
+	return *attr;
+}
+
+bool DBObject::getBooleanValue(CK_ATTRIBUTE_TYPE type, bool val)
+{
+	MutexLocker lock(_mutex);
+
+	OSAttribute* attr = getAttributeDB(type);
+	if (attr == NULL) return val;
+
+	if (attr->isBooleanAttribute())
+	{
+		return attr->getBooleanValue();
+	}
+	else
+	{
+		ERROR_MSG("The attribute is not a boolean: 0x%08X", type);
+		return val;
+	}
+}
+
+unsigned long DBObject::getUnsignedLongValue(CK_ATTRIBUTE_TYPE type, unsigned long val)
+{
+	MutexLocker lock(_mutex);
+
+	OSAttribute* attr = getAttributeDB(type);
+	if (attr == NULL) return val;
+
+	if (attr->isUnsignedLongAttribute())
+	{
+		return attr->getUnsignedLongValue();
+	}
+	else
+	{
+		ERROR_MSG("The attribute is not an unsigned long: 0x%08X", type);
+		return val;
+	}
+}
+
+ByteString DBObject::getByteStringValue(CK_ATTRIBUTE_TYPE type)
+{
+	MutexLocker lock(_mutex);
+
+	ByteString val;
+
+	OSAttribute* attr = getAttributeDB(type);
+	if (attr == NULL) return val;
+
+	if (attr->isByteStringAttribute())
+	{
+		return attr->getByteStringValue();
+	}
+	else
+	{
+		ERROR_MSG("The attribute is not a byte string: 0x%08X", type);
+		return val;
+	}
+}
+
 CK_ATTRIBUTE_TYPE DBObject::nextAttributeType(CK_ATTRIBUTE_TYPE)
 {
 	MutexLocker lock(_mutex);
@@ -937,7 +974,7 @@ CK_ATTRIBUTE_TYPE DBObject::nextAttributeType(CK_ATTRIBUTE_TYPE)
 		ERROR_MSG("Cannot get next attribute for invalid object.");
 		return false;
 	}
-	
+
 	// FIXME: implement for C_CopyObject
 	return CKA_CLASS;
 }
@@ -945,9 +982,6 @@ CK_ATTRIBUTE_TYPE DBObject::nextAttributeType(CK_ATTRIBUTE_TYPE)
 // Set the specified attribute
 bool DBObject::setAttribute(CK_ATTRIBUTE_TYPE type, const OSAttribute& attribute)
 {
-	// Retrieve and existing attribute if it exists or NULL if it doesn't
-	OSAttribute *attr = getAttribute(type);
-	
 	MutexLocker lock(_mutex);
 
 	if (_connection == NULL)
@@ -960,6 +994,9 @@ bool DBObject::setAttribute(CK_ATTRIBUTE_TYPE type, const OSAttribute& attribute
 		ERROR_MSG("Cannot update invalid object.");
 		return false;
 	}
+
+	// Retrieve and existing attribute if it exists or NULL if it doesn't
+	OSAttribute *attr = getAttributeDB(type);
 
 	// Update an existing attribute...
 	if (attr)
@@ -1015,8 +1052,8 @@ bool DBObject::setAttribute(CK_ATTRIBUTE_TYPE type, const OSAttribute& attribute
 		if (bindByteString)
 		{
 			DB::Bindings(statement).bindBlob(1, attribute.getByteStringValue().const_byte_str(), attribute.getByteStringValue().size(), SQLITE_STATIC);
-		}			
-		
+		}
+
 		// Statement is valid when a prepared statement has been attached to it.
 		if (statement.isValid())
 		{
@@ -1026,13 +1063,13 @@ bool DBObject::setAttribute(CK_ATTRIBUTE_TYPE type, const OSAttribute& attribute
 				return false;
 			}
 
-			if (_transaction)	
+			if (_transaction)
 			{
 				std::map<CK_ATTRIBUTE_TYPE,OSAttribute*>::iterator it =	 _transaction->find(type);
 				if (it != _transaction->end())
 					*it->second = attribute;
 				else
-					(*_transaction)[type] = new OSAttribute(attribute);	
+					(*_transaction)[type] = new OSAttribute(attribute);
 			} else
 				*attr = attribute;
 			return true;
@@ -1040,7 +1077,7 @@ bool DBObject::setAttribute(CK_ATTRIBUTE_TYPE type, const OSAttribute& attribute
 	}
 
 	DB::Statement statement;
-	
+
 	// Insert the attribute, because it is currently unknown
 	if (attribute.isBooleanAttribute())
 	{
@@ -1068,7 +1105,7 @@ bool DBObject::setAttribute(CK_ATTRIBUTE_TYPE type, const OSAttribute& attribute
 					"insert into attribute_binary (value,type,object_id) values (?,%lu,%lld)",
 					type,
 					_objectId);
-		
+
 		DB::Bindings(statement).bindBlob(1, attribute.getByteStringValue().const_byte_str(), attribute.getByteStringValue().size(), SQLITE_STATIC);
 	}
 	else if (attribute.isArrayAttribute())
@@ -1095,7 +1132,7 @@ bool DBObject::setAttribute(CK_ATTRIBUTE_TYPE type, const OSAttribute& attribute
 			ERROR_MSG("Failed to insert attribute %lu for object %lld",type,_objectId);
 			return false;
 		}
-	
+
 		if (_transaction)
 			(*_transaction)[type] = new OSAttribute(attribute);
 		else
@@ -1132,22 +1169,22 @@ bool DBObject::startTransaction(Access access)
 	if (_transaction)
 	{
 		ERROR_MSG("Transaction is already active.");
-		return false;	
+		return false;
 	}
 
 	_transaction = new std::map<CK_ATTRIBUTE_TYPE,OSAttribute*>;
 	if (_transaction == NULL)
 	{
 		ERROR_MSG("Not enough memory to start transaction.");
-		return false;	
+		return false;
 	}
-	
+
 	if (_connection->inTransaction())
 	{
 		ERROR_MSG("Transaction in database is already active.");
 		return false;
 	}
-	
+
 	// Ask the connection to start the transaction.
 	if (access == ReadWrite)
 		return _connection->beginTransactionRW();
@@ -1171,12 +1208,12 @@ bool DBObject::commitTransaction()
 		ERROR_MSG("No transaction active.");
 		return false;
 	}
-	
+
 	if (!_connection->commitTransaction())
 	{
 		return false;
 	}
-	
+
 	// Copy the values from the internally stored transaction to the _attributes field.
 	for (std::map<CK_ATTRIBUTE_TYPE,OSAttribute*>::iterator it = _transaction->begin(); it!=_transaction->end(); ++it) {
 		std::map<CK_ATTRIBUTE_TYPE,OSAttribute*>::iterator attr_it = _attributes.find(it->first);
@@ -1217,7 +1254,7 @@ bool DBObject::abortTransaction()
 		delete _transaction;
 		_transaction = NULL;
 	}
-	
+
 	return _connection->rollbackTransaction();
 }
 
@@ -1227,7 +1264,7 @@ bool DBObject::destroyObject()
 	// NOTE: Do not lock _mutex, because _token will call us back and cause a deadlock.
 	// There is no need to lock anyway as _token is a non-mutable pointer, so no race
 	// conditions possible.
-	
+
 	if (_token == NULL)
 	{
 		ERROR_MSG("Cannot destroy an object that is not associated with a token");

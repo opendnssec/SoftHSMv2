@@ -56,18 +56,14 @@ OSSLDSA::~OSSLDSA()
 		delete pCurrentHash;
 	}
 }
-	
+
 // Signing functions
 bool OSSLDSA::sign(PrivateKey* privateKey, const ByteString& dataToSign,
-		   ByteString& signature, const std::string mechanism)
+		   ByteString& signature, const AsymMech::Type mechanism,
+		   const void* param /* = NULL */, const size_t paramLen /* = 0 */)
 {
-	std::string lowerMechanism;
-	lowerMechanism.resize(mechanism.size());
-	std::transform(mechanism.begin(), mechanism.end(), lowerMechanism.begin(), tolower);
-
-	if (!lowerMechanism.compare("dsa"))
+	if (mechanism == AsymMech::DSA)
 	{
-
 		// Separate implementation for DSA signing without hash computation
 
 		// Check if the private key is the right type
@@ -98,13 +94,14 @@ bool OSSLDSA::sign(PrivateKey* privateKey, const ByteString& dataToSign,
 	else
 	{
 		// Call default implementation
-		return AsymmetricAlgorithm::sign(privateKey, dataToSign, signature, mechanism);
+		return AsymmetricAlgorithm::sign(privateKey, dataToSign, signature, mechanism, param, paramLen);
 	}
 }
 
-bool OSSLDSA::signInit(PrivateKey* privateKey, const std::string mechanism)
+bool OSSLDSA::signInit(PrivateKey* privateKey, const AsymMech::Type mechanism,
+		       const void* param /* = NULL */, const size_t paramLen /* = 0 */)
 {
-	if (!AsymmetricAlgorithm::signInit(privateKey, mechanism))
+	if (!AsymmetricAlgorithm::signInit(privateKey, mechanism, param, paramLen))
 	{
 		return false;
 	}
@@ -120,63 +117,49 @@ bool OSSLDSA::signInit(PrivateKey* privateKey, const std::string mechanism)
 		return false;
 	}
 
-	std::string lowerMechanism;
-	lowerMechanism.resize(mechanism.size());
-	std::transform(mechanism.begin(), mechanism.end(), lowerMechanism.begin(), tolower);
+	HashAlgo::Type hash = HashAlgo::Unknown;
 
-	if (!lowerMechanism.compare("dsa-sha1"))
+	switch (mechanism)
 	{
-		pCurrentHash = CryptoFactory::i()->getHashAlgorithm("sha1");
+		case AsymMech::DSA_SHA1:
+			hash = HashAlgo::SHA1;
+			break;
+		case AsymMech::DSA_SHA224:
+			hash = HashAlgo::SHA224;
+			break;
+		case AsymMech::DSA_SHA256:
+			hash = HashAlgo::SHA256;
+			break;
+		case AsymMech::DSA_SHA384:
+			hash = HashAlgo::SHA384;
+			break;
+		case AsymMech::DSA_SHA512:
+			hash = HashAlgo::SHA512;
+			break;
+		default:
+			ERROR_MSG("Invalid mechanism supplied (%i)", mechanism);
 
-		if (!pCurrentHash->hashInit())
-		{
-			delete pCurrentHash;
-			pCurrentHash = NULL;
-		}
-	}
-	else if (!lowerMechanism.compare("dsa-sha224"))
-	{
-		pCurrentHash = CryptoFactory::i()->getHashAlgorithm("sha224");
+			ByteString dummy;
+			AsymmetricAlgorithm::signFinal(dummy);
 
-		if (!pCurrentHash->hashInit())
-		{
-			delete pCurrentHash;
-			pCurrentHash = NULL;
-		}
+			return false;
 	}
-	else if (!lowerMechanism.compare("dsa-sha256"))
-	{
-		pCurrentHash = CryptoFactory::i()->getHashAlgorithm("sha256");
 
-		if (!pCurrentHash->hashInit())
-		{
-			delete pCurrentHash;
-			pCurrentHash = NULL;
-		}
-	}
-	else if (!lowerMechanism.compare("dsa-sha384"))
-	{
-		pCurrentHash = CryptoFactory::i()->getHashAlgorithm("sha384");
-
-		if (!pCurrentHash->hashInit())
-		{
-			delete pCurrentHash;
-			pCurrentHash = NULL;
-		}
-	}
-	if (!lowerMechanism.compare("dsa-sha512"))
-	{
-		pCurrentHash = CryptoFactory::i()->getHashAlgorithm("sha512");
-
-		if (!pCurrentHash->hashInit())
-		{
-			delete pCurrentHash;
-			pCurrentHash = NULL;
-		}
-	}
+	pCurrentHash = CryptoFactory::i()->getHashAlgorithm(hash);
 
 	if (pCurrentHash == NULL)
 	{
+		ByteString dummy;
+		AsymmetricAlgorithm::signFinal(dummy);
+
+		return false;
+	}
+
+	if (!pCurrentHash->hashInit())
+	{
+		delete pCurrentHash;
+		pCurrentHash = NULL;
+
 		ByteString dummy;
 		AsymmetricAlgorithm::signFinal(dummy);
 
@@ -208,13 +191,9 @@ bool OSSLDSA::signUpdate(const ByteString& dataToSign)
 }
 
 bool OSSLDSA::signFinal(ByteString& signature)
-{	
+{
 	// Save necessary state before calling super class signFinal
 	OSSLDSAPrivateKey* pk = (OSSLDSAPrivateKey*) currentPrivateKey;
-
-	std::string lowerMechanism;
-	lowerMechanism.resize(currentMechanism.size());
-	std::transform(currentMechanism.begin(), currentMechanism.end(), lowerMechanism.begin(), tolower);
 
 	if (!AsymmetricAlgorithm::signFinal(signature))
 	{
@@ -232,7 +211,7 @@ bool OSSLDSA::signFinal(ByteString& signature)
 	{
 		return false;
 	}
-	
+
 	DSA* dsa = pk->getOSSLKey();
 
 	// Perform the signature operation
@@ -251,13 +230,10 @@ bool OSSLDSA::signFinal(ByteString& signature)
 
 // Verification functions
 bool OSSLDSA::verify(PublicKey* publicKey, const ByteString& originalData,
-		     const ByteString& signature, const std::string mechanism)
+		     const ByteString& signature, const AsymMech::Type mechanism,
+		     const void* param /* = NULL */, const size_t paramLen /* = 0 */)
 {
-	std::string lowerMechanism;
-	lowerMechanism.resize(mechanism.size());
-	std::transform(mechanism.begin(), mechanism.end(), lowerMechanism.begin(), tolower);
-
-	if (!lowerMechanism.compare("dsa"))
+	if (mechanism == AsymMech::DSA)
 	{
 		// Separate implementation for DSA verification without hash computation
 
@@ -302,13 +278,14 @@ bool OSSLDSA::verify(PublicKey* publicKey, const ByteString& originalData,
 	else
 	{
 		// Call the generic function
-		return AsymmetricAlgorithm::verify(publicKey, originalData, signature, mechanism);
+		return AsymmetricAlgorithm::verify(publicKey, originalData, signature, mechanism, param, paramLen);
 	}
 }
 
-bool OSSLDSA::verifyInit(PublicKey* publicKey, const std::string mechanism)
+bool OSSLDSA::verifyInit(PublicKey* publicKey, const AsymMech::Type mechanism,
+			 const void* param /* = NULL */, const size_t paramLen /* = 0 */)
 {
-	if (!AsymmetricAlgorithm::verifyInit(publicKey, mechanism))
+	if (!AsymmetricAlgorithm::verifyInit(publicKey, mechanism, param, paramLen))
 	{
 		return false;
 	}
@@ -324,63 +301,50 @@ bool OSSLDSA::verifyInit(PublicKey* publicKey, const std::string mechanism)
 		return false;
 	}
 
-	std::string lowerMechanism;
-	lowerMechanism.resize(mechanism.size());
-	std::transform(mechanism.begin(), mechanism.end(), lowerMechanism.begin(), tolower);
+	HashAlgo::Type hash = HashAlgo::Unknown;
 
-	if (!lowerMechanism.compare("dsa-sha1"))
+	switch (mechanism)
 	{
-		pCurrentHash = CryptoFactory::i()->getHashAlgorithm("sha1");
+		case AsymMech::DSA_SHA1:
+			hash = HashAlgo::SHA1;
+			break;
+		case AsymMech::DSA_SHA224:
+			hash = HashAlgo::SHA224;
+			break;
+		case AsymMech::DSA_SHA256:
+			hash = HashAlgo::SHA256;
+			break;
+		case AsymMech::DSA_SHA384:
+			hash = HashAlgo::SHA384;
+			break;
+		case AsymMech::DSA_SHA512:
+			hash = HashAlgo::SHA512;
+			break;
+		default:
+			ERROR_MSG("Invalid mechanism supplied (%i)", mechanism);
 
-		if (!pCurrentHash->hashInit())
-		{
-			delete pCurrentHash;
-			pCurrentHash = NULL;
-		}
-	}
-	else if (!lowerMechanism.compare("dsa-sha224"))
-	{
-		pCurrentHash = CryptoFactory::i()->getHashAlgorithm("sha224");
+			ByteString dummy;
+			AsymmetricAlgorithm::verifyFinal(dummy);
 
-		if (!pCurrentHash->hashInit())
-		{
-			delete pCurrentHash;
-			pCurrentHash = NULL;
-		}
+			return false;
 	}
-	else if (!lowerMechanism.compare("dsa-sha256"))
-	{
-		pCurrentHash = CryptoFactory::i()->getHashAlgorithm("sha256");
 
-		if (!pCurrentHash->hashInit())
-		{
-			delete pCurrentHash;
-			pCurrentHash = NULL;
-		}
-	}
-	else if (!lowerMechanism.compare("dsa-sha384"))
-	{
-		pCurrentHash = CryptoFactory::i()->getHashAlgorithm("sha384");
+	pCurrentHash = CryptoFactory::i()->getHashAlgorithm(hash);
 
-		if (!pCurrentHash->hashInit())
-		{
-			delete pCurrentHash;
-			pCurrentHash = NULL;
-		}
-	}
-	else if (!lowerMechanism.compare("dsa-sha512"))
-	{
-		pCurrentHash = CryptoFactory::i()->getHashAlgorithm("sha512");
-
-		if (!pCurrentHash->hashInit())
-		{
-			delete pCurrentHash;
-			pCurrentHash = NULL;
-		}
-	}
 
 	if (pCurrentHash == NULL)
 	{
+		ByteString dummy;
+		AsymmetricAlgorithm::verifyFinal(dummy);
+
+		return false;
+	}
+
+	if (!pCurrentHash->hashInit())
+	{
+		delete pCurrentHash;
+		pCurrentHash = NULL;
+
 		ByteString dummy;
 		AsymmetricAlgorithm::verifyFinal(dummy);
 
@@ -415,10 +379,6 @@ bool OSSLDSA::verifyFinal(const ByteString& signature)
 {
 	// Save necessary state before calling super class verifyFinal
 	OSSLDSAPublicKey* pk = (OSSLDSAPublicKey*) currentPublicKey;
-
-	std::string lowerMechanism;
-	lowerMechanism.resize(currentMechanism.size());
-	std::transform(currentMechanism.begin(), currentMechanism.end(), lowerMechanism.begin(), tolower);
 
 	if (!AsymmetricAlgorithm::verifyFinal(signature))
 	{
@@ -467,7 +427,8 @@ bool OSSLDSA::verifyFinal(const ByteString& signature)
 }
 
 // Encryption functions
-bool OSSLDSA::encrypt(PublicKey* /*publicKey*/, const ByteString& /*data*/, ByteString& /*encryptedData*/, const std::string /*padding*/)
+bool OSSLDSA::encrypt(PublicKey* /*publicKey*/, const ByteString& /*data*/,
+		      ByteString& /*encryptedData*/, const AsymMech::Type /*padding*/)
 {
 	ERROR_MSG("DSA does not support encryption");
 
@@ -475,7 +436,8 @@ bool OSSLDSA::encrypt(PublicKey* /*publicKey*/, const ByteString& /*data*/, Byte
 }
 
 // Decryption functions
-bool OSSLDSA::decrypt(PrivateKey* /*privateKey*/, const ByteString& /*encryptedData*/, ByteString& /*data*/, const std::string /*padding*/)
+bool OSSLDSA::decrypt(PrivateKey* /*privateKey*/, const ByteString& /*encryptedData*/,
+		      ByteString& /*data*/, const AsymMech::Type /*padding*/)
 {
 	ERROR_MSG("DSA does not support decryption");
 
@@ -680,7 +642,7 @@ PrivateKey* OSSLDSA::newPrivateKey()
 {
 	return (PrivateKey*) new OSSLDSAPrivateKey();
 }
-	
+
 AsymmetricParameters* OSSLDSA::newParameters()
 {
 	return (AsymmetricParameters*) new DSAParameters();

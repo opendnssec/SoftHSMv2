@@ -50,6 +50,13 @@ void DHParameters::setG(const ByteString& g)
 	this->g = g;
 }
 
+// Set the optional bit length
+void DHParameters::setXBitLength(const size_t bitLen)
+{
+	this->bitLen = bitLen;
+}
+
+
 // Get the public prime p
 const ByteString& DHParameters::getP() const
 {
@@ -62,6 +69,12 @@ const ByteString& DHParameters::getG() const
 	return g;
 }
 
+// Get the optional bit length
+size_t DHParameters::getXBitLength() const
+{
+	return bitLen;
+}
+
 // Are the parameters of the given type?
 bool DHParameters::areOfType(const char* type)
 {
@@ -71,22 +84,27 @@ bool DHParameters::areOfType(const char* type)
 // Serialisation
 ByteString DHParameters::serialise() const
 {
-	return p.serialise() + g.serialise();
+	ByteString len(bitLen);
+
+	return p.serialise() + g.serialise() + len.serialise();
 }
 
 bool DHParameters::deserialise(ByteString& serialised)
 {
 	ByteString dP = ByteString::chainDeserialise(serialised);
 	ByteString dG = ByteString::chainDeserialise(serialised);
+	ByteString dLen = ByteString::chainDeserialise(serialised);
 
 	if ((dP.size() == 0) ||
-	    (dG.size() == 0))
+	    (dG.size() == 0) ||
+	    (dLen.size() == 0))
 	{
 		return false;
 	}
 
 	setP(dP);
 	setG(dG);
+	setXBitLength(dLen.long_val());
 
 	return true;
 }

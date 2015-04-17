@@ -37,7 +37,7 @@
 #include <botan/rfc3394.h>
 
 // Wrap/Unwrap keys
-bool BotanAES::wrapKey(const SymmetricKey* key, const std::string mode, const ByteString& in, ByteString& out)
+bool BotanAES::wrapKey(const SymmetricKey* key, const SymWrap::Type mode, const ByteString& in, ByteString& out)
 {
 	// Check key bit length; AES only supports 128, 192 or 256 bit keys
 	if ((key->getBitLen() != 128) &&
@@ -50,7 +50,7 @@ bool BotanAES::wrapKey(const SymmetricKey* key, const std::string mode, const By
 	}
 
 	// Determine the wrapping mode
-	if (!mode.compare("aes-keywrap"))
+	if (mode == SymWrap::AES_KEYWRAP)
 	{
 		// RFC 3394 AES key wrap
 		if (in.size() < 16)
@@ -97,7 +97,7 @@ bool BotanAES::wrapKey(const SymmetricKey* key, const std::string mode, const By
 		return  true;
 	}
 #ifdef HAVE_AES_KEY_WRAP_PAD
-	else if (!mode.compare("aes-keywrap-pad"))
+	else if (mode == SymWrap::AES_KEYWRAP_PAD)
 	{
 		// RFC 5649 AES key wrap with pad
 #if BOTAN_VERSION_MINOR == 11
@@ -133,13 +133,13 @@ bool BotanAES::wrapKey(const SymmetricKey* key, const std::string mode, const By
 #endif
 	else
 	{
-		ERROR_MSG("unknown AES key wrap mode %s", mode.c_str());
+		ERROR_MSG("unknown AES key wrap mode %i", mode);
 
 		return false;
 	}
 }
 
-bool BotanAES::unwrapKey(const SymmetricKey* key, const std::string mode, const ByteString& in, ByteString& out)
+bool BotanAES::unwrapKey(const SymmetricKey* key, const SymWrap::Type mode, const ByteString& in, ByteString& out)
 {
 	// Check key bit length; AES only supports 128, 192 or 256 bit keys
 	if ((key->getBitLen() != 128) &&
@@ -152,7 +152,7 @@ bool BotanAES::unwrapKey(const SymmetricKey* key, const std::string mode, const 
 	}
 
 	// Determine the unwrapping mode
-	if (!mode.compare("aes-keywrap"))
+	if (mode == SymWrap::AES_KEYWRAP)
 	{
 		// RFC 3394 AES key wrap
 		if (in.size() < 24)
@@ -199,7 +199,7 @@ bool BotanAES::unwrapKey(const SymmetricKey* key, const std::string mode, const 
 		return  true;
 	}
 #ifdef HAVE_AES_KEY_WRAP_PAD
-	else if (!mode.compare("aes-keywrap-pad"))
+	else if (mode == SymWrap::AES_KEYWRAP_PAD)
 	{
 		// RFC 5649 AES key wrap with wrap
 		if (in.size() < 16)
@@ -248,7 +248,7 @@ bool BotanAES::unwrapKey(const SymmetricKey* key, const std::string mode, const 
 #endif
 	else
 	{
-		ERROR_MSG("unknown AES key wrap mode %s", mode.c_str());
+		ERROR_MSG("unknown AES key wrap mode %i", mode);
 
 		return false;
 	}
@@ -256,56 +256,56 @@ bool BotanAES::unwrapKey(const SymmetricKey* key, const std::string mode, const 
 
 std::string BotanAES::getCipher() const
 {
+	std::string algo;
+	std::string mode;
+	std::string padding;
+
 	if (currentKey == NULL) return "";
 
 	// Check currentKey bit length; AES only supports 128, 192 or 256 bit keys
-	if ((currentKey->getBitLen() != 128) && 
-	    (currentKey->getBitLen() != 192) &&
-            (currentKey->getBitLen() != 256))
+	switch (currentKey->getBitLen())
 	{
-		ERROR_MSG("Invalid AES currentKey length (%d bits)", currentKey->getBitLen());
+		case 128:
+			algo = "AES-128";
+			break;
+		case 192:
+			algo = "AES-192";
+			break;
+		case 256:
+			algo = "AES-256";
+			break;
+		default:
+			ERROR_MSG("Invalid AES currentKey length (%d bits)", currentKey->getBitLen());
 
-		return "";
-	}
-
-	// Check padding mode
-	if (!currentPaddingMode.compare("PKCS7") &&
-	    !currentPaddingMode.compare("NoPadding"))
-	{
-		ERROR_MSG("Invalid AES padding mode %s", currentPaddingMode.c_str());
-
-		return "";
+			return "";
 	}
 
 	// Determine the cipher mode
-	if (!currentCipherMode.compare("cbc"))
+	switch (currentCipherMode)
 	{
-		switch(currentKey->getBitLen())
-		{
-			case 128:
-				return "AES-128/CBC/" + currentPaddingMode;
-			case 192:
-				return "AES-192/CBC/" + currentPaddingMode;
-			case 256:
-				return "AES-256/CBC/" + currentPaddingMode;
-		};
-	}
-	else if (!currentCipherMode.compare("ecb"))
-	{
-		switch(currentKey->getBitLen())
-		{
-			case 128:
-				return "AES-128/ECB/" + currentPaddingMode;
-			case 192:
-				return "AES-192/ECB/" + currentPaddingMode;
-			case 256:
-				return "AES-256/ECB/" + currentPaddingMode;
-		};
+		case SymMode::CBC:
+			mode = "CBC";
+			break;
+		case SymMode::ECB:
+			mode = "ECB";
+			break;
+		default:
+			ERROR_MSG("Invalid AES cipher mode %i", currentCipherMode);
+
+			return "";
 	}
 
-	ERROR_MSG("Invalid AES cipher mode %s", currentCipherMode.c_str());
+	// Check padding mode
+	if (currentPaddingMode)
+	{
+		padding = "PKCS7";
+	}
+	else
+	{
+		padding = "NoPadding";
+	}
 
-	return "";
+	return algo + "/" + mode + "/" + padding;
 }
 
 size_t BotanAES::getBlockSize() const

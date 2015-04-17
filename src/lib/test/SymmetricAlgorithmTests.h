@@ -42,12 +42,14 @@ class SymmetricAlgorithmTests : public CppUnit::TestFixture
 	CPPUNIT_TEST(testAesEncryptDecrypt);
 	CPPUNIT_TEST(testDesEncryptDecrypt);
 	CPPUNIT_TEST(testAesWrapUnwrap);
+	CPPUNIT_TEST(testNullTemplate);
 	CPPUNIT_TEST_SUITE_END();
 
 public:
 	void testAesEncryptDecrypt();
 	void testDesEncryptDecrypt();
 	void testAesWrapUnwrap();
+	void testNullTemplate();
 
 	void setUp();
 	void tearDown();

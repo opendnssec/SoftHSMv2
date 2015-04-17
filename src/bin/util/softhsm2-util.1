@@ -1,10 +1,10 @@
-.TH SOFTHSM-UTIL 1 "22 October 2012" "SoftHSM"
+.TH SOFTHSM2-UTIL 1 "20 March 2014" "SoftHSM"
 .SH NAME
-softhsm-util \- support tool for libsofthsm
+softhsm2-util \- support tool for libsofthsm2
 .SH SYNOPSIS
-.B softhsm-util \-\-show-slots
+.B softhsm2-util \-\-show-slots
 .PP
-.B softhsm-util \-\-init-token
+.B softhsm2-util \-\-init-token
 .B \-\-slot
 .I number
 .B \-\-label
@@ -16,7 +16,7 @@ softhsm-util \- support tool for libsofthsm
 .B \-\-pin
 .IR PIN ]
 .PP
-.B softhsm-util \-\-import
+.B softhsm2-util \-\-import
 .I path
 .RB [ \-\-file-pin
 .IR PIN ]
@@ -32,13 +32,13 @@ softhsm-util \- support tool for libsofthsm
 .B \-\-id
 .I hex
 .SH DESCRIPTION
-.B softhsm-util
-is a support tool mainly for libsofthsm. It can also
+.B softhsm2-util
+is a support tool mainly for libsofthsm2. It can also
 be used with other PKCS#11 libraries by using the option
 .B \-\-module
 .PP
 Read the sections below to get more information on
-the libsofthsm and PKCS#11.
+the libsofthsm2 and PKCS#11.
 Most applications assumes that the token they want
 to use is already initialized.
 It is then up to the user
@@ -46,7 +46,7 @@ to initialize the PKCS#11 token.
 This is done by using the PKCS#11 interface,
 but instead of writing your own
 tool you can use the
-.B softhsm-util
+.B softhsm2-util
 tool.
 .PP
 Keys are usually created directly in the token,
@@ -58,10 +58,10 @@ If you need to convert keys from
 BIND .private-key format over to PKCS#8,
 one can
 use
-.BR softhsm-keyconv .
+.BR softhsm2-keyconv .
 .LP
 The libary
-.BR libsofthsm ,
+.BR libsofthsm2 ,
 known as SoftHSM, provides cryptographic functionality
 by using the PKCS#11 API.
 It was developed as a part of the OpenDNSSEC project,
@@ -73,7 +73,7 @@ of the PKCS#11 API.
 .PP
 SoftHSM is a software implementation of a generic cryptographic device with a PKCS#11 interface.
 These devices are often called tokens.
-Read in the manual softhsm.conf(5) on how to create these
+Read in the manual softhsm2.conf(5) on how to create these
 tokens and how they are added to a slot in SoftHSM.
 .LP
 The 
@@ -177,7 +177,7 @@ The token can be initialized using this command:
 .LP
 .RS
 .nf
-softhsm-util \-\-init-token \-\-slot 1 \-\-label "A token"
+softhsm2-util \-\-init-token \-\-slot 1 \-\-label "A token"
 .fi
 .RE
 .LP
@@ -188,7 +188,7 @@ The file must be in PKCS#8 format.
 .LP
 .RS
 .nf
-softhsm-util \-\-import key1.pem \-\-slot 1 \-\-label "My key" \\
+softhsm2-util \-\-import key1.pem \-\-slot 1 \-\-label "My key" \\
 .ti +0.7i
 \-\-id A1B2 \-\-pin 123456
 .fi
@@ -198,9 +198,9 @@ if the key file is encrypted.)
 .RE
 .LP
 .SH AUTHORS
-Written by Rickard Bellgrim, René Post, and Roland van Rijswijk.
+Written by Rickard Bellgrim, Francis Dupont, René Post, and Roland van Rijswijk.
 .LP
 .SH "SEE ALSO"
-.IR softhsm-keyconv (1),
-.IR softhsm-migrate (1),
+.IR softhsm2-keyconv (1),
+.IR softhsm2-migrate (1),
 .IR softhsm2.conf (5)

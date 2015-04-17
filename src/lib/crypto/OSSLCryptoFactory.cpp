@@ -67,7 +67,7 @@
 #endif
 
 // Initialise the one-and-only instance
-std::auto_ptr<OSSLCryptoFactory> OSSLCryptoFactory::instance(NULL); 
+std::auto_ptr<OSSLCryptoFactory> OSSLCryptoFactory::instance(NULL);
 
 // Thread ID callback
 #ifdef HAVE_PTHREAD_H
@@ -224,116 +224,84 @@ void OSSLCryptoFactory::reset()
 }
 
 // Create a concrete instance of a symmetric algorithm
-SymmetricAlgorithm* OSSLCryptoFactory::getSymmetricAlgorithm(std::string algorithm)
+SymmetricAlgorithm* OSSLCryptoFactory::getSymmetricAlgorithm(SymAlgo::Type algorithm)
 {
-	std::string lcAlgo;
-	lcAlgo.resize(algorithm.size());
-	std::transform(algorithm.begin(), algorithm.end(), lcAlgo.begin(), tolower);
+	switch (algorithm)
+	{
+		case SymAlgo::AES:
+			return new OSSLAES();
+		case SymAlgo::DES:
+		case SymAlgo::DES3:
+			return new OSSLDES();
+		default:
+			// No algorithm implementation is available
+			ERROR_MSG("Unknown algorithm '%i'", algorithm);
 
-	if (!lcAlgo.compare("aes"))
-	{
-		return new OSSLAES();
+			return NULL;
 	}
-	else if (!lcAlgo.compare("des") || !lcAlgo.compare("3des"))
-	{
-		return new OSSLDES();
-	}
-	else 
-	{
-		// No algorithm implementation is available
-		ERROR_MSG("Unknown algorithm '%s'", lcAlgo.c_str());
 
-		return NULL;
-	}
+	// No algorithm implementation is available
+	return NULL;
 }
 
 // Create a concrete instance of an asymmetric algorithm
-AsymmetricAlgorithm* OSSLCryptoFactory::getAsymmetricAlgorithm(std::string algorithm)
+AsymmetricAlgorithm* OSSLCryptoFactory::getAsymmetricAlgorithm(AsymAlgo::Type algorithm)
 {
-	std::string lcAlgo;
-	lcAlgo.resize(algorithm.size());
-	std::transform(algorithm.begin(), algorithm.end(), lcAlgo.begin(), tolower);
-
-	if (!lcAlgo.compare("rsa"))
+	switch (algorithm)
 	{
-		return new OSSLRSA();
-	}
-	else if (!lcAlgo.compare("dsa"))
-	{
-		return new OSSLDSA();
-	}
-	else if (!lcAlgo.compare("dh"))
-	{
-		return new OSSLDH();
-	}
+		case AsymAlgo::RSA:
+			return new OSSLRSA();
+		case AsymAlgo::DSA:
+			return new OSSLDSA();
+		case AsymAlgo::DH:
+			return new OSSLDH();
 #ifdef WITH_ECC
-	else if (!lcAlgo.compare("ecdh"))
-	{
-		return new OSSLECDH();
-	}
-	else if (!lcAlgo.compare("ecdsa"))
-	{
-		return new OSSLECDSA();
-	}
+		case AsymAlgo::ECDH:
+			return new OSSLECDH();
+		case AsymAlgo::ECDSA:
+			return new OSSLECDSA();
 #endif
 #ifdef WITH_GOST
-	else if (!lcAlgo.compare("gost"))
-	{
-		return new OSSLGOST();
-	}
+		case AsymAlgo::GOST:
+			return new OSSLGOST();
 #endif
-	else
-	{
-		// No algorithm implementation is available
-		ERROR_MSG("Unknown algorithm '%s'", algorithm.c_str());
+		default:
+			// No algorithm implementation is available
+			ERROR_MSG("Unknown algorithm '%i'", algorithm);
 
-		return NULL;
+			return NULL;
 	}
+
+	// No algorithm implementation is available
+	return NULL;
 }
 
 // Create a concrete instance of a hash algorithm
-HashAlgorithm* OSSLCryptoFactory::getHashAlgorithm(std::string algorithm)
+HashAlgorithm* OSSLCryptoFactory::getHashAlgorithm(HashAlgo::Type algorithm)
 {
-	std::string lcAlgo;
-	lcAlgo.resize(algorithm.size());
-	std::transform(algorithm.begin(), algorithm.end(), lcAlgo.begin(), tolower);
-
-	if (!lcAlgo.compare("md5"))
+	switch (algorithm)
 	{
-		return new OSSLMD5();
-	}
-	else if (!lcAlgo.compare("sha1"))
-	{
-		return new OSSLSHA1();
-	}
-	else if (!lcAlgo.compare("sha224"))
-	{
-		return new OSSLSHA224();
-	}
-	else if (!lcAlgo.compare("sha256"))
-	{
-		return new OSSLSHA256();
-	}
-	else if (!lcAlgo.compare("sha384"))
-	{
-		return new OSSLSHA384();
-	}
-	else if (!lcAlgo.compare("sha512"))
-	{
-		return new OSSLSHA512();
-	}
+		case HashAlgo::MD5:
+			return new OSSLMD5();
+		case HashAlgo::SHA1:
+			return new OSSLSHA1();
+		case HashAlgo::SHA224:
+			return new OSSLSHA224();
+		case HashAlgo::SHA256:
+			return new OSSLSHA256();
+		case HashAlgo::SHA384:
+			return new OSSLSHA384();
+		case HashAlgo::SHA512:
+			return new OSSLSHA512();
 #ifdef WITH_GOST
-	else if (!lcAlgo.compare("gost"))
-	{
-		return new OSSLGOSTR3411();
-	}
+		case HashAlgo::GOST:
+			return new OSSLGOSTR3411();
 #endif
-	else
-	{
-		// No algorithm implementation is available
-		ERROR_MSG("Unknown algorithm '%s'", algorithm.c_str());
+		default:
+			// No algorithm implementation is available
+			ERROR_MSG("Unknown algorithm '%i'", algorithm);
 
-		return NULL;
+			return NULL;
 	}
 
 	// No algorithm implementation is available
@@ -341,48 +309,31 @@ HashAlgorithm* OSSLCryptoFactory::getHashAlgorithm(std::string algorithm)
 }
 
 // Create a concrete instance of a MAC algorithm
-MacAlgorithm* OSSLCryptoFactory::getMacAlgorithm(std::string algorithm)
+MacAlgorithm* OSSLCryptoFactory::getMacAlgorithm(MacAlgo::Type algorithm)
 {
-	std::string lcAlgo;
-	lcAlgo.resize(algorithm.size());
-	std::transform(algorithm.begin(), algorithm.end(), lcAlgo.begin(), tolower);
-
-	if (!lcAlgo.compare("hmac-md5"))
+	switch (algorithm)
 	{
-		return new OSSLHMACMD5();
-	}
-	else if (!lcAlgo.compare("hmac-sha1"))
-	{
-		return new OSSLHMACSHA1();
-	}
-	else if (!lcAlgo.compare("hmac-sha224"))
-	{
-		return new OSSLHMACSHA224();
-	}
-	else if (!lcAlgo.compare("hmac-sha256"))
-	{
-		return new OSSLHMACSHA256();
-	}
-	else if (!lcAlgo.compare("hmac-sha384"))
-	{
-		return new OSSLHMACSHA384();
-	}
-	else if (!lcAlgo.compare("hmac-sha512"))
-	{
-		return new OSSLHMACSHA512();
-	}
+		case MacAlgo::HMAC_MD5:
+			return new OSSLHMACMD5();
+		case MacAlgo::HMAC_SHA1:
+			return new OSSLHMACSHA1();
+		case MacAlgo::HMAC_SHA224:
+			return new OSSLHMACSHA224();
+		case MacAlgo::HMAC_SHA256:
+			return new OSSLHMACSHA256();
+		case MacAlgo::HMAC_SHA384:
+			return new OSSLHMACSHA384();
+		case MacAlgo::HMAC_SHA512:
+			return new OSSLHMACSHA512();
 #ifdef WITH_GOST
-	else if (!lcAlgo.compare("hmac-gost"))
-	{
-		return new OSSLHMACGOSTR3411();
-	}
+		case MacAlgo::HMAC_GOST:
+			return new OSSLHMACGOSTR3411();
 #endif
-	else
-	{
-		// No algorithm implementation is available
-		ERROR_MSG("Unknown algorithm '%s'", algorithm.c_str());
+		default:
+			// No algorithm implementation is available
+			ERROR_MSG("Unknown algorithm '%i'", algorithm);
 
-		return NULL;
+			return NULL;
 	}
 
 	// No algorithm implementation is available
@@ -390,20 +341,16 @@ MacAlgorithm* OSSLCryptoFactory::getMacAlgorithm(std::string algorithm)
 }
 
 // Get the global RNG (may be an unique RNG per thread)
-RNG* OSSLCryptoFactory::getRNG(std::string name /* = "default" */)
+RNG* OSSLCryptoFactory::getRNG(RNGImpl::Type name /* = RNGImpl::Default */)
 {
-	std::string lcAlgo;
-	lcAlgo.resize(name.size());
-	std::transform(name.begin(), name.end(), lcAlgo.begin(), tolower);
-
-	if (!lcAlgo.compare("default"))
+	if (name == RNGImpl::Default)
 	{
 		return rng;
 	}
 	else
 	{
-		// No algorithm implementation is available
-		ERROR_MSG("Unknown algorithm '%s'", name.c_str());
+		// No RNG implementation is available
+		ERROR_MSG("Unknown RNG '%i'", name);
 
 		return NULL;
 	}

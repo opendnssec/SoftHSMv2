@@ -175,11 +175,9 @@ bool OSToken::getSOPIN(ByteString& soPINBlob)
 		return false;
 	}
 
-	OSAttribute* soPIN = tokenObject->getAttribute(CKA_OS_SOPIN);
-
-	if (soPIN != NULL)
+	if (tokenObject->attributeExists(CKA_OS_SOPIN))
 	{
-		soPINBlob = soPIN->getByteStringValue();
+		soPINBlob = tokenObject->getAttribute(CKA_OS_SOPIN).getByteStringValue();
 
 		return true;
 	}
@@ -221,11 +219,9 @@ bool OSToken::getUserPIN(ByteString& userPINBlob)
 		return false;
 	}
 
-	OSAttribute* userPIN = tokenObject->getAttribute(CKA_OS_USERPIN);
-
-	if (userPIN != NULL)
+	if (tokenObject->attributeExists(CKA_OS_USERPIN))
 	{
-		userPINBlob = userPIN->getByteStringValue();
+		userPINBlob = tokenObject->getAttribute(CKA_OS_USERPIN).getByteStringValue();
 
 		return true;
 	}
@@ -243,11 +239,9 @@ bool OSToken::getTokenLabel(ByteString& label)
 		return false;
 	}
 
-	OSAttribute* tokenLabel = tokenObject->getAttribute(CKA_OS_TOKENLABEL);
-
-	if (tokenLabel != NULL)
+	if (tokenObject->attributeExists(CKA_OS_TOKENLABEL))
 	{
-		label = tokenLabel->getByteStringValue();
+		label = tokenObject->getAttribute(CKA_OS_TOKENLABEL).getByteStringValue();
 
 		return true;
 	}
@@ -265,11 +259,9 @@ bool OSToken::getTokenSerial(ByteString& serial)
 		return false;
 	}
 
-	OSAttribute* tokenSerial = tokenObject->getAttribute(CKA_OS_TOKENSERIAL);
-
-	if (tokenSerial != NULL)
+	if (tokenObject->attributeExists(CKA_OS_TOKENSERIAL))
 	{
-		serial = tokenSerial->getByteStringValue();
+		serial = tokenObject->getAttribute(CKA_OS_TOKENSERIAL).getByteStringValue();
 
 		return true;
 	}
@@ -287,11 +279,9 @@ bool OSToken::getTokenFlags(CK_ULONG& flags)
 		return false;
 	}
 
-	OSAttribute* tokenFlags = tokenObject->getAttribute(CKA_OS_TOKENFLAGS);
-
-	if (tokenFlags != NULL)
+	if (tokenObject->attributeExists(CKA_OS_TOKENFLAGS))
 	{
-		flags = tokenFlags->getUnsignedLongValue();
+		flags = tokenObject->getAttribute(CKA_OS_TOKENFLAGS).getUnsignedLongValue();
 
 		// Check if the user PIN is initialised
 		if (tokenObject->attributeExists(CKA_OS_USERPIN))

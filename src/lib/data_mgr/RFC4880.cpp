@@ -58,7 +58,7 @@ bool RFC4880::PBEDeriveKey(const ByteString& password, ByteString& salt, AESKey*
 	unsigned int iter = PBE_ITERATION_BASE_COUNT + salt[salt.size() - 1];
 
 	// Get a hash instance
-	HashAlgorithm* hash = CryptoFactory::i()->getHashAlgorithm("sha256");
+	HashAlgorithm* hash = CryptoFactory::i()->getHashAlgorithm(HashAlgo::SHA256);
 
 	if (hash == NULL)
 	{

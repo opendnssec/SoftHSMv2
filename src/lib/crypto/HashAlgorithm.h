@@ -36,6 +36,21 @@
 #include "config.h"
 #include "ByteString.h"
 
+struct HashAlgo
+{
+	enum Type
+	{
+		Unknown,
+		MD5,
+		SHA1,
+		SHA224,
+		SHA256,
+		SHA384,
+		SHA512,
+		GOST
+	};
+};
+
 class HashAlgorithm
 {
 public:
