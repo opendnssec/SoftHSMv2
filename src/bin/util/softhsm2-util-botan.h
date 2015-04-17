@@ -35,6 +35,9 @@
 
 #include <botan/rsa.h>
 #include <botan/dsa.h>
+#ifdef WITH_ECC
+#include <botan/ecdsa.h>
+#endif
 
 typedef struct rsa_key_material_t {
 	CK_ULONG sizeE;
@@ -98,6 +101,25 @@ typedef struct dsa_key_material_t {
 	}
 } dsa_key_material_t;
 
+#ifdef WITH_ECC
+typedef struct ecdsa_key_material_t {
+	CK_ULONG sizeParams;
+	CK_ULONG sizeD;
+	CK_ULONG sizeQ;
+	CK_VOID_PTR derParams;
+	CK_VOID_PTR bigD;
+	CK_VOID_PTR derQ;
+	ecdsa_key_material_t() {
+		sizeParams = 0;
+		sizeD = 0;
+		sizeQ = 0;
+		derParams = NULL_PTR;
+		bigD = NULL_PTR;
+		derQ = NULL_PTR;
+	}
+} ecdsa_key_material_t;
+#endif
+
 Botan::Private_Key* crypto_read_file(char* filePath, char* filePIN);
 
 // RSA
@@ -109,5 +131,12 @@ void crypto_free_rsa(rsa_key_material_t* keyMat);
 int crypto_save_dsa(CK_SESSION_HANDLE hSession, char* label, char* objID, size_t objIDLen, int noPublicKey, Botan::DSA_PrivateKey* dsa);
 dsa_key_material_t* crypto_malloc_dsa(Botan::DSA_PrivateKey* dsa);
 void crypto_free_dsa(dsa_key_material_t* keyMat);
+
+// ECDSA
+#ifdef WITH_ECC
+int crypto_save_ecdsa(CK_SESSION_HANDLE hSession, char* label, char* objID, size_t objIDLen, int noPublicKey, Botan::ECDSA_PrivateKey* ecdsa);
+ecdsa_key_material_t* crypto_malloc_ecdsa(Botan::ECDSA_PrivateKey* ecdsa);
+void crypto_free_ecdsa(ecdsa_key_material_t* keyMat);
+#endif
 
 #endif // !_SOFTHSM_V2_SOFTHSM2_UTIL_OSSL_H
