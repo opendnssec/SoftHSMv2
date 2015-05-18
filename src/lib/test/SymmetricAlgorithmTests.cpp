@@ -179,6 +179,9 @@ void SymmetricAlgorithmTests::aesEncryptDecrypt(CK_MECHANISM_TYPE mechanismType,
 	CK_ULONG ulCipherTextMultiPartLen;
 	CK_BYTE recoveredText[300];
 	CK_ULONG ulRecoveredTextLen;
+	CK_BYTE recoveredTextMulti[300];
+	CK_ULONG ulRecoveredTextMultiLen;
+	CK_ULONG ulRecoveredTextMultiPartLen;
 	CK_RV rv;
 
 	rv = C_GenerateRandom(hSession, plainText, sizeof(plainText));
@@ -261,6 +264,37 @@ void SymmetricAlgorithmTests::aesEncryptDecrypt(CK_MECHANISM_TYPE mechanismType,
 	CPPUNIT_ASSERT(ulRecoveredTextLen==sizeof(plainText));
 
 	CPPUNIT_ASSERT(memcmp(plainText, recoveredText, sizeof(plainText)) == 0);
+
+	// Multi-part decryption
+	rv = C_DecryptInit(hSession,&mechanism,hKey);
+	CPPUNIT_ASSERT(rv==CKR_OK);
+
+	// Test invalid cipher text size
+	if (mechanismType == CKM_AES_ECB ||
+	    mechanismType == CKM_AES_CBC)
+	{
+		ulRecoveredTextMultiLen = sizeof(recoveredTextMulti);
+		rv = C_DecryptUpdate(hSession,cipherText,ulCipherTextLen/2-1,recoveredTextMulti,&ulRecoveredTextMultiLen);
+		CPPUNIT_ASSERT(rv==CKR_DATA_LEN_RANGE);
+		rv = C_DecryptInit(hSession,&mechanism,hKey);
+		CPPUNIT_ASSERT(rv==CKR_OK);
+	}
+
+	ulRecoveredTextMultiLen = sizeof(recoveredTextMulti);
+	rv = C_DecryptUpdate(hSession,cipherText,ulCipherTextLen/2,recoveredTextMulti,&ulRecoveredTextMultiLen);
+	CPPUNIT_ASSERT(rv==CKR_OK);
+
+	ulRecoveredTextMultiPartLen = sizeof(recoveredTextMulti) - ulRecoveredTextMultiLen;
+	rv = C_DecryptUpdate(hSession,cipherText+ulCipherTextLen/2,ulCipherTextLen/2,recoveredTextMulti+ulRecoveredTextMultiLen,&ulRecoveredTextMultiPartLen);
+	CPPUNIT_ASSERT(rv==CKR_OK);
+	ulRecoveredTextMultiLen += ulRecoveredTextMultiPartLen;
+
+	ulRecoveredTextMultiPartLen = sizeof(recoveredTextMulti) - ulRecoveredTextMultiLen;
+	rv = C_DecryptFinal(hSession,recoveredTextMulti+ulRecoveredTextMultiLen,&ulRecoveredTextMultiPartLen);
+	CPPUNIT_ASSERT(rv==CKR_OK);
+	ulRecoveredTextMultiLen += ulRecoveredTextMultiPartLen;
+	CPPUNIT_ASSERT(ulRecoveredTextLen==ulRecoveredTextMultiLen);
+	CPPUNIT_ASSERT(memcmp(recoveredText, recoveredTextMulti, ulRecoveredTextLen) == 0);
 }
 
 #ifndef WITH_FIPS
@@ -276,6 +310,9 @@ void SymmetricAlgorithmTests::desEncryptDecrypt(CK_MECHANISM_TYPE mechanismType,
 	CK_ULONG ulCipherTextMultiPartLen;
 	CK_BYTE recoveredText[300];
 	CK_ULONG ulRecoveredTextLen;
+	CK_BYTE recoveredTextMulti[300];
+	CK_ULONG ulRecoveredTextMultiLen;
+	CK_ULONG ulRecoveredTextMultiPartLen;
 	CK_RV rv;
 
 	rv = C_GenerateRandom(hSession, plainText, sizeof(plainText));
@@ -358,6 +395,37 @@ void SymmetricAlgorithmTests::desEncryptDecrypt(CK_MECHANISM_TYPE mechanismType,
 	CPPUNIT_ASSERT(ulRecoveredTextLen==sizeof(plainText));
 
 	CPPUNIT_ASSERT(memcmp(plainText, recoveredText, sizeof(plainText)) == 0);
+
+	// Multi-part decryption
+	rv = C_DecryptInit(hSession,&mechanism,hKey);
+	CPPUNIT_ASSERT(rv==CKR_OK);
+
+	// Test invalid cipher text size
+	if (mechanismType == CKM_DES_ECB ||
+	    mechanismType == CKM_DES_CBC)
+	{
+		ulRecoveredTextMultiLen = sizeof(recoveredTextMulti);
+		rv = C_DecryptUpdate(hSession,cipherText,ulCipherTextLen/2-1,recoveredTextMulti,&ulRecoveredTextMultiLen);
+		CPPUNIT_ASSERT(rv==CKR_DATA_LEN_RANGE);
+		rv = C_DecryptInit(hSession,&mechanism,hKey);
+		CPPUNIT_ASSERT(rv==CKR_OK);
+	}
+
+	ulRecoveredTextMultiLen = sizeof(recoveredTextMulti);
+	rv = C_DecryptUpdate(hSession,cipherText,ulCipherTextLen/2,recoveredTextMulti,&ulRecoveredTextMultiLen);
+	CPPUNIT_ASSERT(rv==CKR_OK);
+
+	ulRecoveredTextMultiPartLen = sizeof(recoveredTextMulti) - ulRecoveredTextMultiLen;
+	rv = C_DecryptUpdate(hSession,cipherText+ulCipherTextLen/2,ulCipherTextLen/2,recoveredTextMulti+ulRecoveredTextMultiLen,&ulRecoveredTextMultiPartLen);
+	CPPUNIT_ASSERT(rv==CKR_OK);
+	ulRecoveredTextMultiLen += ulRecoveredTextMultiPartLen;
+
+	ulRecoveredTextMultiPartLen = sizeof(recoveredTextMulti) - ulRecoveredTextMultiLen;
+	rv = C_DecryptFinal(hSession,recoveredTextMulti+ulRecoveredTextMultiLen,&ulRecoveredTextMultiPartLen);
+	CPPUNIT_ASSERT(rv==CKR_OK);
+	ulRecoveredTextMultiLen += ulRecoveredTextMultiPartLen;
+	CPPUNIT_ASSERT(ulRecoveredTextLen==ulRecoveredTextMultiLen);
+	CPPUNIT_ASSERT(memcmp(recoveredText, recoveredTextMulti, ulRecoveredTextLen) == 0);
 }
 #endif
 
@@ -373,6 +441,9 @@ void SymmetricAlgorithmTests::des3EncryptDecrypt(CK_MECHANISM_TYPE mechanismType
 	CK_ULONG ulCipherTextMultiPartLen;
 	CK_BYTE recoveredText[300];
 	CK_ULONG ulRecoveredTextLen;
+	CK_BYTE recoveredTextMulti[300];
+	CK_ULONG ulRecoveredTextMultiLen;
+	CK_ULONG ulRecoveredTextMultiPartLen;
 	CK_RV rv;
 
 	rv = C_GenerateRandom(hSession, plainText, sizeof(plainText));
@@ -455,6 +526,37 @@ void SymmetricAlgorithmTests::des3EncryptDecrypt(CK_MECHANISM_TYPE mechanismType
 	CPPUNIT_ASSERT(ulRecoveredTextLen==sizeof(plainText));
 
 	CPPUNIT_ASSERT(memcmp(plainText, recoveredText, sizeof(plainText)) == 0);
+
+	// Multi-part decryption
+	rv = C_DecryptInit(hSession,&mechanism,hKey);
+	CPPUNIT_ASSERT(rv==CKR_OK);
+
+	// Test invalid cipher text size
+	if (mechanismType == CKM_DES3_ECB ||
+	    mechanismType == CKM_DES3_CBC)
+	{
+		ulRecoveredTextMultiLen = sizeof(recoveredTextMulti);
+		rv = C_DecryptUpdate(hSession,cipherText,ulCipherTextLen/2-1,recoveredTextMulti,&ulRecoveredTextMultiLen);
+		CPPUNIT_ASSERT(rv==CKR_DATA_LEN_RANGE);
+		rv = C_DecryptInit(hSession,&mechanism,hKey);
+		CPPUNIT_ASSERT(rv==CKR_OK);
+	}
+
+	ulRecoveredTextMultiLen = sizeof(recoveredTextMulti);
+	rv = C_DecryptUpdate(hSession,cipherText,ulCipherTextLen/2,recoveredTextMulti,&ulRecoveredTextMultiLen);
+	CPPUNIT_ASSERT(rv==CKR_OK);
+
+	ulRecoveredTextMultiPartLen = sizeof(recoveredTextMulti) - ulRecoveredTextMultiLen;
+	rv = C_DecryptUpdate(hSession,cipherText+ulCipherTextLen/2,ulCipherTextLen/2,recoveredTextMulti+ulRecoveredTextMultiLen,&ulRecoveredTextMultiPartLen);
+	CPPUNIT_ASSERT(rv==CKR_OK);
+	ulRecoveredTextMultiLen += ulRecoveredTextMultiPartLen;
+
+	ulRecoveredTextMultiPartLen = sizeof(recoveredTextMulti) - ulRecoveredTextMultiLen;
+	rv = C_DecryptFinal(hSession,recoveredTextMulti+ulRecoveredTextMultiLen,&ulRecoveredTextMultiPartLen);
+	CPPUNIT_ASSERT(rv==CKR_OK);
+	ulRecoveredTextMultiLen += ulRecoveredTextMultiPartLen;
+	CPPUNIT_ASSERT(ulRecoveredTextLen==ulRecoveredTextMultiLen);
+	CPPUNIT_ASSERT(memcmp(recoveredText, recoveredTextMulti, ulRecoveredTextLen) == 0);
 }
 
 #ifdef HAVE_AES_KEY_WRAP_PAD

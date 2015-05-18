@@ -2,6 +2,10 @@ NEWS for SoftHSM -- History of user visible changes
 
 SoftHSM develop
 
+* SOFTHSM-121: Test cases for C_DecryptUpdate/C_DecryptFinal.
+* Support C_DecryptUpdate/C_DecryptFinal for symmetric algorithms.
+  (Patch from Thomas Calderon)
+
 Bugfixes:
 * SOFTHSM-120: Segfault after renaming variables.
 
