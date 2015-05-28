@@ -52,7 +52,7 @@ BotanECDSAPrivateKey::BotanECDSAPrivateKey()
 
 BotanECDSAPrivateKey::BotanECDSAPrivateKey(const Botan::ECDSA_PrivateKey* inECKEY)
 {
-	BotanECDSAPrivateKey();
+	eckey = NULL;
 
 	setFromBotan(inECKEY);
 }
@@ -71,7 +71,7 @@ unsigned long BotanECDSAPrivateKey::getOrderLength() const
 {
 	try
 	{
-		Botan::EC_Group group = BotanUtil::byteString2ECGroup(this->ec);
+		Botan::EC_Group group = BotanUtil::byteString2ECGroup(ec);
 		return group.get_order().bytes();
 	}
 	catch (...)
@@ -83,24 +83,24 @@ unsigned long BotanECDSAPrivateKey::getOrderLength() const
 }
 
 // Set from Botan representation
-void BotanECDSAPrivateKey::setFromBotan(const Botan::ECDSA_PrivateKey* eckey)
+void BotanECDSAPrivateKey::setFromBotan(const Botan::ECDSA_PrivateKey* inECKEY)
 {
-	ByteString ec = BotanUtil::ecGroup2ByteString(eckey->domain());
-	setEC(ec);
-	ByteString d = BotanUtil::bigInt2ByteString(eckey->private_value());
-	setD(d);
+	ByteString inEC = BotanUtil::ecGroup2ByteString(inECKEY->domain());
+	setEC(inEC);
+	ByteString inD = BotanUtil::bigInt2ByteString(inECKEY->private_value());
+	setD(inD);
 }
 
 // Check if the key is of the given type
-bool BotanECDSAPrivateKey::isOfType(const char* type)
+bool BotanECDSAPrivateKey::isOfType(const char* inType)
 {
-	return !strcmp(BotanECDSAPrivateKey::type, type);
+	return !strcmp(type, inType);
 }
 
 // Setters for the ECDSA private key components
-void BotanECDSAPrivateKey::setD(const ByteString& d)
+void BotanECDSAPrivateKey::setD(const ByteString& inD)
 {
-	ECPrivateKey::setD(d);
+	ECPrivateKey::setD(inD);
 
 	if (eckey)
 	{
@@ -110,9 +110,9 @@ void BotanECDSAPrivateKey::setD(const ByteString& d)
 }
 
 // Setters for the ECDSA public key components
-void BotanECDSAPrivateKey::setEC(const ByteString& ec)
+void BotanECDSAPrivateKey::setEC(const ByteString& inEC)
 {
-	ECPrivateKey::setEC(ec);
+	ECPrivateKey::setEC(inEC);
 
 	if (eckey)
 	{
@@ -217,10 +217,10 @@ Botan::ECDSA_PrivateKey* BotanECDSAPrivateKey::getBotanKey()
 // Create the Botan representation of the key
 void BotanECDSAPrivateKey::createBotanKey()
 {
-	if (this->ec.size() != 0 &&
-	    this->d.size() != 0)
+	if (ec.size() != 0 &&
+	    d.size() != 0)
 	{
-		if (eckey)   
+		if (eckey)
 		{
 			delete eckey;
 			eckey = NULL;
@@ -229,10 +229,10 @@ void BotanECDSAPrivateKey::createBotanKey()
 		try
 		{
 			BotanRNG* rng = (BotanRNG*)BotanCryptoFactory::i()->getRNG();
-			Botan::EC_Group group = BotanUtil::byteString2ECGroup(this->ec);
+			Botan::EC_Group group = BotanUtil::byteString2ECGroup(ec);
 			eckey = new Botan::ECDSA_PrivateKey(*rng->getRNG(),
 							group,
-							BotanUtil::byteString2bigInt(this->d));
+							BotanUtil::byteString2bigInt(d));
 		}
 		catch (...)
 		{

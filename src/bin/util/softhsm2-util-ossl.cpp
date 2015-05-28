@@ -51,6 +51,16 @@ void crypto_init()
 {
 	// We do not need to do this one
 	// OpenSSL_add_all_algorithms();
+#ifdef WITH_FIPS
+	// The PKCS#11 library might be using a FIPS capable OpenSSL
+	if (FIPS_mode())
+		return;
+	if (!FIPS_mode_set(1))
+	{
+		fprintf(stderr, "ERROR: can't enter into FIPS mode.\n");
+		exit(0);
+	}
+#endif
 }
 
 // Final OpenSSL
@@ -80,6 +90,9 @@ int crypto_import_key_pair
 
 	RSA* rsa = NULL;
 	DSA* dsa = NULL;
+#ifdef WITH_ECC
+	EC_KEY* ecdsa = NULL;
+#endif
 
 	switch (EVP_PKEY_type(pkey->type))
 	{
@@ -89,6 +102,11 @@ int crypto_import_key_pair
 		case EVP_PKEY_DSA:
 			dsa = EVP_PKEY_get1_DSA(pkey);
 			break;
+#ifdef WITH_ECC
+		case EVP_PKEY_EC:
+			ecdsa = EVP_PKEY_get1_EC_KEY(pkey);
+			break;
+#endif
 		default:
 			fprintf(stderr, "ERROR: Cannot handle this algorithm.\n");
 			EVP_PKEY_free(pkey);
@@ -109,6 +127,13 @@ int crypto_import_key_pair
 		result = crypto_save_dsa(hSession, label, objID, objIDLen, noPublicKey, dsa);
 		DSA_free(dsa);
 	}
+#ifdef WITH_ECC
+	else if (ecdsa)
+	{
+		result = crypto_save_ecdsa(hSession, label, objID, objIDLen, noPublicKey, ecdsa);
+		EC_KEY_free(ecdsa);
+	}
+#endif
 	else
 	{
 		fprintf(stderr, "ERROR: Could not get the key material.\n");
@@ -480,3 +505,174 @@ void crypto_free_dsa(dsa_key_material_t* keyMat)
 	if (keyMat->bigY) free(keyMat->bigY);
 	free(keyMat);
 }
+
+#ifdef WITH_ECC
+
+// Save the key data in PKCS#11
+int crypto_save_ecdsa
+(
+	CK_SESSION_HANDLE hSession,
+	char* label,
+	char* objID,
+	size_t objIDLen,
+	int noPublicKey,
+	EC_KEY* ecdsa
+)
+{
+	ecdsa_key_material_t* keyMat = crypto_malloc_ecdsa(ecdsa);
+	if (keyMat == NULL)
+	{
+		fprintf(stderr, "ERROR: Could not convert the key material to binary information.\n");
+		return 1;
+	}
+
+	CK_OBJECT_CLASS pubClass = CKO_PUBLIC_KEY, privClass = CKO_PRIVATE_KEY;
+	CK_KEY_TYPE keyType = CKK_EC;
+	CK_BBOOL ckTrue = CK_TRUE, ckFalse = CK_FALSE, ckToken = CK_TRUE;
+	if (noPublicKey)
+	{
+		ckToken = CK_FALSE;
+	}
+	CK_ATTRIBUTE pubTemplate[] = {
+		{ CKA_CLASS,          &pubClass,         sizeof(pubClass) },
+		{ CKA_KEY_TYPE,       &keyType,          sizeof(keyType) },
+		{ CKA_LABEL,          label,             strlen(label) },
+		{ CKA_ID,             objID,             objIDLen },
+		{ CKA_TOKEN,          &ckToken,          sizeof(ckToken) },
+		{ CKA_VERIFY,         &ckTrue,           sizeof(ckTrue) },
+		{ CKA_ENCRYPT,        &ckFalse,          sizeof(ckFalse) },
+		{ CKA_WRAP,           &ckFalse,          sizeof(ckFalse) },
+		{ CKA_EC_PARAMS,      keyMat->derParams, keyMat->sizeParams },
+		{ CKA_EC_POINT,       keyMat->derQ,      keyMat->sizeQ },
+	};
+	CK_ATTRIBUTE privTemplate[] = {
+		{ CKA_CLASS,          &privClass,        sizeof(privClass) },
+		{ CKA_KEY_TYPE,       &keyType,          sizeof(keyType) },
+		{ CKA_LABEL,          label,             strlen(label) },
+		{ CKA_ID,             objID,             objIDLen },
+		{ CKA_SIGN,           &ckTrue,           sizeof(ckTrue) },
+		{ CKA_DECRYPT,        &ckFalse,          sizeof(ckFalse) },
+		{ CKA_UNWRAP,         &ckFalse,          sizeof(ckFalse) },
+		{ CKA_SENSITIVE,      &ckTrue,           sizeof(ckTrue) },
+		{ CKA_TOKEN,          &ckTrue,           sizeof(ckTrue) },
+		{ CKA_PRIVATE,        &ckTrue,           sizeof(ckTrue) },
+		{ CKA_EXTRACTABLE,    &ckFalse,          sizeof(ckFalse) },
+		{ CKA_EC_PARAMS,      keyMat->derParams, keyMat->sizeParams },
+		{ CKA_VALUE,          keyMat->bigD,      keyMat->sizeD }
+	};
+
+	CK_OBJECT_HANDLE hKey1, hKey2;
+	CK_RV rv = p11->C_CreateObject(hSession, privTemplate, 13, &hKey1);
+	if (rv != CKR_OK)
+	{
+		fprintf(stderr, "ERROR: Could not save the private key in the token. "
+				"Maybe the algorithm is not supported.\n");
+		crypto_free_ecdsa(keyMat);
+		return 1;
+	}
+
+	rv = p11->C_CreateObject(hSession, pubTemplate, 10, &hKey2);
+	crypto_free_ecdsa(keyMat);
+
+	if (rv != CKR_OK)
+	{
+		p11->C_DestroyObject(hSession, hKey1);
+		fprintf(stderr, "ERROR: Could not save the public key in the token.\n");
+		return 1;
+	}
+
+	printf("The key pair has been imported.\n");
+
+	return 0;
+}
+
+// Convert the OpenSSL key to binary
+ecdsa_key_material_t* crypto_malloc_ecdsa(EC_KEY* ec_key)
+{
+	int result;
+
+	if (ec_key == NULL)
+	{
+		return NULL;
+	}
+
+	ecdsa_key_material_t* keyMat = (ecdsa_key_material_t*)malloc(sizeof(ecdsa_key_material_t));
+	if (keyMat == NULL)
+	{
+		return NULL;
+	}
+
+	const BIGNUM *d = EC_KEY_get0_private_key(ec_key);
+	const EC_GROUP *group = EC_KEY_get0_group(ec_key);
+	const EC_POINT *point = EC_KEY_get0_public_key(ec_key);
+
+	keyMat->sizeParams = i2d_ECPKParameters(group, NULL);
+	keyMat->sizeD = BN_num_bytes(d);
+	int point_length = EC_POINT_point2oct(group,
+					      point,
+					      POINT_CONVERSION_UNCOMPRESSED,
+					      NULL,
+					      0,
+					      NULL);
+	keyMat->sizeQ = point_length + 2;
+
+	keyMat->derParams = (CK_VOID_PTR)malloc(keyMat->sizeParams);
+	keyMat->bigD = (CK_VOID_PTR)malloc(keyMat->sizeD);
+	keyMat->derQ = (CK_VOID_PTR)malloc(keyMat->sizeQ);
+
+	if (!keyMat->derParams || !keyMat->bigD || !keyMat->derQ)
+	{
+		crypto_free_ecdsa(keyMat);
+		return NULL;
+	}
+
+	/*
+	 * i2d functions increment the pointer, so we have to use a
+	 * sacrificial pointer
+	 */
+	unsigned char *derParams = (unsigned char*) keyMat->derParams;
+	result = i2d_ECPKParameters(group, &derParams);
+	if (result == 0)
+	{
+		crypto_free_ecdsa(keyMat);
+		return NULL;
+	}
+
+	BN_bn2bin(d, (unsigned char*)keyMat->bigD);
+
+	/* Only sizes up to 0x7f are supported right now */
+	if (point_length > 0x7f)
+	{
+		crypto_free_ecdsa(keyMat);
+		return NULL;
+	}
+
+	unsigned char *derQ = (unsigned char *)keyMat->derQ;
+	derQ[0] = V_ASN1_OCTET_STRING;
+	derQ[1] = point_length & 0x7f;
+	result = EC_POINT_point2oct(group,
+				    point,
+				    POINT_CONVERSION_UNCOMPRESSED,
+				    &derQ[2],
+				    point_length,
+				    NULL);
+	if (result == 0)
+	{
+		crypto_free_ecdsa(keyMat);
+		return NULL;
+	}
+
+	return keyMat;
+}
+
+// Free the memory of the key
+void crypto_free_ecdsa(ecdsa_key_material_t* keyMat)
+{
+	if (keyMat == NULL) return;
+	if (keyMat->derParams) free(keyMat->derParams);
+	if (keyMat->bigD) free(keyMat->bigD);
+	if (keyMat->derQ) free(keyMat->derQ);
+	free(keyMat);
+}
+
+#endif

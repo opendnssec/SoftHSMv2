@@ -49,9 +49,9 @@
 #include <sys/stat.h>
 
 // Constructor
-Directory::Directory(std::string path)
+Directory::Directory(std::string inPath)
 {
-	this->path = path;
+	path = inPath;
 	dirMutex = MutexFactory::i()->getMutex();
 
 	valid = (dirMutex != NULL) && refresh();

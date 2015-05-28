@@ -44,12 +44,16 @@ OSSLDHPrivateKey::OSSLDHPrivateKey()
 	dh = DH_new();
 
 	// Use the OpenSSL implementation and not any engine
-	DH_set_method(dh, DH_OpenSSL());
+	DH_set_method(dh, DH_get_default_method());
 }
 
 OSSLDHPrivateKey::OSSLDHPrivateKey(const DH* inDH)
 {
-	OSSLDHPrivateKey();
+	dh = DH_new();
+
+	// Use the OpenSSL implementation and not any engine
+	DH_set_method(dh, DH_OpenSSL());
+
 	setFromOSSL(inDH);
 }
 
@@ -63,59 +67,71 @@ OSSLDHPrivateKey::~OSSLDHPrivateKey()
 /*static*/ const char* OSSLDHPrivateKey::type = "OpenSSL DH Private Key";
 
 // Set from OpenSSL representation
-void OSSLDHPrivateKey::setFromOSSL(const DH* dh)
+void OSSLDHPrivateKey::setFromOSSL(const DH* inDH)
 {
-	if (dh->p) { ByteString p = OSSL::bn2ByteString(dh->p); setP(p); }
-	if (dh->g) { ByteString g = OSSL::bn2ByteString(dh->g); setG(g); }
-	if (dh->priv_key) { ByteString x = OSSL::bn2ByteString(dh->priv_key); setX(x); }
+	if (inDH->p)
+	{
+		ByteString inP = OSSL::bn2ByteString(inDH->p);
+		setP(inP);
+	}
+	if (inDH->g)
+	{
+		ByteString inG = OSSL::bn2ByteString(inDH->g);
+		setG(inG);
+	}
+	if (inDH->priv_key)
+	{
+		ByteString inX = OSSL::bn2ByteString(inDH->priv_key);
+		setX(inX);
+	}
 }
 
 // Check if the key is of the given type
-bool OSSLDHPrivateKey::isOfType(const char* type)
+bool OSSLDHPrivateKey::isOfType(const char* inType)
 {
-	return !strcmp(OSSLDHPrivateKey::type, type);
+	return !strcmp(type, inType);
 }
 
 // Setters for the DH private key components
-void OSSLDHPrivateKey::setX(const ByteString& x)
+void OSSLDHPrivateKey::setX(const ByteString& inX)
 {
-	DHPrivateKey::setX(x);
+	DHPrivateKey::setX(inX);
 
-	if (dh->priv_key) 
+	if (dh->priv_key)
 	{
 		BN_clear_free(dh->priv_key);
 		dh->priv_key = NULL;
 	}
 
-	dh->priv_key = OSSL::byteString2bn(x);
+	dh->priv_key = OSSL::byteString2bn(inX);
 }
 
 
 // Setters for the DH public key components
-void OSSLDHPrivateKey::setP(const ByteString& p)
+void OSSLDHPrivateKey::setP(const ByteString& inP)
 {
-	DHPrivateKey::setP(p);
+	DHPrivateKey::setP(inP);
 
-	if (dh->p) 
+	if (dh->p)
 	{
 		BN_clear_free(dh->p);
 		dh->p = NULL;
 	}
 
-	dh->p = OSSL::byteString2bn(p);
+	dh->p = OSSL::byteString2bn(inP);
 }
 
-void OSSLDHPrivateKey::setG(const ByteString& g)
+void OSSLDHPrivateKey::setG(const ByteString& inG)
 {
-	DHPrivateKey::setG(g);
+	DHPrivateKey::setG(inG);
 
-	if (dh->g) 
+	if (dh->g)
 	{
 		BN_clear_free(dh->g);
 		dh->g = NULL;
 	}
 
-	dh->g = OSSL::byteString2bn(g);
+	dh->g = OSSL::byteString2bn(inG);
 }
 
 // Encode into PKCS#8 DER
@@ -140,8 +156,8 @@ ByteString OSSLDHPrivateKey::PKCS8Encode()
 		return der;
 	}
 	der.resize(len);
-	unsigned char* p = &der[0];
-	int len2 = i2d_PKCS8_PRIV_KEY_INFO(p8inf, &p);
+	unsigned char* priv = &der[0];
+	int len2 = i2d_PKCS8_PRIV_KEY_INFO(p8inf, &priv);
 	PKCS8_PRIV_KEY_INFO_free(p8inf);
 	if (len2 != len) der.wipe();
 	return der;
@@ -152,8 +168,8 @@ bool OSSLDHPrivateKey::PKCS8Decode(const ByteString& ber)
 {
 	int len = ber.size();
 	if (len <= 0) return false;
-	const unsigned char* p = ber.const_byte_str();
-	PKCS8_PRIV_KEY_INFO* p8 = d2i_PKCS8_PRIV_KEY_INFO(NULL, &p, len);
+	const unsigned char* priv = ber.const_byte_str();
+	PKCS8_PRIV_KEY_INFO* p8 = d2i_PKCS8_PRIV_KEY_INFO(NULL, &priv, len);
 	if (p8 == NULL) return false;
 	EVP_PKEY* pkey = EVP_PKCS82PKEY(p8);
 	PKCS8_PRIV_KEY_INFO_free(p8);

@@ -192,6 +192,9 @@ extern "C" {
 #define other_info_len ulOtherInfoLen
 #define other_info pOtherInfo
 
+#define data pData
+#define len ulLen
+
 #define ck_rv_t CK_RV
 #define ck_notify_t CK_NOTIFY
 
@@ -820,9 +823,7 @@ typedef unsigned long ck_mechanism_type_t;
 #define CKM_AES_CTS			(0x1089)
 #define CKM_AES_CMAC			(0x108a)
 #define CKM_AES_CMAC_GENERAL		(0x108b)
-#define CKM_AES_KEY_WRAP		(0x1090)
 #define CKM_BLOWFISH_KEY_GEN		(0x1090)
-#define CKM_AES_KEY_WRAP_PAD		(0x1091)
 #define CKM_BLOWFISH_CBC		(0x1091)
 #define CKM_TWOFISH_KEY_GEN		(0x1092)
 #define CKM_TWOFISH_CBC			(0x1093)
@@ -853,6 +854,8 @@ typedef unsigned long ck_mechanism_type_t;
 #define CKM_AES_CFB64			(0x2105)
 #define CKM_AES_CFB8			(0x2106)
 #define CKM_AES_CFB128			(0x2107)
+#define CKM_AES_KEY_WRAP		(0x2109)
+#define CKM_AES_KEY_WRAP_PAD		(0x210a)
 #define CKM_RSA_PKCS_TPM_1_1		(0x4001)
 #define CKM_RSA_PKCS_OAEPTPM_1_1	(0x4002)
 #define CKM_VENDOR_DEFINED		((unsigned long) (1ul << 31))
@@ -901,6 +904,8 @@ struct ck_mechanism_info
 #define CKG_MGF1_SHA384       (0x00000003)
 #define CKG_MGF1_SHA512       (0x00000004)
 #define CKG_MGF1_SHA224       (0x00000005)
+
+#define CKZ_DATA_SPECIFIED    (0x00000001)
 
 struct ck_rsa_pkcs_oaep_params {
   ck_mechanism_type_t hash_alg;
@@ -999,6 +1004,22 @@ struct ck_x9_42_mqv_derive_params {
   ck_object_handle_t public_key;
 };
 
+struct ck_des_cbc_encrypt_data_params {
+  unsigned char iv[8];
+  unsigned char *data;
+  unsigned long length;
+};
+
+struct ck_aes_cbc_encrypt_data_params {
+  unsigned char iv[16];
+  unsigned char *data;
+  unsigned long length;
+};
+
+struct ck_key_derivation_string_data {
+  unsigned char *data;
+  unsigned long len;
+};
 
 /* Flags for C_WaitForSlotEvent.  */
 #define CKF_DONT_BLOCK				(1)
@@ -1564,6 +1585,15 @@ typedef struct ck_rsa_pkcs_pss_params *CK_RSA_PKCS_PSS_PARAMS_PTR;
 typedef struct ck_ecdh1_derive_params CK_ECDH1_DERIVE_PARAMS;
 typedef struct ck_ecdh1_derive_params *CK_ECDH1_DERIVE_PARAMS_PTR;
 
+typedef struct ck_des_cbc_encrypt_data_params CK_DES_CBC_ENCRYPT_DATA_PARAMS;
+typedef struct ck_des_cbc_encrypt_data_params *CK_DES_CBC_ENCRYPT_DATA_PARAMS_PTR;
+
+typedef struct ck_aes_cbc_encrypt_data_params CK_AES_CBC_ENCRYPT_DATA_PARAMS;
+typedef struct ck_aes_cbc_encrypt_data_params *CK_AES_CBC_ENCRYPT_DATA_PARAMS_PTR;
+
+typedef struct ck_key_derivation_string_data CK_KEY_DERIVATION_STRING_DATA;
+typedef struct ck_key_derivation_string_data *CK_KEY_DERIVATION_STRING_DATA_PTR;
+
 typedef struct ck_function_list CK_FUNCTION_LIST;
 typedef struct ck_function_list *CK_FUNCTION_LIST_PTR;
 typedef struct ck_function_list **CK_FUNCTION_LIST_PTR_PTR;
@@ -1656,6 +1686,9 @@ typedef struct ck_c_initialize_args *CK_C_INITIALIZE_ARGS_PTR;
 #undef ck_x9_42_dh_kdf_type_t
 #undef other_info_len
 #undef other_info
+
+#undef data
+#undef len
 
 #undef ck_rv_t
 #undef ck_notify_t

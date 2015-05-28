@@ -63,7 +63,7 @@ enum AttributeKind {
 //
 // N.B.: the create flag only has a function when a file is opened read/write
 // N.B.: the truncate flag only has a function when the create one is true
-File::File(std::string path, bool forRead /* = true */, bool forWrite /* = false */, bool create /* = false */, bool truncate /* = true */)
+File::File(std::string inPath, bool forRead /* = true */, bool forWrite /* = false */, bool create /* = false */, bool truncate /* = true */)
 {
 	stream = NULL;
 
@@ -71,7 +71,8 @@ File::File(std::string path, bool forRead /* = true */, bool forWrite /* = false
 	isWritable = forWrite;
 	locked = false;
 
-	this->path = path;
+	path = inPath;
+	valid = false;
 
 	if (forRead || forWrite)
 	{
@@ -125,7 +126,7 @@ File::File(std::string path, bool forRead /* = true */, bool forWrite /* = false
 }
 
 // Destructor
-File::~File() 
+File::~File()
 {
 	if (locked)
 	{

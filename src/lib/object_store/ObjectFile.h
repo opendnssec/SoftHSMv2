@@ -52,7 +52,7 @@ class ObjectFile : public OSObject
 {
 public:
 	// Constructor
-	ObjectFile(OSToken* parent, const std::string path, const std::string lockpath, bool isNew = false);
+	ObjectFile(OSToken* parent, const std::string inPath, const std::string inLockpath, bool isNew = false);
 
 	// Destructor
 	virtual ~ObjectFile();

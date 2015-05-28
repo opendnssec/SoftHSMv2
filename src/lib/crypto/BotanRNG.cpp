@@ -33,17 +33,30 @@
 #include "config.h"
 #include "BotanRNG.h"
 
+#include <botan/version.h>
+
+#if BOTAN_VERSION_CODE < BOTAN_VERSION_CODE_FOR(1,11,14)
 #include <botan/libstate.h>
+#else
+#include <botan/auto_rng.h>
+#endif
 
 // Base constructor
 BotanRNG::BotanRNG()
 {
+#if BOTAN_VERSION_CODE < BOTAN_VERSION_CODE_FOR(1,11,14)
 	rng = &Botan::global_state().global_rng();
+#else
+	rng = new Botan::AutoSeeded_RNG();
+#endif
 }
 
 // Destructor
 BotanRNG::~BotanRNG()
 {
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,14)
+	delete rng;
+#endif
 }
 
 // Generate random data

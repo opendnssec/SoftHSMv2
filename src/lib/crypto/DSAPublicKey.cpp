@@ -39,9 +39,9 @@
 /*static*/ const char* DSAPublicKey::type = "Abstract DSA public key";
 
 // Check if the key is of the given type
-bool DSAPublicKey::isOfType(const char* type)
+bool DSAPublicKey::isOfType(const char* inType)
 {
-	return !strcmp(this->type, type);
+	return !strcmp(type, inType);
 }
 
 // Get the bit length
@@ -57,24 +57,24 @@ unsigned long DSAPublicKey::getOutputLength() const
 }
 
 // Setters for the DSA public key components
-void DSAPublicKey::setP(const ByteString& p)
+void DSAPublicKey::setP(const ByteString& inP)
 {
-	this->p = p;
+	p = inP;
 }
 
-void DSAPublicKey::setQ(const ByteString& q)
+void DSAPublicKey::setQ(const ByteString& inQ)
 {
-	this->q = q;
+	q = inQ;
 }
 
-void DSAPublicKey::setG(const ByteString& g)
+void DSAPublicKey::setG(const ByteString& inG)
 {
-	this->g = g;
+	g = inG;
 }
 
-void DSAPublicKey::setY(const ByteString& y)
+void DSAPublicKey::setY(const ByteString& inY)
 {
-	this->y = y;
+	y = inY;
 }
 
 // Getters for the DSA public key components

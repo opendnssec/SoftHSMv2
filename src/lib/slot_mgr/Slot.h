@@ -46,7 +46,7 @@ class Slot
 {
 public:
 	// Constructor
-	Slot(ObjectStore* objectStore, size_t slotID, ObjectStoreToken *token = NULL);
+	Slot(ObjectStore* inObjectStore, size_t inSlotID, ObjectStoreToken *inToken = NULL);
 
 	// Destructor
 	virtual ~Slot();

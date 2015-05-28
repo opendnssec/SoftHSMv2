@@ -35,7 +35,8 @@
 
 #include "pkcs11.h"
 
-CK_C_GetFunctionList loadLibrary(char* module, void** moduleHandle);
+CK_C_GetFunctionList loadLibrary(char* module, void** moduleHandle,
+				char **pErrMsg);
 void unloadLibrary(void* moduleHandle);
 
 #endif // !_SOFTHSM_V2_BIN_LIBRARY_H

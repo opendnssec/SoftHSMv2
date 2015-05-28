@@ -51,13 +51,14 @@
 #include <stdio.h>
 
 // Constructor
-OSToken::OSToken(const std::string tokenPath)
+OSToken::OSToken(const std::string inTokenPath)
 {
+	tokenPath = inTokenPath;
+
 	tokenDir = new Directory(tokenPath);
 	gen = Generation::create(tokenPath + OS_PATHSEP + "generation", true);
 	tokenObject = new ObjectFile(this, tokenPath + OS_PATHSEP + "token.object", tokenPath + OS_PATHSEP + "token.lock");
 	tokenMutex = MutexFactory::i()->getMutex();
-	this->tokenPath = tokenPath;
 	valid = (gen != NULL) && (tokenMutex != NULL) && tokenDir->isValid() && tokenObject->valid;
 
 	DEBUG_MSG("Opened token %s", tokenPath.c_str());
@@ -319,7 +320,7 @@ std::set<OSObject*> OSToken::getObjects()
     return objects;
 }
 
-void OSToken::getObjects(std::set<OSObject*> &objects)
+void OSToken::getObjects(std::set<OSObject*> &inObjects)
 {
     index();
 
@@ -327,7 +328,7 @@ void OSToken::getObjects(std::set<OSObject*> &objects)
     // the object list when we return it
     MutexLocker lock(tokenMutex);
 
-    objects.insert(this->objects.begin(),this->objects.end());
+    inObjects.insert(objects.begin(),objects.end());
 }
 
 // Create a new object

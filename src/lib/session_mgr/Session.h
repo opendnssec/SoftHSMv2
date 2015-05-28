@@ -57,7 +57,7 @@
 class Session
 {
 public:
-	Session(Slot* slot, bool isReadWrite, CK_VOID_PTR pApplication, CK_NOTIFY notify);
+	Session(Slot* inSlot, bool inIsReadWrite, CK_VOID_PTR inPApplication, CK_NOTIFY inNotify);
 
 	// Destructor
 	virtual ~Session();
@@ -70,53 +70,53 @@ public:
 	CK_RV getInfo(CK_SESSION_INFO_PTR pInfo);
 	bool isRW();
 	CK_STATE getState();
-	void setHandle(CK_SESSION_HANDLE hSession);
+	void setHandle(CK_SESSION_HANDLE inHSession);
 	CK_SESSION_HANDLE getHandle();
 
 	// Operations
 	int getOpType();
-	void setOpType(int operation);
+	void setOpType(int inOperation);
 	void resetOp();
 
 	// Find
-	void setFindOp(FindOperation *findOp);
+	void setFindOp(FindOperation *inFindOp);
 	FindOperation *getFindOp();
 
 	// Digest
-	void setDigestOp(HashAlgorithm* digestOp);
+	void setDigestOp(HashAlgorithm* inDigestOp);
 	HashAlgorithm* getDigestOp();
 
 	// Mac
-	void setMacOp(MacAlgorithm* macOp);
+	void setMacOp(MacAlgorithm* inMacOp);
 	MacAlgorithm* getMacOp();
 
 	// Asymmetric Crypto
-	void setAsymmetricCryptoOp(AsymmetricAlgorithm* asymmetricCryptoOp);
+	void setAsymmetricCryptoOp(AsymmetricAlgorithm* inAsymmetricCryptoOp);
 	AsymmetricAlgorithm* getAsymmetricCryptoOp();
 
 	// Symmetric Crypto
-	void setSymmetricCryptoOp(SymmetricAlgorithm* symmetricCryptoOp);
+	void setSymmetricCryptoOp(SymmetricAlgorithm* inSymmetricCryptoOp);
 	SymmetricAlgorithm* getSymmetricCryptoOp();
 
-	void setMechanism(AsymMech::Type mechanism);
+	void setMechanism(AsymMech::Type inMechanism);
 	AsymMech::Type getMechanism();
 
-	void setParameters(void* param, size_t paramLen);
-	void* getParameters(size_t& paramLen);
+	void setParameters(void* inParam, size_t inParamLen);
+	void* getParameters(size_t& inParamLen);
 
-	void setAllowMultiPartOp(bool allowMultiPartOp);
+	void setAllowMultiPartOp(bool inAllowMultiPartOp);
 	bool getAllowMultiPartOp();
 
-	void setAllowSinglePartOp(bool allowSinglePartOp);
+	void setAllowSinglePartOp(bool inAllowSinglePartOp);
 	bool getAllowSinglePartOp();
 
-	void setPublicKey(PublicKey* publicKey);
+	void setPublicKey(PublicKey* inPublicKey);
 	PublicKey* getPublicKey();
 
-	void setPrivateKey(PrivateKey* privateKey);
+	void setPrivateKey(PrivateKey* inPrivateKey);
 	PrivateKey* getPrivateKey();
 
-	void setSymmetricKey(SymmetricKey* symmetricKey);
+	void setSymmetricKey(SymmetricKey* inSymmetricKey);
 	SymmetricKey* getSymmetricKey();
 
 private:

@@ -43,7 +43,7 @@
 // Constructor
 Mutex::Mutex()
 {
-	isValid = (MutexFactory::i()->createMutex(&handle) == CKR_OK);	
+	isValid = (MutexFactory::i()->CreateMutex(&handle) == CKR_OK);
 }
 
 // Destructor
@@ -51,22 +51,22 @@ Mutex::~Mutex()
 {
 	if (isValid)
 	{
-		MutexFactory::i()->destroyMutex(handle);
+		MutexFactory::i()->DestroyMutex(handle);
 	}
 }
 
 // Lock the mutex
 bool Mutex::lock()
 {
-	return (isValid && (MutexFactory::i()->lockMutex(handle) == CKR_OK));
+	return (isValid && (MutexFactory::i()->LockMutex(handle) == CKR_OK));
 }
-	 
+
 // Unlock the mutex
 void Mutex::unlock()
 {
-	if (isValid) 
+	if (isValid)
 	{
-		MutexFactory::i()->unlockMutex(handle);
+		MutexFactory::i()->UnlockMutex(handle);
 	}
 }
 
@@ -75,17 +75,17 @@ void Mutex::unlock()
  *****************************************************************************/
 
 // Constructor
-MutexLocker::MutexLocker(Mutex* mutex)
+MutexLocker::MutexLocker(Mutex* inMutex)
 {
-	this->mutex = mutex;
+	mutex = inMutex;
 
-	if (this->mutex != NULL) this->mutex->lock();
+	if (mutex != NULL) mutex->lock();
 }
 
 // Destructor
 MutexLocker::~MutexLocker()
 {
-	if (this->mutex != NULL) this->mutex->unlock();
+	if (mutex != NULL) mutex->unlock();
 }
 
 /*****************************************************************************
@@ -93,7 +93,11 @@ MutexLocker::~MutexLocker()
  *****************************************************************************/
 
 // Initialise the one-and-only instance
+#ifdef HAVE_CXX11
+std::unique_ptr<MutexFactory> MutexFactory::instance(nullptr);
+#else
 std::auto_ptr<MutexFactory> MutexFactory::instance(NULL);
+#endif
 
 // Constructor
 MutexFactory::MutexFactory()
@@ -116,7 +120,7 @@ MutexFactory* MutexFactory::i()
 {
 	if (!instance.get())
 	{
-		instance = std::auto_ptr<MutexFactory>(new MutexFactory());
+		instance.reset(new MutexFactory());
 	}
 
 	return instance.get();
@@ -135,24 +139,24 @@ void MutexFactory::recycleMutex(Mutex* mutex)
 }
 
 // Set the function pointers
-void MutexFactory::setCreateMutex(CK_CREATEMUTEX createMutex)
+void MutexFactory::setCreateMutex(CK_CREATEMUTEX inCreateMutex)
 {
-	this->createMutex = createMutex;
+	createMutex = inCreateMutex;
 }
 
-void MutexFactory::setDestroyMutex(CK_DESTROYMUTEX destroyMutex)
+void MutexFactory::setDestroyMutex(CK_DESTROYMUTEX inDestroyMutex)
 {
-	this->destroyMutex = destroyMutex;
+	destroyMutex = inDestroyMutex;
 }
 
-void MutexFactory::setLockMutex(CK_LOCKMUTEX lockMutex)
+void MutexFactory::setLockMutex(CK_LOCKMUTEX inLockMutex)
 {
-	this->lockMutex = lockMutex;
+	lockMutex = inLockMutex;
 }
 
-void MutexFactory::setUnlockMutex(CK_UNLOCKMUTEX unlockMutex)
+void MutexFactory::setUnlockMutex(CK_UNLOCKMUTEX inUnlockMutex)
 {
-	this->unlockMutex = unlockMutex;
+	unlockMutex = inUnlockMutex;
 }
 
 void MutexFactory::enable()

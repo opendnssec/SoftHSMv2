@@ -43,9 +43,9 @@ class OSSLECPrivateKey : public ECPrivateKey
 public:
 	// Constructors
 	OSSLECPrivateKey();
-	
+
 	OSSLECPrivateKey(const EC_KEY* inECKEY);
-	
+
 	// Destructor
 	virtual ~OSSLECPrivateKey();
 
@@ -53,16 +53,16 @@ public:
 	static const char* type;
 
 	// Check if the key is of the given type
-	virtual bool isOfType(const char* type);
+	virtual bool isOfType(const char* inType);
 
 	// Get the base point order length
 	virtual unsigned long getOrderLength() const;
 
 	// Setters for the EC private key components
-	virtual void setD(const ByteString& d);
+	virtual void setD(const ByteString& inD);
 
 	// Setters for the EC public key components
-	virtual void setEC(const ByteString& ec);
+	virtual void setEC(const ByteString& inEC);
 
 	// Encode into PKCS#8 DER
 	virtual ByteString PKCS8Encode();
@@ -71,7 +71,7 @@ public:
 	virtual bool PKCS8Decode(const ByteString& ber);
 
 	// Set from OpenSSL representation
-	virtual void setFromOSSL(const EC_KEY* eckey);
+	virtual void setFromOSSL(const EC_KEY* inECKEY);
 
 	// Retrieve the OpenSSL representation of the key
 	EC_KEY* getOSSLKey();

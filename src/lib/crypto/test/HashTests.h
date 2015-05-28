@@ -40,7 +40,9 @@
 class HashTests : public CppUnit::TestFixture
 {
 	CPPUNIT_TEST_SUITE(HashTests);
+#ifndef WITH_FIPS
 	CPPUNIT_TEST(testMD5);
+#endif
 	CPPUNIT_TEST(testSHA1);
 	CPPUNIT_TEST(testSHA224);
 	CPPUNIT_TEST(testSHA256);
@@ -49,7 +51,9 @@ class HashTests : public CppUnit::TestFixture
 	CPPUNIT_TEST_SUITE_END();
 
 public:
+#ifndef WITH_FIPS
 	void testMD5();
+#endif
 	void testSHA1();
 	void testSHA224();
 	void testSHA256();

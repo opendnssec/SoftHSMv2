@@ -97,18 +97,21 @@ std::string BotanDES::getCipher() const
 	}
 
 	// Check padding mode
-	if (currentPaddingMode &&
-	    currentCipherMode != SymMode::OFB &&
-	    currentCipherMode != SymMode::CFB)
+	if (currentCipherMode == SymMode::OFB ||
+	    currentCipherMode == SymMode::CFB)
 	{
-		padding = "PKCS7";
+		padding = "";
+	}
+	else if (currentPaddingMode)
+	{
+		padding = "/PKCS7";
 	}
 	else
 	{
-		padding = "NoPadding";
+		padding = "/NoPadding";
 	}
 
-	return algo + "/" + mode + "/" + padding;
+	return algo + "/" + mode + padding;
 }
 
 bool BotanDES::generateKey(SymmetricKey& key, RNG* rng /* = NULL */)

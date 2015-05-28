@@ -47,13 +47,13 @@ public:
 	static const char* type;
 
 	// Set the public prime p
-	void setP(const ByteString& p);
+	void setP(const ByteString& inP);
 
 	// Set the generator g
-	void setG(const ByteString& g);
+	void setG(const ByteString& inG);
 
 	// Set the optional bit length
-	void setXBitLength(const size_t bitLen);
+	void setXBitLength(const size_t inBitLen);
 
 	// Get the public prime p
 	const ByteString& getP() const;
@@ -65,7 +65,7 @@ public:
 	size_t getXBitLength() const;
 
 	// Are the parameters of the given type?
-	virtual bool areOfType(const char* type);
+	virtual bool areOfType(const char* inType);
 
 	// Serialisation
 	virtual ByteString serialise() const;

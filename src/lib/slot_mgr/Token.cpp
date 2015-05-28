@@ -50,11 +50,11 @@ Token::Token()
 }
 
 // Constructor
-Token::Token(ObjectStoreToken* token)
+Token::Token(ObjectStoreToken* inToken)
 {
 	tokenMutex = MutexFactory::i()->getMutex();
 
-	this->token = token;
+	token = inToken;
 
 	ByteString soPINBlob, userPINBlob;
 
@@ -453,8 +453,8 @@ CK_RV Token::getTokenInfo(CK_TOKEN_INFO_PTR info)
 
 	memset(info->manufacturerID, ' ', 32);
 	memset(info->model, ' ', 16);
-	strncpy((char*) info->manufacturerID, mfgID, strlen(mfgID));
-	strncpy((char*) info->model, model, strlen(model));
+	memcpy(info->manufacturerID, mfgID, strlen(mfgID));
+	memcpy(info->model, model, strlen(model));
 
 	// TODO: Can we set these?
 	info->ulSessionCount = CK_UNAVAILABLE_INFORMATION;

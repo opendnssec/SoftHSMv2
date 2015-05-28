@@ -43,7 +43,7 @@ public:
 	static const char* type;
 
 	// Check if the key is of the given type
-	virtual bool isOfType(const char* type);
+	virtual bool isOfType(const char* inType);
 
 	// Get the bit length
 	virtual unsigned long getBitLength() const;
@@ -52,10 +52,10 @@ public:
 	virtual unsigned long getOutputLength() const = 0;
 
 	// Setters for the GOST private key components
-	virtual void setD(const ByteString& d);
+	virtual void setD(const ByteString& inD);
 
 	// Setters for the GOST public key components
-	virtual void setEC(const ByteString& ec);
+	virtual void setEC(const ByteString& inEC);
 
 	// Getters for the GOST private key components
 	virtual const ByteString& getD() const;

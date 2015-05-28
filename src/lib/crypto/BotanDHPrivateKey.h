@@ -75,7 +75,7 @@ public:
 	BotanDHPrivateKey();
 
 	BotanDHPrivateKey(const BotanDH_PrivateKey* inDH);
-	
+
 	// Destructor
 	virtual ~BotanDHPrivateKey();
 
@@ -83,14 +83,14 @@ public:
 	static const char* type;
 
 	// Check if the key is of the given type
-	virtual bool isOfType(const char* type);
+	virtual bool isOfType(const char* inType);
 
 	// Setters for the DH private key components
-	virtual void setX(const ByteString& x);
+	virtual void setX(const ByteString& inX);
 
 	// Setters for the DH public key components
-	virtual void setP(const ByteString& p);
-	virtual void setG(const ByteString& g);
+	virtual void setP(const ByteString& inP);
+	virtual void setG(const ByteString& inG);
 
 	// Encode into PKCS#8 DER
 	virtual ByteString PKCS8Encode();
@@ -99,7 +99,7 @@ public:
 	virtual bool PKCS8Decode(const ByteString& ber);
 
 	// Set from Botan representation
-	virtual void setFromBotan(const BotanDH_PrivateKey* dh);
+	virtual void setFromBotan(const BotanDH_PrivateKey* inDH);
 
 	// Retrieve the Botan representation of the key
 	BotanDH_PrivateKey* getBotanKey();

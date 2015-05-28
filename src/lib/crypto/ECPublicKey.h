@@ -43,7 +43,7 @@ public:
 	static const char* type;
 
 	// Check if the key is of the given type
-	virtual bool isOfType(const char* type);
+	virtual bool isOfType(const char* inType);
 
 	// Get the bit length
 	virtual unsigned long getBitLength() const;
@@ -55,8 +55,8 @@ public:
 	virtual unsigned long getOrderLength() const = 0;
 
 	// Setters for the EC public key components
-	virtual void setEC(const ByteString& ec);
-	virtual void setQ(const ByteString& q);
+	virtual void setEC(const ByteString& inEc);
+	virtual void setQ(const ByteString& inQ);
 
 	// Getters for the EC public key components
 	virtual const ByteString& getEC() const;

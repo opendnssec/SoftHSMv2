@@ -44,7 +44,7 @@ BotanDSAPublicKey::BotanDSAPublicKey()
 
 BotanDSAPublicKey::BotanDSAPublicKey(const Botan::DSA_PublicKey* inDSA)
 {
-	BotanDSAPublicKey();
+	dsa = NULL;
 
 	setFromBotan(inDSA);
 }
@@ -59,28 +59,28 @@ BotanDSAPublicKey::~BotanDSAPublicKey()
 /*static*/ const char* BotanDSAPublicKey::type = "Botan DSA Public Key";
 
 // Set from Botan representation
-void BotanDSAPublicKey::setFromBotan(const Botan::DSA_PublicKey* dsa)
+void BotanDSAPublicKey::setFromBotan(const Botan::DSA_PublicKey* inDSA)
 {
-	ByteString p = BotanUtil::bigInt2ByteString(dsa->group_p());
-	setP(p);
-	ByteString q = BotanUtil::bigInt2ByteString(dsa->group_q());
-	setQ(q);
-	ByteString g = BotanUtil::bigInt2ByteString(dsa->group_g());
-	setG(g);
-	ByteString y = BotanUtil::bigInt2ByteString(dsa->get_y());
-	setY(y);
+	ByteString inP = BotanUtil::bigInt2ByteString(inDSA->group_p());
+	setP(inP);
+	ByteString inQ = BotanUtil::bigInt2ByteString(inDSA->group_q());
+	setQ(inQ);
+	ByteString inG = BotanUtil::bigInt2ByteString(inDSA->group_g());
+	setG(inG);
+	ByteString inY = BotanUtil::bigInt2ByteString(inDSA->get_y());
+	setY(inY);
 }
 
 // Check if the key is of the given type
-bool BotanDSAPublicKey::isOfType(const char* type)
+bool BotanDSAPublicKey::isOfType(const char* inType)
 {
-	return !strcmp(BotanDSAPublicKey::type, type);
+	return !strcmp(type, inType);
 }
 
 // Setters for the DSA public key components
-void BotanDSAPublicKey::setP(const ByteString& p)
+void BotanDSAPublicKey::setP(const ByteString& inP)
 {
-	DSAPublicKey::setP(p);
+	DSAPublicKey::setP(inP);
 
 	if (dsa)
 	{
@@ -89,9 +89,9 @@ void BotanDSAPublicKey::setP(const ByteString& p)
 	}
 }
 
-void BotanDSAPublicKey::setQ(const ByteString& q)
+void BotanDSAPublicKey::setQ(const ByteString& inQ)
 {
-	DSAPublicKey::setQ(q);
+	DSAPublicKey::setQ(inQ);
 
 	if (dsa)
 	{
@@ -100,9 +100,9 @@ void BotanDSAPublicKey::setQ(const ByteString& q)
 	}
 }
 
-void BotanDSAPublicKey::setG(const ByteString& g)
+void BotanDSAPublicKey::setG(const ByteString& inG)
 {
-	DSAPublicKey::setG(g);
+	DSAPublicKey::setG(inG);
 
 	if (dsa)
 	{
@@ -111,9 +111,9 @@ void BotanDSAPublicKey::setG(const ByteString& g)
 	}
 }
 
-void BotanDSAPublicKey::setY(const ByteString& y)
+void BotanDSAPublicKey::setY(const ByteString& inY)
 {
-	DSAPublicKey::setY(y);
+	DSAPublicKey::setY(inY);
 
 	if (dsa)
 	{
@@ -132,14 +132,14 @@ Botan::DSA_PublicKey* BotanDSAPublicKey::getBotanKey()
 
 	return dsa;
 }
- 
+
 // Create the Botan representation of the key
 void BotanDSAPublicKey::createBotanKey()
 {
 	// We actually do not need to check q, since it can be set zero
-	if (this->p.size() != 0 &&
-	    this->g.size() != 0 &&
-	    this->y.size() != 0)
+	if (p.size() != 0 &&
+	    g.size() != 0 &&
+	    y.size() != 0)
 	{
 		if (dsa)
 		{
@@ -149,10 +149,10 @@ void BotanDSAPublicKey::createBotanKey()
 
 		try
 		{
-			dsa = new Botan::DSA_PublicKey(Botan::DL_Group(BotanUtil::byteString2bigInt(this->p),
-							BotanUtil::byteString2bigInt(this->q),
-							BotanUtil::byteString2bigInt(this->g)),
-							BotanUtil::byteString2bigInt(this->y));
+			dsa = new Botan::DSA_PublicKey(Botan::DL_Group(BotanUtil::byteString2bigInt(p),
+							BotanUtil::byteString2bigInt(q),
+							BotanUtil::byteString2bigInt(g)),
+							BotanUtil::byteString2bigInt(y));
 		}
 		catch (...)
 		{

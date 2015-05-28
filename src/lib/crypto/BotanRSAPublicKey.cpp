@@ -44,7 +44,7 @@ BotanRSAPublicKey::BotanRSAPublicKey()
 
 BotanRSAPublicKey::BotanRSAPublicKey(const Botan::RSA_PublicKey* inRSA)
 {
-	BotanRSAPublicKey();
+	rsa = NULL;
 
 	setFromBotan(inRSA);
 }
@@ -59,24 +59,24 @@ BotanRSAPublicKey::~BotanRSAPublicKey()
 /*static*/ const char* BotanRSAPublicKey::type = "Botan RSA Public Key";
 
 // Check if the key is of the given type
-bool BotanRSAPublicKey::isOfType(const char* type)
+bool BotanRSAPublicKey::isOfType(const char* inType)
 {
-	return !strcmp(BotanRSAPublicKey::type, type);
+	return !strcmp(type, inType);
 }
 
 // Set from OpenSSL representation
-void BotanRSAPublicKey::setFromBotan(const Botan::RSA_PublicKey* rsa)
+void BotanRSAPublicKey::setFromBotan(const Botan::RSA_PublicKey* inRSA)
 {
-	ByteString n = BotanUtil::bigInt2ByteString(rsa->get_n());
-	setN(n);
-	ByteString e = BotanUtil::bigInt2ByteString(rsa->get_e());
-	setE(e);
+	ByteString inN = BotanUtil::bigInt2ByteString(inRSA->get_n());
+	setN(inN);
+	ByteString inE = BotanUtil::bigInt2ByteString(inRSA->get_e());
+	setE(inE);
 }
 
 // Setters for the RSA public key components
-void BotanRSAPublicKey::setN(const ByteString& n)
+void BotanRSAPublicKey::setN(const ByteString& inN)
 {
-	RSAPublicKey::setN(n);
+	RSAPublicKey::setN(inN);
 
 	if (rsa)
 	{
@@ -85,9 +85,9 @@ void BotanRSAPublicKey::setN(const ByteString& n)
 	}
 }
 
-void BotanRSAPublicKey::setE(const ByteString& e)
+void BotanRSAPublicKey::setE(const ByteString& inE)
 {
-	RSAPublicKey::setE(e);
+	RSAPublicKey::setE(inE);
 
 	if (rsa)
 	{
@@ -110,7 +110,7 @@ Botan::RSA_PublicKey* BotanRSAPublicKey::getBotanKey()
 // Create the Botan representation of the key
 void BotanRSAPublicKey::createBotanKey()
 {
-	if (this->n.size() != 0 && this->e.size() != 0)
+	if (n.size() != 0 && e.size() != 0)
 	{
 		if (rsa)
 		{
@@ -120,8 +120,8 @@ void BotanRSAPublicKey::createBotanKey()
 
 		try
 		{
-			rsa = new Botan::RSA_PublicKey(BotanUtil::byteString2bigInt(this->n), 
-							BotanUtil::byteString2bigInt(this->e));
+			rsa = new Botan::RSA_PublicKey(BotanUtil::byteString2bigInt(n),
+							BotanUtil::byteString2bigInt(e));
 		}
 		catch (...)
 		{

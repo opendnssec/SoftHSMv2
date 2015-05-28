@@ -48,6 +48,7 @@
 #include "MutexFactory.h"
 #include <memory>
 #include <map>
+#include <botan/version.h>
 
 class BotanCryptoFactory : public CryptoFactory
 {
@@ -81,7 +82,11 @@ private:
 	BotanCryptoFactory();
 
 	// The one-and-only instance
+#ifdef HAVE_CXX11
+	static std::unique_ptr<BotanCryptoFactory> instance;
+#else
 	static std::auto_ptr<BotanCryptoFactory> instance;
+#endif
 
 	// Thread specific RNG
 #ifdef HAVE_PTHREAD_H
@@ -91,7 +96,9 @@ private:
 #endif
         Mutex* rngsMutex;
 
+#if BOTAN_VERSION_CODE < BOTAN_VERSION_CODE_FOR(1,11,14)
 	bool wasInitialized;
+#endif
 };
 
 #endif // !_SOFTHSM_V2_BOTANCRYPTOFACTORY_H

@@ -43,9 +43,9 @@
 #include <stdio.h>
 
 // Constructor
-ObjectStore::ObjectStore(std::string storePath)
+ObjectStore::ObjectStore(std::string inStorePath)
 {
-	this->storePath = storePath;
+	storePath = inStorePath;
 	valid = false;
 	storeMutex = MutexFactory::i()->getMutex();
 

@@ -5,11 +5,12 @@ AM_CPPFLAGS = 		-I$(srcdir)/../../lib/cryptoki_compat \
 			-I$(srcdir)/../../lib \
 			@SQLITE3_INCLUDES@
 
-dist_man_MANS =		softhsm2-dump-file.1 softhsm2-dump-db.1
+dist_man_MANS =		softhsm2-dump-file.1
 
 bin_PROGRAMS =		softhsm2-dump-file
 
 if BUILD_OBJECTSTORE_BACKEND_DB
+dist_man_MANS +=	softhsm2-dump-db.1
 bin_PROGRAMS +=		softhsm2-dump-db
 endif
 
@@ -19,4 +20,5 @@ softhsm2_dump_db_SOURCES = softhsm2-dump-db.cpp
 
 softhsm2_dump_db_LDADD	= @SQLITE3_LIBS@ @YIELD_LIB@
 
-EXTRA_DIST =		$(srcdir)/*.h
+EXTRA_DIST =		$(srcdir)/*.h \
+			softhsm2-dump-db.1

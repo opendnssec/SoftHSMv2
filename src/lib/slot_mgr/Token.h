@@ -47,7 +47,7 @@ class Token
 public:
 	// Constructor
 	Token();
-	Token(ObjectStoreToken *token);
+	Token(ObjectStoreToken *inToken);
 
 	// Destructor
 	virtual ~Token();
