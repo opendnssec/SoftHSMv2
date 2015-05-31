@@ -8,6 +8,7 @@ SoftHSM 2.0.0 - 2015-07-17
 
 Bugfixes:
 * SOFTHSM-120: Segfault after renaming variables.
+* SOFTHSM-123: Fix library cleanup on BSD.
 
 
 SoftHSM 2.0.0b3 - 2015-04-17
