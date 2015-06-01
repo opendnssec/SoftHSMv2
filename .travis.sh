@@ -11,6 +11,7 @@ botan)
 openssl)
 	CONF_CRYPTO="$CONF_CRYPTO --with-crypto-backend=openssl --with-openssl=/usr"
 	CONF_CRYPTO="$CONF_CRYPTO --disable-ecc --disable-gost"
+	openssl version -a
 	;;
 *)
 	echo "Unknown crypto backend"
