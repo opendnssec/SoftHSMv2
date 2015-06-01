@@ -6,4 +6,4 @@ before_install:
   - sudo apt-get update -qq
   - sudo apt-get install build-essential autoconf automake libtool libcppunit-dev
   - sudo apt-get install libsqlite3-dev sqlite3 libbotan1.10-dev libssl-dev
-script: sh autogen.sh && ./configure --with-crypto-backend=botan --with-botan=/usr --disable-ecc --disable-gost && make
+script: sh autogen.sh && ./configure --with-crypto-backend=botan --with-botan=/usr --disable-ecc --disable-gost && make check
