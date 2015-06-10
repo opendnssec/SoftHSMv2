@@ -2,6 +2,8 @@
 
 SoftHSM is part of the OpenDNSSEC project. Read more at www.opendnssec.org.
 
+[![Build Status](https://api.travis-ci.org/opendnssec/SoftHSMv2.png)](https://travis-ci.org/opendnssec/SoftHSMv2)
+
 ## Introduction
 
 OpenDNSSEC handles and stores its cryptographic keys via the PKCS#11 interface.
