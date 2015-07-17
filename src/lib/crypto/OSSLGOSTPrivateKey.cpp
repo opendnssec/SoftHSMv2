@@ -88,7 +88,7 @@ void OSSLGOSTPrivateKey::setFromOSSL(const EVP_PKEY* pkey)
 
 	ByteString inEC;
 	int nid = EC_GROUP_get_curve_name(EC_KEY_get0_group(eckey));
-	ec.resize(i2d_ASN1_OBJECT(OBJ_nid2obj(nid), NULL));
+	inEC.resize(i2d_ASN1_OBJECT(OBJ_nid2obj(nid), NULL));
 	unsigned char *p = &inEC[0];
 	i2d_ASN1_OBJECT(OBJ_nid2obj(nid), &p);
 	setEC(inEC);

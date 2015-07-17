@@ -2605,7 +2605,7 @@ CK_RV SoftHSM::SymDecryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 
 	session->setOpType(SESSION_OP_DECRYPT);
 	session->setSymmetricCryptoOp(cipher);
-	session->setAllowMultiPartOp(false);
+	session->setAllowMultiPartOp(true);
 	session->setAllowSinglePartOp(true);
 	session->setSymmetricKey(secretkey);
 
@@ -2872,20 +2872,137 @@ CK_RV SoftHSM::C_Decrypt(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pEncryptedData,
 				   pData, pulDataLen);
 }
 
+// SymAlgorithm version of C_DecryptUpdate
+static CK_RV SymDecryptUpdate(Session* session, CK_BYTE_PTR pEncryptedData, CK_ULONG ulEncryptedDataLen, CK_BYTE_PTR pData, CK_ULONG_PTR pDataLen)
+{
+	SymmetricAlgorithm* cipher = session->getSymmetricCryptoOp();
+	if (cipher == NULL || !session->getAllowMultiPartOp())
+	{
+		session->resetOp();
+		return CKR_OPERATION_NOT_INITIALIZED;
+	}
+
+	// Check data size
+	SymMode::Type mode = cipher->getCipherMode();
+	CK_ULONG remainder = ulEncryptedDataLen % cipher->getBlockSize();
+	if ((mode == SymMode::ECB || mode == SymMode::CBC) &&
+	    cipher->getPaddingMode() == false &&
+	    remainder != 0)
+	{
+		session->resetOp();
+		return CKR_DATA_LEN_RANGE;
+	}
+
+	// Round down/up to block size
+	CK_ULONG maxSize = ulEncryptedDataLen - remainder;
+	if (remainder + cipher->getBufferSize() > cipher->getBlockSize())
+	{
+		maxSize += cipher->getBlockSize();
+	}
+
+	if (pData == NULL_PTR)
+	{
+		*pDataLen = maxSize;
+		return CKR_OK;
+	}
+
+	// Check buffer size
+	if (*pDataLen < maxSize)
+	{
+		*pDataLen = maxSize;
+		return CKR_BUFFER_TOO_SMALL;
+	}
+
+	// Get the data
+	ByteString data(pEncryptedData, ulEncryptedDataLen);
+	ByteString decryptedData;
+
+	// Encrypt the data
+	if (!cipher->decryptUpdate(data, decryptedData))
+	{
+		session->resetOp();
+		return CKR_GENERAL_ERROR;
+	}
+
+	memcpy(pData, decryptedData.byte_str(), decryptedData.size());
+	*pDataLen = decryptedData.size();
+
+	return CKR_OK;
+}
+
+
 // Feed data to the running decryption operation in a session
-CK_RV SoftHSM::C_DecryptUpdate(CK_SESSION_HANDLE hSession, CK_BYTE_PTR /*pEncryptedData*/, CK_ULONG /*ulEncryptedDataLen*/, CK_BYTE_PTR /*pData*/, CK_ULONG_PTR /*pDataLen*/)
+CK_RV SoftHSM::C_DecryptUpdate(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pEncryptedData, CK_ULONG ulEncryptedDataLen, CK_BYTE_PTR pData, CK_ULONG_PTR pDataLen)
 {
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
+
+	if (pEncryptedData == NULL_PTR) return CKR_ARGUMENTS_BAD;
+	if (pDataLen == NULL_PTR) return CKR_ARGUMENTS_BAD;
 
 	// Get the session
 	Session* session = (Session*)handleManager->getSession(hSession);
 	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
 
-	return CKR_FUNCTION_NOT_SUPPORTED;
+	// Check if we are doing the correct operation
+	if (session->getOpType() != SESSION_OP_DECRYPT)
+		return CKR_OPERATION_NOT_INITIALIZED;
+
+	if (session->getSymmetricCryptoOp() != NULL)
+		return SymDecryptUpdate(session, pEncryptedData, ulEncryptedDataLen,
+				  pData, pDataLen);
+	else
+		return CKR_FUNCTION_NOT_SUPPORTED;
+}
+
+static CK_RV SymDecryptFinal(Session* session, CK_BYTE_PTR pEncryptedData, CK_ULONG_PTR pulEncryptedDataLen)
+{
+	SymmetricAlgorithm* cipher = session->getSymmetricCryptoOp();
+	if (cipher == NULL || !session->getAllowMultiPartOp())
+	{
+		session->resetOp();
+		return CKR_OPERATION_NOT_INITIALIZED;
+	}
+
+	// Size of the encrypted data
+	CK_ULONG size = 0;
+	if (cipher->getPaddingMode() == true)
+	{
+		size = cipher->getBlockSize();
+	}
+
+	if (pEncryptedData == NULL_PTR)
+	{
+		*pulEncryptedDataLen = size;
+		return CKR_OK;
+	}
+
+	// Check buffer size
+	if (*pulEncryptedDataLen < size)
+	{
+		*pulEncryptedDataLen = size;
+		return CKR_BUFFER_TOO_SMALL;
+	}
+
+	// Finalize encryption
+	ByteString encryptedFinal;
+	if (!cipher->decryptFinal(encryptedFinal))
+	{
+		session->resetOp();
+		return CKR_GENERAL_ERROR;
+	}
+
+	if (encryptedFinal.size() != 0)
+	{
+		memcpy(pEncryptedData, encryptedFinal.byte_str(), encryptedFinal.size());
+	}
+	*pulEncryptedDataLen = encryptedFinal.size();
+
+	session->resetOp();
+	return CKR_OK;
 }
 
 // Finalise the decryption operation
-CK_RV SoftHSM::C_DecryptFinal(CK_SESSION_HANDLE hSession, CK_BYTE_PTR /*pData*/, CK_ULONG_PTR /*pDataLen*/)
+CK_RV SoftHSM::C_DecryptFinal(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pData, CK_ULONG_PTR pDataLen)
 {
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
 
@@ -2896,8 +3013,10 @@ CK_RV SoftHSM::C_DecryptFinal(CK_SESSION_HANDLE hSession, CK_BYTE_PTR /*pData*/,
 	// Check if we are doing the correct operation
 	if (session->getOpType() != SESSION_OP_DECRYPT) return CKR_OPERATION_NOT_INITIALIZED;
 
-	session->resetOp();
-	return CKR_FUNCTION_NOT_SUPPORTED;
+	if (session->getSymmetricCryptoOp() != NULL)
+		return SymDecryptFinal(session, pData, pDataLen);
+	else
+		return CKR_FUNCTION_NOT_SUPPORTED;
 }
 
 // Initialise digesting using the specified mechanism in the specified session

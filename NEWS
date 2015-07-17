@@ -1,5 +1,15 @@
 NEWS for SoftHSM -- History of user visible changes
 
+SoftHSM 2.0.0 - 2015-07-17
+
+* SOFTHSM-121: Test cases for C_DecryptUpdate/C_DecryptFinal.
+* Support C_DecryptUpdate/C_DecryptFinal for symmetric algorithms.
+  (Patch from Thomas Calderon)
+
+Bugfixes:
+* SOFTHSM-120: Segfault after renaming variables.
+
+
 SoftHSM 2.0.0b3 - 2015-04-17
 
 * SOFTHSM-113: Support for Botan 1.11.15
