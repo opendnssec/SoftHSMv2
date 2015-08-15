@@ -195,8 +195,8 @@ public:
 	}
 
 	// Comparison operators
-	inline bool operator==(SecureAllocator const&) { return true; }
-	inline bool operator!=(SecureAllocator const&) { return false; }
+	inline bool operator==(SecureAllocator const&) const { return true; }
+	inline bool operator!=(SecureAllocator const&) const { return false; }
 };
 
 #endif // !_SOFTHSM_V2_SECUREALLOCATOR_H
