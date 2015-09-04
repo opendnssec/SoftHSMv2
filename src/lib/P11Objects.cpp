@@ -136,6 +136,8 @@ CK_RV P11Object::loadTemplate(Token *token, CK_ATTRIBUTE_PTR pTemplate, CK_ULONG
 	//
 	// 5. Otherwise, the ulValueLen field is modified to hold the value -1.
 
+	bool invalid = false, sensitive = false, buffer_too_small = false;
+
 	// If case 3 or 4 applies to all the requested attributes, then the call will return CKR_OK.
 	for (CK_ULONG i = 0; i < ulAttributeCount; ++i)
 	{
@@ -146,24 +148,36 @@ CK_RV P11Object::loadTemplate(Token *token, CK_ATTRIBUTE_PTR pTemplate, CK_ULONG
 			pTemplate[i].ulValueLen = (CK_ULONG)-1;
 			// If case 2 applies to any of the requested attributes, then the call should
 			// return the value CKR_ATTRIBUTE_TYPE_INVALID.
-			return CKR_ATTRIBUTE_TYPE_INVALID;
+			invalid = true;
+			continue;
 		}
 
 		// case 1,3,4 and 5 of the attribute checks are done while retrieving the attribute itself.
 		CK_RV retrieve_rv = attr->retrieve(token, isPrivate, pTemplate[i].pValue, &pTemplate[i].ulValueLen);
-		if (retrieve_rv != CKR_OK) {
+		if (retrieve_rv == CKR_ATTRIBUTE_SENSITIVE) {
 			// If case 1 applies to any of the requested attributes, then the call should
 			// return the value CKR_ATTRIBUTE_SENSITIVE.
+			sensitive = true;
+		} else if (retrieve_rv == CKR_BUFFER_TOO_SMALL) {
 			// If case 5 applies to any of the requested attributes, then the call should
 			// return the value CKR_BUFFER_TOO_SMALL.
-			return retrieve_rv;
+			buffer_too_small = true;
+		} else if (retrieve_rv != CKR_OK) {
+		    return CKR_GENERAL_ERROR;
 		}
 
 	}
 
 	// As usual if more than one of these error codes is applicable, Cryptoki may
 	// return any of them. Only if none of them applies to any of the requested
-	// attributes will CKR_OK be returned.
+	// attributes will CKR_OK be returned. We choose to return the errors in
+	// the following priority, which is probably the most useful order.
+	if (sensitive)
+		return CKR_ATTRIBUTE_SENSITIVE;
+	if (invalid)
+		return CKR_ATTRIBUTE_TYPE_INVALID;
+	if (buffer_too_small)
+		return CKR_BUFFER_TOO_SMALL;
 	return CKR_OK;
 }
 
