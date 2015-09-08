@@ -1,5 +1,15 @@
 NEWS for SoftHSM -- History of user visible changes
 
+SoftHSM develop
+
+Bugfixes:
+* SOFTHSM-123: Fix library cleanup on BSD.
+* Prioritize the return values in C_GetAttributeValue.
+  (Patch from Nicholas Wilson)
+* Fix errors reported by Visual Studio 2015.
+  (Patch from Jaroslav Imrich)
+
+
 SoftHSM 2.0.0 - 2015-07-17
 
 * SOFTHSM-121: Test cases for C_DecryptUpdate/C_DecryptFinal.

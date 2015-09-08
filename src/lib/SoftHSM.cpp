@@ -264,6 +264,9 @@ static CK_ATTRIBUTE bsAttribute(CK_ATTRIBUTE_TYPE type, const ByteString &value)
 }
 #endif
 
+#ifdef HAVE_FUNC_ATTRIBUTE_DESTRUCTOR
+__attribute__((__destructor__))
+#endif
 static void libcleanup()
 {
 	SoftHSM::i()->C_Finalize(NULL);
@@ -473,8 +476,10 @@ CK_RV SoftHSM::C_Initialize(CK_VOID_PTR pInitArgs)
 	// Set the state to initialised
 	isInitialised = true;
 
+#ifndef HAVE_FUNC_ATTRIBUTE_DESTRUCTOR
 	// Hook cleanup on dlclose() or exit()
 	atexit(libcleanup);
+#endif
 
 	return CKR_OK;
 }
