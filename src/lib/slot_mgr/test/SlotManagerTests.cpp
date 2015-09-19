@@ -45,6 +45,18 @@
 #include "CryptoFactory.h"
 #include "cryptoki.h"
 
+#ifdef HAVE_CXX11
+std::unique_ptr<MutexFactory> MutexFactory::instance(nullptr);
+#else
+std::auto_ptr<MutexFactory> MutexFactory::instance(NULL);
+#endif
+
+#ifdef HAVE_CXX11
+std::unique_ptr<SecureMemoryRegistry> SecureMemoryRegistry::instance(nullptr);
+#else
+std::auto_ptr<SecureMemoryRegistry> SecureMemoryRegistry::instance(NULL);
+#endif
+
 CPPUNIT_TEST_SUITE_REGISTRATION(SlotManagerTests);
 
 void SlotManagerTests::setUp()

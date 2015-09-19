@@ -36,6 +36,19 @@
 #include "CryptoFactory.h"
 #include "SecureMemoryRegistry.h"
 
+// Initialise the one-and-only instance
+#ifdef HAVE_CXX11
+std::unique_ptr<MutexFactory> MutexFactory::instance(nullptr);
+#else
+std::auto_ptr<MutexFactory> MutexFactory::instance(NULL);
+#endif
+
+#ifdef HAVE_CXX11
+std::unique_ptr<SecureMemoryRegistry> SecureMemoryRegistry::instance(nullptr);
+#else
+std::auto_ptr<SecureMemoryRegistry> SecureMemoryRegistry::instance(NULL);
+#endif
+
 int main(int /*argc*/, char** /*argv*/)
 {
 	CppUnit::TextUi::TestRunner runner;

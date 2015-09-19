@@ -35,6 +35,13 @@
 #include <cppunit/extensions/HelperMacros.h>
 #include "HandleManagerTests.h"
 
+#ifdef HAVE_CXX11
+std::unique_ptr<MutexFactory> MutexFactory::instance(nullptr);
+#else
+std::auto_ptr<MutexFactory> MutexFactory::instance(NULL);
+#endif
+
+
 CPPUNIT_TEST_SUITE_REGISTRATION(HandleManagerTests);
 
 void HandleManagerTests::setUp()
