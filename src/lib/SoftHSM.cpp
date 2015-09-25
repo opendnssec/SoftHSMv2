@@ -69,6 +69,22 @@
 
 #include <stdlib.h>
 
+// Initialise the one-and-only instance
+
+#ifdef HAVE_CXX11
+std::unique_ptr<MutexFactory> MutexFactory::instance(nullptr);
+#else
+std::auto_ptr<MutexFactory> MutexFactory::instance(NULL);
+#endif
+
+#ifdef HAVE_CXX11
+std::unique_ptr<SecureMemoryRegistry> SecureMemoryRegistry::instance(nullptr);
+#else
+std::auto_ptr<SecureMemoryRegistry> SecureMemoryRegistry::instance(NULL);
+#endif
+
+
+
 static CK_RV newP11Object(CK_OBJECT_CLASS objClass, CK_KEY_TYPE keyType, CK_CERTIFICATE_TYPE certType, P11Object **p11object)
 {
 	switch(objClass) {

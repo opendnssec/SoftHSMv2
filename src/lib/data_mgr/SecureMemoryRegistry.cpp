@@ -37,13 +37,6 @@
 #include "log.h"
 #include "SecureMemoryRegistry.h"
 
-// Initialise the one-and-only instance
-#ifdef HAVE_CXX11
-std::unique_ptr<SecureMemoryRegistry> SecureMemoryRegistry::instance(nullptr);
-#else
-std::auto_ptr<SecureMemoryRegistry> SecureMemoryRegistry::instance(NULL);
-#endif
-
 // Constructor
 SecureMemoryRegistry::SecureMemoryRegistry()
 {
