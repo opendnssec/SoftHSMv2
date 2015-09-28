@@ -40,6 +40,8 @@ Minimum required versions:
 If you are using Botan, make sure that it has support for GNU MP (--with-gnump).
 This will improve the performance when doing public key operations.
 
+The GNU Autotools are also required for building the software.
+
 There is a migration tool for converting token databases from SoftHSMv1 into
 the new type of tokens. If this tool is built, then SQLite3 is required (>=
 3.4.2).
@@ -50,6 +52,7 @@ the new type of tokens. If this tool is built, then SQLite3 is required (>=
 
 Configure the installation/compilation scripts:
 
+	sh ./autogen.sh
 	./configure
 
 Options:
