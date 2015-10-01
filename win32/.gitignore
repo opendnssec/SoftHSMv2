@@ -5,6 +5,7 @@
 *.opensdf
 *.sdf
 *.suo
+.vs/
 
 # Object files
 *.obj

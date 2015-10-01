@@ -2,6 +2,9 @@ NEWS for SoftHSM -- History of user visible changes
 
 SoftHSM develop
 
+* Issue #136: Improved guide and build scripts for Windows.
+  (Thanks to Jaroslav Imrich)
+
 Bugfixes:
 * SOFTHSM-123: Fix library cleanup on BSD.
 * Prioritize the return values in C_GetAttributeValue.
