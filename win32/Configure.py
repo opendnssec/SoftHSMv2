@@ -4,6 +4,8 @@
 #
 # this script builds Visual Studio files
 
+from __future__ import print_function
+
 import sys
 import os
 import os.path
@@ -95,13 +97,13 @@ commandlist = ["help", "clean"] # verbose, keep
 
 # usage
 
-usage = ["Usage: python Configure.pl help",
-         "       python Configure.pl options*",
-         "       python Configure.pl clean"]
+usage = ["Usage: python Configure.py help",
+         "       python Configure.py options*",
+         "       python Configure.py clean"]
 
 # help
 
-myhelp = ["'python Configure.pl' configures SoftHSMv2 build files.\n"] +\
+myhelp = ["'python Configure.py' configures SoftHSMv2 build files.\n"] +\
 usage + [\
 "\nGeneral Commands:",
 "  help                     print this help",
@@ -335,7 +337,7 @@ def mywith(key, val, detail=None):
 def dohelp():
     """help"""
     for line in myhelp:
-        print line
+        print(line)
     sys.exit(1)
 
 def docleantest():
@@ -368,7 +370,7 @@ def doclean():
 
 def dounknown():
     """parsing error"""
-    print >> sys.stderr, "can't parse " + unknown_value + ""
+    print("can't parse " + unknown_value + "", file=sys.stderr)
     sys.exit(1)
 
 def doconfig():
@@ -401,11 +403,11 @@ def doconfig():
         varvals["DLLPATH"] = botan_dll
         botan_inc = os.path.join(botan_path, "include")
         if not os.path.exists(os.path.join(botan_inc, "botan\\init.h")):
-            print >> sys.stderr, "can't find Botan includes"
+            print("can't find Botan includes", file=sys.stderr)
             sys.exit(1)
         varvals["INCLUDEPATH"] = botan_inc
         if not os.path.exists(os.path.join(botan_path, "botan.lib")):
-            print >> sys.stderr, "can't find Botan library"
+            print("can't find Botan library", file=sys.stderr)
             sys.exit(1)
         varvals["LIBPATH"] = botan_path
         if enable_debug:
@@ -415,11 +417,11 @@ def doconfig():
             debug_botan_inc = os.path.join(debug_botan_path, "include")
             if not os.path.exists(os.path.join(debug_botan_inc,
                                                "botan\\init.h")):
-                print >> sys.stderr, "can't find debug Botan includes"
+                print("can't find debug Botan includes", file=sys.stderr)
                 sys.exit(1)
             varvals["DEBUGINCPATH"] = debug_botan_inc
             if not os.path.exists(os.path.join(debug_botan_path, "botan.lib")):
-                print >> sys.stderr, "can't find debug Botan library"
+                print("can't find debug Botan library", file=sys.stderr)
                 sys.exit(1)
             varvals["DEBUGLIBPATH"] = debug_botan_path
         else:
@@ -429,7 +431,7 @@ def doconfig():
 
         # Botan version
         if verbose:
-            print "checking Botan version"
+            print("checking Botan version")
         botan_version_minor = 0
         system_libs = []
         if os.path.exists(botan_dll):
@@ -439,7 +441,7 @@ def doconfig():
         inc = botan_inc
         lib = os.path.join(botan_path, "botan.lib")
         testfile = open("testbotan.cpp", "w")
-        print >>testfile, '\
+        print('\
 #include <botan/init.h>\n\
 #include <botan/version.h>\n\
 int main() {\n\
@@ -452,24 +454,24 @@ int main() {\n\
  return 2;\n\
 #endif\n\
  return 0;\n\
-}'
+}', file=testfile)
         testfile.close()
         command = ["cl", "/nologo", "/MD", "/I", inc, "testbotan.cpp", lib]
         command.extend(system_libs)
         subprocess.check_output(command, stderr=subprocess.STDOUT)
         if not os.path.exists(".\\testbotan.exe"):
-            print >> sys.stderr, "can't create .\\testbotan.exe"
+            print("can't create .\\testbotan.exe", file=sys.stderr)
             sys.exit(1)
         ret = subprocess.call(".\\testbotan.exe")
         if ret == 1:
-            print >> sys.stderr, "Botan version too old"
+            print("Botan version too old", file=sys.stderr)
             sys.exit(1)
         if ret == 2:
             botan_version_minor = 11
-            print >> sys.stderr, "Botan version 11 not yet supported"
+            print("Botan version 11 not yet supported", file=sys.stderr)
             sys.exit(1)
         if ret != 0:
-            print >> sys.stderr, "Botan test failed"
+            print("Botan test failed", file=sys.stderr)
             sys.exit(1)
         else:
             botan_version_minor = 10
@@ -477,9 +479,9 @@ int main() {\n\
         # Botan ECC support
         if enable_ecc:
             if verbose:
-                print "checking Botan ECC support"
+                print("checking Botan ECC support")
             testfile = open("testecc.cpp", "w")
-            print >>testfile, '\
+            print('\
 #include <botan/init.h>\n\
 #include <botan/ec_group.h>\n\
 #include <botan/oids.h>\n\
@@ -495,25 +497,24 @@ int main() {\n\
   return 1;\n\
  }\n\
  return 0;\n\
-}'
+}', file=testfile)
             testfile.close()
             command = ["cl", "/nologo", "/MD", "/I", inc, "testecc.cpp", lib]
             command.extend(system_libs)
             subprocess.check_output(command, stderr=subprocess.STDOUT)
             if not os.path.exists(".\\testecc.exe"):
-                print >> sys.stderr, "can't create .\\testecc.exe"
+                print("can't create .\\testecc.exe", file=sys.stderr)
                 sys.exit(1)
             if subprocess.call(".\\testecc.exe") != 0:
-                print >> sys.stderr, \
-                    "can't find P256: upgrade to Botan >= 1.10.6"
+                print("can't find P256: upgrade to Botan >= 1.10.6", file=sys.stderr)
                 sys.exit(1)
 
         # Botan GOST support
         if enable_gost:
             if verbose:
-                print "checking Botan GOST support"
+                print("checking Botan GOST support")
             testfile = open("testgost.cpp", "w")
-            print >>testfile, '\
+            print('\
 #include <botan/init.h>\n\
 #include <botan/gost_3410.h>\n\
 #include <botan/oids.h>\n\
@@ -529,17 +530,16 @@ int main() {\n\
   return 1;\n\
  }\n\
  return 0;\n\
-}'
+}', file=testfile)
             testfile.close()
             command = ["cl", "/nologo", "/MD", "/I", inc, "testgost.cpp", lib]
             command.extend(system_libs)
             subprocess.check_output(command, stderr=subprocess.STDOUT)
             if not os.path.exists(".\\testgost.exe"):
-                print >> sys.stderr, "can't create .\\testgost.exe"
+                print("can't create .\\testgost.exe", file=sys.stderr)
                 sys.exit(1)
             if subprocess.call(".\\testgost.exe") != 0:
-                print >> sys.stderr, \
-                    "can't find GOST: upgrade to Botan >= 1.10.6"
+                print("can't find GOST: upgrade to Botan >= 1.10.6", file=sys.stderr)
                 sys.exit(1)
 
         # no check for Botan RFC3394 support
@@ -547,9 +547,9 @@ int main() {\n\
 
         # Botan RFC5649 support
         if verbose:
-            print "checking Botan RFC5649 support"
+            print("checking Botan RFC5649 support")
         testfile = open("testrfc5649.cpp", "w")
-        print >>testfile, '\
+        print('\
 #include <botan/botan.h>\n\
 #include <botan/rfc3394.h>\n\
 int main() {\n\
@@ -559,41 +559,41 @@ int main() {\n\
  Algorithm_Factory& af = global_state().algorithm_factory();\n\
  SecureVector<byte> x = rfc5649_keywrap(key, kek, af);\n\
  return 1;\n\
-}'
+}', file=testfile)
         testfile.close()
         command = ["cl", "/nologo", "/MD", "/I", inc, "testrfc5649.cpp", lib]
         command.extend(system_libs)
         subprocess.call(command)
-        if not os.path.exists(".\\testrfc5649.exe"):
+        if os.path.exists(".\\testrfc5649.exe"):
             if verbose:
-                print "Found AES key wrap with pad"
+                print("Found AES key wrap with pad")
             condvals["RFC5649"] = True
         else:
             if verbose:
-                print "can't compile Botan AES key wrap with pad"
+                print("can't compile Botan AES key wrap with pad")
 
         # Botan GNU MP support
         if botan_version_minor == 10:
             if verbose:
-                print "checking Botan GNU MP support"
+                print("checking Botan GNU MP support")
             testfile = open("testgnump.cpp", "w")
-            print >>testfile, '\
+            print('\
 #include <botan/build.h>\n\
 int main() {\n\
 #ifndef BOTAN_HAS_ENGINE_GNU_MP\n\
 #error "No GNU MP support";\n\
 #endif\n\
-}'
+}', file=testfile)
             testfile.close()
             command = ["cl", "/nologo", "/MD", "/I", inc, "testgnump.cpp", lib]
             command.extend(system_libs)
             subprocess.call(command)
-            if not os.path.exists(".\\testgnump.exe"):
+            if os.path.exists(".\\testgnump.exe"):
                 if verbose:
-                    print "Botan GNU MP is supported"
+                    print("Botan GNU MP is supported")
             else:
                 if verbose:
-                    print "Botan GNU MP is not supported"
+                    print("Botan GNU MP is not supported")
 
     else:
 
@@ -605,12 +605,12 @@ int main() {\n\
         varvals["DLLPATH"] = openssl_dll
         openssl_inc = os.path.join(openssl_path, "include")
         if not os.path.exists(os.path.join(openssl_inc, "openssl\\ssl.h")):
-            print >> sys.stderr, "can't find OpenSSL headers"
+            print("can't find OpenSSL headers", file=sys.stderr)
             sys.exit(1)
         varvals["INCLUDEPATH"] = openssl_inc
         openssl_lib = os.path.join(openssl_path, "lib")
         if not os.path.exists(os.path.join(openssl_lib, "libeay32.lib")):
-            print >> sys.stderr, "can't find OpenSSL library"
+            print("can't find OpenSSL library", file=sys.stderr)
             sys.exit(1)
         varvals["LIBPATH"] = openssl_lib
         if enable_debug:
@@ -620,13 +620,13 @@ int main() {\n\
             debug_openssl_inc = os.path.join(debug_openssl_path, "include")
             if not os.path.exists(os.path.join(debug_openssl_inc,
                                                "openssl\\ssl.h")):
-                print >> sys.stderr, "can't find debug OpenSSL headers"
+                print("can't find debug OpenSSL headers", file=sys.stderr)
                 sys.exit(1)
             varvals["DEBUGINCPATH"] = debug_openssl_inc
             debug_openssl_lib = os.path.join(debug_openssl_path, "lib")
             if not os.path.exists(os.path.join(debug_openssl_lib,
                                                "libeay32.lib")):
-                print >> sys.stderr, "can't find debug OpenSSL library"
+                print("can't find debug OpenSSL library", file=sys.stderr)
                 sys.exit(1)
             varvals["DEBUGLIBPATH"] = debug_openssl_lib
         else:
@@ -636,7 +636,7 @@ int main() {\n\
 
         # OpenSSL support
         if verbose:
-            print "checking OpenSSL"
+            print("checking OpenSSL")
         system_libs = []
         if os.path.exists(openssl_dll):
             subprocess.call(["copy", openssl_dll, "."], shell=True)
@@ -645,28 +645,28 @@ int main() {\n\
         inc = openssl_inc
         lib = os.path.join(openssl_lib, "libeay32.lib")
         testfile = open("testossl.c", "w")
-        print >>testfile, '\
+        print('\
 #include <openssl/err.h>\n\
 int main() {\n\
  ERR_clear_error();\n\
  return 0;\n\
-}'
+}', file=testfile)
         testfile.close()
         command = ["cl", "/nologo", "/MD", "/I", inc, "testossl.c", lib]
         command.extend(system_libs)
         subprocess.check_output(command, stderr=subprocess.STDOUT)
         if not os.path.exists(".\\testossl.exe"):
-            print >> sys.stderr, "can't create .\\testossl.exe"
+            print("can't create .\\testossl.exe", file=sys.stderr)
             sys.exit(1)
         if subprocess.call(".\\testossl.exe") != 0:
-            print >> sys.stderr, "OpenSSL test failed"
+            print("OpenSSL test failed", file=sys.stderr)
             sys.exit(1)
 
         # OpenSSL version
         if verbose:
-            print "checking OpenSSL version"
+            print("checking OpenSSL version")
         testfile = open("testosslv.c", "w")
-        print >>testfile, '\
+        print('\
 #include <openssl/ssl.h>\n\
 #include <openssl/opensslv.h>\n\
 int main() {\n\
@@ -678,25 +678,24 @@ int main() {\n\
 #else\n\
  return 1;\n\
 #endif\n\
-}'
+}', file=testfile)
         testfile.close()
         command = ["cl", "/nologo", "/MD", "/I", inc, "testosslv.c", lib]
         command.extend(system_libs)
         subprocess.check_output(command, stderr=subprocess.STDOUT)
         if not os.path.exists(".\\testosslv.exe"):
-            print >> sys.stderr, "can't create .\\testosslv.exe"
+            print("can't create .\\testosslv.exe", file=sys.stderr)
             sys.exit(1)
         if subprocess.call(".\\testosslv.exe") != 0:
-            print >> sys.stderr, \
-                "OpenSLL version too old (1.0.0 or later required)"
+            print("OpenSLL version too old (1.0.0 or later required)", file=sys.stderr)
             sys.exit(1)
 
         # OpenSSL ECC support
         if enable_ecc:
             if verbose:
-                print "checking OpenSSL ECC support"
+                print("checking OpenSSL ECC support")
             testfile = open("testecc.c", "w")
-            print >>testfile, '\
+            print('\
 #include <openssl/ecdsa.h>\n\
 #include <openssl/objects.h>\n\
 int main() {\n\
@@ -706,24 +705,24 @@ int main() {\n\
  if (ec256 == NULL || ec384 == NULL)\n\
   return 1;\n\
  return 0;\n\
-}'
+}', file=testfile)
             testfile.close()
             command = ["cl", "/nologo", "/MD", "/I", inc, "testecc.c", lib]
             command.extend(system_libs)
             subprocess.check_output(command, stderr=subprocess.STDOUT)
             if not os.path.exists(".\\testecc.exe"):
-                print >> sys.stderr, "can't create .\\testecc.exe"
+                print("can't create .\\testecc.exe", file=sys.stderr)
                 sys.exit(1)
             if subprocess.call(".\\testecc.exe") != 0:
-                print >> sys.stderr, "can't find P256 or P384: no ECC support"
+                print("can't find P256 or P384: no ECC support", file=sys.stderr)
                 sys.exit(1)
 
         # OpenSSL GOST support
         if enable_gost:
             if verbose:
-                print "checking OpenSSL GOST support"
+                print("checking OpenSSL GOST support")
             testfile = open("testgost.c", "w")
-            print >>testfile, '\
+            print('\
 #include <openssl/conf.h>\n\
 #include <openssl/engine.h>\n\
 int main() {\n\
@@ -737,61 +736,61 @@ int main() {\n\
  if (ENGINE_init(e) <= 0)\n\
   return 1;\n\
  return 0;\n\
-}'
+}', file=testfile)
             testfile.close()
             command = ["cl", "/nologo", "/MD", "/I", inc, "testgost.c", lib]
             command.extend(system_libs)
             subprocess.check_output(command, stderr=subprocess.STDOUT)
             if not os.path.exists(".\\testgost.exe"):
-                print >> sys.stderr, "can't create .\\testgost.exe"
+                print("can't create .\\testgost.exe", file=sys.stderr)
                 sys.exit(1)
             if subprocess.call(".\\testgost.exe") != 0:
-                print >> sys.stderr, "can't find GOST: no GOST support"
+                print("can't find GOST: no GOST support", file=sys.stderr)
                 sys.exit(1)
 
         # OpenSSL EVP interface for AES key wrapping (aka RFC 3394)
         if verbose:
-            print "checking OpenSSL EVP interface for AES key wrapping"
+            print("checking OpenSSL EVP interface for AES key wrapping")
         testfile = open("testrfc3394.c", "w")
-        print >>testfile, '\
+        print('\
 #include <openssl/evp.h>\n\
 int main() {\n\
  EVP_aes_128_wrap();\n\
  return 1;\n\
-}'
+}', file=testfile)
         testfile.close()
         command = ["cl", "/nologo", "/MD", "/I", inc, "testrfc3394.c", lib]
         command.extend(system_libs)
         subprocess.call(command)
         if os.path.exists(".\\testrfc3394.exe"):
             if verbose:
-                print "RFC 3394 is supported"
+                print("RFC 3394 is supported")
             condvals["RFC3394"] = True
         else:
             if verbose:
-                print "can't compile OpenSSL RFC 3394"
+                print("can't compile OpenSSL RFC 3394")
 
         # OpenSSL EVP interface for AES key wrap with pad (aka RFC 5649)
         if verbose:
-            print "checking OpenSSL EVP interface for AES key wrapping with pad"
+            print("checking OpenSSL EVP interface for AES key wrapping with pad")
         testfile = open("testrfc5649.c", "w")
-        print >>testfile, '\
+        print('\
 #include <openssl/evp.h>\n\
 int main() {\n\
  EVP_aes_128_wrap_pad();\n\
  return 1;\n\
-}'
+}', file=testfile)
         testfile.close()
         command = ["cl", "/nologo", "/MD", "/I", inc, "testrfc5649.c", lib]
         command.extend(system_libs)
         subprocess.call(command)
         if os.path.exists(".\\testrfc5649.exe"):
             if verbose:
-                print "RFC 5649 is supported"
+                print("RFC 5649 is supported")
             condvals["RFC5649"] = True
         else:
             if verbose:
-                print "can't compile OpenSSL RFC 5649"
+                print("can't compile OpenSSL RFC 5649")
         
     # configure CppUnit
     if want_tests:
@@ -799,18 +798,18 @@ int main() {\n\
         cppunit_path = os.path.abspath(cppunit_path)
         cppunit_inc = os.path.join(cppunit_path, "include")
         if not os.path.exists(os.path.join(cppunit_inc, "cppunit\\Test.h")):
-            print >> sys.stderr, "can't find CppUnit headers"
+            print("can't find CppUnit headers", file=sys.stderr)
             sys.exit(1)
         varvals["CUINCPATH"] = cppunit_inc
         cppunit_lib = os.path.join(cppunit_path, "lib")
         if not os.path.exists(os.path.join(cppunit_lib, "cppunit.lib")):
             cppunit_lib = cppunit_path
         if not os.path.exists(os.path.join(cppunit_lib, "cppunit.lib")):
-            print >> sys.stderr, "can't find CppUnit library"
+            print("can't find CppUnit library", file=sys.stderr)
             sys.exit(1)
         if enable_debug:
             if not os.path.exists(os.path.join(cppunit_lib, "cppunitd.lib")):
-                print >> sys.stderr, "can't find debug CppUnit library"
+                print("can't find debug CppUnit library", file=sys.stderr)
                 sys.exit(1)
         varvals["CULIBPATH"] = cppunit_lib
 
@@ -887,9 +886,9 @@ def setupfile(filename):
                     raise SyntaxError("unknown control @" + vm.group(2) +
                                       "@ in " + filename)
             break
-        print >>fileout, line
+        print(line, file=fileout)
     if verbose:
-        print "Setting up " + filename
+        print("Setting up " + filename)
     filein.close()
     fileout.close()
 
@@ -899,7 +898,7 @@ def main(args):
     # no arguments -> usage
     if len(args) <= 1:
         for line in usage:
-            print line
+            print(line)
         sys.exit(1)
 
     parseargs(args[1:])
@@ -915,67 +914,67 @@ def main(args):
 
     if verbose:
         if enable_keep:
-            print "keep: enabled"
+            print("keep: enabled")
         else:
-            print "keep: disabled"
+            print("keep: disabled")
         if platform == 64:
-            print "64bit: enabled"
+            print("64bit: enabled")
         else:
-            print "64bit: disabled"
+            print("64bit: disabled")
         if enable_debug:
-            print "debug: enabled"
+            print("debug: enabled")
         else:
-            print "debug: disabled"
+            print("debug: disabled")
         if enable_ecc:
-            print "ecc: enabled"
+            print("ecc: enabled")
         else:
-            print "ecc: disabled"
+            print("ecc: disabled")
         if enable_gost:
-            print "gost: enabled"
+            print("gost: enabled")
         else:
-            print "gost: disabled"
+            print("gost: disabled")
         if enable_non_paged:
-            print "non-paged-memory: enabled"
+            print("non-paged-memory: enabled")
         else:
-            print "non-paged-memory: disabled"
-        print "crypto-backend: " + crypto_backend
+            print("non-paged-memory: disabled")
+        print("crypto-backend: " + crypto_backend)
         if crypto_backend == "botan":
-            print "botan-path: " + botan_path
+            print("botan-path: " + botan_path)
             if enable_debug:
-                print "debug-botan-path: " + debug_botan_path
+                print("debug-botan-path: " + debug_botan_path)
         else:
-            print "openssl-path: " + openssl_path
+            print("openssl-path: " + openssl_path)
             if enable_debug:
-                print "debug-openssl-path: " + debug_openssl_path
+                print("debug-openssl-path: " + debug_openssl_path)
         if want_tests:
-            print "cppunit-path: " + cppunit_path
+            print("cppunit-path: " + cppunit_path)
 
     doconfig()
 
     # status after config
 
     if verbose:
-        print "Configuration Status"
-        print "\tconditions:"
+        print("Configuration Status")
+        print("\tconditions:")
         for name in condnames:
             if condvals.get(name):
-                print "\t\t" + name + " is true"
+                print("\t\t" + name + " is true")
             else:
-                print "\t\t" + name + " is false"
-        print "\tsubstitutions:"
+                print("\t\t" + name + " is false")
+        print("\tsubstitutions:")
         for name in varnames:
             if varvals.get(name):
-                print "\t\t" + name + '-> "' + varvals[name] + '"'
-        print
+                print("\t\t" + name + '-> "' + varvals[name] + '"')
+        print()
 
     for filename in filelist:
         setupfile(filename)
 
     # clean test file
     if not enable_keep:
-        cleantest()
+        docleantest()
 
-    print "Configured."
+    print("Configured.")
     sys.exit(0)
 
 main(sys.argv)
