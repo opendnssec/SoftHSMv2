@@ -211,6 +211,16 @@ void SymmetricAlgorithmTests::aesEncryptDecrypt(CK_MECHANISM_TYPE mechanismType,
 		CPPUNIT_ASSERT(rv==CKR_OK);
 	}
 
+	
+	if (mechanismType == CKM_AES_CBC_PAD)
+	{
+		ulCipherTextLen = sizeof(cipherText);
+		rv = C_Encrypt(hSession, plainText, 4, cipherText, &ulCipherTextLen);
+		CPPUNIT_ASSERT(rv == CKR_OK);
+		rv = C_EncryptInit(hSession, &mechanism, hKey);
+		CPPUNIT_ASSERT(rv == CKR_OK);
+	}
+
 	ulCipherTextLen = sizeof(cipherText);
 	rv = C_Encrypt(hSession,plainText,sizeof(plainText),cipherText,&ulCipherTextLen);
 	CPPUNIT_ASSERT(rv==CKR_OK);
@@ -253,6 +263,30 @@ void SymmetricAlgorithmTests::aesEncryptDecrypt(CK_MECHANISM_TYPE mechanismType,
 	ulCipherTextMultiLen += ulCipherTextMultiPartLen;
 	CPPUNIT_ASSERT(ulCipherTextLen==ulCipherTextMultiLen);
 	CPPUNIT_ASSERT(memcmp(cipherText, cipherTextMulti, ulCipherTextLen) == 0);
+
+
+	if (mechanismType == CKM_AES_CBC_PAD)
+	{
+		CK_ULONG ulCipherTextMultiLen1 = 0;
+		CK_ULONG ulCipherTextMultiLen2 = 0;
+		CK_ULONG ulCipherTextMultiLen3 = 0;
+		rv = C_EncryptInit(hSession, &mechanism, hKey);
+		CPPUNIT_ASSERT(rv == CKR_OK);
+		ulCipherTextMultiLen1 = sizeof(cipherTextMulti);
+		rv = C_EncryptUpdate(hSession, plainText, 4, cipherTextMulti, &ulCipherTextMultiLen1);
+		// input data is too small (4), to produce cipher data
+		CPPUNIT_ASSERT(rv == CKR_OK);
+		ulCipherTextMultiLen2 = sizeof(cipherTextMulti) - ulCipherTextMultiLen1;
+		rv = C_EncryptUpdate(hSession, plainText + 4, sizeof(plainText) - 4, cipherTextMulti + ulCipherTextMultiLen1, &ulCipherTextMultiLen2);
+		// ulCipherTextMultiLen2 is a key length modulo
+		CPPUNIT_ASSERT(rv == CKR_OK);
+		ulCipherTextMultiLen3 = sizeof(cipherTextMulti) - ulCipherTextMultiLen1 - ulCipherTextMultiLen2;
+		rv = C_EncryptFinal(hSession, cipherTextMulti + ulCipherTextMultiLen1 + ulCipherTextMultiLen2, &ulCipherTextMultiLen3);
+		// ulCipherTextMultiLen3 contains one key length
+		CPPUNIT_ASSERT(rv == CKR_OK);
+		CPPUNIT_ASSERT(ulCipherTextLen == ulCipherTextMultiLen1 + ulCipherTextMultiLen2 + ulCipherTextMultiLen3);
+		CPPUNIT_ASSERT(memcmp(cipherText, cipherTextMulti, ulCipherTextLen) == 0);
+	}
 
 	// Single-part decryption
 	rv = C_DecryptInit(hSession,&mechanism,hKey);

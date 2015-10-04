@@ -2321,8 +2321,14 @@ static CK_RV SymEncryptUpdate(Session* session, CK_BYTE_PTR pData, CK_ULONG ulDa
 		return CKR_DATA_LEN_RANGE;
 	}
 
-	// Round down/up to block size
+	
 	CK_ULONG maxSize = ulDataLen - remainder;
+	if (maxSize == 0)
+	{
+		maxSize = cipher->getBlockSize();
+	}
+	
+	// Round down/up to block size
 	if (remainder + cipher->getBufferSize() > cipher->getBlockSize())
 	{
 		maxSize += cipher->getBlockSize();
@@ -2352,7 +2358,8 @@ static CK_RV SymEncryptUpdate(Session* session, CK_BYTE_PTR pData, CK_ULONG ulDa
 		return CKR_GENERAL_ERROR;
 	}
 
-	memcpy(pEncryptedData, encryptedData.byte_str(), encryptedData.size());
+	if (encryptedData.size())
+		memcpy(pEncryptedData, encryptedData.byte_str(), encryptedData.size());
 	*pulEncryptedDataLen = encryptedData.size();
 
 	return CKR_OK;
@@ -9330,11 +9337,6 @@ CK_RV SoftHSM::deriveSymmetric
 	if (cipher == NULL) return CKR_MECHANISM_INVALID;
 
 	SymmetricKey* secretkey = new SymmetricKey();
-// 	if (secretkey == NULL)
-// 	{
-// 		CryptoFactory::i()->recycleSymmetricAlgorithm(cipher);
-// 		return CKR_HOST_MEMORY;
-// 	}
 
 	if (getSymmetricKey(secretkey, token, baseKey) != CKR_OK)
 	{
