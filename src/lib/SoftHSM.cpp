@@ -2006,11 +2006,6 @@ CK_RV SoftHSM::SymEncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 	if (cipher == NULL) return CKR_MECHANISM_INVALID;
 
 	SymmetricKey* secretkey = new SymmetricKey();
-	if (secretkey == NULL)
-	{
-		CryptoFactory::i()->recycleSymmetricAlgorithm(cipher);
-		return CKR_HOST_MEMORY;
-	}
 
 	if (getSymmetricKey(secretkey, token, key) != CKR_OK)
 	{
@@ -2326,8 +2321,14 @@ static CK_RV SymEncryptUpdate(Session* session, CK_BYTE_PTR pData, CK_ULONG ulDa
 		return CKR_DATA_LEN_RANGE;
 	}
 
-	// Round down/up to block size
+	
 	CK_ULONG maxSize = ulDataLen - remainder;
+	if (maxSize == 0)
+	{
+		maxSize = cipher->getBlockSize();
+	}
+	
+	// Round down/up to block size
 	if (remainder + cipher->getBufferSize() > cipher->getBlockSize())
 	{
 		maxSize += cipher->getBlockSize();
@@ -2357,7 +2358,8 @@ static CK_RV SymEncryptUpdate(Session* session, CK_BYTE_PTR pData, CK_ULONG ulDa
 		return CKR_GENERAL_ERROR;
 	}
 
-	memcpy(pEncryptedData, encryptedData.byte_str(), encryptedData.size());
+	if (encryptedData.size())
+		memcpy(pEncryptedData, encryptedData.byte_str(), encryptedData.size());
 	*pulEncryptedDataLen = encryptedData.size();
 
 	return CKR_OK;
@@ -2600,11 +2602,6 @@ CK_RV SoftHSM::SymDecryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 	if (cipher == NULL) return CKR_MECHANISM_INVALID;
 
 	SymmetricKey* secretkey = new SymmetricKey();
-	if (secretkey == NULL)
-	{
-		CryptoFactory::i()->recycleSymmetricAlgorithm(cipher);
-		return CKR_HOST_MEMORY;
-	}
 
 	if (getSymmetricKey(secretkey, token, key) != CKR_OK)
 	{
@@ -3403,11 +3400,6 @@ CK_RV SoftHSM::MacSignInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechani
 	if (mac == NULL) return CKR_MECHANISM_INVALID;
 
 	SymmetricKey* privkey = new SymmetricKey();
-	if (privkey == NULL)
-	{
-		CryptoFactory::i()->recycleMacAlgorithm(mac);
-		return CKR_HOST_MEMORY;
-	}
 
 	if (getSymmetricKey(privkey, token, key) != CKR_OK)
 	{
@@ -4216,11 +4208,6 @@ CK_RV SoftHSM::MacVerifyInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMecha
 	if (mac == NULL) return CKR_MECHANISM_INVALID;
 
 	SymmetricKey* pubkey = new SymmetricKey();
-	if (pubkey == NULL)
-	{
-		CryptoFactory::i()->recycleMacAlgorithm(mac);
-		return CKR_HOST_MEMORY;
-	}
 
 	if (getSymmetricKey(pubkey, token, key) != CKR_OK)
 	{
@@ -5280,11 +5267,6 @@ CK_RV SoftHSM::WrapKeySym
 	if (cipher == NULL) return CKR_MECHANISM_INVALID;
 
 	SymmetricKey* wrappingkey = new SymmetricKey();
-	if (wrappingkey == NULL)
-	{
-		CryptoFactory::i()->recycleSymmetricAlgorithm(cipher);
-		return CKR_HOST_MEMORY;
-	}
 
 	if (getSymmetricKey(wrappingkey, token, wrapKey) != CKR_OK)
 	{
@@ -5671,11 +5653,6 @@ CK_RV SoftHSM::UnwrapKeySym
 	if (cipher == NULL) return CKR_MECHANISM_INVALID;
 
 	SymmetricKey* unwrappingkey = new SymmetricKey();
-	if (unwrappingkey == NULL)
-	{
-		CryptoFactory::i()->recycleSymmetricAlgorithm(cipher);
-		return CKR_HOST_MEMORY;
-	}
 
 	if (getSymmetricKey(unwrappingkey, token, unwrapKey) != CKR_OK)
 	{
@@ -5899,7 +5876,7 @@ CK_RV SoftHSM::C_UnwrapKey
 	// Add the additional
 	if (ulCount > (maxAttribs - secretAttribsCount))
 		return CKR_TEMPLATE_INCONSISTENT;
-	for (CK_ULONG i = 0; i < ulCount && rv == CKR_OK; ++i)
+	for (CK_ULONG i = 0; i < ulCount; ++i)
 	{
 		switch (pTemplate[i].type)
 		{
@@ -9360,11 +9337,6 @@ CK_RV SoftHSM::deriveSymmetric
 	if (cipher == NULL) return CKR_MECHANISM_INVALID;
 
 	SymmetricKey* secretkey = new SymmetricKey();
-	if (secretkey == NULL)
-	{
-		CryptoFactory::i()->recycleSymmetricAlgorithm(cipher);
-		return CKR_HOST_MEMORY;
-	}
 
 	if (getSymmetricKey(secretkey, token, baseKey) != CKR_OK)
 	{
@@ -9996,7 +9968,7 @@ CK_RV SoftHSM::getSymmetricKey(SymmetricKey* skey, Token* token, OSObject* key)
 	return CKR_OK;
 }
 
-bool SoftHSM::setRSAPrivateKey(OSObject* key, ByteString ber, Token* token, bool isPrivate)
+bool SoftHSM::setRSAPrivateKey(OSObject* key, const ByteString& ber, Token* token, bool isPrivate) const
 {
 	AsymmetricAlgorithm* rsa = CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::RSA);
 	if (rsa == NULL)
@@ -10060,7 +10032,7 @@ bool SoftHSM::setRSAPrivateKey(OSObject* key, ByteString ber, Token* token, bool
 	return bOK;
 }
 
-bool SoftHSM::setDSAPrivateKey(OSObject* key, ByteString ber, Token* token, bool isPrivate)
+bool SoftHSM::setDSAPrivateKey(OSObject* key, const ByteString& ber, Token* token, bool isPrivate) const
 {
 	AsymmetricAlgorithm* dsa = CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::DSA);
 	if (dsa == NULL)
@@ -10108,7 +10080,7 @@ bool SoftHSM::setDSAPrivateKey(OSObject* key, ByteString ber, Token* token, bool
 	return bOK;
 }
 
-bool SoftHSM::setDHPrivateKey(OSObject* key, ByteString ber, Token* token, bool isPrivate)
+bool SoftHSM::setDHPrivateKey(OSObject* key, const ByteString &ber, Token* token, bool isPrivate) const
 {
 	AsymmetricAlgorithm* dh = CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::DH);
 	if (dh == NULL)
@@ -10151,7 +10123,7 @@ bool SoftHSM::setDHPrivateKey(OSObject* key, ByteString ber, Token* token, bool 
 
 	return bOK;
 }
-bool SoftHSM::setECPrivateKey(OSObject* key, ByteString ber, Token* token, bool isPrivate)
+bool SoftHSM::setECPrivateKey(OSObject* key, const ByteString& ber, Token* token, bool isPrivate) const
 {
 	AsymmetricAlgorithm* ecc = CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::ECDSA);
 	if (ecc == NULL)

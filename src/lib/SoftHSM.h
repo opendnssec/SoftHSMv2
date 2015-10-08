@@ -384,10 +384,10 @@ private:
 	CK_RV getGOSTPublicKey(GOSTPublicKey* publicKey, Token* token, OSObject* key);
 	CK_RV getSymmetricKey(SymmetricKey* skey, Token* token, OSObject* key);
 
-	bool setRSAPrivateKey(OSObject* key, ByteString ber, Token* token, bool isPrivate);
-	bool setDSAPrivateKey(OSObject* key, ByteString ber, Token* token, bool isPrivate);
-	bool setDHPrivateKey(OSObject* key, ByteString ber, Token* token, bool isPrivate);
-	bool setECPrivateKey(OSObject* key, ByteString ber, Token* token, bool isPrivate);
+	bool setRSAPrivateKey(OSObject* key, const ByteString& ber, Token* token, bool isPrivate) const;
+	bool setDSAPrivateKey(OSObject* key, const ByteString& ber, Token* token, bool isPrivate) const;
+	bool setDHPrivateKey(OSObject* key, const ByteString& ber, Token* token, bool isPrivate) const;
+	bool setECPrivateKey(OSObject* key, const ByteString& ber, Token* token, bool isPrivate) const;
 
 
 	CK_RV WrapKeyAsym
