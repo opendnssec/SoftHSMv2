@@ -679,11 +679,11 @@ int dbRSAPriv2session(sqlite3* /*db*/, CK_OBJECT_HANDLE objectID, CK_SESSION_HAN
 		{ CKA_PUBLIC_EXPONENT,		NULL,	0 },
 		{ CKA_PRIVATE_EXPONENT,		NULL,	0 },
 		{ CKA_PRIME_1,			NULL,	0 },
-		{ CKA_PRIME_2,			NULL,	0 }
-// SoftHSM v1 did not store these values
-//		{ CKA_EXPONENT_1,		NULL,	0 },
-//		{ CKA_EXPONENT_2,		NULL,	0 },
-//		{ CKA_COEFFICIENT,		NULL,	0 }
+		{ CKA_PRIME_2,			NULL,	0 },
+		// SoftHSM v1 did not store the values below
+		{ CKA_EXPONENT_1,		NULL,	0 },
+		{ CKA_EXPONENT_2,		NULL,	0 },
+		{ CKA_COEFFICIENT,		NULL,	0 }
 	};
 
 	for (i = 0; i < 23; i++)
@@ -696,7 +696,7 @@ int dbRSAPriv2session(sqlite3* /*db*/, CK_OBJECT_HANDLE objectID, CK_SESSION_HAN
 		}
 	}
 
-	rv = p11->C_CreateObject(hSession, privTemplate, 23, &hKey);
+	rv = p11->C_CreateObject(hSession, privTemplate, 26, &hKey);
 	if (rv != CKR_OK)
 	{
 		fprintf(stderr, "ERROR %X: Could not save the private key in the token. "
@@ -708,7 +708,7 @@ int dbRSAPriv2session(sqlite3* /*db*/, CK_OBJECT_HANDLE objectID, CK_SESSION_HAN
 		printf("Object %lu has been migrated\n", objectID);
 	}
 
-	freeTemplate(privTemplate, 23);
+	freeTemplate(privTemplate, 26);
 
 	return result;
 }
