@@ -5869,7 +5869,7 @@ CK_RV SoftHSM::C_UnwrapKey
 	// Add the additional
 	if (ulCount > (maxAttribs - secretAttribsCount))
 		return CKR_TEMPLATE_INCONSISTENT;
-	for (CK_ULONG i = 0; i < ulCount && rv == CKR_OK; ++i)
+	for (CK_ULONG i = 0; i < ulCount; ++i)
 	{
 		switch (pTemplate[i].type)
 		{
