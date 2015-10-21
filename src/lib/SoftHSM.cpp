@@ -2352,7 +2352,10 @@ static CK_RV SymEncryptUpdate(Session* session, CK_BYTE_PTR pData, CK_ULONG ulDa
 		return CKR_GENERAL_ERROR;
 	}
 
-	memcpy(pEncryptedData, encryptedData.byte_str(), encryptedData.size());
+	if (encryptedData.size() != 0)
+	{
+		memcpy(pEncryptedData, encryptedData.byte_str(), encryptedData.size());
+	}
 	*pulEncryptedDataLen = encryptedData.size();
 
 	return CKR_OK;
@@ -2798,7 +2801,10 @@ static CK_RV SymDecrypt(Session* session, CK_BYTE_PTR pEncryptedData, CK_ULONG u
 		data.resize(ulEncryptedDataLen);
 	}
 
-	memcpy(pData, data.byte_str(), data.size());
+	if (data.size() != 0)
+	{
+		memcpy(pData, data.byte_str(), data.size());
+	}
 	*pulDataLen = data.size();
 
 	session->resetOp();
@@ -2851,7 +2857,10 @@ static CK_RV AsymDecrypt(Session* session, CK_BYTE_PTR pEncryptedData, CK_ULONG 
 		session->resetOp();
 		return CKR_GENERAL_ERROR;
 	}
-	memcpy(pData, data.byte_str(), data.size());
+	if (data.size() != 0)
+	{
+		memcpy(pData, data.byte_str(), data.size());
+	}
 	*pulDataLen = data.size();
 
 	session->resetOp();
@@ -2935,7 +2944,10 @@ static CK_RV SymDecryptUpdate(Session* session, CK_BYTE_PTR pEncryptedData, CK_U
 		return CKR_GENERAL_ERROR;
 	}
 
-	memcpy(pData, decryptedData.byte_str(), decryptedData.size());
+	if (decryptedData.size() != 0)
+	{
+		memcpy(pData, decryptedData.byte_str(), decryptedData.size());
+	}
 	*pDataLen = decryptedData.size();
 
 	return CKR_OK;
@@ -2965,7 +2977,7 @@ CK_RV SoftHSM::C_DecryptUpdate(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pEncrypte
 		return CKR_FUNCTION_NOT_SUPPORTED;
 }
 
-static CK_RV SymDecryptFinal(Session* session, CK_BYTE_PTR pEncryptedData, CK_ULONG_PTR pulEncryptedDataLen)
+static CK_RV SymDecryptFinal(Session* session, CK_BYTE_PTR pDecryptedData, CK_ULONG_PTR pulDecryptedDataLen)
 {
 	SymmetricAlgorithm* cipher = session->getSymmetricCryptoOp();
 	if (cipher == NULL || !session->getAllowMultiPartOp())
@@ -2974,39 +2986,39 @@ static CK_RV SymDecryptFinal(Session* session, CK_BYTE_PTR pEncryptedData, CK_UL
 		return CKR_OPERATION_NOT_INITIALIZED;
 	}
 
-	// Size of the encrypted data
+	// Size of the decrypted data
 	CK_ULONG size = 0;
 	if (cipher->getPaddingMode() == true)
 	{
 		size = cipher->getBlockSize();
 	}
 
-	if (pEncryptedData == NULL_PTR)
+	if (pDecryptedData == NULL_PTR)
 	{
-		*pulEncryptedDataLen = size;
+		*pulDecryptedDataLen = size;
 		return CKR_OK;
 	}
 
 	// Check buffer size
-	if (*pulEncryptedDataLen < size)
+	if (*pulDecryptedDataLen < size)
 	{
-		*pulEncryptedDataLen = size;
+		*pulDecryptedDataLen = size;
 		return CKR_BUFFER_TOO_SMALL;
 	}
 
-	// Finalize encryption
-	ByteString encryptedFinal;
-	if (!cipher->decryptFinal(encryptedFinal))
+	// Finalize decryption
+	ByteString decryptedFinal;
+	if (!cipher->decryptFinal(decryptedFinal))
 	{
 		session->resetOp();
 		return CKR_GENERAL_ERROR;
 	}
 
-	if (encryptedFinal.size() != 0)
+	if (decryptedFinal.size() != 0)
 	{
-		memcpy(pEncryptedData, encryptedFinal.byte_str(), encryptedFinal.size());
+		memcpy(pDecryptedData, decryptedFinal.byte_str(), decryptedFinal.size());
 	}
-	*pulEncryptedDataLen = encryptedFinal.size();
+	*pulDecryptedDataLen = decryptedFinal.size();
 
 	session->resetOp();
 	return CKR_OK;
@@ -6225,7 +6237,10 @@ CK_RV SoftHSM::C_GenerateRandom(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pRandomD
 	if (!rng->generateRandom(randomData, ulRandomLen)) return CKR_GENERAL_ERROR;
 
 	// Return random data
-	memcpy(pRandomData, randomData.byte_str(), ulRandomLen);
+	if (ulRandomLen != 0)
+	{
+		memcpy(pRandomData, randomData.byte_str(), ulRandomLen);
+	}
 
 	return CKR_OK;
 }
