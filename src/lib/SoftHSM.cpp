@@ -2006,11 +2006,6 @@ CK_RV SoftHSM::SymEncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 	if (cipher == NULL) return CKR_MECHANISM_INVALID;
 
 	SymmetricKey* secretkey = new SymmetricKey();
-	if (secretkey == NULL)
-	{
-		CryptoFactory::i()->recycleSymmetricAlgorithm(cipher);
-		return CKR_HOST_MEMORY;
-	}
 
 	if (getSymmetricKey(secretkey, token, key) != CKR_OK)
 	{
@@ -2600,11 +2595,6 @@ CK_RV SoftHSM::SymDecryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 	if (cipher == NULL) return CKR_MECHANISM_INVALID;
 
 	SymmetricKey* secretkey = new SymmetricKey();
-	if (secretkey == NULL)
-	{
-		CryptoFactory::i()->recycleSymmetricAlgorithm(cipher);
-		return CKR_HOST_MEMORY;
-	}
 
 	if (getSymmetricKey(secretkey, token, key) != CKR_OK)
 	{
@@ -3403,11 +3393,6 @@ CK_RV SoftHSM::MacSignInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechani
 	if (mac == NULL) return CKR_MECHANISM_INVALID;
 
 	SymmetricKey* privkey = new SymmetricKey();
-	if (privkey == NULL)
-	{
-		CryptoFactory::i()->recycleMacAlgorithm(mac);
-		return CKR_HOST_MEMORY;
-	}
 
 	if (getSymmetricKey(privkey, token, key) != CKR_OK)
 	{
@@ -4216,11 +4201,6 @@ CK_RV SoftHSM::MacVerifyInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMecha
 	if (mac == NULL) return CKR_MECHANISM_INVALID;
 
 	SymmetricKey* pubkey = new SymmetricKey();
-	if (pubkey == NULL)
-	{
-		CryptoFactory::i()->recycleMacAlgorithm(mac);
-		return CKR_HOST_MEMORY;
-	}
 
 	if (getSymmetricKey(pubkey, token, key) != CKR_OK)
 	{
@@ -5280,11 +5260,6 @@ CK_RV SoftHSM::WrapKeySym
 	if (cipher == NULL) return CKR_MECHANISM_INVALID;
 
 	SymmetricKey* wrappingkey = new SymmetricKey();
-	if (wrappingkey == NULL)
-	{
-		CryptoFactory::i()->recycleSymmetricAlgorithm(cipher);
-		return CKR_HOST_MEMORY;
-	}
 
 	if (getSymmetricKey(wrappingkey, token, wrapKey) != CKR_OK)
 	{
@@ -5671,11 +5646,6 @@ CK_RV SoftHSM::UnwrapKeySym
 	if (cipher == NULL) return CKR_MECHANISM_INVALID;
 
 	SymmetricKey* unwrappingkey = new SymmetricKey();
-	if (unwrappingkey == NULL)
-	{
-		CryptoFactory::i()->recycleSymmetricAlgorithm(cipher);
-		return CKR_HOST_MEMORY;
-	}
 
 	if (getSymmetricKey(unwrappingkey, token, unwrapKey) != CKR_OK)
 	{
@@ -9360,11 +9330,6 @@ CK_RV SoftHSM::deriveSymmetric
 	if (cipher == NULL) return CKR_MECHANISM_INVALID;
 
 	SymmetricKey* secretkey = new SymmetricKey();
-	if (secretkey == NULL)
-	{
-		CryptoFactory::i()->recycleSymmetricAlgorithm(cipher);
-		return CKR_HOST_MEMORY;
-	}
 
 	if (getSymmetricKey(secretkey, token, baseKey) != CKR_OK)
 	{
