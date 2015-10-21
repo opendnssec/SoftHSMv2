@@ -9961,7 +9961,7 @@ CK_RV SoftHSM::getSymmetricKey(SymmetricKey* skey, Token* token, OSObject* key)
 	return CKR_OK;
 }
 
-bool SoftHSM::setRSAPrivateKey(OSObject* key, ByteString ber, Token* token, bool isPrivate)
+bool SoftHSM::setRSAPrivateKey(OSObject* key, const ByteString &ber, Token* token, bool isPrivate) const
 {
 	AsymmetricAlgorithm* rsa = CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::RSA);
 	if (rsa == NULL)
@@ -10025,7 +10025,7 @@ bool SoftHSM::setRSAPrivateKey(OSObject* key, ByteString ber, Token* token, bool
 	return bOK;
 }
 
-bool SoftHSM::setDSAPrivateKey(OSObject* key, ByteString ber, Token* token, bool isPrivate)
+bool SoftHSM::setDSAPrivateKey(OSObject* key, const ByteString &ber, Token* token, bool isPrivate) const
 {
 	AsymmetricAlgorithm* dsa = CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::DSA);
 	if (dsa == NULL)
@@ -10073,7 +10073,7 @@ bool SoftHSM::setDSAPrivateKey(OSObject* key, ByteString ber, Token* token, bool
 	return bOK;
 }
 
-bool SoftHSM::setDHPrivateKey(OSObject* key, ByteString ber, Token* token, bool isPrivate)
+bool SoftHSM::setDHPrivateKey(OSObject* key, const ByteString &ber, Token* token, bool isPrivate) const
 {
 	AsymmetricAlgorithm* dh = CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::DH);
 	if (dh == NULL)
@@ -10116,7 +10116,7 @@ bool SoftHSM::setDHPrivateKey(OSObject* key, ByteString ber, Token* token, bool 
 
 	return bOK;
 }
-bool SoftHSM::setECPrivateKey(OSObject* key, ByteString ber, Token* token, bool isPrivate)
+bool SoftHSM::setECPrivateKey(OSObject* key, const ByteString &ber, Token* token, bool isPrivate) const
 {
 	AsymmetricAlgorithm* ecc = CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::ECDSA);
 	if (ecc == NULL)
