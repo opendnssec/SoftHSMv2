@@ -955,14 +955,9 @@ bool P11AttrCertificateCategory::setDefault()
 }
 
 // Update the value if allowed
-CK_RV P11AttrCertificateCategory::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op)
+CK_RV P11AttrCertificateCategory::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int /*op*/)
 {
 	// Attribute specific checks
-
-	if (op != OBJECT_OP_SET)
-	{
-		return CKR_ATTRIBUTE_READ_ONLY;
-	}
 
 	if (ulValueLen !=sizeof(CK_ULONG))
 	{
@@ -1085,14 +1080,9 @@ bool P11AttrJavaMidpSecurityDomain::setDefault()
 }
 
 // Update the value if allowed
-CK_RV P11AttrJavaMidpSecurityDomain::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op)
+CK_RV P11AttrJavaMidpSecurityDomain::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int /*op*/)
 {
 	// Attribute specific checks
-
-	if (op != OBJECT_OP_SET)
-	{
-		return CKR_ATTRIBUTE_READ_ONLY;
-	}
 
 	if (ulValueLen !=sizeof(CK_ULONG))
 	{
@@ -1117,14 +1107,9 @@ bool P11AttrNameHashAlgorithm::setDefault()
 }
 
 // Update the value if allowed
-CK_RV P11AttrNameHashAlgorithm::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op)
+CK_RV P11AttrNameHashAlgorithm::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int /*op*/)
 {
 	// Attribute specific checks
-
-	if (op != OBJECT_OP_SET)
-	{
-		return CKR_ATTRIBUTE_READ_ONLY;
-	}
 
 	if (ulValueLen !=sizeof(CK_ULONG))
 	{

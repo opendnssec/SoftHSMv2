@@ -6,6 +6,9 @@ SoftHSM develop
   (Thanks to Jaroslav Imrich)
 
 Bugfixes:
+* Issue #162: Not possible to create certificate objects containing
+  CKA_CERTIFICATE_CATEGORY, CKA_NAME_HASH_ALGORITHM, or
+  CKA_JAVA_MIDP_SECURITY_DOMAIN.
 * SOFTHSM-123: Fix library cleanup on BSD.
 * Prioritize the return values in C_GetAttributeValue.
   (Patch from Nicholas Wilson)
