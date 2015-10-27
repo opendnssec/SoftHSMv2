@@ -47,6 +47,7 @@ class InfoTests : public CppUnit::TestFixture
 	CPPUNIT_TEST(testGetTokenInfo);
 	CPPUNIT_TEST(testGetMechanismList);
 	CPPUNIT_TEST(testGetMechanismInfo);
+	CPPUNIT_TEST(testGetSlotInfoAlt);
 	CPPUNIT_TEST_SUITE_END();
 
 public:
@@ -57,6 +58,7 @@ public:
 	void testGetTokenInfo();
 	void testGetMechanismList();
 	void testGetMechanismInfo();
+	void testGetSlotInfoAlt();
 
 	void setUp();
 	void tearDown();
