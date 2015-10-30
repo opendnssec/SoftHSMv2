@@ -146,9 +146,13 @@ int getPW(char* pin, char* newPIN, CK_ULONG userType)
 	size_t size = MAX_PIN_LEN+1;
 	ssize_t length = 0;
 
+	// Check if the user has provided a password
 	if (pin)
 	{
 		length = strlen(pin);
+		// Save the PIN if it has the correct length
+		if (length >= MIN_PIN_LEN && length <= MAX_PIN_LEN)
+			memcpy(password1, pin, length+1);
 	}
 
 	while (length < MIN_PIN_LEN || length > MAX_PIN_LEN)
