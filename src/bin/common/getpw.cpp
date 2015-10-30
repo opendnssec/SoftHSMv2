@@ -71,7 +71,7 @@ int getpin(const char* prompt, char* buffer, size_t size)
 		return -1;
 
 	// Update the console mode
-	if (hstdin == INVALID_HANDLE_VALUE || !(SetConsoleMode(hstdin, 0))
+	if (hstdin == INVALID_HANDLE_VALUE || !(SetConsoleMode(hstdin, 0)))
 		return -1;
 #else
 	struct termios new_attr, old_attr;
@@ -144,7 +144,7 @@ int getPW(char* pin, char* newPIN, CK_ULONG userType)
 	char password1[MAX_PIN_LEN+1];
 	char password2[MAX_PIN_LEN+1];
 	size_t size = MAX_PIN_LEN+1;
-	ssize_t length = 0;
+	int length = 0;
 
 	// Check if the user has provided a password
 	if (pin)
