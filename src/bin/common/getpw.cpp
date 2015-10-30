@@ -36,18 +36,115 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#ifndef _WIN32
+
+#ifdef _WIN32
+#include <windows.h>
+#else
 #include <unistd.h>
+#include <termios.h>
+#include <signal.h>
 #endif
 
-// Get a password from the user
-void getPW(char* pin, char* newPIN, CK_ULONG userType)
-{
-	// Keep a copy of the PIN because getpass/getpassphrase
-	// will overwrite the previous PIN.
-	char password[MAX_PIN_LEN+1];
+#ifndef _WIN32
+// Remember the signal number
+static volatile sig_atomic_t signo;
 
-	int length = 0;
+void sighandler(int s)
+{
+	signo = s;
+}
+#endif
+
+int getpin(const char* prompt, char* buffer, size_t size)
+{
+	if (prompt == NULL || buffer == NULL || size < 1)
+		return -1;
+
+	fprintf(stderr, "%s", prompt);
+
+#ifdef _WIN32
+	HANDLE hstdin = GetStdHandle(STD_INPUT_HANDLE);
+	DWORD mode;
+
+	// Save current console mode
+	if (!GetConsoleMode(hstdin, &mode))
+		return -1;
+
+	// Update the console mode
+	if (hstdin == INVALID_HANDLE_VALUE || !(SetConsoleMode(hstdin, 0))
+		return -1;
+#else
+	struct termios new_attr, old_attr;
+
+	// Get current terminal attributes
+	if (tcgetattr(STDIN_FILENO, &old_attr) < 0)
+		return -1;
+
+	// Save the mode flags
+	new_attr = old_attr;
+
+	// Update the mode flags
+	new_attr.c_lflag &= ~ICANON;
+	new_attr.c_lflag &= ~ECHO;
+
+	// Handle the SIGINT signal
+	signo = 0;
+	struct sigaction osa, sa;
+	sigaction(SIGINT, NULL, &osa);
+	if (osa.sa_handler != SIG_IGN)
+	{
+		sigemptyset(&sa.sa_mask);
+		sa.sa_flags = 0;
+		sa.sa_handler = sighandler;
+		sigaction(SIGINT, &sa, &osa);
+        }
+
+	// Set the new terminal attributes
+	if (tcsetattr(STDIN_FILENO, 0, &new_attr) < 0)
+		return -1;
+#endif
+
+	int nread = 0;
+	int ch = 0;
+	while ((ch = getchar()) != '\n' && ch != EOF)
+	{
+		// Check buffer size
+		if ((nread+2) > size)
+			continue;
+
+		putchar('*');
+		buffer[nread] = ch;
+		nread++;
+	}
+
+	putchar('\n');
+	buffer[nread] = '\0';
+
+#ifdef _WIN32
+	// Restore the console mode
+	if (!SetConsoleMode(hstdin, mode))
+		return -1;
+#else
+	// Restore terminal
+	if (tcsetattr(STDIN_FILENO, 0, &old_attr) < 0)
+		return -1;
+
+	// Restore the signal
+	sigaction(SIGINT, &osa, NULL);
+	if (signo)
+		raise(signo);
+#endif
+
+	return nread;
+}
+
+// Get a password from the user
+int getPW(char* pin, char* newPIN, CK_ULONG userType)
+{
+	char password1[MAX_PIN_LEN+1];
+	char password2[MAX_PIN_LEN+1];
+	size_t size = MAX_PIN_LEN+1;
+	ssize_t length = 0;
 
 	if (pin)
 	{
@@ -58,65 +155,42 @@ void getPW(char* pin, char* newPIN, CK_ULONG userType)
 	{
 		if (userType == CKU_SO)
 		{
-			printf("*** SO PIN (%i-%i characters) ***\n",
+			printf("=== SO PIN (%i-%i characters) ===\n",
 				MIN_PIN_LEN, MAX_PIN_LEN);
+			length = getpin("Please enter SO PIN: ",
+					password1, size);
 		}
 		else
 		{
-			printf("*** User PIN (%i-%i characters) ***\n",
+			printf("=== User PIN (%i-%i characters) ===\n",
 				MIN_PIN_LEN, MAX_PIN_LEN);
+			length = getpin("Please enter user PIN: ",
+					password1, size);
 		}
 
-#ifdef HAVE_GETPASSPHRASE
-		if (userType == CKU_SO)
-		{
-			pin = getpassphrase("Please enter SO PIN: ");
-		}
-		else
-		{
-			pin = getpassphrase("Please enter user PIN: ");
-		}
-#else
-		if (userType == CKU_SO)
-		{
-			pin = getpass("Please enter SO PIN: ");
-		}
-		else
-		{
-			pin = getpass("Please enter user PIN: ");
-		}
-#endif
-
-		length = strlen(pin);
+		if (length < 0)
+			return 1;
 		if (length < MIN_PIN_LEN || length > MAX_PIN_LEN)
 		{
 			fprintf(stderr, "ERROR: The length of the PIN is out of range.\n");
 			length = 0;
 			continue;
 		}
-		memcpy(password, pin, length+1);
 
-#ifdef HAVE_GETPASSPHRASE
 		if (userType == CKU_SO)
 		{
-			pin = getpassphrase("Please reenter SO PIN: ");
+			length = getpin("Please reenter SO PIN: ",
+					password2, size);
 		}
 		else
 		{
-			pin = getpassphrase("Please reenter user PIN: ");
+			length = getpin("Please reenter user PIN: ",
+					password2, size);
 		}
-#else
-		if (userType == CKU_SO)
-		{
-			pin = getpass("Please reenter SO PIN: ");
-		}
-		else
-		{
-			pin = getpass("Please reenter user PIN: ");
-		}
-#endif
 
-		if (strcmp(password, pin))
+		if (length < 0)
+			return 1;
+		if (strcmp(password1, password2))
 		{
 			fprintf(stderr, "ERROR: The entered PINs are not equal.\n");
 			length = 0;
@@ -124,5 +198,6 @@ void getPW(char* pin, char* newPIN, CK_ULONG userType)
 		}
 	}
 
-	memcpy(newPIN, pin, length+1);
+	memcpy(newPIN, password1, length+1);
+	return 0;
 }
