@@ -480,6 +480,8 @@ CK_RV SoftHSM::C_Initialize(CK_VOID_PTR pInitArgs)
 		return CKR_GENERAL_ERROR;
 	}
 
+	isRemovable = Configuration::i()->getBool("slots.removable", false);
+
 	// Load the slot manager
 	slotManager = new SlotManager(objectStore);
 
@@ -563,6 +565,7 @@ CK_RV SoftHSM::C_GetSlotList(CK_BBOOL tokenPresent, CK_SLOT_ID_PTR pSlotList, CK
 // Return information about a slot
 CK_RV SoftHSM::C_GetSlotInfo(CK_SLOT_ID slotID, CK_SLOT_INFO_PTR pInfo)
 {
+	CK_RV rv;
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
 
 	Slot* slot = slotManager->getSlot(slotID);
@@ -571,7 +574,16 @@ CK_RV SoftHSM::C_GetSlotInfo(CK_SLOT_ID slotID, CK_SLOT_INFO_PTR pInfo)
 		return CKR_SLOT_ID_INVALID;
 	}
 
-	return slot->getSlotInfo(pInfo);
+	rv = slot->getSlotInfo(pInfo);
+	if (rv != CKR_OK) {
+		return rv;
+	}
+
+	if (isRemovable) {
+		pInfo->flags |= CKF_REMOVABLE_DEVICE;
+	}
+
+	return CKR_OK;
 }
 
 // Return information about a token in a slot
