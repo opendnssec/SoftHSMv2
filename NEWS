@@ -14,6 +14,10 @@ Bugfixes:
   (Patch from Nicholas Wilson)
 * Fix errors reported by Visual Studio 2015.
   (Patch from Jaroslav Imrich)
+* Fix the Windows build, destruction order of objects,
+  minor changes after a PVS-Studio code analysis, and
+  C_EncryptUpdate crash if no ciphered data is produced.
+  (Patch from agrandville)
 
 
 SoftHSM 2.0.0 - 2015-07-17
