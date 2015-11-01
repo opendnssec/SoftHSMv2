@@ -60,7 +60,7 @@ int getpin(const char* prompt, char* buffer, size_t size)
 	if (prompt == NULL || buffer == NULL || size < 1)
 		return -1;
 
-	fprintf(stderr, "%s", prompt);
+	printf("%s", prompt);
 
 #ifdef _WIN32
 	HANDLE hstdin = GetStdHandle(STD_INPUT_HANDLE);
@@ -71,7 +71,7 @@ int getpin(const char* prompt, char* buffer, size_t size)
 		return -1;
 
 	// Update the console mode
-	if (hstdin == INVALID_HANDLE_VALUE || !(SetConsoleMode(hstdin, 0)))
+	if (hstdin == INVALID_HANDLE_VALUE || !(SetConsoleMode(hstdin, ENABLE_LINE_INPUT | ENABLE_PROCESSED_INPUT)))
 		return -1;
 #else
 	struct termios new_attr, old_attr;
