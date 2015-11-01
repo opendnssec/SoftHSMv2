@@ -482,14 +482,9 @@ bool P11AttrClass::setDefault()
 }
 
 // Update the value if allowed
-CK_RV P11AttrClass::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op)
+CK_RV P11AttrClass::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int /*op*/)
 {
 	// Attribute specific checks
-
-	if (op == OBJECT_OP_SET)
-	{
-		return CKR_ATTRIBUTE_READ_ONLY;
-	}
 
 	if (ulValueLen !=sizeof(CK_ULONG))
 	{
@@ -516,14 +511,9 @@ bool P11AttrKeyType::setDefault()
 }
 
 // Update the value if allowed
-CK_RV P11AttrKeyType::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op)
+CK_RV P11AttrKeyType::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int /*op*/)
 {
 	// Attribute specific checks
-
-	if (op == OBJECT_OP_SET)
-	{
-		return CKR_ATTRIBUTE_READ_ONLY;
-	}
 
 	if (ulValueLen !=sizeof(CK_ULONG))
 	{
@@ -552,14 +542,9 @@ bool P11AttrCertificateType::setDefault()
 }
 
 // Update the value if allowed
-CK_RV P11AttrCertificateType::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op)
+CK_RV P11AttrCertificateType::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int /*op*/)
 {
 	// Attribute specific checks
-
-	if (op == OBJECT_OP_SET)
-	{
-		return CKR_ATTRIBUTE_READ_ONLY;
-	}
 
 	if (ulValueLen !=sizeof(CK_ULONG))
 	{
@@ -586,21 +571,12 @@ bool P11AttrToken::setDefault()
 }
 
 // Update the value if allowed
-CK_RV P11AttrToken::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op)
+CK_RV P11AttrToken::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int /*op*/)
 {
 	OSAttribute attrTrue(true);
 	OSAttribute attrFalse(false);
 
 	// Attribute specific checks
-
-	if (op != OBJECT_OP_GENERATE &&
-	    op != OBJECT_OP_DERIVE &&
-	    op != OBJECT_OP_CREATE &&
-	    op != OBJECT_OP_COPY &&
-	    op != OBJECT_OP_UNWRAP)
-	{
-		return CKR_ATTRIBUTE_READ_ONLY;
-	}
 
 	if (ulValueLen !=sizeof(CK_BBOOL))
 	{
@@ -633,21 +609,12 @@ bool P11AttrPrivate::setDefault()
 }
 
 // Update the value if allowed
-CK_RV P11AttrPrivate::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op)
+CK_RV P11AttrPrivate::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int /*op*/)
 {
 	OSAttribute attrTrue(true);
 	OSAttribute attrFalse(false);
 
 	// Attribute specific checks
-
-	if (op != OBJECT_OP_GENERATE &&
-	    op != OBJECT_OP_DERIVE &&
-	    op != OBJECT_OP_CREATE &&
-	    op != OBJECT_OP_COPY &&
-	    op != OBJECT_OP_UNWRAP)
-	{
-		return CKR_ATTRIBUTE_READ_ONLY;
-	}
 
 	if (ulValueLen !=sizeof(CK_BBOOL))
 	{
@@ -680,21 +647,12 @@ bool P11AttrModifiable::setDefault()
 }
 
 // Update the value if allowed
-CK_RV P11AttrModifiable::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op)
+CK_RV P11AttrModifiable::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int /*op*/)
 {
 	OSAttribute attrTrue(true);
 	OSAttribute attrFalse(false);
 
 	// Attribute specific checks
-
-	if (op != OBJECT_OP_GENERATE &&
-	    op != OBJECT_OP_DERIVE &&
-	    op != OBJECT_OP_CREATE &&
-	    op != OBJECT_OP_COPY &&
-	    op != OBJECT_OP_UNWRAP)
-	{
-		return CKR_ATTRIBUTE_READ_ONLY;
-	}
 
 	if (ulValueLen !=sizeof(CK_BBOOL))
 	{
@@ -738,21 +696,12 @@ bool P11AttrCopyable::setDefault()
 }
 
 // Update the value if allowed
-CK_RV P11AttrCopyable::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op)
+CK_RV P11AttrCopyable::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int /*op*/)
 {
 	OSAttribute attrTrue(true);
 	OSAttribute attrFalse(false);
 
 	// Attribute specific checks
-
-	if (op != OBJECT_OP_GENERATE &&
-	    op != OBJECT_OP_DERIVE &&
-	    op != OBJECT_OP_CREATE &&
-	    op != OBJECT_OP_COPY &&
-	    op != OBJECT_OP_UNWRAP)
-	{
-		return CKR_ATTRIBUTE_READ_ONLY;
-	}
 
 	if (ulValueLen !=sizeof(CK_BBOOL))
 	{
@@ -955,14 +904,9 @@ bool P11AttrCertificateCategory::setDefault()
 }
 
 // Update the value if allowed
-CK_RV P11AttrCertificateCategory::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op)
+CK_RV P11AttrCertificateCategory::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int /*op*/)
 {
 	// Attribute specific checks
-
-	if (op != OBJECT_OP_SET)
-	{
-		return CKR_ATTRIBUTE_READ_ONLY;
-	}
 
 	if (ulValueLen !=sizeof(CK_ULONG))
 	{
@@ -1085,14 +1029,9 @@ bool P11AttrJavaMidpSecurityDomain::setDefault()
 }
 
 // Update the value if allowed
-CK_RV P11AttrJavaMidpSecurityDomain::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op)
+CK_RV P11AttrJavaMidpSecurityDomain::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int /*op*/)
 {
 	// Attribute specific checks
-
-	if (op != OBJECT_OP_SET)
-	{
-		return CKR_ATTRIBUTE_READ_ONLY;
-	}
 
 	if (ulValueLen !=sizeof(CK_ULONG))
 	{
@@ -1117,14 +1056,9 @@ bool P11AttrNameHashAlgorithm::setDefault()
 }
 
 // Update the value if allowed
-CK_RV P11AttrNameHashAlgorithm::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op)
+CK_RV P11AttrNameHashAlgorithm::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int /*op*/)
 {
 	// Attribute specific checks
-
-	if (op != OBJECT_OP_SET)
-	{
-		return CKR_ATTRIBUTE_READ_ONLY;
-	}
 
 	if (ulValueLen !=sizeof(CK_ULONG))
 	{
