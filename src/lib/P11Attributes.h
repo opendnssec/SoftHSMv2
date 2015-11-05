@@ -308,7 +308,7 @@ class P11AttrCheckValue : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrCheckValue(OSObject* inobject) : P11Attribute(inobject) { type = CKA_CHECK_VALUE; checks = 0; }
+	P11AttrCheckValue(OSObject* inobject, CK_ULONG inchecks) : P11Attribute(inobject) { type = CKA_CHECK_VALUE; checks = inchecks; }
 
 protected:
 	// Set the default value of the attribute

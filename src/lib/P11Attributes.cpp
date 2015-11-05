@@ -33,6 +33,7 @@
 #include "config.h"
 #include "P11Attributes.h"
 #include "ByteString.h"
+#include "CryptoFactory.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -822,6 +823,36 @@ CK_RV P11AttrValue::updateAttr(Token *token, bool isPrivate, CK_VOID_PTR pValue,
 			OSAttribute bits((unsigned long)plaintext.bits());
 			osobject->setAttribute(CKA_VALUE_BITS, bits);
 		}
+	}
+
+	// Calculate the CKA_CHECK_VALUE for certificates
+	if (osobject->getUnsignedLongValue(CKA_CLASS, CKO_VENDOR_DEFINED) == CKO_CERTIFICATE)
+	{
+		HashAlgorithm* hash = CryptoFactory::i()->getHashAlgorithm(HashAlgo::SHA1);
+		if (hash == NULL) return CKR_GENERAL_ERROR;
+
+		ByteString digest;
+		if (hash->hashInit() == false ||
+		    hash->hashUpdate(plaintext) == false ||
+		    hash->hashFinal(digest) == false)
+		{
+			CryptoFactory::i()->recycleHashAlgorithm(hash);
+			return CKR_GENERAL_ERROR;
+		}
+		CryptoFactory::i()->recycleHashAlgorithm(hash);
+
+		// First three bytes of the SHA-1 hash
+		digest.resize(3);
+
+		if (isPrivate)
+		{
+			ByteString encrypted;
+			if (!token->encrypt(digest, encrypted))
+				return CKR_GENERAL_ERROR;
+			osobject->setAttribute(CKA_CHECK_VALUE, encrypted);
+		}
+		else
+			osobject->setAttribute(CKA_CHECK_VALUE, digest);
 	}
 
 	return CKR_OK;

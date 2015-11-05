@@ -608,19 +608,22 @@ CK_RV ObjectTests::createDataObjectNormal(CK_SESSION_HANDLE hSession, CK_BBOOL b
 	return C_CreateObject(hSession, objTemplate, sizeof(objTemplate)/sizeof(CK_ATTRIBUTE),&hObject);
 }
 
-CK_RV ObjectTests::createCertificateObjectIncomplete(CK_SESSION_HANDLE hSession, CK_BBOOL /*bToken*/, CK_BBOOL /*bPrivate*/, CK_OBJECT_HANDLE &hObject)
+CK_RV ObjectTests::createCertificateObjectIncomplete(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_OBJECT_HANDLE &hObject)
 {
 	CK_OBJECT_CLASS cClass = CKO_CERTIFICATE;
 	CK_ATTRIBUTE objTemplate[] = {
 		// Common
 		{ CKA_CLASS, &cClass, sizeof(cClass) },
+		// Storage
+		{ CKA_TOKEN, &bToken, sizeof(bToken) },
+		{ CKA_PRIVATE, &bPrivate, sizeof(bPrivate) }
 	};
 
 	hObject = CK_INVALID_HANDLE;
 	return C_CreateObject(hSession, objTemplate, sizeof(objTemplate)/sizeof(CK_ATTRIBUTE),&hObject);
 }
 
-CK_RV ObjectTests::createCertificateObjectValue(CK_SESSION_HANDLE hSession, CK_BBOOL /*bToken*/, CK_BBOOL /*bPrivate*/, CK_OBJECT_HANDLE &hObject)
+CK_RV ObjectTests::createCertificateObjectX509(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_OBJECT_HANDLE &hObject)
 {
 	CK_OBJECT_CLASS cClass = CKO_CERTIFICATE;
 	CK_CERTIFICATE_TYPE cType = CKC_X_509;
@@ -630,6 +633,9 @@ CK_RV ObjectTests::createCertificateObjectValue(CK_SESSION_HANDLE hSession, CK_B
 	CK_ATTRIBUTE objTemplate[] = {
 		// Common
 		{ CKA_CLASS, &cClass, sizeof(cClass) },
+		// Storage
+		{ CKA_TOKEN, &bToken, sizeof(bToken) },
+		{ CKA_PRIVATE, &bPrivate, sizeof(bPrivate) },
 		// Common Certificate Object Attributes
 		{ CKA_CERTIFICATE_TYPE, &cType, sizeof(cType) },
 		// X.509 Certificate Object Attributes
@@ -1550,6 +1556,44 @@ void ObjectTests::testGenerateKeys()
 	CPPUNIT_ASSERT(rv == CKR_OK);
 }
 
+void ObjectTests::testCreateCertificates()
+{
+	CK_RV rv;
+	CK_UTF8CHAR pin[] = SLOT_0_USER1_PIN;
+	CK_ULONG pinLength = sizeof(pin) - 1;
+	CK_SESSION_HANDLE hSession;
+
+	// Just make sure that we finalize any previous tests
+	C_Finalize(NULL_PTR);
+
+	// Initialize the library and start the test.
+	rv = C_Initialize(NULL_PTR);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Open read-write session
+	rv = C_OpenSession(SLOT_INIT_TOKEN, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSession);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Login USER into the sessions so we can create a private objects
+	rv = C_Login(hSession,CKU_USER,pin,pinLength);
+	CPPUNIT_ASSERT(rv==CKR_OK);
+
+	CK_OBJECT_HANDLE hObject = CK_INVALID_HANDLE;
+
+	rv = createCertificateObjectIncomplete(hSession,IN_SESSION,IS_PUBLIC,hObject);
+	CPPUNIT_ASSERT(rv == CKR_TEMPLATE_INCOMPLETE);
+	rv = createCertificateObjectX509(hSession,IN_SESSION,IS_PUBLIC,hObject);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	CK_BYTE pCheckValue[] = { 0x2b, 0x84, 0xf6 };
+	CK_ATTRIBUTE attribs[] = {
+		{ CKA_CHECK_VALUE, pCheckValue, sizeof(pCheckValue) }
+	};
+
+	rv = C_SetAttributeValue(hSession, hObject, attribs, 1);
+	CPPUNIT_ASSERT(rv == CKR_ATTRIBUTE_READ_ONLY);
+}
+
 void ObjectTests::testDefaultDataAttributes()
 {
 	CK_RV rv;
@@ -1602,6 +1646,7 @@ void ObjectTests::testDefaultX509CertAttributes()
 	CK_CERTIFICATE_TYPE certificateType = CKC_X_509;
 	CK_BYTE pSubject[] = "Test1";
 	CK_BYTE pValue[] = "Test2";
+	CK_BYTE pCheckValue[] = { 0x2b, 0x84, 0xf6 };
 	CK_DATE emptyDate;
 	CK_ATTRIBUTE objTemplate[] = {
 		{ CKA_CLASS, &objClass, sizeof(objClass) },
@@ -1633,7 +1678,7 @@ void ObjectTests::testDefaultX509CertAttributes()
 	checkCommonObjectAttributes(hSession, hObject, objClass);
 	checkCommonStorageObjectAttributes(hSession, hObject, CK_FALSE, CK_FALSE, CK_TRUE, NULL_PTR, 0, CK_TRUE);
 	memset(&emptyDate, 0, sizeof(emptyDate));
-	checkCommonCertificateObjectAttributes(hSession, hObject, CKC_X_509, CK_FALSE, 0, NULL_PTR, 0, emptyDate, 0, emptyDate, 0);
+	checkCommonCertificateObjectAttributes(hSession, hObject, CKC_X_509, CK_FALSE, 0, pCheckValue, sizeof(pCheckValue), emptyDate, 0, emptyDate, 0);
 	checkX509CertificateObjectAttributes(hSession, hObject, pSubject, sizeof(pSubject)-1, NULL_PTR, 0, NULL_PTR, 0, NULL_PTR, 0, pValue, sizeof(pValue)-1, NULL_PTR, 0, NULL_PTR, 0, NULL_PTR, 0, 0, CKM_SHA_1);
 }
 
