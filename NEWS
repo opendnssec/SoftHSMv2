@@ -4,6 +4,8 @@ SoftHSM develop
 
 * Issue #136: Improved guide and build scripts for Windows.
   (Thanks to Jaroslav Imrich)
+* Issue #144: The password prompt in softhsm2-util can now be
+  interrupted (ctrl-c).
 
 Bugfixes:
 * Issue #162: Not possible to create certificate objects containing

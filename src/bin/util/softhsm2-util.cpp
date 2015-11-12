@@ -303,8 +303,16 @@ int initToken(char* slot, int freeToken, char* label, char* soPIN, char* userPIN
 	}
 
 	// Get the passwords
-	getPW(soPIN, so_pin_copy, CKU_SO);
-	getPW(userPIN, user_pin_copy, CKU_USER);
+	if (getPW(soPIN, so_pin_copy, CKU_SO) != 0)
+	{
+		fprintf(stderr, "ERROR: Could not get SO PIN\n");
+		return 1;
+	}
+	if (getPW(userPIN, user_pin_copy, CKU_USER) != 0)
+	{
+		fprintf(stderr, "ERROR: Could not get user PIN\n");
+		return 1;
+	}
 
 	// Load the variables
 	CK_SLOT_ID slotID = 0;
@@ -602,7 +610,12 @@ int importKeyPair
 	}
 
 	// Get the password
-	getPW(userPIN, user_pin_copy, CKU_USER);
+	if (getPW(userPIN, user_pin_copy, CKU_USER) != 0)
+	{
+		fprintf(stderr, "ERROR: Could not get user PIN\n");
+		free(objID);
+		return 1;
+	}
 
 	rv = p11->C_Login(hSession, CKU_USER, (CK_UTF8CHAR_PTR)user_pin_copy, strlen(user_pin_copy));
 	if (rv != CKR_OK)
