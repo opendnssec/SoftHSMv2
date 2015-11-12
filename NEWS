@@ -6,20 +6,26 @@ SoftHSM develop
   (Thanks to Jaroslav Imrich)
 * Issue #144: The password prompt in softhsm2-util can now be
   interrupted (ctrl-c).
+* Issue #166: Add slots.removable config option.
+  (Patch from Sumit Bose)
 
 Bugfixes:
+* Issue #128: Prioritize the return values in C_GetAttributeValue.
+  (Patch from Nicholas Wilson)
+* Issue #129: Fix errors reported by Visual Studio 2015.
+  (Patch from Jaroslav Imrich)
+* Issue #154: Fix the Windows build and destruction order of objects.
+  (Patch from agrandville)
 * Issue #162: Not possible to create certificate objects containing
   CKA_CERTIFICATE_CATEGORY, CKA_NAME_HASH_ALGORITHM, or
   CKA_JAVA_MIDP_SECURITY_DOMAIN.
-* SOFTHSM-123: Fix library cleanup on BSD.
-* Prioritize the return values in C_GetAttributeValue.
-  (Patch from Nicholas Wilson)
-* Fix errors reported by Visual Studio 2015.
-  (Patch from Jaroslav Imrich)
-* Fix the Windows build, destruction order of objects,
-  minor changes after a PVS-Studio code analysis, and
+* Issue #163: Do not attempt decryption of empty byte strings.
+  (Patch from Michal Kepien)
+* Issue #165: Minor changes after a PVS-Studio code analysis, and
   C_EncryptUpdate crash if no ciphered data is produced.
   (Patch from agrandville)
+* Issue #169: One-byte buffer overflow in call to EVP_DecryptUpdate.
+* SOFTHSM-123: Fix library cleanup on BSD.
 
 
 SoftHSM 2.0.0 - 2015-07-17
