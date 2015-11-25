@@ -25,58 +25,71 @@
  */
 
 /*****************************************************************************
- HashAlgorithm.h
+ OSSLRC2.cpp
 
- Base class for hash algorithm classes
+ OpenSSL (3)RC2 implementation
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_HASHALGORITHM_H
-#define _SOFTHSM_V2_HASHALGORITHM_H
-
 #include "config.h"
-#include "ByteString.h"
+#include "OSSLRC2.h"
+#include <algorithm>
+#include "odd.h"
 
-struct HashAlgo
+bool OSSLRC2::wrapKey(const SymmetricKey* /*key*/, const SymWrap::Type /*mode*/, const ByteString& /*in*/, ByteString& /*out*/)
 {
-	enum Type
-	{
-		Unknown,
-		MD5,
-		SHA1,
-		SHA224,
-		SHA256,
-		SHA384,
-		SHA512,
-		GOST,
-		MD2,
-		MD4
-	};
-};
+	ERROR_MSG("RC2 does not support key wrapping");
 
-class HashAlgorithm
+	return false;
+}
+
+bool OSSLRC2::unwrapKey(const SymmetricKey* /*key*/, const SymWrap::Type /*mode*/, const ByteString& /*in*/, ByteString& /*out*/)
 {
-public:
-	// Base constructors
-	HashAlgorithm();
+	ERROR_MSG("RC2 does not support key unwrapping");
 
-	// Destructor
-	virtual ~HashAlgorithm() { }
+	return false;
+}
 
-	// Hashing functions
-	virtual bool hashInit();
-	virtual bool hashUpdate(const ByteString& data);
-	virtual bool hashFinal(ByteString& hashedData);
+const EVP_CIPHER* OSSLRC2::getCipher() const
+{
+	if (currentKey == NULL) return NULL;
 
-	virtual int getHashSize() = 0;
-protected:
-	// The current operation
-	enum
-	{
-		NONE,
-		HASHING
+	if ((currentKey->getBitLen() % 8) != 0 ||
+            (currentKey->getBitLen() < 8 || currentKey->getBitLen() > 1024))
+        {
+		ERROR_MSG("Invalid RC2 currentKey length (%d bits)", currentKey->getBitLen());
+		return "";
 	}
-	currentOperation;
-};
+        else
+        {
+		algo = "RC2";
+	}
 
-#endif // !_SOFTHSM_V2_HASHALGORITHM_H
+	// Determine the cipher mode
+	if (currentCipherMode == SymMode::CBC)
+	{
+		return EVP_rc2_cbc();
+	}
+	else if (currentCipherMode == SymMode::ECB)
+	{
+		return EVP_rc2_ecb();
+	}
+	else if (currentCipherMode == SymMode::OFB)
+	{
+		return EVP_rc2_ofb();
+	}
+	else if (currentCipherMode == SymMode::CFB)
+	{
+		return EVP_rc2_cfb();
+	}
+
+	ERROR_MSG("Invalid RC2 cipher mode %i", currentCipherMode);
+
+	return NULL;
+}
+
+size_t OSSLRC2::getBlockSize() const
+{
+	// The block size is 64 bits
+	return 64 >> 3;
+}
 

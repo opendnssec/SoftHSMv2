@@ -25,58 +25,54 @@
  */
 
 /*****************************************************************************
- HashAlgorithm.h
+ OSSLRC4.cpp
 
- Base class for hash algorithm classes
+ OpenSSL (3)RC4 implementation
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_HASHALGORITHM_H
-#define _SOFTHSM_V2_HASHALGORITHM_H
-
 #include "config.h"
-#include "ByteString.h"
+#include "OSSLRC4.h"
+#include <algorithm>
+#include "odd.h"
 
-struct HashAlgo
+bool OSSLRC4::wrapKey(const SymmetricKey* /*key*/, const SymWrap::Type /*mode*/, const ByteString& /*in*/, ByteString& /*out*/)
 {
-	enum Type
-	{
-		Unknown,
-		MD5,
-		SHA1,
-		SHA224,
-		SHA256,
-		SHA384,
-		SHA512,
-		GOST,
-		MD2,
-		MD4
-	};
-};
+	ERROR_MSG("RC4 does not support key wrapping");
 
-class HashAlgorithm
+	return false;
+}
+
+bool OSSLRC4::unwrapKey(const SymmetricKey* /*key*/, const SymWrap::Type /*mode*/, const ByteString& /*in*/, ByteString& /*out*/)
 {
-public:
-	// Base constructors
-	HashAlgorithm();
+	ERROR_MSG("RC4 does not support key unwrapping");
 
-	// Destructor
-	virtual ~HashAlgorithm() { }
+	return false;
+}
 
-	// Hashing functions
-	virtual bool hashInit();
-	virtual bool hashUpdate(const ByteString& data);
-	virtual bool hashFinal(ByteString& hashedData);
+const EVP_CIPHER* OSSLRC4::getCipher() const
+{
+	if (currentKey == NULL) return NULL;
 
-	virtual int getHashSize() = 0;
-protected:
-	// The current operation
-	enum
-	{
-		NONE,
-		HASHING
+	if ((currentKey->getBitLen() % 8) != 0 ||
+            (currentKey->getBitLen() < 8 || currentKey->getBitLen() > 2048))
+        {
+		ERROR_MSG("Invalid RC4 currentKey length (%d bits)", currentKey->getBitLen());
+		return "";
 	}
-	currentOperation;
-};
 
-#endif // !_SOFTHSM_V2_HASHALGORITHM_H
+	// Determine the cipher mode
+	if (currentCipherMode != SymMode::Stream)
+	{
+		ERROR_MSG("Invalid RC4 cipher mode %i", currentCipherMode);
+		return "";
+	}
+
+	return EVP_rc4();
+}
+
+size_t OSSLRC4::getBlockSize() const
+{
+	// The block size is 8 bits
+	return 8 >> 3;
+}
 

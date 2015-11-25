@@ -36,6 +36,8 @@
 #include "OSSLRNG.h"
 #include "OSSLAES.h"
 #include "OSSLDES.h"
+#include "OSSLMD2.h"
+#include "OSSLMD4.h"
 #include "OSSLMD5.h"
 #include "OSSLSHA1.h"
 #include "OSSLSHA224.h"
@@ -43,6 +45,8 @@
 #include "OSSLSHA384.h"
 #include "OSSLSHA512.h"
 #include "OSSLHMAC.h"
+#include "OSSLRC2.h"
+#include "OSSLRC4.h"
 #include "OSSLRSA.h"
 #include "OSSLDSA.h"
 #include "OSSLDH.h"
@@ -268,6 +272,10 @@ SymmetricAlgorithm* OSSLCryptoFactory::getSymmetricAlgorithm(SymAlgo::Type algor
 		case SymAlgo::DES:
 		case SymAlgo::DES3:
 			return new OSSLDES();
+		case SymAlgo::RC2:
+			return new OSSLRC2();
+		case SymAlgo::RC4:
+			return new OSSLRC4();
 		default:
 			// No algorithm implementation is available
 			ERROR_MSG("Unknown algorithm '%i'", algorithm);
@@ -316,6 +324,10 @@ HashAlgorithm* OSSLCryptoFactory::getHashAlgorithm(HashAlgo::Type algorithm)
 {
 	switch (algorithm)
 	{
+		case HashAlgo::MD2:
+			return new OSSLMD2();
+		case HashAlgo::MD4:
+			return new OSSLMD4();
 		case HashAlgo::MD5:
 			return new OSSLMD5();
 		case HashAlgo::SHA1:

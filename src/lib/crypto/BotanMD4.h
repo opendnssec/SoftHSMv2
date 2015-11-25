@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010 SURFnet bv
+ * Copyright (c) 2010 .SE (The Internet Infrastructure Foundation)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,58 +25,24 @@
  */
 
 /*****************************************************************************
- HashAlgorithm.h
+ BotanMD4.h
 
- Base class for hash algorithm classes
+ Botan MD4 implementation
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_HASHALGORITHM_H
-#define _SOFTHSM_V2_HASHALGORITHM_H
+#ifndef _SOFTHSM_V2_BOTANMD4_H
+#define _SOFTHSM_V2_BOTANMD4_H
 
 #include "config.h"
-#include "ByteString.h"
+#include "BotanHashAlgorithm.h"
+#include <botan/hash.h>
 
-struct HashAlgo
+class BotanMD4 : public BotanHashAlgorithm
 {
-	enum Type
-	{
-		Unknown,
-		MD5,
-		SHA1,
-		SHA224,
-		SHA256,
-		SHA384,
-		SHA512,
-		GOST,
-		MD2,
-		MD4
-	};
-};
-
-class HashAlgorithm
-{
-public:
-	// Base constructors
-	HashAlgorithm();
-
-	// Destructor
-	virtual ~HashAlgorithm() { }
-
-	// Hashing functions
-	virtual bool hashInit();
-	virtual bool hashUpdate(const ByteString& data);
-	virtual bool hashFinal(ByteString& hashedData);
-
-	virtual int getHashSize() = 0;
+	virtual int getHashSize();
 protected:
-	// The current operation
-	enum
-	{
-		NONE,
-		HASHING
-	}
-	currentOperation;
+	virtual Botan::HashFunction* getHash() const;
 };
 
-#endif // !_SOFTHSM_V2_HASHALGORITHM_H
+#endif // !_SOFTHSM_V2_BOTANMD4_H
 

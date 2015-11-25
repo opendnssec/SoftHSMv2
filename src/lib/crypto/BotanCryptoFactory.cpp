@@ -40,7 +40,11 @@
 #include "BotanECDH.h"
 #include "BotanECDSA.h"
 #endif
+#include "BotanMD2.h"
+#include "BotanMD4.h"
 #include "BotanMD5.h"
+#include "BotanRC2.h"
+#include "BotanRC4.h"
 #include "BotanRNG.h"
 #include "BotanRSA.h"
 #include "BotanSHA1.h"
@@ -151,6 +155,10 @@ SymmetricAlgorithm* BotanCryptoFactory::getSymmetricAlgorithm(SymAlgo::Type algo
 		case SymAlgo::DES:
 		case SymAlgo::DES3:
 	                return new BotanDES();
+		case SymAlgo::RC2:
+	                return new BotanRC2();
+		case SymAlgo::RC4:
+	                return new BotanRC4();
 		default:
 	                // No algorithm implementation is available
         	        ERROR_MSG("Unknown algorithm '%i'", algorithm);
@@ -199,6 +207,10 @@ HashAlgorithm* BotanCryptoFactory::getHashAlgorithm(HashAlgo::Type algorithm)
 {
 	switch (algorithm)
 	{
+		case HashAlgo::MD2:
+			return new BotanMD2();
+		case HashAlgo::MD4:
+			return new BotanMD4();
 		case HashAlgo::MD5:
 			return new BotanMD5();
 		case HashAlgo::SHA1:

@@ -62,7 +62,11 @@ libsofthsm_crypto_la_SOURCES +=	OSSLAES.cpp \
 				OSSLGOSTPublicKey.cpp \
 				OSSLGOSTR3411.cpp \
 				OSSLHMAC.cpp \
+				OSSLMD2.cpp \
+				OSSLMD4.cpp \
 				OSSLMD5.cpp \
+				OSSLRC2.cpp \
+				OSSLRC4.cpp \
 				OSSLRNG.cpp \
 				OSSLRSA.cpp \
 				OSSLRSAKeyPair.cpp \
@@ -105,7 +109,11 @@ libsofthsm_crypto_la_SOURCES +=	BotanAES.cpp \
 				BotanHashAlgorithm.cpp \
 				BotanHMAC.cpp \
 				BotanMacAlgorithm.cpp \
+				BotanMD2.cpp \
+				BotanMD4.cpp \
 				BotanMD5.cpp \
+				BotanRC2.cpp \
+				BotanRC4.cpp \
 				BotanRNG.cpp \
 				BotanRSA.cpp \
 				BotanRSAKeyPair.cpp \
