@@ -240,6 +240,24 @@ private:
 		CK_BBOOL isOnToken,
 		CK_BBOOL isPrivate
 	);
+	CK_RV generateRC2
+	(
+		CK_SESSION_HANDLE hSession,
+		CK_ATTRIBUTE_PTR pTemplate,
+		CK_ULONG ulCount,
+		CK_OBJECT_HANDLE_PTR phKey,
+		CK_BBOOL isOnToken,
+		CK_BBOOL isPrivate
+	);
+	CK_RV generateRC4
+	(
+		CK_SESSION_HANDLE hSession,
+		CK_ATTRIBUTE_PTR pTemplate,
+		CK_ULONG ulCount,
+		CK_OBJECT_HANDLE_PTR phKey,
+		CK_BBOOL isOnToken,
+		CK_BBOOL isPrivate
+	);
 	CK_RV generateRSA
 	(CK_SESSION_HANDLE hSession,
 		CK_ATTRIBUTE_PTR pPublicKeyTemplate,
