@@ -33,7 +33,6 @@
 #include "config.h"
 #include "OSSLRC2.h"
 #include <algorithm>
-#include "odd.h"
 
 bool OSSLRC2::wrapKey(const SymmetricKey* /*key*/, const SymWrap::Type /*mode*/, const ByteString& /*in*/, ByteString& /*out*/)
 {
@@ -57,11 +56,7 @@ const EVP_CIPHER* OSSLRC2::getCipher() const
             (currentKey->getBitLen() < 8 || currentKey->getBitLen() > 1024))
         {
 		ERROR_MSG("Invalid RC2 currentKey length (%d bits)", currentKey->getBitLen());
-		return "";
-	}
-        else
-        {
-		algo = "RC2";
+		return NULL;
 	}
 
 	// Determine the cipher mode

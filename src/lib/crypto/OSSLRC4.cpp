@@ -33,7 +33,6 @@
 #include "config.h"
 #include "OSSLRC4.h"
 #include <algorithm>
-#include "odd.h"
 
 bool OSSLRC4::wrapKey(const SymmetricKey* /*key*/, const SymWrap::Type /*mode*/, const ByteString& /*in*/, ByteString& /*out*/)
 {
@@ -57,14 +56,14 @@ const EVP_CIPHER* OSSLRC4::getCipher() const
             (currentKey->getBitLen() < 8 || currentKey->getBitLen() > 2048))
         {
 		ERROR_MSG("Invalid RC4 currentKey length (%d bits)", currentKey->getBitLen());
-		return "";
+		return NULL;
 	}
 
 	// Determine the cipher mode
 	if (currentCipherMode != SymMode::Stream)
 	{
 		ERROR_MSG("Invalid RC4 cipher mode %i", currentCipherMode);
-		return "";
+		return NULL;
 	}
 
 	return EVP_rc4();

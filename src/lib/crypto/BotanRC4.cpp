@@ -33,7 +33,6 @@
 #include "config.h"
 #include "BotanRC4.h"
 #include <algorithm>
-#include "odd.h"
 
 bool BotanRC4::wrapKey(const SymmetricKey* /*key*/, const SymWrap::Type /*mode*/, const ByteString& /*in*/, ByteString& /*out*/)
 {

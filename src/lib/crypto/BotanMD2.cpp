@@ -32,7 +32,7 @@
 
 #include "config.h"
 #include "BotanMD2.h"
-#include <botan/MD2.h>
+#include <botan/md2.h>
 
 int BotanMD2::getHashSize()
 {

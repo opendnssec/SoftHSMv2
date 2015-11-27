@@ -30,17 +30,19 @@
  OpenSSL MD2 implementation
  *****************************************************************************/
 
+#ifndef _SOFTHSM_V2_OSSLMD2_H
+#define _SOFTHSM_V2_OSSLMD2_H
+
 #include "config.h"
-#include "OSSLMD2.h"
+#include "OSSLEVPHashAlgorithm.h"
 #include <openssl/evp.h>
 
-int OSSLMD2::getHashSize()
+class OSSLMD2 : public OSSLEVPHashAlgorithm
 {
-	return 16;
-}
+	virtual int getHashSize();
+protected:
+	virtual const EVP_MD* getEVPHash() const;
+};
 
-const EVP_MD* OSSLMD2::getEVPHash() const
-{
-	return EVP_MD2();
-}
+#endif // !_SOFTHSM_V2_OSSLMD2_H
 

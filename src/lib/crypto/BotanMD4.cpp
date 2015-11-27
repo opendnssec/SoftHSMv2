@@ -32,7 +32,7 @@
 
 #include "config.h"
 #include "BotanMD4.h"
-#include <botan/MD4.h>
+#include <botan/md4.h>
 
 int BotanMD4::getHashSize()
 {
