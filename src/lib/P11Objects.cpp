@@ -1465,12 +1465,6 @@ bool P11GenericSecretKeyObj::setKeyType(CK_KEY_TYPE inKeytype)
 		return false;
 }
 
-// Get Key Type
-CK_KEY_TYPE P11GenericSecretKeyObj::getKeyType()
-{
-	return keytype;
-}
-
 // Constructor
 P11AESSecretKeyObj::P11AESSecretKeyObj()
 {
@@ -1577,7 +1571,6 @@ CK_KEY_TYPE P11DESSecretKeyObj::getKeyType()
 P11RC2SecretKeyObj::P11RC2SecretKeyObj()
 {
 	initialized = false;
-	keytype = CKK_VENDOR_DEFINED;
 }
 
 // Add attributes
@@ -1586,8 +1579,8 @@ bool P11RC2SecretKeyObj::init(OSObject *inobject)
 	if (initialized) return true;
 	if (inobject == NULL) return false;
 
-	if (!inobject->attributeExists(CKA_KEY_TYPE) || inobject->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED) != keytype) {
-		OSAttribute setKeyType(keytype);
+	if (!inobject->attributeExists(CKA_KEY_TYPE) || inobject->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED) != CKK_RC2) {
+		OSAttribute setKeyType((unsigned long)CKK_RC2);
 		inobject->setAttribute(CKA_KEY_TYPE, setKeyType);
 	}
 
@@ -1612,29 +1605,10 @@ bool P11RC2SecretKeyObj::init(OSObject *inobject)
 	return true;
 }
 
-// Set Key Type
-bool P11RC2SecretKeyObj::setKeyType(CK_KEY_TYPE inKeytype)
-{
-	if (!initialized)
-	{
-		keytype = inKeytype;
-		return true;
-	}
-	else
-		return false;
-}
-
-// Get Key Type
-CK_KEY_TYPE P11RC2SecretKeyObj::getKeyType()
-{
-	return keytype;
-}
-
 // Constructor
 P11RC4SecretKeyObj::P11RC4SecretKeyObj()
 {
 	initialized = false;
-	keytype = CKK_VENDOR_DEFINED;
 }
 
 // Add attributes
@@ -1643,8 +1617,8 @@ bool P11RC4SecretKeyObj::init(OSObject *inobject)
 	if (initialized) return true;
 	if (inobject == NULL) return false;
 
-	if (!inobject->attributeExists(CKA_KEY_TYPE) || inobject->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED) != keytype) {
-		OSAttribute setKeyType(keytype);
+	if (!inobject->attributeExists(CKA_KEY_TYPE) || inobject->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED) != CKK_RC4) {
+		OSAttribute setKeyType((unsigned long)CKK_RC4);
 		inobject->setAttribute(CKA_KEY_TYPE, setKeyType);
 	}
 
@@ -1667,24 +1641,6 @@ bool P11RC4SecretKeyObj::init(OSObject *inobject)
 
 	initialized = true;
 	return true;
-}
-
-// Set Key Type
-bool P11RC4SecretKeyObj::setKeyType(CK_KEY_TYPE inKeytype)
-{
-	if (!initialized)
-	{
-		keytype = inKeytype;
-		return true;
-	}
-	else
-		return false;
-}
-
-// Get Key Type
-CK_KEY_TYPE P11RC4SecretKeyObj::getKeyType()
-{
-	return keytype;
 }
 
 // Constructor

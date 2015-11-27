@@ -159,13 +159,11 @@ static CK_RV newP11Object(CK_OBJECT_CLASS objClass, CK_KEY_TYPE keyType, CK_CERT
 			{
 				P11RC2SecretKeyObj* key = new P11RC2SecretKeyObj();
 				*p11object = key;
-				key->setKeyType(keyType);
 			}
 			else if (keyType == CKK_RC4)
 			{
 				P11RC4SecretKeyObj* key = new P11RC4SecretKeyObj();
 				*p11object = key;
-				key->setKeyType(keyType);
 			}
 			else if (keyType == CKK_GOST28147)
 			{
@@ -7026,7 +7024,7 @@ CK_RV SoftHSM::generateDES3
 	return rv;
 }
 
-// Generate an AES secret key
+// Generate a RC2 secret key
 CK_RV SoftHSM::generateRC2
 (CK_SESSION_HANDLE hSession,
 	CK_ATTRIBUTE_PTR pTemplate,
@@ -7073,7 +7071,7 @@ CK_RV SoftHSM::generateRC2
 		return CKR_TEMPLATE_INCOMPLETE;
 	}
 
-	// keyLen must be 16, 24 or 32
+	// keyLen must be between 1 and 128 bytes
 	if ((keyLen < 1) || (keyLen > 128))
 	{
 		INFO_MSG("bad RC2 key length");
@@ -7197,7 +7195,7 @@ CK_RV SoftHSM::generateRC2
 	return rv;
 }
 
-// Generate an AES secret key
+// Generate a RC2 secret key
 CK_RV SoftHSM::generateRC4
 (CK_SESSION_HANDLE hSession,
 	CK_ATTRIBUTE_PTR pTemplate,

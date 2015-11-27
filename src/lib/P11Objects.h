@@ -356,13 +356,8 @@ public:
 	// Add attributes
 	virtual bool init(OSObject *inobject);
 
-	// Better than multiply subclasses
-	virtual bool setKeyType(CK_KEY_TYPE inKeytype);
-	virtual CK_KEY_TYPE getKeyType();
-
 protected:
 	bool initialized;
-	CK_KEY_TYPE keytype;
 };
 
 class P11RC4SecretKeyObj : public P11SecretKeyObj
@@ -374,13 +369,8 @@ public:
 	// Add attributes
 	virtual bool init(OSObject *inobject);
 
-	// Better than multiply subclasses
-	virtual bool setKeyType(CK_KEY_TYPE inKeytype);
-	virtual CK_KEY_TYPE getKeyType();
-
 protected:
 	bool initialized;
-	CK_KEY_TYPE keytype;
 };
 
 class P11GOSTSecretKeyObj : public P11SecretKeyObj
