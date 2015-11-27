@@ -7195,7 +7195,7 @@ CK_RV SoftHSM::generateRC2
 	return rv;
 }
 
-// Generate a RC2 secret key
+// Generate a RC4 secret key
 CK_RV SoftHSM::generateRC4
 (CK_SESSION_HANDLE hSession,
 	CK_ATTRIBUTE_PTR pTemplate,
