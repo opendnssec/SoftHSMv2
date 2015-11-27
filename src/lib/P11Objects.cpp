@@ -1541,15 +1541,10 @@ bool P11DESSecretKeyObj::init(OSObject *inobject)
 	P11Attribute* attrValue = new P11AttrValue(osobject,P11Attribute::ck1|P11Attribute::ck4|P11Attribute::ck6|P11Attribute::ck7);
 
 	// Initialize the attributes
-	if
-	(
-		!attrValue->init() ||
-		!attrValueLen->init()
-	)
+	if (!attrValue->init())
 	{
 		ERROR_MSG("Could not initialize the attribute");
 		delete attrValue;
-		delete attrValueLen;
 		return false;
 	}
 
@@ -1648,10 +1643,15 @@ bool P11RC4SecretKeyObj::init(OSObject *inobject)
 	P11Attribute* attrValueLen = new P11AttrValueLen(osobject,P11Attribute::ck6);
 
 	// Initialize the attributes
-	if (!attrValue->init())
+	if
+	(
+		!attrValue->init() ||
+		!attrValueLen->init()
+	)
 	{
 		ERROR_MSG("Could not initialize the attribute");
 		delete attrValue;
+		delete attrValueLen;
 		return false;
 	}
 
