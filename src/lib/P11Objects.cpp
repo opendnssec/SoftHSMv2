@@ -1595,6 +1595,7 @@ bool P11RC2SecretKeyObj::init(OSObject *inobject)
 
 	// Create attributes
 	P11Attribute* attrValue = new P11AttrValue(osobject,P11Attribute::ck1|P11Attribute::ck4|P11Attribute::ck6|P11Attribute::ck7);
+	P11Attribute* attrValueLen = new P11AttrValueLen(osobject,P11Attribute::ck6);
 
 	// Initialize the attributes
 	if (!attrValue->init())
@@ -1606,6 +1607,7 @@ bool P11RC2SecretKeyObj::init(OSObject *inobject)
 
 	// Add them to the map
 	attributes[attrValue->getType()] = attrValue;
+	attributes[attrValueLen->getType()] = attrValueLen;
 
 	initialized = true;
 	return true;
@@ -1633,6 +1635,7 @@ bool P11RC4SecretKeyObj::init(OSObject *inobject)
 
 	// Create attributes
 	P11Attribute* attrValue = new P11AttrValue(osobject,P11Attribute::ck1|P11Attribute::ck4|P11Attribute::ck6|P11Attribute::ck7);
+	P11Attribute* attrValueLen = new P11AttrValueLen(osobject,P11Attribute::ck6);
 
 	// Initialize the attributes
 	if (!attrValue->init())
@@ -1644,6 +1647,7 @@ bool P11RC4SecretKeyObj::init(OSObject *inobject)
 
 	// Add them to the map
 	attributes[attrValue->getType()] = attrValue;
+	attributes[attrValueLen->getType()] = attrValueLen;
 
 	initialized = true;
 	return true;
