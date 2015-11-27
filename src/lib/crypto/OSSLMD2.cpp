@@ -41,6 +41,6 @@ int OSSLMD2::getHashSize()
 
 const EVP_MD* OSSLMD2::getEVPHash() const
 {
-	return EVP_MD2();
+	return EVP_md2();
 }
 
