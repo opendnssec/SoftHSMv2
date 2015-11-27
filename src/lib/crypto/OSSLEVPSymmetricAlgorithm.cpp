@@ -125,7 +125,10 @@ bool OSSLEVPSymmetricAlgorithm::encryptInit(const SymmetricKey* key, const SymMo
 	}
 
 	EVP_CIPHER_CTX_set_padding(pCurCTX, padding ? 1 : 0);
-	EVP_CIPHER_CTX_ctrl(pCurCTX, EVP_CTRL_SET_RC2_KEY_BITS, currentKey->getBitLen(), NULL);
+	if (EVP_CIPHER_nid(cipher) == NID_rc2)
+	{
+		EVP_CIPHER_CTX_ctrl(pCurCTX, EVP_CTRL_SET_RC2_KEY_BITS, currentKey->getBitLen(), NULL);
+	}
 
 	return true;
 }
