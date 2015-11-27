@@ -1465,6 +1465,12 @@ bool P11GenericSecretKeyObj::setKeyType(CK_KEY_TYPE inKeytype)
 		return false;
 }
 
+// Get Key Type
+CK_KEY_TYPE P11GenericSecretKeyObj::getKeyType()
+{
+	return keytype;
+}
+
 // Constructor
 P11AESSecretKeyObj::P11AESSecretKeyObj()
 {
