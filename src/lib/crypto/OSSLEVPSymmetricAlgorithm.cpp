@@ -125,7 +125,7 @@ bool OSSLEVPSymmetricAlgorithm::encryptInit(const SymmetricKey* key, const SymMo
 	}
 
 	EVP_CIPHER_CTX_set_padding(pCurCTX, padding ? 1 : 0);
-	switch (EVP_CIPHER_NID(cipher)) {
+	switch (EVP_CIPHER_nid(cipher)) {
 	case NID_rc2_cbc:
 	case NID_rc2_ecb:
 	case NID_rc2_cfb64:
