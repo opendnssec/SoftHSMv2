@@ -1594,7 +1594,7 @@ bool P11RC2SecretKeyObj::init(OSObject *inobject)
 	if (!P11SecretKeyObj::init(inobject)) return false;
 
 	// Create attributes
-	P11Attribute* attrValue = new P11AttrValue(osobject,P11Attribute::ck1|P11Attribute::ck4|P11Attribute::ck7);
+	P11Attribute* attrValue = new P11AttrValue(osobject,P11Attribute::ck1|P11Attribute::ck4|P11Attribute::ck6|P11Attribute::ck7);
 	P11Attribute* attrValueLen = new P11AttrValueLen(osobject);
 
 	// Initialize the attributes
