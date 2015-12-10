@@ -25,6 +25,8 @@ Bugfixes:
   C_EncryptUpdate crash if no ciphered data is produced.
   (Patch from agrandville)
 * Issue #169: One-byte buffer overflow in call to EVP_DecryptUpdate.
+* Issue #171: Problem while closing library that is initialized but
+  improperly finalized.
 * Issue #173: Adjust return values for the template parsing.
 * Issue #174: C_DeriveKey() error with leading zero bytes.
 * Issue #177: CKA_NEVER_EXTRACTABLE set to CK_FALSE on objects

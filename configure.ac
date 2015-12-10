@@ -49,7 +49,6 @@ AC_PROG_CXX
 ACX_PEDANTIC
 ACX_STRICT
 ACX_64BIT
-ACX_DESTRUCTOR
 
 # Check for libraries (-ldl can be required by OpenSSL too)
 ACX_DLOPEN

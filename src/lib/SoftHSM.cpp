@@ -67,23 +67,39 @@
 #include "P11Objects.h"
 #include "odd.h"
 
+#if defined(WITH_OPENSSL)
+#include "OSSLCryptoFactory.h"
+#else
+#include "BotanCryptoFactory.h"
+#endif
+
 #include <stdlib.h>
 
 // Initialise the one-and-only instance
 
 #ifdef HAVE_CXX11
+
 std::unique_ptr<MutexFactory> MutexFactory::instance(nullptr);
-#else
-std::auto_ptr<MutexFactory> MutexFactory::instance(NULL);
-#endif
-
-#ifdef HAVE_CXX11
 std::unique_ptr<SecureMemoryRegistry> SecureMemoryRegistry::instance(nullptr);
+#if defined(WITH_OPENSSL)
+std::unique_ptr<OSSLCryptoFactory> OSSLCryptoFactory::instance(nullptr);
 #else
-std::auto_ptr<SecureMemoryRegistry> SecureMemoryRegistry::instance(NULL);
+std::unique_ptr<BotanCryptoFactory> BotanCryptoFactory::instance(nullptr);
 #endif
+std::unique_ptr<SoftHSM> SoftHSM::instance(nullptr);
 
+#else
 
+std::auto_ptr<MutexFactory> MutexFactory::instance(NULL);
+std::auto_ptr<SecureMemoryRegistry> SecureMemoryRegistry::instance(NULL);
+#if defined(WITH_OPENSSL)
+std::auto_ptr<OSSLCryptoFactory> OSSLCryptoFactory::instance(NULL);
+#else
+std::auto_ptr<BotanCryptoFactory> BotanCryptoFactory::instance(NULL);
+#endif
+std::auto_ptr<SoftHSM> SoftHSM::instance(NULL);
+
+#endif
 
 static CK_RV newP11Object(CK_OBJECT_CLASS objClass, CK_KEY_TYPE keyType, CK_CERTIFICATE_TYPE certType, P11Object **p11object)
 {
@@ -280,24 +296,9 @@ static CK_ATTRIBUTE bsAttribute(CK_ATTRIBUTE_TYPE type, const ByteString &value)
 }
 #endif
 
-#ifdef HAVE_FUNC_ATTRIBUTE_DESTRUCTOR
-__attribute__((__destructor__))
-#endif
-static void libcleanup()
-{
-	SoftHSM::i()->C_Finalize(NULL);
-}
-
 /*****************************************************************************
  Implementation of SoftHSM class specific functions
  *****************************************************************************/
-
-// Initialise the one-and-only instance
-#ifdef HAVE_CXX11
-std::unique_ptr<SoftHSM> SoftHSM::instance(nullptr);
-#else
-std::auto_ptr<SoftHSM> SoftHSM::instance(NULL);
-#endif
 
 // Return the one-and-only instance
 SoftHSM* SoftHSM::i()
@@ -494,11 +495,6 @@ CK_RV SoftHSM::C_Initialize(CK_VOID_PTR pInitArgs)
 	// Set the state to initialised
 	isInitialised = true;
 
-#ifndef HAVE_FUNC_ATTRIBUTE_DESTRUCTOR
-	// Hook cleanup on dlclose() or exit()
-	atexit(libcleanup);
-#endif
-
 	return CKR_OK;
 }
 
@@ -520,10 +516,6 @@ CK_RV SoftHSM::C_Finalize(CK_VOID_PTR pReserved)
 	objectStore = NULL;
 	if (sessionObjectStore != NULL) delete sessionObjectStore;
 	sessionObjectStore = NULL;
-	CryptoFactory::reset();
-	SecureMemoryRegistry::reset();
-
-	// TODO: What should we finalize?
 
 	isInitialised = false;
 
