@@ -34,6 +34,8 @@
 #include "P11Attributes.h"
 #include "ByteString.h"
 #include "CryptoFactory.h"
+#include "DESKey.h"
+#include "AESKey.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -757,6 +759,81 @@ bool P11AttrCheckValue::setDefault()
 {
 	OSAttribute attr(ByteString(""));
 	return osobject->setAttribute(type, attr);
+}
+
+// Update the value if allowed
+CK_RV P11AttrCheckValue::updateAttr(Token *token, bool isPrivate, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op)
+{
+	ByteString plaintext((unsigned char*)pValue, ulValueLen);
+	ByteString value;
+
+	// Encrypt
+
+	if (isPrivate)
+	{
+		if (!token->encrypt(plaintext, value))
+			return CKR_GENERAL_ERROR;
+	}
+	else
+		value = plaintext;
+
+	// Attribute specific checks
+
+	if (value.size() < ulValueLen)
+		return CKR_GENERAL_ERROR;
+
+	// Store data
+	if (ulValueLen == 0)
+	{
+		osobject->setAttribute(type, value);
+	}
+	else
+	{
+		ByteString checkValue;
+		ByteString keybits;
+		if (isPrivate)
+		{
+			if (!token->decrypt(osobject->getByteStringValue(CKA_VALUE), keybits))
+				return CKR_GENERAL_ERROR;
+		}
+		else
+		{
+			keybits = osobject->getByteStringValue(CKA_VALUE);
+		}
+
+		SymmetricKey key;
+		AESKey aes;
+		DESKey des;
+		switch (osobject->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED))
+		{
+			case CKK_GENERIC_SECRET:
+				key.setKeyBits(keybits);
+				key.setBitLen(keybits.size() * 8);
+				checkValue = key.getKeyCheckValue();
+				break;
+			case CKK_AES:
+				aes.setKeyBits(keybits);
+				aes.setBitLen(keybits.size() * 8);
+				checkValue = aes.getKeyCheckValue();
+				break;
+			case CKK_DES:
+			case CKK_DES2:
+			case CKK_DES3:
+				des.setKeyBits(keybits);
+				des.setBitLen(keybits.size() * 7);
+				checkValue = des.getKeyCheckValue();
+				break;
+			default:
+				return CKR_GENERAL_ERROR;
+		}
+
+		if (plaintext != checkValue)
+			return CKR_ATTRIBUTE_VALUE_INVALID;
+
+		osobject->setAttribute(type, value);
+	}
+
+	return CKR_OK;
 }
 
 /*****************************************

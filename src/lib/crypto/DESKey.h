@@ -46,6 +46,9 @@ public:
 
 	// Set the key
 	virtual bool setKeyBits(const ByteString& keybits);
+
+	// Get the key check value
+	virtual ByteString getKeyCheckValue() const;
 };
 
 #endif // !_SOFTHSM_V2_DESKEY_H

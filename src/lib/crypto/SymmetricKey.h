@@ -54,6 +54,9 @@ public:
 	// Get the key
 	virtual const ByteString& getKeyBits() const;
 
+	// Get the key check value
+	virtual ByteString getKeyCheckValue() const;
+
 	// Serialisation
 	virtual ByteString serialise() const;
 

@@ -1339,7 +1339,6 @@ bool P11SecretKeyObj::init(OSObject *inobject)
 	P11Attribute* attrExtractable = new P11AttrExtractable(osobject);
 	P11Attribute* attrAlwaysSensitive = new P11AttrAlwaysSensitive(osobject);
 	P11Attribute* attrNeverExtractable = new P11AttrNeverExtractable(osobject);
-	// TODO: CKA_CHECK_VALUE is accepted, but we do not calculate it
 	P11Attribute* attrCheckValue = new P11AttrCheckValue(osobject, P11Attribute::ck8);
 	P11Attribute* attrWrapWithTrusted = new P11AttrWrapWithTrusted(osobject);
 	P11Attribute* attrTrusted = new P11AttrTrusted(osobject);

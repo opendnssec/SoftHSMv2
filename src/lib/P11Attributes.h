@@ -313,6 +313,10 @@ public:
 protected:
 	// Set the default value of the attribute
 	virtual bool setDefault();
+
+
+	// Update the value if allowed
+	virtual CK_RV updateAttr(Token *token, bool isPrivate, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op);
 };
 
 /*****************************************
