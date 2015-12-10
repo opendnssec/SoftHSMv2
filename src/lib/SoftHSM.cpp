@@ -8745,35 +8745,38 @@ CK_RV SoftHSM::deriveDH
 
 			// Secret Attributes
 			ByteString secretValue = secret->getKeyBits();
+			ByteString value;
 
-			// Truncate value when requested
 			if (byteLen > secretValue.size())
 			{
 				INFO_MSG("The derived secret is too short");
 				bOK = false;
 			}
-			if (bOK && byteLen != 0)
-				secretValue.resize(byteLen);
-
-			// Fix the odd parity for DES
-			if (keyType == CKK_DES ||
-			    keyType == CKK_DES2 ||
-			    keyType == CKK_DES3)
-			{
-				for (size_t i = 0; i < secretValue.size(); i++)
-				{
-					secretValue[i] = odd_parity[secretValue[i]];
-				}
-			}
-
-			ByteString value;
-			if (isPrivate)
-			{
-				token->encrypt(secretValue, value);
-			}
 			else
 			{
-				value = secretValue;
+				// Truncate value when requested, remove from the leading end
+				if (byteLen < secretValue.size())
+					secretValue.split(secretValue.size() - byteLen);
+
+				// Fix the odd parity for DES
+				if (keyType == CKK_DES ||
+				    keyType == CKK_DES2 ||
+				    keyType == CKK_DES3)
+				{
+					for (size_t i = 0; i < secretValue.size(); i++)
+					{
+						secretValue[i] = odd_parity[secretValue[i]];
+					}
+				}
+
+				if (isPrivate)
+				{
+					token->encrypt(secretValue, value);
+				}
+				else
+				{
+					value = secretValue;
+				}
 			}
 			bOK = bOK && osobject->setAttribute(CKA_VALUE, value);
 
@@ -9042,35 +9045,38 @@ CK_RV SoftHSM::deriveECDH
 
 			// Secret Attributes
 			ByteString secretValue = secret->getKeyBits();
+			ByteString value;
 
-			// Truncate value when requested
 			if (byteLen > secretValue.size())
 			{
 				INFO_MSG("The derived secret is too short");
 				bOK = false;
 			}
-			if (bOK && byteLen != 0)
-				secretValue.resize(byteLen);
-
-			// Fix the odd parity for DES
-			if (keyType == CKK_DES ||
-			    keyType == CKK_DES2 ||
-			    keyType == CKK_DES3)
-			{
-				for (size_t i = 0; i < secretValue.size(); i++)
-				{
-					secretValue[i] = odd_parity[secretValue[i]];
-				}
-			}
-
-			ByteString value;
-			if (isPrivate)
-			{
-				token->encrypt(secretValue, value);
-			}
 			else
 			{
-				value = secretValue;
+				// Truncate value when requested, remove from the leading end
+				if (byteLen < secretValue.size())
+					secretValue.split(secretValue.size() - byteLen);
+
+				// Fix the odd parity for DES
+				if (keyType == CKK_DES ||
+				    keyType == CKK_DES2 ||
+				    keyType == CKK_DES3)
+				{
+					for (size_t i = 0; i < secretValue.size(); i++)
+					{
+						secretValue[i] = odd_parity[secretValue[i]];
+					}
+				}
+
+				if (isPrivate)
+				{
+					token->encrypt(secretValue, value);
+				}
+				else
+				{
+					value = secretValue;
+				}
 			}
 			bOK = bOK && osobject->setAttribute(CKA_VALUE, value);
 
@@ -9463,34 +9469,38 @@ CK_RV SoftHSM::deriveSymmetric
 				bOK = bOK && osobject->setAttribute(CKA_NEVER_EXTRACTABLE,false);
 			}
 
-			// Truncate value when requested
+			ByteString value;
+
 			if (byteLen > secretValue.size())
 			{
 				INFO_MSG("The derived secret is too short");
 				bOK = false;
 			}
-			if (bOK && byteLen != 0)
-				secretValue.resize(byteLen);
-
-			// Fix the odd parity for DES
-			if (keyType == CKK_DES ||
-			    keyType == CKK_DES2 ||
-			    keyType == CKK_DES3)
-			{
-				for (size_t i = 0; i < secretValue.size(); i++)
-				{
-					secretValue[i] = odd_parity[secretValue[i]];
-				}
-			}
-
-			ByteString value;
-			if (isPrivate)
-			{
-				token->encrypt(secretValue, value);
-			}
 			else
 			{
-				value = secretValue;
+				// Truncate value when requested, remove from the trailing end
+				if (byteLen < secretValue.size())
+					secretValue.resize(byteLen);
+
+				// Fix the odd parity for DES
+				if (keyType == CKK_DES ||
+				    keyType == CKK_DES2 ||
+				    keyType == CKK_DES3)
+				{
+					for (size_t i = 0; i < secretValue.size(); i++)
+					{
+						secretValue[i] = odd_parity[secretValue[i]];
+					}
+				}
+
+				if (isPrivate)
+				{
+					token->encrypt(secretValue, value);
+				}
+				else
+				{
+					value = secretValue;
+				}
 			}
 			bOK = bOK && osobject->setAttribute(CKA_VALUE, value);
 

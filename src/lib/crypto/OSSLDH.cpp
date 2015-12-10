@@ -202,17 +202,23 @@ bool OSSLDH::deriveKey(SymmetricKey **ppSymmetricKey, PublicKey* publicKey, Priv
 	}
 
 	// Derive the secret
-	ByteString secret;
-	secret.resize(DH_size(priv));;
+	ByteString secret, derivedSecret;
+	int size = DH_size(priv);
+	secret.wipe(size);
+	derivedSecret.wipe(size);
+	int keySize = DH_compute_key(&derivedSecret[0], pub->pub_key, priv);
 
-	if (DH_compute_key(&secret[0], pub->pub_key, priv) <= 0)
+	if (keySize <= 0)
 	{
 		ERROR_MSG("DH key derivation failed (0x%08X)", ERR_get_error());
 
 		return false;
 	}
 
-	*ppSymmetricKey = new SymmetricKey;
+	// We compensate that OpenSSL removes leading zeros
+	memcpy(&secret[0] + size - keySize, &derivedSecret[0], keySize);
+
+	*ppSymmetricKey = new SymmetricKey(secret.size() * 8);
 	if (*ppSymmetricKey == NULL)
 		return false;
 	if (!(*ppSymmetricKey)->setKeyBits(secret))
