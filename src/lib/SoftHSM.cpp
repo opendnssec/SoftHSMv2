@@ -516,6 +516,8 @@ CK_RV SoftHSM::C_Finalize(CK_VOID_PTR pReserved)
 	objectStore = NULL;
 	if (sessionObjectStore != NULL) delete sessionObjectStore;
 	sessionObjectStore = NULL;
+	CryptoFactory::reset();
+	SecureMemoryRegistry::reset();
 
 	isInitialised = false;
 
