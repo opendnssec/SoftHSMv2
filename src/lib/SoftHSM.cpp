@@ -9602,6 +9602,27 @@ CK_RV SoftHSM::CreateObject(CK_SESSION_HANDLE hSession, CK_ATTRIBUTE_PTR pTempla
 	if (rv != CKR_OK)
 		return rv;
 
+	if (op == OBJECT_OP_CREATE)
+	{
+		if (objClass == CKO_PUBLIC_KEY &&
+		    (!object->startTransaction() ||
+		    !object->setAttribute(CKA_LOCAL, false) ||
+		    !object->commitTransaction()))
+		{
+			return CKR_GENERAL_ERROR;
+		}
+
+		if ((objClass == CKO_SECRET_KEY || objClass == CKO_PRIVATE_KEY) &&
+		    (!object->startTransaction() ||
+		    !object->setAttribute(CKA_LOCAL, false) ||
+		    !object->setAttribute(CKA_ALWAYS_SENSITIVE, false) ||
+		    !object->setAttribute(CKA_NEVER_EXTRACTABLE, false) ||
+		    !object->commitTransaction()))
+		{
+			return CKR_GENERAL_ERROR;
+		}
+	}
+
 	if (isOnToken)
 	{
 		*phObject = handleManager->addTokenObject(slot->getSlotID(), isPrivate != CK_FALSE, object);
