@@ -5016,7 +5016,7 @@ CK_RV SoftHSM::C_GenerateKey(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMecha
 
 	// Report errors and/or unexpected usage.
 	if (objClass != CKO_SECRET_KEY && objClass != CKO_DOMAIN_PARAMETERS)
-		return CKR_TEMPLATE_INCONSISTENT;
+		return CKR_ATTRIBUTE_VALUE_INVALID;
 	if (pMechanism->mechanism == CKM_DSA_PARAMETER_GEN &&
 	    (objClass != CKO_DOMAIN_PARAMETERS || keyType != CKK_DSA))
 		return CKR_TEMPLATE_INCONSISTENT;
@@ -5147,7 +5147,7 @@ CK_RV SoftHSM::C_GenerateKeyPair
 
 	// Report errors caused by accidental template mix-ups in the application using this cryptoki lib.
 	if (publicKeyClass != CKO_PUBLIC_KEY)
-		return CKR_TEMPLATE_INCONSISTENT;
+		return CKR_ATTRIBUTE_VALUE_INVALID;
 	if (pMechanism->mechanism == CKM_RSA_PKCS_KEY_PAIR_GEN && keyType != CKK_RSA)
 		return CKR_TEMPLATE_INCONSISTENT;
 	if (pMechanism->mechanism == CKM_DSA_KEY_PAIR_GEN && keyType != CKK_DSA)
@@ -5168,7 +5168,7 @@ CK_RV SoftHSM::C_GenerateKeyPair
 
 	// Report errors caused by accidental template mix-ups in the application using this cryptoki lib.
 	if (privateKeyClass != CKO_PRIVATE_KEY)
-		return CKR_TEMPLATE_INCONSISTENT;
+		return CKR_ATTRIBUTE_VALUE_INVALID;
 	if (pMechanism->mechanism == CKM_RSA_PKCS_KEY_PAIR_GEN && keyType != CKK_RSA)
 		return CKR_TEMPLATE_INCONSISTENT;
 	if (pMechanism->mechanism == CKM_DSA_KEY_PAIR_GEN && keyType != CKK_DSA)
@@ -5865,7 +5865,7 @@ CK_RV SoftHSM::C_UnwrapKey
 
 	// Report errors and/or unexpected usage.
 	if (objClass != CKO_SECRET_KEY && objClass != CKO_PRIVATE_KEY)
-		return CKR_TEMPLATE_INCONSISTENT;
+		return CKR_ATTRIBUTE_VALUE_INVALID;
 	// Key type will be handled at object creation
 
 	// Check authorization
@@ -6124,7 +6124,7 @@ CK_RV SoftHSM::C_DeriveKey
 
 	// Report errors and/or unexpected usage.
 	if (objClass != CKO_SECRET_KEY)
-		return CKR_TEMPLATE_INCONSISTENT;
+		return CKR_ATTRIBUTE_VALUE_INVALID;
 	if (keyType != CKK_GENERIC_SECRET &&
 	    keyType != CKK_DES &&
 	    keyType != CKK_DES2 &&
@@ -6318,7 +6318,7 @@ CK_RV SoftHSM::generateAES
 				if (pTemplate[i].ulValueLen != sizeof(CK_ULONG))
 				{
 					INFO_MSG("CKA_VALUE_LEN does not have the size of CK_ULONG");
-					return CKR_TEMPLATE_INCOMPLETE;
+					return CKR_ATTRIBUTE_VALUE_INVALID;
 				}
 				keyLen = *(CK_ULONG*)pTemplate[i].pValue;
 				break;
@@ -6911,7 +6911,7 @@ CK_RV SoftHSM::generateRSA
 				if (pPublicKeyTemplate[i].ulValueLen != sizeof(CK_ULONG))
 				{
 					INFO_MSG("CKA_MODULUS_BITS does not have the size of CK_ULONG");
-					return CKR_TEMPLATE_INCOMPLETE;
+					return CKR_ATTRIBUTE_VALUE_INVALID;
 				}
 				bitLen = *(CK_ULONG*)pPublicKeyTemplate[i].pValue;
 				break;
@@ -7455,7 +7455,7 @@ CK_RV SoftHSM::generateDSAParameters
 				if (pTemplate[i].ulValueLen != sizeof(CK_ULONG))
 				{
 					INFO_MSG("CKA_PRIME_BITS does not have the size of CK_ULONG");
-					return CKR_TEMPLATE_INCOMPLETE;
+					return CKR_ATTRIBUTE_VALUE_INVALID;
 				}
 				bitLen = *(CK_ULONG*)pTemplate[i].pValue;
 				break;
@@ -7463,7 +7463,7 @@ CK_RV SoftHSM::generateDSAParameters
 				if (pTemplate[i].ulValueLen != sizeof(CK_ULONG))
 				{
 					INFO_MSG("CKA_SUBPRIME_BITS does not have the size of CK_ULONG");
-					return CKR_TEMPLATE_INCOMPLETE;
+					return CKR_ATTRIBUTE_VALUE_INVALID;
 				}
 				qLen = *(CK_ULONG*)pTemplate[i].pValue;
 				break;
@@ -8149,7 +8149,7 @@ CK_RV SoftHSM::generateDHParameters
 				if (pTemplate[i].ulValueLen != sizeof(CK_ULONG))
 				{
 					INFO_MSG("CKA_PRIME_BITS does not have the size of CK_ULONG");
-					return CKR_TEMPLATE_INCOMPLETE;
+					return CKR_ATTRIBUTE_VALUE_INVALID;
 				}
 				bitLen = *(CK_ULONG*)pTemplate[i].pValue;
 				break;
@@ -8569,12 +8569,12 @@ CK_RV SoftHSM::deriveDH
 		{
 			case CKA_VALUE:
 				INFO_MSG("CKA_VALUE must not be included");
-				return CKR_TEMPLATE_INCONSISTENT;
+				return CKR_ATTRIBUTE_READ_ONLY;
 			case CKA_VALUE_LEN:
 				if (pTemplate[i].ulValueLen != sizeof(CK_ULONG))
 				{
 					INFO_MSG("CKA_VALUE_LEN does not have the size of CK_ULONG");
-					return CKR_TEMPLATE_INCOMPLETE;
+					return CKR_ATTRIBUTE_VALUE_INVALID;
 				}
 				byteLen = *(CK_ULONG*)pTemplate[i].pValue;
 				break;
@@ -8590,7 +8590,7 @@ CK_RV SoftHSM::deriveDH
 			if (byteLen == 0)
 			{
 				INFO_MSG("CKA_VALUE_LEN must be set");
-				return CKR_TEMPLATE_INCONSISTENT;
+				return CKR_TEMPLATE_INCOMPLETE;
 			}
 			break;
 #ifndef WITH_FIPS
@@ -8598,7 +8598,7 @@ CK_RV SoftHSM::deriveDH
 			if (byteLen != 0)
 			{
 				INFO_MSG("CKA_VALUE_LEN must not be set");
-				return CKR_TEMPLATE_INCONSISTENT;
+				return CKR_ATTRIBUTE_READ_ONLY;
 			}
 			byteLen = 8;
 			break;
@@ -8607,7 +8607,7 @@ CK_RV SoftHSM::deriveDH
 			if (byteLen != 0)
 			{
 				INFO_MSG("CKA_VALUE_LEN must not be set");
-				return CKR_TEMPLATE_INCONSISTENT;
+				return CKR_ATTRIBUTE_READ_ONLY;
 			}
 			byteLen = 16;
 			break;
@@ -8615,7 +8615,7 @@ CK_RV SoftHSM::deriveDH
 			if (byteLen != 0)
 			{
 				INFO_MSG("CKA_VALUE_LEN must not be set");
-				return CKR_TEMPLATE_INCONSISTENT;
+				return CKR_ATTRIBUTE_READ_ONLY;
 			}
 			byteLen = 24;
 			break;
@@ -8623,11 +8623,11 @@ CK_RV SoftHSM::deriveDH
 			if (byteLen != 16 && byteLen != 24 && byteLen != 32)
 			{
 				INFO_MSG("CKA_VALUE_LEN must be 16, 24 or 32");
-				return CKR_TEMPLATE_INCOMPLETE;
+				return CKR_ATTRIBUTE_VALUE_INVALID;
 			}
 			break;
 		default:
-			return CKR_TEMPLATE_INCONSISTENT;
+			return CKR_ATTRIBUTE_VALUE_INVALID;
 	}
 
 	// Get the base key handle
@@ -8864,12 +8864,12 @@ CK_RV SoftHSM::deriveECDH
 		{
 			case CKA_VALUE:
 				INFO_MSG("CKA_VALUE must not be included");
-				return CKR_TEMPLATE_INCONSISTENT;
+				return CKR_ATTRIBUTE_READ_ONLY;
 			case CKA_VALUE_LEN:
 				if (pTemplate[i].ulValueLen != sizeof(CK_ULONG))
 				{
 					INFO_MSG("CKA_VALUE_LEN does not have the size of CK_ULONG");
-					return CKR_TEMPLATE_INCOMPLETE;
+					return CKR_ATTRIBUTE_VALUE_INVALID;
 				}
 				byteLen = *(CK_ULONG*)pTemplate[i].pValue;
 				break;
@@ -8885,7 +8885,7 @@ CK_RV SoftHSM::deriveECDH
 			if (byteLen == 0)
 			{
 				INFO_MSG("CKA_VALUE_LEN must be set");
-				return CKR_TEMPLATE_INCONSISTENT;
+				return CKR_TEMPLATE_INCOMPLETE;
 			}
 			break;
 #ifndef WITH_FIPS
@@ -8893,7 +8893,7 @@ CK_RV SoftHSM::deriveECDH
 			if (byteLen != 0)
 			{
 				INFO_MSG("CKA_VALUE_LEN must not be set");
-				return CKR_TEMPLATE_INCONSISTENT;
+				return CKR_ATTRIBUTE_READ_ONLY;
 			}
 			byteLen = 8;
 			break;
@@ -8902,7 +8902,7 @@ CK_RV SoftHSM::deriveECDH
 			if (byteLen != 0)
 			{
 				INFO_MSG("CKA_VALUE_LEN must not be set");
-				return CKR_TEMPLATE_INCONSISTENT;
+				return CKR_ATTRIBUTE_READ_ONLY;
 			}
 			byteLen = 16;
 			break;
@@ -8910,7 +8910,7 @@ CK_RV SoftHSM::deriveECDH
 			if (byteLen != 0)
 			{
 				INFO_MSG("CKA_VALUE_LEN must not be set");
-				return CKR_TEMPLATE_INCONSISTENT;
+				return CKR_ATTRIBUTE_READ_ONLY;
 			}
 			byteLen = 24;
 			break;
@@ -8918,11 +8918,11 @@ CK_RV SoftHSM::deriveECDH
 			if (byteLen != 16 && byteLen != 24 && byteLen != 32)
 			{
 				INFO_MSG("CKA_VALUE_LEN must be 16, 24 or 32");
-				return CKR_TEMPLATE_INCOMPLETE;
+				return CKR_ATTRIBUTE_VALUE_INVALID;
 			}
 			break;
 		default:
-			return CKR_TEMPLATE_INCONSISTENT;
+			return CKR_ATTRIBUTE_VALUE_INVALID;
 	}
 
 	// Get the base key handle
@@ -9235,12 +9235,12 @@ CK_RV SoftHSM::deriveSymmetric
 		{
 			case CKA_VALUE:
 				INFO_MSG("CKA_VALUE must not be included");
-				return CKR_TEMPLATE_INCONSISTENT;
+				return CKR_ATTRIBUTE_READ_ONLY;
 			case CKA_VALUE_LEN:
 				if (pTemplate[i].ulValueLen != sizeof(CK_ULONG))
 				{
 					INFO_MSG("CKA_VALUE_LEN does not have the size of CK_ULONG");
-					return CKR_TEMPLATE_INCOMPLETE;
+					return CKR_ATTRIBUTE_VALUE_INVALID;
 				}
 				byteLen = *(CK_ULONG*)pTemplate[i].pValue;
 				break;
@@ -9256,7 +9256,7 @@ CK_RV SoftHSM::deriveSymmetric
 			if (byteLen == 0)
 			{
 				INFO_MSG("CKA_VALUE_LEN must be set");
-				return CKR_TEMPLATE_INCONSISTENT;
+				return CKR_TEMPLATE_INCOMPLETE;
 			}
 			break;
 #ifndef WITH_FIPS
@@ -9264,7 +9264,7 @@ CK_RV SoftHSM::deriveSymmetric
 			if (byteLen != 0)
 			{
 				INFO_MSG("CKA_VALUE_LEN must not be set");
-				return CKR_TEMPLATE_INCONSISTENT;
+				return CKR_ATTRIBUTE_READ_ONLY;
 			}
 			byteLen = 8;
 			break;
@@ -9273,7 +9273,7 @@ CK_RV SoftHSM::deriveSymmetric
 			if (byteLen != 0)
 			{
 				INFO_MSG("CKA_VALUE_LEN must not be set");
-				return CKR_TEMPLATE_INCONSISTENT;
+				return CKR_ATTRIBUTE_READ_ONLY;
 			}
 			byteLen = 16;
 			break;
@@ -9281,7 +9281,7 @@ CK_RV SoftHSM::deriveSymmetric
 			if (byteLen != 0)
 			{
 				INFO_MSG("CKA_VALUE_LEN must not be set");
-				return CKR_TEMPLATE_INCONSISTENT;
+				return CKR_ATTRIBUTE_READ_ONLY;
 			}
 			byteLen = 24;
 			break;
@@ -9289,11 +9289,11 @@ CK_RV SoftHSM::deriveSymmetric
 			if (byteLen != 16 && byteLen != 24 && byteLen != 32)
 			{
 				INFO_MSG("CKA_VALUE_LEN must be 16, 24 or 32");
-				return CKR_TEMPLATE_INCOMPLETE;
+				return CKR_ATTRIBUTE_VALUE_INVALID;
 			}
 			break;
 		default:
-			return CKR_TEMPLATE_INCONSISTENT;
+			return CKR_ATTRIBUTE_VALUE_INVALID;
 	}
 
 	// Get the symmetric algorithm matching the mechanism

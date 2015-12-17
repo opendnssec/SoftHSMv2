@@ -25,6 +25,7 @@ Bugfixes:
   C_EncryptUpdate crash if no ciphered data is produced.
   (Patch from agrandville)
 * Issue #169: One-byte buffer overflow in call to EVP_DecryptUpdate.
+* Issue #173: Adjust return values for the template parsing.
 * SOFTHSM-123: Fix library cleanup on BSD.
 
 
