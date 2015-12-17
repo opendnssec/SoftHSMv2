@@ -685,8 +685,8 @@ void ObjectTests::testCreateObject()
 	// [PKCS#11 v2.3 p126]
 	// a. Only session objects can be created during read-only session.
 	// b. Only public objects can be created unless the normal user is logged in.
-	// c. TODO: Key object will have CKA_LOCAL == CK_FALSE.
-	// d. TODO: If key object is secret or a private key then both CKA_ALWAYS_SENSITIVE == CK_FALSE and CKA_NEVER_EXTRACTABLE == CKA_FALSE.
+	// c. Key object will have CKA_LOCAL == CK_FALSE.
+	// d. If key object is secret or a private key then both CKA_ALWAYS_SENSITIVE == CK_FALSE and CKA_NEVER_EXTRACTABLE == CKA_FALSE.
 
 	CK_RV rv;
 	CK_UTF8CHAR pin[] = SLOT_0_USER1_PIN;
@@ -695,6 +695,31 @@ void ObjectTests::testCreateObject()
 	CK_ULONG sopinLength = sizeof(sopin) - 1;
 	CK_SESSION_HANDLE hSession;
 	CK_OBJECT_HANDLE hObject;
+
+	CK_BBOOL bFalse = CK_FALSE;
+	CK_BBOOL bTrue = CK_TRUE;
+	CK_OBJECT_CLASS secretClass = CKO_SECRET_KEY;
+	CK_KEY_TYPE genKeyType = CKK_GENERIC_SECRET;
+	CK_BYTE keyPtr[128];
+	CK_ULONG keyLen = 128;
+	CK_ATTRIBUTE attribs[] = {
+		{ CKA_EXTRACTABLE, &bFalse, sizeof(bFalse) },
+		{ CKA_CLASS, &secretClass, sizeof(secretClass) },
+		{ CKA_KEY_TYPE, &genKeyType, sizeof(genKeyType) },
+		{ CKA_TOKEN, &bFalse, sizeof(bFalse) },
+		{ CKA_PRIVATE, &bTrue, sizeof(bTrue) },
+		{ CKA_SENSITIVE, &bTrue, sizeof(bTrue) },
+		{ CKA_VALUE, keyPtr, keyLen }
+	};
+
+	CK_BBOOL local;
+	CK_BBOOL always;
+	CK_BBOOL never;
+	CK_ATTRIBUTE getTemplate[] = {
+		{ CKA_LOCAL, &local, sizeof(local) },
+		{ CKA_ALWAYS_SENSITIVE, &always, sizeof(always) },
+		{ CKA_NEVER_EXTRACTABLE, &never, sizeof(never) }
+	};
 
 	// Just make sure that we finalize any previous tests
 	C_Finalize(NULL_PTR);
@@ -860,6 +885,39 @@ void ObjectTests::testCreateObject()
 	// Only public objects can be created unless the normal user is logged in.
 	rv = createDataObjectMinimal(hSession, ON_TOKEN, IS_PRIVATE, hObject);
 	CPPUNIT_ASSERT(rv == CKR_USER_NOT_LOGGED_IN);
+
+	// Close session
+	rv = C_CloseSession(hSession);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	/////////////////////////////////
+	// READ-WRITE & USER
+	/////////////////////////////////
+
+	// Open as read-write session
+	rv = C_OpenSession(SLOT_INIT_TOKEN, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSession);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Login to the read-write session
+	rv = C_Login(hSession,CKU_USER,pin,pinLength);
+	CPPUNIT_ASSERT(rv==CKR_OK);
+
+	// Create a secret object
+	rv = C_GenerateRandom(hSession, keyPtr, keyLen);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	rv = C_CreateObject(hSession, attribs, sizeof(attribs)/sizeof(CK_ATTRIBUTE), &hObject);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Check value
+	rv = C_GetAttributeValue(hSession, hObject, getTemplate, 3);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	CPPUNIT_ASSERT(local == CK_FALSE);
+	CPPUNIT_ASSERT(always == CK_FALSE);
+	CPPUNIT_ASSERT(never == CK_FALSE);
+
+	// Destroy the secret object
+	rv = C_DestroyObject(hSession,hObject);
+	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// Close session
 	rv = C_CloseSession(hSession);

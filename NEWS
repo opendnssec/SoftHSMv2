@@ -27,6 +27,8 @@ Bugfixes:
 * Issue #169: One-byte buffer overflow in call to EVP_DecryptUpdate.
 * Issue #173: Adjust return values for the template parsing.
 * Issue #174: C_DeriveKey() error with leading zero bytes.
+* Issue #177: CKA_NEVER_EXTRACTABLE set to CK_FALSE on objects
+  created with C_CreateObject.
 * SOFTHSM-123: Fix library cleanup on BSD.
 
 
