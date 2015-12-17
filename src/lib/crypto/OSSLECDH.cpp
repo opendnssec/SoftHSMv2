@@ -188,19 +188,23 @@ bool OSSLECDH::deriveKey(SymmetricKey **ppSymmetricKey, PublicKey* publicKey, Pr
 	ECDH_set_method(priv, ECDH_get_default_method());
 
 	// Derive the secret
-	ByteString secret;
-	secret.resize(((OSSLECPublicKey *)publicKey)->getOrderLength());;
+	ByteString secret, derivedSecret;
+	int size = ((OSSLECPublicKey *)publicKey)->getOrderLength();
+	secret.wipe(size);
+	derivedSecret.wipe(size);
+	int keySize = ECDH_compute_key(&derivedSecret[0], derivedSecret.size(), EC_KEY_get0_public_key(pub), priv, NULL);
 
-	int outlen = ECDH_compute_key(&secret[0], secret.size(), EC_KEY_get0_public_key(pub), priv, NULL);
-	if (outlen <= 0)
+	if (keySize <= 0)
 	{
 		ERROR_MSG("ECDH key derivation failed (0x%08X)", ERR_get_error());
 
 		return false;
 	}
-	secret.resize(outlen);
 
-	*ppSymmetricKey = new SymmetricKey;
+	// We compensate that OpenSSL removes leading zeros
+	memcpy(&secret[0] + size - keySize, &derivedSecret[0], keySize);
+
+	*ppSymmetricKey = new SymmetricKey(secret.size() * 8);
 	if (*ppSymmetricKey == NULL)
 		return false;
 	if (!(*ppSymmetricKey)->setKeyBits(secret))

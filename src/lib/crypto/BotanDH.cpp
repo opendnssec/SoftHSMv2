@@ -201,10 +201,14 @@ bool BotanDH::deriveKey(SymmetricKey **ppSymmetricKey, PublicKey* publicKey, Pri
 	}
 
 	ByteString secret;
-	secret.resize(sk.length());
-	memcpy(&secret[0], sk.begin(), sk.length());
 
-	*ppSymmetricKey = new SymmetricKey(sk.length() * 8);
+	// We compensate that Botan removes leading zeros
+	int size = ((BotanDHPublicKey*) publicKey)->getOutputLength();
+	int keySize = sk.length();
+	secret.wipe(size);
+	memcpy(&secret[0] + size - keySize, sk.begin(), keySize);
+
+	*ppSymmetricKey = new SymmetricKey(secret.size() * 8);
 	if (*ppSymmetricKey == NULL)
 	{
 		ERROR_MSG("Can't create DH secret");
