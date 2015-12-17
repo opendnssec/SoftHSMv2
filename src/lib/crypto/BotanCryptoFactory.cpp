@@ -60,13 +60,6 @@
 #include <botan/libstate.h>
 #endif
 
-// Initialise the one-and-only instance
-#ifdef HAVE_CXX11
-std::unique_ptr<BotanCryptoFactory> BotanCryptoFactory::instance(nullptr);
-#else
-std::auto_ptr<BotanCryptoFactory> BotanCryptoFactory::instance(NULL);
-#endif
-
 // Constructor
 BotanCryptoFactory::BotanCryptoFactory()
 {
