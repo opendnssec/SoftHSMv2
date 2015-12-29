@@ -153,22 +153,26 @@ cppunit_path = "..\\..\\cu"
 toolset = ""
 
 def dodetectplatform(visualstudio):
-	# detect platform tool set >= VS2010
-	global toolset
-	
-	if "Microsoft Visual Studio 10.0" in visualstudio:
-		toolset="v100"
-	elif "Microsoft Visual Studio 11.0" in visualstudio:	
-		toolset="v110"
-	else:
-		print("PlatformToolset for \""+visualstudio+"\" not supported")
-		toolset=""
-		
-def dodetectvisualstudio):
-	"""detect visual studio version"""
-	if os.environ.get('VSINSTALLDIR'):
+    # detect platform tool set >= VS2010
+    global toolset
+    
+    if "Microsoft Visual Studio 10.0" in visualstudio:
+        toolset="v100"
+    elif "Microsoft Visual Studio 11.0" in visualstudio:
+        toolset="v110"
+    elif "Microsoft Visual Studio 13.0" in visualstudio:
+        toolset="v120"
+    elif "Microsoft Visual Studio 14.0" in visualstudio:
+        toolset="v140"
+    else:
+        print("PlatformToolset for \""+visualstudio+"\" not supported")
+        toolset=""
+
+def dodetectvisualstudio():
+    """detect visual studio version"""
+    if os.environ.get('VSINSTALLDIR'):
         dodetectplatform(os.environ.get('VSINSTALLDIR'))
-		
+
 def parseargs(args):
     """parse arguments"""
     global verbose
@@ -303,7 +307,7 @@ def mywith(key, val, detail=None):
     global want_unknown
     global unknown_value
     global toolset
-	
+
     if key.lower() == "crypto-backend":
         if val and (detail.lower() == "openssl"):
             crypto_backend = "openssl"
@@ -945,11 +949,11 @@ def main(args):
         dodetectvisualstudio()
     if not toolset:
         print("Build skipped. To build, this file needs to run from VS command prompt.")
-	    sys.exit(1)
-	
+        sys.exit(1)
+
     varvals["PLATFORMTOOLSET"] = toolset
-	
-	# status before config
+
+    # status before config
     if verbose:
         if enable_keep:
             print("keep: enabled")
