@@ -57,7 +57,8 @@ varnames = ["CUINCPATH",
             "LIBNAME",
             "LIBPATH",
             "PLATFORM",
-            "PLATFORMDIR"]
+            "PLATFORMDIR",
+            "PLATFORMTOOLSET"]
 
 # conditions to stack
 
@@ -89,7 +90,8 @@ withlist = ["botan",
             "crypto-backend",
             "debug-botan",
             "debug-openssl",
-            "openssl"]
+            "openssl",
+            "toolset"]
 
 # general commands
 
@@ -123,7 +125,9 @@ usage + [\
 "  with-debug-botan=PATH    speficy prefix of path of Botan (Debug)",
 "  with-openssl=PATH        speficy prefix of path of OpenSSL (Release)",
 "  with-debug-openssl=PATH  speficy prefix of path of OpenSSL (Debug)",
-"  with-cppunit=PATH        specify prefix of path of CppUnit"]
+"  with-cppunit=PATH        specify prefix of path of CppUnit",
+"  with-toolset=VALUE       set Visual Studio platform toolset version (eg v110 for vs2012)",
+]
 
 # variables for parsing
 
@@ -146,7 +150,25 @@ openssl_path = "..\\..\\ssl"
 debug_openssl_path = None
 want_tests = True
 cppunit_path = "..\\..\\cu"
+toolset = ""
 
+def dodetectplatform(visualstudio):
+	# detect platform tool set >= VS2010
+	global toolset
+	
+	if "Microsoft Visual Studio 10.0" in visualstudio:
+		toolset="v100"
+	elif "Microsoft Visual Studio 11.0" in visualstudio:	
+		toolset="v110"
+	else:
+		print("PlatformToolset for \""+visualstudio+"\" not supported")
+		toolset=""
+		
+def dodetectvisualstudio):
+	"""detect visual studio version"""
+	if os.environ.get('VSINSTALLDIR'):
+        dodetectplatform(os.environ.get('VSINSTALLDIR'))
+		
 def parseargs(args):
     """parse arguments"""
     global verbose
@@ -214,6 +236,7 @@ def appargs(arg):
     global configargs
     # escape backslashes, spaces and double quotes
     escaped = ""
+    
     for x in arg:
         if (x == "\\") or (x == " ") or (x == "\""):
             escaped += "\\"
@@ -279,6 +302,8 @@ def mywith(key, val, detail=None):
     global cppunit_path
     global want_unknown
     global unknown_value
+    global toolset
+	
     if key.lower() == "crypto-backend":
         if val and (detail.lower() == "openssl"):
             crypto_backend = "openssl"
@@ -327,6 +352,13 @@ def mywith(key, val, detail=None):
             return
         if detail.lower() != "yes":
             cppunit_path = detail
+        return
+    if key.lower() == "toolset":
+        if not val:
+            want_tests = False
+            return
+        if detail:
+            toolset=detail.lower() 
         return
     want_unknown = True
     if not val:
@@ -909,9 +941,15 @@ def main(args):
         doclean()
     if want_unknown:
         dounknown()
-
-    # status before config
-
+    if not toolset:
+        dodetectvisualstudio()
+    if not toolset:
+        print("Build skipped. To build, this file needs to run from VS command prompt.")
+	    sys.exit(1)
+	
+    varvals["PLATFORMTOOLSET"] = toolset
+	
+	# status before config
     if verbose:
         if enable_keep:
             print("keep: enabled")
@@ -948,11 +986,12 @@ def main(args):
                 print("debug-openssl-path: " + debug_openssl_path)
         if want_tests:
             print("cppunit-path: " + cppunit_path)
-
+        print("toolset: "+toolset)
+    
+    
     doconfig()
 
     # status after config
-
     if verbose:
         print("Configuration Status")
         print("\tconditions:")
