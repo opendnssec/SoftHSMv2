@@ -160,7 +160,7 @@ def dodetectplatform(visualstudio):
         toolset="v100"
     elif "Microsoft Visual Studio 11.0" in visualstudio:
         toolset="v110"
-    elif "Microsoft Visual Studio 13.0" in visualstudio:
+    elif "Microsoft Visual Studio 12.0" in visualstudio:
         toolset="v120"
     elif "Microsoft Visual Studio 14.0" in visualstudio:
         toolset="v140"
