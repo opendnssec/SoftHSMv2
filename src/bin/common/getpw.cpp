@@ -104,7 +104,7 @@ int getpin(const char* prompt, char* buffer, size_t size)
 		return -1;
 #endif
 
-	int nread = 0;
+	size_t nread = 0;
 	int ch = 0;
 	while ((ch = getchar()) != '\n' && ch != EOF)
 	{
