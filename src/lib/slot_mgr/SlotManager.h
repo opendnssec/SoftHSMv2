@@ -47,7 +47,7 @@ class SlotManager
 {
 public:
 	// Constructor
-	SlotManager(ObjectStore* objectStore);
+	SlotManager(ObjectStore* objectStore, int nrOfUninitializedTokens);
 
 	// Destructor
 	virtual ~SlotManager();

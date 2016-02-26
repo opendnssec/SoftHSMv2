@@ -48,6 +48,7 @@ const struct config Configuration::valid_config[] = {
 	{ "objectstore.backend",	CONFIG_TYPE_STRING },
 	{ "log.level",			CONFIG_TYPE_STRING },
 	{ "slots.removable",		CONFIG_TYPE_BOOL },
+	{ "slots.nrOfUninitializedTokens", CONFIG_TYPE_INT },
 	{ "",				CONFIG_TYPE_UNSUPPORTED }
 };
 
