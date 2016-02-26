@@ -484,7 +484,7 @@ CK_RV SoftHSM::C_Initialize(CK_VOID_PTR pInitArgs)
 	isRemovable = Configuration::i()->getBool("slots.removable", false);
 
 	// Load the slot manager
-	slotManager = new SlotManager(objectStore);
+	slotManager = new SlotManager(objectStore, Configuration::i()->getInt("slots.nrOfUninitializedTokens", 1));
 
 	// Load the session manager
 	sessionManager = new SessionManager();

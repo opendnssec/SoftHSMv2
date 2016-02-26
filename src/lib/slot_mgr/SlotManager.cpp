@@ -38,7 +38,7 @@
 #include "SlotManager.h"
 
 // Constructor
-SlotManager::SlotManager(ObjectStore* objectStore)
+SlotManager::SlotManager(ObjectStore* objectStore, const int nrOfUninitializedTokens)
 {
 	// Add a slot for each token that already exists
 	for (size_t i = 0; i < objectStore->getTokenCount(); i++)
@@ -46,9 +46,10 @@ SlotManager::SlotManager(ObjectStore* objectStore)
 		Slot* newSlot = new Slot(objectStore, i, objectStore->getToken(i));
 		slots.push_back(newSlot);
 	}
-
-	// Add an empty slot
-	slots.push_back(new Slot(objectStore, objectStore->getTokenCount()));
+	for ( size_t i=objectStore->getTokenCount(); i<nrOfUninitializedTokens+objectStore->getTokenCount(); i++ ) {
+		// Add an uninitialized token
+		slots.push_back(new Slot(objectStore, i));
+	}
 }
 
 // Destructor

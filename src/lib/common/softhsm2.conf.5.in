@@ -64,6 +64,16 @@ slots.removable = true
 .fi
 .RE
 .LP
+.SH SLOTS.NROFUNINITIALIZEDTOKENS
+The number of uninitialized tokens that are created when C_Initialize is called. Default is 1.
+The total number of slots will be the number of tokens that are read from the object store plus this property.
+.LP
+.RS
+.nf
+slots.nrOfUninitializedTokens = 10
+.fi
+.RE
+.LP
 .SH ENVIRONMENT
 .TP
 SOFTHSM2_CONF
