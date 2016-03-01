@@ -102,6 +102,7 @@ const EVP_CIPHER* OSSLAES::getWrapCipher(const SymWrap::Type mode, const Symmetr
 		return NULL;
 	}
 
+#ifdef HAVE_AES_KEY_WRAP
 	// Determine the un/wrapping mode
 	if (mode == SymWrap::AES_KEYWRAP)
 	{
@@ -116,8 +117,9 @@ const EVP_CIPHER* OSSLAES::getWrapCipher(const SymWrap::Type mode, const Symmetr
 				return EVP_aes_256_wrap();
 		};
 	}
+#endif
 #ifdef HAVE_AES_KEY_WRAP_PAD
-	else if (mode == SymWrap::AES_KEYWRAP_PAD)
+	if (mode == SymWrap::AES_KEYWRAP_PAD)
 	{
 		// RFC 5649 AES key wrap with pad
 		switch(key->getBitLen())
