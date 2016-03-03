@@ -53,7 +53,7 @@ public:
 	virtual ~SlotManager();
 
 	// Get the slots
-	std::vector<Slot*> getSlots();
+	std::vector<Slot*>* getSlots();
 
 	// Get the slot list
 	CK_RV getSlotList(CK_BBOOL tokenPresent, CK_SLOT_ID_PTR pSlotList, CK_ULONG_PTR pulCount);

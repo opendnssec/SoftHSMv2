@@ -38,3 +38,18 @@ test-driver
 *.so
 *.so.*
 *.dylib
+
+# make
+*.la
+*.lo
+.deps
+src/bin/common/.dirstamp
+src/bin/dump/softhsm2-dump-file
+src/bin/keyconv/softhsm2-keyconv
+src/bin/util/softhsm2-util
+src/lib/.libs/
+src/lib/common/softhsm2.conf
+src/lib/common/softhsm2.conf.5
+src/lib/test/softhsm2-alt.conf
+src/lib/test/softhsm2.conf
+src/lib/test/tokens/dummy

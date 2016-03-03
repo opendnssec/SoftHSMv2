@@ -1072,7 +1072,16 @@ CK_RV SoftHSM::C_InitToken(CK_SLOT_ID slotID, CK_UTF8CHAR_PTR pPin, CK_ULONG ulP
 
 	ByteString soPIN(pPin, ulPinLen);
 
-	return slot->initToken(soPIN, pLabel);
+	const bool wasInitialized( slot->getToken()->isInitialized() );
+	const CK_RV result( slot->initToken(soPIN, pLabel) );
+	if ( wasInitialized || result!=CKR_OK ) {
+		return result;// Return if token was reinitialized or if error.
+	}
+	// Add a slot with an uninitialized token after initializing an uninitialized token.
+	// There must always be one uninitialized token so that a new token could be added.
+	std::vector<Slot*>*const pSlots(slotManager->getSlots());
+	pSlots->push_back(new Slot(objectStore, objectStore->getTokenCount()));
+	return CKR_OK;
 }
 
 // Initialise the user PIN

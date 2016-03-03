@@ -111,9 +111,9 @@ CK_RV SlotManager::getSlotList(CK_BBOOL tokenPresent, CK_SLOT_ID_PTR pSlotList, 
 }
 
 // Get the slots
-std::vector<Slot*> SlotManager::getSlots()
+std::vector<Slot*>* SlotManager::getSlots()
 {
-	return slots;
+	return &slots;
 }
 
 // Get one slot
