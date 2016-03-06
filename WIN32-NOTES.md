@@ -185,8 +185,8 @@ Configure build process in a **new command line window**:
 
 OpenSSL or Botan crypto backend:
 
-    perl Configure.pl disable-debug with-crypto-backend=openssl with-openssl=C:\build\bin\openssl-1.0.2d-x86\ with-cppunit=C:\build\bin\cppunit-1.13.2-x86\
-    perl Configure.pl disable-debug with-crypto-backend=botan with-botan=C:\build\bin\botan-1.10.10-x86\ with-cppunit=C:\build\bin\cppunit-1.13.2-x86\
+    python Configure.py disable-debug with-crypto-backend=openssl with-openssl=C:\build\bin\openssl-1.0.2d-x86\ with-cppunit=C:\build\bin\cppunit-1.13.2-x86\
+    python Configure.py disable-debug with-crypto-backend=botan with-botan=C:\build\bin\botan-1.10.10-x86\ with-cppunit=C:\build\bin\cppunit-1.13.2-x86\
 
 Open solution `C:\build\src\SoftHSMv2\win32\softhsm2.sln` in Visual Studio and rebuild the source with `Release\Win32` solution configuration.
 
@@ -223,8 +223,8 @@ Configure build process in a **new command line window**:
 
 OpenSSL or Botan crypto backend:
 
-    perl Configure.pl enable-64bit disable-debug with-crypto-backend=openssl with-openssl=C:\build\bin\openssl-1.0.2d-x64\ with-cppunit=C:\build\bin\cppunit-1.13.2-x64\
-    perl Configure.pl enable-64bit disable-debug with-crypto-backend=botan with-botan=C:\build\bin\botan-1.10.10-x64\ with-cppunit=C:\build\bin\cppunit-1.13.2-x64\
+    python Configure.py enable-64bit disable-debug with-crypto-backend=openssl with-openssl=C:\build\bin\openssl-1.0.2d-x64\ with-cppunit=C:\build\bin\cppunit-1.13.2-x64\
+    python Configure.py enable-64bit disable-debug with-crypto-backend=botan with-botan=C:\build\bin\botan-1.10.10-x64\ with-cppunit=C:\build\bin\cppunit-1.13.2-x64\
 
 Open solution `C:\build\src\SoftHSMv2\win32\softhsm2.sln` in Visual Studio and rebuild the source with `Release\x64` solution configuration.
 
