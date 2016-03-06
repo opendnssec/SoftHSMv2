@@ -8,6 +8,8 @@ SoftHSM develop
   interrupted (ctrl-c).
 * Issue #166: Add slots.removable config option.
   (Patch from Sumit Bose)
+* Issue #180: Windows configure script improvements.
+  (Patch from Arnaud Grandville)
 
 Bugfixes:
 * Issue #128: Prioritize the return values in C_GetAttributeValue.
@@ -15,7 +17,7 @@ Bugfixes:
 * Issue #129: Fix errors reported by Visual Studio 2015.
   (Patch from Jaroslav Imrich)
 * Issue #154: Fix the Windows build and destruction order of objects.
-  (Patch from agrandville)
+  (Patch from Arnaud Grandville)
 * Issue #162: Not possible to create certificate objects containing
   CKA_CERTIFICATE_CATEGORY, CKA_NAME_HASH_ALGORITHM, or
   CKA_JAVA_MIDP_SECURITY_DOMAIN.
@@ -23,7 +25,7 @@ Bugfixes:
   (Patch from Michal Kepien)
 * Issue #165: Minor changes after a PVS-Studio code analysis, and
   C_EncryptUpdate crash if no ciphered data is produced.
-  (Patch from agrandville)
+  (Patch from Arnaud Grandville)
 * Issue #169: One-byte buffer overflow in call to EVP_DecryptUpdate.
 * Issue #171: Problem while closing library that is initialized but
   improperly finalized.
@@ -31,6 +33,10 @@ Bugfixes:
 * Issue #174: C_DeriveKey() error with leading zero bytes.
 * Issue #177: CKA_NEVER_EXTRACTABLE set to CK_FALSE on objects
   created with C_CreateObject.
+* Issue #182: Resolve compiler warning.
+  (Patch from Josh Datko)
+* Issue #184: Stop discarding the global OpenSSL libcrypto state.
+  (Patch from Michal Trojnara)
 * SOFTHSM-123: Fix library cleanup on BSD.
 
 
