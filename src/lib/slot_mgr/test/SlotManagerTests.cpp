@@ -79,12 +79,12 @@ void SlotManagerTests::testNoExistingTokens()
 	CK_SLOT_ID testList[10];
 	CK_ULONG ulCount = 10;
 
-	CPPUNIT_ASSERT(slotManager.getSlotList(CK_FALSE, testList, &ulCount) == CKR_OK);
+	CPPUNIT_ASSERT(slotManager.getSlotList(&store, CK_FALSE, testList, &ulCount) == CKR_OK);
 	CPPUNIT_ASSERT(ulCount == 1);
 
 	ulCount = 10;
 
-	CPPUNIT_ASSERT(slotManager.getSlotList(CK_TRUE, testList, &ulCount) == CKR_OK);
+	CPPUNIT_ASSERT(slotManager.getSlotList(&store, CK_TRUE, testList, &ulCount) == CKR_OK);
 	CPPUNIT_ASSERT(ulCount == 1);
 	CPPUNIT_ASSERT(slotManager.getSlots()[0]->getSlotID() == testList[0]);
 
@@ -129,12 +129,12 @@ void SlotManagerTests::testExistingTokens()
 	CK_SLOT_ID testList[10];
 	CK_ULONG ulCount = 10;
 
-	CPPUNIT_ASSERT(slotManager.getSlotList(CK_FALSE, testList, &ulCount) == CKR_OK);
+	CPPUNIT_ASSERT(slotManager.getSlotList(&store, CK_FALSE, testList, &ulCount) == CKR_OK);
 	CPPUNIT_ASSERT(ulCount == 3);
 
 	ulCount = 10;
 
-	CPPUNIT_ASSERT(slotManager.getSlotList(CK_TRUE, testList, &ulCount) == CKR_OK);
+	CPPUNIT_ASSERT(slotManager.getSlotList(&store, CK_TRUE, testList, &ulCount) == CKR_OK);
 	CPPUNIT_ASSERT(ulCount == 3);
 	CPPUNIT_ASSERT(slotManager.getSlots()[0]->getSlotID() == testList[0]);
 	CPPUNIT_ASSERT(slotManager.getSlots()[1]->getSlotID() == testList[1]);
@@ -191,55 +191,55 @@ void SlotManagerTests::testInitialiseTokenInLastSlot()
 #else
 		ObjectStore store(".\\testdir");
 #endif
-	
+
 		// Create the slot manager
 		SlotManager slotManager(&store);
-	
+
 		CPPUNIT_ASSERT(slotManager.getSlots().size() == 1);
-	
+
 		// Test C_GetSlotList
 		CK_SLOT_ID testList[10];
 		CK_ULONG ulCount = 10;
-	
-		CPPUNIT_ASSERT(slotManager.getSlotList(CK_FALSE, testList, &ulCount) == CKR_OK);
+
+		CPPUNIT_ASSERT(slotManager.getSlotList(&store, CK_FALSE, testList, &ulCount) == CKR_OK);
 		CPPUNIT_ASSERT(ulCount == 1);
-	
+
 		ulCount = 10;
-	
-		CPPUNIT_ASSERT(slotManager.getSlotList(CK_TRUE, testList, &ulCount) == CKR_OK);
+
+		CPPUNIT_ASSERT(slotManager.getSlotList(&store, CK_TRUE, testList, &ulCount) == CKR_OK);
 		CPPUNIT_ASSERT(ulCount == 1);
 		CPPUNIT_ASSERT(slotManager.getSlots()[0]->getSlotID() == testList[0]);
-	
+
 		// Retrieve slot information about the first slot
 		CK_SLOT_INFO slotInfo;
-	
+
 		CPPUNIT_ASSERT(slotManager.getSlots()[0]->getSlotInfo(&slotInfo) == CKR_OK);
-	
+
 		CPPUNIT_ASSERT((slotInfo.flags & CKF_TOKEN_PRESENT) == CKF_TOKEN_PRESENT);
-	
+
 		// Retrieve token information about the token in the first slot
 		CK_TOKEN_INFO tokenInfo;
-	
+
 		CPPUNIT_ASSERT(slotManager.getSlots()[0]->getToken() != NULL);
 		CPPUNIT_ASSERT(slotManager.getSlots()[0]->getToken()->getTokenInfo(&tokenInfo) == CKR_OK);
-	
+
 		CPPUNIT_ASSERT((tokenInfo.flags & CKF_TOKEN_INITIALIZED) != CKF_TOKEN_INITIALIZED);
-	
+
 		// Now initialise the token in the first slot
 		ByteString soPIN((unsigned char*)"1234", 4);
 		CK_UTF8CHAR label[33] = "My test token                   ";
-	
+
 		CPPUNIT_ASSERT(slotManager.getSlots()[0]->initToken(soPIN, label) == CKR_OK);
-	
+
 		// Retrieve slot information about the first slot
 		CPPUNIT_ASSERT(slotManager.getSlots()[0]->getSlotInfo(&slotInfo) == CKR_OK);
-	
+
 		CPPUNIT_ASSERT((slotInfo.flags & CKF_TOKEN_PRESENT) == CKF_TOKEN_PRESENT);
-	
+
 		// Retrieve token information about the token in the first slot
 		CPPUNIT_ASSERT(slotManager.getSlots()[0]->getToken() != NULL);
 		CPPUNIT_ASSERT(slotManager.getSlots()[0]->getToken()->getTokenInfo(&tokenInfo) == CKR_OK);
-	
+
 		CPPUNIT_ASSERT((tokenInfo.flags & CKF_TOKEN_INITIALIZED) == CKF_TOKEN_INITIALIZED);
 		CPPUNIT_ASSERT(!memcmp(tokenInfo.label, label, 32));
 	}
@@ -258,12 +258,12 @@ void SlotManagerTests::testInitialiseTokenInLastSlot()
 	CK_SLOT_ID testList[10];
 	CK_ULONG ulCount = 10;
 
-	CPPUNIT_ASSERT(slotManager.getSlotList(CK_FALSE, testList, &ulCount) == CKR_OK);
+	CPPUNIT_ASSERT(slotManager.getSlotList(&store, CK_FALSE, testList, &ulCount) == CKR_OK);
 	CPPUNIT_ASSERT(ulCount == 2);
 
 	ulCount = 10;
 
-	CPPUNIT_ASSERT(slotManager.getSlotList(CK_TRUE, testList, &ulCount) == CKR_OK);
+	CPPUNIT_ASSERT(slotManager.getSlotList(&store, CK_TRUE, testList, &ulCount) == CKR_OK);
 	CPPUNIT_ASSERT(ulCount == 2);
 	CPPUNIT_ASSERT(slotManager.getSlots()[0]->getSlotID() == testList[0]);
 	CPPUNIT_ASSERT(slotManager.getSlots()[1]->getSlotID() == testList[1]);
@@ -323,12 +323,12 @@ void SlotManagerTests::testReinitialiseExistingToken()
 	CK_SLOT_ID testList[10];
 	CK_ULONG ulCount = 10;
 
-	CPPUNIT_ASSERT(slotManager.getSlotList(CK_FALSE, testList, &ulCount) == CKR_OK);
+	CPPUNIT_ASSERT(slotManager.getSlotList(&store, CK_FALSE, testList, &ulCount) == CKR_OK);
 	CPPUNIT_ASSERT(ulCount == 3);
 
 	ulCount = 10;
 
-	CPPUNIT_ASSERT(slotManager.getSlotList(CK_TRUE, testList, &ulCount) == CKR_OK);
+	CPPUNIT_ASSERT(slotManager.getSlotList(&store, CK_TRUE, testList, &ulCount) == CKR_OK);
 	CPPUNIT_ASSERT(ulCount == 3);
 	CPPUNIT_ASSERT(slotManager.getSlots()[0]->getSlotID() == testList[0]);
 	CPPUNIT_ASSERT(slotManager.getSlots()[1]->getSlotID() == testList[1]);
@@ -392,5 +392,86 @@ void SlotManagerTests::testReinitialiseExistingToken()
 
 	CPPUNIT_ASSERT((tokenInfo.flags & CKF_TOKEN_INITIALIZED) == CKF_TOKEN_INITIALIZED);
 	CPPUNIT_ASSERT(!memcmp(tokenInfo.label, label, 32));
+}
+
+void SlotManagerTests::testUninitialisedToken()
+{
+	// Create an empty object store
+#ifndef _WIN32
+	ObjectStore store("./testdir");
+#else
+	ObjectStore store(".\\testdir");
+#endif
+
+	// Now attach the slot manager
+	SlotManager slotManager(&store);
+
+	CPPUNIT_ASSERT(slotManager.getSlots().size() == 1);
+
+	// Test C_GetSlotList
+	CK_SLOT_ID testList[10];
+	CK_ULONG ulCount = 10;
+
+	CPPUNIT_ASSERT(slotManager.getSlotList(&store, CK_FALSE, testList, &ulCount) == CKR_OK);
+	CPPUNIT_ASSERT(ulCount == 1);
+	ulCount = 10;
+	CPPUNIT_ASSERT(slotManager.getSlotList(&store, CK_TRUE, testList, &ulCount) == CKR_OK);
+	CPPUNIT_ASSERT(ulCount == 1);
+
+	// Initialise the token in the first slot
+	ByteString soPIN((unsigned char*)"1234", 4);
+	CK_UTF8CHAR label[33] = "My test token                   ";
+	CPPUNIT_ASSERT(slotManager.getSlots()[0]->initToken(soPIN, label) == CKR_OK);
+
+	// Check if a new slot is added
+	ulCount = 10;
+	CPPUNIT_ASSERT(slotManager.getSlotList(&store, CK_FALSE, testList, &ulCount) == CKR_OK);
+	CPPUNIT_ASSERT(ulCount == 1);
+	ulCount = 10;
+	CPPUNIT_ASSERT(slotManager.getSlotList(&store, CK_TRUE, testList, &ulCount) == CKR_OK);
+	CPPUNIT_ASSERT(ulCount == 1);
+	ulCount = 10;
+	CPPUNIT_ASSERT(slotManager.getSlotList(&store, CK_FALSE, NULL_PTR, &ulCount) == CKR_OK);
+	CPPUNIT_ASSERT(ulCount == 2);
+	ulCount = 10;
+	CPPUNIT_ASSERT(slotManager.getSlotList(&store, CK_TRUE, NULL_PTR, &ulCount) == CKR_OK);
+	CPPUNIT_ASSERT(ulCount == 2);
+
+	// Retrieve token information about the tokens
+	CK_TOKEN_INFO tokenInfo;
+	CPPUNIT_ASSERT(slotManager.getSlots()[0]->getToken() != NULL);
+	CPPUNIT_ASSERT(slotManager.getSlots()[0]->getToken()->getTokenInfo(&tokenInfo) == CKR_OK);
+	CPPUNIT_ASSERT((tokenInfo.flags & CKF_TOKEN_INITIALIZED) == CKF_TOKEN_INITIALIZED);
+	CPPUNIT_ASSERT(slotManager.getSlots()[1]->getToken() != NULL);
+	CPPUNIT_ASSERT(slotManager.getSlots()[1]->getToken()->getTokenInfo(&tokenInfo) == CKR_OK);
+	CPPUNIT_ASSERT((tokenInfo.flags & CKF_TOKEN_INITIALIZED) != CKF_TOKEN_INITIALIZED);
+
+	// Initialise the token in the second slot
+	CPPUNIT_ASSERT(slotManager.getSlots()[1]->initToken(soPIN, label) == CKR_OK);
+
+	// Check if a new slot is added
+	ulCount = 10;
+	CPPUNIT_ASSERT(slotManager.getSlotList(&store, CK_FALSE, testList, &ulCount) == CKR_OK);
+	CPPUNIT_ASSERT(ulCount == 2);
+	ulCount = 10;
+	CPPUNIT_ASSERT(slotManager.getSlotList(&store, CK_TRUE, testList, &ulCount) == CKR_OK);
+	CPPUNIT_ASSERT(ulCount == 2);
+	ulCount = 10;
+	CPPUNIT_ASSERT(slotManager.getSlotList(&store, CK_FALSE, NULL_PTR, &ulCount) == CKR_OK);
+	CPPUNIT_ASSERT(ulCount == 3);
+	ulCount = 10;
+	CPPUNIT_ASSERT(slotManager.getSlotList(&store, CK_TRUE, NULL_PTR, &ulCount) == CKR_OK);
+	CPPUNIT_ASSERT(ulCount == 3);
+
+	// Retrieve token information about the tokens
+	CPPUNIT_ASSERT(slotManager.getSlots()[0]->getToken() != NULL);
+	CPPUNIT_ASSERT(slotManager.getSlots()[0]->getToken()->getTokenInfo(&tokenInfo) == CKR_OK);
+	CPPUNIT_ASSERT((tokenInfo.flags & CKF_TOKEN_INITIALIZED) == CKF_TOKEN_INITIALIZED);
+	CPPUNIT_ASSERT(slotManager.getSlots()[1]->getToken() != NULL);
+	CPPUNIT_ASSERT(slotManager.getSlots()[1]->getToken()->getTokenInfo(&tokenInfo) == CKR_OK);
+	CPPUNIT_ASSERT((tokenInfo.flags & CKF_TOKEN_INITIALIZED) == CKF_TOKEN_INITIALIZED);
+	CPPUNIT_ASSERT(slotManager.getSlots()[2]->getToken() != NULL);
+	CPPUNIT_ASSERT(slotManager.getSlots()[2]->getToken()->getTokenInfo(&tokenInfo) == CKR_OK);
+	CPPUNIT_ASSERT((tokenInfo.flags & CKF_TOKEN_INITIALIZED) != CKF_TOKEN_INITIALIZED);
 }
 

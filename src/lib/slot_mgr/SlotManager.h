@@ -56,7 +56,7 @@ public:
 	std::vector<Slot*> getSlots();
 
 	// Get the slot list
-	CK_RV getSlotList(CK_BBOOL tokenPresent, CK_SLOT_ID_PTR pSlotList, CK_ULONG_PTR pulCount);
+	CK_RV getSlotList(ObjectStore* objectStore, CK_BBOOL tokenPresent, CK_SLOT_ID_PTR pSlotList, CK_ULONG_PTR pulCount);
 
 	// Get one slot
 	Slot* getSlot(CK_SLOT_ID slotID);

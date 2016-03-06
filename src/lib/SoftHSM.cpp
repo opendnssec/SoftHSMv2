@@ -553,7 +553,7 @@ CK_RV SoftHSM::C_GetSlotList(CK_BBOOL tokenPresent, CK_SLOT_ID_PTR pSlotList, CK
 {
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
 
-	return slotManager->getSlotList(tokenPresent, pSlotList, pulCount);
+	return slotManager->getSlotList(objectStore, tokenPresent, pSlotList, pulCount);
 }
 
 // Return information about a slot
