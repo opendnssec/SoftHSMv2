@@ -807,6 +807,12 @@ CK_RV P11AttrCheckValue::updateAttr(Token *token, bool isPrivate, CK_VOID_PTR pV
 		switch (osobject->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED))
 		{
 			case CKK_GENERIC_SECRET:
+			case CKK_MD5_HMAC:
+			case CKK_SHA_1_HMAC:
+			case CKK_SHA224_HMAC:
+			case CKK_SHA256_HMAC:
+			case CKK_SHA384_HMAC:
+			case CKK_SHA512_HMAC:
 				key.setKeyBits(keybits);
 				key.setBitLen(keybits.size() * 8);
 				checkValue = key.getKeyCheckValue();
@@ -822,6 +828,11 @@ CK_RV P11AttrCheckValue::updateAttr(Token *token, bool isPrivate, CK_VOID_PTR pV
 				des.setKeyBits(keybits);
 				des.setBitLen(keybits.size() * 7);
 				checkValue = des.getKeyCheckValue();
+				break;
+			case CKK_GOST28147:
+				// TODO: Encryption support for CKK_GOST28147
+				// We do not calculate the KCV
+				checkValue = plaintext;
 				break;
 			default:
 				return CKR_GENERAL_ERROR;
@@ -930,6 +941,58 @@ CK_RV P11AttrValue::updateAttr(Token *token, bool isPrivate, CK_VOID_PTR pValue,
 		}
 		else
 			osobject->setAttribute(CKA_CHECK_VALUE, digest);
+	}
+
+	// Calculate the CKA_CHECK_VALUE for secret keys
+	if (op == OBJECT_OP_CREATE &&
+	    osobject->getUnsignedLongValue(CKA_CLASS, CKO_VENDOR_DEFINED) == CKO_SECRET_KEY)
+	{
+		SymmetricKey key;
+		AESKey aes;
+		DESKey des;
+		ByteString checkValue;
+		switch (osobject->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED))
+		{
+			case CKK_GENERIC_SECRET:
+			case CKK_MD5_HMAC:
+			case CKK_SHA_1_HMAC:
+			case CKK_SHA224_HMAC:
+			case CKK_SHA256_HMAC:
+			case CKK_SHA384_HMAC:
+			case CKK_SHA512_HMAC:
+				key.setKeyBits(plaintext);
+				key.setBitLen(plaintext.size() * 8);
+				checkValue = key.getKeyCheckValue();
+				break;
+			case CKK_AES:
+				aes.setKeyBits(plaintext);
+				aes.setBitLen(plaintext.size() * 8);
+				checkValue = aes.getKeyCheckValue();
+				break;
+			case CKK_DES:
+			case CKK_DES2:
+			case CKK_DES3:
+				des.setKeyBits(plaintext);
+				des.setBitLen(plaintext.size() * 7);
+				checkValue = des.getKeyCheckValue();
+				break;
+			case CKK_GOST28147:
+				// TODO: Encryption support for CKK_GOST28147
+				// We do not calculate the KCV
+				break;
+			default:
+				return CKR_GENERAL_ERROR;
+		}
+
+		if (isPrivate)
+		{
+			ByteString encrypted;
+			if (!token->encrypt(checkValue, encrypted))
+				return CKR_GENERAL_ERROR;
+			osobject->setAttribute(CKA_CHECK_VALUE, encrypted);
+		}
+		else
+			osobject->setAttribute(CKA_CHECK_VALUE, checkValue);
 	}
 
 	return CKR_OK;

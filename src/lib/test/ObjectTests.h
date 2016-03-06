@@ -58,6 +58,7 @@ class ObjectTests : public CppUnit::TestFixture
 	CPPUNIT_TEST(testSensitiveAttributes);
 	CPPUNIT_TEST(testGetInvalidAttribute);
 	CPPUNIT_TEST(testArrayAttribute);
+	CPPUNIT_TEST(testCreateSecretKey);
 	CPPUNIT_TEST_SUITE_END();
 
 public:
@@ -78,6 +79,7 @@ public:
 	void testSensitiveAttributes();
 	void testGetInvalidAttribute();
 	void testArrayAttribute();
+	void testCreateSecretKey();
 
 	void setUp();
 	void tearDown();

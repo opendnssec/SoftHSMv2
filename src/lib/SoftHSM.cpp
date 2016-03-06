@@ -9792,6 +9792,32 @@ CK_RV SoftHSM::CreateObject(CK_SESSION_HANDLE hSession, CK_ATTRIBUTE_PTR pTempla
 		return rv;
 	}
 
+	// Change order of attributes
+	const CK_ULONG maxAttribs = 32;
+	CK_ATTRIBUTE attribs[maxAttribs];
+	CK_ATTRIBUTE saveAttribs[maxAttribs];
+	CK_ULONG attribsCount = 0;
+	CK_ULONG saveAttribsCount = 0;
+	if (ulCount > maxAttribs)
+	{
+		return CKR_TEMPLATE_INCONSISTENT;
+	}
+	for (CK_ULONG i=0; i < ulCount; i++)
+	{
+		switch (pTemplate[i].type)
+		{
+			case CKA_CHECK_VALUE:
+				saveAttribs[saveAttribsCount++] = pTemplate[i];
+				break;
+			default:
+				attribs[attribsCount++] = pTemplate[i];
+		}
+	}
+	for (CK_ULONG i=0; i < saveAttribsCount; i++)
+	{
+		attribs[attribsCount++] = saveAttribs[i];
+	}
+
 	P11Object* p11object = NULL;
 	rv = newP11Object(objClass,keyType,certType,&p11object);
 	if (rv != CKR_OK)
@@ -9814,7 +9840,7 @@ CK_RV SoftHSM::CreateObject(CK_SESSION_HANDLE hSession, CK_ATTRIBUTE_PTR pTempla
 		return CKR_GENERAL_ERROR;
 	}
 
-	rv = p11object->saveTemplate(token, isPrivate != CK_FALSE, pTemplate,ulCount,op);
+	rv = p11object->saveTemplate(token, isPrivate != CK_FALSE, attribs,attribsCount,op);
 	delete p11object;
 	if (rv != CKR_OK)
 		return rv;
