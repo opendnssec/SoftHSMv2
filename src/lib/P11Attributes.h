@@ -308,11 +308,15 @@ class P11AttrCheckValue : public P11Attribute
 {
 public:
 	// Constructor
-	P11AttrCheckValue(OSObject* inobject) : P11Attribute(inobject) { type = CKA_CHECK_VALUE; checks = 0; }
+	P11AttrCheckValue(OSObject* inobject, CK_ULONG inchecks) : P11Attribute(inobject) { type = CKA_CHECK_VALUE; checks = inchecks; }
 
 protected:
 	// Set the default value of the attribute
 	virtual bool setDefault();
+
+
+	// Update the value if allowed
+	virtual CK_RV updateAttr(Token *token, bool isPrivate, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op);
 };
 
 /*****************************************

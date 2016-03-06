@@ -250,20 +250,32 @@ void DeriveTests::dhDerive(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hPublicK
 
 bool DeriveTests::compareSecret(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hKey1, CK_OBJECT_HANDLE hKey2)
 {
-	CK_ATTRIBUTE valAttrib = { CKA_VALUE, NULL_PTR, 0 };
+	CK_ATTRIBUTE keyAttribs[] = {
+		{ CKA_VALUE, NULL_PTR, 0 },
+		{ CKA_CHECK_VALUE, NULL_PTR, 0 }
+	};
 	CK_BYTE val1[128];
-	valAttrib.pValue = val1;
-	valAttrib.ulValueLen = sizeof(val1);
-	CK_RV rv = C_GetAttributeValue(hSession, hKey1, &valAttrib, 1);
+	CK_BYTE check1[3];
+	keyAttribs[0].pValue = val1;
+	keyAttribs[0].ulValueLen = sizeof(val1);
+	keyAttribs[1].pValue = check1;
+	keyAttribs[1].ulValueLen = sizeof(check1);
+	CK_RV rv = C_GetAttributeValue(hSession, hKey1, keyAttribs, 2);
 	CPPUNIT_ASSERT(rv == CKR_OK);
-	CPPUNIT_ASSERT(valAttrib.ulValueLen == 100);
+	CPPUNIT_ASSERT(keyAttribs[0].ulValueLen == 100);
+	CPPUNIT_ASSERT(keyAttribs[1].ulValueLen == 3);
 	CK_BYTE val2[128];
-	valAttrib.pValue = val2;
-	valAttrib.ulValueLen = sizeof(val2);
-	rv = C_GetAttributeValue(hSession, hKey2, &valAttrib, 1);
+	CK_BYTE check2[3];
+	keyAttribs[0].pValue = val2;
+	keyAttribs[0].ulValueLen = sizeof(val2);
+	keyAttribs[1].pValue = check2;
+	keyAttribs[1].ulValueLen = sizeof(check2);
+	rv = C_GetAttributeValue(hSession, hKey2, keyAttribs, 2);
 	CPPUNIT_ASSERT(rv == CKR_OK);
-	CPPUNIT_ASSERT(valAttrib.ulValueLen == 100);
-	return memcmp(val1, val2, 100) == 0;
+	CPPUNIT_ASSERT(keyAttribs[0].ulValueLen == 100);
+	CPPUNIT_ASSERT(keyAttribs[1].ulValueLen == 3);
+	return memcmp(val1, val2, 100) == 0 &&
+	       memcmp(check1, check2, 3) == 0;
 }
 
 void DeriveTests::testDhDerive()
@@ -435,6 +447,17 @@ void DeriveTests::symDerive(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hKey, C
 				 &hDerive);
 	}
 	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Check that KCV has been set
+	CK_ATTRIBUTE checkAttribs[] = {
+		{ CKA_CHECK_VALUE, NULL_PTR, 0 }
+	};
+	CK_BYTE check[3];
+	checkAttribs[0].pValue = check;
+	checkAttribs[0].ulValueLen = sizeof(check);
+	rv = C_GetAttributeValue(hSession, hDerive, checkAttribs, 1);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	CPPUNIT_ASSERT(checkAttribs[0].ulValueLen == 3);
 
 	if (keyType == CKK_GENERIC_SECRET) return;
 

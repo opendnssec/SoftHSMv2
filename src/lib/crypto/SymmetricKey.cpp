@@ -34,6 +34,7 @@
 #include "ByteString.h"
 #include "Serialisable.h"
 #include "SymmetricKey.h"
+#include "CryptoFactory.h"
 
 // Base constructors
 SymmetricKey::SymmetricKey(size_t inBitLen /* = 0 */)
@@ -64,6 +65,28 @@ bool SymmetricKey::setKeyBits(const ByteString& keybits)
 const ByteString& SymmetricKey::getKeyBits() const
 {
 	return keyData;
+}
+
+// Get the key check value
+ByteString SymmetricKey::getKeyCheckValue() const
+{
+	ByteString digest;
+
+	HashAlgorithm* hash = CryptoFactory::i()->getHashAlgorithm(HashAlgo::SHA1);
+	if (hash == NULL) return digest;
+
+	if (!hash->hashInit() ||
+	    !hash->hashUpdate(keyData) ||
+	    !hash->hashFinal(digest))
+	{
+		CryptoFactory::i()->recycleHashAlgorithm(hash);
+		return digest;
+	}
+	CryptoFactory::i()->recycleHashAlgorithm(hash);
+
+	digest.resize(3);
+
+	return digest;
 }
 
 // Serialisation

@@ -42,6 +42,9 @@ class AESKey : public SymmetricKey
 public:
 	// Base constructor
 	AESKey(size_t inBitLen = 0) : SymmetricKey(inBitLen) { }
+
+	// Get the key check value
+	virtual ByteString getKeyCheckValue() const;
 };
 
 #endif // !SOFTHSM_V2_AESKEY_H

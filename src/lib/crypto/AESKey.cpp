@@ -25,74 +25,26 @@
  */
 
 /*****************************************************************************
- DESKey.cpp
+ AESKey.cpp
 
- DES key class
+ AES key class
  *****************************************************************************/
 
 #include "config.h"
 #include "ByteString.h"
 #include "Serialisable.h"
-#include "DESKey.h"
+#include "AESKey.h"
 #include "CryptoFactory.h"
 
-// Set the key
-bool DESKey::setKeyBits(const ByteString& keybits)
-{
-	if (bitLen > 0)
-	{
-		// Check if the correct input data is supplied
-		size_t expectedLen = 0;
-
-		switch(bitLen)
-		{
-			case 56:
-				expectedLen = 8;
-				break;
-			case 112:
-				expectedLen = 16;
-				break;
-			case 168:
-				expectedLen = 24;
-				break;
-		};
-
-		// Check the length
-		if (keybits.size() != expectedLen)
-		{
-			return false;
-		}
-	}
-
-	keyData = keybits;
-
-	return true;
-}
-
 // Get key check value
-ByteString DESKey::getKeyCheckValue() const
+ByteString AESKey::getKeyCheckValue() const
 {
-	SymAlgo::Type algo = SymAlgo::Unknown;
 	ByteString iv;
 	ByteString data;
 	ByteString encryptedData;
 	ByteString encryptedFinal;
 
-
-	switch (this->getBitLen())
-	{
-		case 56:
-			algo = SymAlgo::DES;
-			break;
-		case 112:
-		case 168:
-			algo = SymAlgo::DES3;
-			break;
-		default:
-			return encryptedData;
-	}
-
-	SymmetricAlgorithm* cipher = CryptoFactory::i()->getSymmetricAlgorithm(algo);
+	SymmetricAlgorithm* cipher = CryptoFactory::i()->getSymmetricAlgorithm(SymAlgo::AES);
 	if (cipher == NULL) return encryptedData;
 
 	// Single block of null (0x00) bytes

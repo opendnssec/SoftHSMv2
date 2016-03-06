@@ -6304,6 +6304,7 @@ CK_RV SoftHSM::generateAES
 
 	// Extract desired parameter information
 	size_t keyLen = 0;
+	bool checkValue = true;
 	for (CK_ULONG i = 0; i < ulCount; i++)
 	{
 		switch (pTemplate[i].type)
@@ -6315,6 +6316,14 @@ CK_RV SoftHSM::generateAES
 					return CKR_ATTRIBUTE_VALUE_INVALID;
 				}
 				keyLen = *(CK_ULONG*)pTemplate[i].pValue;
+				break;
+			case CKA_CHECK_VALUE:
+				if (pTemplate[i].ulValueLen > 0)
+				{
+					INFO_MSG("CKA_CHECK_VALUE must be a no-value (0 length) entry");
+					return CKR_ATTRIBUTE_VALUE_INVALID;
+				}
+				checkValue = false;
 				break;
 			default:
 				break;
@@ -6385,6 +6394,7 @@ CK_RV SoftHSM::generateAES
 			case CKA_TOKEN:
 			case CKA_PRIVATE:
 			case CKA_KEY_TYPE:
+			case CKA_CHECK_VALUE:
 				continue;
 		default:
 			keyAttribs[keyAttribsCount++] = pTemplate[i];
@@ -6416,11 +6426,20 @@ CK_RV SoftHSM::generateAES
 
 			// AES Secret Key Attributes
 			ByteString value;
+			ByteString kcv;
 			if (isPrivate)
+			{
 				token->encrypt(key->getKeyBits(), value);
+				token->encrypt(key->getKeyCheckValue(), kcv);
+			}
 			else
+			{
 				value = key->getKeyBits();
+				kcv = key->getKeyCheckValue();
+			}
 			bOK = bOK && osobject->setAttribute(CKA_VALUE, value);
+			if (checkValue)
+				bOK = bOK && osobject->setAttribute(CKA_CHECK_VALUE, kcv);
 
 			if (bOK)
 				bOK = osobject->commitTransaction();
@@ -6473,6 +6492,25 @@ CK_RV SoftHSM::generateDES
 	if (token == NULL)
 		return CKR_GENERAL_ERROR;
 
+	// Extract desired parameter information
+	bool checkValue = true;
+	for (CK_ULONG i = 0; i < ulCount; i++)
+	{
+		switch (pTemplate[i].type)
+		{
+			case CKA_CHECK_VALUE:
+				if (pTemplate[i].ulValueLen > 0)
+				{
+					INFO_MSG("CKA_CHECK_VALUE must be a no-value (0 length) entry");
+					return CKR_ATTRIBUTE_VALUE_INVALID;
+				}
+				checkValue = false;
+				break;
+			default:
+				break;
+		}
+	}
+
 	// Generate the secret key
 	DESKey* key = new DESKey(56);
 	SymmetricAlgorithm* des = CryptoFactory::i()->getSymmetricAlgorithm(SymAlgo::DES);
@@ -6523,6 +6561,7 @@ CK_RV SoftHSM::generateDES
 			case CKA_TOKEN:
 			case CKA_PRIVATE:
 			case CKA_KEY_TYPE:
+			case CKA_CHECK_VALUE:
 				continue;
 		default:
 			keyAttribs[keyAttribsCount++] = pTemplate[i];
@@ -6554,11 +6593,20 @@ CK_RV SoftHSM::generateDES
 
 			// DES Secret Key Attributes
 			ByteString value;
+			ByteString kcv;
 			if (isPrivate)
+			{
 				token->encrypt(key->getKeyBits(), value);
+				token->encrypt(key->getKeyCheckValue(), kcv);
+			}
 			else
+			{
 				value = key->getKeyBits();
+				kcv = key->getKeyCheckValue();
+			}
 			bOK = bOK && osobject->setAttribute(CKA_VALUE, value);
+			if (checkValue)
+				bOK = bOK && osobject->setAttribute(CKA_CHECK_VALUE, kcv);
 
 			if (bOK)
 				bOK = osobject->commitTransaction();
@@ -6611,6 +6659,25 @@ CK_RV SoftHSM::generateDES2
 	if (token == NULL)
 		return CKR_GENERAL_ERROR;
 
+	// Extract desired parameter information
+	bool checkValue = true;
+	for (CK_ULONG i = 0; i < ulCount; i++)
+	{
+		switch (pTemplate[i].type)
+		{
+			case CKA_CHECK_VALUE:
+				if (pTemplate[i].ulValueLen > 0)
+				{
+					INFO_MSG("CKA_CHECK_VALUE must be a no-value (0 length) entry");
+					return CKR_ATTRIBUTE_VALUE_INVALID;
+				}
+				checkValue = false;
+				break;
+			default:
+				break;
+		}
+	}
+
 	// Generate the secret key
 	DESKey* key = new DESKey(112);
 	SymmetricAlgorithm* des = CryptoFactory::i()->getSymmetricAlgorithm(SymAlgo::DES3);
@@ -6661,6 +6728,7 @@ CK_RV SoftHSM::generateDES2
 			case CKA_TOKEN:
 			case CKA_PRIVATE:
 			case CKA_KEY_TYPE:
+			case CKA_CHECK_VALUE:
 				continue;
 		default:
 			keyAttribs[keyAttribsCount++] = pTemplate[i];
@@ -6692,11 +6760,20 @@ CK_RV SoftHSM::generateDES2
 
 			// DES Secret Key Attributes
 			ByteString value;
+			ByteString kcv;
 			if (isPrivate)
+			{
 				token->encrypt(key->getKeyBits(), value);
+				token->encrypt(key->getKeyCheckValue(), kcv);
+			}
 			else
+			{
 				value = key->getKeyBits();
+				kcv = key->getKeyCheckValue();
+			}
 			bOK = bOK && osobject->setAttribute(CKA_VALUE, value);
+			if (checkValue)
+				bOK = bOK && osobject->setAttribute(CKA_CHECK_VALUE, kcv);
 
 			if (bOK)
 				bOK = osobject->commitTransaction();
@@ -6749,6 +6826,25 @@ CK_RV SoftHSM::generateDES3
 	if (token == NULL)
 		return CKR_GENERAL_ERROR;
 
+	// Extract desired parameter information
+	bool checkValue = true;
+	for (CK_ULONG i = 0; i < ulCount; i++)
+	{
+		switch (pTemplate[i].type)
+		{
+			case CKA_CHECK_VALUE:
+				if (pTemplate[i].ulValueLen > 0)
+				{
+					INFO_MSG("CKA_CHECK_VALUE must be a no-value (0 length) entry");
+					return CKR_ATTRIBUTE_VALUE_INVALID;
+				}
+				checkValue = false;
+				break;
+			default:
+				break;
+		}
+	}
+
 	// Generate the secret key
 	DESKey* key = new DESKey(168);
 	SymmetricAlgorithm* des = CryptoFactory::i()->getSymmetricAlgorithm(SymAlgo::DES3);
@@ -6799,6 +6895,7 @@ CK_RV SoftHSM::generateDES3
 			case CKA_TOKEN:
 			case CKA_PRIVATE:
 			case CKA_KEY_TYPE:
+			case CKA_CHECK_VALUE:
 				continue;
 		default:
 			keyAttribs[keyAttribsCount++] = pTemplate[i];
@@ -6830,11 +6927,20 @@ CK_RV SoftHSM::generateDES3
 
 			// DES Secret Key Attributes
 			ByteString value;
+			ByteString kcv;
 			if (isPrivate)
+			{
 				token->encrypt(key->getKeyBits(), value);
+				token->encrypt(key->getKeyCheckValue(), kcv);
+			}
 			else
+			{
 				value = key->getKeyBits();
+				kcv = key->getKeyCheckValue();
+			}
 			bOK = bOK && osobject->setAttribute(CKA_VALUE, value);
+			if (checkValue)
+				bOK = bOK && osobject->setAttribute(CKA_CHECK_VALUE, kcv);
 
 			if (bOK)
 				bOK = osobject->commitTransaction();
@@ -8557,6 +8663,7 @@ CK_RV SoftHSM::deriveDH
 
 	// Extract desired parameter information
 	size_t byteLen = 0;
+	bool checkValue = true;
 	for (CK_ULONG i = 0; i < ulCount; i++)
 	{
 		switch (pTemplate[i].type)
@@ -8571,6 +8678,14 @@ CK_RV SoftHSM::deriveDH
 					return CKR_ATTRIBUTE_VALUE_INVALID;
 				}
 				byteLen = *(CK_ULONG*)pTemplate[i].pValue;
+				break;
+			case CKA_CHECK_VALUE:
+				if (pTemplate[i].ulValueLen > 0)
+				{
+					INFO_MSG("CKA_CHECK_VALUE must be a no-value (0 length) entry");
+					return CKR_ATTRIBUTE_VALUE_INVALID;
+				}
+				checkValue = false;
 				break;
 			default:
 				break;
@@ -8696,6 +8811,7 @@ CK_RV SoftHSM::deriveDH
 			case CKA_TOKEN:
 			case CKA_PRIVATE:
 			case CKA_KEY_TYPE:
+			case CKA_CHECK_VALUE:
 				continue;
 		default:
 			secretAttribs[secretAttribsCount++] = pTemplate[i];
@@ -8740,6 +8856,8 @@ CK_RV SoftHSM::deriveDH
 			// Secret Attributes
 			ByteString secretValue = secret->getKeyBits();
 			ByteString value;
+			ByteString plainKCV;
+			ByteString kcv;
 
 			if (byteLen > secretValue.size())
 			{
@@ -8763,16 +8881,42 @@ CK_RV SoftHSM::deriveDH
 					}
 				}
 
+				// Get the KCV
+				switch (keyType)
+				{
+					case CKK_GENERIC_SECRET:
+						secret->setBitLen(byteLen * 8);
+						plainKCV = secret->getKeyCheckValue();
+						break;
+					case CKK_DES:
+					case CKK_DES2:
+					case CKK_DES3:
+						secret->setBitLen(byteLen * 7);
+						plainKCV = ((DESKey*)secret)->getKeyCheckValue();
+						break;
+					case CKK_AES:
+						secret->setBitLen(byteLen * 8);
+						plainKCV = ((AESKey*)secret)->getKeyCheckValue();
+						break;
+					default:
+						bOK = false;
+						break;
+				}
+
 				if (isPrivate)
 				{
 					token->encrypt(secretValue, value);
+					token->encrypt(plainKCV, kcv);
 				}
 				else
 				{
 					value = secretValue;
+					kcv = plainKCV;
 				}
 			}
 			bOK = bOK && osobject->setAttribute(CKA_VALUE, value);
+			if (checkValue)
+				bOK = bOK && osobject->setAttribute(CKA_CHECK_VALUE, kcv);
 
 			if (bOK)
 				bOK = osobject->commitTransaction();
@@ -8855,6 +8999,7 @@ CK_RV SoftHSM::deriveECDH
 
 	// Extract desired parameter information
 	size_t byteLen = 0;
+	bool checkValue = true;
 	for (CK_ULONG i = 0; i < ulCount; i++)
 	{
 		switch (pTemplate[i].type)
@@ -8869,6 +9014,14 @@ CK_RV SoftHSM::deriveECDH
 					return CKR_ATTRIBUTE_VALUE_INVALID;
 				}
 				byteLen = *(CK_ULONG*)pTemplate[i].pValue;
+				break;
+			case CKA_CHECK_VALUE:
+				if (pTemplate[i].ulValueLen > 0)
+				{
+					INFO_MSG("CKA_CHECK_VALUE must be a no-value (0 length) entry");
+					return CKR_ATTRIBUTE_VALUE_INVALID;
+				}
+				checkValue = false;
 				break;
 			default:
 				break;
@@ -8996,6 +9149,7 @@ CK_RV SoftHSM::deriveECDH
 			case CKA_TOKEN:
 			case CKA_PRIVATE:
 			case CKA_KEY_TYPE:
+			case CKA_CHECK_VALUE:
 				continue;
 		default:
 			secretAttribs[secretAttribsCount++] = pTemplate[i];
@@ -9040,6 +9194,8 @@ CK_RV SoftHSM::deriveECDH
 			// Secret Attributes
 			ByteString secretValue = secret->getKeyBits();
 			ByteString value;
+			ByteString plainKCV;
+			ByteString kcv;
 
 			if (byteLen > secretValue.size())
 			{
@@ -9063,16 +9219,42 @@ CK_RV SoftHSM::deriveECDH
 					}
 				}
 
+				// Get the KCV
+				switch (keyType)
+				{
+					case CKK_GENERIC_SECRET:
+						secret->setBitLen(byteLen * 8);
+						plainKCV = secret->getKeyCheckValue();
+						break;
+					case CKK_DES:
+					case CKK_DES2:
+					case CKK_DES3:
+						secret->setBitLen(byteLen * 7);
+						plainKCV = ((DESKey*)secret)->getKeyCheckValue();
+						break;
+					case CKK_AES:
+						secret->setBitLen(byteLen * 8);
+						plainKCV = ((AESKey*)secret)->getKeyCheckValue();
+						break;
+					default:
+						bOK = false;
+						break;
+				}
+
 				if (isPrivate)
 				{
 					token->encrypt(secretValue, value);
+					token->encrypt(plainKCV, kcv);
 				}
 				else
 				{
 					value = secretValue;
+					kcv = plainKCV;
 				}
 			}
 			bOK = bOK && osobject->setAttribute(CKA_VALUE, value);
+			if (checkValue)
+				bOK = bOK && osobject->setAttribute(CKA_CHECK_VALUE, kcv);
 
 			if (bOK)
 				bOK = osobject->commitTransaction();
@@ -9229,6 +9411,7 @@ CK_RV SoftHSM::deriveSymmetric
 
 	// Extract desired parameter information
 	size_t byteLen = 0;
+	bool checkValue = true;
 	for (CK_ULONG i = 0; i < ulCount; i++)
 	{
 		switch (pTemplate[i].type)
@@ -9243,6 +9426,14 @@ CK_RV SoftHSM::deriveSymmetric
 					return CKR_ATTRIBUTE_VALUE_INVALID;
 				}
 				byteLen = *(CK_ULONG*)pTemplate[i].pValue;
+				break;
+			case CKA_CHECK_VALUE:
+				if (pTemplate[i].ulValueLen > 0)
+				{
+					INFO_MSG("CKA_CHECK_VALUE must be a no-value (0 length) entry");
+					return CKR_ATTRIBUTE_VALUE_INVALID;
+				}
+				checkValue = false;
 				break;
 			default:
 				break;
@@ -9422,6 +9613,7 @@ CK_RV SoftHSM::deriveSymmetric
 			case CKA_TOKEN:
 			case CKA_PRIVATE:
 			case CKA_KEY_TYPE:
+			case CKA_CHECK_VALUE:
 				continue;
 			default:
 				secretAttribs[secretAttribsCount++] = pTemplate[i];
@@ -9464,6 +9656,8 @@ CK_RV SoftHSM::deriveSymmetric
 			}
 
 			ByteString value;
+			ByteString plainKCV;
+			ByteString kcv;
 
 			if (byteLen > secretValue.size())
 			{
@@ -9487,16 +9681,45 @@ CK_RV SoftHSM::deriveSymmetric
 					}
 				}
 
+				// Get the KCV
+				SymmetricKey* secret = new SymmetricKey();
+				secret->setKeyBits(secretValue);
+				switch (keyType)
+				{
+					case CKK_GENERIC_SECRET:
+						secret->setBitLen(byteLen * 8);
+						plainKCV = secret->getKeyCheckValue();
+						break;
+					case CKK_DES:
+					case CKK_DES2:
+					case CKK_DES3:
+						secret->setBitLen(byteLen * 7);
+						plainKCV = ((DESKey*)secret)->getKeyCheckValue();
+						break;
+					case CKK_AES:
+						secret->setBitLen(byteLen * 8);
+						plainKCV = ((AESKey*)secret)->getKeyCheckValue();
+						break;
+					default:
+						bOK = false;
+						break;
+				}
+				delete secret;
+
 				if (isPrivate)
 				{
 					token->encrypt(secretValue, value);
+					token->encrypt(plainKCV, kcv);
 				}
 				else
 				{
 					value = secretValue;
+					kcv = plainKCV;
 				}
 			}
 			bOK = bOK && osobject->setAttribute(CKA_VALUE, value);
+			if (checkValue)
+				bOK = bOK && osobject->setAttribute(CKA_CHECK_VALUE, kcv);
 
 			if (bOK)
 				bOK = osobject->commitTransaction();
@@ -9569,6 +9792,32 @@ CK_RV SoftHSM::CreateObject(CK_SESSION_HANDLE hSession, CK_ATTRIBUTE_PTR pTempla
 		return rv;
 	}
 
+	// Change order of attributes
+	const CK_ULONG maxAttribs = 32;
+	CK_ATTRIBUTE attribs[maxAttribs];
+	CK_ATTRIBUTE saveAttribs[maxAttribs];
+	CK_ULONG attribsCount = 0;
+	CK_ULONG saveAttribsCount = 0;
+	if (ulCount > maxAttribs)
+	{
+		return CKR_TEMPLATE_INCONSISTENT;
+	}
+	for (CK_ULONG i=0; i < ulCount; i++)
+	{
+		switch (pTemplate[i].type)
+		{
+			case CKA_CHECK_VALUE:
+				saveAttribs[saveAttribsCount++] = pTemplate[i];
+				break;
+			default:
+				attribs[attribsCount++] = pTemplate[i];
+		}
+	}
+	for (CK_ULONG i=0; i < saveAttribsCount; i++)
+	{
+		attribs[attribsCount++] = saveAttribs[i];
+	}
+
 	P11Object* p11object = NULL;
 	rv = newP11Object(objClass,keyType,certType,&p11object);
 	if (rv != CKR_OK)
@@ -9591,7 +9840,7 @@ CK_RV SoftHSM::CreateObject(CK_SESSION_HANDLE hSession, CK_ATTRIBUTE_PTR pTempla
 		return CKR_GENERAL_ERROR;
 	}
 
-	rv = p11object->saveTemplate(token, isPrivate != CK_FALSE, pTemplate,ulCount,op);
+	rv = p11object->saveTemplate(token, isPrivate != CK_FALSE, attribs,attribsCount,op);
 	delete p11object;
 	if (rv != CKR_OK)
 		return rv;

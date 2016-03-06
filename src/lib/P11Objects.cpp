@@ -393,12 +393,11 @@ bool P11CertificateObj::init(OSObject *inobject)
 	P11Attribute* attrCertificateType = new P11AttrCertificateType(osobject);
 	P11Attribute* attrTrusted = new P11AttrTrusted(osobject);
 	P11Attribute* attrCertificateCategory = new P11AttrCertificateCategory(osobject);
-	// TODO: CKA_CHECK_VALUE is accepted, but we do not calculate it
-	P11Attribute* attrCheckValue = new P11AttrCheckValue(osobject);
 	// NOTE: Because these attributes are used in a certificate object
 	//  where the CKA_VALUE containing the certificate data is not
 	//  modifiable, we assume that this attribute is also not modifiable.
 	//  There is also no explicit mention of these attributes being modifiable.
+	P11Attribute* attrCheckValue = new P11AttrCheckValue(osobject, 0);
 	P11Attribute* attrStartDate = new P11AttrStartDate(osobject,0);
 	P11Attribute* attrEndDate = new P11AttrEndDate(osobject,0);
 
@@ -1340,8 +1339,7 @@ bool P11SecretKeyObj::init(OSObject *inobject)
 	P11Attribute* attrExtractable = new P11AttrExtractable(osobject);
 	P11Attribute* attrAlwaysSensitive = new P11AttrAlwaysSensitive(osobject);
 	P11Attribute* attrNeverExtractable = new P11AttrNeverExtractable(osobject);
-	// TODO: CKA_CHECK_VALUE is accepted, but we do not calculate it
-	P11Attribute* attrCheckValue = new P11AttrCheckValue(osobject);
+	P11Attribute* attrCheckValue = new P11AttrCheckValue(osobject, P11Attribute::ck8);
 	P11Attribute* attrWrapWithTrusted = new P11AttrWrapWithTrusted(osobject);
 	P11Attribute* attrTrusted = new P11AttrTrusted(osobject);
 	P11Attribute* attrWrapTemplate = new P11AttrWrapTemplate(osobject);

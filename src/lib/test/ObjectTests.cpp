@@ -608,19 +608,22 @@ CK_RV ObjectTests::createDataObjectNormal(CK_SESSION_HANDLE hSession, CK_BBOOL b
 	return C_CreateObject(hSession, objTemplate, sizeof(objTemplate)/sizeof(CK_ATTRIBUTE),&hObject);
 }
 
-CK_RV ObjectTests::createCertificateObjectIncomplete(CK_SESSION_HANDLE hSession, CK_BBOOL /*bToken*/, CK_BBOOL /*bPrivate*/, CK_OBJECT_HANDLE &hObject)
+CK_RV ObjectTests::createCertificateObjectIncomplete(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_OBJECT_HANDLE &hObject)
 {
 	CK_OBJECT_CLASS cClass = CKO_CERTIFICATE;
 	CK_ATTRIBUTE objTemplate[] = {
 		// Common
 		{ CKA_CLASS, &cClass, sizeof(cClass) },
+		// Storage
+		{ CKA_TOKEN, &bToken, sizeof(bToken) },
+		{ CKA_PRIVATE, &bPrivate, sizeof(bPrivate) }
 	};
 
 	hObject = CK_INVALID_HANDLE;
 	return C_CreateObject(hSession, objTemplate, sizeof(objTemplate)/sizeof(CK_ATTRIBUTE),&hObject);
 }
 
-CK_RV ObjectTests::createCertificateObjectValue(CK_SESSION_HANDLE hSession, CK_BBOOL /*bToken*/, CK_BBOOL /*bPrivate*/, CK_OBJECT_HANDLE &hObject)
+CK_RV ObjectTests::createCertificateObjectX509(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_OBJECT_HANDLE &hObject)
 {
 	CK_OBJECT_CLASS cClass = CKO_CERTIFICATE;
 	CK_CERTIFICATE_TYPE cType = CKC_X_509;
@@ -630,6 +633,9 @@ CK_RV ObjectTests::createCertificateObjectValue(CK_SESSION_HANDLE hSession, CK_B
 	CK_ATTRIBUTE objTemplate[] = {
 		// Common
 		{ CKA_CLASS, &cClass, sizeof(cClass) },
+		// Storage
+		{ CKA_TOKEN, &bToken, sizeof(bToken) },
+		{ CKA_PRIVATE, &bPrivate, sizeof(bPrivate) },
 		// Common Certificate Object Attributes
 		{ CKA_CERTIFICATE_TYPE, &cType, sizeof(cType) },
 		// X.509 Certificate Object Attributes
@@ -1550,6 +1556,44 @@ void ObjectTests::testGenerateKeys()
 	CPPUNIT_ASSERT(rv == CKR_OK);
 }
 
+void ObjectTests::testCreateCertificates()
+{
+	CK_RV rv;
+	CK_UTF8CHAR pin[] = SLOT_0_USER1_PIN;
+	CK_ULONG pinLength = sizeof(pin) - 1;
+	CK_SESSION_HANDLE hSession;
+
+	// Just make sure that we finalize any previous tests
+	C_Finalize(NULL_PTR);
+
+	// Initialize the library and start the test.
+	rv = C_Initialize(NULL_PTR);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Open read-write session
+	rv = C_OpenSession(SLOT_INIT_TOKEN, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSession);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Login USER into the sessions so we can create a private objects
+	rv = C_Login(hSession,CKU_USER,pin,pinLength);
+	CPPUNIT_ASSERT(rv==CKR_OK);
+
+	CK_OBJECT_HANDLE hObject = CK_INVALID_HANDLE;
+
+	rv = createCertificateObjectIncomplete(hSession,IN_SESSION,IS_PUBLIC,hObject);
+	CPPUNIT_ASSERT(rv == CKR_TEMPLATE_INCOMPLETE);
+	rv = createCertificateObjectX509(hSession,IN_SESSION,IS_PUBLIC,hObject);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	CK_BYTE pCheckValue[] = { 0x2b, 0x84, 0xf6 };
+	CK_ATTRIBUTE attribs[] = {
+		{ CKA_CHECK_VALUE, pCheckValue, sizeof(pCheckValue) }
+	};
+
+	rv = C_SetAttributeValue(hSession, hObject, attribs, 1);
+	CPPUNIT_ASSERT(rv == CKR_ATTRIBUTE_READ_ONLY);
+}
+
 void ObjectTests::testDefaultDataAttributes()
 {
 	CK_RV rv;
@@ -1602,6 +1646,7 @@ void ObjectTests::testDefaultX509CertAttributes()
 	CK_CERTIFICATE_TYPE certificateType = CKC_X_509;
 	CK_BYTE pSubject[] = "Test1";
 	CK_BYTE pValue[] = "Test2";
+	CK_BYTE pCheckValue[] = { 0x2b, 0x84, 0xf6 };
 	CK_DATE emptyDate;
 	CK_ATTRIBUTE objTemplate[] = {
 		{ CKA_CLASS, &objClass, sizeof(objClass) },
@@ -1633,7 +1678,7 @@ void ObjectTests::testDefaultX509CertAttributes()
 	checkCommonObjectAttributes(hSession, hObject, objClass);
 	checkCommonStorageObjectAttributes(hSession, hObject, CK_FALSE, CK_FALSE, CK_TRUE, NULL_PTR, 0, CK_TRUE);
 	memset(&emptyDate, 0, sizeof(emptyDate));
-	checkCommonCertificateObjectAttributes(hSession, hObject, CKC_X_509, CK_FALSE, 0, NULL_PTR, 0, emptyDate, 0, emptyDate, 0);
+	checkCommonCertificateObjectAttributes(hSession, hObject, CKC_X_509, CK_FALSE, 0, pCheckValue, sizeof(pCheckValue), emptyDate, 0, emptyDate, 0);
 	checkX509CertificateObjectAttributes(hSession, hObject, pSubject, sizeof(pSubject)-1, NULL_PTR, 0, NULL_PTR, 0, NULL_PTR, 0, pValue, sizeof(pValue)-1, NULL_PTR, 0, NULL_PTR, 0, NULL_PTR, 0, 0, CKM_SHA_1);
 }
 
@@ -2043,3 +2088,130 @@ void ObjectTests::testArrayAttribute()
 	free(wrapAttribs[0].pValue);
 	free(wrapAttribs[1].pValue);
 }
+
+void ObjectTests::testCreateSecretKey()
+{
+	CK_RV rv;
+	CK_UTF8CHAR pin[] = SLOT_0_USER1_PIN;
+	CK_ULONG pinLength = sizeof(pin) - 1;
+	CK_SESSION_HANDLE hSession;
+
+	// Just make sure that we finalize any previous tests
+	C_Finalize(NULL_PTR);
+
+	// Initialize the library and start the test.
+	rv = C_Initialize(NULL_PTR);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Open read-write session
+	rv = C_OpenSession(SLOT_INIT_TOKEN, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSession);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Login USER into the sessions so we can create a private objects
+	rv = C_Login(hSession,CKU_USER,pin,pinLength);
+	CPPUNIT_ASSERT(rv==CKR_OK);
+
+	CK_BYTE genericKey[] = {
+		0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a,
+		0x01, 0x02, 0x03, 0x04, 0x05, 0x06
+	};
+	CK_BYTE aesKey[] = {
+		0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a,
+		0x01, 0x02, 0x03, 0x04, 0x05, 0x06
+	};
+	CK_BYTE desKey[] = {
+		0x81, 0xdc, 0x9b, 0xdb, 0x52, 0xd0, 0x4d, 0xc2
+	};
+	CK_BYTE des2Key[] = {
+		0x81, 0xdc, 0x9b, 0xdb, 0x52, 0xd0, 0x4d, 0xc2, 0x00, 0x36,
+		0xdb, 0xd8, 0x31, 0x3e, 0xd0, 0x55
+	};
+	CK_BYTE des3Key[] = {
+		0x81, 0xdc, 0x9b, 0xdb, 0x52, 0xd0, 0x4d, 0xc2, 0x00, 0x36,
+		0xdb, 0xd8, 0x31, 0x3e, 0xd0, 0x55, 0xcc, 0x57, 0x76, 0xd1,
+		0x6a, 0x1f, 0xb6, 0xe4
+	};
+	CK_BYTE genericKCV[] = { 0x5c, 0x3b, 0x7c };
+	CK_BYTE aesKCV[] =     { 0x08, 0xbd, 0x28 };
+	CK_BYTE desKCV[] =     { 0x08, 0xa1, 0x50 };
+	CK_BYTE des2KCV[] =    { 0xa9, 0x67, 0xae };
+	CK_BYTE des3KCV[] =    { 0x5c, 0x5e, 0xec };
+
+	CK_OBJECT_HANDLE hObject = CK_INVALID_HANDLE;
+	CK_BBOOL bFalse = CK_FALSE;
+	CK_BBOOL bTrue = CK_TRUE;
+	CK_OBJECT_CLASS secretClass = CKO_SECRET_KEY;
+	CK_KEY_TYPE keyType = CKK_GENERIC_SECRET;
+	CK_ATTRIBUTE attribs[] = {
+		{ CKA_VALUE, genericKey, sizeof(genericKey) },
+		{ CKA_EXTRACTABLE, &bFalse, sizeof(bFalse) },
+		{ CKA_CLASS, &secretClass, sizeof(secretClass) },
+		{ CKA_KEY_TYPE, &keyType, sizeof(keyType) },
+		{ CKA_TOKEN, &bFalse, sizeof(bFalse) },
+		{ CKA_PRIVATE, &bTrue, sizeof(bTrue) },
+		{ CKA_SENSITIVE, &bTrue, sizeof(bTrue) }
+	};
+
+	CK_BYTE pCheckValue[3];
+	CK_ATTRIBUTE attribKCV[] = {
+		{ CKA_CHECK_VALUE, pCheckValue, sizeof(pCheckValue) }
+	};
+
+	rv = C_CreateObject(hSession, attribs, sizeof(attribs)/sizeof(CK_ATTRIBUTE), &hObject);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	rv = C_GetAttributeValue(hSession, hObject, attribKCV, 1);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	CPPUNIT_ASSERT(attribKCV[0].ulValueLen == 3);
+	CPPUNIT_ASSERT(memcmp(pCheckValue, genericKCV, 3) == 0);
+	rv = C_DestroyObject(hSession,hObject);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	keyType = CKK_AES;
+	attribs[0].pValue = aesKey;
+	attribs[0].ulValueLen = sizeof(aesKey);
+	rv = C_CreateObject(hSession, attribs, sizeof(attribs)/sizeof(CK_ATTRIBUTE), &hObject);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	rv = C_GetAttributeValue(hSession, hObject, attribKCV, 1);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	CPPUNIT_ASSERT(attribKCV[0].ulValueLen == 3);
+	CPPUNIT_ASSERT(memcmp(pCheckValue, aesKCV, 3) == 0);
+	rv = C_DestroyObject(hSession,hObject);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	keyType = CKK_DES;
+	attribs[0].pValue = desKey;
+	attribs[0].ulValueLen = sizeof(desKey);
+	rv = C_CreateObject(hSession, attribs, sizeof(attribs)/sizeof(CK_ATTRIBUTE), &hObject);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	rv = C_GetAttributeValue(hSession, hObject, attribKCV, 1);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	CPPUNIT_ASSERT(attribKCV[0].ulValueLen == 3);
+	CPPUNIT_ASSERT(memcmp(pCheckValue, desKCV, 3) == 0);
+	rv = C_DestroyObject(hSession,hObject);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	keyType = CKK_DES2;
+	attribs[0].pValue = des2Key;
+	attribs[0].ulValueLen = sizeof(des2Key);
+	rv = C_CreateObject(hSession, attribs, sizeof(attribs)/sizeof(CK_ATTRIBUTE), &hObject);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	rv = C_GetAttributeValue(hSession, hObject, attribKCV, 1);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	CPPUNIT_ASSERT(attribKCV[0].ulValueLen == 3);
+	CPPUNIT_ASSERT(memcmp(pCheckValue, des2KCV, 3) == 0);
+	rv = C_DestroyObject(hSession,hObject);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	keyType = CKK_DES3;
+	attribs[0].pValue = des3Key;
+	attribs[0].ulValueLen = sizeof(des3Key);
+	rv = C_CreateObject(hSession, attribs, sizeof(attribs)/sizeof(CK_ATTRIBUTE), &hObject);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	rv = C_GetAttributeValue(hSession, hObject, attribKCV, 1);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	CPPUNIT_ASSERT(attribKCV[0].ulValueLen == 3);
+	CPPUNIT_ASSERT(memcmp(pCheckValue, des3KCV, 3) == 0);
+	rv = C_DestroyObject(hSession,hObject);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+}
+
