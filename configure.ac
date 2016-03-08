@@ -7,7 +7,7 @@
 # Program version
 
 define([SOFTHSM_VERSION_MAJOR], [2])
-define([SOFTHSM_VERSION_MINOR], [0])
+define([SOFTHSM_VERSION_MINOR], [1])
 define([SOFTHSM_VERSION_FIX], [0])
 define([PACKAGE_SUFFIX], [])
 
@@ -20,7 +20,7 @@ define([PACKAGE_SUFFIX], [])
 
 define([SOFTHSM_VERSION_CURRENT], [2])
 define([SOFTHSM_VERSION_AGE], [1])
-define([SOFTHSM_VERSION_REVISION], [0])
+define([SOFTHSM_VERSION_REVISION], [1])
 
 ##################
 #                #
