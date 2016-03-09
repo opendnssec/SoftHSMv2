@@ -46,7 +46,7 @@ class Slot
 {
 public:
 	// Constructor
-	Slot(ObjectStore* inObjectStore, size_t inSlotID, ObjectStoreToken *inToken = NULL);
+	Slot(ObjectStore* inObjectStore, CK_SLOT_ID inSlotID, ObjectStoreToken *inToken = NULL);
 
 	// Destructor
 	virtual ~Slot();
@@ -61,7 +61,7 @@ public:
 	CK_RV getSlotInfo(CK_SLOT_INFO_PTR info);
 
 	// Get the slot ID
-	size_t getSlotID();
+	CK_SLOT_ID getSlotID();
 
 	// Is a token present?
 	bool isTokenPresent();
@@ -74,7 +74,7 @@ private:
 	Token* token;
 
 	// The slot ID
-	size_t slotID;
+	CK_SLOT_ID slotID;
 };
 
 #endif // !_SOFTHSM_V2_SLOT_H

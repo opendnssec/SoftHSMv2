@@ -53,8 +53,8 @@ public:
     CK_RV closeAllSessions(Slot* slot);
 	CK_RV getSessionInfo(CK_SESSION_HANDLE hSession, CK_SESSION_INFO_PTR pInfo);
 	Session* getSession(CK_SESSION_HANDLE hSession);
-	bool haveSession(size_t slotID);
-	bool haveROSession(size_t slotID);
+	bool haveSession(CK_SLOT_ID slotID);
+	bool haveROSession(CK_SLOT_ID slotID);
 
 private:
 	// The sessions

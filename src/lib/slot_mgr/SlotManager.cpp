@@ -36,6 +36,8 @@
 #include "config.h"
 #include "log.h"
 #include "SlotManager.h"
+#include <iostream>
+#include <sstream>
 
 // Constructor
 SlotManager::SlotManager(ObjectStore* objectStore)
@@ -43,7 +45,19 @@ SlotManager::SlotManager(ObjectStore* objectStore)
 	// Add a slot for each token that already exists
 	for (size_t i = 0; i < objectStore->getTokenCount(); i++)
 	{
-		Slot* newSlot = new Slot(objectStore, i, objectStore->getToken(i));
+		ObjectStoreToken*const pToken(objectStore->getToken(i));
+		ByteString bs;
+		pToken->getTokenSerial(bs);
+		const std::string s((const char*)bs.const_byte_str(), (const char*)bs.const_byte_str()+bs.size());
+		std::istringstream iss(s);
+		CK_SLOT_ID l;
+		// parse serial string that is expected to have only hex digits.
+		iss >> std::hex >> l;
+		// mask for 31 bits.
+		// this since sunpkcs11 java wrapper is parsing the slot ID to a java int that needs to be positive.
+		// java int is 32 bit and the the sign bit is removed.
+		const CK_SLOT_ID mask( ((CK_SLOT_ID)1<<31)-1 );
+		Slot*const newSlot( new Slot(objectStore, mask&l, pToken) );
 		slots.push_back(newSlot);
 	}
 
@@ -114,7 +128,7 @@ CK_RV SlotManager::getSlotList(ObjectStore* objectStore, CK_BBOOL tokenPresent, 
 	{
 		if ((tokenPresent == CK_FALSE) || (*i)->isTokenPresent())
 		{
-			pSlotList[size++] = (CK_ULONG)(*i)->getSlotID();
+			pSlotList[size++] = (*i)->getSlotID();
 		}
 	}
 
