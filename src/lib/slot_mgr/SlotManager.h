@@ -41,7 +41,8 @@
 #include "ObjectStore.h"
 #include "Slot.h"
 #include <string>
-#include <vector>
+#include <map>
+typedef std::map<const CK_SLOT_ID, Slot*const> SlotMap;
 
 class SlotManager
 {
@@ -53,7 +54,7 @@ public:
 	virtual ~SlotManager();
 
 	// Get the slots
-	std::vector<Slot*> getSlots();
+	SlotMap getSlots();
 
 	// Get the slot list
 	CK_RV getSlotList(ObjectStore* objectStore, CK_BBOOL tokenPresent, CK_SLOT_ID_PTR pSlotList, CK_ULONG_PTR pulCount);
@@ -61,8 +62,9 @@ public:
 	// Get one slot
 	Slot* getSlot(CK_SLOT_ID slotID);
 private:
+	void insertToken(ObjectStore* objectStore, CK_SLOT_ID slotID, ObjectStoreToken* pToken);
 	// The slots
-	std::vector<Slot*> slots;
+	SlotMap slots;
 };
 
 #endif // !_SOFTHSM_V2_SLOTMANAGER_H
