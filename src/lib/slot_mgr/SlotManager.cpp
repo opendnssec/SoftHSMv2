@@ -39,6 +39,7 @@
 #include <iostream>
 #include <sstream>
 #include <cassert>
+#include <stdexcept>
 typedef std::pair<CK_SLOT_ID, Slot*> SlotMapElement;
 typedef std::pair<SlotMap::iterator, bool> InsertResult;
 
