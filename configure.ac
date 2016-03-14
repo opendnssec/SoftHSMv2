@@ -7,7 +7,7 @@
 # Program version
 
 define([SOFTHSM_VERSION_MAJOR], [2])
-define([SOFTHSM_VERSION_MINOR], [0])
+define([SOFTHSM_VERSION_MINOR], [1])
 define([SOFTHSM_VERSION_FIX], [0])
 define([PACKAGE_SUFFIX], [])
 
@@ -20,7 +20,7 @@ define([PACKAGE_SUFFIX], [])
 
 define([SOFTHSM_VERSION_CURRENT], [2])
 define([SOFTHSM_VERSION_AGE], [1])
-define([SOFTHSM_VERSION_REVISION], [0])
+define([SOFTHSM_VERSION_REVISION], [1])
 
 ##################
 #                #
@@ -203,6 +203,7 @@ AC_CONFIG_FILES([
 	src/lib/handle_mgr/test/Makefile
 	src/lib/test/Makefile
 	src/lib/test/softhsm2.conf
+	src/lib/test/softhsm2-alt.conf
 	src/lib/test/tokens/dummy
 	src/bin/Makefile
 	src/bin/common/Makefile

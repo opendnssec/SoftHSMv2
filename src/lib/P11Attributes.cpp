@@ -33,6 +33,9 @@
 #include "config.h"
 #include "P11Attributes.h"
 #include "ByteString.h"
+#include "CryptoFactory.h"
+#include "DESKey.h"
+#include "AESKey.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -482,14 +485,9 @@ bool P11AttrClass::setDefault()
 }
 
 // Update the value if allowed
-CK_RV P11AttrClass::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op)
+CK_RV P11AttrClass::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int /*op*/)
 {
 	// Attribute specific checks
-
-	if (op == OBJECT_OP_SET)
-	{
-		return CKR_ATTRIBUTE_READ_ONLY;
-	}
 
 	if (ulValueLen !=sizeof(CK_ULONG))
 	{
@@ -516,14 +514,9 @@ bool P11AttrKeyType::setDefault()
 }
 
 // Update the value if allowed
-CK_RV P11AttrKeyType::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op)
+CK_RV P11AttrKeyType::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int /*op*/)
 {
 	// Attribute specific checks
-
-	if (op == OBJECT_OP_SET)
-	{
-		return CKR_ATTRIBUTE_READ_ONLY;
-	}
 
 	if (ulValueLen !=sizeof(CK_ULONG))
 	{
@@ -552,14 +545,9 @@ bool P11AttrCertificateType::setDefault()
 }
 
 // Update the value if allowed
-CK_RV P11AttrCertificateType::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op)
+CK_RV P11AttrCertificateType::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int /*op*/)
 {
 	// Attribute specific checks
-
-	if (op == OBJECT_OP_SET)
-	{
-		return CKR_ATTRIBUTE_READ_ONLY;
-	}
 
 	if (ulValueLen !=sizeof(CK_ULONG))
 	{
@@ -586,21 +574,12 @@ bool P11AttrToken::setDefault()
 }
 
 // Update the value if allowed
-CK_RV P11AttrToken::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op)
+CK_RV P11AttrToken::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int /*op*/)
 {
 	OSAttribute attrTrue(true);
 	OSAttribute attrFalse(false);
 
 	// Attribute specific checks
-
-	if (op != OBJECT_OP_GENERATE &&
-	    op != OBJECT_OP_DERIVE &&
-	    op != OBJECT_OP_CREATE &&
-	    op != OBJECT_OP_COPY &&
-	    op != OBJECT_OP_UNWRAP)
-	{
-		return CKR_ATTRIBUTE_READ_ONLY;
-	}
 
 	if (ulValueLen !=sizeof(CK_BBOOL))
 	{
@@ -633,21 +612,12 @@ bool P11AttrPrivate::setDefault()
 }
 
 // Update the value if allowed
-CK_RV P11AttrPrivate::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op)
+CK_RV P11AttrPrivate::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int /*op*/)
 {
 	OSAttribute attrTrue(true);
 	OSAttribute attrFalse(false);
 
 	// Attribute specific checks
-
-	if (op != OBJECT_OP_GENERATE &&
-	    op != OBJECT_OP_DERIVE &&
-	    op != OBJECT_OP_CREATE &&
-	    op != OBJECT_OP_COPY &&
-	    op != OBJECT_OP_UNWRAP)
-	{
-		return CKR_ATTRIBUTE_READ_ONLY;
-	}
 
 	if (ulValueLen !=sizeof(CK_BBOOL))
 	{
@@ -680,21 +650,12 @@ bool P11AttrModifiable::setDefault()
 }
 
 // Update the value if allowed
-CK_RV P11AttrModifiable::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op)
+CK_RV P11AttrModifiable::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int /*op*/)
 {
 	OSAttribute attrTrue(true);
 	OSAttribute attrFalse(false);
 
 	// Attribute specific checks
-
-	if (op != OBJECT_OP_GENERATE &&
-	    op != OBJECT_OP_DERIVE &&
-	    op != OBJECT_OP_CREATE &&
-	    op != OBJECT_OP_COPY &&
-	    op != OBJECT_OP_UNWRAP)
-	{
-		return CKR_ATTRIBUTE_READ_ONLY;
-	}
 
 	if (ulValueLen !=sizeof(CK_BBOOL))
 	{
@@ -738,21 +699,12 @@ bool P11AttrCopyable::setDefault()
 }
 
 // Update the value if allowed
-CK_RV P11AttrCopyable::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op)
+CK_RV P11AttrCopyable::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int /*op*/)
 {
 	OSAttribute attrTrue(true);
 	OSAttribute attrFalse(false);
 
 	// Attribute specific checks
-
-	if (op != OBJECT_OP_GENERATE &&
-	    op != OBJECT_OP_DERIVE &&
-	    op != OBJECT_OP_CREATE &&
-	    op != OBJECT_OP_COPY &&
-	    op != OBJECT_OP_UNWRAP)
-	{
-		return CKR_ATTRIBUTE_READ_ONLY;
-	}
 
 	if (ulValueLen !=sizeof(CK_BBOOL))
 	{
@@ -807,6 +759,92 @@ bool P11AttrCheckValue::setDefault()
 {
 	OSAttribute attr(ByteString(""));
 	return osobject->setAttribute(type, attr);
+}
+
+// Update the value if allowed
+CK_RV P11AttrCheckValue::updateAttr(Token *token, bool isPrivate, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op)
+{
+	ByteString plaintext((unsigned char*)pValue, ulValueLen);
+	ByteString value;
+
+	// Encrypt
+
+	if (isPrivate)
+	{
+		if (!token->encrypt(plaintext, value))
+			return CKR_GENERAL_ERROR;
+	}
+	else
+		value = plaintext;
+
+	// Attribute specific checks
+
+	if (value.size() < ulValueLen)
+		return CKR_GENERAL_ERROR;
+
+	// Store data
+	if (ulValueLen == 0)
+	{
+		osobject->setAttribute(type, value);
+	}
+	else
+	{
+		ByteString checkValue;
+		ByteString keybits;
+		if (isPrivate)
+		{
+			if (!token->decrypt(osobject->getByteStringValue(CKA_VALUE), keybits))
+				return CKR_GENERAL_ERROR;
+		}
+		else
+		{
+			keybits = osobject->getByteStringValue(CKA_VALUE);
+		}
+
+		SymmetricKey key;
+		AESKey aes;
+		DESKey des;
+		switch (osobject->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED))
+		{
+			case CKK_GENERIC_SECRET:
+			case CKK_MD5_HMAC:
+			case CKK_SHA_1_HMAC:
+			case CKK_SHA224_HMAC:
+			case CKK_SHA256_HMAC:
+			case CKK_SHA384_HMAC:
+			case CKK_SHA512_HMAC:
+				key.setKeyBits(keybits);
+				key.setBitLen(keybits.size() * 8);
+				checkValue = key.getKeyCheckValue();
+				break;
+			case CKK_AES:
+				aes.setKeyBits(keybits);
+				aes.setBitLen(keybits.size() * 8);
+				checkValue = aes.getKeyCheckValue();
+				break;
+			case CKK_DES:
+			case CKK_DES2:
+			case CKK_DES3:
+				des.setKeyBits(keybits);
+				des.setBitLen(keybits.size() * 7);
+				checkValue = des.getKeyCheckValue();
+				break;
+			case CKK_GOST28147:
+				// TODO: Encryption support for CKK_GOST28147
+				// We do not calculate the KCV
+				checkValue = plaintext;
+				break;
+			default:
+				return CKR_GENERAL_ERROR;
+		}
+
+		if (plaintext != checkValue)
+			return CKR_ATTRIBUTE_VALUE_INVALID;
+
+		osobject->setAttribute(type, value);
+	}
+
+	return CKR_OK;
 }
 
 /*****************************************
@@ -873,6 +911,88 @@ CK_RV P11AttrValue::updateAttr(Token *token, bool isPrivate, CK_VOID_PTR pValue,
 			OSAttribute bits((unsigned long)plaintext.bits());
 			osobject->setAttribute(CKA_VALUE_BITS, bits);
 		}
+	}
+
+	// Calculate the CKA_CHECK_VALUE for certificates
+	if (osobject->getUnsignedLongValue(CKA_CLASS, CKO_VENDOR_DEFINED) == CKO_CERTIFICATE)
+	{
+		HashAlgorithm* hash = CryptoFactory::i()->getHashAlgorithm(HashAlgo::SHA1);
+		if (hash == NULL) return CKR_GENERAL_ERROR;
+
+		ByteString digest;
+		if (hash->hashInit() == false ||
+		    hash->hashUpdate(plaintext) == false ||
+		    hash->hashFinal(digest) == false)
+		{
+			CryptoFactory::i()->recycleHashAlgorithm(hash);
+			return CKR_GENERAL_ERROR;
+		}
+		CryptoFactory::i()->recycleHashAlgorithm(hash);
+
+		// First three bytes of the SHA-1 hash
+		digest.resize(3);
+
+		if (isPrivate)
+		{
+			ByteString encrypted;
+			if (!token->encrypt(digest, encrypted))
+				return CKR_GENERAL_ERROR;
+			osobject->setAttribute(CKA_CHECK_VALUE, encrypted);
+		}
+		else
+			osobject->setAttribute(CKA_CHECK_VALUE, digest);
+	}
+
+	// Calculate the CKA_CHECK_VALUE for secret keys
+	if (op == OBJECT_OP_CREATE &&
+	    osobject->getUnsignedLongValue(CKA_CLASS, CKO_VENDOR_DEFINED) == CKO_SECRET_KEY)
+	{
+		SymmetricKey key;
+		AESKey aes;
+		DESKey des;
+		ByteString checkValue;
+		switch (osobject->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED))
+		{
+			case CKK_GENERIC_SECRET:
+			case CKK_MD5_HMAC:
+			case CKK_SHA_1_HMAC:
+			case CKK_SHA224_HMAC:
+			case CKK_SHA256_HMAC:
+			case CKK_SHA384_HMAC:
+			case CKK_SHA512_HMAC:
+				key.setKeyBits(plaintext);
+				key.setBitLen(plaintext.size() * 8);
+				checkValue = key.getKeyCheckValue();
+				break;
+			case CKK_AES:
+				aes.setKeyBits(plaintext);
+				aes.setBitLen(plaintext.size() * 8);
+				checkValue = aes.getKeyCheckValue();
+				break;
+			case CKK_DES:
+			case CKK_DES2:
+			case CKK_DES3:
+				des.setKeyBits(plaintext);
+				des.setBitLen(plaintext.size() * 7);
+				checkValue = des.getKeyCheckValue();
+				break;
+			case CKK_GOST28147:
+				// TODO: Encryption support for CKK_GOST28147
+				// We do not calculate the KCV
+				break;
+			default:
+				return CKR_GENERAL_ERROR;
+		}
+
+		if (isPrivate)
+		{
+			ByteString encrypted;
+			if (!token->encrypt(checkValue, encrypted))
+				return CKR_GENERAL_ERROR;
+			osobject->setAttribute(CKA_CHECK_VALUE, encrypted);
+		}
+		else
+			osobject->setAttribute(CKA_CHECK_VALUE, checkValue);
 	}
 
 	return CKR_OK;
@@ -955,14 +1075,9 @@ bool P11AttrCertificateCategory::setDefault()
 }
 
 // Update the value if allowed
-CK_RV P11AttrCertificateCategory::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op)
+CK_RV P11AttrCertificateCategory::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int /*op*/)
 {
 	// Attribute specific checks
-
-	if (op != OBJECT_OP_SET)
-	{
-		return CKR_ATTRIBUTE_READ_ONLY;
-	}
 
 	if (ulValueLen !=sizeof(CK_ULONG))
 	{
@@ -1085,14 +1200,9 @@ bool P11AttrJavaMidpSecurityDomain::setDefault()
 }
 
 // Update the value if allowed
-CK_RV P11AttrJavaMidpSecurityDomain::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op)
+CK_RV P11AttrJavaMidpSecurityDomain::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int /*op*/)
 {
 	// Attribute specific checks
-
-	if (op != OBJECT_OP_SET)
-	{
-		return CKR_ATTRIBUTE_READ_ONLY;
-	}
 
 	if (ulValueLen !=sizeof(CK_ULONG))
 	{
@@ -1117,14 +1227,9 @@ bool P11AttrNameHashAlgorithm::setDefault()
 }
 
 // Update the value if allowed
-CK_RV P11AttrNameHashAlgorithm::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op)
+CK_RV P11AttrNameHashAlgorithm::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int /*op*/)
 {
 	// Attribute specific checks
-
-	if (op != OBJECT_OP_SET)
-	{
-		return CKR_ATTRIBUTE_READ_ONLY;
-	}
 
 	if (ulValueLen !=sizeof(CK_ULONG))
 	{

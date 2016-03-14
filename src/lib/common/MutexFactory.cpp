@@ -35,7 +35,6 @@
 #include "osmutex.h"
 #include <memory>
 
-
 /*****************************************************************************
  Mutex implementation
  *****************************************************************************/
@@ -91,13 +90,6 @@ MutexLocker::~MutexLocker()
 /*****************************************************************************
  MutexFactory implementation
  *****************************************************************************/
-
-// Initialise the one-and-only instance
-#ifdef HAVE_CXX11
-std::unique_ptr<MutexFactory> MutexFactory::instance(nullptr);
-#else
-std::auto_ptr<MutexFactory> MutexFactory::instance(NULL);
-#endif
 
 // Constructor
 MutexFactory::MutexFactory()

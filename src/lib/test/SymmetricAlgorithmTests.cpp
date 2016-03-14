@@ -1036,3 +1036,77 @@ void SymmetricAlgorithmTests::testNonModifiableDesKeyGeneration()
 		&hKey);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 }
+
+void SymmetricAlgorithmTests::testCheckValue()
+{
+	CK_RV rv;
+	CK_UTF8CHAR pin[] = SLOT_0_USER1_PIN;
+	CK_ULONG pinLength = sizeof(pin) - 1;
+	CK_SESSION_HANDLE hSession;
+	CK_MECHANISM mechanism = { CKM_AES_KEY_GEN, NULL_PTR, 0 };
+	CK_OBJECT_HANDLE hKey = CK_INVALID_HANDLE;
+
+	// Just make sure that we finalize any previous tests
+	C_Finalize(NULL_PTR);
+
+	// Initialize the library and start the test.
+	rv = C_Initialize(NULL_PTR);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Open read-write session
+	rv = C_OpenSession(SLOT_INIT_TOKEN, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSession);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Login USER into the sessions so we can create a private objects
+	rv = C_Login(hSession, CKU_USER, pin, pinLength);
+	CPPUNIT_ASSERT(rv==CKR_OK);
+
+	CK_ULONG bytes = 16;
+	CK_BYTE pCheckValue[] = { 0x2b, 0x84, 0xf6 };
+	CK_BBOOL bFalse = CK_FALSE;
+	CK_BBOOL bTrue = CK_TRUE;
+	CK_ATTRIBUTE keyAttribs[] = {
+		{ CKA_TOKEN, &bFalse, sizeof(bFalse) },
+		{ CKA_PRIVATE, &bTrue, sizeof(bTrue) },
+		{ CKA_ENCRYPT, &bTrue, sizeof(bTrue) },
+		{ CKA_DECRYPT, &bTrue, sizeof(bTrue) },
+		{ CKA_WRAP, &bTrue, sizeof(bTrue) },
+		{ CKA_UNWRAP, &bTrue, sizeof(bTrue) },
+		{ CKA_VALUE_LEN, &bytes, sizeof(bytes) },
+		{ CKA_CHECK_VALUE, &pCheckValue, sizeof(pCheckValue) }
+	};
+
+	rv = C_GenerateKey(hSession, &mechanism,
+			   keyAttribs, 8,
+			   &hKey);
+	CPPUNIT_ASSERT(rv == CKR_ATTRIBUTE_VALUE_INVALID);
+
+	keyAttribs[7].ulValueLen = 0;
+	rv = C_GenerateKey(hSession, &mechanism,
+			   keyAttribs, 8,
+			   &hKey);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	CK_ATTRIBUTE checkAttrib[] = {
+		{ CKA_CHECK_VALUE, &pCheckValue, sizeof(pCheckValue) }
+	};
+
+	rv = C_GetAttributeValue(hSession, hKey, checkAttrib, 1);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	CPPUNIT_ASSERT(checkAttrib[0].ulValueLen == 0);
+
+	rv = C_DestroyObject(hSession, hKey);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	rv = C_GenerateKey(hSession, &mechanism,
+			   keyAttribs, 7,
+			   &hKey);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	rv = C_GetAttributeValue(hSession, hKey, checkAttrib, 1);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	CPPUNIT_ASSERT(checkAttrib[0].ulValueLen == 3);
+
+	rv = C_DestroyObject(hSession, hKey);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+}

@@ -54,6 +54,7 @@ public:
 	void testAesWrapUnwrap();
 	void testNullTemplate();
 	void testNonModifiableDesKeyGeneration();
+	void testCheckValue();
 
 	void setUp();
 	void tearDown();

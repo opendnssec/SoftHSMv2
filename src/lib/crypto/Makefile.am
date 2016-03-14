@@ -7,7 +7,8 @@ AM_CPPFLAGS = 			-I$(srcdir)/../common \
 				@CRYPTO_INCLUDES@
 
 noinst_LTLIBRARIES =		libsofthsm_crypto.la
-libsofthsm_crypto_la_SOURCES =	AsymmetricAlgorithm.cpp \
+libsofthsm_crypto_la_SOURCES =	AESKey.cpp \
+				AsymmetricAlgorithm.cpp \
 				AsymmetricKeyPair.cpp \
 				CryptoFactory.cpp \
 				DESKey.cpp \

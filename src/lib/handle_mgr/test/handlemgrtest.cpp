@@ -33,6 +33,15 @@
 #include <cppunit/extensions/TestFactoryRegistry.h>
 #include <cppunit/ui/text/TestRunner.h>
 
+#include "config.h"
+#include "MutexFactory.h"
+
+#ifdef HAVE_CXX11
+std::unique_ptr<MutexFactory> MutexFactory::instance(nullptr);
+#else
+std::auto_ptr<MutexFactory> MutexFactory::instance(NULL);
+#endif
+
 int main(int /*argc*/, char** /*argv*/)
 {
 	CppUnit::TextUi::TestRunner runner;

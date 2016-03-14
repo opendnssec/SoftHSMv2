@@ -8,6 +8,7 @@ AM_CPPFLAGS = 			-I$(srcdir)/.. \
 				-I$(srcdir)/../../data_mgr \
 				-I$(srcdir)/../../session_mgr \
 				-I$(srcdir)/../../slot_mgr \
+				@CRYPTO_INCLUDES@ \
 				`cppunit-config --cflags`
 
 check_PROGRAMS =		objstoretest

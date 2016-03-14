@@ -308,7 +308,7 @@ bool OSSLEVPSymmetricAlgorithm::decryptUpdate(const ByteString& encryptedData, B
 	}
 
 	// Prepare the output block
-	data.resize(encryptedData.size() + getBlockSize() - 1);
+	data.resize(encryptedData.size() + getBlockSize());
 
 	int outLen = data.size();
 

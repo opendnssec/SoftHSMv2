@@ -49,6 +49,7 @@ class ObjectTests : public CppUnit::TestFixture
 	CPPUNIT_TEST(testSetAttributeValue);
 	CPPUNIT_TEST(testFindObjects);
 	CPPUNIT_TEST(testGenerateKeys);
+	CPPUNIT_TEST(testCreateCertificates);
 	CPPUNIT_TEST(testDefaultDataAttributes);
 	CPPUNIT_TEST(testDefaultX509CertAttributes);
 	CPPUNIT_TEST(testDefaultRSAPubAttributes);
@@ -57,6 +58,7 @@ class ObjectTests : public CppUnit::TestFixture
 	CPPUNIT_TEST(testSensitiveAttributes);
 	CPPUNIT_TEST(testGetInvalidAttribute);
 	CPPUNIT_TEST(testArrayAttribute);
+	CPPUNIT_TEST(testCreateSecretKey);
 	CPPUNIT_TEST_SUITE_END();
 
 public:
@@ -68,6 +70,7 @@ public:
 	void testSetAttributeValue();
 	void testFindObjects();
 	void testGenerateKeys();
+	void testCreateCertificates();
 	void testDefaultDataAttributes();
 	void testDefaultX509CertAttributes();
 	void testDefaultRSAPubAttributes();
@@ -76,6 +79,7 @@ public:
 	void testSensitiveAttributes();
 	void testGetInvalidAttribute();
 	void testArrayAttribute();
+	void testCreateSecretKey();
 
 	void setUp();
 	void tearDown();
@@ -179,7 +183,7 @@ protected:
 	CK_RV createDataObjectNormal(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_OBJECT_HANDLE &hObject);
 
 	CK_RV createCertificateObjectIncomplete(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_OBJECT_HANDLE &hObject);
-	CK_RV createCertificateObjectValue(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_OBJECT_HANDLE &hObject);
+	CK_RV createCertificateObjectX509(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_OBJECT_HANDLE &hObject);
 
 	CK_RV generateRsaKeyPair(CK_SESSION_HANDLE hSession, CK_BBOOL bTokenPuk, CK_BBOOL bPrivatePuk, CK_BBOOL bTokenPrk, CK_BBOOL bPrivatePrk, CK_OBJECT_HANDLE &hPuk, CK_OBJECT_HANDLE &hPrk);
 };

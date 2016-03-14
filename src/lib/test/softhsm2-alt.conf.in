@@ -1,0 +1,6 @@
+# SoftHSM v2 configuration file
+
+directories.tokendir = @builddir@/tokens
+objectstore.backend = file
+log.level = INFO
+slots.removable = true

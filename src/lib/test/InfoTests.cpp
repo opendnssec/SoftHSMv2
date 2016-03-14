@@ -178,9 +178,59 @@ void InfoTests::testGetSlotInfo()
 
 	rv = C_GetSlotInfo(SLOT_NO_INIT_TOKEN, &slotInfo);
 	CPPUNIT_ASSERT(rv == CKR_OK);
+	CPPUNIT_ASSERT((slotInfo.flags & CKF_TOKEN_PRESENT ) == CKF_TOKEN_PRESENT);
+	CPPUNIT_ASSERT((slotInfo.flags & CKF_REMOVABLE_DEVICE ) == 0);
 
 	C_Finalize(NULL_PTR);
 }
+
+void InfoTests::testGetSlotInfoAlt()
+{
+	CK_RV rv;
+	CK_SLOT_INFO slotInfo;
+
+	// Just make sure that we finalize any previous failed tests
+	C_Finalize(NULL_PTR);
+
+#ifndef _WIN32
+    setenv("SOFTHSM2_CONF", "./softhsm2-alt.conf", 1);
+#else
+    setenv("SOFTHSM2_CONF", ".\\softhsm2-alt.conf", 1);
+#endif
+
+	CK_UTF8CHAR pin[] = SLOT_0_SO1_PIN;
+	CK_ULONG pinLength = sizeof(pin) - 1;
+	CK_UTF8CHAR label[32];
+	memset(label, ' ', 32);
+	memcpy(label, "token1", strlen("token1"));
+
+	// (Re)initialize the token
+	rv = C_Initialize(NULL_PTR);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	rv = C_InitToken(SLOT_INIT_TOKEN, pin, pinLength, label);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	C_Finalize(NULL_PTR);
+
+	rv = C_GetSlotInfo(SLOT_NO_INIT_TOKEN, &slotInfo);
+	CPPUNIT_ASSERT(rv == CKR_CRYPTOKI_NOT_INITIALIZED);
+
+	rv = C_Initialize(NULL_PTR);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	rv = C_GetSlotInfo(SLOT_NO_INIT_TOKEN, NULL_PTR);
+	CPPUNIT_ASSERT(rv == CKR_ARGUMENTS_BAD);
+
+	rv = C_GetSlotInfo(SLOT_INVALID, &slotInfo);
+	CPPUNIT_ASSERT(rv == CKR_SLOT_ID_INVALID);
+
+	rv = C_GetSlotInfo(SLOT_NO_INIT_TOKEN, &slotInfo);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	CPPUNIT_ASSERT((slotInfo.flags & CKF_TOKEN_PRESENT ) == CKF_TOKEN_PRESENT);
+	CPPUNIT_ASSERT((slotInfo.flags & CKF_REMOVABLE_DEVICE ) == CKF_REMOVABLE_DEVICE);
+
+	C_Finalize(NULL_PTR);
+}
+
 
 void InfoTests::testGetTokenInfo()
 {

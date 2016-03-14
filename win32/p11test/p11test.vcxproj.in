@@ -20,12 +20,14 @@
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <CharacterSet>Unicode</CharacterSet>
+	<PlatformToolset>@PLATFORMTOOLSET@</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|@PLATFORM@'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
+	<PlatformToolset>@PLATFORMTOOLSET@</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -49,8 +51,8 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..;..\..\src\lib;..\..\src\lib\cryptoki_compat;..\..\src\lib\common;..\..\src\lib\crypto;..\..\src\lib\object_store;..\..\src\lib\data_mgr;..\..\src\lib\session_mgr;..\..\src\lib\slot_mgr;..\..\src\lib\handle_mgr;..\..\src\lib\win32;@CUINCPATH@;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..;..\..\src\lib;..\..\src\lib\cryptoki_compat;..\..\src\lib\common;..\..\src\lib\crypto;..\..\src\lib\object_store;..\..\src\lib\data_mgr;..\..\src\lib\session_mgr;..\..\src\lib\slot_mgr;..\..\src\lib\handle_mgr;..\..\src\lib\win32;@CUINCPATH@;@INCLUDEPATH@;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -59,13 +61,12 @@
       <AdditionalDependencies>convarch.lib;cppunitd.lib;@LIBNAME@;@EXTRALIBS@%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>copy ..\..\src\lib\test\softhsm2.conf.win32 ..\..\softhsm2.conf
-mkdir ..\..\tokens 2&gt; nul
-copy ..\..\src\lib\test\tokens\dummy.in ..\..\tokens\dummy
-
-copy ..\..\src\lib\test\softhsm2.conf.win32 ..\..\win32\p11test\softhsm2.conf
-mkdir  ..\..\win32\p11test\tokens 2&gt; nul
-copy ..\..\src\lib\test\tokens\dummy.in  ..\..\win32\p11test\tokens\dummy</Command>
+      <Command>
+copy ..\..\src\lib\test\softhsm2.conf.win32 "$(TargetDir)\softhsm2.conf"
+mkdir "$(TargetDir)\tokens" 2&gt; nul
+copy ..\..\src\lib\test\tokens\dummy.in "$(TargetDir)\tokens\dummy"
+      </Command>
+      <Message>Copying dummy test files to Debug folder</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|@PLATFORM@'">
@@ -76,8 +77,8 @@ copy ..\..\src\lib\test\tokens\dummy.in  ..\..\win32\p11test\tokens\dummy</Comma
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..;..\..\src\lib;..\..\src\lib\cryptoki_compat;..\..\src\lib\common;..\..\src\lib\crypto;..\..\src\lib\object_store;..\..\src\lib\data_mgr;..\..\src\lib\session_mgr;..\..\src\lib\slot_mgr;..\..\src\lib\handle_mgr;..\..\src\lib\win32;@CUINCPATH@;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..;..\..\src\lib;..\..\src\lib\cryptoki_compat;..\..\src\lib\common;..\..\src\lib\crypto;..\..\src\lib\object_store;..\..\src\lib\data_mgr;..\..\src\lib\session_mgr;..\..\src\lib\slot_mgr;..\..\src\lib\handle_mgr;..\..\src\lib\win32;@CUINCPATH@;@INCLUDEPATH@;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -88,13 +89,12 @@ copy ..\..\src\lib\test\tokens\dummy.in  ..\..\win32\p11test\tokens\dummy</Comma
       <AdditionalDependencies>convarch.lib;cppunit.lib;@LIBNAME@;@EXTRALIBS@%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>copy ..\..\src\lib\test\softhsm2.conf.win32 ..\..\softhsm2.conf
-mkdir ..\..\tokens 2&gt; nul
-copy ..\..\src\lib\test\tokens\dummy.in ..\..\tokens\dummy
-
-copy ..\..\src\lib\test\softhsm2.conf.win32 ..\..\win32\p11test\softhsm2.conf
-mkdir  ..\..\win32\p11test\tokens 2&gt; nul
-copy ..\..\src\lib\test\tokens\dummy.in  ..\..\win32\p11test\tokens\dummy</Command>
+      <Command>
+copy ..\..\src\lib\test\softhsm2.conf.win32 "$(TargetDir)\softhsm2.conf"
+mkdir "$(TargetDir)\tokens" 2&gt; nul
+copy ..\..\src\lib\test\tokens\dummy.in "$(TargetDir)\tokens\dummy"
+      </Command>
+      <Message>Copying dummy test files to Release folder</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>

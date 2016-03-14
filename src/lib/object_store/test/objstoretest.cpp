@@ -33,8 +33,38 @@
 #include <cppunit/extensions/TestFactoryRegistry.h>
 #include <cppunit/ui/text/TestRunner.h>
 
-#include "CryptoFactory.h"
+#include "config.h"
+#include "MutexFactory.h"
 #include "SecureMemoryRegistry.h"
+
+#if defined(WITH_OPENSSL)
+#include "OSSLCryptoFactory.h"
+#else
+#include "BotanCryptoFactory.h"
+#endif
+
+// Initialise the one-and-only instance
+#ifdef HAVE_CXX11
+
+std::unique_ptr<MutexFactory> MutexFactory::instance(nullptr);
+std::unique_ptr<SecureMemoryRegistry> SecureMemoryRegistry::instance(nullptr);
+#if defined(WITH_OPENSSL)
+std::unique_ptr<OSSLCryptoFactory> OSSLCryptoFactory::instance(nullptr);
+#else
+std::unique_ptr<BotanCryptoFactory> BotanCryptoFactory::instance(nullptr);
+#endif
+
+#else
+
+std::auto_ptr<MutexFactory> MutexFactory::instance(NULL);
+std::auto_ptr<SecureMemoryRegistry> SecureMemoryRegistry::instance(NULL);
+#if defined(WITH_OPENSSL)
+std::auto_ptr<OSSLCryptoFactory> OSSLCryptoFactory::instance(NULL);
+#else
+std::auto_ptr<BotanCryptoFactory> BotanCryptoFactory::instance(NULL);
+#endif
+
+#endif
 
 int main(int /*argc*/, char** /*argv*/)
 {
@@ -43,9 +73,6 @@ int main(int /*argc*/, char** /*argv*/)
 
 	runner.addTest(registry.makeTest());
 	bool wasSucessful = runner.run();
-
-	CryptoFactory::reset();
-	SecureMemoryRegistry::reset();
 
 	return wasSucessful ? 0 : 1;
 }

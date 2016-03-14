@@ -383,7 +383,11 @@ int openP11(char* slot, char* userPIN, CK_SESSION_HANDLE* hSession)
 	}
 
 	// Get the password
-	getPW(userPIN, user_pin_copy, CKU_USER);
+	if (getPW(userPIN, user_pin_copy, CKU_USER) != 0)
+	{
+		fprintf(stderr, "ERROR: Could not get user PIN\n");
+		return 1;
+	}
 
 	rv = p11->C_Login(*hSession, CKU_USER, (CK_UTF8CHAR_PTR)user_pin_copy, strlen(user_pin_copy));
 	if (rv != CKR_OK)

@@ -35,6 +35,6 @@
 
 #include "pkcs11.h"
 
-void getPW(char* pin, char* newPIN, CK_ULONG userType);
+int getPW(char* pin, char* newPIN, CK_ULONG userType);
 
 #endif // !_SOFTHSM_V2_BIN_GETPW_H

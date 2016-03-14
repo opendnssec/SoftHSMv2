@@ -59,9 +59,6 @@ void SlotManagerTests::tearDown()
 #else
 	CPPUNIT_ASSERT(!system("rmdir /s /q testdir 2> nul"));
 #endif
-
-	CryptoFactory::reset();
-	SecureMemoryRegistry::reset();
 }
 
 void SlotManagerTests::testNoExistingTokens()

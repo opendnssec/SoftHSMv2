@@ -338,6 +338,13 @@ bool SecureDataManager::decrypt(const ByteString& encrypted, ByteString& plainte
 		return false;
 	}
 
+	// Do not attempt decryption of empty byte strings
+	if (encrypted.size() == 0)
+	{
+		plaintext = ByteString("");
+		return true;
+	}
+
 	AESKey theKey(256);
 	ByteString unmaskedKey;
 

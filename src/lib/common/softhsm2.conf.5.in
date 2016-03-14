@@ -55,6 +55,15 @@ log.level = INFO
 .fi
 .RE
 .LP
+.SH SLOTS.REMOVABLE
+If set to true CKF_REMOVABLE_DEVICE is set in the flags returned by C_GetSlotInfo. Default is false.
+.LP
+.RS
+.nf
+slots.removable = true
+.fi
+.RE
+.LP
 .SH ENVIRONMENT
 .TP
 SOFTHSM2_CONF

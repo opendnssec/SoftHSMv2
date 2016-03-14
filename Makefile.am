@@ -19,7 +19,6 @@ EXTRA_DIST =	$(srcdir)/aes_wrap_key_with_pad/botan-diff \
 		$(srcdir)/OSX-NOTES.md \
 		$(srcdir)/README.md \
 		$(srcdir)/win32/config.h.in \
-		$(srcdir)/win32/Configure.pl \
 		$(srcdir)/win32/Configure.py \
 		$(srcdir)/win32/convarch/convarch.vcxproj.in \
 		$(srcdir)/win32/convarch/convarch.vcxproj.filters.in \
