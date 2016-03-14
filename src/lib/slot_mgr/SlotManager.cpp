@@ -90,7 +90,7 @@ SlotManager::~SlotManager()
 // Get the slot list
 CK_RV SlotManager::getSlotList(ObjectStore* objectStore, CK_BBOOL tokenPresent, CK_SLOT_ID_PTR pSlotList, CK_ULONG_PTR pulCount)
 {
-	CK_ULONG size = 0;
+	size_t size( 0 );
 
 	if (pulCount == NULL) return CKR_ARGUMENTS_BAD;
 
@@ -132,16 +132,23 @@ CK_RV SlotManager::getSlotList(ObjectStore* objectStore, CK_BBOOL tokenPresent, 
 		return CKR_BUFFER_TOO_SMALL;
 	}
 
-	size = 0;
+	size_t startIx( 0 );
+	size_t endIx( size-1 );
 
 	for (SlotMap::iterator i = slots.begin(); i != slots.end(); i++)
 	{
-		if ((tokenPresent == CK_FALSE) || i->second->isTokenPresent())
-		{
-			pSlotList[size++] = i->second->getSlotID();
+		if ((tokenPresent == CK_TRUE) && !i->second->isTokenPresent())
+		{// only show token if present on slot. But this slot has no token so we continue
+			continue;
+		}
+		// put uninitialized last. After all initialized or slots without tokens.
+		if ( i->second->isTokenPresent() && !i->second->getToken()->isInitialized() ) {
+			pSlotList[endIx--] =  i->second->getSlotID();
+		} else {
+			pSlotList[startIx++] = i->second->getSlotID();
 		}
 	}
-
+	assert(startIx==endIx+1);
 	*pulCount = size;
 
 	return CKR_OK;
