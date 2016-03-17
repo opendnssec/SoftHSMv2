@@ -34,10 +34,10 @@
 #ifndef _SOFTHSM_V2_SESSIONTESTS_H
 #define _SOFTHSM_V2_SESSIONTESTS_H
 
+#include "TestsNoPINInitBase.h"
 #include <cppunit/extensions/HelperMacros.h>
-#include "cryptoki.h"
 
-class SessionTests : public CppUnit::TestFixture
+class SessionTests : public TestsNoPINInitBase
 {
 	CPPUNIT_TEST_SUITE(SessionTests);
 	CPPUNIT_TEST(testOpenSession);
@@ -51,9 +51,6 @@ public:
 	void testCloseSession();
 	void testCloseAllSessions();
 	void testGetSessionInfo();
-
-	void setUp();
-	void tearDown();
 };
 
 #endif // !_SOFTHSM_V2_SESSIONTESTS_H

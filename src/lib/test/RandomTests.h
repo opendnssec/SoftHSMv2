@@ -33,10 +33,10 @@
 #ifndef _SOFTHSM_V2_RANDOMTESTS_H
 #define _SOFTHSM_V2_RANDOMTESTS_H
 
+#include "TestsNoPINInitBase.h"
 #include <cppunit/extensions/HelperMacros.h>
-#include "cryptoki.h"
 
-class RandomTests : public CppUnit::TestFixture
+class RandomTests : public TestsNoPINInitBase
 {
 	CPPUNIT_TEST_SUITE(RandomTests);
 	CPPUNIT_TEST(testSeedRandom);
@@ -46,9 +46,6 @@ class RandomTests : public CppUnit::TestFixture
 public:
 	void testSeedRandom();
 	void testGenerateRandom();
-
-	void setUp();
-	void tearDown();
 };
 
 #endif // !_SOFTHSM_V2_RANDOMTESTS_H

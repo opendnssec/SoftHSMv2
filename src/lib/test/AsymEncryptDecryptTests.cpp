@@ -34,9 +34,7 @@
 #include <config.h>
 #include <stdlib.h>
 #include <string.h>
-#include <cppunit/extensions/HelperMacros.h>
 #include "AsymEncryptDecryptTests.h"
-#include "testconfig.h"
 
 // CKA_TOKEN
 const CK_BBOOL ON_TOKEN = CK_TRUE;
@@ -48,51 +46,6 @@ const CK_BBOOL IS_PUBLIC = CK_FALSE;
 
 
 CPPUNIT_TEST_SUITE_REGISTRATION(AsymEncryptDecryptTests);
-
-void AsymEncryptDecryptTests::setUp()
-{
-//    printf("\nObjectTests\n");
-
-#ifndef _WIN32
-	setenv("SOFTHSM2_CONF", "./softhsm2.conf", 1);
-#else
-	setenv("SOFTHSM2_CONF", ".\\softhsm2.conf", 1);
-#endif
-
-	CK_RV rv;
-	CK_UTF8CHAR pin[] = SLOT_0_USER1_PIN;
-	CK_ULONG pinLength = sizeof(pin) - 1;
-	CK_UTF8CHAR sopin[] = SLOT_0_SO1_PIN;
-	CK_ULONG sopinLength = sizeof(sopin) - 1;
-	CK_SESSION_HANDLE hSession;
-
-	CK_UTF8CHAR label[32];
-	memset(label, ' ', 32);
-	memcpy(label, "token1", strlen("token1"));
-
-	// (Re)initialize the token
-	rv = C_Initialize(NULL_PTR);
-	CPPUNIT_ASSERT(rv == CKR_OK);
-	rv = C_InitToken(SLOT_INIT_TOKEN, sopin,sopinLength, label);
-	CPPUNIT_ASSERT(rv == CKR_OK);
-
-	// Open session
-	rv = C_OpenSession(SLOT_INIT_TOKEN, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSession);
-	CPPUNIT_ASSERT(rv == CKR_OK);
-
-	// Login SO
-	rv = C_Login(hSession,CKU_SO, sopin, sopinLength);
-	CPPUNIT_ASSERT(rv == CKR_OK);
-
-	// Initialize the user pin
-	rv = C_InitPIN(hSession, pin, pinLength);
-	CPPUNIT_ASSERT(rv == CKR_OK);
-}
-
-void AsymEncryptDecryptTests::tearDown()
-{
-	C_Finalize(NULL_PTR);
-}
 
 CK_RV AsymEncryptDecryptTests::generateRsaKeyPair(CK_SESSION_HANDLE hSession, CK_BBOOL bTokenPuk, CK_BBOOL bPrivatePuk, CK_BBOOL bTokenPrk, CK_BBOOL bPrivatePrk, CK_OBJECT_HANDLE &hPuk, CK_OBJECT_HANDLE &hPrk)
 {
@@ -213,8 +166,6 @@ void AsymEncryptDecryptTests::rsaOAEPParams(CK_SESSION_HANDLE hSession, CK_OBJEC
 void AsymEncryptDecryptTests::testRsaEncryptDecrypt()
 {
 	CK_RV rv;
-	CK_UTF8CHAR pin[] = SLOT_0_USER1_PIN;
-	CK_ULONG pinLength = sizeof(pin) - 1;
 	CK_SESSION_HANDLE hSessionRO;
 	CK_SESSION_HANDLE hSessionRW;
 
@@ -222,7 +173,7 @@ void AsymEncryptDecryptTests::testRsaEncryptDecrypt()
 	C_Finalize(NULL_PTR);
 
 	// Open read-only session on when the token is not initialized should fail
-	rv = C_OpenSession(SLOT_INIT_TOKEN, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSessionRO);
+	rv = C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSessionRO);
 	CPPUNIT_ASSERT(rv == CKR_CRYPTOKI_NOT_INITIALIZED);
 
 	// Initialize the library and start the test.
@@ -230,15 +181,15 @@ void AsymEncryptDecryptTests::testRsaEncryptDecrypt()
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// Open read-only session
-	rv = C_OpenSession(SLOT_INIT_TOKEN, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSessionRO);
+	rv = C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSessionRO);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// Open read-write session
-	rv = C_OpenSession(SLOT_INIT_TOKEN, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSessionRW);
+	rv = C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSessionRW);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// Login USER into the sessions so we can create a private objects
-	rv = C_Login(hSessionRO,CKU_USER,pin,pinLength);
+	rv = C_Login(hSessionRO,CKU_USER,m_userPin1,m_userPin1Length);
 	CPPUNIT_ASSERT(rv==CKR_OK);
 
 	CK_OBJECT_HANDLE hPublicKey = CK_INVALID_HANDLE;

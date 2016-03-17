@@ -1,7 +1,7 @@
 /*
- * Copyright (c) 2010 SURFnet bv
+ * Copyright (c) 2010 .SE (The Internet Infrastructure Foundation)
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -10,7 +10,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -25,29 +25,34 @@
  */
 
 /*****************************************************************************
- p11test.cpp
+ TestsNoPINInitBase.h
 
- The main test executor for tests on the PKCS#11 interface in SoftHSM v2
+ Base class for test classes. Used when there is no need for user login.
  *****************************************************************************/
 
-#include <cppunit/extensions/TestFactoryRegistry.h>
-#include <cppunit/ui/text/TestRunner.h>
-#include <stdlib.h>
+#ifndef SRC_LIB_TEST_TESTSNOPININITBASE_H_
+#define SRC_LIB_TEST_TESTSNOPININITBASE_H_
 
-int main(int /*argc*/, char** /*argv*/)
-{
-#ifndef _WIN32
-	setenv("SOFTHSM2_CONF", "./softhsm2.conf", 1);
-#else
-	setenv("SOFTHSM2_CONF", ".\\softhsm2.conf", 1);
-#endif
+#include "cryptoki.h"
+#include <cppunit/TestFixture.h>
 
-	CppUnit::TextUi::TestRunner runner;
-	CppUnit::TestFactoryRegistry &registry = CppUnit::TestFactoryRegistry::getRegistry();
+class TestsNoPINInitBase : public CppUnit::TestFixture {
+public:
+	TestsNoPINInitBase();
 
-	runner.addTest(registry.makeTest());
-	bool wasSucessful = runner.run();
+	virtual void setUp();
+	virtual void tearDown();
+protected:
+	const CK_SLOT_ID m_invalidSlotID;
+	CK_SLOT_ID m_initializedTokenSlotID;
+	CK_SLOT_ID m_notInitializedTokenSlotID;
 
-	return wasSucessful ? 0 : 1;
-}
+	const CK_UTF8CHAR_PTR m_soPin1;
+	const CK_ULONG m_soPin1Length;
 
+	const CK_UTF8CHAR_PTR m_userPin1;
+	const CK_ULONG m_userPin1Length;
+};
+
+
+#endif /* SRC_LIB_TEST_TESTSNOPININITBASE_H_ */

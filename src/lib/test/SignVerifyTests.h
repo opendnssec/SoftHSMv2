@@ -34,10 +34,10 @@
 #ifndef _SOFTHSM_V2_SIGNVERIFYTESTS_H
 #define _SOFTHSM_V2_SIGNVERIFYTESTS_H
 
+#include "TestsBase.h"
 #include <cppunit/extensions/HelperMacros.h>
-#include "cryptoki.h"
 
-class SignVerifyTests : public CppUnit::TestFixture
+class SignVerifyTests : public TestsBase
 {
 	CPPUNIT_TEST_SUITE(SignVerifyTests);
 	CPPUNIT_TEST(testRsaSignVerify);
@@ -47,9 +47,6 @@ class SignVerifyTests : public CppUnit::TestFixture
 public:
 	void testRsaSignVerify();
 	void testHmacSignVerify();
-
-	void setUp();
-	void tearDown();
 
 protected:
 	CK_RV generateRsaKeyPair(CK_SESSION_HANDLE hSession, CK_BBOOL bTokenPuk, CK_BBOOL bPrivatePuk, CK_BBOOL bTokenPrk, CK_BBOOL bPrivatePrk, CK_OBJECT_HANDLE &hPuk, CK_OBJECT_HANDLE &hPrk);

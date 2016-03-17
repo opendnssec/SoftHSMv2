@@ -33,40 +33,9 @@
 #include <config.h>
 #include <stdlib.h>
 #include <string.h>
-#include <cppunit/extensions/HelperMacros.h>
 #include "RandomTests.h"
-#include "testconfig.h"
 
 CPPUNIT_TEST_SUITE_REGISTRATION(RandomTests);
-
-void RandomTests::setUp()
-{
-//    printf("\nRandomTests\n");
-
-#ifndef _WIN32
-	setenv("SOFTHSM2_CONF", "./softhsm2.conf", 1);
-#else
-	setenv("SOFTHSM2_CONF", ".\\softhsm2.conf", 1);
-#endif
-
-	CK_UTF8CHAR pin[] = SLOT_0_SO1_PIN;
-	CK_ULONG pinLength = sizeof(pin) - 1;
-	CK_UTF8CHAR label[32];
-	memset(label, ' ', 32);
-	memcpy(label, "token1", strlen("token1"));
-
-	// (Re)initialize the token
-	CK_RV rv = C_Initialize(NULL_PTR);
-	CPPUNIT_ASSERT(rv == CKR_OK);
-	rv = C_InitToken(SLOT_INIT_TOKEN, pin, pinLength, label);
-	CPPUNIT_ASSERT(rv == CKR_OK);
-	C_Finalize(NULL_PTR);
-}
-
-void RandomTests::tearDown()
-{
-	C_Finalize(NULL_PTR);
-}
 
 void RandomTests::testSeedRandom()
 {
@@ -83,7 +52,7 @@ void RandomTests::testSeedRandom()
 	rv = C_Initialize(NULL_PTR);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	rv = C_OpenSession(SLOT_INIT_TOKEN, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSession);
+	rv = C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSession);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	rv = C_SeedRandom(hSession, NULL_PTR, sizeof(seed));
@@ -111,7 +80,7 @@ void RandomTests::testGenerateRandom()
 	rv = C_Initialize(NULL_PTR);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	rv = C_OpenSession(SLOT_INIT_TOKEN, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSession);
+	rv = C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSession);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	rv = C_GenerateRandom(hSession, NULL_PTR, 40);

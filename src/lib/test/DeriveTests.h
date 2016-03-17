@@ -33,10 +33,10 @@
 #ifndef _SOFTHSM_V2_DERIVETESTS_H
 #define _SOFTHSM_V2_DERIVETESTS_H
 
+#include "TestsBase.h"
 #include <cppunit/extensions/HelperMacros.h>
-#include "cryptoki.h"
 
-class DeriveTests : public CppUnit::TestFixture
+class DeriveTests : public TestsBase
 {
 	CPPUNIT_TEST_SUITE(DeriveTests);
 	CPPUNIT_TEST(testDhDerive);
@@ -46,9 +46,6 @@ class DeriveTests : public CppUnit::TestFixture
 public:
 	void testDhDerive();
 	void testSymDerive();
-
-	void setUp();
-	void tearDown();
 
 protected:
 	CK_RV generateDhKeyPair(CK_SESSION_HANDLE hSession, CK_BBOOL bTokenPuk, CK_BBOOL bPrivatePuk, CK_BBOOL bTokenPrk, CK_BBOOL bPrivatePrk, CK_OBJECT_HANDLE &hPuk, CK_OBJECT_HANDLE &hPrk);

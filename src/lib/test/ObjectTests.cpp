@@ -71,9 +71,7 @@
 #include <config.h>
 #include <stdlib.h>
 #include <string.h>
-#include <cppunit/extensions/HelperMacros.h>
 #include "ObjectTests.h"
-#include "testconfig.h"
 
 // Common object attributes
 const CK_BBOOL CKA_TOKEN_DEFAULT = CK_FALSE;
@@ -97,51 +95,6 @@ const CK_BBOOL IS_PUBLIC = CK_FALSE;
 
 
 CPPUNIT_TEST_SUITE_REGISTRATION(ObjectTests);
-
-void ObjectTests::setUp()
-{
-//    printf("\nObjectTests\n");
-
-#ifndef _WIN32
-	setenv("SOFTHSM2_CONF", "./softhsm2.conf", 1);
-#else
-	setenv("SOFTHSM2_CONF", ".\\softhsm2.conf", 1);
-#endif
-
-	CK_RV rv;
-	CK_UTF8CHAR pin[] = SLOT_0_USER1_PIN;
-	CK_ULONG pinLength = sizeof(pin) - 1;
-	CK_UTF8CHAR sopin[] = SLOT_0_SO1_PIN;
-	CK_ULONG sopinLength = sizeof(sopin) - 1;
-	CK_SESSION_HANDLE hSession;
-
-	CK_UTF8CHAR label[32];
-	memset(label, ' ', 32);
-	memcpy(label, "token1", strlen("token1"));
-
-	// (Re)initialize the token
-	rv = C_Initialize(NULL_PTR);
-	CPPUNIT_ASSERT(rv == CKR_OK);
-	rv = C_InitToken(SLOT_INIT_TOKEN, sopin,sopinLength, label);
-	CPPUNIT_ASSERT(rv == CKR_OK);
-
-	// Open session
-	rv = C_OpenSession(SLOT_INIT_TOKEN, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSession);
-	CPPUNIT_ASSERT(rv == CKR_OK);
-
-	// Login SO
-	rv = C_Login(hSession,CKU_SO, sopin, sopinLength);
-	CPPUNIT_ASSERT(rv == CKR_OK);
-
-	// Initialize the user pin
-	rv = C_InitPIN(hSession, pin, pinLength);
-	CPPUNIT_ASSERT(rv == CKR_OK);
-}
-
-void ObjectTests::tearDown()
-{
-	C_Finalize(NULL_PTR);
-}
 
 void ObjectTests::checkCommonObjectAttributes(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject, CK_OBJECT_CLASS objClass)
 {
@@ -695,10 +648,6 @@ void ObjectTests::testCreateObject()
 	// d. If key object is secret or a private key then both CKA_ALWAYS_SENSITIVE == CK_FALSE and CKA_NEVER_EXTRACTABLE == CKA_FALSE.
 
 	CK_RV rv;
-	CK_UTF8CHAR pin[] = SLOT_0_USER1_PIN;
-	CK_ULONG pinLength = sizeof(pin) - 1;
-	CK_UTF8CHAR sopin[] = SLOT_0_SO1_PIN;
-	CK_ULONG sopinLength = sizeof(sopin) - 1;
 	CK_SESSION_HANDLE hSession;
 	CK_OBJECT_HANDLE hObject;
 
@@ -738,7 +687,7 @@ void ObjectTests::testCreateObject()
 	/////////////////////////////////
 
 	// Open read-only session and don't login
-	rv = C_OpenSession(SLOT_INIT_TOKEN, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSession);
+	rv = C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSession);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// We should be allowed to create public session objects
@@ -763,7 +712,7 @@ void ObjectTests::testCreateObject()
 	/////////////////////////////////
 
 	// Login USER into the read-only session
-	rv = C_Login(hSession,CKU_USER,pin,pinLength);
+	rv = C_Login(hSession,CKU_USER,m_userPin1,m_userPin1Length);
 	CPPUNIT_ASSERT(rv==CKR_OK);
 
 	// We should be allowed to create public session objects
@@ -793,7 +742,7 @@ void ObjectTests::testCreateObject()
 	/////////////////////////////////
 
 	// Open as read-write session but don't login.
-	rv = C_OpenSession(SLOT_INIT_TOKEN, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSession);
+	rv = C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSession);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// We should be allowed to create public session objects
@@ -825,11 +774,11 @@ void ObjectTests::testCreateObject()
 	/////////////////////////////////
 
 	// Open as read-write session
-	rv = C_OpenSession(SLOT_INIT_TOKEN, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSession);
+	rv = C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSession);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// Login to the read-write session
-	rv = C_Login(hSession,CKU_USER,pin,pinLength);
+	rv = C_Login(hSession,CKU_USER,m_userPin1,m_userPin1Length);
 	CPPUNIT_ASSERT(rv==CKR_OK);
 
 	// We should always be allowed to create public session objects
@@ -865,11 +814,11 @@ void ObjectTests::testCreateObject()
 	/////////////////////////////////
 
 	// Open as read-write session
-	rv = C_OpenSession(SLOT_INIT_TOKEN, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSession);
+	rv = C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSession);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// Login to the read-write session
-	rv = C_Login(hSession,CKU_SO,sopin,sopinLength);
+	rv = C_Login(hSession,CKU_SO,m_soPin1,m_soPin1Length);
 	CPPUNIT_ASSERT(rv==CKR_OK);
 
 	// We should always be allowed to create public session objects
@@ -901,11 +850,11 @@ void ObjectTests::testCreateObject()
 	/////////////////////////////////
 
 	// Open as read-write session
-	rv = C_OpenSession(SLOT_INIT_TOKEN, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSession);
+	rv = C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSession);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// Login to the read-write session
-	rv = C_Login(hSession,CKU_USER,pin,pinLength);
+	rv = C_Login(hSession,CKU_USER,m_userPin1,m_userPin1Length);
 	CPPUNIT_ASSERT(rv==CKR_OK);
 
 	// Create a secret object
@@ -935,8 +884,6 @@ void ObjectTests::testCopyObject()
 //    printf("\ntestCopyObject\n");
 
 	CK_RV rv;
-	CK_UTF8CHAR pin[] = SLOT_0_USER1_PIN;
-	CK_ULONG pinLength = sizeof(pin) - 1;
 	CK_SESSION_HANDLE hSession;
 	CK_OBJECT_HANDLE hObject;
 	CK_OBJECT_HANDLE hObject1;
@@ -948,7 +895,7 @@ void ObjectTests::testCopyObject()
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// Open read-only session and don't login
-	rv = C_OpenSession(SLOT_INIT_TOKEN, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSession);
+	rv = C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSession);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// Get a public session object
@@ -998,11 +945,11 @@ void ObjectTests::testCopyObject()
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// Create a read-write session
-	rv = C_OpenSession(SLOT_INIT_TOKEN, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSession);
+	rv = C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSession);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// Login USER into the sessions so we can create a private object
-	rv = C_Login(hSession, CKU_USER, pin, pinLength);
+	rv = C_Login(hSession, CKU_USER, m_userPin1, m_userPin1Length);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// Get a public session object
@@ -1060,8 +1007,6 @@ void ObjectTests::testDestroyObject()
 	// Only public objects can be created unless the normal user is logged in.
 
 	CK_RV rv;
-	CK_UTF8CHAR pin[] = SLOT_0_USER1_PIN;
-	CK_ULONG pinLength = sizeof(pin) - 1;
 	CK_SESSION_HANDLE hSessionRO;
 	CK_SESSION_HANDLE hSessionRW;
 	CK_OBJECT_HANDLE hObjectSessionPublic;
@@ -1073,7 +1018,7 @@ void ObjectTests::testDestroyObject()
 	C_Finalize(NULL_PTR);
 
 	// Open read-only session on when the token is not initialized should fail
-	rv = C_OpenSession(SLOT_INIT_TOKEN, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSessionRO);
+	rv = C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSessionRO);
 	CPPUNIT_ASSERT(rv == CKR_CRYPTOKI_NOT_INITIALIZED);
 
 	// Initialize the library and start the test.
@@ -1085,7 +1030,7 @@ void ObjectTests::testDestroyObject()
 	CPPUNIT_ASSERT(rv == CKR_SESSION_HANDLE_INVALID);
 
 	// Create a read-only session.
-	rv = C_OpenSession(SLOT_INIT_TOKEN, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSessionRO);
+	rv = C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSessionRO);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// Trying to destroy an invalid object in a read-only session
@@ -1093,7 +1038,7 @@ void ObjectTests::testDestroyObject()
 	CPPUNIT_ASSERT(rv == CKR_OBJECT_HANDLE_INVALID);
 
 	// Create a read-write session
-	rv = C_OpenSession(SLOT_INIT_TOKEN, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSessionRW);
+	rv = C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSessionRW);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// Trying to destroy an invalid object in a read-write session
@@ -1101,7 +1046,7 @@ void ObjectTests::testDestroyObject()
 	CPPUNIT_ASSERT(rv == CKR_OBJECT_HANDLE_INVALID);
 
 	// Login USER into the sessions so we can create a private objects
-	rv = C_Login(hSessionRO,CKU_USER,pin,pinLength);
+	rv = C_Login(hSessionRO,CKU_USER,m_userPin1,m_userPin1Length);
 	CPPUNIT_ASSERT(rv==CKR_OK);
 
 	// Create all permutations of session/token, public/private objects
@@ -1127,7 +1072,7 @@ void ObjectTests::testDestroyObject()
 	CPPUNIT_ASSERT(rv==CKR_OK);
 
 	// Login USER into the sessions so we can destroy private objects
-	rv = C_Login(hSessionRO,CKU_USER,pin,pinLength);
+	rv = C_Login(hSessionRO,CKU_USER,m_userPin1,m_userPin1Length);
 	CPPUNIT_ASSERT(rv==CKR_OK);
 
 	// We should be able to destroy the public session object from a read-only session.
@@ -1165,7 +1110,7 @@ void ObjectTests::testGetObjectSize()
 	C_Finalize(NULL_PTR);
 
 	// Open read-only session on when the token is not initialized should fail
-	rv = C_OpenSession(SLOT_INIT_TOKEN, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSession);
+	rv = C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSession);
 	CPPUNIT_ASSERT(rv == CKR_CRYPTOKI_NOT_INITIALIZED);
 
 	// Initialize the library and start the test.
@@ -1173,7 +1118,7 @@ void ObjectTests::testGetObjectSize()
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// Open a session
-	rv = C_OpenSession(SLOT_INIT_TOKEN, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSession);
+	rv = C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSession);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// Get an object
@@ -1202,7 +1147,7 @@ void ObjectTests::testGetAttributeValue()
 	C_Finalize(NULL_PTR);
 
 	// Open read-only session on when the token is not initialized should fail
-	rv = C_OpenSession(SLOT_INIT_TOKEN, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSessionRO);
+	rv = C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSessionRO);
 	CPPUNIT_ASSERT(rv == CKR_CRYPTOKI_NOT_INITIALIZED);
 
 	// Initialize the library and start the test.
@@ -1210,11 +1155,11 @@ void ObjectTests::testGetAttributeValue()
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// Open read-only session
-	rv = C_OpenSession(SLOT_INIT_TOKEN, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSessionRO);
+	rv = C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSessionRO);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// Open read-write
-	rv = C_OpenSession(SLOT_INIT_TOKEN, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSessionRW);
+	rv = C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSessionRW);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// Try to destroy an invalid object using an invalid session
@@ -1293,8 +1238,6 @@ void ObjectTests::testSetAttributeValue()
 
 
 	CK_RV rv;
-	CK_UTF8CHAR pin[] = SLOT_0_USER1_PIN;
-	CK_ULONG pinLength = sizeof(pin) - 1;
 	CK_SESSION_HANDLE hSessionRO;
 	CK_SESSION_HANDLE hSessionRW;
 	CK_OBJECT_HANDLE hObjectSessionPublic;
@@ -1306,7 +1249,7 @@ void ObjectTests::testSetAttributeValue()
 	C_Finalize(NULL_PTR);
 
 	// Open read-only session on when the token is not initialized should fail
-	rv = C_OpenSession(SLOT_INIT_TOKEN, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSessionRO);
+	rv = C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSessionRO);
 	CPPUNIT_ASSERT(rv == CKR_CRYPTOKI_NOT_INITIALIZED);
 
 	// Initialize the library and start the test.
@@ -1314,15 +1257,15 @@ void ObjectTests::testSetAttributeValue()
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// Open read-only session
-	rv = C_OpenSession(SLOT_INIT_TOKEN, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSessionRO);
+	rv = C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSessionRO);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// Open read-write session
-	rv = C_OpenSession(SLOT_INIT_TOKEN, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSessionRW);
+	rv = C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSessionRW);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// Login USER into the sessions so we can create a private objects
-	rv = C_Login(hSessionRO,CKU_USER,pin,pinLength);
+	rv = C_Login(hSessionRO,CKU_USER,m_userPin1,m_userPin1Length);
 	CPPUNIT_ASSERT(rv==CKR_OK);
 
 	// Create all permutations of session/token, public/private objects
@@ -1380,8 +1323,6 @@ void ObjectTests::testSetAttributeValue()
 void ObjectTests::testFindObjects()
 {
 	CK_RV rv;
-	CK_UTF8CHAR pin[] = SLOT_0_USER1_PIN;
-	CK_ULONG pinLength = sizeof(pin) - 1;
 	CK_SESSION_HANDLE hSessionRO;
 	CK_SESSION_HANDLE hSessionRW;
 	CK_OBJECT_HANDLE hObjectSessionPublic;
@@ -1393,7 +1334,7 @@ void ObjectTests::testFindObjects()
 	C_Finalize(NULL_PTR);
 
 	// Open read-only session on when the token is not initialized should fail
-	rv = C_OpenSession(SLOT_INIT_TOKEN, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSessionRO);
+	rv = C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSessionRO);
 	CPPUNIT_ASSERT(rv == CKR_CRYPTOKI_NOT_INITIALIZED);
 
 	// Initialize the library and start the test.
@@ -1401,15 +1342,15 @@ void ObjectTests::testFindObjects()
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// Open read-only session
-	rv = C_OpenSession(SLOT_INIT_TOKEN, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSessionRO);
+	rv = C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSessionRO);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// Open read-write session
-	rv = C_OpenSession(SLOT_INIT_TOKEN, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSessionRW);
+	rv = C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSessionRW);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// Login USER into the sessions so we can create a private objects
-	rv = C_Login(hSessionRO,CKU_USER,pin,pinLength);
+	rv = C_Login(hSessionRO,CKU_USER,m_userPin1,m_userPin1Length);
 	CPPUNIT_ASSERT(rv==CKR_OK);
 
 	// Create all permutations of session/token, public/private objects
@@ -1471,7 +1412,7 @@ void ObjectTests::testFindObjects()
 	rv = C_FindObjectsFinal(hSessionRW);
 
 	// Login USER into the sessions so we can gain access to private objects
-	rv = C_Login(hSessionRW,CKU_USER,pin,pinLength);
+	rv = C_Login(hSessionRW,CKU_USER,m_userPin1,m_userPin1Length);
 	CPPUNIT_ASSERT(rv==CKR_OK);
 
 	// Now find just the public token object as public session object should be gone now.
@@ -1487,8 +1428,6 @@ void ObjectTests::testFindObjects()
 void ObjectTests::testGenerateKeys()
 {
 	CK_RV rv;
-	CK_UTF8CHAR pin[] = SLOT_0_USER1_PIN;
-	CK_ULONG pinLength = sizeof(pin) - 1;
 	CK_SESSION_HANDLE hSessionRO;
 	CK_SESSION_HANDLE hSessionRW;
 
@@ -1496,7 +1435,7 @@ void ObjectTests::testGenerateKeys()
 	C_Finalize(NULL_PTR);
 
 	// Open read-only session on when the token is not initialized should fail
-	rv = C_OpenSession(SLOT_INIT_TOKEN, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSessionRO);
+	rv = C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSessionRO);
 	CPPUNIT_ASSERT(rv == CKR_CRYPTOKI_NOT_INITIALIZED);
 
 	// Initialize the library and start the test.
@@ -1504,15 +1443,15 @@ void ObjectTests::testGenerateKeys()
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// Open read-only session
-	rv = C_OpenSession(SLOT_INIT_TOKEN, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSessionRO);
+	rv = C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSessionRO);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// Open read-write session
-	rv = C_OpenSession(SLOT_INIT_TOKEN, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSessionRW);
+	rv = C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSessionRW);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// Login USER into the sessions so we can create a private objects
-	rv = C_Login(hSessionRO,CKU_USER,pin,pinLength);
+	rv = C_Login(hSessionRO,CKU_USER,m_userPin1,m_userPin1Length);
 	CPPUNIT_ASSERT(rv==CKR_OK);
 
 	CK_OBJECT_HANDLE hPuk = CK_INVALID_HANDLE;
@@ -1559,8 +1498,6 @@ void ObjectTests::testGenerateKeys()
 void ObjectTests::testCreateCertificates()
 {
 	CK_RV rv;
-	CK_UTF8CHAR pin[] = SLOT_0_USER1_PIN;
-	CK_ULONG pinLength = sizeof(pin) - 1;
 	CK_SESSION_HANDLE hSession;
 
 	// Just make sure that we finalize any previous tests
@@ -1571,11 +1508,11 @@ void ObjectTests::testCreateCertificates()
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// Open read-write session
-	rv = C_OpenSession(SLOT_INIT_TOKEN, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSession);
+	rv = C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSession);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// Login USER into the sessions so we can create a private objects
-	rv = C_Login(hSession,CKU_USER,pin,pinLength);
+	rv = C_Login(hSession,CKU_USER,m_userPin1,m_userPin1Length);
 	CPPUNIT_ASSERT(rv==CKR_OK);
 
 	CK_OBJECT_HANDLE hObject = CK_INVALID_HANDLE;
@@ -1597,8 +1534,6 @@ void ObjectTests::testCreateCertificates()
 void ObjectTests::testDefaultDataAttributes()
 {
 	CK_RV rv;
-	CK_UTF8CHAR pin[] = SLOT_0_USER1_PIN;
-	CK_ULONG pinLength = sizeof(pin) - 1;
 	CK_SESSION_HANDLE hSession;
 	CK_OBJECT_HANDLE hObject = CK_INVALID_HANDLE;
 
@@ -1616,11 +1551,11 @@ void ObjectTests::testDefaultDataAttributes()
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// Open read-write session
-	rv = C_OpenSession(SLOT_INIT_TOKEN, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSession);
+	rv = C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSession);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// Login USER into the sessions so we can create a private objects
-	rv = C_Login(hSession, CKU_USER, pin, pinLength);
+	rv = C_Login(hSession, CKU_USER, m_userPin1, m_userPin1Length);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// Create minimal data object
@@ -1636,8 +1571,6 @@ void ObjectTests::testDefaultDataAttributes()
 void ObjectTests::testDefaultX509CertAttributes()
 {
 	CK_RV rv;
-	CK_UTF8CHAR pin[] = SLOT_0_USER1_PIN;
-	CK_ULONG pinLength = sizeof(pin) - 1;
 	CK_SESSION_HANDLE hSession;
 	CK_OBJECT_HANDLE hObject = CK_INVALID_HANDLE;
 
@@ -1663,11 +1596,11 @@ void ObjectTests::testDefaultX509CertAttributes()
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// Open read-write session
-	rv = C_OpenSession(SLOT_INIT_TOKEN, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSession);
+	rv = C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSession);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// Login USER into the sessions so we can create a private objects
-	rv = C_Login(hSession, CKU_USER, pin, pinLength);
+	rv = C_Login(hSession, CKU_USER, m_userPin1, m_userPin1Length);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// Create minimal X509 certificate
@@ -1685,8 +1618,6 @@ void ObjectTests::testDefaultX509CertAttributes()
 void ObjectTests::testDefaultRSAPubAttributes()
 {
 	CK_RV rv;
-	CK_UTF8CHAR pin[] = SLOT_0_USER1_PIN;
-	CK_ULONG pinLength = sizeof(pin) - 1;
 	CK_SESSION_HANDLE hSession;
 	CK_OBJECT_HANDLE hObject = CK_INVALID_HANDLE;
 
@@ -1717,11 +1648,11 @@ void ObjectTests::testDefaultRSAPubAttributes()
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// Open read-write session
-	rv = C_OpenSession(SLOT_INIT_TOKEN, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSession);
+	rv = C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSession);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// Login USER into the sessions so we can create a private objects
-	rv = C_Login(hSession, CKU_USER, pin, pinLength);
+	rv = C_Login(hSession, CKU_USER, m_userPin1, m_userPin1Length);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// Create minimal RSA public key object
@@ -1740,8 +1671,6 @@ void ObjectTests::testDefaultRSAPubAttributes()
 void ObjectTests::testDefaultRSAPrivAttributes()
 {
 	CK_RV rv;
-	CK_UTF8CHAR pin[] = SLOT_0_USER1_PIN;
-	CK_ULONG pinLength = sizeof(pin) - 1;
 	CK_SESSION_HANDLE hSession;
 	CK_OBJECT_HANDLE hObject = CK_INVALID_HANDLE;
 
@@ -1783,11 +1712,11 @@ void ObjectTests::testDefaultRSAPrivAttributes()
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// Open read-write session
-	rv = C_OpenSession(SLOT_INIT_TOKEN, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSession);
+	rv = C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSession);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// Login USER into the sessions so we can create a private objects
-	rv = C_Login(hSession, CKU_USER, pin, pinLength);
+	rv = C_Login(hSession, CKU_USER, m_userPin1, m_userPin1Length);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// Create minimal RSA public key object
@@ -1806,8 +1735,6 @@ void ObjectTests::testDefaultRSAPrivAttributes()
 void ObjectTests::testAlwaysNeverAttribute()
 {
 	CK_RV rv;
-	CK_UTF8CHAR pin[] = SLOT_0_USER1_PIN;
-	CK_ULONG pinLength = sizeof(pin) - 1;
 	CK_SESSION_HANDLE hSession;
 	CK_OBJECT_HANDLE hPuk = CK_INVALID_HANDLE;
 	CK_OBJECT_HANDLE hPrk = CK_INVALID_HANDLE;
@@ -1838,11 +1765,11 @@ void ObjectTests::testAlwaysNeverAttribute()
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// Open read-write session
-	rv = C_OpenSession(SLOT_INIT_TOKEN, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSession);
+	rv = C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSession);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// Login USER into the sessions so we can create a private objects
-	rv = C_Login(hSession, CKU_USER, pin, pinLength);
+	rv = C_Login(hSession, CKU_USER, m_userPin1, m_userPin1Length);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// Create object
@@ -1875,8 +1802,6 @@ void ObjectTests::testAlwaysNeverAttribute()
 void ObjectTests::testSensitiveAttributes()
 {
 	CK_RV rv;
-	CK_UTF8CHAR pin[] = SLOT_0_USER1_PIN;
-	CK_ULONG pinLength = sizeof(pin) - 1;
 	CK_SESSION_HANDLE hSession;
 	CK_OBJECT_HANDLE hPuk = CK_INVALID_HANDLE;
 	CK_OBJECT_HANDLE hPrk = CK_INVALID_HANDLE;
@@ -1910,11 +1835,11 @@ void ObjectTests::testSensitiveAttributes()
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// Open read-write session
-	rv = C_OpenSession(SLOT_INIT_TOKEN, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSession);
+	rv = C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSession);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// Login USER into the sessions so we can create a private objects
-	rv = C_Login(hSession, CKU_USER, pin, pinLength);
+	rv = C_Login(hSession, CKU_USER, m_userPin1, m_userPin1Length);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// Create object
@@ -1944,8 +1869,6 @@ void ObjectTests::testSensitiveAttributes()
 void ObjectTests::testGetInvalidAttribute()
 {
 	CK_RV rv;
-	CK_UTF8CHAR pin[] = SLOT_0_USER1_PIN;
-	CK_ULONG pinLength = sizeof(pin) - 1;
 	CK_SESSION_HANDLE hSession;
 	CK_OBJECT_HANDLE hObject = CK_INVALID_HANDLE;
 
@@ -1967,11 +1890,11 @@ void ObjectTests::testGetInvalidAttribute()
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// Open read-write session
-	rv = C_OpenSession(SLOT_INIT_TOKEN, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSession);
+	rv = C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSession);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// Login USER into the sessions so we can create a private objects
-	rv = C_Login(hSession, CKU_USER, pin, pinLength);
+	rv = C_Login(hSession, CKU_USER, m_userPin1, m_userPin1Length);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// Create minimal data object
@@ -1986,8 +1909,6 @@ void ObjectTests::testGetInvalidAttribute()
 void ObjectTests::testArrayAttribute()
 {
 	CK_RV rv;
-	CK_UTF8CHAR pin[] = SLOT_0_USER1_PIN;
-	CK_ULONG pinLength = sizeof(pin) - 1;
 	CK_SESSION_HANDLE hSession;
 	CK_OBJECT_HANDLE hObject = CK_INVALID_HANDLE;
         CK_BYTE pE[] = { 0x01, 0x00, 0x01 };
@@ -2025,11 +1946,11 @@ void ObjectTests::testArrayAttribute()
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// Open read-write session
-	rv = C_OpenSession(SLOT_INIT_TOKEN, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSession);
+	rv = C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSession);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// Login USER into the sessions so we can create a private objects
-	rv = C_Login(hSession, CKU_USER, pin, pinLength);
+	rv = C_Login(hSession, CKU_USER, m_userPin1, m_userPin1Length);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// Create minimal RSA public key object
@@ -2092,8 +2013,6 @@ void ObjectTests::testArrayAttribute()
 void ObjectTests::testCreateSecretKey()
 {
 	CK_RV rv;
-	CK_UTF8CHAR pin[] = SLOT_0_USER1_PIN;
-	CK_ULONG pinLength = sizeof(pin) - 1;
 	CK_SESSION_HANDLE hSession;
 
 	// Just make sure that we finalize any previous tests
@@ -2104,11 +2023,11 @@ void ObjectTests::testCreateSecretKey()
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// Open read-write session
-	rv = C_OpenSession(SLOT_INIT_TOKEN, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSession);
+	rv = C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSession);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// Login USER into the sessions so we can create a private objects
-	rv = C_Login(hSession,CKU_USER,pin,pinLength);
+	rv = C_Login(hSession,CKU_USER,m_userPin1,m_userPin1Length);
 	CPPUNIT_ASSERT(rv==CKR_OK);
 
 	CK_BYTE genericKey[] = {

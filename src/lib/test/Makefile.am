@@ -23,6 +23,8 @@ p11test_SOURCES =		p11test.cpp \
 				SignVerifyTests.cpp \
 				AsymEncryptDecryptTests.cpp \
 				AsymWrapUnwrapTests.cpp \
+				TestsBase.cpp \
+				TestsNoPINInitBase.cpp \
 				../common/osmutex.cpp
 
 p11test_LDADD =			../libsofthsm2.la 

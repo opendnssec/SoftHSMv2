@@ -25,24 +25,25 @@
  */
 
 /*****************************************************************************
- testconfig.h
+ TestsBase.cpp
 
- Contains parameters for the test cases
+ Base class for test classes.
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_TESTCONFIG_H
-#define _SOFTHSM_V2_TESTCONFIG_H
+#include "TestsBase.h"
+#include <cppunit/extensions/HelperMacros.h>
 
-// Slots
-#define SLOT_INVALID 9999
-#define SLOT_INIT_TOKEN 0
-#define SLOT_NO_INIT_TOKEN 1
+void TestsBase::setUp() {
+	TestsNoPINInitBase::setUp();
 
-// PIN
-#define SLOT_0_SO1_PIN "12345678"
-#define SLOT_0_SO2_PIN "123456789"
-#define SLOT_0_USER1_PIN "1234"
-#define SLOT_0_USER2_PIN "12345"
+	CK_SESSION_HANDLE hSession;
 
-#endif // !_SOFTHSM_V2_TESTCONFIG_H
+	// Open session
+	CPPUNIT_ASSERT( C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION|CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSession)==CKR_OK );
 
+	// Login SO
+	CPPUNIT_ASSERT( C_Login(hSession,CKU_SO, m_soPin1, m_soPin1Length)==CKR_OK );
+
+	// Initialize the user pin
+	CPPUNIT_ASSERT( C_InitPIN(hSession, m_userPin1, m_userPin1Length)==CKR_OK );
+}
