@@ -36,50 +36,74 @@
 #include "config.h"
 #include "log.h"
 #include "SlotManager.h"
+#include <iostream>
+#include <sstream>
+#include <cassert>
+#include <stdexcept>
+typedef std::pair<CK_SLOT_ID, Slot*> SlotMapElement;
+typedef std::pair<SlotMap::iterator, bool> InsertResult;
 
 // Constructor
-SlotManager::SlotManager(ObjectStore* objectStore)
+SlotManager::SlotManager(ObjectStore*const objectStore)
 {
 	// Add a slot for each token that already exists
 	for (size_t i = 0; i < objectStore->getTokenCount(); i++)
 	{
-		Slot* newSlot = new Slot(objectStore, i, objectStore->getToken(i));
-		slots.push_back(newSlot);
+		ObjectStoreToken*const pToken(objectStore->getToken(i));
+		ByteString bs;
+		pToken->getTokenSerial(bs);
+		const std::string s((const char*)bs.const_byte_str(), (const char*)bs.const_byte_str()+bs.size());
+		std::istringstream iss(s);
+		CK_SLOT_ID l;
+		// parse serial string that is expected to have only hex digits.
+		iss >> std::hex >> l;
+		// mask for 31 bits.
+		// this since sunpkcs11 java wrapper is parsing the slot ID to a java int that needs to be positive.
+		// java int is 32 bit and the the sign bit is removed.
+		const CK_SLOT_ID mask( ((CK_SLOT_ID)1<<31)-1 );
+		const CK_SLOT_ID slotID(mask&l);
+		insertToken(objectStore, slotID, pToken);
 	}
 
 	// Add an empty slot
-	slots.push_back(new Slot(objectStore, objectStore->getTokenCount()));
+	insertToken(objectStore, objectStore->getTokenCount(), NULL);
+}
+
+void SlotManager::insertToken(ObjectStore*const objectStore, const CK_SLOT_ID slotID, ObjectStoreToken*const pToken) {
+	Slot*const newSlot( new Slot(objectStore, slotID, pToken) );
+	const InsertResult result( slots.insert(SlotMapElement(slotID, newSlot)) );
+	assert(result.second);// fails if there is already a token on this slot
 }
 
 // Destructor
 SlotManager::~SlotManager()
 {
-	std::vector<Slot*> toDelete = slots;
+	SlotMap toDelete = slots;
 	slots.clear();
 
-	for (std::vector<Slot*>::iterator i = toDelete.begin(); i != toDelete.end(); i++)
+	for (SlotMap::iterator i = toDelete.begin(); i != toDelete.end(); i++)
 	{
-		delete *i;
+		delete i->second;
 	}
 }
 
 // Get the slot list
 CK_RV SlotManager::getSlotList(ObjectStore* objectStore, CK_BBOOL tokenPresent, CK_SLOT_ID_PTR pSlotList, CK_ULONG_PTR pulCount)
 {
-	CK_ULONG size = 0;
+	size_t size( 0 );
 
 	if (pulCount == NULL) return CKR_ARGUMENTS_BAD;
 
 	// Calculate the size of the list
 	bool uninitialized = false;
-	for (std::vector<Slot*>::iterator i = slots.begin(); i != slots.end(); i++)
+	for (SlotMap::iterator i = slots.begin(); i != slots.end(); i++)
 	{
-		if ((tokenPresent == CK_FALSE) || (*i)->isTokenPresent())
+		if ((tokenPresent == CK_FALSE) || i->second->isTokenPresent())
 		{
 			size++;
 		}
 
-		if ((*i)->getToken() != NULL && (*i)->getToken()->isInitialized() == false)
+		if (i->second->getToken() != NULL && i->second->getToken()->isInitialized() == false)
 		{
 			uninitialized = true;
 		}
@@ -91,7 +115,7 @@ CK_RV SlotManager::getSlotList(ObjectStore* objectStore, CK_BBOOL tokenPresent, 
 		// Always have an uninitialized token
 		if (uninitialized == false)
 		{
-			slots.push_back(new Slot(objectStore, objectStore->getTokenCount()));
+			insertToken(objectStore, objectStore->getTokenCount(), NULL);
 			size++;
 		}
 
@@ -108,23 +132,30 @@ CK_RV SlotManager::getSlotList(ObjectStore* objectStore, CK_BBOOL tokenPresent, 
 		return CKR_BUFFER_TOO_SMALL;
 	}
 
-	size = 0;
+	size_t startIx( 0 );
+	size_t endIx( size-1 );
 
-	for (std::vector<Slot*>::iterator i = slots.begin(); i != slots.end(); i++)
+	for (SlotMap::iterator i = slots.begin(); i != slots.end(); i++)
 	{
-		if ((tokenPresent == CK_FALSE) || (*i)->isTokenPresent())
-		{
-			pSlotList[size++] = (CK_ULONG)(*i)->getSlotID();
+		if ((tokenPresent == CK_TRUE) && !i->second->isTokenPresent())
+		{// only show token if present on slot. But this slot has no token so we continue
+			continue;
+		}
+		// put uninitialized last. After all initialized or slots without tokens.
+		if ( i->second->isTokenPresent() && !i->second->getToken()->isInitialized() ) {
+			pSlotList[endIx--] =  i->second->getSlotID();
+		} else {
+			pSlotList[startIx++] = i->second->getSlotID();
 		}
 	}
-
+	assert(startIx==endIx+1);
 	*pulCount = size;
 
 	return CKR_OK;
 }
 
 // Get the slots
-std::vector<Slot*> SlotManager::getSlots()
+SlotMap SlotManager::getSlots()
 {
 	return slots;
 }
@@ -132,13 +163,9 @@ std::vector<Slot*> SlotManager::getSlots()
 // Get one slot
 Slot* SlotManager::getSlot(CK_SLOT_ID slotID)
 {
-	for (std::vector<Slot*>::iterator i = slots.begin(); i != slots.end(); i++)
-	{
-		if ((*i)->getSlotID() == slotID)
-		{
-			return *i;
-		}
+	try {
+		return slots.at(slotID);
+	} catch( const std::out_of_range &oor) {
+		return NULL_PTR;
 	}
-
-	return NULL;
 }

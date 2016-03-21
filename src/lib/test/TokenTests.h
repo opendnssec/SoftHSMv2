@@ -33,10 +33,10 @@
 #ifndef _SOFTHSM_V2_TOKENTESTS_H
 #define _SOFTHSM_V2_TOKENTESTS_H
 
+#include "TestsNoPINInitBase.h"
 #include <cppunit/extensions/HelperMacros.h>
-#include "cryptoki.h"
 
-class TokenTests : public CppUnit::TestFixture
+class TokenTests : public TestsNoPINInitBase
 {
 	CPPUNIT_TEST_SUITE(TokenTests);
 	CPPUNIT_TEST(testInitToken);
@@ -44,9 +44,6 @@ class TokenTests : public CppUnit::TestFixture
 
 public:
 	void testInitToken();
-
-	void setUp();
-	void tearDown();
 };
 
 #endif // !_SOFTHSM_V2_TOKENTESTS_H

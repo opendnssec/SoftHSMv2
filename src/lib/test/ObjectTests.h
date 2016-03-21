@@ -35,10 +35,10 @@
 #ifndef _SOFTHSM_V2_OBJECTTESTS_H
 #define _SOFTHSM_V2_OBJECTTESTS_H
 
+#include "TestsBase.h"
 #include <cppunit/extensions/HelperMacros.h>
-#include "cryptoki.h"
 
-class ObjectTests : public CppUnit::TestFixture
+class ObjectTests : public TestsBase
 {
 	CPPUNIT_TEST_SUITE(ObjectTests);
 	CPPUNIT_TEST(testCreateObject);
@@ -80,9 +80,6 @@ public:
 	void testGetInvalidAttribute();
 	void testArrayAttribute();
 	void testCreateSecretKey();
-
-	void setUp();
-	void tearDown();
 
 protected:
 	void checkCommonObjectAttributes

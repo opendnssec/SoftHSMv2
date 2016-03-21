@@ -33,10 +33,10 @@
 #ifndef _SOFTHSM_V2_USERTESTS_H
 #define _SOFTHSM_V2_USERTESTS_H
 
+#include "TestsNoPINInitBase.h"
 #include <cppunit/extensions/HelperMacros.h>
-#include "cryptoki.h"
 
-class UserTests : public CppUnit::TestFixture
+class UserTests : public TestsNoPINInitBase
 {
 	CPPUNIT_TEST_SUITE(UserTests);
 	CPPUNIT_TEST(testInitPIN);
@@ -50,9 +50,6 @@ public:
 	void testLogin();
 	void testLogout();
 	void testSetPIN();
-
-	void setUp();
-	void tearDown();
 };
 
 #endif // !_SOFTHSM_V2_USERTESTS_H

@@ -33,10 +33,10 @@
 #ifndef _SOFTHSM_V2_DIGESTTESTS_H
 #define _SOFTHSM_V2_DIGESTTESTS_H
 
+#include "TestsNoPINInitBase.h"
 #include <cppunit/extensions/HelperMacros.h>
-#include "cryptoki.h"
 
-class DigestTests : public CppUnit::TestFixture
+class DigestTests : public TestsNoPINInitBase
 {
 	CPPUNIT_TEST_SUITE(DigestTests);
 	CPPUNIT_TEST(testDigestInit);
@@ -54,9 +54,6 @@ public:
 	void testDigestKey();
 	void testDigestFinal();
 	void testDigestAll();
-
-	void setUp();
-	void tearDown();
 };
 
 #endif // !_SOFTHSM_V2_DIGESTTESTS_H

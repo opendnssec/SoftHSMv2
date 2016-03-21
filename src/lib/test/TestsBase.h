@@ -1,7 +1,7 @@
 /*
- * Copyright (c) 2010 SURFnet bv
+ * Copyright (c) 2010 .SE (The Internet Infrastructure Foundation)
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -10,7 +10,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -25,29 +25,20 @@
  */
 
 /*****************************************************************************
- p11test.cpp
+ TestsBase.h
 
- The main test executor for tests on the PKCS#11 interface in SoftHSM v2
+ Base class for test classes.
  *****************************************************************************/
 
-#include <cppunit/extensions/TestFactoryRegistry.h>
-#include <cppunit/ui/text/TestRunner.h>
-#include <stdlib.h>
+#ifndef SRC_LIB_TEST_TESTSBASE_H_
+#define SRC_LIB_TEST_TESTSBASE_H_
 
-int main(int /*argc*/, char** /*argv*/)
-{
-#ifndef _WIN32
-	setenv("SOFTHSM2_CONF", "./softhsm2.conf", 1);
-#else
-	setenv("SOFTHSM2_CONF", ".\\softhsm2.conf", 1);
-#endif
+#include <TestsNoPINInitBase.h>
 
-	CppUnit::TextUi::TestRunner runner;
-	CppUnit::TestFactoryRegistry &registry = CppUnit::TestFactoryRegistry::getRegistry();
+class TestsBase : public TestsNoPINInitBase {
+public:
+	virtual void setUp();
+};
 
-	runner.addTest(registry.makeTest());
-	bool wasSucessful = runner.run();
 
-	return wasSucessful ? 0 : 1;
-}
-
+#endif /* SRC_LIB_TEST_TESTSBASE_H_ */

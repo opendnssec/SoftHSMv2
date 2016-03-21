@@ -34,10 +34,10 @@
 #ifndef _SOFTHSM_V2_ASYMWRAPUNWRAPTESTS_H
 #define _SOFTHSM_V2_ASYMWRAPUNWRAPTESTS_H
 
+#include "TestsBase.h"
 #include <cppunit/extensions/HelperMacros.h>
-#include "cryptoki.h"
 
-class AsymWrapUnwrapTests : public CppUnit::TestFixture
+class AsymWrapUnwrapTests : public TestsBase
 {
 	CPPUNIT_TEST_SUITE(AsymWrapUnwrapTests);
 	CPPUNIT_TEST(testRsaWrapUnwrap);
@@ -45,9 +45,6 @@ class AsymWrapUnwrapTests : public CppUnit::TestFixture
 
 public:
 	void testRsaWrapUnwrap();
-
-	void setUp();
-	void tearDown();
 
 protected:
 	CK_RV generateAesKey(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE &hKey);

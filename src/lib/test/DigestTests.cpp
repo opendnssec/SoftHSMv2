@@ -33,40 +33,9 @@
 #include <config.h>
 #include <stdlib.h>
 #include <string.h>
-#include <cppunit/extensions/HelperMacros.h>
 #include "DigestTests.h"
-#include "testconfig.h"
 
 CPPUNIT_TEST_SUITE_REGISTRATION(DigestTests);
-
-void DigestTests::setUp()
-{
-//    printf("\nDigestTests\n");
-
-#ifndef _WIN32
-	setenv("SOFTHSM2_CONF", "./softhsm2.conf", 1);
-#else
-	setenv("SOFTHSM2_CONF", ".\\softhsm2.conf", 1);
-#endif
-
-	CK_UTF8CHAR pin[] = SLOT_0_SO1_PIN;
-	CK_ULONG pinLength = sizeof(pin) - 1;
-	CK_UTF8CHAR label[32];
-	memset(label, ' ', 32);
-	memcpy(label, "token1", strlen("token1"));
-
-	// (Re)initialize the token
-	CK_RV rv = C_Initialize(NULL_PTR);
-	CPPUNIT_ASSERT(rv == CKR_OK);
-	rv = C_InitToken(SLOT_INIT_TOKEN, pin, pinLength, label);
-	CPPUNIT_ASSERT(rv == CKR_OK);
-	C_Finalize(NULL_PTR);
-}
-
-void DigestTests::tearDown()
-{
-	C_Finalize(NULL_PTR);
-}
 
 void DigestTests::testDigestInit()
 {
@@ -85,7 +54,7 @@ void DigestTests::testDigestInit()
 	rv = C_Initialize(NULL_PTR);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	rv = C_OpenSession(SLOT_INIT_TOKEN, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSession);
+	rv = C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSession);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	rv = C_DigestInit(hSession, NULL_PTR);
@@ -125,7 +94,7 @@ void DigestTests::testDigest()
 	rv = C_Initialize(NULL_PTR);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	rv = C_OpenSession(SLOT_INIT_TOKEN, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSession);
+	rv = C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSession);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	rv = C_Digest(CK_INVALID_HANDLE, data, sizeof(data)-1, NULL_PTR, &digestLen);
@@ -178,7 +147,7 @@ void DigestTests::testDigestUpdate()
 	rv = C_Initialize(NULL_PTR);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	rv = C_OpenSession(SLOT_INIT_TOKEN, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSession);
+	rv = C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSession);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	rv = C_DigestUpdate(CK_INVALID_HANDLE, data, sizeof(data)-1);
@@ -215,7 +184,7 @@ void DigestTests::testDigestKey()
 	rv = C_Initialize(NULL_PTR);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	rv = C_OpenSession(SLOT_INIT_TOKEN, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSession);
+	rv = C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSession);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// Create the generic secret key to digest
@@ -275,7 +244,7 @@ void DigestTests::testDigestFinal()
 	rv = C_Initialize(NULL_PTR);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	rv = C_OpenSession(SLOT_INIT_TOKEN, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSession);
+	rv = C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSession);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	rv = C_DigestFinal(CK_INVALID_HANDLE, NULL_PTR, &digestLen);
@@ -337,7 +306,7 @@ void DigestTests::testDigestAll()
 	rv = C_Initialize(NULL_PTR);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	rv = C_OpenSession(SLOT_INIT_TOKEN, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSession);
+	rv = C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSession);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	for (unsigned int i = 0; i < sizeof(mechanisms)/sizeof(CK_MECHANISM); i++)

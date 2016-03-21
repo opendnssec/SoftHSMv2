@@ -33,10 +33,10 @@
 #ifndef _SOFTHSM_V2_SYMENCRYPTDECRYPTTESTS_H
 #define _SOFTHSM_V2_SYMENCRYPTDECRYPTTESTS_H
 
+#include "TestsBase.h"
 #include <cppunit/extensions/HelperMacros.h>
-#include "cryptoki.h"
 
-class SymmetricAlgorithmTests : public CppUnit::TestFixture
+class SymmetricAlgorithmTests : public TestsBase
 {
 	CPPUNIT_TEST_SUITE(SymmetricAlgorithmTests);
 	CPPUNIT_TEST(testAesEncryptDecrypt);
@@ -55,9 +55,6 @@ public:
 	void testNullTemplate();
 	void testNonModifiableDesKeyGeneration();
 	void testCheckValue();
-
-	void setUp();
-	void tearDown();
 
 protected:
 	CK_RV generateAesKey(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_OBJECT_HANDLE &hKey);
