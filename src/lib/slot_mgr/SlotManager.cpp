@@ -64,24 +64,37 @@ SlotManager::~SlotManager()
 }
 
 // Get the slot list
-CK_RV SlotManager::getSlotList(CK_BBOOL tokenPresent, CK_SLOT_ID_PTR pSlotList, CK_ULONG_PTR pulCount)
+CK_RV SlotManager::getSlotList(ObjectStore* objectStore, CK_BBOOL tokenPresent, CK_SLOT_ID_PTR pSlotList, CK_ULONG_PTR pulCount)
 {
 	CK_ULONG size = 0;
 
 	if (pulCount == NULL) return CKR_ARGUMENTS_BAD;
 
 	// Calculate the size of the list
+	bool uninitialized = false;
 	for (std::vector<Slot*>::iterator i = slots.begin(); i != slots.end(); i++)
 	{
 		if ((tokenPresent == CK_FALSE) || (*i)->isTokenPresent())
 		{
 			size++;
 		}
+
+		if ((*i)->getToken() != NULL && (*i)->getToken()->isInitialized() == false)
+		{
+			uninitialized = true;
+		}
 	}
 
 	// The user wants the size of the list
 	if (pSlotList == NULL)
 	{
+		// Always have an uninitialized token
+		if (uninitialized == false)
+		{
+			slots.push_back(new Slot(objectStore, objectStore->getTokenCount()));
+			size++;
+		}
+
 		*pulCount = size;
 
 		return CKR_OK;
