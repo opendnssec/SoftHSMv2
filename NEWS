@@ -6,7 +6,8 @@ SoftHSM develop
   there is always a slot with an uninitialized token available.
 
 Bugfixes:
-* Issue #201: Missing new source file in Windows build configuration.
+* Issue #201: Missing new source file and test configuration in the
+  Windows build project.
 
 
 SoftHSM 2.1.0 - 2016-03-14
