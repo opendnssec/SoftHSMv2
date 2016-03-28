@@ -328,6 +328,9 @@ CK_RV Token::createToken(ObjectStore* objectStore, ByteString& soPIN, CK_UTF8CHA
 	if (objectStore == NULL) return CKR_GENERAL_ERROR;
 	if (label == NULL_PTR) return CKR_ARGUMENTS_BAD;
 
+	// Convert the label
+	ByteString labelByteStr((const unsigned char*) label, 32);
+
 	if (token != NULL)
 	{
 		// Get token flags
@@ -337,6 +340,7 @@ CK_RV Token::createToken(ObjectStore* objectStore, ByteString& soPIN, CK_UTF8CHA
 			return CKR_GENERAL_ERROR;
 		}
 
+		// Verify SO PIN
 		if (sdm->getSOPINBlob().size() > 0 && !sdm->loginSO(soPIN))
 		{
 			flags |= CKF_SO_PIN_COUNT_LOW;
@@ -345,50 +349,49 @@ CK_RV Token::createToken(ObjectStore* objectStore, ByteString& soPIN, CK_UTF8CHA
 			ERROR_MSG("Incorrect SO PIN");
 			return CKR_PIN_INCORRECT;
 		}
+		flags &= ~CKF_SO_PIN_COUNT_LOW;
+		token->setTokenFlags(flags);
 
-		// The token is already initialised. Destroy it first.
-		if (!objectStore->destroyToken(token))
+		// Reset the token
+		if (!token->resetToken(labelByteStr))
 		{
-			ERROR_MSG("Failed to destroy existing token");
+			ERROR_MSG("Could not reset the token");
+			return CKR_DEVICE_ERROR;
+		}
+	}
+	else
+	{
+		// Generate the SO PIN blob
+		SecureDataManager soPINBlobGen;
+
+		if (!soPINBlobGen.setSOPIN(soPIN))
+		{
+			return CKR_GENERAL_ERROR;
+		}
+
+		// Create the token
+		ObjectStoreToken* newToken = objectStore->newToken(labelByteStr);
+
+		if (newToken == NULL)
+		{
 			return CKR_DEVICE_ERROR;
 		}
 
-		token = NULL;
-	}
-
-	// Generate the SO PIN blob
-	SecureDataManager soPINBlobGen;
-
-	if (!soPINBlobGen.setSOPIN(soPIN))
-	{
-		return CKR_GENERAL_ERROR;
-	}
-
-	// Convert the label
-	ByteString labelByteStr((const unsigned char*) label, 32);
-
-	// Create the token
-	ObjectStoreToken* newToken = objectStore->newToken(labelByteStr);
-
-	if (newToken == NULL)
-	{
-		return CKR_DEVICE_ERROR;
-	}
-
-	// Set the SO PIN on the token
-	if (!newToken->setSOPIN(soPINBlobGen.getSOPINBlob()))
-	{
-		ERROR_MSG("Failed to set SO PIN on new token");
-
-		if (!objectStore->destroyToken(newToken))
+		// Set the SO PIN on the token
+		if (!newToken->setSOPIN(soPINBlobGen.getSOPINBlob()))
 		{
-			ERROR_MSG("Failed to destroy incomplete token");
+			ERROR_MSG("Failed to set SO PIN on new token");
+
+			if (!objectStore->destroyToken(newToken))
+			{
+				ERROR_MSG("Failed to destroy incomplete token");
+			}
+
+			return CKR_DEVICE_ERROR;
 		}
 
-		return CKR_DEVICE_ERROR;
+		token = newToken;
 	}
-
-	token = newToken;
 
 	ByteString soPINBlob, userPINBlob;
 

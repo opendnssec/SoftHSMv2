@@ -1143,6 +1143,89 @@ bool DBObject::setAttribute(CK_ATTRIBUTE_TYPE type, const OSAttribute& attribute
 	return false;
 }
 
+// Set the specified attribute
+bool DBObject::deleteAttribute(CK_ATTRIBUTE_TYPE type)
+{
+	MutexLocker lock(_mutex);
+
+	if (_connection == NULL)
+	{
+		ERROR_MSG("Object is not connected to the database.");
+		return false;
+	}
+	if (_objectId == 0)
+	{
+		ERROR_MSG("Cannot update invalid object.");
+		return false;
+	}
+
+	// Retrieve and existing attribute if it exists or NULL if it doesn't
+	OSAttribute *attr = getAttributeDB(type);
+	if (attr == NULL)
+	{
+		ERROR_MSG("Cannot delete an attribute that doesn't exist.");
+		return false;
+	}
+
+	DB::Statement statement;
+	if (attr->isBooleanAttribute())
+	{
+		// delete boolean attribute
+		statement = _connection->prepare(
+				"delete from attribute_boolean where type=%lu and object_id=%lld",
+				type,
+				_objectId);
+	}
+	else if (attr->isUnsignedLongAttribute())
+	{
+		// delete integer attribute
+		statement = _connection->prepare(
+				"delete from attribute_integer where type=%lu and object_id=%lld",
+				type,
+				_objectId);
+	}
+	else if (attr->isByteStringAttribute())
+	{
+		// delete binary attribute
+		statement = _connection->prepare(
+				"delete from attribute_binary where type=%lu and object_id=%lld",
+				type,
+				_objectId);
+	}
+	else if (attr->isArrayAttribute())
+	{
+		// delete array attribute
+		statement = _connection->prepare(
+				"delete from attribute_array where type=%lu and object_id=%lld",
+				type,
+				_objectId);
+	}
+
+	// Statement is valid when a prepared statement has been attached to it.
+	if (statement.isValid())
+	{
+		if (!_connection->execute(statement))
+		{
+			ERROR_MSG("Failed to delete attribute %lu for object %lld",type,_objectId);
+			return false;
+		}
+
+		if (_transaction)
+		{
+			std::map<CK_ATTRIBUTE_TYPE,OSAttribute*>::iterator it =	 _transaction->find(type);
+			if (it != _transaction->end())
+			{
+				delete it->second;
+				it->second = NULL;
+			}
+		}
+
+		return true;
+	}
+
+	return false;
+}
+
 // The validity state of the object
 bool DBObject::isValid()
 {

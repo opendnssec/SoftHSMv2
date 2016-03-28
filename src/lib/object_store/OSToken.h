@@ -112,6 +112,9 @@ public:
 	// Delete the token
 	virtual bool clearToken();
 
+	// Reset the token
+	virtual bool resetToken(const ByteString& label);
+
 private:
 	// ObjectFile instances can call the index() function
 	friend class ObjectFile;

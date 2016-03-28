@@ -603,7 +603,6 @@ bool DBToken::setTokenFlags(const CK_ULONG flags)
 	}
 
 	return true;
-
 }
 
 // Retrieve objects
@@ -619,7 +618,7 @@ void DBToken::getObjects(std::set<OSObject*> &objects)
 	if (_connection == NULL) return;
 
 	if (!_connection->beginTransactionRO()) return;
-	
+
 	DB::Statement statement = _connection->prepare("select id from object limit -1 offset 1");
 
 	DB::Result result = _connection->perform(statement);
@@ -644,7 +643,7 @@ void DBToken::getObjects(std::set<OSObject*> &objects)
 			}
 		} while (result.nextRow());
 	}
-	
+
 	_connection->endTransactionRO();
 }
 
@@ -785,6 +784,91 @@ bool DBToken::clearToken()
 	}
 
 	DEBUG_MSG("Token instance %s was succesfully cleared", tokenDir.c_str());
+
+	return true;
+}
+
+// Reset the token
+bool DBToken::resetToken(const ByteString& label)
+{
+	if (_connection == NULL) return false;
+
+	std::string tokenDir = _connection->dbdir();
+
+	// Clean up
+	std::set<OSObject*> cleanUp = getObjects();
+
+	for (std::set<OSObject*>::iterator i = cleanUp.begin(); i != cleanUp.end(); i++)
+	{
+		if (!deleteObject(*i))
+		{
+			ERROR_MSG("Unable to delete all objects in token database at \"%s\"", _connection->dbpath().c_str());
+			return false;
+		}
+	}
+
+	// Create a DBObject for the established connection to the token object in the database
+	DBObject tokenObject(_connection);
+
+	if (!tokenObject.startTransaction(DBObject::ReadWrite))
+	{
+		ERROR_MSG("Unable to start a transaction for setting the TOKENLABEL in token database at \"%s\"", _connection->dbpath().c_str());
+		return false;
+	}
+
+	// First find the token object in the database.
+	if (!tokenObject.find(DBTOKEN_OBJECT_TOKENINFO))
+	{
+		ERROR_MSG("Token object not found in token database at \"%s\"", _connection->dbpath().c_str());
+		tokenObject.abortTransaction();
+		return false;
+	}
+
+	if (tokenObject.attributeExists(CKA_OS_USERPIN))
+	{
+		if (!tokenObject.deleteAttribute(CKA_OS_USERPIN))
+		{
+			ERROR_MSG("Error while deleting USERPIN in token database at \"%s\"", _connection->dbpath().c_str());
+			tokenObject.abortTransaction();
+			return false;
+		}
+	}
+
+	if (!tokenObject.attributeExists(CKA_OS_TOKENFLAGS))
+	{
+		ERROR_MSG("Error while getting TOKENFLAGS from token database at \"%s\"", _connection->dbpath().c_str());
+		tokenObject.abortTransaction();
+		return false;
+	}
+
+	// Retrieve flags from the database and reset flags related to tries and expiration of the SOPIN.
+	CK_ULONG flags = tokenObject.getAttribute(CKA_OS_TOKENFLAGS).getUnsignedLongValue()
+					& ~(CKF_USER_PIN_INITIALIZED | CKF_USER_PIN_COUNT_LOW | CKF_USER_PIN_FINAL_TRY | CKF_USER_PIN_LOCKED | CKF_USER_PIN_TO_BE_CHANGED);
+
+	OSAttribute changedTokenFlags(flags);
+	if (!tokenObject.setAttribute(CKA_OS_TOKENFLAGS, changedTokenFlags))
+	{
+		ERROR_MSG("Error while setting TOKENFLAGS in token database at \"%s\"", _connection->dbpath().c_str());
+		tokenObject.abortTransaction();
+		return false;
+	}
+
+	OSAttribute tokenLabel(label);
+	if (!tokenObject.setAttribute(CKA_OS_TOKENLABEL, tokenLabel))
+	{
+		ERROR_MSG("Error while setting TOKENLABEL in token database at \"%s\"", _connection->dbpath().c_str());
+		tokenObject.abortTransaction();
+		return false;
+	}
+
+	if (!tokenObject.commitTransaction())
+	{
+		ERROR_MSG("Error while committing TOKENLABEL changes to token database at \"%s\"", _connection->dbpath().c_str());
+		tokenObject.abortTransaction();
+		return false;
+	}
+
+	DEBUG_MSG("Token instance %s was succesfully reset", tokenDir.c_str());
 
 	return true;
 }

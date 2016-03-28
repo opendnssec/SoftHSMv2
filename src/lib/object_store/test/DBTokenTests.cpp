@@ -457,6 +457,15 @@ void test_a_dbtoken::support_clearing_a_token()
 	CPPUNIT_ASSERT(retrievedUserPIN == userPIN);
 	CPPUNIT_ASSERT_EQUAL(flags, (CK_ULONG)(CKF_RNG | CKF_LOGIN_REQUIRED | CKF_RESTORE_KEY_NOT_NEEDED | CKF_TOKEN_INITIALIZED | CKF_USER_PIN_INITIALIZED));
 
+	// Now reset the token
+	CPPUNIT_ASSERT(reopenedToken.resetToken(label));
+	CPPUNIT_ASSERT(reopenedToken.getSOPIN(retrievedSOPIN));
+	CPPUNIT_ASSERT(!reopenedToken.getUserPIN(retrievedUserPIN));
+	CPPUNIT_ASSERT(reopenedToken.getTokenFlags(flags));
+	CPPUNIT_ASSERT(retrievedSOPIN == soPIN);
+	CPPUNIT_ASSERT_EQUAL(flags, (CK_ULONG)(CKF_RNG | CKF_LOGIN_REQUIRED | CKF_RESTORE_KEY_NOT_NEEDED | CKF_TOKEN_INITIALIZED));
+	CPPUNIT_ASSERT(reopenedToken.isValid());
+
 	// Now clear the token
 	CPPUNIT_ASSERT(reopenedToken.clearToken());
 	CPPUNIT_ASSERT(!reopenedToken.isValid());

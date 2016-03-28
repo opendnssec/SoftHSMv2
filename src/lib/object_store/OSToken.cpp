@@ -93,7 +93,7 @@ OSToken::OSToken(const std::string inTokenPath)
 	}
 
 	// Set the initial attributes
-	CK_ULONG flags = 
+	CK_ULONG flags =
 		CKF_RNG |
 		CKF_LOGIN_REQUIRED | // FIXME: check
 		CKF_RESTORE_KEY_NOT_NEEDED |
@@ -317,18 +317,18 @@ std::set<OSObject*> OSToken::getObjects()
 	// the object list when we return it
 	MutexLocker lock(tokenMutex);
 
-    return objects;
+	return objects;
 }
 
 void OSToken::getObjects(std::set<OSObject*> &inObjects)
 {
-    index();
+	index();
 
-    // Make sure that no other thread is in the process of changing
-    // the object list when we return it
-    MutexLocker lock(tokenMutex);
+	// Make sure that no other thread is in the process of changing
+	// the object list when we return it
+	MutexLocker lock(tokenMutex);
 
-    inObjects.insert(objects.begin(),objects.end());
+	inObjects.insert(objects.begin(),objects.end());
 }
 
 // Create a new object
@@ -390,7 +390,7 @@ bool OSToken::deleteObject(OSObject* object)
 
 		return false;
 	}
-	
+
 	// Invalidate the object instance
 	fileObject->invalidate();
 
@@ -449,7 +449,7 @@ bool OSToken::clearToken()
 
 	// First, clear out all objects
 	objects.clear();
-	
+
 	// Now, delete all files in the token directory
 	if (!tokenDir->refresh())
 	{
@@ -477,6 +477,102 @@ bool OSToken::clearToken()
 	}
 
 	DEBUG_MSG("Token instance %s was succesfully cleared", tokenPath.c_str());
+
+	return true;
+}
+
+// Reset the token
+bool OSToken::resetToken(const ByteString& label)
+{
+	CK_ULONG flags;
+	ByteString serial;
+	bool haveSOPIN;
+	ByteString soPINBlob;
+
+	if (!getTokenSerial(serial) || !getTokenFlags(flags))
+	{
+		ERROR_MSG("Failed to get the token attributes");
+
+		return false;
+	}
+
+	haveSOPIN = getSOPIN(soPINBlob);
+
+	// Clean up
+	std::set<OSObject*> cleanUp = getObjects();
+
+	MutexLocker lock(tokenMutex);
+
+	for (std::set<OSObject*>::iterator i = cleanUp.begin(); i != cleanUp.end(); i++)
+	{
+		ObjectFile* fileObject = dynamic_cast<ObjectFile*>(*i);
+		if (fileObject == NULL)
+		{
+			ERROR_MSG("Object type not compatible with this token class 0x%08X", *i);
+
+			return false;
+		}
+
+		// Invalidate the object instance
+		fileObject->invalidate();
+
+		// Retrieve the filename of the object
+		std::string objectFilename = fileObject->getFilename();
+
+		// Attempt to delete the file
+		if (!tokenDir->remove(objectFilename))
+		{
+			ERROR_MSG("Failed to delete object file %s", objectFilename.c_str());
+
+			return false;
+		}
+
+		// Retrieve the filename of the lock
+		std::string lockFilename = fileObject->getLockname();
+
+		// Attempt to delete the lock
+		if (!tokenDir->remove(lockFilename))
+		{
+			ERROR_MSG("Failed to delete lock file %s", lockFilename.c_str());
+
+			return false;
+		}
+
+		objects.erase(*i);
+
+		DEBUG_MSG("Deleted object %s", objectFilename.c_str());
+	}
+
+	// Reset the token attributes
+	tokenObject->discardAttributes();
+
+	// The user PIN has been removed
+	flags &= ~CKF_USER_PIN_INITIALIZED;
+	flags &= ~CKF_USER_PIN_COUNT_LOW;
+	flags &= ~CKF_USER_PIN_FINAL_TRY;
+	flags &= ~CKF_USER_PIN_LOCKED;
+	flags &= ~CKF_USER_PIN_TO_BE_CHANGED;
+
+	// Set new token attributes
+	OSAttribute tokenLabel(label);
+	OSAttribute tokenSerial(serial);
+	OSAttribute tokenFlags(flags);
+	OSAttribute soPIN(soPINBlob);
+
+	if (!tokenObject->setAttribute(CKA_OS_TOKENLABEL, tokenLabel) ||
+	    !tokenObject->setAttribute(CKA_OS_TOKENSERIAL, tokenSerial) ||
+	    !tokenObject->setAttribute(CKA_OS_TOKENFLAGS, tokenFlags) ||
+	    (haveSOPIN && !tokenObject->setAttribute(CKA_OS_SOPIN, soPINBlob)))
+	{
+		ERROR_MSG("Failed to set the token attributes");
+
+		return false;
+	}
+
+	DEBUG_MSG("Token instance %s was succesfully reset", tokenPath.c_str());
+
+	gen->update();
+	gen->commit();
 
 	return true;
 }
@@ -589,10 +685,10 @@ bool OSToken::index(bool isFirstTime /* = false */)
 		if (fileObject == NULL)
 		{
 			ERROR_MSG("Object type not compatible with this token class 0x%08X", (*i));
-	
+
 			return false;
 		}
-		
+
 		DEBUG_MSG("Processing %s (0x%08X)", fileObject->getFilename().c_str(), *i);
 
 		if (removedFiles.find(fileObject->getFilename()) == removedFiles.end())
