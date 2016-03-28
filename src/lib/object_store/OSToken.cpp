@@ -485,18 +485,13 @@ bool OSToken::clearToken()
 bool OSToken::resetToken(const ByteString& label)
 {
 	CK_ULONG flags;
-	ByteString serial;
-	bool haveSOPIN;
-	ByteString soPINBlob;
 
-	if (!getTokenSerial(serial) || !getTokenFlags(flags))
+	if (!getTokenFlags(flags))
 	{
 		ERROR_MSG("Failed to get the token attributes");
 
 		return false;
 	}
-
-	haveSOPIN = getSOPIN(soPINBlob);
 
 	// Clean up
 	std::set<OSObject*> cleanUp = getObjects();
@@ -543,9 +538,6 @@ bool OSToken::resetToken(const ByteString& label)
 		DEBUG_MSG("Deleted object %s", objectFilename.c_str());
 	}
 
-	// Reset the token attributes
-	tokenObject->discardAttributes();
-
 	// The user PIN has been removed
 	flags &= ~CKF_USER_PIN_INITIALIZED;
 	flags &= ~CKF_USER_PIN_COUNT_LOW;
@@ -555,16 +547,20 @@ bool OSToken::resetToken(const ByteString& label)
 
 	// Set new token attributes
 	OSAttribute tokenLabel(label);
-	OSAttribute tokenSerial(serial);
 	OSAttribute tokenFlags(flags);
-	OSAttribute soPIN(soPINBlob);
 
 	if (!tokenObject->setAttribute(CKA_OS_TOKENLABEL, tokenLabel) ||
-	    !tokenObject->setAttribute(CKA_OS_TOKENSERIAL, tokenSerial) ||
-	    !tokenObject->setAttribute(CKA_OS_TOKENFLAGS, tokenFlags) ||
-	    (haveSOPIN && !tokenObject->setAttribute(CKA_OS_SOPIN, soPINBlob)))
+	    !tokenObject->setAttribute(CKA_OS_TOKENFLAGS, tokenFlags))
 	{
 		ERROR_MSG("Failed to set the token attributes");
+
+		return false;
+	}
+
+	if (tokenObject->attributeExists(CKA_OS_USERPIN) &&
+	    !tokenObject->deleteAttribute(CKA_OS_USERPIN))
+	{
+		ERROR_MSG("Failed to remove USERPIN");
 
 		return false;
 	}

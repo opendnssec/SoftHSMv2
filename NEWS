@@ -2,6 +2,9 @@ NEWS for SoftHSM -- History of user visible changes
 
 SoftHSM develop
 
+* Issue #186: Reinitializing a token will now keep the token, but all
+  token objects are deleted, the user PIN is removed and the token
+  label is updated.
 * Issue #198: Calling C_GetSlotList with NULL_PTR will make sure that
   there is always a slot with an uninitialized token available.
 

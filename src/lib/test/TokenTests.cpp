@@ -42,6 +42,8 @@ void TokenTests::testInitToken()
 	CK_RV rv;
 	CK_UTF8CHAR label[32];
 	CK_SESSION_HANDLE hSession;
+	CK_TOKEN_INFO tokenInfo;
+	CK_CHAR serialNumber[16];
 
 	memset(label, ' ', 32);
 	memcpy(label, "token1", strlen("token1"));
@@ -65,6 +67,11 @@ void TokenTests::testInitToken()
 	rv = C_InitToken(m_initializedTokenSlotID, m_soPin1, m_soPin1Length, label);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
+	// Get token serial
+	rv = C_GetTokenInfo(m_initializedTokenSlotID, &tokenInfo);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	memcpy(serialNumber, tokenInfo.serialNumber, 16);
+
 	// Initialize with wrong password
 	rv = C_InitToken(m_initializedTokenSlotID, m_soPin1, m_soPin1Length - 1, label);
 	CPPUNIT_ASSERT(rv == CKR_PIN_INCORRECT);
@@ -81,6 +88,11 @@ void TokenTests::testInitToken()
 	// Re-initialize
 	rv = C_InitToken(m_initializedTokenSlotID, m_soPin1, m_soPin1Length, label);
 	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Compare token serial
+	rv = C_GetTokenInfo(m_initializedTokenSlotID, &tokenInfo);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	CPPUNIT_ASSERT(memcmp(serialNumber, tokenInfo.serialNumber, 16) == 0);
 
 	C_Finalize(NULL_PTR);
 }
