@@ -39,11 +39,11 @@ void TestsBase::setUp() {
 	CK_SESSION_HANDLE hSession;
 
 	// Open session
-	CPPUNIT_ASSERT( C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION|CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSession)==CKR_OK );
+	CPPUNIT_ASSERT( CRYPTOKI_F_PTR( C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION|CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSession)==CKR_OK ) );
 
 	// Login SO
-	CPPUNIT_ASSERT( C_Login(hSession,CKU_SO, m_soPin1, m_soPin1Length)==CKR_OK );
+	CPPUNIT_ASSERT( CRYPTOKI_F_PTR( C_Login(hSession,CKU_SO, m_soPin1, m_soPin1Length)==CKR_OK ) );
 
 	// Initialize the user pin
-	CPPUNIT_ASSERT( C_InitPIN(hSession, m_userPin1, m_userPin1Length)==CKR_OK );
+	CPPUNIT_ASSERT( CRYPTOKI_F_PTR( C_InitPIN(hSession, m_userPin1, m_userPin1Length)==CKR_OK ) );
 }

@@ -44,30 +44,30 @@ void SessionTests::testOpenSession()
 	CK_SESSION_HANDLE hSession;
 
     // Just make sure that we finalize any previous tests
-	C_Finalize(NULL_PTR);
+	CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
 
-	rv = C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSession);
+	rv = CRYPTOKI_F_PTR( C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSession) );
 	CPPUNIT_ASSERT(rv == CKR_CRYPTOKI_NOT_INITIALIZED);
 
-    rv = C_Initialize(NULL_PTR);
+    rv = CRYPTOKI_F_PTR( C_Initialize(NULL_PTR) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-    rv = C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, NULL_PTR);
+    rv = CRYPTOKI_F_PTR( C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, NULL_PTR) );
 	CPPUNIT_ASSERT(rv == CKR_ARGUMENTS_BAD);
 
-    rv = C_OpenSession(m_invalidSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSession);
+    rv = CRYPTOKI_F_PTR( C_OpenSession(m_invalidSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSession) );
 	CPPUNIT_ASSERT(rv == CKR_SLOT_ID_INVALID);
 
-    rv = C_OpenSession(m_notInitializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSession);
+    rv = CRYPTOKI_F_PTR( C_OpenSession(m_notInitializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSession) );
 	CPPUNIT_ASSERT(rv == CKR_TOKEN_NOT_RECOGNIZED);
 
-    rv = C_OpenSession(m_initializedTokenSlotID, 0, NULL_PTR, NULL_PTR, &hSession);
+    rv = CRYPTOKI_F_PTR( C_OpenSession(m_initializedTokenSlotID, 0, NULL_PTR, NULL_PTR, &hSession) );
 	CPPUNIT_ASSERT(rv == CKR_SESSION_PARALLEL_NOT_SUPPORTED);
 
-    rv = C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSession);
+    rv = CRYPTOKI_F_PTR( C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSession) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-    rv = C_CloseSession(hSession);
+    rv = CRYPTOKI_F_PTR( C_CloseSession(hSession) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 }
 
@@ -77,27 +77,27 @@ void SessionTests::testCloseSession()
 	CK_SESSION_HANDLE hSession = CK_INVALID_HANDLE;
 
 	// Just make sure that we finalize any previous tests
-	C_Finalize(NULL_PTR);
+	CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
 
-	rv = C_CloseSession(hSession);
+	rv = CRYPTOKI_F_PTR( C_CloseSession(hSession) );
 	CPPUNIT_ASSERT(rv == CKR_CRYPTOKI_NOT_INITIALIZED);
 
-	rv = C_Initialize(NULL_PTR);
+	rv = CRYPTOKI_F_PTR( C_Initialize(NULL_PTR) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	rv = C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSession);
+	rv = CRYPTOKI_F_PTR( C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSession) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	rv = C_CloseSession(CK_INVALID_HANDLE);
+	rv = CRYPTOKI_F_PTR( C_CloseSession(CK_INVALID_HANDLE) );
 	CPPUNIT_ASSERT(rv == CKR_SESSION_HANDLE_INVALID);
 
-	rv = C_CloseSession(hSession + 1);
+	rv = CRYPTOKI_F_PTR( C_CloseSession(hSession + 1) );
 	CPPUNIT_ASSERT(rv == CKR_SESSION_HANDLE_INVALID);
 
-	rv = C_CloseSession(hSession);
+	rv = CRYPTOKI_F_PTR( C_CloseSession(hSession) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	rv = C_CloseSession(hSession);
+	rv = CRYPTOKI_F_PTR( C_CloseSession(hSession) );
 	CPPUNIT_ASSERT(rv == CKR_SESSION_HANDLE_INVALID);
 }
 
@@ -108,30 +108,30 @@ void SessionTests::testCloseAllSessions()
 	CK_SESSION_INFO info;
 
 	// Just make sure that we finalize any previous tests
-	C_Finalize(NULL_PTR);
+	CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
 
-	rv = C_CloseAllSessions(m_initializedTokenSlotID);
+	rv = CRYPTOKI_F_PTR( C_CloseAllSessions(m_initializedTokenSlotID) );
 	CPPUNIT_ASSERT(rv == CKR_CRYPTOKI_NOT_INITIALIZED);
 
-	rv = C_Initialize(NULL_PTR);
+	rv = CRYPTOKI_F_PTR( C_Initialize(NULL_PTR) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	rv = C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSession);
+	rv = CRYPTOKI_F_PTR( C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSession) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	rv = C_CloseAllSessions(m_invalidSlotID);
+	rv = CRYPTOKI_F_PTR( C_CloseAllSessions(m_invalidSlotID) );
 	CPPUNIT_ASSERT(rv == CKR_SLOT_ID_INVALID);
 
-	rv = C_CloseAllSessions(m_notInitializedTokenSlotID);
+	rv = CRYPTOKI_F_PTR( C_CloseAllSessions(m_notInitializedTokenSlotID) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	rv = C_GetSessionInfo(hSession, &info);
+	rv = CRYPTOKI_F_PTR( C_GetSessionInfo(hSession, &info) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	rv = C_CloseAllSessions(m_initializedTokenSlotID);
+	rv = CRYPTOKI_F_PTR( C_CloseAllSessions(m_initializedTokenSlotID) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	rv = C_CloseSession(hSession);
+	rv = CRYPTOKI_F_PTR( C_CloseSession(hSession) );
 	CPPUNIT_ASSERT(rv == CKR_SESSION_HANDLE_INVALID);
 }
 
@@ -142,35 +142,35 @@ void SessionTests::testGetSessionInfo()
 	CK_SESSION_INFO info;
 
 	// Just make sure that we finalize any previous tests
-	C_Finalize(NULL_PTR);
+	CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
 
-    rv = C_GetSessionInfo(hSession, &info);
+    rv = CRYPTOKI_F_PTR( C_GetSessionInfo(hSession, &info) );
 	CPPUNIT_ASSERT(rv == CKR_CRYPTOKI_NOT_INITIALIZED);
 
-    rv = C_Initialize(NULL_PTR);
+    rv = CRYPTOKI_F_PTR( C_Initialize(NULL_PTR) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-    rv = C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSession);
+    rv = CRYPTOKI_F_PTR( C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSession) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-    rv = C_GetSessionInfo(CK_INVALID_HANDLE, &info);
+    rv = CRYPTOKI_F_PTR( C_GetSessionInfo(CK_INVALID_HANDLE, &info) );
 	CPPUNIT_ASSERT(rv == CKR_SESSION_HANDLE_INVALID);
 
-    rv = C_GetSessionInfo(hSession + 1, &info);
+    rv = CRYPTOKI_F_PTR( C_GetSessionInfo(hSession + 1, &info) );
 	CPPUNIT_ASSERT(rv == CKR_SESSION_HANDLE_INVALID);
 
-	rv = C_GetSessionInfo(hSession, NULL_PTR);
+	rv = CRYPTOKI_F_PTR( C_GetSessionInfo(hSession, NULL_PTR) );
 	CPPUNIT_ASSERT(rv == CKR_ARGUMENTS_BAD);
 
-    rv = C_GetSessionInfo(hSession, &info);
+    rv = CRYPTOKI_F_PTR( C_GetSessionInfo(hSession, &info) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
     CPPUNIT_ASSERT(info.state == CKS_RO_PUBLIC_SESSION);
 	CPPUNIT_ASSERT(info.flags == CKF_SERIAL_SESSION);
 
-    rv = C_CloseSession(hSession);
+    rv = CRYPTOKI_F_PTR( C_CloseSession(hSession) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-    rv = C_GetSessionInfo(hSession, &info);
+    rv = CRYPTOKI_F_PTR( C_GetSessionInfo(hSession, &info) );
 	CPPUNIT_ASSERT(rv == CKR_SESSION_HANDLE_INVALID);
 }

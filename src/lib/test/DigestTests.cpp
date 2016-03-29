@@ -46,31 +46,31 @@ void DigestTests::testDigestInit()
 	};
 
 	// Just make sure that we finalize any previous tests
-	C_Finalize(NULL_PTR);
+	CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
 
-	rv = C_DigestInit(hSession, &mechanism);
+	rv = CRYPTOKI_F_PTR( C_DigestInit(hSession, &mechanism) );
 	CPPUNIT_ASSERT(rv == CKR_CRYPTOKI_NOT_INITIALIZED);
 
-	rv = C_Initialize(NULL_PTR);
+	rv = CRYPTOKI_F_PTR( C_Initialize(NULL_PTR) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	rv = C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSession);
+	rv = CRYPTOKI_F_PTR( C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSession) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	rv = C_DigestInit(hSession, NULL_PTR);
+	rv = CRYPTOKI_F_PTR( C_DigestInit(hSession, NULL_PTR) );
 	CPPUNIT_ASSERT(rv == CKR_ARGUMENTS_BAD);
 
-	rv = C_DigestInit(CK_INVALID_HANDLE, &mechanism);
+	rv = CRYPTOKI_F_PTR( C_DigestInit(CK_INVALID_HANDLE, &mechanism) );
 	CPPUNIT_ASSERT(rv == CKR_SESSION_HANDLE_INVALID);
 
-	rv = C_DigestInit(hSession, &mechanism);
+	rv = CRYPTOKI_F_PTR( C_DigestInit(hSession, &mechanism) );
 	CPPUNIT_ASSERT(rv == CKR_MECHANISM_INVALID);
 
 	mechanism.mechanism = CKM_SHA512;
-	rv = C_DigestInit(hSession, &mechanism);
+	rv = CRYPTOKI_F_PTR( C_DigestInit(hSession, &mechanism) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	rv = C_DigestInit(hSession, &mechanism);
+	rv = CRYPTOKI_F_PTR( C_DigestInit(hSession, &mechanism) );
 	CPPUNIT_ASSERT(rv == CKR_OPERATION_ACTIVE);
 }
 
@@ -86,46 +86,46 @@ void DigestTests::testDigest()
 	CK_BYTE data[] = {"Text to digest"};
 
 	// Just make sure that we finalize any previous tests
-	C_Finalize(NULL_PTR);
+	CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
 
-	rv = C_Digest(hSession, data, sizeof(data)-1, NULL_PTR, &digestLen);
+	rv = CRYPTOKI_F_PTR( C_Digest(hSession, data, sizeof(data)-1, NULL_PTR, &digestLen) );
 	CPPUNIT_ASSERT(rv == CKR_CRYPTOKI_NOT_INITIALIZED);
 
-	rv = C_Initialize(NULL_PTR);
+	rv = CRYPTOKI_F_PTR( C_Initialize(NULL_PTR) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	rv = C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSession);
+	rv = CRYPTOKI_F_PTR( C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSession) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	rv = C_Digest(CK_INVALID_HANDLE, data, sizeof(data)-1, NULL_PTR, &digestLen);
+	rv = CRYPTOKI_F_PTR( C_Digest(CK_INVALID_HANDLE, data, sizeof(data)-1, NULL_PTR, &digestLen) );
 	CPPUNIT_ASSERT(rv == CKR_SESSION_HANDLE_INVALID);
 	
-	rv = C_Digest(hSession, data, sizeof(data)-1, NULL_PTR, &digestLen);
+	rv = CRYPTOKI_F_PTR( C_Digest(hSession, data, sizeof(data)-1, NULL_PTR, &digestLen) );
 	CPPUNIT_ASSERT(rv == CKR_OPERATION_NOT_INITIALIZED);
 
-	rv = C_DigestInit(hSession, &mechanism);
+	rv = CRYPTOKI_F_PTR( C_DigestInit(hSession, &mechanism) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	rv = C_Digest(hSession, NULL_PTR, sizeof(data)-1, NULL_PTR, &digestLen);
+	rv = CRYPTOKI_F_PTR( C_Digest(hSession, NULL_PTR, sizeof(data)-1, NULL_PTR, &digestLen) );
 	CPPUNIT_ASSERT(rv == CKR_ARGUMENTS_BAD);
 
-	rv = C_Digest(hSession, data, sizeof(data)-1, NULL_PTR, NULL_PTR);
+	rv = CRYPTOKI_F_PTR( C_Digest(hSession, data, sizeof(data)-1, NULL_PTR, NULL_PTR) );
 	CPPUNIT_ASSERT(rv == CKR_ARGUMENTS_BAD);
 
-	rv = C_Digest(hSession, data, sizeof(data)-1, NULL_PTR, &digestLen);
+	rv = CRYPTOKI_F_PTR( C_Digest(hSession, data, sizeof(data)-1, NULL_PTR, &digestLen) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	digest = (CK_BYTE_PTR)malloc(digestLen);
 	digestLen = 0;
 
-	rv = C_Digest(hSession, data, sizeof(data)-1, digest, &digestLen);
+	rv = CRYPTOKI_F_PTR( C_Digest(hSession, data, sizeof(data)-1, digest, &digestLen) );
 	CPPUNIT_ASSERT(rv == CKR_BUFFER_TOO_SMALL);
 
-	rv = C_Digest(hSession, data, sizeof(data)-1, digest, &digestLen);
+	rv = CRYPTOKI_F_PTR( C_Digest(hSession, data, sizeof(data)-1, digest, &digestLen) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 	free(digest);
 
-	rv = C_Digest(hSession, data, sizeof(data)-1, digest, &digestLen);
+	rv = CRYPTOKI_F_PTR( C_Digest(hSession, data, sizeof(data)-1, digest, &digestLen) );
 	CPPUNIT_ASSERT(rv == CKR_OPERATION_NOT_INITIALIZED);
 }
 
@@ -139,30 +139,30 @@ void DigestTests::testDigestUpdate()
 	CK_BYTE data[] = {"Text to digest"};
 
 	// Just make sure that we finalize any previous tests
-	C_Finalize(NULL_PTR);
+	CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
 
-	rv = C_DigestUpdate(hSession, data, sizeof(data)-1);
+	rv = CRYPTOKI_F_PTR( C_DigestUpdate(hSession, data, sizeof(data)-1) );
 	CPPUNIT_ASSERT(rv == CKR_CRYPTOKI_NOT_INITIALIZED);
 
-	rv = C_Initialize(NULL_PTR);
+	rv = CRYPTOKI_F_PTR( C_Initialize(NULL_PTR) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	rv = C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSession);
+	rv = CRYPTOKI_F_PTR( C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSession) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	rv = C_DigestUpdate(CK_INVALID_HANDLE, data, sizeof(data)-1);
+	rv = CRYPTOKI_F_PTR( C_DigestUpdate(CK_INVALID_HANDLE, data, sizeof(data)-1) );
 	CPPUNIT_ASSERT(rv == CKR_SESSION_HANDLE_INVALID);
 	
-	rv = C_DigestUpdate(hSession, data, sizeof(data)-1);
+	rv = CRYPTOKI_F_PTR( C_DigestUpdate(hSession, data, sizeof(data)-1) );
 	CPPUNIT_ASSERT(rv == CKR_OPERATION_NOT_INITIALIZED);
 
-	rv = C_DigestInit(hSession, &mechanism);
+	rv = CRYPTOKI_F_PTR( C_DigestInit(hSession, &mechanism) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	rv = C_DigestUpdate(hSession, NULL_PTR, sizeof(data)-1);
+	rv = CRYPTOKI_F_PTR( C_DigestUpdate(hSession, NULL_PTR, sizeof(data)-1) );
 	CPPUNIT_ASSERT(rv == CKR_ARGUMENTS_BAD);
 
-	rv = C_DigestUpdate(hSession, data, sizeof(data)-1);
+	rv = CRYPTOKI_F_PTR( C_DigestUpdate(hSession, data, sizeof(data)-1) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 }
 
@@ -176,15 +176,15 @@ void DigestTests::testDigestKey()
 	CK_BYTE data[] = {"Text to digest"};
 
 	// Just make sure that we finalize any previous tests
-	C_Finalize(NULL_PTR);
+	CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
 
-	rv = C_DigestKey(hSession, (CK_OBJECT_HANDLE)123UL);
+	rv = CRYPTOKI_F_PTR( C_DigestKey(hSession, (CK_OBJECT_HANDLE)123UL) );
 	CPPUNIT_ASSERT(rv == CKR_CRYPTOKI_NOT_INITIALIZED);
 
-	rv = C_Initialize(NULL_PTR);
+	rv = CRYPTOKI_F_PTR( C_Initialize(NULL_PTR) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	rv = C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSession);
+	rv = CRYPTOKI_F_PTR( C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSession) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// Create the generic secret key to digest
@@ -204,23 +204,23 @@ void DigestTests::testDigestKey()
 	CK_OBJECT_HANDLE hKey;
 
 	hKey = CK_INVALID_HANDLE;
-	rv = C_CreateObject(hSession, attribs, sizeof(attribs)/sizeof(CK_ATTRIBUTE), &hKey);
+	rv = CRYPTOKI_F_PTR( C_CreateObject(hSession, attribs, sizeof(attribs)/sizeof(CK_ATTRIBUTE), &hKey) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 	CPPUNIT_ASSERT(hKey != CK_INVALID_HANDLE);
 
-	rv = C_DigestKey(CK_INVALID_HANDLE, hKey);
+	rv = CRYPTOKI_F_PTR( C_DigestKey(CK_INVALID_HANDLE, hKey) );
 	CPPUNIT_ASSERT(rv == CKR_SESSION_HANDLE_INVALID);
 	
-	rv = C_DigestKey(hSession, hKey);
+	rv = CRYPTOKI_F_PTR( C_DigestKey(hSession, hKey) );
 	CPPUNIT_ASSERT(rv == CKR_OPERATION_NOT_INITIALIZED);
 
-	rv = C_DigestInit(hSession, &mechanism);
+	rv = CRYPTOKI_F_PTR( C_DigestInit(hSession, &mechanism) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	rv = C_DigestKey(hSession, CK_INVALID_HANDLE);
+	rv = CRYPTOKI_F_PTR( C_DigestKey(hSession, CK_INVALID_HANDLE) );
 	CPPUNIT_ASSERT(rv == CKR_KEY_HANDLE_INVALID);
 
-	rv = C_DigestKey(hSession, hKey);
+	rv = CRYPTOKI_F_PTR( C_DigestKey(hSession, hKey) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 }
 
@@ -236,46 +236,46 @@ void DigestTests::testDigestFinal()
 	CK_BYTE_PTR digest;
 
 	// Just make sure that we finalize any previous tests
-	C_Finalize(NULL_PTR);
+	CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
 
-	rv = C_DigestFinal(hSession, NULL_PTR, &digestLen);
+	rv = CRYPTOKI_F_PTR( C_DigestFinal(hSession, NULL_PTR, &digestLen) );
 	CPPUNIT_ASSERT(rv == CKR_CRYPTOKI_NOT_INITIALIZED);
 
-	rv = C_Initialize(NULL_PTR);
+	rv = CRYPTOKI_F_PTR( C_Initialize(NULL_PTR) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	rv = C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSession);
+	rv = CRYPTOKI_F_PTR( C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSession) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	rv = C_DigestFinal(CK_INVALID_HANDLE, NULL_PTR, &digestLen);
+	rv = CRYPTOKI_F_PTR( C_DigestFinal(CK_INVALID_HANDLE, NULL_PTR, &digestLen) );
 	CPPUNIT_ASSERT(rv == CKR_SESSION_HANDLE_INVALID);
 	
-	rv = C_DigestFinal(hSession, NULL_PTR, &digestLen);
+	rv = CRYPTOKI_F_PTR( C_DigestFinal(hSession, NULL_PTR, &digestLen) );
 	CPPUNIT_ASSERT(rv == CKR_OPERATION_NOT_INITIALIZED);
 
-	rv = C_DigestInit(hSession, &mechanism);
+	rv = CRYPTOKI_F_PTR( C_DigestInit(hSession, &mechanism) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	rv = C_DigestUpdate(hSession, data, sizeof(data)-1);
+	rv = CRYPTOKI_F_PTR( C_DigestUpdate(hSession, data, sizeof(data)-1) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	rv = C_DigestFinal(hSession, NULL_PTR, NULL_PTR);
+	rv = CRYPTOKI_F_PTR( C_DigestFinal(hSession, NULL_PTR, NULL_PTR) );
 	CPPUNIT_ASSERT(rv == CKR_ARGUMENTS_BAD);
 
-	rv = C_DigestFinal(hSession, NULL_PTR, &digestLen);
+	rv = CRYPTOKI_F_PTR( C_DigestFinal(hSession, NULL_PTR, &digestLen) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	digest = (CK_BYTE_PTR)malloc(digestLen);
 	digestLen = 0;
 
-	rv = C_DigestFinal(hSession, digest, &digestLen);
+	rv = CRYPTOKI_F_PTR( C_DigestFinal(hSession, digest, &digestLen) );
 	CPPUNIT_ASSERT(rv == CKR_BUFFER_TOO_SMALL);
 
-	rv = C_DigestFinal(hSession, digest, &digestLen);
+	rv = CRYPTOKI_F_PTR( C_DigestFinal(hSession, digest, &digestLen) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 	free(digest);
 
-	rv = C_DigestFinal(hSession, NULL_PTR, &digestLen);
+	rv = CRYPTOKI_F_PTR( C_DigestFinal(hSession, NULL_PTR, &digestLen) );
 	CPPUNIT_ASSERT(rv == CKR_OPERATION_NOT_INITIALIZED);
 }
 
@@ -301,25 +301,25 @@ void DigestTests::testDigestAll()
 	CK_BYTE data[] = {"Text to digest"};
 
 	// Just make sure that we finalize any previous tests
-	C_Finalize(NULL_PTR);
+	CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
 
-	rv = C_Initialize(NULL_PTR);
+	rv = CRYPTOKI_F_PTR( C_Initialize(NULL_PTR) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	rv = C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSession);
+	rv = CRYPTOKI_F_PTR( C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSession) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	for (unsigned int i = 0; i < sizeof(mechanisms)/sizeof(CK_MECHANISM); i++)
 	{
-		rv = C_DigestInit(hSession, &mechanisms[i]);
+		rv = CRYPTOKI_F_PTR( C_DigestInit(hSession, &mechanisms[i]) );
 		CPPUNIT_ASSERT(rv == CKR_OK);
 
-		rv = C_Digest(hSession, data, sizeof(data)-1, NULL_PTR, &digestLen);
+		rv = CRYPTOKI_F_PTR( C_Digest(hSession, data, sizeof(data)-1, NULL_PTR, &digestLen) );
 		CPPUNIT_ASSERT(rv == CKR_OK);
 
 		digest = (CK_BYTE_PTR)malloc(digestLen);
 
-		rv = C_Digest(hSession, data, sizeof(data)-1, digest, &digestLen);
+		rv = CRYPTOKI_F_PTR( C_Digest(hSession, data, sizeof(data)-1, digest, &digestLen) );
 		CPPUNIT_ASSERT(rv == CKR_OK);
 		free(digest);
 	}

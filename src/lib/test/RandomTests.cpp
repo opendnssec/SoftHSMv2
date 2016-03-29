@@ -44,24 +44,24 @@ void RandomTests::testSeedRandom()
 	CK_BYTE seed[] = {"Some random data"};
 
 	// Just make sure that we finalize any previous tests
-	C_Finalize(NULL_PTR);
+	CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
 
-	rv = C_SeedRandom(CK_INVALID_HANDLE, seed, sizeof(seed));
+	rv = CRYPTOKI_F_PTR( C_SeedRandom(CK_INVALID_HANDLE, seed, sizeof(seed)) );
 	CPPUNIT_ASSERT(rv == CKR_CRYPTOKI_NOT_INITIALIZED);
 
-	rv = C_Initialize(NULL_PTR);
+	rv = CRYPTOKI_F_PTR( C_Initialize(NULL_PTR) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	rv = C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSession);
+	rv = CRYPTOKI_F_PTR( C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSession) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	rv = C_SeedRandom(hSession, NULL_PTR, sizeof(seed));
+	rv = CRYPTOKI_F_PTR( C_SeedRandom(hSession, NULL_PTR, sizeof(seed)) );
 	CPPUNIT_ASSERT(rv == CKR_ARGUMENTS_BAD);
 
-	rv = C_SeedRandom(hSession, seed, sizeof(seed));
+	rv = CRYPTOKI_F_PTR( C_SeedRandom(hSession, seed, sizeof(seed)) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	rv = C_SeedRandom(hSession, seed, sizeof(seed));
+	rv = CRYPTOKI_F_PTR( C_SeedRandom(hSession, seed, sizeof(seed)) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 }
 
@@ -72,23 +72,23 @@ void RandomTests::testGenerateRandom()
 	CK_BYTE randomData[40];
 
 	// Just make sure that we finalize any previous tests
-	C_Finalize(NULL_PTR);
+	CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
 
-	rv = C_GenerateRandom(CK_INVALID_HANDLE, randomData, 40);
+	rv = CRYPTOKI_F_PTR( C_GenerateRandom(CK_INVALID_HANDLE, randomData, 40) );
 	CPPUNIT_ASSERT(rv == CKR_CRYPTOKI_NOT_INITIALIZED);
 
-	rv = C_Initialize(NULL_PTR);
+	rv = CRYPTOKI_F_PTR( C_Initialize(NULL_PTR) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	rv = C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSession);
+	rv = CRYPTOKI_F_PTR( C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSession) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	rv = C_GenerateRandom(hSession, NULL_PTR, 40);
+	rv = CRYPTOKI_F_PTR( C_GenerateRandom(hSession, NULL_PTR, 40) );
 	CPPUNIT_ASSERT(rv == CKR_ARGUMENTS_BAD);
 
-	rv = C_GenerateRandom(hSession, randomData, 40);
+	rv = CRYPTOKI_F_PTR( C_GenerateRandom(hSession, randomData, 40) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	rv = C_GenerateRandom(hSession, randomData, 40);
+	rv = CRYPTOKI_F_PTR( C_GenerateRandom(hSession, randomData, 40) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 }

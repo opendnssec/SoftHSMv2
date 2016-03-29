@@ -36,13 +36,32 @@
 #include "cryptoki.h"
 #include <cppunit/TestFixture.h>
 
+
+#ifdef P11M
+#define CRYPTOKI_F_PTR(func) ptr->func
+#else
+#define CRYPTOKI_F_PTR(func)
+#endif
+
 class TestsNoPINInitBase : public CppUnit::TestFixture {
 public:
 	TestsNoPINInitBase();
+	virtual ~TestsNoPINInitBase();
 
 	virtual void setUp();
 	virtual void tearDown();
+#ifdef P11M
+private:
+#ifdef _WIN32
+	HINSTANCE__* p11Library;
+#else
+	void *const p11Library;
+#endif
 protected:
+	const CK_FUNCTION_LIST_PTR ptr;
+#else
+protected:
+#endif
 	const CK_SLOT_ID m_invalidSlotID;
 	CK_SLOT_ID m_initializedTokenSlotID;
 	CK_SLOT_ID m_notInitializedTokenSlotID;

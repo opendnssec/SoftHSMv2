@@ -171,10 +171,10 @@ CK_RV DeriveTests::generateDes3Key(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, 
 void DeriveTests::dhDerive(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hPublicKey, CK_OBJECT_HANDLE hPrivateKey, CK_OBJECT_HANDLE &hKey)
 {
 	CK_ATTRIBUTE valAttrib = { CKA_VALUE, NULL_PTR, 0 };
-	CK_RV rv = C_GetAttributeValue(hSession, hPublicKey, &valAttrib, 1);
+	CK_RV rv = CRYPTOKI_F_PTR( C_GetAttributeValue(hSession, hPublicKey, &valAttrib, 1) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 	valAttrib.pValue = (CK_BYTE_PTR)malloc(valAttrib.ulValueLen);
-	rv = C_GetAttributeValue(hSession, hPublicKey, &valAttrib, 1);
+	rv = CRYPTOKI_F_PTR( C_GetAttributeValue(hSession, hPublicKey, &valAttrib, 1) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 	CK_MECHANISM mechanism = { CKM_DH_PKCS_DERIVE, NULL_PTR, 0 };
 	mechanism.pParameter = valAttrib.pValue;
@@ -213,7 +213,7 @@ bool DeriveTests::compareSecret(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hKe
 	keyAttribs[0].ulValueLen = sizeof(val1);
 	keyAttribs[1].pValue = check1;
 	keyAttribs[1].ulValueLen = sizeof(check1);
-	CK_RV rv = C_GetAttributeValue(hSession, hKey1, keyAttribs, 2);
+	CK_RV rv = CRYPTOKI_F_PTR( C_GetAttributeValue(hSession, hKey1, keyAttribs, 2) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 	CPPUNIT_ASSERT(keyAttribs[0].ulValueLen == 100);
 	CPPUNIT_ASSERT(keyAttribs[1].ulValueLen == 3);
@@ -223,7 +223,7 @@ bool DeriveTests::compareSecret(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hKe
 	keyAttribs[0].ulValueLen = sizeof(val2);
 	keyAttribs[1].pValue = check2;
 	keyAttribs[1].ulValueLen = sizeof(check2);
-	rv = C_GetAttributeValue(hSession, hKey2, keyAttribs, 2);
+	rv = CRYPTOKI_F_PTR( C_GetAttributeValue(hSession, hKey2, keyAttribs, 2) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 	CPPUNIT_ASSERT(keyAttribs[0].ulValueLen == 100);
 	CPPUNIT_ASSERT(keyAttribs[1].ulValueLen == 3);
@@ -238,26 +238,26 @@ void DeriveTests::testDhDerive()
 	CK_SESSION_HANDLE hSessionRW;
 
 	// Just make sure that we finalize any previous tests
-	C_Finalize(NULL_PTR);
+	CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
 
 	// Open read-only session on when the token is not initialized should fail
-	rv = C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSessionRO);
+	rv = CRYPTOKI_F_PTR( C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSessionRO) );
 	CPPUNIT_ASSERT(rv == CKR_CRYPTOKI_NOT_INITIALIZED);
 
 	// Initialize the library and start the test.
-	rv = C_Initialize(NULL_PTR);
+	rv = CRYPTOKI_F_PTR( C_Initialize(NULL_PTR) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// Open read-only session
-	rv = C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSessionRO);
+	rv = CRYPTOKI_F_PTR( C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSessionRO) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// Open read-write session
-	rv = C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSessionRW);
+	rv = CRYPTOKI_F_PTR( C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSessionRW) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// Login USER into the sessions so we can create a private objects
-	rv = C_Login(hSessionRO,CKU_USER,m_userPin1,m_userPin1Length);
+	rv = CRYPTOKI_F_PTR( C_Login(hSessionRO,CKU_USER,m_userPin1,m_userPin1Length) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// Public Session keys
@@ -406,7 +406,7 @@ void DeriveTests::symDerive(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hKey, C
 	CK_BYTE check[3];
 	checkAttribs[0].pValue = check;
 	checkAttribs[0].ulValueLen = sizeof(check);
-	rv = C_GetAttributeValue(hSession, hDerive, checkAttribs, 1);
+	rv = CRYPTOKI_F_PTR( C_GetAttributeValue(hSession, hDerive, checkAttribs, 1) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 	CPPUNIT_ASSERT(checkAttribs[0].ulValueLen == 3);
 
@@ -417,18 +417,18 @@ void DeriveTests::symDerive(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hKey, C
 	CK_BYTE recoveredText[300];
 	CK_ULONG ulRecoveredTextLen;
 
-	rv = C_EncryptInit(hSession,&mechEncrypt,hDerive);
+	rv = CRYPTOKI_F_PTR( C_EncryptInit(hSession,&mechEncrypt,hDerive) );
 	CPPUNIT_ASSERT(rv==CKR_OK);
 
 	ulCipherTextLen = sizeof(cipherText);
-	rv = C_Encrypt(hSession,data,sizeof(data),cipherText,&ulCipherTextLen);
+	rv = CRYPTOKI_F_PTR( C_Encrypt(hSession,data,sizeof(data),cipherText,&ulCipherTextLen) );
 	CPPUNIT_ASSERT(rv==CKR_OK);
 
-	rv = C_DecryptInit(hSession,&mechEncrypt,hDerive);
+	rv = CRYPTOKI_F_PTR( C_DecryptInit(hSession,&mechEncrypt,hDerive) );
 	CPPUNIT_ASSERT(rv==CKR_OK);
 
 	ulRecoveredTextLen = sizeof(recoveredText);
-	rv = C_Decrypt(hSession,cipherText,ulCipherTextLen,recoveredText,&ulRecoveredTextLen);
+	rv = CRYPTOKI_F_PTR( C_Decrypt(hSession,cipherText,ulCipherTextLen,recoveredText,&ulRecoveredTextLen) );
 	CPPUNIT_ASSERT(rv==CKR_OK);
 	CPPUNIT_ASSERT(ulRecoveredTextLen==sizeof(data));
 
@@ -442,26 +442,26 @@ void DeriveTests::testSymDerive()
 	CK_SESSION_HANDLE hSessionRW;
 
 	// Just make sure that we finalize any previous tests
-	C_Finalize(NULL_PTR);
+	CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
 
 	// Open read-only session on when the token is not initialized should fail
-	rv = C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSessionRO);
+	rv = CRYPTOKI_F_PTR( C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSessionRO) );
 	CPPUNIT_ASSERT(rv == CKR_CRYPTOKI_NOT_INITIALIZED);
 
 	// Initialize the library and start the test.
-	rv = C_Initialize(NULL_PTR);
+	rv = CRYPTOKI_F_PTR( C_Initialize(NULL_PTR) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// Open read-only session
-	rv = C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSessionRO);
+	rv = CRYPTOKI_F_PTR( C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSessionRO) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// Open read-write session
-	rv = C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSessionRW);
+	rv = CRYPTOKI_F_PTR( C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSessionRW) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// Login USER into the sessions so we can create private objects
-	rv = C_Login(hSessionRO,CKU_USER,m_userPin1,m_userPin1Length);
+	rv = CRYPTOKI_F_PTR( C_Login(hSessionRO,CKU_USER,m_userPin1,m_userPin1Length) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// Generate base key

@@ -100,17 +100,17 @@ void SignVerifyTests::rsaPkcsSignVerify(CK_MECHANISM_TYPE mechanismType, CK_SESS
 	CK_BYTE signature[256];
 	CK_ULONG ulSignatureLen = 0;
 
-	rv = C_SignInit(hSession,&mechanism,hPrivateKey);
+	rv = CRYPTOKI_F_PTR( C_SignInit(hSession,&mechanism,hPrivateKey) );
 	CPPUNIT_ASSERT(rv==CKR_OK);
 
 	ulSignatureLen = sizeof(signature);
-	rv = C_Sign(hSession,data,sizeof(data),signature,&ulSignatureLen);
+	rv = CRYPTOKI_F_PTR( C_Sign(hSession,data,sizeof(data),signature,&ulSignatureLen) );
 	CPPUNIT_ASSERT(rv==CKR_OK);
 
-	rv = C_VerifyInit(hSession,&mechanism,hPublicKey);
+	rv = CRYPTOKI_F_PTR( C_VerifyInit(hSession,&mechanism,hPublicKey) );
 	CPPUNIT_ASSERT(rv==CKR_OK);
 
-	rv = C_Verify(hSession,data,sizeof(data),signature,ulSignatureLen);
+	rv = CRYPTOKI_F_PTR( C_Verify(hSession,data,sizeof(data),signature,ulSignatureLen) );
 	CPPUNIT_ASSERT(rv==CKR_OK);
 }
 
@@ -122,34 +122,34 @@ void SignVerifyTests::digestRsaPkcsSignVerify(CK_MECHANISM_TYPE mechanismType, C
 	CK_BYTE signature[256];
 	CK_ULONG ulSignatureLen = 0;
 
-	rv = C_SignInit(hSession,&mechanism,hPrivateKey);
+	rv = CRYPTOKI_F_PTR( C_SignInit(hSession,&mechanism,hPrivateKey) );
 	CPPUNIT_ASSERT(rv==CKR_OK);
 
-	rv =C_SignUpdate(hSession,data,sizeof(data));
+	rv =CRYPTOKI_F_PTR( C_SignUpdate(hSession,data,sizeof(data)) );
 	CPPUNIT_ASSERT(rv==CKR_OK);
 
 	ulSignatureLen = sizeof(signature);
-	rv =C_SignFinal(hSession,signature,&ulSignatureLen);
+	rv =CRYPTOKI_F_PTR( C_SignFinal(hSession,signature,&ulSignatureLen) );
 	CPPUNIT_ASSERT(rv==CKR_OK);
 
-	rv = C_VerifyInit(hSession,&mechanism,hPublicKey);
+	rv = CRYPTOKI_F_PTR( C_VerifyInit(hSession,&mechanism,hPublicKey) );
 	CPPUNIT_ASSERT(rv==CKR_OK);
 
-	rv = C_VerifyUpdate(hSession,data,sizeof(data));
+	rv = CRYPTOKI_F_PTR( C_VerifyUpdate(hSession,data,sizeof(data)) );
 	CPPUNIT_ASSERT(rv==CKR_OK);
 
-	rv = C_VerifyFinal(hSession,signature,ulSignatureLen);
+	rv = CRYPTOKI_F_PTR( C_VerifyFinal(hSession,signature,ulSignatureLen) );
 	CPPUNIT_ASSERT(rv==CKR_OK);
 
 	// verify again, but now change the input that is being signed.
-	rv = C_VerifyInit(hSession,&mechanism,hPublicKey);
+	rv = CRYPTOKI_F_PTR( C_VerifyInit(hSession,&mechanism,hPublicKey) );
 	CPPUNIT_ASSERT(rv==CKR_OK);
 
 	data[0] = 0xff;
-	rv = C_VerifyUpdate(hSession,data,sizeof(data));
+	rv = CRYPTOKI_F_PTR( C_VerifyUpdate(hSession,data,sizeof(data)) );
 	CPPUNIT_ASSERT(rv==CKR_OK);
 
-	rv = C_VerifyFinal(hSession,signature,ulSignatureLen);
+	rv = CRYPTOKI_F_PTR( C_VerifyFinal(hSession,signature,ulSignatureLen) );
 	CPPUNIT_ASSERT(rv==CKR_SIGNATURE_INVALID);
 }
 
@@ -168,26 +168,26 @@ void SignVerifyTests::testRsaSignVerify()
 	};
 
 	// Just make sure that we finalize any previous tests
-	C_Finalize(NULL_PTR);
+	CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
 
 	// Open read-only session on when the token is not initialized should fail
-	rv = C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSessionRO);
+	rv = CRYPTOKI_F_PTR( C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSessionRO) );
 	CPPUNIT_ASSERT(rv == CKR_CRYPTOKI_NOT_INITIALIZED);
 
 	// Initialize the library and start the test.
-	rv = C_Initialize(NULL_PTR);
+	rv = CRYPTOKI_F_PTR( C_Initialize(NULL_PTR) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// Open read-only session
-	rv = C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSessionRO);
+	rv = CRYPTOKI_F_PTR( C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSessionRO) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// Open read-write session
-	rv = C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSessionRW);
+	rv = CRYPTOKI_F_PTR( C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSessionRW) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// Login USER into the sessions so we can create a private objects
-	rv = C_Login(hSessionRO,CKU_USER,m_userPin1,m_userPin1Length);
+	rv = CRYPTOKI_F_PTR( C_Login(hSessionRO,CKU_USER,m_userPin1,m_userPin1Length) );
 	CPPUNIT_ASSERT(rv==CKR_OK);
 
 	CK_OBJECT_HANDLE hPuk = CK_INVALID_HANDLE;
@@ -299,17 +299,17 @@ CK_RV SignVerifyTests::generateKey(CK_SESSION_HANDLE hSession, CK_KEY_TYPE keyTy
 		{ CKA_GOST28147_PARAMS, oid, sizeof(oid) }
 	};
 
-	rv = C_GenerateRandom(hSession, val, GEN_KEY_LEN);
+	rv = CRYPTOKI_F_PTR( C_GenerateRandom(hSession, val, GEN_KEY_LEN) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	hKey = CK_INVALID_HANDLE;
 	if (keyType == CKK_GOST28147)
 	{
-		return C_CreateObject(hSession, kAttribs, 9, &hKey);
+		return CRYPTOKI_F_PTR( C_CreateObject(hSession, kAttribs, 9, &hKey) );
 	}
 	else
 	{
-		return C_CreateObject(hSession, kAttribs, 8, &hKey);
+		return CRYPTOKI_F_PTR( C_CreateObject(hSession, kAttribs, 8, &hKey) );
 	}
 }
 
@@ -321,34 +321,34 @@ void SignVerifyTests::hmacSignVerify(CK_MECHANISM_TYPE mechanismType, CK_SESSION
 	CK_BYTE signature[256];
 	CK_ULONG ulSignatureLen = 0;
 
-	rv = C_SignInit(hSession,&mechanism,hKey);
+	rv = CRYPTOKI_F_PTR( C_SignInit(hSession,&mechanism,hKey) );
 	CPPUNIT_ASSERT(rv==CKR_OK);
 
-	rv =C_SignUpdate(hSession,data,sizeof(data));
+	rv =CRYPTOKI_F_PTR( C_SignUpdate(hSession,data,sizeof(data)) );
 	CPPUNIT_ASSERT(rv==CKR_OK);
 
 	ulSignatureLen = sizeof(signature);
-	rv =C_SignFinal(hSession,signature,&ulSignatureLen);
+	rv =CRYPTOKI_F_PTR( C_SignFinal(hSession,signature,&ulSignatureLen) );
 	CPPUNIT_ASSERT(rv==CKR_OK);
 
-	rv = C_VerifyInit(hSession,&mechanism,hKey);
+	rv = CRYPTOKI_F_PTR( C_VerifyInit(hSession,&mechanism,hKey) );
 	CPPUNIT_ASSERT(rv==CKR_OK);
 
-	rv = C_VerifyUpdate(hSession,data,sizeof(data));
+	rv = CRYPTOKI_F_PTR( C_VerifyUpdate(hSession,data,sizeof(data)) );
 	CPPUNIT_ASSERT(rv==CKR_OK);
 
-	rv = C_VerifyFinal(hSession,signature,ulSignatureLen);
+	rv = CRYPTOKI_F_PTR( C_VerifyFinal(hSession,signature,ulSignatureLen) );
 	CPPUNIT_ASSERT(rv==CKR_OK);
 
 	// verify again, but now change the input that is being signed.
-	rv = C_VerifyInit(hSession,&mechanism,hKey);
+	rv = CRYPTOKI_F_PTR( C_VerifyInit(hSession,&mechanism,hKey) );
 	CPPUNIT_ASSERT(rv==CKR_OK);
 
 	data[0] = 0xff;
-	rv = C_VerifyUpdate(hSession,data,sizeof(data));
+	rv = CRYPTOKI_F_PTR( C_VerifyUpdate(hSession,data,sizeof(data)) );
 	CPPUNIT_ASSERT(rv==CKR_OK);
 
-	rv = C_VerifyFinal(hSession,signature,ulSignatureLen);
+	rv = CRYPTOKI_F_PTR( C_VerifyFinal(hSession,signature,ulSignatureLen) );
 	CPPUNIT_ASSERT(rv==CKR_SIGNATURE_INVALID);
 }
 
@@ -359,26 +359,26 @@ void SignVerifyTests::testHmacSignVerify()
 	CK_SESSION_HANDLE hSessionRW;
 
 	// Just make sure that we finalize any previous tests
-	C_Finalize(NULL_PTR);
+	CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
 
 	// Open read-only session on when the token is not initialized should fail
-	rv = C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSessionRO);
+	rv = CRYPTOKI_F_PTR( C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSessionRO) );
 	CPPUNIT_ASSERT(rv == CKR_CRYPTOKI_NOT_INITIALIZED);
 
 	// Initialize the library and start the test.
-	rv = C_Initialize(NULL_PTR);
+	rv = CRYPTOKI_F_PTR( C_Initialize(NULL_PTR) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// Open read-only session
-	rv = C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSessionRO);
+	rv = CRYPTOKI_F_PTR( C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSessionRO) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// Open read-write session
-	rv = C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSessionRW);
+	rv = CRYPTOKI_F_PTR( C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSessionRW) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// Login USER into the sessions so we can create a private objects
-	rv = C_Login(hSessionRO,CKU_USER,m_userPin1,m_userPin1Length);
+	rv = CRYPTOKI_F_PTR( C_Login(hSessionRO,CKU_USER,m_userPin1,m_userPin1Length) );
 	CPPUNIT_ASSERT(rv==CKR_OK);
 
 	// Public Session keys
