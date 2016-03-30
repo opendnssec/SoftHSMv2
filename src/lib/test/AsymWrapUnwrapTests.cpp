@@ -63,9 +63,9 @@ CK_RV AsymWrapUnwrapTests::generateAesKey(CK_SESSION_HANDLE hSession, CK_OBJECT_
 	};
 
 	hKey = CK_INVALID_HANDLE;
-	return C_GenerateKey(hSession, &mechanism,
+	return CRYPTOKI_F_PTR( C_GenerateKey(hSession, &mechanism,
 			     keyAttribs, sizeof(keyAttribs)/sizeof(CK_ATTRIBUTE),
-			     &hKey);
+			     &hKey) );
 }
 
 CK_RV AsymWrapUnwrapTests::generateRsaKeyPair(CK_SESSION_HANDLE hSession, CK_BBOOL bTokenPuk, CK_BBOOL bPrivatePuk, CK_BBOOL bTokenPrk, CK_BBOOL bPrivatePrk, CK_OBJECT_HANDLE &hPuk, CK_OBJECT_HANDLE &hPrk)
@@ -99,10 +99,10 @@ CK_RV AsymWrapUnwrapTests::generateRsaKeyPair(CK_SESSION_HANDLE hSession, CK_BBO
 
 	hPuk = CK_INVALID_HANDLE;
 	hPrk = CK_INVALID_HANDLE;
-	return C_GenerateKeyPair(hSession, &mechanism,
+	return CRYPTOKI_F_PTR( C_GenerateKeyPair(hSession, &mechanism,
 							 pukAttribs, sizeof(pukAttribs)/sizeof(CK_ATTRIBUTE),
 							 prkAttribs, sizeof(prkAttribs)/sizeof(CK_ATTRIBUTE),
-							 &hPuk, &hPrk);
+							 &hPuk, &hPrk) );
 }
 
 void AsymWrapUnwrapTests::rsaWrapUnwrap(CK_MECHANISM_TYPE mechanismType, CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hPublicKey, CK_OBJECT_HANDLE hPrivateKey)

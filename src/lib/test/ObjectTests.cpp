@@ -631,10 +631,10 @@ CK_RV ObjectTests::generateRsaKeyPair(CK_SESSION_HANDLE hSession, CK_BBOOL bToke
 
 	hPuk = CK_INVALID_HANDLE;
 	hPrk = CK_INVALID_HANDLE;
-	return C_GenerateKeyPair(hSession, &mechanism,
+	return CRYPTOKI_F_PTR( C_GenerateKeyPair(hSession, &mechanism,
 							 pukAttribs, sizeof(pukAttribs)/sizeof(CK_ATTRIBUTE),
 							 prkAttribs, sizeof(prkAttribs)/sizeof(CK_ATTRIBUTE),
-							 &hPuk, &hPrk);
+							 &hPuk, &hPrk) );
 }
 
 void ObjectTests::testCreateObject()
@@ -1175,7 +1175,7 @@ void ObjectTests::testGetAttributeValue()
 		{ CKA_CLASS, &cClass, sizeof(cClass) }
 	};
 
-	rv = CRYPTOKI_F_PTR( C_GetAttributeValue (hSessionRO,hObjectSessionPublic,&attribs[0],1);//sizeof(attribs)/sizeof(CK_ATTRIBUTE)) );
+	rv = CRYPTOKI_F_PTR( C_GetAttributeValue (hSessionRO,hObjectSessionPublic,&attribs[0],1) );//sizeof(attribs)/sizeof(CK_ATTRIBUTE));
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// Close session
@@ -1611,7 +1611,7 @@ void ObjectTests::testDefaultX509CertAttributes()
 	checkCommonObjectAttributes(hSession, hObject, objClass);
 	checkCommonStorageObjectAttributes(hSession, hObject, CK_FALSE, CK_FALSE, CK_TRUE, NULL_PTR, 0, CK_TRUE);
 	memset(&emptyDate, 0, sizeof(emptyDate));
-	checkCommonCertificateObjectAttributes(hSession, hObject, CKCRYPTOKI_F_PTR( C_X_509, CK_FALSE, 0, pCheckValue, sizeof(pCheckValue), emptyDate, 0, emptyDate, 0) );
+	checkCommonCertificateObjectAttributes(hSession, hObject, CKC_X_509, CK_FALSE, 0, pCheckValue, sizeof(pCheckValue), emptyDate, 0, emptyDate, 0);
 	checkX509CertificateObjectAttributes(hSession, hObject, pSubject, sizeof(pSubject)-1, NULL_PTR, 0, NULL_PTR, 0, NULL_PTR, 0, pValue, sizeof(pValue)-1, NULL_PTR, 0, NULL_PTR, 0, NULL_PTR, 0, 0, CKM_SHA_1);
 }
 

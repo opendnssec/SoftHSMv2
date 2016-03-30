@@ -63,9 +63,9 @@ CK_RV SymmetricAlgorithmTests::generateAesKey(CK_SESSION_HANDLE hSession, CK_BBO
 	};
 
 	hKey = CK_INVALID_HANDLE;
-	return C_GenerateKey(hSession, &mechanism,
+	return CRYPTOKI_F_PTR( C_GenerateKey(hSession, &mechanism,
 			     keyAttribs, sizeof(keyAttribs)/sizeof(CK_ATTRIBUTE),
-			     &hKey);
+			     &hKey) );
 }
 
 #ifndef WITH_FIPS
@@ -82,9 +82,9 @@ CK_RV SymmetricAlgorithmTests::generateDesKey(CK_SESSION_HANDLE hSession, CK_BBO
 	};
 
 	hKey = CK_INVALID_HANDLE;
-	return C_GenerateKey(hSession, &mechanism,
+	return CRYPTOKI_F_PTR( C_GenerateKey(hSession, &mechanism,
 			     keyAttribs, sizeof(keyAttribs)/sizeof(CK_ATTRIBUTE),
-			     &hKey);
+			     &hKey) );
 }
 
 CK_RV SymmetricAlgorithmTests::generateDes2Key(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_OBJECT_HANDLE &hKey)
@@ -100,9 +100,9 @@ CK_RV SymmetricAlgorithmTests::generateDes2Key(CK_SESSION_HANDLE hSession, CK_BB
 	};
 
 	hKey = CK_INVALID_HANDLE;
-	return C_GenerateKey(hSession, &mechanism,
+	return CRYPTOKI_F_PTR( C_GenerateKey(hSession, &mechanism,
 			     keyAttribs, sizeof(keyAttribs)/sizeof(CK_ATTRIBUTE),
-			     &hKey);
+			     &hKey) );
 }
 #endif
 
@@ -119,9 +119,9 @@ CK_RV SymmetricAlgorithmTests::generateDes3Key(CK_SESSION_HANDLE hSession, CK_BB
 	};
 
 	hKey = CK_INVALID_HANDLE;
-	return C_GenerateKey(hSession, &mechanism,
+	return CRYPTOKI_F_PTR( C_GenerateKey(hSession, &mechanism,
 			     keyAttribs, sizeof(keyAttribs)/sizeof(CK_ATTRIBUTE),
-			     &hKey);
+			     &hKey) );
 }
 
 void SymmetricAlgorithmTests::aesEncryptDecrypt(CK_MECHANISM_TYPE mechanismType, CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hKey)
@@ -939,9 +939,9 @@ void SymmetricAlgorithmTests::testNonModifiableDesKeyGeneration()
 	rv = CRYPTOKI_F_PTR( C_Login(hSession, CKU_USER, m_userPin1, m_userPin1Length) );
 	CPPUNIT_ASSERT(rv==CKR_OK);
 
-	rv = C_GenerateKey(hSession, &mechanism,
+	rv = CRYPTOKI_F_PTR( C_GenerateKey(hSession, &mechanism,
 		keyAttribs, sizeof(keyAttribs)/sizeof(CK_ATTRIBUTE),
-		&hKey);
+		&hKey) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	rv = CRYPTOKI_F_PTR( C_DestroyObject(hSession, hKey) );
@@ -952,9 +952,9 @@ void SymmetricAlgorithmTests::testNonModifiableDesKeyGeneration()
 	keyAttribs[2].pValue = &bFalse;
 	keyAttribs[2].ulValueLen = sizeof(bFalse);
 
-	rv = C_GenerateKey(hSession, &mechanism,
+	rv = CRYPTOKI_F_PTR( C_GenerateKey(hSession, &mechanism,
 		keyAttribs, sizeof(keyAttribs) / sizeof(CK_ATTRIBUTE),
-		&hKey);
+		&hKey) );
 	// The call would fail with CKR_ATTRIBUTE_READ_ONLY
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
@@ -969,18 +969,18 @@ void SymmetricAlgorithmTests::testNonModifiableDesKeyGeneration()
 		{ CKA_MODIFIABLE, &bTrue, sizeof(bTrue) }
 	};
 
-	rv = C_GenerateKey(hSession, &mechanism,
+	rv = CRYPTOKI_F_PTR( C_GenerateKey(hSession, &mechanism,
 		keyAttribs1, sizeof(keyAttribs1) / sizeof(CK_ATTRIBUTE),
-		&hKey);
+		&hKey) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// Now when CKA_MODIFIABLE is bFalse the key generation succeeds
 	keyAttribs1[2].pValue = &bFalse;
 	keyAttribs1[2].ulValueLen = sizeof(bFalse);
 
-	rv = C_GenerateKey(hSession, &mechanism,
+	rv = CRYPTOKI_F_PTR( C_GenerateKey(hSession, &mechanism,
 		keyAttribs1, sizeof(keyAttribs1) / sizeof(CK_ATTRIBUTE),
-		&hKey);
+		&hKey) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 }
 
@@ -1021,15 +1021,15 @@ void SymmetricAlgorithmTests::testCheckValue()
 		{ CKA_CHECK_VALUE, &pCheckValue, sizeof(pCheckValue) }
 	};
 
-	rv = C_GenerateKey(hSession, &mechanism,
+	rv = CRYPTOKI_F_PTR( C_GenerateKey(hSession, &mechanism,
 			   keyAttribs, 8,
-			   &hKey);
+			   &hKey) );
 	CPPUNIT_ASSERT(rv == CKR_ATTRIBUTE_VALUE_INVALID);
 
 	keyAttribs[7].ulValueLen = 0;
-	rv = C_GenerateKey(hSession, &mechanism,
+	rv = CRYPTOKI_F_PTR( C_GenerateKey(hSession, &mechanism,
 			   keyAttribs, 8,
-			   &hKey);
+			   &hKey) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	CK_ATTRIBUTE checkAttrib[] = {
@@ -1043,9 +1043,9 @@ void SymmetricAlgorithmTests::testCheckValue()
 	rv = CRYPTOKI_F_PTR( C_DestroyObject(hSession, hKey) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	rv = C_GenerateKey(hSession, &mechanism,
+	rv = CRYPTOKI_F_PTR( C_GenerateKey(hSession, &mechanism,
 			   keyAttribs, 7,
-			   &hKey);
+			   &hKey) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	rv = CRYPTOKI_F_PTR( C_GetAttributeValue(hSession, hKey, checkAttrib, 1) );

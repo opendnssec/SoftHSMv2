@@ -86,10 +86,10 @@ CK_RV DeriveTests::generateDhKeyPair(CK_SESSION_HANDLE hSession, CK_BBOOL bToken
 
 	hPuk = CK_INVALID_HANDLE;
 	hPrk = CK_INVALID_HANDLE;
-	return C_GenerateKeyPair(hSession, &mechanism,
+	return CRYPTOKI_F_PTR( C_GenerateKeyPair(hSession, &mechanism,
 			pukAttribs, sizeof(pukAttribs)/sizeof(CK_ATTRIBUTE),
 			prkAttribs, sizeof(prkAttribs)/sizeof(CK_ATTRIBUTE),
-			&hPuk, &hPrk);
+			&hPuk, &hPrk) );
 }
 
 CK_RV DeriveTests::generateAesKey(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_OBJECT_HANDLE &hKey)
@@ -107,9 +107,9 @@ CK_RV DeriveTests::generateAesKey(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, C
 	};
 
 	hKey = CK_INVALID_HANDLE;
-	return C_GenerateKey(hSession, &mechanism,
+	return CRYPTOKI_F_PTR( C_GenerateKey(hSession, &mechanism,
 			     keyAttribs, sizeof(keyAttribs)/sizeof(CK_ATTRIBUTE),
-			     &hKey);
+			     &hKey) );
 }
 
 #ifndef WITH_FIPS
@@ -126,9 +126,9 @@ CK_RV DeriveTests::generateDesKey(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, C
 	};
 
 	hKey = CK_INVALID_HANDLE;
-	return C_GenerateKey(hSession, &mechanism,
+	return CRYPTOKI_F_PTR( C_GenerateKey(hSession, &mechanism,
 			     keyAttribs, sizeof(keyAttribs)/sizeof(CK_ATTRIBUTE),
-			     &hKey);
+			     &hKey) );
 }
 #endif
 
@@ -145,9 +145,9 @@ CK_RV DeriveTests::generateDes2Key(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, 
 	};
 
 	hKey = CK_INVALID_HANDLE;
-	return C_GenerateKey(hSession, &mechanism,
+	return CRYPTOKI_F_PTR( C_GenerateKey(hSession, &mechanism,
 			     keyAttribs, sizeof(keyAttribs)/sizeof(CK_ATTRIBUTE),
-			     &hKey);
+			     &hKey) );
 }
 
 CK_RV DeriveTests::generateDes3Key(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_OBJECT_HANDLE &hKey)
@@ -163,9 +163,9 @@ CK_RV DeriveTests::generateDes3Key(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, 
 	};
 
 	hKey = CK_INVALID_HANDLE;
-	return C_GenerateKey(hSession, &mechanism,
+	return CRYPTOKI_F_PTR( C_GenerateKey(hSession, &mechanism,
 			     keyAttribs, sizeof(keyAttribs)/sizeof(CK_ATTRIBUTE),
-			     &hKey);
+			     &hKey) );
 }
 
 void DeriveTests::dhDerive(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hPublicKey, CK_OBJECT_HANDLE hPrivateKey, CK_OBJECT_HANDLE &hKey)
@@ -194,9 +194,9 @@ void DeriveTests::dhDerive(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hPublicK
 	};
 
 	hKey = CK_INVALID_HANDLE;
-	rv = C_DeriveKey(hSession, &mechanism, hPrivateKey,
+	rv = CRYPTOKI_F_PTR( C_DeriveKey(hSession, &mechanism, hPrivateKey,
 			 keyAttribs, sizeof(keyAttribs)/sizeof(CK_ATTRIBUTE),
-			 &hKey);
+			 &hKey) );
 	free(valAttrib.pValue);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 }
@@ -387,15 +387,15 @@ void DeriveTests::symDerive(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hKey, C
 	hDerive = CK_INVALID_HANDLE;
 	if (secLen > 0)
 	{
-		rv = C_DeriveKey(hSession, &mechanism, hKey,
+		rv = CRYPTOKI_F_PTR( C_DeriveKey(hSession, &mechanism, hKey,
 				 keyAttribs, sizeof(keyAttribs)/sizeof(CK_ATTRIBUTE),
-				 &hDerive);
+				 &hDerive) );
 	}
 	else
 	{
-		rv = C_DeriveKey(hSession, &mechanism, hKey,
+		rv = CRYPTOKI_F_PTR( C_DeriveKey(hSession, &mechanism, hKey,
 				 keyAttribs, sizeof(keyAttribs)/sizeof(CK_ATTRIBUTE) - 1,
-				 &hDerive);
+				 &hDerive) );
 	}
 	CPPUNIT_ASSERT(rv == CKR_OK);
 

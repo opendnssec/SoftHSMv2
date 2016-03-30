@@ -65,7 +65,7 @@ static CK_FUNCTION_LIST_PTR getFunctionListPtr(const char*const libName, void *c
 	}
 	return ptr;
 }
-static void getSlotIDs( CK_SLOT_ID*const pInitializedTokenSlotID, CK_SLOT_ID*const pFreeTokenSlotID ) {
+void TestsNoPINInitBase::getSlotIDs() {
 	bool hasFoundFree(false);
 	bool hasFoundInitialized(false);
 	CK_ULONG nrOfSlots;
@@ -78,17 +78,17 @@ static void getSlotIDs( CK_SLOT_ID*const pInitializedTokenSlotID, CK_SLOT_ID*con
 		if ( tokenInfo.flags&CKF_TOKEN_INITIALIZED ) {
 			if ( !hasFoundInitialized ) {
 				hasFoundInitialized = true;
-				*pInitializedTokenSlotID = *i;
+				m_initializedTokenSlotID = *i;
 			}
 		} else {
 			if ( !hasFoundFree ) {
 				hasFoundFree = true;
-				*pFreeTokenSlotID = *i;
+				m_notInitializedTokenSlotID = *i;
 			}
 		}
 	}
 	if ( !hasFoundInitialized ) {
-		*pInitializedTokenSlotID = *pFreeTokenSlotID;
+		m_initializedTokenSlotID = m_notInitializedTokenSlotID;
 	}
 }
 
@@ -99,7 +99,7 @@ TestsNoPINInitBase::TestsNoPINInitBase() :
 #else
 		p11Library( dlopen(P11M, RTLD_LAZY) ),
 #endif
-		ptr(getFunctionListPtr(P11M, p11Library, "C_GetFunctionList")),
+		m_ptr(getFunctionListPtr(P11M, p11Library, "C_GetFunctionList")),
 #endif
 		m_invalidSlotID(-1),
 		m_initializedTokenSlotID(m_invalidSlotID),
@@ -115,22 +115,28 @@ void TestsNoPINInitBase::setUp() {
 	memcpy(label, "token1", strlen("token1"));
 
 	// initialize cryptoki
-	CPPUNIT_ASSERT( CRYPTOKI_F_PTR( C_Initialize(NULL_PTR)==CKR_OK ) );
+	CPPUNIT_ASSERT_EQUAL( (CK_RV)CKR_OK, CRYPTOKI_F_PTR( C_Initialize(NULL_PTR) ) );
 	// update slot IDs to initialized and not initialized token.
-	getSlotIDs(&m_initializedTokenSlotID, &m_notInitializedTokenSlotID);
+	getSlotIDs();
 	// (Re)initialize the token
-	CPPUNIT_ASSERT( CRYPTOKI_F_PTR( C_InitToken(m_initializedTokenSlotID, m_soPin1, m_soPin1Length, label)==CKR_OK ) );
+	CPPUNIT_ASSERT_EQUAL( (CK_RV)CKR_OK, CRYPTOKI_F_PTR( C_InitToken(m_initializedTokenSlotID, m_soPin1, m_soPin1Length, label) ) );
 	// Reset cryptoki to get new slot IDs.
-	CPPUNIT_ASSERT( CRYPTOKI_F_PTR( C_Finalize(NULL_PTR)==CKR_OK ) );
-	CPPUNIT_ASSERT( CRYPTOKI_F_PTR( C_Initialize(NULL_PTR)==CKR_OK ) );
+	CPPUNIT_ASSERT_EQUAL( (CK_RV)CKR_OK, CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) ) );
+	CPPUNIT_ASSERT_EQUAL( (CK_RV)CKR_OK, CRYPTOKI_F_PTR( C_Initialize(NULL_PTR) ) );
 	// slot IDs must be updated since the ID of the initialized token has changed.
-	getSlotIDs(&m_initializedTokenSlotID, &m_notInitializedTokenSlotID);
+	getSlotIDs();
 }
 
-void TestsNoPINInitBase::tearDown()
-{
-	CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
+void TestsNoPINInitBase::tearDown() {
+	const CK_RV result(CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) ) );
+	if ( result==CKR_OK||result==CKR_CRYPTOKI_NOT_INITIALIZED ) {
+		return;
+	}
+	std::ostringstream oss;
+	oss << "C_Finalize failed with CK_RV: " << std::hex << result;
+	CPPUNIT_ASSERT_MESSAGE(oss.str(), false);
 }
+
 TestsNoPINInitBase::~TestsNoPINInitBase() {
 	if ( !p11Library ) {
 		return;
@@ -141,3 +147,10 @@ TestsNoPINInitBase::~TestsNoPINInitBase() {
 	dlclose(p11Library);
 #endif
 }
+
+#ifdef P11M
+void softHSMLog(const int loglevel, const char* functionName, const char* fileName, const int lineNo, const char* format, ...)
+{
+
+}
+#endif

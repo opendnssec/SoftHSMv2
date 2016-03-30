@@ -86,10 +86,10 @@ CK_RV SignVerifyTests::generateRsaKeyPair(CK_SESSION_HANDLE hSession, CK_BBOOL b
 
 	hPuk = CK_INVALID_HANDLE;
 	hPrk = CK_INVALID_HANDLE;
-	return C_GenerateKeyPair(hSession, &mechanism,
+	return CRYPTOKI_F_PTR( C_GenerateKeyPair(hSession, &mechanism,
 							 pukAttribs, sizeof(pukAttribs)/sizeof(CK_ATTRIBUTE),
 							 prkAttribs, sizeof(prkAttribs)/sizeof(CK_ATTRIBUTE),
-							 &hPuk, &hPrk);
+							 &hPuk, &hPrk) );
 }
 
 void SignVerifyTests::rsaPkcsSignVerify(CK_MECHANISM_TYPE mechanismType, CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hPublicKey, CK_OBJECT_HANDLE hPrivateKey)

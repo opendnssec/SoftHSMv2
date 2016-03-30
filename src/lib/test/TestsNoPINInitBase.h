@@ -38,7 +38,7 @@
 
 
 #ifdef P11M
-#define CRYPTOKI_F_PTR(func) ptr->func
+#define CRYPTOKI_F_PTR(func) m_ptr->func
 #else
 #define CRYPTOKI_F_PTR(func)
 #endif
@@ -50,15 +50,16 @@ public:
 
 	virtual void setUp();
 	virtual void tearDown();
-#ifdef P11M
 private:
+	void getSlotIDs();
+#ifdef P11M
 #ifdef _WIN32
 	HINSTANCE__* p11Library;
 #else
 	void *const p11Library;
 #endif
 protected:
-	const CK_FUNCTION_LIST_PTR ptr;
+	const CK_FUNCTION_LIST_PTR m_ptr;
 #else
 protected:
 #endif
