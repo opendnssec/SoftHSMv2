@@ -123,10 +123,10 @@ void DigestTests::testDigest()
 
 	rv = CRYPTOKI_F_PTR( C_Digest(hSession, data, sizeof(data)-1, digest, &digestLen) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
-	free(digest);
 
 	rv = CRYPTOKI_F_PTR( C_Digest(hSession, data, sizeof(data)-1, digest, &digestLen) );
 	CPPUNIT_ASSERT(rv == CKR_OPERATION_NOT_INITIALIZED);
+	free(digest);
 }
 
 void DigestTests::testDigestUpdate()

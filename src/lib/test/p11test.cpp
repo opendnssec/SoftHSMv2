@@ -32,9 +32,27 @@
 
 #include <cppunit/extensions/TestFactoryRegistry.h>
 #include <cppunit/ui/text/TestRunner.h>
+#include <cppunit/TestResult.h>
+#include <cppunit/TestFailure.h>
+#include <cppunit/TestResultCollector.h>
+#include <cppunit/SourceLine.h>
+#include <cppunit/Message.h>
+#include <cppunit/Exception.h>
 #include <stdlib.h>
+#include <iostream>
 
-int main(int /*argc*/, char** /*argv*/)
+class MyListener : public CPPUNIT_NS::TestListener {
+	virtual void startTest( CPPUNIT_NS::Test*const pTest ) {
+		std::cout << std::endl << pTest->getName() << ' ' << pTest->countTestCases() << std::endl << std::endl;
+	}
+	virtual void addFailure( const CPPUNIT_NS::TestFailure & failure ) {
+		const CPPUNIT_NS::SourceLine solurceLine( failure.sourceLine() );
+		CPPUNIT_NS::Message message( failure.thrownException()->message() );
+		std::cout << solurceLine.fileName() << ' ' << solurceLine.lineNumber() << ' ' << message.shortDescription() << std::endl;
+		std::cout << message.details() << std::endl << std::endl;
+	}
+};
+int main(int argc, char** /* argv */)
 {
 #ifndef _WIN32
 	setenv("SOFTHSM2_CONF", "./softhsm2.conf", 1);
@@ -42,12 +60,22 @@ int main(int /*argc*/, char** /*argv*/)
 	setenv("SOFTHSM2_CONF", ".\\softhsm2.conf", 1);
 #endif
 
-	CppUnit::TextUi::TestRunner runner;
-	CppUnit::TestFactoryRegistry &registry = CppUnit::TestFactoryRegistry::getRegistry();
+	CPPUNIT_NS::TestFactoryRegistry &registry( CPPUNIT_NS::TestFactoryRegistry::getRegistry() );
 
+	if ( argc<2 ) {
+		CPPUNIT_NS::TextTestRunner runner;
+		runner.addTest(registry.makeTest());
+		return runner.run() ? 0 : 1;
+	}
+	CPPUNIT_NS::TestRunner runner;
 	runner.addTest(registry.makeTest());
-	bool wasSucessful = runner.run();
+	CPPUNIT_NS::TestResult controller;
+	CPPUNIT_NS::TestResultCollector result;
+	controller.addListener( &result );
+	MyListener progress;
+	controller.addListener( &progress );
 
-	return wasSucessful ? 0 : 1;
+	runner.run(controller);
+	return result.wasSuccessful() ? 0 : 1;
 }
 
