@@ -32,5 +32,6 @@ p11test_LDFLAGS = 		@CRYPTO_LIBS@ -no-install `cppunit-config --libs` -pthread -
 TESTS = 			p11test
 
 EXTRA_DIST =			$(srcdir)/*.h \
+				$(srcdir)/softhsm2-alt.conf.win32 \
 				$(srcdir)/softhsm2.conf.win32 \
 				$(srcdir)/tokens/dummy.in
