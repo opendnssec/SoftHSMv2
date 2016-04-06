@@ -1,5 +1,15 @@
 NEWS for SoftHSM -- History of user visible changes
 
+SoftHSM develop
+
+* Issue #198: Calling C_GetSlotList with NULL_PTR will make sure that
+  there is always a slot with an uninitialized token available.
+
+Bugfixes:
+* Issue #201: Missing new source file and test configuration in the
+  Windows build project.
+
+
 SoftHSM 2.1.0 - 2016-03-14
 
 * Issue #136: Improved guide and build scripts for Windows.
