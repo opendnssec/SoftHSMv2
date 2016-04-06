@@ -191,6 +191,31 @@ bool SessionObject::setAttribute(CK_ATTRIBUTE_TYPE type, const OSAttribute& attr
 	return true;
 }
 
+// Delete the specified attribute
+bool SessionObject::deleteAttribute(CK_ATTRIBUTE_TYPE type)
+{
+	MutexLocker lock(objectMutex);
+
+	if (!valid)
+	{
+		DEBUG_MSG("Cannot update invalid session object 0x%08X", this);
+
+		return false;
+	}
+
+	if (attributes[type] == NULL)
+	{
+		DEBUG_MSG("Cannot delete attribute that doesn't exist in object 0x%08X", this);
+
+		return false;
+	}
+
+	delete attributes[type];
+	attributes.erase(type);
+
+	return true;
+}
+
 // The validity state of the object
 bool SessionObject::isValid()
 {

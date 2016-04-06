@@ -43,13 +43,13 @@ class ObjectStoreToken
 public:
 	// Select the type of backend to use for storing token objects.
 	static bool selectBackend(const std::string& backend);
-	
+
 	// Create a new token
 	static ObjectStoreToken* createToken(const std::string basePath, const std::string tokenDir, const ByteString& label, const ByteString& serial);
 
 	// Access an existing token
 	static ObjectStoreToken* accessToken(const std::string &basePath, const std::string &tokenDir);
-	
+
 	// Set the SO PIN
 	virtual bool setSOPIN(const ByteString& soPINBlob) = 0;
 
@@ -96,7 +96,10 @@ public:
 	virtual void invalidate() = 0;
 
 	// Delete the token
-	virtual bool clearToken()  = 0;
+	virtual bool clearToken() = 0;
+
+	// Reset the token
+	virtual bool resetToken(const ByteString& label) = 0;
 };
 
 #endif // !_SOFTHSM_V2_OBJECTSTORETOKEN_H

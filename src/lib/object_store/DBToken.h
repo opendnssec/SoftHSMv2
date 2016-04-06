@@ -63,7 +63,7 @@ public:
 
 	// Access an existing token
 	static DBToken* accessToken(const std::string &basePath, const std::string &tokenDir);
-	
+
 	// Destructor
 	virtual ~DBToken();
 
@@ -111,6 +111,9 @@ public:
 
 	// Delete the token
 	virtual bool clearToken();
+
+	// Reset the token
+	virtual bool resetToken(const ByteString& label);
 
 private:
 	DB::Connection *_connection;

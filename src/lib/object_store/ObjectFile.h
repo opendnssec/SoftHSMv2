@@ -72,6 +72,9 @@ public:
 	// Set the specified attribute
 	virtual bool setAttribute(CK_ATTRIBUTE_TYPE type, const OSAttribute& attribute);
 
+	// Delete the specified attribute
+	virtual bool deleteAttribute(CK_ATTRIBUTE_TYPE type);
+
 	// The validity state of the object (refresh from disk as a side effect)
 	virtual bool isValid();
 
