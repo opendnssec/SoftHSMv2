@@ -25,4 +25,4 @@ install-data-hook:
 		${INSTALL_DATA} ${top_builddir}/src/lib/common/softhsm2.conf ${DESTDIR}${sysconfdir}
 	${INSTALL_DATA} ${top_builddir}/src/lib/common/softhsm2.conf ${DESTDIR}${sysconfdir}/softhsm2.conf.sample
 	test -d ${DESTDIR}${softhsmtokendir} || \
-		${INSTALL} -d -m 700 ${DESTDIR}${softhsmtokendir}
+		${INSTALL} -d -m 1777 ${DESTDIR}${softhsmtokendir}
