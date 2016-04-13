@@ -52,7 +52,7 @@ class MyListener : public CPPUNIT_NS::TestListener {
 		std::cout << message.details() << std::endl << std::endl;
 	}
 };
-int main(int argc, char** /* argv */)
+int main(int argc, char**const argv)
 {
 #ifndef _WIN32
 	setenv("SOFTHSM2_CONF", "./softhsm2.conf", 1);
@@ -62,12 +62,14 @@ int main(int argc, char** /* argv */)
 
 	CPPUNIT_NS::TestFactoryRegistry &registry( CPPUNIT_NS::TestFactoryRegistry::getRegistry() );
 
+	CPPUNIT_NS::TextTestRunner runner;
+	runner.addTest(registry.makeTest());
 	if ( argc<2 ) {
-		CPPUNIT_NS::TextTestRunner runner;
-		runner.addTest(registry.makeTest());
 		return runner.run() ? 0 : 1;
 	}
-	CPPUNIT_NS::TestRunner runner;
+	if ( std::string("direct").find(*(argv+1))==std::string::npos ) {
+		return runner.run(*(argv+1)) ? 0 : 1;
+	}
 	runner.addTest(registry.makeTest());
 	CPPUNIT_NS::TestResult controller;
 	CPPUNIT_NS::TestResultCollector result;
