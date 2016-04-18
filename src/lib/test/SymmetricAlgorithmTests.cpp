@@ -551,10 +551,10 @@ CK_RV SymmetricAlgorithmTests::generateRsaPrivateKey(CK_SESSION_HANDLE hSession,
 	CK_OBJECT_HANDLE hPub = CK_INVALID_HANDLE;
 	hKey = CK_INVALID_HANDLE;
 	CK_RV rv;
-	rv = C_GenerateKeyPair(hSession, &mechanism,
+	rv = CRYPTOKI_F_PTR( C_GenerateKeyPair(hSession, &mechanism,
 			       pubAttribs, sizeof(pubAttribs)/sizeof(CK_ATTRIBUTE),
 			       privAttribs, sizeof(privAttribs)/sizeof(CK_ATTRIBUTE),
-			       &hPub, &hKey);
+			       &hPub, &hKey) );
 	if (hPub != CK_INVALID_HANDLE)
 	{
 		CRYPTOKI_F_PTR( C_DestroyObject(hSession, hPub) );
