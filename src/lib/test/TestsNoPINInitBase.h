@@ -40,7 +40,7 @@
 #ifdef P11M
 #define CRYPTOKI_F_PTR(func) m_ptr->func
 #else
-#define CRYPTOKI_F_PTR(func)
+#define CRYPTOKI_F_PTR(func) func
 #endif
 
 class TestsNoPINInitBase : public CppUnit::TestFixture {

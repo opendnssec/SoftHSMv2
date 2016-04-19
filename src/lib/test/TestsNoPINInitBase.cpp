@@ -36,13 +36,14 @@
 #include <vector>
 #include <sstream>
 
+#ifdef P11M
 #ifdef _WIN32
 CK_FUNCTION_LIST_PTR FunctionList::getFunctionListPtr(const char*const libName,  HINSTANCE__* p11Library, const char*getFunctionList) {
 #else
 #include <dlfcn.h>
 
 static CK_FUNCTION_LIST_PTR getFunctionListPtr(const char*const libName, void *const p11Library, const char*getFunctionList) {
-#endif
+#endif //_WIN32
 	CPPUNIT_ASSERT_MESSAGE(libName, p11Library);
 #ifdef _WIN32
 	const CK_C_GetFunctionList pGFL( (CK_C_GetFunctionList)GetProcAddress(
@@ -54,7 +55,7 @@ static CK_FUNCTION_LIST_PTR getFunctionListPtr(const char*const libName, void *c
 			p11Library,
 			getFunctionList
 	) );
-#endif
+#endif //_WIN32
 	CPPUNIT_ASSERT_MESSAGE(libName, pGFL);
 	CK_FUNCTION_LIST_PTR ptr(NULL_PTR);
 	const CK_RV retCode( pGFL(&ptr) );
@@ -65,6 +66,7 @@ static CK_FUNCTION_LIST_PTR getFunctionListPtr(const char*const libName, void *c
 	}
 	return ptr;
 }
+#endif //P11M
 void TestsNoPINInitBase::getSlotIDs() {
 	bool hasFoundFree(false);
 	bool hasFoundInitialized(false);
@@ -137,6 +139,7 @@ void TestsNoPINInitBase::tearDown() {
 	CPPUNIT_ASSERT_MESSAGE(oss.str(), false);
 }
 
+#ifdef P11M
 TestsNoPINInitBase::~TestsNoPINInitBase() {
 	if ( !p11Library ) {
 		return;
@@ -145,12 +148,13 @@ TestsNoPINInitBase::~TestsNoPINInitBase() {
 	FreeLibrary(p11Library);
 #else
 	dlclose(p11Library);
-#endif
+#endif // _WIN32
 }
 
-#ifdef P11M
 void softHSMLog(const int, const char*, const char*, const int, const char*, ...)
 {
 
 }
-#endif
+#else
+TestsNoPINInitBase::~TestsNoPINInitBase() {}
+#endif // P11M
