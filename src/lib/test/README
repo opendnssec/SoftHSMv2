@@ -1,0 +1,17 @@
+To build for test of SoftHSM with static linking:
+make p11test
+
+To build for testing another p11 module provided as shared library:
+make p11test_DEPENDENCIES= p11test_LDADD= CPPFLAGS=-DP11M=\\\"./p11m.so\\\" p11test
+Substitute ./p11m.so with the path to your shared library.
+Note that nothing else of SoftHSMv2 has to be built in order to build the test of an external p11.
+
+To run the test with first a test summary and then specific output of each failure:
+./p11test
+
+To get output of each test after it is executed:
+./p11test direct
+
+To run a specific test:
+./p11test ObjectTests::testArrayAttribute
+Substitute 'ObjectTests::testArrayAttribute' with the test you want to run.

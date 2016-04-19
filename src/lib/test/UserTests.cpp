@@ -43,30 +43,30 @@ void UserTests::testInitPIN()
 	CK_SESSION_HANDLE hSession = CK_INVALID_HANDLE;
 
 	// Just make sure that we finalize any previous tests
-	C_Finalize(NULL_PTR);
+	CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
 
-	rv = C_InitPIN(hSession, m_userPin1, m_userPin1Length);
+	rv = CRYPTOKI_F_PTR( C_InitPIN(hSession, m_userPin1, m_userPin1Length) );
 	CPPUNIT_ASSERT(rv == CKR_CRYPTOKI_NOT_INITIALIZED);
 
-	rv = C_Initialize(NULL_PTR);
+	rv = CRYPTOKI_F_PTR( C_Initialize(NULL_PTR) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	rv = C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSession);
+	rv = CRYPTOKI_F_PTR( C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSession) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	rv = C_InitPIN(hSession, m_userPin1, m_userPin1Length);
+	rv = CRYPTOKI_F_PTR( C_InitPIN(hSession, m_userPin1, m_userPin1Length) );
 	CPPUNIT_ASSERT(rv == CKR_USER_NOT_LOGGED_IN);
 
-	rv = C_Login(hSession, CKU_SO, m_soPin1, m_soPin1Length);
+	rv = CRYPTOKI_F_PTR( C_Login(hSession, CKU_SO, m_soPin1, m_soPin1Length) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	rv = C_InitPIN(CK_INVALID_HANDLE, m_userPin1, m_userPin1Length);
+	rv = CRYPTOKI_F_PTR( C_InitPIN(CK_INVALID_HANDLE, m_userPin1, m_userPin1Length) );
 	CPPUNIT_ASSERT(rv == CKR_SESSION_HANDLE_INVALID);
 
-	rv = C_InitPIN(hSession, m_userPin1, 0);
+	rv = CRYPTOKI_F_PTR( C_InitPIN(hSession, m_userPin1, 0) );
 	CPPUNIT_ASSERT(rv == CKR_PIN_LEN_RANGE);
 
-	rv = C_InitPIN(hSession, m_userPin1, m_userPin1Length);
+	rv = CRYPTOKI_F_PTR( C_InitPIN(hSession, m_userPin1, m_userPin1Length) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 }
 
@@ -76,76 +76,76 @@ void UserTests::testLogin()
 	CK_SESSION_HANDLE hSession[2];
 
 	// Just make sure that we finalize any previous tests
-	C_Finalize(NULL_PTR);
+	CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
 
 	// Set up user PIN
-	rv = C_Initialize(NULL_PTR);
+	rv = CRYPTOKI_F_PTR( C_Initialize(NULL_PTR) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
-	rv = C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSession[0]);
+	rv = CRYPTOKI_F_PTR( C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSession[0]) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
-	rv = C_Login(hSession[0], CKU_USER, m_userPin1, m_userPin1Length);
+	rv = CRYPTOKI_F_PTR( C_Login(hSession[0], CKU_USER, m_userPin1, m_userPin1Length) );
 	CPPUNIT_ASSERT(rv == CKR_USER_PIN_NOT_INITIALIZED);
-	rv = C_Login(hSession[0], CKU_SO, m_soPin1, m_soPin1Length);
+	rv = CRYPTOKI_F_PTR( C_Login(hSession[0], CKU_SO, m_soPin1, m_soPin1Length) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
-	rv = C_InitPIN(hSession[0], m_userPin1, m_userPin1Length);
+	rv = CRYPTOKI_F_PTR( C_InitPIN(hSession[0], m_userPin1, m_userPin1Length) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
-	C_Finalize(NULL_PTR);
+	CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
 
-	rv = C_Login(hSession[0], CKU_SO, m_soPin1, m_soPin1Length);
+	rv = CRYPTOKI_F_PTR( C_Login(hSession[0], CKU_SO, m_soPin1, m_soPin1Length) );
 	CPPUNIT_ASSERT(rv == CKR_CRYPTOKI_NOT_INITIALIZED);
 
-	rv = C_Initialize(NULL_PTR);
+	rv = CRYPTOKI_F_PTR( C_Initialize(NULL_PTR) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	rv = C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSession[0]);
+	rv = CRYPTOKI_F_PTR( C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSession[0]) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	rv = C_Login(CK_INVALID_HANDLE, CKU_SO, m_soPin1, m_soPin1Length);
+	rv = CRYPTOKI_F_PTR( C_Login(CK_INVALID_HANDLE, CKU_SO, m_soPin1, m_soPin1Length) );
 	CPPUNIT_ASSERT(rv == CKR_SESSION_HANDLE_INVALID);
 
-	rv = C_Login(hSession[0], CKU_SO, NULL_PTR, m_soPin1Length);
+	rv = CRYPTOKI_F_PTR( C_Login(hSession[0], CKU_SO, NULL_PTR, m_soPin1Length) );
 	CPPUNIT_ASSERT(rv == CKR_ARGUMENTS_BAD);
 
-	rv = C_Login(hSession[0], CKU_SO, m_soPin1, 0);
+	rv = CRYPTOKI_F_PTR( C_Login(hSession[0], CKU_SO, m_soPin1, 0) );
 	CPPUNIT_ASSERT(rv == CKR_PIN_INCORRECT);
 
-	rv = C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSession[1]);
+	rv = CRYPTOKI_F_PTR( C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSession[1]) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	rv = C_Login(hSession[0], CKU_SO, m_soPin1, m_soPin1Length);
+	rv = CRYPTOKI_F_PTR( C_Login(hSession[0], CKU_SO, m_soPin1, m_soPin1Length) );
 	CPPUNIT_ASSERT(rv == CKR_SESSION_READ_ONLY_EXISTS);
 
-	rv = C_CloseSession(hSession[1]);
+	rv = CRYPTOKI_F_PTR( C_CloseSession(hSession[1]) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	rv = C_Login(hSession[0], CKU_USER, m_userPin1, m_userPin1Length);
+	rv = CRYPTOKI_F_PTR( C_Login(hSession[0], CKU_USER, m_userPin1, m_userPin1Length) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	rv = C_Login(hSession[0], CKU_SO, m_soPin1, m_soPin1Length);
+	rv = CRYPTOKI_F_PTR( C_Login(hSession[0], CKU_SO, m_soPin1, m_soPin1Length) );
 	CPPUNIT_ASSERT(rv == CKR_USER_ANOTHER_ALREADY_LOGGED_IN);
 
-	rv = C_Logout(hSession[0]);
+	rv = CRYPTOKI_F_PTR( C_Logout(hSession[0]) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	rv = C_Login(hSession[0], CKU_SO, m_soPin1, m_soPin1Length);
+	rv = CRYPTOKI_F_PTR( C_Login(hSession[0], CKU_SO, m_soPin1, m_soPin1Length) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	rv = C_Login(hSession[0], CKU_SO, m_soPin1, m_soPin1Length);
+	rv = CRYPTOKI_F_PTR( C_Login(hSession[0], CKU_SO, m_soPin1, m_soPin1Length) );
 	CPPUNIT_ASSERT(rv == CKR_USER_ALREADY_LOGGED_IN);
 
-	rv = C_Login(hSession[0], CKU_USER, m_userPin1, m_userPin1Length);
+	rv = CRYPTOKI_F_PTR( C_Login(hSession[0], CKU_USER, m_userPin1, m_userPin1Length) );
 	CPPUNIT_ASSERT(rv == CKR_USER_ANOTHER_ALREADY_LOGGED_IN);
 
-	rv = C_Logout(hSession[0]);
+	rv = CRYPTOKI_F_PTR( C_Logout(hSession[0]) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	rv = C_Login(hSession[0], CKU_USER, m_userPin1, m_userPin1Length - 1);
+	rv = CRYPTOKI_F_PTR( C_Login(hSession[0], CKU_USER, m_userPin1, m_userPin1Length - 1) );
 	CPPUNIT_ASSERT(rv == CKR_PIN_INCORRECT);
 
-	rv = C_Login(hSession[0], CKU_USER, m_userPin1, m_userPin1Length);
+	rv = CRYPTOKI_F_PTR( C_Login(hSession[0], CKU_USER, m_userPin1, m_userPin1Length) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	rv = C_Login(hSession[0], CKU_USER, m_userPin1, m_userPin1Length);
+	rv = CRYPTOKI_F_PTR( C_Login(hSession[0], CKU_USER, m_userPin1, m_userPin1Length) );
 	CPPUNIT_ASSERT(rv == CKR_USER_ALREADY_LOGGED_IN);
 }
 
@@ -155,27 +155,27 @@ void UserTests::testLogout()
 	CK_SESSION_HANDLE hSession = CK_INVALID_HANDLE;
 
 	// Just make sure that we finalize any previous tests
-	C_Finalize(NULL_PTR);
+	CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
 
-	rv = C_Logout(hSession);
+	rv = CRYPTOKI_F_PTR( C_Logout(hSession) );
 	CPPUNIT_ASSERT(rv == CKR_CRYPTOKI_NOT_INITIALIZED);
 
-	rv = C_Initialize(NULL_PTR);
+	rv = CRYPTOKI_F_PTR( C_Initialize(NULL_PTR) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	rv = C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSession);
+	rv = CRYPTOKI_F_PTR( C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSession) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	rv = C_Login(hSession, CKU_SO, m_soPin1, m_soPin1Length);
+	rv = CRYPTOKI_F_PTR( C_Login(hSession, CKU_SO, m_soPin1, m_soPin1Length) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	rv = C_Logout(CK_INVALID_HANDLE);
+	rv = CRYPTOKI_F_PTR( C_Logout(CK_INVALID_HANDLE) );
 	CPPUNIT_ASSERT(rv == CKR_SESSION_HANDLE_INVALID);
 
-	rv = C_Logout(hSession);
+	rv = CRYPTOKI_F_PTR( C_Logout(hSession) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	rv = C_Logout(hSession);
+	rv = CRYPTOKI_F_PTR( C_Logout(hSession) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 }
 
@@ -189,82 +189,82 @@ void UserTests::testSetPIN()
 	CK_SESSION_HANDLE hSession;
 
 	// Just make sure that we finalize any previous tests
-	C_Finalize(NULL_PTR);
+	CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
 
 	// Set up user PIN
-	rv = C_Initialize(NULL_PTR);
+	rv = CRYPTOKI_F_PTR( C_Initialize(NULL_PTR) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
-	rv = C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSession);
+	rv = CRYPTOKI_F_PTR( C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSession) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
-	rv = C_Login(hSession, CKU_SO, m_soPin1, m_soPin1Length);
+	rv = CRYPTOKI_F_PTR( C_Login(hSession, CKU_SO, m_soPin1, m_soPin1Length) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
-	rv = C_InitPIN(hSession, m_userPin1, m_userPin1Length);
+	rv = CRYPTOKI_F_PTR( C_InitPIN(hSession, m_userPin1, m_userPin1Length) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
-	C_Finalize(NULL_PTR);
+	CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
 
-	rv = C_SetPIN(hSession, m_userPin1, m_userPin1Length, pin2, pin2Length);
+	rv = CRYPTOKI_F_PTR( C_SetPIN(hSession, m_userPin1, m_userPin1Length, pin2, pin2Length) );
 	CPPUNIT_ASSERT(rv == CKR_CRYPTOKI_NOT_INITIALIZED);
 
-	rv = C_Initialize(NULL_PTR);
+	rv = CRYPTOKI_F_PTR( C_Initialize(NULL_PTR) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	rv = C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSession);
+	rv = CRYPTOKI_F_PTR( C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSession) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	rv = C_SetPIN(CK_INVALID_HANDLE, m_userPin1, m_userPin1Length, pin2, pin2Length);
+	rv = CRYPTOKI_F_PTR( C_SetPIN(CK_INVALID_HANDLE, m_userPin1, m_userPin1Length, pin2, pin2Length) );
 	CPPUNIT_ASSERT(rv == CKR_SESSION_HANDLE_INVALID);
 
-	rv = C_SetPIN(hSession, m_userPin1, m_userPin1Length, pin2, pin2Length);
+	rv = CRYPTOKI_F_PTR( C_SetPIN(hSession, m_userPin1, m_userPin1Length, pin2, pin2Length) );
 	CPPUNIT_ASSERT(rv == CKR_SESSION_READ_ONLY);
 
-	rv = C_CloseSession(hSession);
+	rv = CRYPTOKI_F_PTR( C_CloseSession(hSession) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	rv = C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSession);
+	rv = CRYPTOKI_F_PTR( C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSession) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	rv = C_SetPIN(hSession, NULL_PTR, m_userPin1Length, pin2, pin2Length);
+	rv = CRYPTOKI_F_PTR( C_SetPIN(hSession, NULL_PTR, m_userPin1Length, pin2, pin2Length) );
 	CPPUNIT_ASSERT(rv == CKR_ARGUMENTS_BAD);
 
-	rv = C_SetPIN(hSession, m_userPin1, m_userPin1Length, NULL_PTR, pin2Length);
+	rv = CRYPTOKI_F_PTR( C_SetPIN(hSession, m_userPin1, m_userPin1Length, NULL_PTR, pin2Length) );
 	CPPUNIT_ASSERT(rv == CKR_ARGUMENTS_BAD);
 
-	rv = C_SetPIN(hSession, m_userPin1, m_userPin1Length, pin2, 0);
+	rv = CRYPTOKI_F_PTR( C_SetPIN(hSession, m_userPin1, m_userPin1Length, pin2, 0) );
 	CPPUNIT_ASSERT(rv == CKR_PIN_LEN_RANGE);
 
-	rv = C_SetPIN(hSession, pin2, pin2Length, pin2, pin2Length);
+	rv = CRYPTOKI_F_PTR( C_SetPIN(hSession, pin2, pin2Length, pin2, pin2Length) );
 	CPPUNIT_ASSERT(rv == CKR_PIN_INCORRECT);
 
-	rv = C_SetPIN(hSession, m_userPin1, m_userPin1Length, pin2, pin2Length);
+	rv = CRYPTOKI_F_PTR( C_SetPIN(hSession, m_userPin1, m_userPin1Length, pin2, pin2Length) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	rv = C_Login(hSession, CKU_USER, pin2, pin2Length);
+	rv = CRYPTOKI_F_PTR( C_Login(hSession, CKU_USER, pin2, pin2Length) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	rv = C_SetPIN(hSession, m_userPin1, m_userPin1Length, pin2, pin2Length);
+	rv = CRYPTOKI_F_PTR( C_SetPIN(hSession, m_userPin1, m_userPin1Length, pin2, pin2Length) );
 	CPPUNIT_ASSERT(rv == CKR_PIN_INCORRECT);
 
-	rv = C_SetPIN(hSession, pin2, pin2Length, m_userPin1, m_userPin1Length);
+	rv = CRYPTOKI_F_PTR( C_SetPIN(hSession, pin2, pin2Length, m_userPin1, m_userPin1Length) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	rv = C_Login(hSession, CKU_SO, m_soPin1, m_soPin1Length);
+	rv = CRYPTOKI_F_PTR( C_Login(hSession, CKU_SO, m_soPin1, m_soPin1Length) );
 	CPPUNIT_ASSERT(rv == CKR_USER_ANOTHER_ALREADY_LOGGED_IN);
 
-	rv = C_Logout(hSession);
+	rv = CRYPTOKI_F_PTR( C_Logout(hSession) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	rv = C_Login(hSession, CKU_SO, m_soPin1, m_soPin1Length);
+	rv = CRYPTOKI_F_PTR( C_Login(hSession, CKU_SO, m_soPin1, m_soPin1Length) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	rv = C_SetPIN(hSession, so2pin, so2pinLength, so2pin, so2pinLength);
+	rv = CRYPTOKI_F_PTR( C_SetPIN(hSession, so2pin, so2pinLength, so2pin, so2pinLength) );
 	CPPUNIT_ASSERT(rv == CKR_PIN_INCORRECT);
 
-	rv = C_SetPIN(hSession, m_soPin1, m_soPin1Length, so2pin, so2pinLength);
+	rv = CRYPTOKI_F_PTR( C_SetPIN(hSession, m_soPin1, m_soPin1Length, so2pin, so2pinLength) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	rv = C_SetPIN(hSession, m_soPin1, m_soPin1Length, m_soPin1, m_soPin1Length);
+	rv = CRYPTOKI_F_PTR( C_SetPIN(hSession, m_soPin1, m_soPin1Length, m_soPin1, m_soPin1Length) );
 	CPPUNIT_ASSERT(rv == CKR_PIN_INCORRECT);
 
-	rv = C_SetPIN(hSession, so2pin, so2pinLength, m_soPin1, m_soPin1Length);
+	rv = CRYPTOKI_F_PTR( C_SetPIN(hSession, so2pin, so2pinLength, m_soPin1, m_soPin1Length) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 }

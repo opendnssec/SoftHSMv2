@@ -53,7 +53,7 @@ void InitTests::setUp()
 void InitTests::tearDown()
 {
 	// Just make sure that we finalize any previous failed tests
-	C_Finalize(NULL_PTR);
+	CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
 }
 
 void InitTests::testInit1()
@@ -61,15 +61,15 @@ void InitTests::testInit1()
 	CK_RV rv;
 
 	// Just make sure that we finalize any previous failed tests
-	C_Finalize(NULL_PTR);
+	CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
 
-	rv = C_Initialize(NULL_PTR);
+	rv = CRYPTOKI_F_PTR( C_Initialize(NULL_PTR) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	rv = C_Initialize(NULL_PTR);
+	rv = CRYPTOKI_F_PTR( C_Initialize(NULL_PTR) );
 	CPPUNIT_ASSERT(rv == CKR_CRYPTOKI_ALREADY_INITIALIZED);
 
-	rv = C_Finalize(NULL_PTR);
+	rv = CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 }
 
@@ -90,19 +90,19 @@ void InitTests::testInit2()
 	InitArgs.pReserved = (CK_VOID_PTR)1;
 
 	// Just make sure that we finalize any previous failed tests
-	C_Finalize(NULL_PTR);
+	CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
 
-	rv = C_Initialize((CK_VOID_PTR)&InitArgs);
+	rv = CRYPTOKI_F_PTR( C_Initialize((CK_VOID_PTR)&InitArgs) );
 	CPPUNIT_ASSERT(rv == CKR_ARGUMENTS_BAD);
 
 	InitArgs.pReserved = NULL_PTR;
-	rv = C_Initialize((CK_VOID_PTR)&InitArgs);
+	rv = CRYPTOKI_F_PTR( C_Initialize((CK_VOID_PTR)&InitArgs) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	rv = C_Initialize((CK_VOID_PTR)&InitArgs);
+	rv = CRYPTOKI_F_PTR( C_Initialize((CK_VOID_PTR)&InitArgs) );
 	CPPUNIT_ASSERT(rv == CKR_CRYPTOKI_ALREADY_INITIALIZED);
 
-	rv = C_Finalize(NULL_PTR);
+	rv = CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 }
 
@@ -119,19 +119,19 @@ void InitTests::testInit3()
 	InitArgs.pReserved = NULL_PTR;
 
 	// Just make sure that we finalize any previous failed tests
-	C_Finalize(NULL_PTR);
+	CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
 
-	rv = C_Initialize((CK_VOID_PTR)&InitArgs);
+	rv = CRYPTOKI_F_PTR( C_Initialize((CK_VOID_PTR)&InitArgs) );
 	CPPUNIT_ASSERT(rv == CKR_ARGUMENTS_BAD);
 
 	InitArgs.UnlockMutex = NULL_PTR;
-	rv = C_Initialize((CK_VOID_PTR)&InitArgs);
+	rv = CRYPTOKI_F_PTR( C_Initialize((CK_VOID_PTR)&InitArgs) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	rv = C_Initialize((CK_VOID_PTR)&InitArgs);
+	rv = CRYPTOKI_F_PTR( C_Initialize((CK_VOID_PTR)&InitArgs) );
 	CPPUNIT_ASSERT(rv == CKR_CRYPTOKI_ALREADY_INITIALIZED);
 
-	rv = C_Finalize(NULL_PTR);
+	rv = CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 }
 
@@ -148,20 +148,20 @@ void InitTests::testInit4()
 	InitArgs.pReserved = NULL_PTR;
 
 	// Just make sure that we finalize any previous failed tests
-	C_Finalize(NULL_PTR);
+	CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
 
-	rv = C_Initialize((CK_VOID_PTR)&InitArgs);
+	rv = CRYPTOKI_F_PTR( C_Initialize((CK_VOID_PTR)&InitArgs) );
 	CPPUNIT_ASSERT(rv == CKR_ARGUMENTS_BAD);
 
 	InitArgs.UnlockMutex = NULL_PTR;
-	rv = C_Initialize((CK_VOID_PTR)&InitArgs);
+	rv = CRYPTOKI_F_PTR( C_Initialize((CK_VOID_PTR)&InitArgs) );
 	// If rv == CKR_CANT_LOCK then we cannot use multiple threads
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	rv = C_Initialize((CK_VOID_PTR)&InitArgs);
+	rv = CRYPTOKI_F_PTR( C_Initialize((CK_VOID_PTR)&InitArgs) );
 	CPPUNIT_ASSERT(rv == CKR_CRYPTOKI_ALREADY_INITIALIZED);
 
-	rv = C_Finalize(NULL_PTR);
+	rv = CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 }
 
@@ -178,20 +178,20 @@ void InitTests::testInit5()
 	InitArgs.pReserved = NULL_PTR;
 
 	// Just make sure that we finalize any previous failed tests
-	C_Finalize(NULL_PTR);
+	CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
 
-	rv = C_Initialize((CK_VOID_PTR)&InitArgs);
+	rv = CRYPTOKI_F_PTR( C_Initialize((CK_VOID_PTR)&InitArgs) );
 	CPPUNIT_ASSERT(rv == CKR_ARGUMENTS_BAD);
 
 	InitArgs.UnlockMutex = OSUnlockMutex;
-	rv = C_Initialize((CK_VOID_PTR)&InitArgs);
+	rv = CRYPTOKI_F_PTR( C_Initialize((CK_VOID_PTR)&InitArgs) );
 	// If rv == CKR_CANT_LOCK then we cannot use multiple threads
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	rv = C_Initialize((CK_VOID_PTR)&InitArgs);
+	rv = CRYPTOKI_F_PTR( C_Initialize((CK_VOID_PTR)&InitArgs) );
 	CPPUNIT_ASSERT(rv == CKR_CRYPTOKI_ALREADY_INITIALIZED);
 
-	rv = C_Finalize(NULL_PTR);
+	rv = CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 }
 
@@ -208,20 +208,20 @@ void InitTests::testInit6()
 	InitArgs.pReserved = NULL_PTR;
 
 	// Just make sure that we finalize any previous failed tests
-	C_Finalize(NULL_PTR);
+	CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
 
-	rv = C_Initialize((CK_VOID_PTR)&InitArgs);
+	rv = CRYPTOKI_F_PTR( C_Initialize((CK_VOID_PTR)&InitArgs) );
 	CPPUNIT_ASSERT(rv == CKR_ARGUMENTS_BAD);
 
 	InitArgs.UnlockMutex = OSUnlockMutex;
-	rv = C_Initialize((CK_VOID_PTR)&InitArgs);
+	rv = CRYPTOKI_F_PTR( C_Initialize((CK_VOID_PTR)&InitArgs) );
 	// If rv == CKR_CANT_LOCK then we cannot use multiple threads
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	rv = C_Initialize((CK_VOID_PTR)&InitArgs);
+	rv = CRYPTOKI_F_PTR( C_Initialize((CK_VOID_PTR)&InitArgs) );
 	CPPUNIT_ASSERT(rv == CKR_CRYPTOKI_ALREADY_INITIALIZED);
 
-	rv = C_Finalize(NULL_PTR);
+	rv = CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 }
 
@@ -230,18 +230,18 @@ void InitTests::testFinal()
 	CK_RV rv;
 
 	// Just make sure that we finalize any previous failed tests
-	C_Finalize(NULL_PTR);
+	CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
 
-	rv = C_Finalize(NULL_PTR);
+	rv = CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
 	CPPUNIT_ASSERT(rv == CKR_CRYPTOKI_NOT_INITIALIZED);
 
-	rv = C_Initialize(NULL_PTR);
+	rv = CRYPTOKI_F_PTR( C_Initialize(NULL_PTR) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// pReserved is reserved for future versions
-	rv = C_Finalize((CK_VOID_PTR)1);
+	rv = CRYPTOKI_F_PTR( C_Finalize((CK_VOID_PTR)1) );
 	CPPUNIT_ASSERT(rv == CKR_ARGUMENTS_BAD);
 
-	rv = C_Finalize(NULL_PTR);
+	rv = CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 }

@@ -34,8 +34,9 @@
 #define _SOFTHSM_V2_INITTESTS_H
 
 #include <cppunit/extensions/HelperMacros.h>
+#include "TestsNoPINInitBase.h"
 
-class InitTests : public CppUnit::TestFixture
+class InitTests : public TestsNoPINInitBase
 {
 	CPPUNIT_TEST_SUITE(InitTests);
 	CPPUNIT_TEST(testInit1);
@@ -56,8 +57,8 @@ public:
 	void testInit6();
 	void testFinal();
 
-	void setUp();
-	void tearDown();
+	virtual void setUp();
+	virtual void tearDown();
 };
 
 #endif // !_SOFTHSM_V2_INITTESTS_H

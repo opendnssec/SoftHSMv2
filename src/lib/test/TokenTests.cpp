@@ -49,50 +49,50 @@ void TokenTests::testInitToken()
 	memcpy(label, "token1", strlen("token1"));
 
 	// Just make sure that we finalize any previous failed tests
-	C_Finalize(NULL_PTR);
+	CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
 
-	rv = C_InitToken(m_initializedTokenSlotID, m_soPin1, m_soPin1Length, label);
+	rv = CRYPTOKI_F_PTR( C_InitToken(m_initializedTokenSlotID, m_soPin1, m_soPin1Length, label) );
 	CPPUNIT_ASSERT(rv == CKR_CRYPTOKI_NOT_INITIALIZED);
 
-	rv = C_Initialize(NULL_PTR);
+	rv = CRYPTOKI_F_PTR( C_Initialize(NULL_PTR) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	rv = C_InitToken(m_initializedTokenSlotID, NULL_PTR, m_soPin1Length, label);
+	rv = CRYPTOKI_F_PTR( C_InitToken(m_initializedTokenSlotID, NULL_PTR, m_soPin1Length, label) );
 	CPPUNIT_ASSERT(rv == CKR_ARGUMENTS_BAD);
 
-	rv = C_InitToken(m_invalidSlotID, m_soPin1, m_soPin1Length, label);
+	rv = CRYPTOKI_F_PTR( C_InitToken(m_invalidSlotID, m_soPin1, m_soPin1Length, label) );
 	CPPUNIT_ASSERT(rv == CKR_SLOT_ID_INVALID);
 
 	// Initialize
-	rv = C_InitToken(m_initializedTokenSlotID, m_soPin1, m_soPin1Length, label);
+	rv = CRYPTOKI_F_PTR( C_InitToken(m_initializedTokenSlotID, m_soPin1, m_soPin1Length, label) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// Get token serial
-	rv = C_GetTokenInfo(m_initializedTokenSlotID, &tokenInfo);
+	rv = CRYPTOKI_F_PTR( C_GetTokenInfo(m_initializedTokenSlotID, &tokenInfo) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 	memcpy(serialNumber, tokenInfo.serialNumber, 16);
 
 	// Initialize with wrong password
-	rv = C_InitToken(m_initializedTokenSlotID, m_soPin1, m_soPin1Length - 1, label);
+	rv = CRYPTOKI_F_PTR( C_InitToken(m_initializedTokenSlotID, m_soPin1, m_soPin1Length - 1, label) );
 	CPPUNIT_ASSERT(rv == CKR_PIN_INCORRECT);
 
-	rv = C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSession);
+	rv = CRYPTOKI_F_PTR( C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSession) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	rv = C_InitToken(m_initializedTokenSlotID, m_soPin1, m_soPin1Length, label);
+	rv = CRYPTOKI_F_PTR( C_InitToken(m_initializedTokenSlotID, m_soPin1, m_soPin1Length, label) );
 	CPPUNIT_ASSERT(rv == CKR_SESSION_EXISTS);
 
-	rv = C_CloseSession(hSession);
+	rv = CRYPTOKI_F_PTR( C_CloseSession(hSession) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// Re-initialize
-	rv = C_InitToken(m_initializedTokenSlotID, m_soPin1, m_soPin1Length, label);
+	rv = CRYPTOKI_F_PTR( C_InitToken(m_initializedTokenSlotID, m_soPin1, m_soPin1Length, label) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// Compare token serial
-	rv = C_GetTokenInfo(m_initializedTokenSlotID, &tokenInfo);
+	rv = CRYPTOKI_F_PTR( C_GetTokenInfo(m_initializedTokenSlotID, &tokenInfo) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 	CPPUNIT_ASSERT(memcmp(serialNumber, tokenInfo.serialNumber, 16) == 0);
 
-	C_Finalize(NULL_PTR);
+	CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
 }

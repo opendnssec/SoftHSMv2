@@ -34,42 +34,82 @@
 #include <cstring>
 #include <cppunit/extensions/HelperMacros.h>
 #include <vector>
+#include <sstream>
 
-static void getSlotIDs( CK_SLOT_ID*const pInitializedTokenSlotID, CK_SLOT_ID*const pFreeTokenSlotID ) {
+#ifdef P11M
+#ifdef _WIN32
+CK_FUNCTION_LIST_PTR FunctionList::getFunctionListPtr(const char*const libName,  HINSTANCE__* p11Library, const char*getFunctionList) {
+#else
+#include <dlfcn.h>
+
+static CK_FUNCTION_LIST_PTR getFunctionListPtr(const char*const libName, void *const p11Library, const char*getFunctionList) {
+#endif //_WIN32
+	CPPUNIT_ASSERT_MESSAGE(libName, p11Library);
+#ifdef _WIN32
+	const CK_C_GetFunctionList pGFL( (CK_C_GetFunctionList)GetProcAddress(
+			p11Library,
+			getFunctionList.c_str()
+	) );
+#else
+	const CK_C_GetFunctionList pGFL( (CK_C_GetFunctionList)dlsym(
+			p11Library,
+			getFunctionList
+	) );
+#endif //_WIN32
+	CPPUNIT_ASSERT_MESSAGE(libName, pGFL);
+	CK_FUNCTION_LIST_PTR ptr(NULL_PTR);
+	const CK_RV retCode( pGFL(&ptr) );
+	if ( !ptr && (retCode)!=CKR_OK) {
+		std::ostringstream oss;
+		oss << "C_GetFunctionList failed...error no = 0x" << std::hex << retCode << " libName '" << libName << "'.";
+		CPPUNIT_ASSERT_MESSAGE(oss.str(), false);
+	}
+	return ptr;
+}
+#endif //P11M
+void TestsNoPINInitBase::getSlotIDs() {
 	bool hasFoundFree(false);
 	bool hasFoundInitialized(false);
 	CK_ULONG nrOfSlots;
-	CPPUNIT_ASSERT( C_GetSlotList(CK_TRUE, NULL_PTR, &nrOfSlots)==CKR_OK );
+	CPPUNIT_ASSERT( CRYPTOKI_F_PTR( C_GetSlotList(CK_TRUE, NULL_PTR, &nrOfSlots)==CKR_OK ) );
 	std::vector<CK_SLOT_ID> slotIDs(nrOfSlots);
-	CPPUNIT_ASSERT( C_GetSlotList(CK_TRUE, &slotIDs.front(), &nrOfSlots)==CKR_OK );
+	CPPUNIT_ASSERT( CRYPTOKI_F_PTR( C_GetSlotList(CK_TRUE, &slotIDs.front(), &nrOfSlots)==CKR_OK ) );
 	for ( std::vector<CK_SLOT_ID>::iterator i=slotIDs.begin(); i!=slotIDs.end(); i++ ) {
 		CK_TOKEN_INFO tokenInfo;
-		CPPUNIT_ASSERT( C_GetTokenInfo(*i, &tokenInfo)==CKR_OK );
+		CPPUNIT_ASSERT( CRYPTOKI_F_PTR( C_GetTokenInfo(*i, &tokenInfo)==CKR_OK ) );
 		if ( tokenInfo.flags&CKF_TOKEN_INITIALIZED ) {
 			if ( !hasFoundInitialized ) {
 				hasFoundInitialized = true;
-				*pInitializedTokenSlotID = *i;
+				m_initializedTokenSlotID = *i;
 			}
 		} else {
 			if ( !hasFoundFree ) {
 				hasFoundFree = true;
-				*pFreeTokenSlotID = *i;
+				m_notInitializedTokenSlotID = *i;
 			}
 		}
 	}
 	if ( !hasFoundInitialized ) {
-		*pInitializedTokenSlotID = *pFreeTokenSlotID;
+		m_initializedTokenSlotID = m_notInitializedTokenSlotID;
 	}
 }
 
 TestsNoPINInitBase::TestsNoPINInitBase() :
-	m_invalidSlotID(-1),
-	m_initializedTokenSlotID(m_invalidSlotID),
-	m_notInitializedTokenSlotID(m_invalidSlotID),
-	m_soPin1((CK_UTF8CHAR_PTR)"12345678"),
-	m_soPin1Length(strlen((char*)m_soPin1)),
-	m_userPin1((CK_UTF8CHAR_PTR)"1234"),
-	m_userPin1Length(strlen((char*)m_userPin1)) {};
+#ifdef P11M
+#ifdef _WIN32
+		p11Library( LoadLibrary(libName.c_str()) ),
+#else
+		p11Library( dlopen(P11M, RTLD_LAZY) ),
+#endif
+		m_ptr(getFunctionListPtr(P11M, p11Library, "C_GetFunctionList")),
+#endif
+		m_invalidSlotID(((CK_SLOT_ID)1<<40)-1),
+		m_initializedTokenSlotID(m_invalidSlotID),
+		m_notInitializedTokenSlotID(m_invalidSlotID),
+		m_soPin1((CK_UTF8CHAR_PTR)"12345678"),
+		m_soPin1Length(strlen((char*)m_soPin1)),
+		m_userPin1((CK_UTF8CHAR_PTR)"1234"),
+		m_userPin1Length(strlen((char*)m_userPin1)) {};
 
 void TestsNoPINInitBase::setUp() {
 	CK_UTF8CHAR label[32];
@@ -77,19 +117,44 @@ void TestsNoPINInitBase::setUp() {
 	memcpy(label, "token1", strlen("token1"));
 
 	// initialize cryptoki
-	CPPUNIT_ASSERT( C_Initialize(NULL_PTR)==CKR_OK );
+	CPPUNIT_ASSERT_EQUAL( (CK_RV)CKR_OK, CRYPTOKI_F_PTR( C_Initialize(NULL_PTR) ) );
 	// update slot IDs to initialized and not initialized token.
-	getSlotIDs(&m_initializedTokenSlotID, &m_notInitializedTokenSlotID);
+	getSlotIDs();
 	// (Re)initialize the token
-	CPPUNIT_ASSERT( C_InitToken(m_initializedTokenSlotID, m_soPin1, m_soPin1Length, label)==CKR_OK );
+	CPPUNIT_ASSERT_EQUAL( (CK_RV)CKR_OK, CRYPTOKI_F_PTR( C_InitToken(m_initializedTokenSlotID, m_soPin1, m_soPin1Length, label) ) );
 	// Reset cryptoki to get new slot IDs.
-	CPPUNIT_ASSERT( C_Finalize(NULL_PTR)==CKR_OK );
-	CPPUNIT_ASSERT( C_Initialize(NULL_PTR)==CKR_OK );
+	CPPUNIT_ASSERT_EQUAL( (CK_RV)CKR_OK, CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) ) );
+	CPPUNIT_ASSERT_EQUAL( (CK_RV)CKR_OK, CRYPTOKI_F_PTR( C_Initialize(NULL_PTR) ) );
 	// slot IDs must be updated since the ID of the initialized token has changed.
-	getSlotIDs(&m_initializedTokenSlotID, &m_notInitializedTokenSlotID);
+	getSlotIDs();
 }
 
-void TestsNoPINInitBase::tearDown()
-{
-	C_Finalize(NULL_PTR);
+void TestsNoPINInitBase::tearDown() {
+	const CK_RV result(CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) ) );
+	if ( result==CKR_OK||result==CKR_CRYPTOKI_NOT_INITIALIZED ) {
+		return;
+	}
+	std::ostringstream oss;
+	oss << "C_Finalize failed with CK_RV: " << std::hex << result;
+	CPPUNIT_ASSERT_MESSAGE(oss.str(), false);
 }
+
+#ifdef P11M
+TestsNoPINInitBase::~TestsNoPINInitBase() {
+	if ( !p11Library ) {
+		return;
+	}
+#ifdef _WIN32
+	FreeLibrary(p11Library);
+#else
+	dlclose(p11Library);
+#endif // _WIN32
+}
+
+void softHSMLog(const int, const char*, const char*, const int, const char*, ...)
+{
+
+}
+#else
+TestsNoPINInitBase::~TestsNoPINInitBase() {}
+#endif // P11M
