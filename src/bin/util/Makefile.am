@@ -11,6 +11,7 @@ bin_PROGRAMS =		softhsm2-util
 AUTOMAKE_OPTIONS =	subdir-objects
 
 softhsm2_util_SOURCES =	softhsm2-util.cpp \
+			../common/findslot.cpp \
 			../common/getpw.cpp \
 			../common/library.cpp
 softhsm2_util_LDADD =	@CRYPTO_LIBS@

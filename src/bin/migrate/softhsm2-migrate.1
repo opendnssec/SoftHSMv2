@@ -1,12 +1,12 @@
-.TH SOFTHSM2-MIGRATE 1 "20 March 2014" "SoftHSM"
+.TH SOFTHSM2-MIGRATE 1 "20 April 2016" "SoftHSM"
 .SH NAME
 softhsm2-migrate \- SoftHSM v1 migration tool
 .SH SYNOPSIS
 .PP
 .B softhsm2-migrate \-\-db
 .I path
-.B \-\-slot
-.I number
+.B \-\-token
+.I label
 .RB [ \-\-pin
 .I PIN
 .B \-\-no\-public\-key]
@@ -38,8 +38,14 @@ The
 .I PIN
 for the normal user.
 .TP
+.B \-\-serial \fInumber\fR
+Will use the token with a matching serial number.
+.TP
 .B \-\-slot \fInumber\fR
 The database will be migrated to this slot.
+.TP
+.B \-\-token \fIlabel\fR
+Will use the token with a matching token label.
 .TP
 .B \-\-version\fR, \fB\-v\fR
 Show the version info.
@@ -49,7 +55,7 @@ A token database can be migrated with the following command:
 .LP
 .RS
 .nf
-softhsm2-migrate \-\-db /home/user/token.db \-\-slot 1
+softhsm2-migrate \-\-db /home/user/token.db \-\-token mytoken
 .fi
 .RE
 .SH AUTHORS

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010 .SE (The Internet Infrastructure Foundation)
+ * Copyright (c) 2016 SURFnet bv
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,41 +25,17 @@
  */
 
 /*****************************************************************************
- softhsm2-util.h
+ findslot.h
 
- This program can be used for interacting with HSMs using PKCS#11.
- The default library is the libsofthsm2.so
+ Helper function to find the slot number
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_SOFTHSM2_UTIL_H
-#define _SOFTHSM_V2_SOFTHSM2_UTIL_H
+#ifndef _SOFTHSM_V2_BIN_FINDSLOT_H
+#define _SOFTHSM_V2_BIN_FINDSLOT_H
 
 #include "pkcs11.h"
 
-// Main functions
+int findSlot(char* slot, char* serial, char* token, bool freeToken, CK_SLOT_ID& slotID);
+int findSlot(char* slot, char* serial, char* token, CK_SLOT_ID& slotID);
 
-void usage();
-int initToken(CK_SLOT_ID slotID, char* label, char* soPIN, char* userPIN);
-int showSlots();
-int importKeyPair(char* filePath, char* filePIN, CK_SLOT_ID slotID, char* userPIN, char* objectLabel, char* objectID, int forceExec, int noPublicKey);
-int crypto_import_key_pair(CK_SESSION_HANDLE hSession, char* filePath, char* filePIN, char* label, char* objID, size_t objIDLen, int noPublicKey);
-
-// Support functions
-
-void crypto_init();
-void crypto_final();
-
-/// Hex
-char* hexStrToBin(char* objectID, int idLength, size_t* newLen);
-int hexdigit_to_int(char ch);
-
-/// Library
-#if !defined(UTIL_BOTAN) && !defined(UTIL_OSSL)
-static void* moduleHandle;
-#endif
-extern CK_FUNCTION_LIST_PTR p11;
-
-/// PKCS#11 support
-CK_OBJECT_HANDLE searchObject(CK_SESSION_HANDLE hSession, char* objID, size_t objIDLen);
-
-#endif // !_SOFTHSM_V2_SOFTHSM2_UTIL_H
+#endif // !_SOFTHSM_V2_BIN_FINDSLOT_H

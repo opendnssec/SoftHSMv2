@@ -1,12 +1,11 @@
-.TH SOFTHSM2-UTIL 1 "29 October 2014" "SoftHSM"
+.TH SOFTHSM2-UTIL 1 "20 April 2016" "SoftHSM"
 .SH NAME
 softhsm2-util \- support tool for libsofthsm2
 .SH SYNOPSIS
 .B softhsm2-util \-\-show-slots
 .PP
 .B softhsm2-util \-\-init-token
-.B \-\-slot
-.I number
+.B \-\-free
 .B \-\-label
 .I text
 \\
@@ -20,8 +19,8 @@ softhsm2-util \- support tool for libsofthsm2
 .I path
 .RB [ \-\-file-pin
 .IR PIN ]
-.B \-\-slot
-.I number
+.B \-\-token
+.I label
 \\
 .ti +0.7i
 .RB [ \-\-pin
@@ -102,8 +101,12 @@ Import a key pair from the given
 The file must be in PKCS#8-format.
 .br
 Use with
+.BR \-\-slot
+or
+.BR \-\-token
+or
+.BR \-\-serial ,
 .BR \-\-file-pin ,
-.BR \-\-slot ,
 .BR \-\-pin ,
 .BR \-\-no\-public\-key ,
 .BR \-\-label ,
@@ -111,7 +114,7 @@ and
 .BR \-\-id .
 .TP
 .B \-\-init-token
-Initialize the token at a given slot.
+Initialize the token at a given slot, token label or token serial.
 If the token is already initialized then this command
 will reinitialize it, thus erasing all the objects in the token.
 The matching Security Officer (SO) PIN must also
@@ -119,6 +122,10 @@ be provided when doing reinitialization.
 .br
 Use with
 .BR \-\-slot
+or
+.BR \-\-token
+or
+.BR \-\-serial
 or
 .BR \-\-free ,
 .BR \-\-label ,
@@ -144,7 +151,7 @@ If not given then the PKCS#8 file is assumed to be unencrypted.
 Use this option to override the warnings and force the given action.
 .TP
 .B \-\-free
-Initialize the first free token.
+Use the first free/uninitialized token.
 .TP
 .B \-\-id \fIhex\fR
 Choose an ID of the key pair.
@@ -156,7 +163,7 @@ when importing a key pair if the ID already exists.
 .B \-\-label \fItext\fR
 Defines the
 .I label
-of the object or the token.
+of the object or the token that will be set.
 .TP
 .B \-\-module \fIpath\fR
 Use another PKCS#11 library than SoftHSM.
@@ -169,6 +176,9 @@ The
 .I PIN
 for the normal user.
 .TP
+.B \-\-serial \fInumber\fR
+Will use the token with a matching serial number.
+.TP
 .B \-\-slot \fInumber\fR
 The slot where the token is located.
 .TP
@@ -176,13 +186,16 @@ The slot where the token is located.
 The
 .I PIN
 for the Security Officer (SO).
+.TP
+.B \-\-token \fIlabel\fR
+Will use the token with a matching token label.
 .SH EXAMPLES
 .LP
 The token can be initialized using this command:
 .LP
 .RS
 .nf
-softhsm2-util \-\-init-token \-\-slot 1 \-\-label "A token"
+softhsm2-util \-\-init-token \-\-slot 1 \-\-label "mytoken"
 .fi
 .RE
 .LP
@@ -193,7 +206,7 @@ The file must be in PKCS#8 format.
 .LP
 .RS
 .nf
-softhsm2-util \-\-import key1.pem \-\-slot 1 \-\-label "My key" \\
+softhsm2-util \-\-import key1.pem \-\-token "mytoken" \-\-label "My key" \\
 .ti +0.7i
 \-\-id A1B2 \-\-pin 123456
 .fi
