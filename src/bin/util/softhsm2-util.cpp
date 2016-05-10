@@ -33,6 +33,7 @@
 
 #include <config.h>
 #include "softhsm2-util.h"
+#include "findslot.h"
 #include "getpw.h"
 #include "library.h"
 
@@ -58,18 +59,19 @@ void usage()
 	printf("  --help            Shows this help screen.\n");
 	printf("  --import <path>   Import a key pair from the given path.\n");
 	printf("                    The file must be in PKCS#8-format.\n");
-	printf("                    Use with --file-pin, --slot, --label, --id,\n");
-	printf("                    --no-public-key, and --pin.\n");
+	printf("                    Use with --slot or --token or --serial, --file-pin,\n");
+	printf("                    --label, --id, --no-public-key, and --pin.\n");
 	printf("  --init-token      Initialize the token at a given slot.\n");
-	printf("                    Use with --slot or --free, --label, --so-pin, and --pin.\n");
-	printf("                    WARNING: Any content in token token will be erased.\n");
+	printf("                    Use with --slot or --token or --serial or --free,\n");
+	printf("                    --label, --so-pin, and --pin.\n");
+	printf("                    WARNING: Any content in token will be erased.\n");
 	printf("  --show-slots      Display all the available slots.\n");
 	printf("  -v                Show version info.\n");
 	printf("  --version         Show version info.\n");
 	printf("Options:\n");
 	printf("  --file-pin <PIN>  Supply a PIN if the file is encrypted.\n");
 	printf("  --force           Used to override a warning.\n");
-	printf("  --free            Initialize the first free token.\n");
+	printf("  --free            Use the first free/uninitialized token.\n");
 	printf("  --id <hex>        Defines the ID of the object. Hexadecimal characters.\n");
 	printf("                    Use with --force if multiple key pairs may share\n");
 	printf("                    the same ID.\n");
@@ -77,8 +79,10 @@ void usage()
 	printf("  --module <path>   Use another PKCS#11 library than SoftHSM.\n");
 	printf("  --no-public-key   Do not import the public key.\n");
 	printf("  --pin <PIN>       The PIN for the normal user.\n");
+	printf("  --serial <number> Will use the token with a matching serial number.\n");
 	printf("  --slot <number>   The slot where the token is located.\n");
 	printf("  --so-pin <PIN>    The PIN for the Security Officer (SO).\n");
+	printf("  --token <label>   Will use the token with a matching token label.\n");
 }
 
 // Enumeration of the long options
@@ -94,9 +98,11 @@ enum {
 	OPT_MODULE,
 	OPT_NO_PUBLIC_KEY,
 	OPT_PIN,
+	OPT_SERIAL,
 	OPT_SHOW_SLOTS,
 	OPT_SLOT,
 	OPT_SO_PIN,
+	OPT_TOKEN,
 	OPT_VERSION
 };
 
@@ -113,9 +119,11 @@ static const struct option long_options[] = {
 	{ "module",          1, NULL, OPT_MODULE },
 	{ "no-public-key",   0, NULL, OPT_NO_PUBLIC_KEY },
 	{ "pin",             1, NULL, OPT_PIN },
+	{ "serial",          1, NULL, OPT_SERIAL },
 	{ "show-slots",      0, NULL, OPT_SHOW_SLOTS },
 	{ "slot",            1, NULL, OPT_SLOT },
 	{ "so-pin",          1, NULL, OPT_SO_PIN },
+	{ "token",           1, NULL, OPT_TOKEN },
 	{ "version",         0, NULL, OPT_VERSION },
 	{ NULL,              0, NULL, 0 }
 };
@@ -137,9 +145,11 @@ int main(int argc, char* argv[])
 	char* module = NULL;
 	char* objectID = NULL;
 	char* slot = NULL;
+	char* serial = NULL;
+	char* token = NULL;
 	char* errMsg = NULL;
 	int forceExec = 0;
-	int freeToken = 0;
+	bool freeToken = false;
 	int noPublicKey = 0;
 
 	int doInitToken = 0;
@@ -148,6 +158,7 @@ int main(int argc, char* argv[])
 	//int doExport = 0;
 	int action = 0;
 	int rv = 0;
+	CK_SLOT_ID slotID = 0;
 
 	moduleHandle = NULL;
 	p11 = NULL;
@@ -175,6 +186,12 @@ int main(int argc, char* argv[])
 			case OPT_LABEL:
 				label = optarg;
 				break;
+			case OPT_SERIAL:
+				serial = optarg;
+				break;
+			case OPT_TOKEN:
+				token = optarg;
+				break;
 			case OPT_MODULE:
 				module = optarg;
 				break;
@@ -197,7 +214,7 @@ int main(int argc, char* argv[])
 				forceExec = 1;
 				break;
 			case OPT_FREE:
-				freeToken = 1;
+				freeToken = true;
 				break;
 			case OPT_VERSION:
 			case 'v':
@@ -243,20 +260,30 @@ int main(int argc, char* argv[])
 	// We should create the token.
 	if (doInitToken)
 	{
-		rv = initToken(slot, freeToken, label, soPIN, userPIN);
+		// Get the slotID
+		rv = findSlot(slot, serial, token, freeToken, slotID);
+		if (!rv)
+		{
+			rv = initToken(slotID, label, soPIN, userPIN);
+		}
 	}
 
 	// Show all available slots
-	if (doShowSlots)
+	if (!rv && doShowSlots)
 	{
 		rv = showSlots();
 	}
 
 	// Import a key pair from the given path
-	if (doImport)
+	if (!rv && doImport)
 	{
-		rv = importKeyPair(inPath, filePIN, slot, userPIN, label, objectID,
-					forceExec, noPublicKey);
+		// Get the slotID
+		rv = findSlot(slot, serial, token, slotID);
+		if (!rv)
+		{
+			rv = importKeyPair(inPath, filePIN, slotID, userPIN, label, objectID,
+						forceExec, noPublicKey);
+		}
 	}
 
 	// Finalize the library
@@ -270,23 +297,10 @@ int main(int argc, char* argv[])
 }
 
 // Initialize the token
-int initToken(char* slot, int freeToken, char* label, char* soPIN, char* userPIN)
+int initToken(CK_SLOT_ID slotID, char* label, char* soPIN, char* userPIN)
 {
 	char so_pin_copy[MAX_PIN_LEN+1];
 	char user_pin_copy[MAX_PIN_LEN+1];
-
-	if (slot != NULL && freeToken == 1)
-	{
-		fprintf(stderr, "ERROR: Select --slot <number> or --free\n");
-		return 1;
-	}
-
-	if (slot == NULL && freeToken != 1)
-	{
-		fprintf(stderr, "ERROR: A slot number must be supplied. "
-				"Use --slot <number> or --free\n");
-		return 1;
-	}
 
 	if (label == NULL)
 	{
@@ -315,28 +329,9 @@ int initToken(char* slot, int freeToken, char* label, char* soPIN, char* userPIN
 	}
 
 	// Load the variables
-	CK_SLOT_ID slotID = 0;
 	CK_UTF8CHAR paddedLabel[32];
 	memset(paddedLabel, ' ', sizeof(paddedLabel));
 	memcpy(paddedLabel, label, strlen(label));
-
-	if (slot != NULL)
-	{
-		int slotNumber = atoi(slot);
-		if (slotNumber < 0)
-		{
-			fprintf(stderr, "ERROR: The slot number is negative.\n");
-			return 1;
-		}
-
-		slotID = slotNumber;
-	}
-	else
-	{
-		CK_SLOT_ID slotNumber = 0;
-		if (getFirstFreeToken(slotNumber) != 0) return 1;
-		slotID = slotNumber;
-	}
 
 	CK_RV rv = p11->C_InitToken(slotID, (CK_UTF8CHAR_PTR)so_pin_copy, strlen(so_pin_copy), paddedLabel);
 
@@ -389,60 +384,6 @@ int initToken(char* slot, int freeToken, char* label, char* soPIN, char* userPIN
 	printf("The token has been initialized.\n");
 
 	return 0;
-}
-
-// Search and return the first free token
-int getFirstFreeToken(CK_SLOT_ID &slot)
-{
-	CK_ULONG ulSlotCount;
-	CK_RV rv = p11->C_GetSlotList(CK_TRUE, NULL_PTR, &ulSlotCount);
-	if (rv != CKR_OK)
-	{
-		fprintf(stderr, "ERROR: Could not get the number of slots.\n");
-		return -1;
-	}
-
-	CK_SLOT_ID_PTR pSlotList = (CK_SLOT_ID_PTR) malloc(ulSlotCount*sizeof(CK_SLOT_ID));
-	if (!pSlotList)
-	{
-		fprintf(stderr, "ERROR: Could not allocate memory.\n");
-		return -1;
-	}
-
-	rv = p11->C_GetSlotList(CK_FALSE, pSlotList, &ulSlotCount);
-	if (rv != CKR_OK)
-	{
-		fprintf(stderr, "ERROR: Could not get the slot list.\n");
-		free(pSlotList);
-		return -1;
-	}
-
-	for (CK_ULONG i = 0; i < ulSlotCount; i++)
-	{
-		CK_TOKEN_INFO tokenInfo;
-
-		rv = p11->C_GetTokenInfo(pSlotList[i], &tokenInfo);
-		if (rv != CKR_OK)
-		{
-			fprintf(stderr, "ERROR: Could not get info about the token in slot %lu.\n",
-				pSlotList[i]);
-			free(pSlotList);
-			return -1;
-		}
-
-		if ((tokenInfo.flags & CKF_TOKEN_INITIALIZED) == 0)
-		{
-			printf("Token %lu is free.\n", pSlotList[i]);
-			slot = pSlotList[i];
-			free(pSlotList);
-			return 0;
-		}
-	}
-
-	free(pSlotList);
-
-	fprintf(stderr, "ERROR: Could not find the first free token.\n");
-	return -1;
 }
 
 // Show what slots are available
@@ -552,7 +493,7 @@ int importKeyPair
 (
 	char* filePath,
 	char* filePIN,
-	char* slot,
+	CK_SLOT_ID slotID,
 	char* userPIN,
 	char* label,
 	char* objectID,
@@ -561,13 +502,6 @@ int importKeyPair
 )
 {
 	char user_pin_copy[MAX_PIN_LEN+1];
-
-	if (slot == NULL)
-	{
-		fprintf(stderr, "ERROR: A slot number must be supplied. "
-				"Use --slot <number>\n");
-		return 1;
-	}
 
 	if (label == NULL)
 	{
@@ -591,7 +525,6 @@ int importKeyPair
 		return 1;
 	}
 
-	CK_SLOT_ID slotID = atoi(slot);
 	CK_SESSION_HANDLE hSession;
 	CK_RV rv = p11->C_OpenSession(slotID, CKF_SERIAL_SESSION | CKF_RW_SESSION,
 					NULL_PTR, NULL_PTR, &hSession);
