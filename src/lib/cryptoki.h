@@ -36,8 +36,13 @@
 #ifndef _SOFTHSM_V2_CRYPTOKI_H
 #define _SOFTHSM_V2_CRYPTOKI_H
 
+#ifndef CRYPTOKI_EXPORTS
 #define CRYPTOKI_EXPORTS
+#endif // !CRYPTOKI_EXPORTS
+
+#ifndef CRYPTOKI_COMPAT
 #define CRYPTOKI_COMPAT
+#endif // !CRYPTOKI_COMPAT
 
 #include "pkcs11.h"
 
