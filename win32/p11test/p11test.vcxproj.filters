@@ -64,7 +64,10 @@
     <ClInclude Include="..\..\src\lib\test\SymmetricAlgorithmTests.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\lib\test\testconfig.h">
+    <ClInclude Include="..\..\src\lib\test\TestsBase.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\test\TestsNoPINInitBase.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\lib\test\TokenTests.h">
@@ -74,6 +77,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\lib\common\osmutex.h">
+      <Filter>Other Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\win32\setenv.h">
       <Filter>Other Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\lib\access.h">
@@ -127,6 +133,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\lib\test\SymmetricAlgorithmTests.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\test\TestsBase.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\test\TestsNoPINInitBase.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\lib\test\TokenTests.cpp">

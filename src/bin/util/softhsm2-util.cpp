@@ -784,6 +784,7 @@ bool rmdir(std::string path)
 		if (!strcmp(fi.name, ".") || !strcmp(fi.name, ".."))
 			continue;
 
+		std::string fullPath = path + OS_PATHSEP + fi.name;
 		if ((fi.attrib & _A_SUBDIR) == 0)
 		{
 			// This is a regular file

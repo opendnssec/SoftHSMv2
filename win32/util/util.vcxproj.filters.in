@@ -31,6 +31,9 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\src\bin\common\findslot.h">
+      <Filter>Common Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\src\bin\common\getpw.h">
       <Filter>Common Header Files</Filter>
     </ClInclude>
@@ -58,6 +61,9 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\src\bin\common\findslot.cpp">
+      <Filter>Common Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\src\bin\common\getpw.cpp">
       <Filter>Common Source Files</Filter>
     </ClCompile>
