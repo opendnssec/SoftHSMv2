@@ -153,7 +153,7 @@ void SymmetricAlgorithmTests::encryptDecrypt(
 		}
 		int getNext() {// get nex part size.
 			const unsigned random(*(pRandom++));
-			current = ((ulong)random)*blockSize*0x100/UINT_MAX + 1;
+			current = ((unsigned long)random)*blockSize*0x100/UINT_MAX + 1;
 			//std::cout << "New random " << std::hex << random << " current " << std::hex << std::setfill('0') << std::setw(4) << current << " block size " << std::hex << blockSize << std::endl;
 			return current;
 		}
