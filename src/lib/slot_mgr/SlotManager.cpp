@@ -36,8 +36,6 @@
 #include "config.h"
 #include "log.h"
 #include "SlotManager.h"
-#include <iostream>
-#include <sstream>
 #include <cassert>
 #include <stdexcept>
 typedef std::pair<CK_SLOT_ID, Slot*> SlotMapElement;
@@ -52,16 +50,25 @@ SlotManager::SlotManager(ObjectStore*const objectStore)
 		ObjectStoreToken*const pToken(objectStore->getToken(i));
 		ByteString bs;
 		pToken->getTokenSerial(bs);
-		const std::string s((const char*)bs.const_byte_str(), (const char*)bs.const_byte_str()+bs.size());
-		std::istringstream iss(s);
-		CK_SLOT_ID l;
+		const std::string s((const char*)bs.const_byte_str(), bs.size());
+
 		// parse serial string that is expected to have only hex digits.
-		iss >> std::hex >> l;
+		CK_SLOT_ID l;
+		if (s.size() < 8)
+		{
+			l = strtoul(s.c_str(), NULL, 16);
+		}
+		else
+		{
+			l = strtoul(s.substr(s.size() - 8).c_str(), NULL, 16);
+		}
+
 		// mask for 31 bits.
 		// this since sunpkcs11 java wrapper is parsing the slot ID to a java int that needs to be positive.
 		// java int is 32 bit and the the sign bit is removed.
 		const CK_SLOT_ID mask( ((CK_SLOT_ID)1<<31)-1 );
 		const CK_SLOT_ID slotID(mask&l);
+
 		insertToken(objectStore, slotID, pToken);
 	}
 
@@ -166,6 +173,7 @@ Slot* SlotManager::getSlot(CK_SLOT_ID slotID)
 	try {
 		return slots.at(slotID);
 	} catch( const std::out_of_range &oor) {
+		DEBUG_MSG("slotID is out of range: %s", oor.what());
 		return NULL_PTR;
 	}
 }

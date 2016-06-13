@@ -30,6 +30,10 @@ softhsm2-util \- support tool for libsofthsm2
 .I text
 .B \-\-id
 .I hex
+.PP
+.B softhsm2-util \-\-delete\-token
+.B \-\-token
+.I text
 .SH DESCRIPTION
 .B softhsm2-util
 is a support tool mainly for libsofthsm2. It can also
@@ -91,6 +95,14 @@ to perform well on these specific tasks
 compared to ordinary processes in a normal computer.
 .LP
 .SH ACTIONS
+.TP
+.B \-\-delete\-token
+Delete the token at a given slot.
+Use with
+.BR \-\-token
+or
+.BR \-\-serial .
+Any content in token will be erased.
 .TP
 .B \-\-help\fR, \fB\-h\fR
 Show the help information.

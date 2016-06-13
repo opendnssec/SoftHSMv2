@@ -103,7 +103,7 @@ TestsNoPINInitBase::TestsNoPINInitBase() :
 #endif
 		m_ptr(getFunctionListPtr(P11M, p11Library, "C_GetFunctionList")),
 #endif
-		m_invalidSlotID(((CK_SLOT_ID)1<<40)-1),
+		m_invalidSlotID(((CK_SLOT_ID)1<<31)),
 		m_initializedTokenSlotID(m_invalidSlotID),
 		m_notInitializedTokenSlotID(m_invalidSlotID),
 		m_soPin1((CK_UTF8CHAR_PTR)"12345678"),

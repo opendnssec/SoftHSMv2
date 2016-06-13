@@ -40,6 +40,9 @@
 #include <cppunit/Exception.h>
 #include <stdlib.h>
 #include <iostream>
+#ifdef _WIN32
+#include "setenv.h"
+#endif
 
 class MyListener : public CPPUNIT_NS::TestListener {
 	virtual void startTest( CPPUNIT_NS::Test*const pTest ) {
