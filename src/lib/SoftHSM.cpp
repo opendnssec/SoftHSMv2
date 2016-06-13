@@ -2309,40 +2309,31 @@ CK_RV SoftHSM::C_Encrypt(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pData, CK_ULONG
 // SymAlgorithm version of C_EncryptUpdate
 static CK_RV SymEncryptUpdate(Session* session, CK_BYTE_PTR pData, CK_ULONG ulDataLen, CK_BYTE_PTR pEncryptedData, CK_ULONG_PTR pulEncryptedDataLen)
 {
-	SymmetricAlgorithm* cipher = session->getSymmetricCryptoOp();
+	SymmetricAlgorithm*const cipher( session->getSymmetricCryptoOp() );
 	if (cipher == NULL || !session->getAllowMultiPartOp())
 	{
 		session->resetOp();
 		return CKR_OPERATION_NOT_INITIALIZED;
 	}
 
+	const size_t blockSize( cipher->getBlockSize() );
+	const size_t remainingSize( cipher->getBufferSize() );
+	const int nrOfBlocks( (ulDataLen+remainingSize)/blockSize );
+	const CK_ULONG maxSize( nrOfBlocks*blockSize );
+
 	// Check data size
-	SymMode::Type mode = cipher->getCipherMode();
-	CK_ULONG remainder = ulDataLen % cipher->getBlockSize();
-	if ((mode == SymMode::ECB || mode == SymMode::CBC) &&
-	    cipher->getPaddingMode() == false &&
-	    remainder != 0)
-	{
-		session->resetOp();
-		return CKR_DATA_LEN_RANGE;
-	}
-
-	// Round down/up to block size
-	CK_ULONG maxSize = ulDataLen - remainder;
-	if (remainder + cipher->getBufferSize() > cipher->getBlockSize())
-	{
-		maxSize += cipher->getBlockSize();
-	}
-
 	if (pEncryptedData == NULL_PTR)
 	{
 		*pulEncryptedDataLen = maxSize;
 		return CKR_OK;
 	}
 
-	// Check buffer size
+	// Check output buffer size
 	if (*pulEncryptedDataLen < maxSize)
 	{
+		DEBUG_MSG(
+				"ulDataLen: %#5x  output buffer size: %#5x  blockSize: %#3x  remainingSize: %#4x  maxSize: %#5x",
+				ulDataLen, *pulEncryptedDataLen, blockSize, remainingSize, maxSize);
 		*pulEncryptedDataLen = maxSize;
 		return CKR_BUFFER_TOO_SMALL;
 	}
@@ -2357,8 +2348,21 @@ static CK_RV SymEncryptUpdate(Session* session, CK_BYTE_PTR pData, CK_ULONG ulDa
 		session->resetOp();
 		return CKR_GENERAL_ERROR;
 	}
+	DEBUG_MSG(
+			"ulDataLen: %#5x  output buffer size: %#5x  blockSize: %#3x  remainingSize: %#4x  maxSize: %#5x  encryptedData.size(): %#5x",
+			ulDataLen, *pulEncryptedDataLen, blockSize, remainingSize, maxSize, encryptedData.size());
 
-	if (encryptedData.size() != 0)
+	// Check output size from crypto. Unrecoverable error if to large.
+	if (*pulEncryptedDataLen < encryptedData.size())
+	{
+		session->resetOp();
+		ERROR_MSG(
+				"Cipher encryptUpdate returning too much data. Length of output data buffer is %i but %i bytes was returned by the encrypt.",
+				*pulEncryptedDataLen, encryptedData.size());
+		return CKR_GENERAL_ERROR;
+	}
+
+	if (encryptedData.size() > 0)
 	{
 		memcpy(pEncryptedData, encryptedData.byte_str(), encryptedData.size());
 	}
@@ -2393,29 +2397,38 @@ CK_RV SoftHSM::C_EncryptUpdate(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pData, CK
 // SymAlgorithm version of C_EncryptFinal
 static CK_RV SymEncryptFinal(Session* session, CK_BYTE_PTR pEncryptedData, CK_ULONG_PTR pulEncryptedDataLen)
 {
-	SymmetricAlgorithm* cipher = session->getSymmetricCryptoOp();
+	SymmetricAlgorithm*const cipher( session->getSymmetricCryptoOp() );
 	if (cipher == NULL || !session->getAllowMultiPartOp())
 	{
 		session->resetOp();
 		return CKR_OPERATION_NOT_INITIALIZED;
 	}
-
-	// Size of the encrypted data
-	CK_ULONG size = 0;
-	if (cipher->getPaddingMode() == true)
-	{
-		size = cipher->getBlockSize();
+	const size_t remainingSize( cipher->getBufferSize() );// since last update
+	const size_t blockSize( cipher->getBlockSize() );
+	const bool isPadding(cipher->getPaddingMode());
+	if ( remainingSize%blockSize!=0 && !isPadding ) {
+		session->resetOp();
+		DEBUG_MSG(
+				"remaining data length is not an integral of the block size. Block size: %#2x  Remaining size: %#2x",
+				blockSize, remainingSize);
+		return CKR_DATA_LEN_RANGE;
 	}
+	// when padding: an integral of the block size that is longer than the remaining data.
+	const CK_ULONG size( isPadding ? ((remainingSize+blockSize)/blockSize)*blockSize : remainingSize );
 
+	// Give required output buffer size.
 	if (pEncryptedData == NULL_PTR)
 	{
 		*pulEncryptedDataLen = size;
 		return CKR_OK;
 	}
 
-	// Check buffer size
+	// Check output buffer size
 	if (*pulEncryptedDataLen < size)
 	{
+		DEBUG_MSG(
+				"output buffer size: %#5x  size: %#5x",
+				*pulEncryptedDataLen, size);
 		*pulEncryptedDataLen = size;
 		return CKR_BUFFER_TOO_SMALL;
 	}
@@ -2427,8 +2440,21 @@ static CK_RV SymEncryptFinal(Session* session, CK_BYTE_PTR pEncryptedData, CK_UL
 		session->resetOp();
 		return CKR_GENERAL_ERROR;
 	}
+	DEBUG_MSG(
+			"output buffer size: %#2x  size: %#2x  encryptedFinal.size(): %#2x",
+			*pulEncryptedDataLen, size, encryptedFinal.size());
 
-	if (encryptedFinal.size() != 0)
+	// Check output size from crypto. Unrecoverable error if to large.
+	if (*pulEncryptedDataLen < encryptedFinal.size())
+	{
+		session->resetOp();
+		ERROR_MSG(
+				"Cipher encryptFinal returning too much data. Length of output data buffer is %i but %i bytes was returned by the encrypt.",
+				*pulEncryptedDataLen, encryptedFinal.size());
+		return CKR_GENERAL_ERROR;
+	}
+
+	if (encryptedFinal.size() > 0)
 	{
 		memcpy(pEncryptedData, encryptedFinal.byte_str(), encryptedFinal.size());
 	}
@@ -2901,40 +2927,34 @@ CK_RV SoftHSM::C_Decrypt(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pEncryptedData,
 // SymAlgorithm version of C_DecryptUpdate
 static CK_RV SymDecryptUpdate(Session* session, CK_BYTE_PTR pEncryptedData, CK_ULONG ulEncryptedDataLen, CK_BYTE_PTR pData, CK_ULONG_PTR pDataLen)
 {
-	SymmetricAlgorithm* cipher = session->getSymmetricCryptoOp();
+	SymmetricAlgorithm*const cipher( session->getSymmetricCryptoOp() );
 	if (cipher == NULL || !session->getAllowMultiPartOp())
 	{
 		session->resetOp();
 		return CKR_OPERATION_NOT_INITIALIZED;
 	}
 
-	// Check data size
-	SymMode::Type mode = cipher->getCipherMode();
-	CK_ULONG remainder = ulEncryptedDataLen % cipher->getBlockSize();
-	if ((mode == SymMode::ECB || mode == SymMode::CBC) &&
-	    cipher->getPaddingMode() == false &&
-	    remainder != 0)
-	{
-		session->resetOp();
-		return CKR_DATA_LEN_RANGE;
-	}
+	const size_t blockSize( cipher->getBlockSize() );
+	const size_t remainingSize( cipher->getBufferSize() );// since last update
+	// There must always be one block left in padding mode if next operation is DecryptFinal.
+	// To guarantee that one byte is removed in padding mode when the number of blocks is calculated.
+	const size_t paddingAdjustByte( cipher->getPaddingMode() ? 1 : 0 );
+	const int nrOfBlocks( (ulEncryptedDataLen+remainingSize-paddingAdjustByte)/blockSize );
+	const CK_ULONG maxSize( nrOfBlocks*blockSize );
 
-	// Round down/up to block size
-	CK_ULONG maxSize = ulEncryptedDataLen - remainder;
-	if (remainder + cipher->getBufferSize() > cipher->getBlockSize())
-	{
-		maxSize += cipher->getBlockSize();
-	}
-
+	// Give required output buffer size.
 	if (pData == NULL_PTR)
 	{
 		*pDataLen = maxSize;
 		return CKR_OK;
 	}
 
-	// Check buffer size
+	// Check output buffer size
 	if (*pDataLen < maxSize)
 	{
+		DEBUG_MSG(
+				"Output buffer too short   ulEncryptedDataLen: %#5x  output buffer size: %#5x  blockSize: %#3x  remainingSize: %#4x  maxSize: %#5x",
+				ulEncryptedDataLen, *pDataLen, blockSize, remainingSize, maxSize);
 		*pDataLen = maxSize;
 		return CKR_BUFFER_TOO_SMALL;
 	}
@@ -2949,8 +2969,21 @@ static CK_RV SymDecryptUpdate(Session* session, CK_BYTE_PTR pEncryptedData, CK_U
 		session->resetOp();
 		return CKR_GENERAL_ERROR;
 	}
+	DEBUG_MSG(
+			"ulEncryptedDataLen: %#5x  output buffer size: %#5x  blockSize: %#3x  remainingSize: %#4x  maxSize: %#5x  decryptedData.size(): %#5x",
+			ulEncryptedDataLen, *pDataLen, blockSize, remainingSize, maxSize, decryptedData.size());
 
-	if (decryptedData.size() != 0)
+	// Check output size from crypto. Unrecoverable error if to large.
+	if (*pDataLen < decryptedData.size())
+	{
+		session->resetOp();
+		ERROR_MSG(
+				"Cipher decryptUpdate returning too much data. Length of output data buffer is %i but %i bytes was returned by the decrypt.",
+				*pDataLen, decryptedData.size());
+		return CKR_GENERAL_ERROR;
+	}
+
+	if (decryptedData.size() > 0)
 	{
 		memcpy(pData, decryptedData.byte_str(), decryptedData.size());
 	}
@@ -2985,29 +3018,39 @@ CK_RV SoftHSM::C_DecryptUpdate(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pEncrypte
 
 static CK_RV SymDecryptFinal(Session* session, CK_BYTE_PTR pDecryptedData, CK_ULONG_PTR pulDecryptedDataLen)
 {
-	SymmetricAlgorithm* cipher = session->getSymmetricCryptoOp();
+	SymmetricAlgorithm*const cipher( session->getSymmetricCryptoOp() );
 	if (cipher == NULL || !session->getAllowMultiPartOp())
 	{
 		session->resetOp();
 		return CKR_OPERATION_NOT_INITIALIZED;
 	}
 
-	// Size of the decrypted data
-	CK_ULONG size = 0;
-	if (cipher->getPaddingMode() == true)
-	{
-		size = cipher->getBlockSize();
+	const size_t remainingSize( cipher->getBufferSize() );// since last update
+	const size_t blockSize( cipher->getBlockSize() );
+	if ( remainingSize%blockSize != 0 ) {
+		session->resetOp();
+		DEBUG_MSG(
+				"remaining data length is not an integral of the block size. Block size: %#2x  Remaining size: %#2x",
+				blockSize, remainingSize);
+		return CKR_ENCRYPTED_DATA_LEN_RANGE;
 	}
+	// It is at least one padding byte. If no padding the all remains will be returned.
+	const size_t paddingAdjustByte( cipher->getPaddingMode() ? 1 : 0 );
+	const CK_ULONG size( remainingSize-paddingAdjustByte );
 
+	// Give required output buffer size.
 	if (pDecryptedData == NULL_PTR)
 	{
 		*pulDecryptedDataLen = size;
 		return CKR_OK;
 	}
 
-	// Check buffer size
+	// Check output buffer size
 	if (*pulDecryptedDataLen < size)
 	{
+		DEBUG_MSG(
+				"output buffer size: %#5x  size: %#5x",
+				*pulDecryptedDataLen, size);
 		*pulDecryptedDataLen = size;
 		return CKR_BUFFER_TOO_SMALL;
 	}
@@ -3019,8 +3062,21 @@ static CK_RV SymDecryptFinal(Session* session, CK_BYTE_PTR pDecryptedData, CK_UL
 		session->resetOp();
 		return CKR_GENERAL_ERROR;
 	}
+	DEBUG_MSG(
+			"output buffer size: %#2x  size: %#2x  decryptedFinal.size(): %#2x",
+			*pulDecryptedDataLen, size, decryptedFinal.size());
 
-	if (decryptedFinal.size() != 0)
+	// Check output size from crypto. Unrecoverable error if to large.
+	if (*pulDecryptedDataLen < decryptedFinal.size())
+	{
+		session->resetOp();
+		ERROR_MSG(
+				"Cipher encryptFinal returning too much data. Length of output data buffer is %i but %i bytes was returned by the encrypt.",
+				*pulDecryptedDataLen, decryptedFinal.size());
+		return CKR_GENERAL_ERROR;
+	}
+
+	if (decryptedFinal.size() > 0)
 	{
 		memcpy(pDecryptedData, decryptedFinal.byte_str(), decryptedFinal.size());
 	}
