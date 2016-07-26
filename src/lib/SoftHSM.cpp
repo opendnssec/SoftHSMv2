@@ -321,6 +321,7 @@ void SoftHSM::reset()
 SoftHSM::SoftHSM()
 {
 	isInitialised = false;
+	isRemovable = false;
 	sessionObjectStore = NULL;
 	objectStore = NULL;
 	slotManager = NULL;

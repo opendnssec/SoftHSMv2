@@ -25,6 +25,7 @@ Bugfixes:
   Windows build project.
 * Issue #207: Fix segmentation faults in loadLibrary function.
   (Patch from Jaroslav Imrich)
+* Issue #218: Fix build warnings.
 
 
 SoftHSM 2.1.0 - 2016-03-14
