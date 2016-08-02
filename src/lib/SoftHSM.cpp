@@ -5135,7 +5135,7 @@ CK_RV SoftHSM::C_GenerateKeyPair
 	// Extract information from the public key template that is needed to create the object.
 	CK_OBJECT_CLASS publicKeyClass = CKO_PUBLIC_KEY;
 	CK_BBOOL ispublicKeyToken = CK_FALSE;
-	CK_BBOOL ispublicKeyPrivate = CK_TRUE;
+	CK_BBOOL ispublicKeyPrivate = CK_FALSE;
 	bool isPublicKeyImplicit = true;
 	extractObjectInformation(pPublicKeyTemplate, ulPublicKeyAttributeCount, publicKeyClass, keyType, dummy, ispublicKeyToken, ispublicKeyPrivate, isPublicKeyImplicit);
 
