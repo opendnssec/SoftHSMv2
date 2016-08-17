@@ -240,20 +240,58 @@ static char *get_user_path(void)
 	return NULL;
 }
 
+static char *get_env_var_path(void)
+{
+#ifdef _WIN32
+
+	LPSTR value = NULL;
+	DWORD size = 0;
+
+	size = GetEnvironmentVariableA("SOFTHSM2_CONF", value, size);
+	if (size == 0) {
+		return NULL;
+	}
+	
+	value = (LPSTR) malloc(size);
+	if (NULL == value) {
+		return NULL;
+	}
+
+	if (GetEnvironmentVariableA("SOFTHSM2_CONF", value, size) != (size - 1)) {
+		free(value);
+		return NULL;
+	}
+
+	return value;
+
+#else
+
+	char *value = getenv("SOFTHSM2_CONF");
+
+	if (value == NULL) {
+		return value;
+	} else {
+		return strdup(value);
+	}
+
+#endif
+}
+
 char* SimpleConfigLoader::getConfigPath()
 {
-	const char* configPath = getenv("SOFTHSM2_CONF");
+	char* configPath = get_env_var_path();
 	char *tpath;
 
-	if (configPath == NULL) {
+	if (configPath != NULL) {
+		return configPath;
+	} else {
 		tpath = get_user_path();
 		if (tpath != NULL) {
 			return tpath;
 		}
 		configPath = DEFAULT_SOFTHSM2_CONF;
+		return strdup(configPath);
 	}
-
-	return strdup(configPath);
 } 
 
 char* SimpleConfigLoader::trimString(char* text)
