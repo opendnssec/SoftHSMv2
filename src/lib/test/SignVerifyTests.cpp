@@ -55,33 +55,39 @@ const CK_BBOOL IS_PUBLIC = CK_FALSE;
 
 CPPUNIT_TEST_SUITE_REGISTRATION(SignVerifyTests);
 
-CK_RV SignVerifyTests::generateRsaKeyPair(CK_SESSION_HANDLE hSession, CK_BBOOL bTokenPuk, CK_BBOOL bPrivatePuk, CK_BBOOL bTokenPrk, CK_BBOOL bPrivatePrk, CK_OBJECT_HANDLE &hPuk, CK_OBJECT_HANDLE &hPrk)
+CK_RV SignVerifyTests::generateRSA(CK_SESSION_HANDLE hSession, CK_BBOOL bTokenPuk, CK_BBOOL bPrivatePuk, CK_BBOOL bTokenPrk, CK_BBOOL bPrivatePrk, CK_OBJECT_HANDLE &hPuk, CK_OBJECT_HANDLE &hPrk)
 {
 	CK_MECHANISM mechanism = { CKM_RSA_PKCS_KEY_PAIR_GEN, NULL_PTR, 0 };
+	CK_KEY_TYPE keyType = CKK_RSA;
 	CK_ULONG bits = 1536;
 	CK_BYTE pubExp[] = {0x01, 0x00, 0x01};
-	CK_BYTE subject[] = { 0x12, 0x34 }; // dummy
+	CK_BYTE label[] = { 0x12, 0x34 }; // dummy
 	CK_BYTE id[] = { 123 } ; // dummy
 	CK_BBOOL bFalse = CK_FALSE;
 	CK_BBOOL bTrue = CK_TRUE;
 	CK_ATTRIBUTE pukAttribs[] = {
+		{ CKA_LABEL, &label[0], sizeof(label) },
+		{ CKA_ID, &id[0], sizeof(id) },
+		{ CKA_KEY_TYPE, &keyType, sizeof(keyType) },
+		{ CKA_VERIFY, &bTrue, sizeof(bTrue) },
+		{ CKA_ENCRYPT, &bFalse, sizeof(bFalse) },
+		{ CKA_WRAP, &bFalse, sizeof(bFalse) },
 		{ CKA_TOKEN, &bTokenPuk, sizeof(bTokenPuk) },
 		{ CKA_PRIVATE, &bPrivatePuk, sizeof(bPrivatePuk) },
-		{ CKA_ENCRYPT, &bFalse, sizeof(bFalse) },
-		{ CKA_VERIFY, &bTrue, sizeof(bTrue) },
-		{ CKA_WRAP, &bFalse, sizeof(bFalse) },
 		{ CKA_MODULUS_BITS, &bits, sizeof(bits) },
 		{ CKA_PUBLIC_EXPONENT, &pubExp[0], sizeof(pubExp) }
 	};
 	CK_ATTRIBUTE prkAttribs[] = {
+		{ CKA_LABEL, &label[0], sizeof(label) },
+		{ CKA_ID, &id[0], sizeof(id) },
+		{ CKA_KEY_TYPE, &keyType, sizeof(keyType) },
+		{ CKA_SIGN, &bTrue, sizeof(bTrue) },
+		{ CKA_DECRYPT, &bFalse, sizeof(bFalse) },
+		{ CKA_UNWRAP, &bFalse, sizeof(bFalse) },
+		{ CKA_SENSITIVE, &bTrue, sizeof(bTrue) },
 		{ CKA_TOKEN, &bTokenPrk, sizeof(bTokenPrk) },
 		{ CKA_PRIVATE, &bPrivatePrk, sizeof(bPrivatePrk) },
-		{ CKA_SUBJECT, &subject[0], sizeof(subject) },
-		{ CKA_ID, &id[0], sizeof(id) },
-		{ CKA_SENSITIVE, &bTrue, sizeof(bTrue) },
-		{ CKA_DECRYPT, &bFalse, sizeof(bFalse) },
-		{ CKA_SIGN, &bTrue, sizeof(bTrue) },
-		{ CKA_UNWRAP, &bFalse, sizeof(bFalse) }
+		{ CKA_EXTRACTABLE, &bFalse, sizeof(bFalse) }
 	};
 
 	hPuk = CK_INVALID_HANDLE;
@@ -92,10 +98,77 @@ CK_RV SignVerifyTests::generateRsaKeyPair(CK_SESSION_HANDLE hSession, CK_BBOOL b
 							 &hPuk, &hPrk) );
 }
 
-void SignVerifyTests::rsaPkcsSignVerify(CK_MECHANISM_TYPE mechanismType, CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hPublicKey, CK_OBJECT_HANDLE hPrivateKey)
+#ifdef WITH_ECC
+CK_RV SignVerifyTests::generateEC(const char* curve, CK_SESSION_HANDLE hSession, CK_BBOOL bTokenPuk, CK_BBOOL bPrivatePuk, CK_BBOOL bTokenPrk, CK_BBOOL bPrivatePrk, CK_OBJECT_HANDLE &hPuk, CK_OBJECT_HANDLE &hPrk)
+{
+	CK_MECHANISM mechanism = { CKM_EC_KEY_PAIR_GEN, NULL_PTR, 0 };
+	CK_KEY_TYPE keyType = CKK_EC;
+	CK_BYTE oidP256[] = { 0x06, 0x08, 0x2A, 0x86, 0x48, 0xCE, 0x3D, 0x03, 0x01, 0x07 };
+	CK_BYTE oidP384[] = { 0x06, 0x05, 0x2B, 0x81, 0x04, 0x00, 0x22 };
+	CK_BYTE oidP521[] = { 0x06, 0x05, 0x2B, 0x81, 0x04, 0x00, 0x23 };
+	CK_BYTE label[] = { 0x12, 0x34 }; // dummy
+	CK_BYTE id[] = { 123 } ; // dummy
+	CK_BBOOL bFalse = CK_FALSE;
+	CK_BBOOL bTrue = CK_TRUE;
+
+	CK_ATTRIBUTE pukAttribs[] = {
+		{ CKA_EC_PARAMS, NULL, 0 },
+		{ CKA_LABEL, &label[0], sizeof(label) },
+		{ CKA_ID, &id[0], sizeof(id) },
+		{ CKA_KEY_TYPE, &keyType, sizeof(keyType) },
+		{ CKA_VERIFY, &bTrue, sizeof(bTrue) },
+		{ CKA_ENCRYPT, &bFalse, sizeof(bFalse) },
+		{ CKA_WRAP, &bFalse, sizeof(bFalse) },
+		{ CKA_TOKEN, &bTokenPuk, sizeof(bTokenPuk) },
+		{ CKA_PRIVATE, &bPrivatePuk, sizeof(bPrivatePuk) }
+	};
+	CK_ATTRIBUTE prkAttribs[] = {
+		{ CKA_LABEL, &label[0], sizeof(label) },
+		{ CKA_ID, &id[0], sizeof(id) },
+		{ CKA_KEY_TYPE, &keyType, sizeof(keyType) },
+		{ CKA_SIGN, &bTrue, sizeof(bTrue) },
+		{ CKA_DECRYPT, &bFalse, sizeof(bFalse) },
+		{ CKA_UNWRAP, &bFalse, sizeof(bFalse) },
+		{ CKA_SENSITIVE, &bTrue, sizeof(bTrue) },
+		{ CKA_TOKEN, &bTokenPrk, sizeof(bTokenPrk) },
+		{ CKA_PRIVATE, &bPrivatePrk, sizeof(bPrivatePrk) },
+		{ CKA_EXTRACTABLE, &bFalse, sizeof(bFalse) }
+	};
+
+	/* Select the curve */
+	if (strcmp(curve, "P-256") == 0)
+	{
+		pukAttribs[0].pValue = oidP256;
+		pukAttribs[0].ulValueLen = sizeof(oidP256);
+	}
+	else if (strcmp(curve, "P-384") == 0)
+	{
+		pukAttribs[0].pValue = oidP384;
+		pukAttribs[0].ulValueLen = sizeof(oidP384);
+	}
+	else if (strcmp(curve, "P-521") == 0)
+	{
+		pukAttribs[0].pValue = oidP521;
+		pukAttribs[0].ulValueLen = sizeof(oidP521);
+	}
+	else
+	{
+		return CKR_GENERAL_ERROR;
+	}
+
+	hPuk = CK_INVALID_HANDLE;
+	hPrk = CK_INVALID_HANDLE;
+	return CRYPTOKI_F_PTR( C_GenerateKeyPair(hSession, &mechanism,
+							 pukAttribs, sizeof(pukAttribs)/sizeof(CK_ATTRIBUTE),
+							 prkAttribs, sizeof(prkAttribs)/sizeof(CK_ATTRIBUTE),
+							 &hPuk, &hPrk) );
+}
+#endif
+
+void SignVerifyTests::signVerifySingle(CK_MECHANISM_TYPE mechanismType, CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hPublicKey, CK_OBJECT_HANDLE hPrivateKey, CK_VOID_PTR param /* = NULL_PTR */, CK_ULONG paramLen /* = 0 */)
 {
 	CK_RV rv;
-	CK_MECHANISM mechanism = { mechanismType, NULL_PTR, 0 };
+	CK_MECHANISM mechanism = { mechanismType, param, paramLen };
 	CK_BYTE data[] = { 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B,0x0C, 0x0D, 0x0F };
 	CK_BYTE signature[256];
 	CK_ULONG ulSignatureLen = 0;
@@ -112,9 +185,17 @@ void SignVerifyTests::rsaPkcsSignVerify(CK_MECHANISM_TYPE mechanismType, CK_SESS
 
 	rv = CRYPTOKI_F_PTR( C_Verify(hSession,data,sizeof(data),signature,ulSignatureLen) );
 	CPPUNIT_ASSERT(rv==CKR_OK);
+
+	// verify again, but now change the input that is being signed.
+	rv = CRYPTOKI_F_PTR( C_VerifyInit(hSession,&mechanism,hPublicKey) );
+	CPPUNIT_ASSERT(rv==CKR_OK);
+
+	data[0] = 0xff;
+	rv = CRYPTOKI_F_PTR( C_Verify(hSession,data,sizeof(data),signature,ulSignatureLen) );
+	CPPUNIT_ASSERT(rv==CKR_SIGNATURE_INVALID);
 }
 
-void SignVerifyTests::digestRsaPkcsSignVerify(CK_MECHANISM_TYPE mechanismType, CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hPublicKey, CK_OBJECT_HANDLE hPrivateKey, CK_VOID_PTR param /* = NULL_PTR */, CK_ULONG paramLen /* = 0 */)
+void SignVerifyTests::signVerifyMulti(CK_MECHANISM_TYPE mechanismType, CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hPublicKey, CK_OBJECT_HANDLE hPrivateKey, CK_VOID_PTR param /* = NULL_PTR */, CK_ULONG paramLen /* = 0 */)
 {
 	CK_RV rv;
 	CK_MECHANISM mechanism = { mechanismType, param, paramLen };
@@ -152,7 +233,6 @@ void SignVerifyTests::digestRsaPkcsSignVerify(CK_MECHANISM_TYPE mechanismType, C
 	rv = CRYPTOKI_F_PTR( C_VerifyFinal(hSession,signature,ulSignatureLen) );
 	CPPUNIT_ASSERT(rv==CKR_SIGNATURE_INVALID);
 }
-
 
 void SignVerifyTests::testRsaSignVerify()
 {
@@ -194,85 +274,164 @@ void SignVerifyTests::testRsaSignVerify()
 	CK_OBJECT_HANDLE hPrk = CK_INVALID_HANDLE;
 
 	// Public Session keys
-	rv = generateRsaKeyPair(hSessionRW,IN_SESSION,IS_PUBLIC,IN_SESSION,IS_PUBLIC,hPuk,hPrk);
+	rv = generateRSA(hSessionRW,IN_SESSION,IS_PUBLIC,IN_SESSION,IS_PUBLIC,hPuk,hPrk);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	rsaPkcsSignVerify(CKM_RSA_PKCS, hSessionRO, hPuk,hPrk);
-	rsaPkcsSignVerify(CKM_RSA_X_509, hSessionRO, hPuk,hPrk);
+	signVerifySingle(CKM_RSA_PKCS, hSessionRO, hPuk,hPrk);
+	signVerifySingle(CKM_RSA_X_509, hSessionRO, hPuk,hPrk);
 #ifndef WITH_FIPS
-	digestRsaPkcsSignVerify(CKM_MD5_RSA_PKCS, hSessionRO, hPuk,hPrk);
+	signVerifyMulti(CKM_MD5_RSA_PKCS, hSessionRO, hPuk,hPrk);
 #endif
-	digestRsaPkcsSignVerify(CKM_SHA1_RSA_PKCS, hSessionRO, hPuk,hPrk);
-	digestRsaPkcsSignVerify(CKM_SHA224_RSA_PKCS, hSessionRO, hPuk,hPrk);
-	digestRsaPkcsSignVerify(CKM_SHA256_RSA_PKCS, hSessionRO, hPuk,hPrk);
-	digestRsaPkcsSignVerify(CKM_SHA384_RSA_PKCS, hSessionRO, hPuk,hPrk);
-	digestRsaPkcsSignVerify(CKM_SHA512_RSA_PKCS, hSessionRO, hPuk,hPrk);
-	digestRsaPkcsSignVerify(CKM_SHA1_RSA_PKCS_PSS, hSessionRO, hPuk,hPrk, &params[0], sizeof(params[0]));
-	digestRsaPkcsSignVerify(CKM_SHA224_RSA_PKCS_PSS, hSessionRO, hPuk,hPrk, &params[1], sizeof(params[1]));
-	digestRsaPkcsSignVerify(CKM_SHA256_RSA_PKCS_PSS, hSessionRO, hPuk,hPrk, &params[2], sizeof(params[2]));
-	digestRsaPkcsSignVerify(CKM_SHA384_RSA_PKCS_PSS, hSessionRO, hPuk,hPrk, &params[3], sizeof(params[3]));
-	digestRsaPkcsSignVerify(CKM_SHA512_RSA_PKCS_PSS, hSessionRO, hPuk,hPrk, &params[4], sizeof(params[4]));
+	signVerifyMulti(CKM_SHA1_RSA_PKCS, hSessionRO, hPuk,hPrk);
+	signVerifyMulti(CKM_SHA224_RSA_PKCS, hSessionRO, hPuk,hPrk);
+	signVerifyMulti(CKM_SHA256_RSA_PKCS, hSessionRO, hPuk,hPrk);
+	signVerifyMulti(CKM_SHA384_RSA_PKCS, hSessionRO, hPuk,hPrk);
+	signVerifyMulti(CKM_SHA512_RSA_PKCS, hSessionRO, hPuk,hPrk);
+	signVerifyMulti(CKM_SHA1_RSA_PKCS_PSS, hSessionRO, hPuk,hPrk, &params[0], sizeof(params[0]));
+	signVerifyMulti(CKM_SHA224_RSA_PKCS_PSS, hSessionRO, hPuk,hPrk, &params[1], sizeof(params[1]));
+	signVerifyMulti(CKM_SHA256_RSA_PKCS_PSS, hSessionRO, hPuk,hPrk, &params[2], sizeof(params[2]));
+	signVerifyMulti(CKM_SHA384_RSA_PKCS_PSS, hSessionRO, hPuk,hPrk, &params[3], sizeof(params[3]));
+	signVerifyMulti(CKM_SHA512_RSA_PKCS_PSS, hSessionRO, hPuk,hPrk, &params[4], sizeof(params[4]));
 
 	// Private Session Keys
-	rv = generateRsaKeyPair(hSessionRW,IN_SESSION,IS_PRIVATE,IN_SESSION,IS_PRIVATE,hPuk,hPrk);
+	rv = generateRSA(hSessionRW,IN_SESSION,IS_PRIVATE,IN_SESSION,IS_PRIVATE,hPuk,hPrk);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	rsaPkcsSignVerify(CKM_RSA_PKCS, hSessionRW, hPuk,hPrk);
-	rsaPkcsSignVerify(CKM_RSA_X_509, hSessionRW, hPuk,hPrk);
+	signVerifySingle(CKM_RSA_PKCS, hSessionRW, hPuk,hPrk);
+	signVerifySingle(CKM_RSA_X_509, hSessionRW, hPuk,hPrk);
 #ifndef WITH_FIPS
-	digestRsaPkcsSignVerify(CKM_MD5_RSA_PKCS, hSessionRW, hPuk,hPrk);
+	signVerifyMulti(CKM_MD5_RSA_PKCS, hSessionRW, hPuk,hPrk);
 #endif
-	digestRsaPkcsSignVerify(CKM_SHA1_RSA_PKCS, hSessionRW, hPuk,hPrk);
-	digestRsaPkcsSignVerify(CKM_SHA224_RSA_PKCS, hSessionRW, hPuk,hPrk);
-	digestRsaPkcsSignVerify(CKM_SHA256_RSA_PKCS, hSessionRW, hPuk,hPrk);
-	digestRsaPkcsSignVerify(CKM_SHA384_RSA_PKCS, hSessionRW, hPuk,hPrk);
-	digestRsaPkcsSignVerify(CKM_SHA512_RSA_PKCS, hSessionRW, hPuk,hPrk);
-	digestRsaPkcsSignVerify(CKM_SHA1_RSA_PKCS_PSS, hSessionRW, hPuk,hPrk, &params[0], sizeof(params[0]));
-	digestRsaPkcsSignVerify(CKM_SHA224_RSA_PKCS_PSS, hSessionRW, hPuk,hPrk, &params[1], sizeof(params[1]));
-	digestRsaPkcsSignVerify(CKM_SHA256_RSA_PKCS_PSS, hSessionRW, hPuk,hPrk, &params[2], sizeof(params[2]));
-	digestRsaPkcsSignVerify(CKM_SHA384_RSA_PKCS_PSS, hSessionRW, hPuk,hPrk, &params[3], sizeof(params[3]));
-	digestRsaPkcsSignVerify(CKM_SHA512_RSA_PKCS_PSS, hSessionRW, hPuk,hPrk, &params[4], sizeof(params[4]));
+	signVerifyMulti(CKM_SHA1_RSA_PKCS, hSessionRW, hPuk,hPrk);
+	signVerifyMulti(CKM_SHA224_RSA_PKCS, hSessionRW, hPuk,hPrk);
+	signVerifyMulti(CKM_SHA256_RSA_PKCS, hSessionRW, hPuk,hPrk);
+	signVerifyMulti(CKM_SHA384_RSA_PKCS, hSessionRW, hPuk,hPrk);
+	signVerifyMulti(CKM_SHA512_RSA_PKCS, hSessionRW, hPuk,hPrk);
+	signVerifyMulti(CKM_SHA1_RSA_PKCS_PSS, hSessionRW, hPuk,hPrk, &params[0], sizeof(params[0]));
+	signVerifyMulti(CKM_SHA224_RSA_PKCS_PSS, hSessionRW, hPuk,hPrk, &params[1], sizeof(params[1]));
+	signVerifyMulti(CKM_SHA256_RSA_PKCS_PSS, hSessionRW, hPuk,hPrk, &params[2], sizeof(params[2]));
+	signVerifyMulti(CKM_SHA384_RSA_PKCS_PSS, hSessionRW, hPuk,hPrk, &params[3], sizeof(params[3]));
+	signVerifyMulti(CKM_SHA512_RSA_PKCS_PSS, hSessionRW, hPuk,hPrk, &params[4], sizeof(params[4]));
 
 	// Public Token Keys
-	rv = generateRsaKeyPair(hSessionRW,ON_TOKEN,IS_PUBLIC,ON_TOKEN,IS_PUBLIC,hPuk,hPrk);
+	rv = generateRSA(hSessionRW,ON_TOKEN,IS_PUBLIC,ON_TOKEN,IS_PUBLIC,hPuk,hPrk);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	rsaPkcsSignVerify(CKM_RSA_PKCS, hSessionRW, hPuk,hPrk);
-	rsaPkcsSignVerify(CKM_RSA_X_509, hSessionRW, hPuk,hPrk);
+	signVerifySingle(CKM_RSA_PKCS, hSessionRW, hPuk,hPrk);
+	signVerifySingle(CKM_RSA_X_509, hSessionRW, hPuk,hPrk);
 #ifndef WITH_FIPS
-	digestRsaPkcsSignVerify(CKM_MD5_RSA_PKCS, hSessionRW, hPuk,hPrk);
+	signVerifyMulti(CKM_MD5_RSA_PKCS, hSessionRW, hPuk,hPrk);
 #endif
-	digestRsaPkcsSignVerify(CKM_SHA1_RSA_PKCS, hSessionRW, hPuk,hPrk);
-	digestRsaPkcsSignVerify(CKM_SHA224_RSA_PKCS, hSessionRW, hPuk,hPrk);
-	digestRsaPkcsSignVerify(CKM_SHA256_RSA_PKCS, hSessionRW, hPuk,hPrk);
-	digestRsaPkcsSignVerify(CKM_SHA384_RSA_PKCS, hSessionRW, hPuk,hPrk);
-	digestRsaPkcsSignVerify(CKM_SHA512_RSA_PKCS, hSessionRW, hPuk,hPrk);
-	digestRsaPkcsSignVerify(CKM_SHA1_RSA_PKCS_PSS, hSessionRW, hPuk,hPrk, &params[0], sizeof(params[0]));
-	digestRsaPkcsSignVerify(CKM_SHA224_RSA_PKCS_PSS, hSessionRW, hPuk,hPrk, &params[1], sizeof(params[1]));
-	digestRsaPkcsSignVerify(CKM_SHA256_RSA_PKCS_PSS, hSessionRW, hPuk,hPrk, &params[2], sizeof(params[2]));
-	digestRsaPkcsSignVerify(CKM_SHA384_RSA_PKCS_PSS, hSessionRW, hPuk,hPrk, &params[3], sizeof(params[3]));
-	digestRsaPkcsSignVerify(CKM_SHA512_RSA_PKCS_PSS, hSessionRW, hPuk,hPrk, &params[4], sizeof(params[4]));
+	signVerifyMulti(CKM_SHA1_RSA_PKCS, hSessionRW, hPuk,hPrk);
+	signVerifyMulti(CKM_SHA224_RSA_PKCS, hSessionRW, hPuk,hPrk);
+	signVerifyMulti(CKM_SHA256_RSA_PKCS, hSessionRW, hPuk,hPrk);
+	signVerifyMulti(CKM_SHA384_RSA_PKCS, hSessionRW, hPuk,hPrk);
+	signVerifyMulti(CKM_SHA512_RSA_PKCS, hSessionRW, hPuk,hPrk);
+	signVerifyMulti(CKM_SHA1_RSA_PKCS_PSS, hSessionRW, hPuk,hPrk, &params[0], sizeof(params[0]));
+	signVerifyMulti(CKM_SHA224_RSA_PKCS_PSS, hSessionRW, hPuk,hPrk, &params[1], sizeof(params[1]));
+	signVerifyMulti(CKM_SHA256_RSA_PKCS_PSS, hSessionRW, hPuk,hPrk, &params[2], sizeof(params[2]));
+	signVerifyMulti(CKM_SHA384_RSA_PKCS_PSS, hSessionRW, hPuk,hPrk, &params[3], sizeof(params[3]));
+	signVerifyMulti(CKM_SHA512_RSA_PKCS_PSS, hSessionRW, hPuk,hPrk, &params[4], sizeof(params[4]));
 
 	// Private Token Keys
-	rv = generateRsaKeyPair(hSessionRW,ON_TOKEN,IS_PRIVATE,ON_TOKEN,IS_PRIVATE,hPuk,hPrk);
+	rv = generateRSA(hSessionRW,ON_TOKEN,IS_PRIVATE,ON_TOKEN,IS_PRIVATE,hPuk,hPrk);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	rsaPkcsSignVerify(CKM_RSA_PKCS, hSessionRW, hPuk,hPrk);
-	rsaPkcsSignVerify(CKM_RSA_X_509, hSessionRW, hPuk,hPrk);
+	signVerifySingle(CKM_RSA_PKCS, hSessionRW, hPuk,hPrk);
+	signVerifySingle(CKM_RSA_X_509, hSessionRW, hPuk,hPrk);
 #ifndef WITH_FIPS
-	digestRsaPkcsSignVerify(CKM_MD5_RSA_PKCS, hSessionRW, hPuk,hPrk);
+	signVerifyMulti(CKM_MD5_RSA_PKCS, hSessionRW, hPuk,hPrk);
 #endif
-	digestRsaPkcsSignVerify(CKM_SHA1_RSA_PKCS, hSessionRW, hPuk,hPrk);
-	digestRsaPkcsSignVerify(CKM_SHA224_RSA_PKCS, hSessionRW, hPuk,hPrk);
-	digestRsaPkcsSignVerify(CKM_SHA256_RSA_PKCS, hSessionRW, hPuk,hPrk);
-	digestRsaPkcsSignVerify(CKM_SHA384_RSA_PKCS, hSessionRW, hPuk,hPrk);
-	digestRsaPkcsSignVerify(CKM_SHA512_RSA_PKCS, hSessionRW, hPuk,hPrk);
-	digestRsaPkcsSignVerify(CKM_SHA1_RSA_PKCS_PSS, hSessionRW, hPuk,hPrk, &params[0], sizeof(params[0]));
-	digestRsaPkcsSignVerify(CKM_SHA224_RSA_PKCS_PSS, hSessionRW, hPuk,hPrk, &params[1], sizeof(params[1]));
-	digestRsaPkcsSignVerify(CKM_SHA256_RSA_PKCS_PSS, hSessionRW, hPuk,hPrk, &params[2], sizeof(params[2]));
-	digestRsaPkcsSignVerify(CKM_SHA384_RSA_PKCS_PSS, hSessionRW, hPuk,hPrk, &params[3], sizeof(params[3]));
-	digestRsaPkcsSignVerify(CKM_SHA512_RSA_PKCS_PSS, hSessionRW, hPuk,hPrk, &params[4], sizeof(params[4]));
+	signVerifyMulti(CKM_SHA1_RSA_PKCS, hSessionRW, hPuk,hPrk);
+	signVerifyMulti(CKM_SHA224_RSA_PKCS, hSessionRW, hPuk,hPrk);
+	signVerifyMulti(CKM_SHA256_RSA_PKCS, hSessionRW, hPuk,hPrk);
+	signVerifyMulti(CKM_SHA384_RSA_PKCS, hSessionRW, hPuk,hPrk);
+	signVerifyMulti(CKM_SHA512_RSA_PKCS, hSessionRW, hPuk,hPrk);
+	signVerifyMulti(CKM_SHA1_RSA_PKCS_PSS, hSessionRW, hPuk,hPrk, &params[0], sizeof(params[0]));
+	signVerifyMulti(CKM_SHA224_RSA_PKCS_PSS, hSessionRW, hPuk,hPrk, &params[1], sizeof(params[1]));
+	signVerifyMulti(CKM_SHA256_RSA_PKCS_PSS, hSessionRW, hPuk,hPrk, &params[2], sizeof(params[2]));
+	signVerifyMulti(CKM_SHA384_RSA_PKCS_PSS, hSessionRW, hPuk,hPrk, &params[3], sizeof(params[3]));
+	signVerifyMulti(CKM_SHA512_RSA_PKCS_PSS, hSessionRW, hPuk,hPrk, &params[4], sizeof(params[4]));
 }
+
+#ifdef WITH_ECC
+void SignVerifyTests::testEcSignVerify()
+{
+	CK_RV rv;
+	CK_SESSION_HANDLE hSessionRO;
+	CK_SESSION_HANDLE hSessionRW;
+
+	// Just make sure that we finalize any previous tests
+	CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
+
+	// Open read-only session on when the token is not initialized should fail
+	rv = CRYPTOKI_F_PTR( C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSessionRO) );
+	CPPUNIT_ASSERT(rv == CKR_CRYPTOKI_NOT_INITIALIZED);
+
+	// Initialize the library and start the test.
+	rv = CRYPTOKI_F_PTR( C_Initialize(NULL_PTR) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Open read-only session
+	rv = CRYPTOKI_F_PTR( C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSessionRO) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Open read-write session
+	rv = CRYPTOKI_F_PTR( C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSessionRW) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Login USER into the sessions so we can create a private objects
+	rv = CRYPTOKI_F_PTR( C_Login(hSessionRO,CKU_USER,m_userPin1,m_userPin1Length) );
+	CPPUNIT_ASSERT(rv==CKR_OK);
+
+	CK_OBJECT_HANDLE hPuk = CK_INVALID_HANDLE;
+	CK_OBJECT_HANDLE hPrk = CK_INVALID_HANDLE;
+
+	// Public Session keys
+	rv = generateEC("P-256", hSessionRW,IN_SESSION,IS_PUBLIC,IN_SESSION,IS_PUBLIC,hPuk,hPrk);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	signVerifySingle(CKM_ECDSA, hSessionRO, hPuk,hPrk);
+	rv = generateEC("P-384", hSessionRW,IN_SESSION,IS_PUBLIC,IN_SESSION,IS_PUBLIC,hPuk,hPrk);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	signVerifySingle(CKM_ECDSA, hSessionRO, hPuk,hPrk);
+	rv = generateEC("P-521", hSessionRW,IN_SESSION,IS_PUBLIC,IN_SESSION,IS_PUBLIC,hPuk,hPrk);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	signVerifySingle(CKM_ECDSA, hSessionRO, hPuk,hPrk);
+
+	// Private Session Keys
+	rv = generateEC("P-256", hSessionRW,IN_SESSION,IS_PRIVATE,IN_SESSION,IS_PRIVATE,hPuk,hPrk);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	signVerifySingle(CKM_ECDSA, hSessionRO, hPuk,hPrk);
+	rv = generateEC("P-384", hSessionRW,IN_SESSION,IS_PRIVATE,IN_SESSION,IS_PRIVATE,hPuk,hPrk);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	signVerifySingle(CKM_ECDSA, hSessionRO, hPuk,hPrk);
+	rv = generateEC("P-521", hSessionRW,IN_SESSION,IS_PRIVATE,IN_SESSION,IS_PRIVATE,hPuk,hPrk);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	signVerifySingle(CKM_ECDSA, hSessionRO, hPuk,hPrk);
+
+	// Public Token Keys
+	rv = generateEC("P-256", hSessionRW,ON_TOKEN,IS_PUBLIC,ON_TOKEN,IS_PUBLIC,hPuk,hPrk);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	signVerifySingle(CKM_ECDSA, hSessionRO, hPuk,hPrk);
+	rv = generateEC("P-384", hSessionRW,ON_TOKEN,IS_PUBLIC,ON_TOKEN,IS_PUBLIC,hPuk,hPrk);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	signVerifySingle(CKM_ECDSA, hSessionRO, hPuk,hPrk);
+	rv = generateEC("P-521", hSessionRW,ON_TOKEN,IS_PUBLIC,ON_TOKEN,IS_PUBLIC,hPuk,hPrk);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	signVerifySingle(CKM_ECDSA, hSessionRO, hPuk,hPrk);
+
+	// Private Token Keys
+	rv = generateEC("P-256", hSessionRW,ON_TOKEN,IS_PRIVATE,ON_TOKEN,IS_PRIVATE,hPuk,hPrk);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	signVerifySingle(CKM_ECDSA, hSessionRO, hPuk,hPrk);
+	rv = generateEC("P-384", hSessionRW,ON_TOKEN,IS_PRIVATE,ON_TOKEN,IS_PRIVATE,hPuk,hPrk);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	signVerifySingle(CKM_ECDSA, hSessionRO, hPuk,hPrk);
+	rv = generateEC("P-521", hSessionRW,ON_TOKEN,IS_PRIVATE,ON_TOKEN,IS_PRIVATE,hPuk,hPrk);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	signVerifySingle(CKM_ECDSA, hSessionRO, hPuk,hPrk);
+}
+#endif
 
 CK_RV SignVerifyTests::generateKey(CK_SESSION_HANDLE hSession, CK_KEY_TYPE keyType, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_OBJECT_HANDLE &hKey)
 {

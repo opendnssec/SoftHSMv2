@@ -76,6 +76,8 @@ void ECDSATests::testKeyGeneration()
 	curves.push_back(ByteString("06082a8648ce3d030107"));
 	// Add secp384r1
 	curves.push_back(ByteString("06052b81040022"));
+	// Add secp521r1
+	curves.push_back(ByteString("06052b81040023"));
 
 	for (std::vector<ByteString>::iterator c = curves.begin(); c != curves.end(); c++)
 	{
@@ -192,7 +194,8 @@ void ECDSATests::testSigningVerifying()
 	totest.push_back(std::make_pair(ByteString("06082a8648ce3d030107"), HashAlgo::SHA256));
 	// Add secp384r1
 	totest.push_back(std::make_pair(ByteString("06052b81040022"), HashAlgo::SHA384));
-
+	// Add secp521r1
+	totest.push_back(std::make_pair(ByteString("06052b81040023"), HashAlgo::SHA384));
 
 	for (std::vector<std::pair<ByteString, HashAlgo::Type> >::iterator k = totest.begin(); k != totest.end(); k++)
 	{

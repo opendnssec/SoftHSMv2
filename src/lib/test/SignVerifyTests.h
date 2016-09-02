@@ -34,6 +34,7 @@
 #ifndef _SOFTHSM_V2_SIGNVERIFYTESTS_H
 #define _SOFTHSM_V2_SIGNVERIFYTESTS_H
 
+#include "config.h"
 #include "TestsBase.h"
 #include <cppunit/extensions/HelperMacros.h>
 
@@ -41,17 +42,26 @@ class SignVerifyTests : public TestsBase
 {
 	CPPUNIT_TEST_SUITE(SignVerifyTests);
 	CPPUNIT_TEST(testRsaSignVerify);
+#ifdef WITH_ECC
+	CPPUNIT_TEST(testEcSignVerify);
+#endif
 	CPPUNIT_TEST(testHmacSignVerify);
 	CPPUNIT_TEST_SUITE_END();
 
 public:
 	void testRsaSignVerify();
+#ifdef WITH_ECC
+	void testEcSignVerify();
+#endif
 	void testHmacSignVerify();
 
 protected:
-	CK_RV generateRsaKeyPair(CK_SESSION_HANDLE hSession, CK_BBOOL bTokenPuk, CK_BBOOL bPrivatePuk, CK_BBOOL bTokenPrk, CK_BBOOL bPrivatePrk, CK_OBJECT_HANDLE &hPuk, CK_OBJECT_HANDLE &hPrk);
-	void rsaPkcsSignVerify(CK_MECHANISM_TYPE mechanismType, CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hPublicKey, CK_OBJECT_HANDLE hPrivateKey);
-	void digestRsaPkcsSignVerify(CK_MECHANISM_TYPE mechanismType, CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hPublicKey, CK_OBJECT_HANDLE hPrivateKey, CK_VOID_PTR param = NULL_PTR, CK_ULONG paramLen = 0);
+	CK_RV generateRSA(CK_SESSION_HANDLE hSession, CK_BBOOL bTokenPuk, CK_BBOOL bPrivatePuk, CK_BBOOL bTokenPrk, CK_BBOOL bPrivatePrk, CK_OBJECT_HANDLE &hPuk, CK_OBJECT_HANDLE &hPrk);
+#ifdef WITH_ECC
+	CK_RV generateEC(const char* curve, CK_SESSION_HANDLE hSession, CK_BBOOL bTokenPuk, CK_BBOOL bPrivatePuk, CK_BBOOL bTokenPrk, CK_BBOOL bPrivatePrk, CK_OBJECT_HANDLE &hPuk, CK_OBJECT_HANDLE &hPrk);
+#endif
+	void signVerifySingle(CK_MECHANISM_TYPE mechanismType, CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hPublicKey, CK_OBJECT_HANDLE hPrivateKey, CK_VOID_PTR param = NULL_PTR, CK_ULONG paramLen = 0);
+	void signVerifyMulti(CK_MECHANISM_TYPE mechanismType, CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hPublicKey, CK_OBJECT_HANDLE hPrivateKey, CK_VOID_PTR param = NULL_PTR, CK_ULONG paramLen = 0);
 	CK_RV generateKey(CK_SESSION_HANDLE hSession, CK_KEY_TYPE keyType, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_OBJECT_HANDLE &hKey);
 	void hmacSignVerify(CK_MECHANISM_TYPE mechanismType, CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hKey);
 };
