@@ -5,7 +5,7 @@ AC_DEFUN([ACX_BOTAN_ECC],[
 	tmp_LIBS=$LIBS
 
 	CPPFLAGS="$CPPFLAGS $CRYPTO_INCLUDES"
-	LIBS="$LIBS $CRYPTO_LIBS"
+	LIBS="$CRYPTO_LIBS $LIBS"
 
 	AC_LANG_PUSH([C++])
 	AC_RUN_IFELSE([
@@ -38,7 +38,7 @@ AC_DEFUN([ACX_BOTAN_ECC],[
 	],[
 		AC_MSG_RESULT([Cannot find P256])
 		AC_MSG_ERROR([
-Botan library has no valid ECC support. Please upgrade to a later version 
+Botan library has no valid ECC support. Please upgrade to a later version
 of Botan, above or including version 1.10.6 or 1.11.5.
 Alternatively disable ECC support in SoftHSM with --disable-ecc
 ])
