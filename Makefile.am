@@ -1,7 +1,12 @@
 ACLOCAL_AMFLAGS = -I m4
 
+if P11_MODULE_FILE
+p11moddir = $(pk_module_configs)
+p11mod_DATA = softhsm2.module
+endif
+
 MAINTAINERCLEANFILES = \
-        config.log config.status \
+        config.log config.status softhsm2.module \
         $(srcdir)/Makefile.in \
         $(srcdir)/config.h.in $(srcdir)/config.h.in~ \
         $(srcdir)/configure \

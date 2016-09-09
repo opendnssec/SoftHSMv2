@@ -124,6 +124,19 @@ softhsmtokendir=${full_localstatedir}/lib/softhsm/tokens/
 full_libdir="$full_libdir/softhsm"
 libdir=$full_libdir
 
+AC_ARG_ENABLE([p11-kit],
+	AS_HELP_STRING([--disable-p11-kit], [Disable p11-kit integration]),
+	[use_p11kit=$enableval], [use_p11kit=yes])
+
+pk_module_configs=
+if test "x${use_p11kit}" != "xno"; then
+	AC_PATH_PROG(PKGCONFIG, [pkg-config])
+	if test "x${PKGCONFIG}" != "x" && ${PKGCONFIG} --exists p11-kit-1; then
+		pk_module_configs=`${PKGCONFIG} --variable=p11_module_configs p11-kit-1`
+	fi
+fi
+AM_CONDITIONAL([P11_MODULE_FILE], [test "x${pk_module_configs}" != "x"])
+
 # For getConfigPath()
 AC_CHECK_FUNCS([getpwuid_r])
 
@@ -174,6 +187,7 @@ AC_DEFINE_UNQUOTED(
 	[The default PKCS#11 library]
 )
 
+AC_SUBST([pk_module_configs])
 AC_SUBST([softhsmtokendir])
 AC_SUBST([default_softhsm2_conf])
 
@@ -184,6 +198,7 @@ AC_PROG_LIBTOOL
 # Generate the makefiles
 AC_CONFIG_FILES([
 	Makefile
+	softhsm2.module
 	src/Makefile
 	src/lib/Makefile
 	src/lib/common/Makefile

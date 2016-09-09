@@ -28,6 +28,7 @@ case "$DISTRIBUTION" in
 			cd build &&
 			../configure --prefix="$INSTALL_ROOT" \
 				--disable-non-paged-memory \
+				--disable-p11-kit \
 				--with-migrate \
 				--with-crypto-backend=botan \
 				--with-botan="$INSTALL_ROOT" &&
@@ -45,6 +46,7 @@ case "$DISTRIBUTION" in
 			cd build &&
 			../configure --prefix="$INSTALL_ROOT" \
 				--disable-non-paged-memory \
+				--disable-p11-kit \
 				--with-migrate \
 				--with-crypto-backend=botan \
 				--with-botan="$INSTALL_ROOT" \
@@ -83,6 +85,7 @@ case "$DISTRIBUTION" in
 			cd build &&
 			../configure --prefix="$INSTALL_ROOT" \
 				--disable-non-paged-memory \
+				--disable-p11-kit \
 				--with-migrate \
 				--with-crypto-backend=botan \
 				--with-botan="$INSTALL_ROOT" &&
