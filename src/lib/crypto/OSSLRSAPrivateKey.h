@@ -81,6 +81,9 @@ public:
 private:
 	// The internal OpenSSL representation
 	RSA* rsa;
+
+	// Create the OpenSSL representation of the key
+	void createOSSLKey();
 };
 
 #endif // !_SOFTHSM_V2_OSSLRSAPRIVATEKEY_H

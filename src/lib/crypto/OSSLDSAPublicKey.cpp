@@ -33,25 +33,23 @@
 #include "config.h"
 #include "log.h"
 #include "OSSLDSAPublicKey.h"
+#include "OSSLComp.h"
 #include "OSSLUtil.h"
 #include <openssl/bn.h>
+#ifdef WITH_FIPS
+#include <openssl/fips.h>
+#endif
 #include <string.h>
 
 // Constructors
 OSSLDSAPublicKey::OSSLDSAPublicKey()
 {
-	dsa = DSA_new();
-
-	// Use the OpenSSL implementation and not any engine
-	DSA_set_method(dsa, DSA_get_default_method());
+	dsa = NULL;
 }
 
 OSSLDSAPublicKey::OSSLDSAPublicKey(const DSA* inDSA)
 {
-	dsa = DSA_new();
-
-	// Use the OpenSSL implementation and not any engine
-	DSA_set_method(dsa, DSA_OpenSSL());
+	dsa = NULL;
 
 	setFromOSSL(inDSA);
 }
@@ -68,24 +66,32 @@ OSSLDSAPublicKey::~OSSLDSAPublicKey()
 // Set from OpenSSL representation
 void OSSLDSAPublicKey::setFromOSSL(const DSA* inDSA)
 {
-	if (inDSA->p)
+	const BIGNUM* bn_p = NULL;
+	const BIGNUM* bn_q = NULL;
+	const BIGNUM* bn_g = NULL;
+	const BIGNUM* bn_pub_key = NULL;
+
+	DSA_get0_pqg(inDSA, &bn_p, &bn_q, &bn_g);
+	DSA_get0_key(inDSA, &bn_pub_key, NULL);
+
+	if (bn_p)
 	{
-		ByteString inP = OSSL::bn2ByteString(inDSA->p);
+		ByteString inP = OSSL::bn2ByteString(bn_p);
 		setP(inP);
 	}
-	if (inDSA->q)
+	if (bn_q)
 	{
-		ByteString inQ = OSSL::bn2ByteString(inDSA->q);
+		ByteString inQ = OSSL::bn2ByteString(bn_q);
 		setQ(inQ);
 	}
-	if (inDSA->g)
+	if (bn_g)
 	{
-		ByteString inG = OSSL::bn2ByteString(inDSA->g);
+		ByteString inG = OSSL::bn2ByteString(bn_g);
 		setG(inG);
 	}
-	if (inDSA->pub_key)
+	if (bn_pub_key)
 	{
-		ByteString inY = OSSL::bn2ByteString(inDSA->pub_key);
+		ByteString inY = OSSL::bn2ByteString(bn_pub_key);
 		setY(inY);
 	}
 }
@@ -101,57 +107,87 @@ void OSSLDSAPublicKey::setP(const ByteString& inP)
 {
 	DSAPublicKey::setP(inP);
 
-	if (dsa->p)
+	if (dsa)
 	{
-		BN_clear_free(dsa->p);
-		dsa->p = NULL;
+		DSA_free(dsa);
+		dsa = NULL;
 	}
-
-	dsa->p = OSSL::byteString2bn(inP);
 }
 
 void OSSLDSAPublicKey::setQ(const ByteString& inQ)
 {
 	DSAPublicKey::setQ(inQ);
 
-	if (dsa->q)
+	if (dsa)
 	{
-		BN_clear_free(dsa->q);
-		dsa->q = NULL;
+		DSA_free(dsa);
+		dsa = NULL;
 	}
-
-	dsa->q = OSSL::byteString2bn(inQ);
 }
 
 void OSSLDSAPublicKey::setG(const ByteString& inG)
 {
 	DSAPublicKey::setG(inG);
 
-	if (dsa->g)
+	if (dsa)
 	{
-		BN_clear_free(dsa->g);
-		dsa->g = NULL;
+		DSA_free(dsa);
+		dsa = NULL;
 	}
-
-	dsa->g = OSSL::byteString2bn(inG);
 }
 
 void OSSLDSAPublicKey::setY(const ByteString& inY)
 {
 	DSAPublicKey::setY(inY);
 
-	if (dsa->pub_key)
+	if (dsa)
 	{
-		BN_clear_free(dsa->pub_key);
-		dsa->pub_key = NULL;
+		DSA_free(dsa);
+		dsa = NULL;
 	}
-
-	dsa->pub_key = OSSL::byteString2bn(inY);
 }
 
 // Retrieve the OpenSSL representation of the key
 DSA* OSSLDSAPublicKey::getOSSLKey()
 {
+	if (dsa == NULL) createOSSLKey();
+
 	return dsa;
 }
 
+// Create the OpenSSL representation of the key
+void OSSLDSAPublicKey::createOSSLKey()
+{
+	if (dsa != NULL) return;
+
+	dsa = DSA_new();
+	if (dsa == NULL)
+	{
+		ERROR_MSG("Could not create DSA object");
+		return;
+	}
+
+	// Use the OpenSSL implementation and not any engine
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+
+#ifdef WITH_FIPS
+	if (FIPS_mode())
+		DSA_set_method(dsa, FIPS_dsa_openssl());
+	else
+		DSA_set_method(dsa, DSA_OpenSSL());
+#else
+	DSA_set_method(dsa, DSA_OpenSSL());
+#endif
+
+#else
+	DSA_set_method(dsa, DSA_OpenSSL());
+#endif
+
+	BIGNUM* bn_p = OSSL::byteString2bn(p);
+	BIGNUM* bn_q = OSSL::byteString2bn(q);
+	BIGNUM* bn_g = OSSL::byteString2bn(g);
+	BIGNUM* bn_pub_key = OSSL::byteString2bn(y);
+
+	DSA_set0_pqg(dsa, bn_p, bn_q, bn_g);
+	DSA_set0_key(dsa, bn_pub_key, NULL);
+}

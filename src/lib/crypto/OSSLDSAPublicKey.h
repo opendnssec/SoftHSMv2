@@ -69,6 +69,9 @@ public:
 private:
 	// The internal OpenSSL representation
 	DSA* dsa;
+
+	// Create the OpenSSL representation of the key
+	void createOSSLKey();
 };
 
 #endif // !_SOFTHSM_V2_OSSLDSAPUBLICKEY_H

@@ -52,6 +52,8 @@ ByteString OSSL::bn2ByteString(const BIGNUM* bn)
 // Convert a ByteString to an OpenSSL BIGNUM
 BIGNUM* OSSL::byteString2bn(const ByteString& byteString)
 {
+	if (byteString.size() == 0) return NULL;
+
 	return BN_bin2bn(byteString.const_byte_str(), byteString.size(), NULL);
 }
 

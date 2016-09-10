@@ -42,6 +42,9 @@
 #include <openssl/ecdh.h>
 #include <openssl/pem.h>
 #include <openssl/err.h>
+#ifdef WITH_FIPS
+#include <openssl/fips.h>
+#endif
 
 // Signing functions
 bool OSSLECDH::signInit(PrivateKey* /*privateKey*/, const AsymMech::Type /*mechanism*/,
@@ -184,8 +187,28 @@ bool OSSLECDH::deriveKey(SymmetricKey **ppSymmetricKey, PublicKey* publicKey, Pr
 	}
 
 	// Use the OpenSSL implementation and not any engine
-	ECDH_set_method(pub, ECDH_get_default_method());
-	ECDH_set_method(priv, ECDH_get_default_method());
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+
+#ifdef WITH_FIPS
+	if (FIPS_mode())
+	{
+		ECDH_set_method(pub, FIPS_ecdh_openssl());
+		ECDH_set_method(priv, FIPS_ecdh_openssl());
+	}
+	else
+	{
+		ECDH_set_method(pub, ECDH_OpenSSL());
+		ECDH_set_method(priv, ECDH_OpenSSL());
+	}
+#else
+	ECDH_set_method(pub, ECDH_OpenSSL());
+	ECDH_set_method(priv, ECDH_OpenSSL());
+#endif
+
+#else
+	EC_KEY_set_method(pub, EC_KEY_OpenSSL());
+	EC_KEY_set_method(priv, EC_KEY_OpenSSL());
+#endif
 
 	// Derive the secret
 	ByteString secret, derivedSecret;

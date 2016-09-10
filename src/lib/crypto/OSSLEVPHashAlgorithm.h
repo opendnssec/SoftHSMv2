@@ -42,7 +42,7 @@ class OSSLEVPHashAlgorithm : public HashAlgorithm
 public:
 	// Base constructors
 	OSSLEVPHashAlgorithm() : HashAlgorithm() {
-		EVP_MD_CTX_init(&curCTX);
+		curCTX = NULL;
 	}
 
 	// Destructor
@@ -59,7 +59,7 @@ protected:
 
 private:
 	// Current hashing context
-	EVP_MD_CTX curCTX;
+	EVP_MD_CTX* curCTX;
 };
 
 #endif // !_SOFTHSM_V2_OSSLEVPHASHALGORITHM_H

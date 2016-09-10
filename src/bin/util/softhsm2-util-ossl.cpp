@@ -34,6 +34,7 @@
 #define UTIL_OSSL
 #include "softhsm2-util.h"
 #include "softhsm2-util-ossl.h"
+#include "OSSLComp.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -94,7 +95,7 @@ int crypto_import_key_pair
 	EC_KEY* ecdsa = NULL;
 #endif
 
-	switch (EVP_PKEY_type(pkey->type))
+	switch (EVP_PKEY_type(EVP_PKEY_id(pkey)))
 	{
 		case EVP_PKEY_RSA:
 			rsa = EVP_PKEY_get1_RSA(pkey);
@@ -191,13 +192,6 @@ EVP_PKEY* crypto_read_file(char* filePath, char* filePIN)
 					"Maybe it is encypted (--file-pin <PIN>)\n");
 			return NULL;
 		}
-	}
-
-	if (p8inf->broken)
-	{
-		fprintf(stderr, "ERROR: Broken key encoding.\n");
-		PKCS8_PRIV_KEY_INFO_free(p8inf);
-		return NULL;
 	}
 
 	// Convert the PKCS#8 to OpenSSL
@@ -310,14 +304,26 @@ rsa_key_material_t* crypto_malloc_rsa(RSA* rsa)
 		return NULL;
 	}
 
-	keyMat->sizeE = BN_num_bytes(rsa->e);
-	keyMat->sizeN = BN_num_bytes(rsa->n);
-	keyMat->sizeD = BN_num_bytes(rsa->d);
-	keyMat->sizeP = BN_num_bytes(rsa->p);
-	keyMat->sizeQ = BN_num_bytes(rsa->q);
-	keyMat->sizeDMP1 = BN_num_bytes(rsa->dmp1);
-	keyMat->sizeDMQ1 = BN_num_bytes(rsa->dmq1);
-	keyMat->sizeIQMP = BN_num_bytes(rsa->iqmp);
+	const BIGNUM* bn_e = NULL;
+	const BIGNUM* bn_n = NULL;
+	const BIGNUM* bn_d = NULL;
+	const BIGNUM* bn_p = NULL;
+	const BIGNUM* bn_q = NULL;
+	const BIGNUM* bn_dmp1 = NULL;
+	const BIGNUM* bn_dmq1 = NULL;
+	const BIGNUM* bn_iqmp = NULL;
+	RSA_get0_factors(rsa, &bn_p, &bn_q);
+	RSA_get0_crt_params(rsa, &bn_dmp1, &bn_dmq1, &bn_iqmp);
+	RSA_get0_key(rsa, &bn_n, &bn_e, &bn_d);
+
+	keyMat->sizeE = BN_num_bytes(bn_e);
+	keyMat->sizeN = BN_num_bytes(bn_n);
+	keyMat->sizeD = BN_num_bytes(bn_d);
+	keyMat->sizeP = BN_num_bytes(bn_p);
+	keyMat->sizeQ = BN_num_bytes(bn_q);
+	keyMat->sizeDMP1 = BN_num_bytes(bn_dmp1);
+	keyMat->sizeDMQ1 = BN_num_bytes(bn_dmq1);
+	keyMat->sizeIQMP = BN_num_bytes(bn_iqmp);
 
 	keyMat->bigE = (CK_VOID_PTR)malloc(keyMat->sizeE);
 	keyMat->bigN = (CK_VOID_PTR)malloc(keyMat->sizeN);
@@ -344,14 +350,14 @@ rsa_key_material_t* crypto_malloc_rsa(RSA* rsa)
 		return NULL;
 	}
 
-	BN_bn2bin(rsa->e, (unsigned char*)keyMat->bigE);
-	BN_bn2bin(rsa->n, (unsigned char*)keyMat->bigN);
-	BN_bn2bin(rsa->d, (unsigned char*)keyMat->bigD);
-	BN_bn2bin(rsa->p, (unsigned char*)keyMat->bigP);
-	BN_bn2bin(rsa->q, (unsigned char*)keyMat->bigQ);
-	BN_bn2bin(rsa->dmp1, (unsigned char*)keyMat->bigDMP1);
-	BN_bn2bin(rsa->dmq1, (unsigned char*)keyMat->bigDMQ1);
-	BN_bn2bin(rsa->iqmp, (unsigned char*)keyMat->bigIQMP);
+	BN_bn2bin(bn_e, (unsigned char*)keyMat->bigE);
+	BN_bn2bin(bn_n, (unsigned char*)keyMat->bigN);
+	BN_bn2bin(bn_d, (unsigned char*)keyMat->bigD);
+	BN_bn2bin(bn_p, (unsigned char*)keyMat->bigP);
+	BN_bn2bin(bn_q, (unsigned char*)keyMat->bigQ);
+	BN_bn2bin(bn_dmp1, (unsigned char*)keyMat->bigDMP1);
+	BN_bn2bin(bn_dmq1, (unsigned char*)keyMat->bigDMQ1);
+	BN_bn2bin(bn_iqmp, (unsigned char*)keyMat->bigIQMP);
 
 	return keyMat;
 }
@@ -467,11 +473,19 @@ dsa_key_material_t* crypto_malloc_dsa(DSA* dsa)
 		return NULL;
 	}
 
-	keyMat->sizeP = BN_num_bytes(dsa->p);
-	keyMat->sizeQ = BN_num_bytes(dsa->q);
-	keyMat->sizeG = BN_num_bytes(dsa->g);
-	keyMat->sizeX = BN_num_bytes(dsa->priv_key);
-	keyMat->sizeY = BN_num_bytes(dsa->pub_key);
+	const BIGNUM* bn_p = NULL;
+	const BIGNUM* bn_q = NULL;
+	const BIGNUM* bn_g = NULL;
+	const BIGNUM* bn_priv_key = NULL;
+	const BIGNUM* bn_pub_key = NULL;
+	DSA_get0_pqg(dsa, &bn_p, &bn_q, &bn_g);
+	DSA_get0_key(dsa, &bn_pub_key, &bn_priv_key);
+
+	keyMat->sizeP = BN_num_bytes(bn_p);
+	keyMat->sizeQ = BN_num_bytes(bn_q);
+	keyMat->sizeG = BN_num_bytes(bn_g);
+	keyMat->sizeX = BN_num_bytes(bn_priv_key);
+	keyMat->sizeY = BN_num_bytes(bn_pub_key);
 
 	keyMat->bigP = (CK_VOID_PTR)malloc(keyMat->sizeP);
 	keyMat->bigQ = (CK_VOID_PTR)malloc(keyMat->sizeQ);
@@ -485,11 +499,11 @@ dsa_key_material_t* crypto_malloc_dsa(DSA* dsa)
 		return NULL;
 	}
 
-	BN_bn2bin(dsa->p, (unsigned char*)keyMat->bigP);
-	BN_bn2bin(dsa->q, (unsigned char*)keyMat->bigQ);
-	BN_bn2bin(dsa->g, (unsigned char*)keyMat->bigG);
-	BN_bn2bin(dsa->priv_key, (unsigned char*)keyMat->bigX);
-	BN_bn2bin(dsa->pub_key, (unsigned char*)keyMat->bigY);
+	BN_bn2bin(bn_p, (unsigned char*)keyMat->bigP);
+	BN_bn2bin(bn_q, (unsigned char*)keyMat->bigQ);
+	BN_bn2bin(bn_g, (unsigned char*)keyMat->bigG);
+	BN_bn2bin(bn_priv_key, (unsigned char*)keyMat->bigX);
+	BN_bn2bin(bn_pub_key, (unsigned char*)keyMat->bigY);
 
 	return keyMat;
 }

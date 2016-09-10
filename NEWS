@@ -9,6 +9,7 @@ SoftHSM develop
 * Issue #186: Reinitializing a token will now keep the token, but all
   token objects are deleted, the user PIN is removed and the token
   label is updated.
+* Issue #190: Support for OpenSSL 1.1.0.
 * Issue #198: Calling C_GetSlotList with NULL_PTR will make sure that
   there is always a slot with an uninitialized token available.
 * Issue #199: The token serial number will be used when setting the slot
