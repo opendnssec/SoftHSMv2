@@ -45,6 +45,7 @@ Now we need to install some dependencies
 	$ brew install openssl
 	$ brew install sqlite
 	$ brew install cppunit
+	$ brew install libtool
 
 Because both openssl and sqlite are pre-installed on the system, the new
 downloads are stored in an alternative location. /usr/local/opt
