@@ -55,9 +55,6 @@
 #include "OSSLGOST.h"
 #endif
 
-#ifdef HAVE_PTHREAD_H
-#include <pthread.h>
-#endif
 #include <algorithm>
 #include <string.h>
 #include <openssl/ssl.h>
@@ -70,14 +67,6 @@
 #ifdef WITH_FIPS
 // Initialise the FIPS 140-2 selftest status
 bool OSSLCryptoFactory::FipsSelfTestStatus = false;
-#endif
-
-// Thread ID callback
-#ifdef HAVE_PTHREAD_H
-static unsigned long id_callback()
-{
-	return (unsigned long) pthread_self();
-}
 #endif
 
 static unsigned nlocks;
@@ -116,9 +105,6 @@ OSSLCryptoFactory::OSSLCryptoFactory()
 	{
 		locks[i] = MutexFactory::i()->getMutex();
 	}
-#ifdef HAVE_PTHREAD_H
-	CRYPTO_set_id_callback(id_callback);
-#endif
 	CRYPTO_set_locking_callback(lock_callback);
 
 #ifdef WITH_FIPS
