@@ -1,0 +1,55 @@
+version: 2.1.{build}
+platform:
+- x86
+- x64
+init:
+- ps: >-
+    If ($env:Platform -Match "x86") {
+            $env:VCVARS_PLATFORM="x86"
+            $env:MSBUILD_PLATFORM="Win32"
+            $env:ENV_PLATFORM="x86"
+    } Else {
+            $env:VCVARS_PLATFORM="amd64"
+            $env:MSBUILD_PLATFORM="x64"
+            $env:ENV_PLATFORM="x64"
+            $env:PYTHON_64="enable-64bit"
+    }
+
+
+    $CURRENT_DIR_PATH = (Get-Item -Path ".\" -Verbose).FullName
+
+    $env:BUILD_DIR = Join-Path $CURRENT_DIR_PATH build
+
+
+    $env:OPENSSL_VERSION_NAME = "OpenSSL-1.0.2g"
+
+    $env:OPENSSL_PACKAGE_NAME = "openssl-1.0.2g"
+
+    $env:OPENSSL_PACKAGE= "$env:OPENSSL_PACKAGE_NAME-$env:ENV_PLATFORM.zip"
+
+    $env:OPENSSL_PATH = Join-Path $env:BUILD_DIR "$env:OPENSSL_PACKAGE_NAME-$env:ENV_PLATFORM"
+
+
+    $env:CPPUNIT_VERSION_NAME = "CppUnit-1.13.2"
+
+    $env:CPPUNIT_PACKAGE_NAME = "cppunit-1.13.2"
+
+    $env:CPPUNIT_PACKAGE = "$env:CPPUNIT_PACKAGE_NAME-$env:ENV_PLATFORM.zip"
+
+
+    $env:PYTHON_PATH = Join-Path $env:BUILD_DIR python
+
+    $env:CPPUNIT_PATH = Join-Path $env:BUILD_DIR "$env:CPPUNIT_PACKAGE_NAME-$env:ENV_PLATFORM"
+
+
+    $env:PYTHON_EXE = Join-Path $env:PYTHON_PATH python.exe
+
+
+    $env:RELEASE_DIR=Join-Path $env:BUILD_DIR "SoftHSMv2-$env:ENV_PLATFORM"
+install:
+- cmd: powershell -File appveyor_download_requirements.ps1
+build_script:
+- cmd: appveyor_build.bat
+artifacts:
+- path: build/SoftHSMv2-$(Platform)
+  name: SoftHSMv2-$(Platform)
