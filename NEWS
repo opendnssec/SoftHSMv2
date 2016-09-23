@@ -28,7 +28,10 @@ Bugfixes:
 * Issue #205: ECDSA P-521 support for OpenSSL and better test coverage.
 * Issue #207: Fix segmentation faults in loadLibrary function.
   (Patch from Jaroslav Imrich)
+* Issue #215: Update the Homebrew install notes for OSX.
 * Issue #218: Fix build warnings.
+* Issue #235: Add the libtool install command for OSX.
+  (Patch from Mark Wylde)
 
 
 SoftHSM 2.1.0 - 2016-03-14
