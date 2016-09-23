@@ -67,6 +67,54 @@ In a **new command line window** build OpenSSL and install it into `C:\build\bin
     nmake /f ms\nt.mak test
     nmake /f ms\nt.mak install
 
+## Build OpenSSL 1.1.0a static library
+
+Download [OpenSSL 1.1.0a](https://www.openssl.org/source/openssl-1.1.0a.tar.gz) with [its signature](https://www.openssl.org/source/openssl-1.1.0a.tar.gz.asc) into `C:\build\src\` directory and verify signature of the downloaded archive:
+
+    cd C:\build\src\
+    gpg --keyserver pgp.mit.edu --recv-keys 0E604491
+    gpg --verify openssl-1.1.0a.tar.gz.asc openssl-1.1.0a.tar.gz
+
+### 32-bit
+
+Extract archive `openssl-1.1.0a.tar.gz` into `C:\build\src\openssl-1.1.0a-x86` directory:
+
+    cd C:\build\src\
+    "C:\Program Files\7-Zip\7z" x openssl-1.1.0a.tar.gz
+    "C:\Program Files\7-Zip\7z" x openssl-1.1.0a.tar
+    rename openssl-1.1.0a openssl-1.1.0a-x86
+    del openssl-1.1.0a.tar*
+
+In a **new command line window** build OpenSSL and install it into `C:\build\bin\openssl-1.1.0a-x86` directory:
+
+    cd C:\build\src\openssl-1.1.0a-x86
+    set PATH=%PATH%;C:\nasm
+    "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat"
+    perl Configure VC-WIN32 --prefix=C:\build\bin\openssl-1.1.0a-x86 enable-static-engine
+    nmake
+    nmake test
+    nmake install
+
+## 64-bit
+
+Extract archive `openssl-1.1.0a.tar.gz` into `C:\build\src\openssl-1.1.0a-x64` directory:
+
+    cd C:\build\src\
+    "C:\Program Files\7-Zip\7z" x openssl-1.1.0a.tar.gz
+    "C:\Program Files\7-Zip\7z" x openssl-1.1.0a.tar
+    rename openssl-1.1.0a openssl-1.1.0a-x64
+    del openssl-1.1.0a.tar*
+
+In a **new command line window** build OpenSSL and install it into `C:\build\bin\openssl-1.1.0a-x64` directory:
+
+    cd C:\build\src\openssl-1.1.0a-x64
+    set PATH=%PATH%;C:\nasm
+    "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" amd64
+    perl Configure VC-WIN64A --prefix=C:\build\bin\openssl-1.1.0a-x64 enable-static-engine
+    nmake
+    nmake test
+    nmake install
+	
 ## Build Botan 1.10.10
 
 Download [Botan 1.10.10](http://botan.randombit.net/releases/Botan-1.10.10.tgz) with [its signature](http://botan.randombit.net/releases/Botan-1.10.10.tgz.asc) into `C:\build\src\` directory and verify signature of the downloaded archive:
@@ -183,9 +231,9 @@ Configure build process in a **new command line window**:
     cd C:\build\src\SoftHSMv2\win32\
     "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat"
 
-OpenSSL or Botan crypto backend:
+OpenSSL (OpenSSL GOST engine does not support OpenSSL 1.1.0) or Botan crypto backend:
 
-    python Configure.py disable-debug with-crypto-backend=openssl with-openssl=C:\build\bin\openssl-1.0.2d-x86\ with-cppunit=C:\build\bin\cppunit-1.13.2-x86\
+    python Configure.py disable-debug disable-gost with-crypto-backend=openssl with-openssl=C:\build\bin\openssl-1.1.0a-x86\ with-cppunit=C:\build\bin\cppunit-1.13.2-x86\
     python Configure.py disable-debug with-crypto-backend=botan with-botan=C:\build\bin\botan-1.10.10-x86\ with-cppunit=C:\build\bin\cppunit-1.13.2-x86\
 
 Open solution `C:\build\src\SoftHSMv2\win32\softhsm2.sln` in Visual Studio and rebuild the source with `Release\Win32` solution configuration.
@@ -221,9 +269,9 @@ Configure build process in a **new command line window**:
     cd C:\build\src\SoftHSMv2\win32\
     "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" amd64
 
-OpenSSL or Botan crypto backend:
+OpenSSL (OpenSSL GOST engine does not support OpenSSL 1.1.0) or Botan crypto backend:
 
-    python Configure.py enable-64bit disable-debug with-crypto-backend=openssl with-openssl=C:\build\bin\openssl-1.0.2d-x64\ with-cppunit=C:\build\bin\cppunit-1.13.2-x64\
+    python Configure.py enable-64bit disable-debug disable-gost with-crypto-backend=openssl with-openssl=C:\build\bin\openssl-1.1.0a-x64\ with-cppunit=C:\build\bin\cppunit-1.13.2-x64\
     python Configure.py enable-64bit disable-debug with-crypto-backend=botan with-botan=C:\build\bin\botan-1.10.10-x64\ with-cppunit=C:\build\bin\cppunit-1.13.2-x64\
 
 Open solution `C:\build\src\SoftHSMv2\win32\softhsm2.sln` in Visual Studio and rebuild the source with `Release\x64` solution configuration.
