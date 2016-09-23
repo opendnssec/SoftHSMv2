@@ -54,7 +54,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..;..\..\src\bin\common;..\..\src\bin\win32;..\..\src\lib\cryptoki_compat;@DEBUGINCPATH@;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..;..\..\src\bin\common;..\..\src\bin\win32;..\..\src\lib\cryptoki_compat;..\..\src\lib\crypto;@DEBUGINCPATH@;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -72,7 +72,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..;..\..\src\bin\common;..\..\src\bin\win32;..\..\src\lib\cryptoki_compat;@INCLUDEPATH@;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..;..\..\src\bin\common;..\..\src\bin\win32;..\..\src\lib\cryptoki_compat;..\..\src\lib\crypto;@INCLUDEPATH@;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -87,6 +87,9 @@
     <ClInclude Include="..\..\src\bin\common\getpw.h" />
     <ClInclude Include="..\..\src\bin\common\library.h" />
     <ClInclude Include="..\..\src\bin\keyconv\softhsm2-keyconv.h" />
+@IF OPENSSL
+    <ClInclude Include="..\..\src\lib\crypto\OSSLComp.h" />
+@END OPENSSL
     <ClInclude Include="..\..\src\bin\win32\getopt.h" />
     <ClInclude Include="..\config.h" />
   </ItemGroup>
@@ -99,6 +102,7 @@
 @END BOTAN
 @IF OPENSSL
     <ClCompile Include="..\..\src\bin\keyconv\softhsm2-keyconv-ossl.cpp" />
+    <ClCompile Include="..\..\src\lib\crypto\OSSLComp.cpp" />
 @END OPENSSL
     <ClCompile Include="..\..\src\bin\keyconv\softhsm2-keyconv.cpp" />
     <ClCompile Include="..\..\src\bin\win32\getopt.cpp" />
