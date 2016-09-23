@@ -735,10 +735,11 @@ int main() {\n\
 #include <openssl/ecdsa.h>\n\
 #include <openssl/objects.h>\n\
 int main() {\n\
- EC_KEY *ec256, *ec384;\n\
+ EC_KEY *ec256, *ec384, *ec521;\n\
  ec256 = EC_KEY_new_by_curve_name(NID_X9_62_prime256v1);\n\
  ec384 = EC_KEY_new_by_curve_name(NID_secp384r1);\n\
- if (ec256 == NULL || ec384 == NULL)\n\
+ ec521 = EC_KEY_new_by_curve_name(NID_secp521r1);\n\
+ if (ec256 == NULL || ec384 == NULL || ec521 == NULL)\n\
   return 1;\n\
  return 0;\n\
 }', file=testfile)
@@ -761,15 +762,29 @@ int main() {\n\
             print('\
 #include <openssl/conf.h>\n\
 #include <openssl/engine.h>\n\
+#include <openssl/crypto.h>\n\
+#include <openssl/opensslv.h>\n\
 int main() {\n\
- ENGINE *e;\n\
- EC_KEY *ek;\n\
- ek = NULL;\n\
- OPENSSL_config(NULL);\n\
- e = ENGINE_by_id("gost");\n\
- if (e == NULL)\n\
+ ENGINE *eg;\n\
+ const EVP_MD* EVP_GOST_34_11;\n\
+ OpenSSL_add_all_algorithms();\n\
+#if OPENSSL_VERSION_NUMBER < 0x10100000L\n\
+ ENGINE_load_builtin_engines();\n\
+#else\n\
+ OPENSSL_init_crypto(OPENSSL_INIT_ENGINE_ALL_BUILTIN | OPENSSL_INIT_LOAD_CONFIG, NULL);\n\
+#endif\n\
+ eg = ENGINE_by_id("gost");\n\
+ if (eg == NULL)\n\
   return 1;\n\
- if (ENGINE_init(e) <= 0)\n\
+ if (ENGINE_init(eg) <= 0)\n\
+  return 1;\n\
+ EVP_GOST_34_11 = ENGINE_get_digest(eg, NID_id_GostR3411_94);\n\
+ if (EVP_GOST_34_11 == NULL)\n\
+  return 1;\n\
+ if (ENGINE_register_pkey_asn1_meths(eg) <= 0)\n\
+  return 1;\n\
+ if (ENGINE_ctrl_cmd_string(eg, "CRYPT_PARAMS",\n\
+     "id-Gost28147-89-CryptoPro-A-ParamSet", 0) <= 0)\n\
   return 1;\n\
  return 0;\n\
 }', file=testfile)
