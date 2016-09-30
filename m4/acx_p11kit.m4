@@ -32,5 +32,5 @@ AC_DEFUN([ACX_P11KIT],[
 	fi
 
 	AC_SUBST(P11KIT_PATH)
-	AM_CONDITIONAL([WITH_P11KIT], [test "x${enable_p11kit}" = "xyes" && "x${P11KIT_PATH}" != "x"])
+	AM_CONDITIONAL([WITH_P11KIT], [test "x${enable_p11kit}" = "xyes" -a "x${P11KIT_PATH}" != "x"])
 ])
