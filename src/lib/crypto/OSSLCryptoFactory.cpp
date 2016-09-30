@@ -57,7 +57,9 @@
 
 #include <algorithm>
 #include <string.h>
+#include <openssl/opensslv.h>
 #include <openssl/ssl.h>
+#include <openssl/crypto.h>
 #include <openssl/err.h>
 #include <openssl/rand.h>
 #ifdef WITH_GOST
@@ -132,7 +134,12 @@ OSSLCryptoFactory::OSSLCryptoFactory()
 
 #ifdef WITH_GOST
 	// Load engines
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
 	ENGINE_load_builtin_engines();
+#else
+	OPENSSL_init_crypto(OPENSSL_INIT_ENGINE_ALL_BUILTIN |
+			    OPENSSL_INIT_LOAD_CONFIG, NULL);
+#endif
 
 	// Initialise the GOST engine
 	eg = ENGINE_by_id("gost");

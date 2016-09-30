@@ -98,6 +98,7 @@
 @END BOTAN
 @IF OPENSSL
     <ClInclude Include="..\..\src\bin\util\softhsm2-util-ossl.h" />
+    <ClInclude Include="..\..\src\lib\crypto\OSSLComp.h" />
 @END OPENSSL
     <ClInclude Include="..\..\src\bin\util\softhsm2-util.h" />
     <ClInclude Include="..\..\src\bin\win32\getopt.h" />
@@ -112,6 +113,7 @@
 @END BOTAN
 @IF OPENSSL
     <ClCompile Include="..\..\src\bin\util\softhsm2-util-ossl.cpp" />
+    <ClCompile Include="..\..\src\lib\crypto\OSSLComp.cpp" />
 @END OPENSSL
     <ClCompile Include="..\..\src\bin\util\softhsm2-util.cpp" />
     <ClCompile Include="..\..\src\bin\win32\getopt.cpp" />

@@ -33,6 +33,7 @@
 #include <config.h>
 #define KEYCONV_OSSL
 #include "softhsm2-keyconv.h"
+#include "OSSLComp.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -95,14 +96,17 @@ int save_rsa_pkcs8(char* out_path, char* file_pin, key_material_t* pkey)
 	}
 
 	rsa = RSA_new();
-	rsa->p =    BN_bin2bn((unsigned char*)pkey[TAG_PRIME1].big,  pkey[TAG_PRIME1].size, NULL);
-	rsa->q =    BN_bin2bn((unsigned char*)pkey[TAG_PRIME2].big,  pkey[TAG_PRIME2].size, NULL);
-	rsa->d =    BN_bin2bn((unsigned char*)pkey[TAG_PRIVEXP].big, pkey[TAG_PRIVEXP].size, NULL);
-	rsa->n =    BN_bin2bn((unsigned char*)pkey[TAG_MODULUS].big, pkey[TAG_MODULUS].size, NULL);
-	rsa->e =    BN_bin2bn((unsigned char*)pkey[TAG_PUBEXP].big,  pkey[TAG_PUBEXP].size, NULL);
-	rsa->dmp1 = BN_bin2bn((unsigned char*)pkey[TAG_EXP1].big,    pkey[TAG_EXP1].size, NULL);
-	rsa->dmq1 = BN_bin2bn((unsigned char*)pkey[TAG_EXP2].big,    pkey[TAG_EXP2].size, NULL);
-	rsa->iqmp = BN_bin2bn((unsigned char*)pkey[TAG_COEFF].big,   pkey[TAG_COEFF].size, NULL);
+	BIGNUM* bn_p =    BN_bin2bn((unsigned char*)pkey[TAG_PRIME1].big,  pkey[TAG_PRIME1].size, NULL);
+	BIGNUM* bn_q =    BN_bin2bn((unsigned char*)pkey[TAG_PRIME2].big,  pkey[TAG_PRIME2].size, NULL);
+	BIGNUM* bn_d =    BN_bin2bn((unsigned char*)pkey[TAG_PRIVEXP].big, pkey[TAG_PRIVEXP].size, NULL);
+	BIGNUM* bn_n =    BN_bin2bn((unsigned char*)pkey[TAG_MODULUS].big, pkey[TAG_MODULUS].size, NULL);
+	BIGNUM* bn_e =    BN_bin2bn((unsigned char*)pkey[TAG_PUBEXP].big,  pkey[TAG_PUBEXP].size, NULL);
+	BIGNUM* bn_dmp1 = BN_bin2bn((unsigned char*)pkey[TAG_EXP1].big,    pkey[TAG_EXP1].size, NULL);
+	BIGNUM* bn_dmq1 = BN_bin2bn((unsigned char*)pkey[TAG_EXP2].big,    pkey[TAG_EXP2].size, NULL);
+	BIGNUM* bn_iqmp = BN_bin2bn((unsigned char*)pkey[TAG_COEFF].big,   pkey[TAG_COEFF].size, NULL);
+	RSA_set0_factors(rsa, bn_p, bn_q);
+	RSA_set0_crt_params(rsa, bn_dmp1, bn_dmq1, bn_iqmp);
+	RSA_set0_key(rsa, bn_n, bn_e, bn_d);
 
 	ossl_pkey = EVP_PKEY_new();
 
@@ -188,11 +192,15 @@ int save_dsa_pkcs8(char* out_path, char* file_pin, key_material_t* pkey)
 	}
 
 	dsa = DSA_new();
-	dsa->p =        BN_bin2bn((unsigned char*)pkey[TAG_PRIME].big,    pkey[TAG_PRIME].size, NULL);
-	dsa->q =        BN_bin2bn((unsigned char*)pkey[TAG_SUBPRIME].big, pkey[TAG_SUBPRIME].size, NULL);
-	dsa->g =        BN_bin2bn((unsigned char*)pkey[TAG_BASE].big,     pkey[TAG_BASE].size, NULL);
-	dsa->priv_key = BN_bin2bn((unsigned char*)pkey[TAG_PRIVVAL].big,  pkey[TAG_PRIVVAL].size, NULL);
-	dsa->pub_key =  BN_bin2bn((unsigned char*)pkey[TAG_PUBVAL].big,   pkey[TAG_PUBVAL].size, NULL);
+	BIGNUM* bn_p =        BN_bin2bn((unsigned char*)pkey[TAG_PRIME].big,    pkey[TAG_PRIME].size, NULL);
+	BIGNUM* bn_q =        BN_bin2bn((unsigned char*)pkey[TAG_SUBPRIME].big, pkey[TAG_SUBPRIME].size, NULL);
+	BIGNUM* bn_g =        BN_bin2bn((unsigned char*)pkey[TAG_BASE].big,     pkey[TAG_BASE].size, NULL);
+	BIGNUM* bn_priv_key = BN_bin2bn((unsigned char*)pkey[TAG_PRIVVAL].big,  pkey[TAG_PRIVVAL].size, NULL);
+	BIGNUM* bn_pub_key =  BN_bin2bn((unsigned char*)pkey[TAG_PUBVAL].big,   pkey[TAG_PUBVAL].size, NULL);
+
+	DSA_set0_pqg(dsa, bn_p, bn_q, bn_g);
+	DSA_set0_key(dsa, bn_pub_key, bn_priv_key);
+
 	ossl_pkey = EVP_PKEY_new();
 
 	// Convert DSA to EVP_PKEY

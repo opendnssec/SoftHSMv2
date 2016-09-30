@@ -32,6 +32,7 @@
 
 #include "config.h"
 #include "log.h"
+#include "OSSLComp.h"
 #include "OSSLRSAPublicKey.h"
 #include "OSSLUtil.h"
 #include <string.h>
@@ -40,18 +41,12 @@
 // Constructors
 OSSLRSAPublicKey::OSSLRSAPublicKey()
 {
-	rsa = RSA_new();
-
-	// Use the OpenSSL implementation and not any engine
-	RSA_set_method(rsa, RSA_get_default_method());
+	rsa = NULL;
 }
 
 OSSLRSAPublicKey::OSSLRSAPublicKey(const RSA* inRSA)
 {
-	rsa = RSA_new();
-
-	// Use the OpenSSL implementation and not any engine
-	RSA_set_method(rsa, RSA_PKCS1_SSLeay());
+	rsa = NULL;
 
 	setFromOSSL(inRSA);
 }
@@ -74,14 +69,19 @@ bool OSSLRSAPublicKey::isOfType(const char* inType)
 // Set from OpenSSL representation
 void OSSLRSAPublicKey::setFromOSSL(const RSA* inRSA)
 {
-	if (inRSA->n)
+	const BIGNUM* bn_n = NULL;
+	const BIGNUM* bn_e = NULL;
+
+	RSA_get0_key(inRSA, &bn_n, &bn_e, NULL);
+
+	if (bn_n)
 	{
-		ByteString inN = OSSL::bn2ByteString(inRSA->n);
+		ByteString inN = OSSL::bn2ByteString(bn_n);
 		setN(inN);
 	}
-	if (inRSA->e)
+	if (bn_e)
 	{
-		ByteString inE = OSSL::bn2ByteString(inRSA->e);
+		ByteString inE = OSSL::bn2ByteString(bn_e);
 		setE(inE);
 	}
 }
@@ -91,31 +91,62 @@ void OSSLRSAPublicKey::setN(const ByteString& inN)
 {
 	RSAPublicKey::setN(inN);
 
-	if (rsa->n)
+	if (rsa)
 	{
-		BN_clear_free(rsa->n);
-		rsa->n = NULL;
+		RSA_free(rsa);
+		rsa = NULL;
 	}
-
-	rsa->n = OSSL::byteString2bn(inN);
 }
 
 void OSSLRSAPublicKey::setE(const ByteString& inE)
 {
 	RSAPublicKey::setE(inE);
 
-	if (rsa->e)
+	if (rsa)
 	{
-		BN_clear_free(rsa->e);
-		rsa->e = NULL;
+		RSA_free(rsa);
+		rsa = NULL;
 	}
-
-	rsa->e = OSSL::byteString2bn(inE);
 }
 
 // Retrieve the OpenSSL representation of the key
 RSA* OSSLRSAPublicKey::getOSSLKey()
 {
+	if (rsa == NULL) createOSSLKey();
+
 	return rsa;
 }
 
+// Create the OpenSSL representation of the key
+void OSSLRSAPublicKey::createOSSLKey()
+{
+	if (rsa != NULL) return;
+
+	rsa = RSA_new();
+	if (rsa == NULL)
+	{
+		ERROR_MSG("Could not create RSA object");
+		return;
+	}
+
+	// Use the OpenSSL implementation and not any engine
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+
+#ifdef OPENSSL_FIPS
+	if (FIPS_mode())
+		RSA_set_method(rsa, FIPS_rsa_pkcs1_ssleay());
+	else
+		RSA_set_method(rsa, RSA_PKCS1_SSLeay());
+#else
+	RSA_set_method(rsa, RSA_PKCS1_SSLeay());
+#endif
+
+#else
+	RSA_set_method(rsa, RSA_PKCS1_OpenSSL());
+#endif
+
+	BIGNUM* bn_n = OSSL::byteString2bn(n);
+	BIGNUM* bn_e = OSSL::byteString2bn(e);
+
+	RSA_set0_key(rsa, bn_n, bn_e, NULL);
+}

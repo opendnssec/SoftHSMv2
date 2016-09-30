@@ -52,6 +52,9 @@
     <ClInclude Include="..\..\src\bin\util\softhsm2-util-ossl.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\OSSLComp.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
 @END OPENSSL
     <ClInclude Include="..\..\src\lib\cryptoki_compat\pkcs11.h">
       <Filter>Header Files</Filter>
@@ -80,6 +83,9 @@
 @END BOTAN
 @IF OPENSSL
     <ClCompile Include="..\..\src\bin\util\softhsm2-util-ossl.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\OSSLComp.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
 @END OPENSSL

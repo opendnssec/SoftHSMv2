@@ -1,6 +1,7 @@
 MAINTAINERCLEANFILES =	$(srcdir)/Makefile.in
 
-AM_CPPFLAGS =			@CRYPTO_INCLUDES@
+AM_CPPFLAGS =			@CRYPTO_INCLUDES@ \
+				-I$(srcdir)/../../lib/crypto
 
 dist_man_MANS =			softhsm2-keyconv.1
 
@@ -12,7 +13,8 @@ softhsm2_keyconv_LDADD =	@CRYPTO_LIBS@
 
 # Compile with OpenSSL support
 if WITH_OPENSSL
-softhsm2_keyconv_SOURCES +=	softhsm2-keyconv-ossl.cpp
+softhsm2_keyconv_SOURCES +=	softhsm2-keyconv-ossl.cpp \
+				../../lib/crypto/OSSLComp.cpp
 endif
 
 # Compile with Botan support

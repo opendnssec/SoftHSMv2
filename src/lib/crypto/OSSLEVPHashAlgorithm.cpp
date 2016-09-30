@@ -32,11 +32,12 @@
 
 #include "config.h"
 #include "OSSLEVPHashAlgorithm.h"
+#include "OSSLComp.h"
 
 // Destructor
 OSSLEVPHashAlgorithm::~OSSLEVPHashAlgorithm()
 {
-	EVP_MD_CTX_cleanup(&curCTX);
+	EVP_MD_CTX_free(curCTX);
 }
 
 // Hashing functions
@@ -48,14 +49,21 @@ bool OSSLEVPHashAlgorithm::hashInit()
 	}
 
 	// Initialize the context
-	EVP_MD_CTX_init(&curCTX);
+	curCTX = EVP_MD_CTX_new();
+	if (curCTX == NULL)
+	{
+		ERROR_MSG("Failed to allocate space for EVP_MD_CTX");
+
+		return false;
+	}
 
 	// Initialize EVP digesting
-	if (!EVP_DigestInit_ex(&curCTX, getEVPHash(), NULL))
+	if (!EVP_DigestInit_ex(curCTX, getEVPHash(), NULL))
 	{
 		ERROR_MSG("EVP_DigestInit failed");
 
-		EVP_MD_CTX_cleanup(&curCTX);
+		EVP_MD_CTX_free(curCTX);
+		curCTX = NULL;
 
 		ByteString dummy;
 		HashAlgorithm::hashFinal(dummy);
@@ -79,11 +87,12 @@ bool OSSLEVPHashAlgorithm::hashUpdate(const ByteString& data)
 		return true;
 	}
 
-	if (!EVP_DigestUpdate(&curCTX, (unsigned char*) data.const_byte_str(), data.size()))
+	if (!EVP_DigestUpdate(curCTX, (unsigned char*) data.const_byte_str(), data.size()))
 	{
 		ERROR_MSG("EVP_DigestUpdate failed");
 
-		EVP_MD_CTX_cleanup(&curCTX);
+		EVP_MD_CTX_free(curCTX);
+		curCTX = NULL;
 
 		ByteString dummy;
 		HashAlgorithm::hashFinal(dummy);
@@ -104,18 +113,20 @@ bool OSSLEVPHashAlgorithm::hashFinal(ByteString& hashedData)
 	hashedData.resize(EVP_MD_size(getEVPHash()));
 	unsigned int outLen = hashedData.size();
 
-	if (!EVP_DigestFinal_ex(&curCTX, &hashedData[0], &outLen))
+	if (!EVP_DigestFinal_ex(curCTX, &hashedData[0], &outLen))
 	{
 		ERROR_MSG("EVP_DigestFinal failed");
 
-		EVP_MD_CTX_cleanup(&curCTX);
+		EVP_MD_CTX_free(curCTX);
+		curCTX = NULL;
 
 		return false;
 	}
 
 	hashedData.resize(outLen);
 
-	EVP_MD_CTX_cleanup(&curCTX);
+	EVP_MD_CTX_free(curCTX);
+	curCTX = NULL;
 
 	return true;
 }

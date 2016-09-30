@@ -42,7 +42,7 @@ class OSSLGOST : public AsymmetricAlgorithm
 public:
 	// Constructor
 	OSSLGOST() : AsymmetricAlgorithm() {
-		EVP_MD_CTX_init(&curCTX);
+		curCTX = NULL;
 	}
 
 	// Destructor
@@ -79,7 +79,7 @@ public:
 	virtual AsymmetricParameters* newParameters();
 
 private:
-	EVP_MD_CTX curCTX;
+	EVP_MD_CTX* curCTX;
 };
 
 #endif // !_SOFTHSM_V2_OSSLGOST_H

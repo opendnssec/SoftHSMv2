@@ -156,13 +156,12 @@ bool OSSLAES::wrapUnwrapKey(const SymmetricKey* key, const SymWrap::Type mode, c
 	}
 
 	// Allocate the EVP context
-	EVP_CIPHER_CTX* pWrapCTX = (EVP_CIPHER_CTX*) salloc(sizeof(EVP_CIPHER_CTX));
+	EVP_CIPHER_CTX* pWrapCTX = EVP_CIPHER_CTX_new();
 	if (pWrapCTX == NULL)
 	{
 		ERROR_MSG("Failed to allocate space for EVP_CIPHER_CTX");
 		return false;
 	}
-	EVP_CIPHER_CTX_init(pWrapCTX);
 	EVP_CIPHER_CTX_set_flags(pWrapCTX, EVP_CIPHER_CTX_FLAG_WRAP_ALLOW);
 
 	int rv = EVP_CipherInit_ex(pWrapCTX, cipher, NULL, (unsigned char*) key->getKeyBits().const_byte_str(), NULL, wrap);
@@ -173,8 +172,7 @@ bool OSSLAES::wrapUnwrapKey(const SymmetricKey* key, const SymWrap::Type mode, c
 	{
 		ERROR_MSG("Failed to initialise EVP cipher %swrap operation", prefix);
 
-		EVP_CIPHER_CTX_cleanup(pWrapCTX);
-		sfree(pWrapCTX);
+		EVP_CIPHER_CTX_free(pWrapCTX);
 		return false;
 	}
 
@@ -191,10 +189,10 @@ bool OSSLAES::wrapUnwrapKey(const SymmetricKey* key, const SymWrap::Type mode, c
 	{
 		ERROR_MSG("Failed EVP %swrap operation", prefix);
 
-		EVP_CIPHER_CTX_cleanup(pWrapCTX);
-		sfree(pWrapCTX);
+		EVP_CIPHER_CTX_free(pWrapCTX);
 		return false;
 	}
+	EVP_CIPHER_CTX_free(pWrapCTX);
 	outLen += curBlockLen;
 	out.resize(outLen);
 	return true;

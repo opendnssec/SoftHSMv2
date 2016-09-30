@@ -27,7 +27,8 @@ softhsm2_util_LDADD =	@CRYPTO_LIBS@ \
 
 # Compile with support of OpenSSL
 if WITH_OPENSSL
-softhsm2_util_SOURCES +=	softhsm2-util-ossl.cpp
+softhsm2_util_SOURCES +=	softhsm2-util-ossl.cpp \
+				../../lib/crypto/OSSLComp.cpp
 endif
 
 # Compile with support of Botan
