@@ -34,7 +34,7 @@ AC_INIT([SoftHSM],[SOFTHSM_VERSION_MAJOR.SOFTHSM_VERSION_MINOR.SOFTHSM_VERSION_F
 AC_CONFIG_HEADER([config.h])
 AC_CONFIG_SRCDIR([src/Makefile.am])
 AC_CONFIG_MACRO_DIR([m4])
-AM_INIT_AUTOMAKE(foreign)
+AM_INIT_AUTOMAKE([foreign subdir-objects])
 ACX_PREFIXHACK
 
 # Version info for the library
@@ -113,6 +113,9 @@ fi
 # Set visibility flags so only PKCS#11 entry points are exported
 ACX_VISIBILITY
 
+# If we should install the p11-kit module
+ACX_P11KIT
+
 # Set full directory paths
 full_sysconfdir=`eval eval eval eval eval echo "${sysconfdir}" | sed "s#NONE#${prefix}#" | sed "s#NONE#${ac_default_prefix}#"`
 full_localstatedir=`eval eval eval eval eval echo "${localstatedir}" | sed "s#NONE#${prefix}#" | sed "s#NONE#${ac_default_prefix}#"`
@@ -123,19 +126,7 @@ softhsmtokendir=${full_localstatedir}/lib/softhsm/tokens/
 # Install the library in a sub-directory
 full_libdir="$full_libdir/softhsm"
 libdir=$full_libdir
-
-AC_ARG_ENABLE([p11-kit],
-	AS_HELP_STRING([--disable-p11-kit], [Disable p11-kit integration]),
-	[use_p11kit=$enableval], [use_p11kit=yes])
-
-pk_module_configs=
-if test "x${use_p11kit}" != "xno"; then
-	AC_PATH_PROG(PKGCONFIG, [pkg-config])
-	if test "x${PKGCONFIG}" != "x" && ${PKGCONFIG} --exists p11-kit-1; then
-		pk_module_configs=`${PKGCONFIG} --variable=p11_module_configs p11-kit-1`
-	fi
-fi
-AM_CONDITIONAL([P11_MODULE_FILE], [test "x${pk_module_configs}" != "x"])
+default_softhsm2_lib="$full_libdir/libsofthsm2.so"
 
 # For getConfigPath()
 AC_CHECK_FUNCS([getpwuid_r])
@@ -183,13 +174,13 @@ AC_DEFINE_UNQUOTED(
 )
 AC_DEFINE_UNQUOTED(
 	[DEFAULT_PKCS11_LIB],
-	["$full_libdir/libsofthsm2.so"],
+	["$default_softhsm2_lib"],
 	[The default PKCS#11 library]
 )
 
-AC_SUBST([pk_module_configs])
 AC_SUBST([softhsmtokendir])
 AC_SUBST([default_softhsm2_conf])
+AC_SUBST([default_softhsm2_lib])
 
 # Generate the libtool script and install script
 AC_PROG_INSTALL

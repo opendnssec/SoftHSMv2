@@ -28,7 +28,7 @@ case "$DISTRIBUTION" in
 			cd build &&
 			../configure --prefix="$INSTALL_ROOT" \
 				--disable-non-paged-memory \
-				--disable-p11-kit \
+				--with-p11-kit="$INSTALL_ROOT/usr/local/share/p11-kit/modules" \
 				--with-migrate \
 				--with-crypto-backend=botan \
 				--with-botan="$INSTALL_ROOT" &&
@@ -46,7 +46,7 @@ case "$DISTRIBUTION" in
 			cd build &&
 			../configure --prefix="$INSTALL_ROOT" \
 				--disable-non-paged-memory \
-				--disable-p11-kit \
+				--with-p11-kit="$INSTALL_ROOT/usr/local/share/p11-kit/modules" \
 				--with-migrate \
 				--with-crypto-backend=botan \
 				--with-botan="$INSTALL_ROOT" \
@@ -66,6 +66,7 @@ case "$DISTRIBUTION" in
 			cd build &&
 			../configure --prefix="$INSTALL_ROOT" \
 				--disable-non-paged-memory \
+				--with-p11-kit="$INSTALL_ROOT/usr/local/share/p11-kit/modules" \
 				--with-migrate \
 				--with-crypto-backend=botan \
 				--with-botan="$INSTALL_ROOT" \
@@ -85,7 +86,7 @@ case "$DISTRIBUTION" in
 			cd build &&
 			../configure --prefix="$INSTALL_ROOT" \
 				--disable-non-paged-memory \
-				--disable-p11-kit \
+				--with-p11-kit="$INSTALL_ROOT/usr/local/share/p11-kit/modules" \
 				--with-migrate \
 				--with-crypto-backend=botan \
 				--with-botan="$INSTALL_ROOT" &&

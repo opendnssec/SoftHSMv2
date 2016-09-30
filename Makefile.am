@@ -1,10 +1,5 @@
 ACLOCAL_AMFLAGS = -I m4
 
-if P11_MODULE_FILE
-p11moddir = $(pk_module_configs)
-p11mod_DATA = softhsm2.module
-endif
-
 MAINTAINERCLEANFILES = \
         config.log config.status softhsm2.module \
         $(srcdir)/Makefile.in \
@@ -15,6 +10,11 @@ MAINTAINERCLEANFILES = \
         $(srcdir)/config.guess $(srcdir)/config.sub
 
 SUBDIRS = src
+
+if WITH_P11KIT
+p11moddir = @P11KIT_PATH@
+p11mod_DATA = softhsm2.module
+endif
 
 EXTRA_DIST =	$(srcdir)/aes_wrap_key_with_pad/botan-diff \
 		$(srcdir)/aes_wrap_key_with_pad/README \

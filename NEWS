@@ -22,6 +22,8 @@ SoftHSM develop
   (Patch from Lars Silvén)
 * Issue #223: Mark public key as non private by default.
   (Patch from Nikos Mavrogiannopoulos)
+* Issue #230: Install p11-kit module, to disable use --disable-p11-kit.
+  (Patch from David Woodhouse)
 * Issue #237: Add windows continuous integration build.
   (Patch from Peter Polačko)
 
