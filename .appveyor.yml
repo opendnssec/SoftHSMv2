@@ -47,9 +47,9 @@ init:
 
     $env:RELEASE_DIR=Join-Path $env:BUILD_DIR "SoftHSMv2-$env:ENV_PLATFORM"
 install:
-- cmd: powershell -File appveyor_download_requirements.ps1
+- cmd: powershell -File testing/appveyor/appveyor_download_requirements.ps1
 build_script:
-- cmd: appveyor_build.bat
+- cmd: testing/appveyor/appveyor_build.bat
 artifacts:
 - path: build/SoftHSMv2-$(Platform)
   name: SoftHSMv2-$(Platform)
