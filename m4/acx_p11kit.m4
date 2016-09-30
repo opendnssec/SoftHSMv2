@@ -25,12 +25,12 @@ AC_DEFUN([ACX_P11KIT],[
 		AC_MSG_CHECKING(where to install the p11-kit module)
 		AC_MSG_RESULT($P11KIT_PATH)
 		if test "x${P11KIT_PATH}" = "x"; then
-			AC_MSG_ERROR([Missing install path for the p11-kit module])
+			AC_MSG_WARN([Missing install path for the p11-kit module, skipping module])
 		fi
 	else
 		AC_MSG_RESULT(no)
 	fi
 
 	AC_SUBST(P11KIT_PATH)
-	AM_CONDITIONAL([WITH_P11KIT], [test "x${enable_p11kit}" = "xyes"])
+	AM_CONDITIONAL([WITH_P11KIT], [test "x${enable_p11kit}" = "xyes" && "x${P11KIT_PATH}" != "x"])
 ])
