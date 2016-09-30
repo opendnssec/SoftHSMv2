@@ -50,7 +50,6 @@ public:
 
 private:
 	SimpleConfigLoader();
-	char* getConfigPath();
 	char* trimString(char* text);
 	bool string2bool(std::string stringValue, bool* boolValue);
 

@@ -56,6 +56,9 @@ std::unique_ptr<SimpleConfigLoader> SimpleConfigLoader::instance(nullptr);
 std::auto_ptr<SimpleConfigLoader> SimpleConfigLoader::instance(NULL);
 #endif
 
+static char *get_user_path(void);
+static char *get_env_var_path(void);
+
 // Return the one-and-only instance
 SimpleConfigLoader* SimpleConfigLoader::i()
 {
@@ -70,7 +73,11 @@ SimpleConfigLoader* SimpleConfigLoader::i()
 // Constructor
 SimpleConfigLoader::SimpleConfigLoader()
 {
-	configPath = getConfigPath();
+	configPath = get_env_var_path();
+	if (configPath == NULL)
+		configPath = get_user_path();
+	if (configPath == NULL)
+		configPath = strdup(DEFAULT_SOFTHSM2_CONF);
 }
 
 // Destructor
@@ -286,23 +293,6 @@ static char *get_env_var_path(void)
 
 #endif
 }
-
-char* SimpleConfigLoader::getConfigPath()
-{
-	char* configPath = get_env_var_path();
-	char *tpath;
-
-	if (configPath != NULL) {
-		return configPath;
-	} else {
-		tpath = get_user_path();
-		if (tpath != NULL) {
-			return tpath;
-		}
-		configPath = DEFAULT_SOFTHSM2_CONF;
-		return strdup(configPath);
-	}
-} 
 
 char* SimpleConfigLoader::trimString(char* text)
 {
