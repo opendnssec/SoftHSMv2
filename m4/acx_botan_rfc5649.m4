@@ -5,7 +5,7 @@ AC_DEFUN([ACX_BOTAN_RFC5649],[
 	tmp_LIBS=$LIBS
 
 	CPPFLAGS="$CPPFLAGS $CRYPTO_INCLUDES"
-	LIBS="$LIBS $CRYPTO_LIBS"
+	LIBS="$CRYPTO_LIBS $LIBS"
 
 	AC_DEFINE([HAVE_AES_KEY_WRAP], [1],
 		  [Define if advanced AES key wrap without pad is supported])

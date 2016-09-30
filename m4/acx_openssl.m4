@@ -20,7 +20,7 @@ AC_DEFUN([ACX_OPENSSL],[
 	tmp_LIBS=$LIBS
 
 	CPPFLAGS="$CPPFLAGS $OPENSSL_INCLUDES"
-	LIBS="$LIBS $OPENSSL_LIBS"
+	LIBS="$OPENSSL_LIBS $LIBS"
 
 	AC_CHECK_HEADERS([openssl/ssl.h],,[AC_MSG_ERROR([Can't find OpenSSL headers])])
 	AC_CHECK_LIB(crypto, BN_new,,[AC_MSG_ERROR([Can't find OpenSSL library])])
