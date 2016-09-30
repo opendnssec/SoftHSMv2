@@ -90,7 +90,7 @@ In a **new command line window** build OpenSSL and install it into `C:\build\bin
     cd C:\build\src\openssl-1.1.0a-x86
     set PATH=%PATH%;C:\nasm
     "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat"
-    perl Configure VC-WIN32 --prefix=C:\build\bin\openssl-1.1.0a-x86 enable-static-engine
+    perl Configure VC-WIN32 --prefix=C:\build\bin\openssl-1.1.0a-x86 --openssldir=C:\build\bin\openssl-1.1.0a-x86\ssl no-shared
     nmake
     nmake test
     nmake install
@@ -110,7 +110,7 @@ In a **new command line window** build OpenSSL and install it into `C:\build\bin
     cd C:\build\src\openssl-1.1.0a-x64
     set PATH=%PATH%;C:\nasm
     "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" amd64
-    perl Configure VC-WIN64A --prefix=C:\build\bin\openssl-1.1.0a-x64 enable-static-engine
+    perl Configure VC-WIN64A --prefix=C:\build\bin\openssl-1.1.0a-x64 --openssldir=C:\build\bin\openssl-1.1.0a-x64\ssl no-shared
     nmake
     nmake test
     nmake install
