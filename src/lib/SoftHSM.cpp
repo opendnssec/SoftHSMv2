@@ -362,8 +362,15 @@ CK_RV SoftHSM::C_Initialize(CK_VOID_PTR pInitArgs)
 		// Must be set to NULL_PTR in this version of PKCS#11
 		if (args->pReserved != NULL_PTR)
 		{
-			DEBUG_MSG("pReserved must be set to NULL_PTR");
-			return CKR_ARGUMENTS_BAD;
+			static const char *confstr = "SOFTHSM2_CONF=";
+			char *init_args = (char *)args->pReserved;
+
+			if (strncmp(init_args, confstr, strlen(confstr)) != 0 ||
+			    init_args[strlen(confstr)] == '\0') {
+				DEBUG_MSG("pReserved must be set to NULL_PTR or \"SOFTHSM2_CONF=...\"");
+				return CKR_ARGUMENTS_BAD;
+			}
+			SimpleConfigLoader::i()->setConfigPath(init_args + strlen(confstr));
 		}
 
 		// Can we spawn our own threads?

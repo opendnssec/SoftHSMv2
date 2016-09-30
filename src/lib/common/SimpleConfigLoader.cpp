@@ -70,22 +70,32 @@ SimpleConfigLoader* SimpleConfigLoader::i()
 // Constructor
 SimpleConfigLoader::SimpleConfigLoader()
 {
+	configPath = getConfigPath();
+}
+
+// Destructor
+SimpleConfigLoader::~SimpleConfigLoader()
+{
+	free(configPath);
+}
+
+// Override the default configPath;
+void SimpleConfigLoader::setConfigPath(char *path)
+{
+	free(configPath);
+	configPath = strdup(path);
 }
 
 // Load the configuration
 bool SimpleConfigLoader::loadConfiguration()
 {
-	char* configPath = getConfigPath();
-
 	FILE* fp = fopen(configPath,"r");
 
 	if (fp == NULL)
 	{
 		ERROR_MSG("Could not open the config file: %s", configPath);
-		free(configPath);
 		return false;
 	}
-	free(configPath);
 
 	char fileBuf[1024];
 
