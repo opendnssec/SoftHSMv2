@@ -2,7 +2,8 @@
 
 SoftHSM is part of the OpenDNSSEC project. Read more at www.opendnssec.org.
 
-[![Build Status](https://api.travis-ci.org/opendnssec/SoftHSMv2.png)](https://travis-ci.org/opendnssec/SoftHSMv2)
+[![Travis Build Status](https://api.travis-ci.org/opendnssec/SoftHSMv2.png)](https://travis-ci.org/opendnssec/SoftHSMv2)
+[![AppVeyor Build Status](https://ci.appveyor.com/api/projects/status/github/opendnssec/SoftHSMv2?svg=true)](https://ci.appveyor.com/project/bellgrim/softhsmv2)
 
 ## Introduction
 

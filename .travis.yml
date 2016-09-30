@@ -5,7 +5,7 @@ compiler:
 before_install:
   - sudo apt-get update -qq
   - sudo apt-get install build-essential autoconf automake libtool libcppunit-dev libsqlite3-dev sqlite3 libbotan1.10-dev libssl-dev
-script: sh .travis.sh
+script: sh testing/travis/travis.sh
 env:
   - CRYPTO=openssl OBJSTORE=file
   - CRYPTO=openssl OBJSTORE=sqlite
