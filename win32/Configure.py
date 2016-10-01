@@ -638,7 +638,7 @@ int main() {\n\
     else:
 
         condvals["OPENSSL"] = True
-        varvals["EXTRALIBS"] = "crypt32.lib;"
+        varvals["EXTRALIBS"] = "crypt32.lib;ws2_32.lib;"
         openssl_path = os.path.abspath(openssl_path)
         openssl_inc = os.path.join(openssl_path, "include")
         if not os.path.exists(os.path.join(openssl_inc, "openssl\\ssl.h")):
@@ -693,7 +693,7 @@ int main() {\n\
         if os.path.exists(openssl_dll):
             subprocess.call(["copy", openssl_dll, "."], shell=True)
         else:
-            system_libs = ["user32.lib", "advapi32.lib", "gdi32.lib", "crypt32.lib"]
+            system_libs = ["user32.lib", "advapi32.lib", "gdi32.lib", "crypt32.lib", "ws2_32.lib"]
         inc = openssl_inc
         lib = os.path.join(openssl_lib, openssl_lib_name)
         testfile = open("testossl.c", "w")
