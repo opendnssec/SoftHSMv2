@@ -43,6 +43,7 @@ Bugfixes:
   (Patch from David Woodhouse)
 * Issue #241: Added EXTRALIBS to Windows utils project.
   (Patch from Peter Polačko)
+* Issue #250: C++11 not detected.
 
 
 SoftHSM 2.1.0 - 2016-03-14
