@@ -24,14 +24,14 @@ IF "%ENV_PLATFORM%"=="x86" (set from_dir=%CD%\win32\Release) ELSE (set from_dir=
 
 echo "Testing build"
 
-%from_dir%\cryptotest.exe || goto :error
-%from_dir%\datamgrtest.exe || goto :error
-%from_dir%\handlemgrtest.exe || goto :error
-%from_dir%\objstoretest.exe || goto :error
-@rem this test is currently not passing on windows
-%from_dir%\p11test.exe 
-%from_dir%\sessionmgrtest.exe || goto :error
-%from_dir%\slotmgrtest.exe || goto :error
+cd %from_dir%
+cryptotest.exe || goto :error
+datamgrtest.exe || goto :error
+handlemgrtest.exe || goto :error
+objstoretest.exe || goto :error
+p11test.exe || goto :error
+sessionmgrtest.exe || goto :error
+slotmgrtest.exe || goto :error
 
 echo "Preparing output package"
 copy %from_dir%\softhsm2.dll %RELEASE_DIR% || goto :error
