@@ -49,6 +49,7 @@ AC_PROG_CXX
 ACX_PEDANTIC
 ACX_STRICT
 ACX_64BIT
+AX_CXX_COMPILE_STDCXX_11([noext],[optional])
 
 # Check for libraries (-ldl can be required by OpenSSL too)
 ACX_DLOPEN
