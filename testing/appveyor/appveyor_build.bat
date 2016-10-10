@@ -12,15 +12,13 @@ set PATH=%PATH%;%PYTHON_PATH%
 echo %cur_dir%
 cd win32
 
-
-python Configure.py %PYTHON_64% disable-debug with-crypto-backend=openssl with-openssl=%OPENSSL_PATH%\ with-cppunit=%CPPUNIT_PATH%\ || goto :error
+python Configure.py %CONFIGURE_OPTIONS% || goto :error
 
 msbuild softhsm2.sln /p:Configuration="Release" /p:Platform="%MSBUILD_PLATFORM%" /p:PlatformToolset=v140 /target:Build || goto :error
 
 cd %cur_dir%
 
 IF "%ENV_PLATFORM%"=="x86" (set from_dir=%CD%\win32\Release) ELSE (set from_dir=%CD%\win32\x64\Release)
-
 
 echo "Testing build"
 

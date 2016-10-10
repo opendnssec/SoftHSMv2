@@ -33,9 +33,9 @@ if ($exists -eq $true) {
     Remove-Item "$env:CPPUNIT_PATH" -recurse
 }
 
-$exists = Test-Path "$env:OPENSSL_PATH"
+$exists = Test-Path "$env:CRYPTO_PACKAGE_PATH"
 if ($exists -eq $true) {
-    Remove-Item "$env:OPENSSL_PATH" -recurse
+    Remove-Item "$env:CRYPTO_PACKAGE_PATH" -recurse
 }
 
 mkdir python
@@ -44,10 +44,10 @@ Write-Host "Preparing directories - OK"
 
 Write-Host "Downloading needed tools and dependencies"
 
-$exists = Test-Path "$env:OPENSSL_PACKAGE_NAME"
+$exists = Test-Path "$env:CRYPTO_PACKAGE_NAME"
 if ($exists -eq $false) {
-    $source = "https://github.com/disig/SoftHSM2-AppVeyor/raw/master/$env:OPENSSL_VERSION_NAME/$env:OPENSSL_PACKAGE"
-    Invoke-WebRequest $source -OutFile $env:OPENSSL_PACKAGE
+    $source = "https://github.com/disig/SoftHSM2-AppVeyor/raw/master/$env:PACKAGE_VERSION_NAME/$env:CRYPTO_PACKAGE"
+    Invoke-WebRequest $source -OutFile $env:CRYPTO_PACKAGE
 }
 
 $exists = Test-Path "$env:CPPUNIT_PACKAGE"
@@ -67,14 +67,14 @@ Write-Host "Downloading needed tools and dependencies - OK"
 Write-Host "Extracting ..."  
 Unzip "$BUILD_DIR/python-3.5.2-embed-win32.zip" "$env:PYTHON_PATH"
 
-Unzip "$BUILD_DIR/$env:OPENSSL_PACKAGE" "$BUILD_DIR"
+Unzip "$BUILD_DIR/$env:CRYPTO_PACKAGE" "$BUILD_DIR"
 
 Unzip "$BUILD_DIR/$env:CPPUNIT_PACKAGE" "$BUILD_DIR"
 
 dir 
 
 dir "$env:PYTHON_PATH"
-dir "$env:OPENSSL_PATH"
+dir "$env:CRYPTO_PACKAGE_PATH"
 dir "$env:CPPUNIT_PATH"
 
 cd $CURRENT_DIR_PATH
