@@ -70,13 +70,7 @@ void DHTests::testKeyGeneration()
 
 	// Key sizes to test
 	std::vector<size_t> keySizes;
-#ifdef WITH_FIPS
 	keySizes.push_back(1024);
-#else
-	keySizes.push_back(512);
-	//keySizes.push_back(768);
-	//keySizes.push_back(1024);
-#endif
 
 	for (std::vector<size_t>::iterator k = keySizes.begin(); k != keySizes.end(); k++)
 	{
@@ -116,13 +110,7 @@ void DHTests::testSerialisation()
 	DHParameters* p;
 	AsymmetricParameters** ap = (AsymmetricParameters**) &p;
 
-	//CPPUNIT_ASSERT(dh->generateParameters(ap, (void*) 1024));
-	// changed for 512-bit for speed...
-#ifndef WITH_BOTAN
 	CPPUNIT_ASSERT(dh->generateParameters(ap, (void*) 1024));
-#else
-	CPPUNIT_ASSERT(dh->generateParameters(ap, (void*) 512));
-#endif
 
 	// Set a fixed private value length
 	p->setXBitLength(128);
@@ -182,13 +170,7 @@ void DHTests::testPKCS8()
 	// Generate 1024-bit parameters for testing
 	AsymmetricParameters* p;
 
-	//CPPUNIT_ASSERT(dh->generateParameters(&p, (void*) 1024));
-	// changed for 512-bit for speed...
-#ifndef WITH_BOTAN
 	CPPUNIT_ASSERT(dh->generateParameters(&p, (void*) 1024));
-#else
-	CPPUNIT_ASSERT(dh->generateParameters(&p, (void*) 512));
-#endif
 
 	// Generate a key-pair
 	AsymmetricKeyPair* kp;
@@ -225,13 +207,7 @@ void DHTests::testDerivation()
 
 	// Key sizes to test
 	std::vector<size_t> keySizes;
-#ifdef WITH_FIPS
 	keySizes.push_back(1024);
-#else
-	keySizes.push_back(512);
-	//keySizes.push_back(768);
-	//keySizes.push_back(1024);
-#endif
 
 	for (std::vector<size_t>::iterator k = keySizes.begin(); k != keySizes.end(); k++)
 	{

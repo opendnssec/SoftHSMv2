@@ -74,7 +74,10 @@ bool BotanRNG::generateRandom(ByteString& data, const size_t len)
 void BotanRNG::seed(ByteString& seedData)
 {
 	rng->add_entropy(seedData.byte_str(), seedData.size());
-	rng->reseed(seedData.size());
+	// add_entropy will make sure the RNG is reseed so we do not need to call it.
+	// Made this change bacuase of API changes in Botan 1.11.31,
+	// but the statement above is also true for Botan 1.10.
+	// rng->reseed(seedData.size());
 }
 
 // Get the RNG
