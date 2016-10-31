@@ -1,6 +1,6 @@
 NEWS for SoftHSM -- History of user visible changes
 
-SoftHSM develop
+SoftHSM 2.2.0 - 2016-??-??
 
 * Issue #143: Delete a token using softhsm2-util.
 * Issue #185: Change access mode bits for /var/lib/softhsm/tokens/
