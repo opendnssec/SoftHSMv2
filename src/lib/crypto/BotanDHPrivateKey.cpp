@@ -41,6 +41,7 @@
 #include <botan/ber_dec.h>
 #include <botan/der_enc.h>
 #include <botan/oids.h>
+#include <botan/version.h>
 
 #if BOTAN_VERSION_MINOR == 11
 std::vector<Botan::byte> BotanDH_PrivateKey::public_value() const
@@ -62,7 +63,11 @@ BotanDH_PrivateKey::BotanDH_PrivateKey(
 			Botan::RandomNumberGenerator& rng) :
 	Botan::DL_Scheme_PrivateKey(alg_id, key_bits, Botan::DL_Group::PKCS3_DH_PARAMETERS)
 {
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,27)
+	impl = new Botan::DH_PrivateKey(rng, m_group, m_x);
+#else
 	impl = new Botan::DH_PrivateKey(rng, group, x);
+#endif
 }
 #else
 BotanDH_PrivateKey::BotanDH_PrivateKey(
@@ -80,9 +85,15 @@ BotanDH_PrivateKey::BotanDH_PrivateKey(Botan::RandomNumberGenerator& rng,
 				       const Botan::BigInt& x_arg)
 {
 	impl = new Botan::DH_PrivateKey(rng, grp, x_arg);
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,27)
+	m_group = grp;
+	m_x = x_arg;
+	m_y = impl->get_y();
+#else
 	group = grp;
 	x = x_arg;
 	y = impl->get_y();
+#endif
 }
 
 BotanDH_PrivateKey::~BotanDH_PrivateKey()

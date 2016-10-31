@@ -257,9 +257,9 @@ bool BotanDH::generateParameters(AsymmetricParameters** ppParams, void* paramete
 		BotanRNG* brng = (BotanRNG*)BotanCryptoFactory::i()->getRNG();
 		group = new Botan::DL_Group(*brng->getRNG(), Botan::DL_Group::Strong, bitLen);
 	}
-	catch (...)
+	catch (std::exception& e)
 	{
-		ERROR_MSG("Failed to generate %d bit DH parameters", bitLen);
+		ERROR_MSG("Failed to generate %d bit DH parameters: %s", bitLen, e.what());
 
 		return false;
 	}
