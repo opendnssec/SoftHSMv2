@@ -42,16 +42,18 @@ class SimpleConfigLoader : public ConfigLoader
 public:
 	static SimpleConfigLoader* i();
 
-	virtual ~SimpleConfigLoader() { }
+	virtual ~SimpleConfigLoader();
 
 	virtual bool loadConfiguration();
 
+	virtual void setConfigPath(char *);
+
 private:
 	SimpleConfigLoader();
-	char* getConfigPath();
 	char* trimString(char* text);
 	bool string2bool(std::string stringValue, bool* boolValue);
 
+	char *configPath;
 #ifdef HAVE_CXX11
 	static std::unique_ptr<SimpleConfigLoader> instance;
 #else
