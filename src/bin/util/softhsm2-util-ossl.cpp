@@ -238,8 +238,8 @@ int crypto_save_rsa
 		{ CKA_ID,               objID,        objIDLen },
 		{ CKA_TOKEN,            &ckToken,     sizeof(ckToken) },
 		{ CKA_VERIFY,           &ckTrue,      sizeof(ckTrue) },
-		{ CKA_ENCRYPT,          &ckFalse,     sizeof(ckFalse) },
-		{ CKA_WRAP,             &ckFalse,     sizeof(ckFalse) },
+		{ CKA_ENCRYPT,          &ckTrue,      sizeof(ckTrue) },
+		{ CKA_WRAP,             &ckTrue,      sizeof(ckTrue) },
 		{ CKA_PUBLIC_EXPONENT,  keyMat->bigE, keyMat->sizeE },
 		{ CKA_MODULUS,          keyMat->bigN, keyMat->sizeN }
 	};
@@ -249,8 +249,8 @@ int crypto_save_rsa
 		{ CKA_LABEL,            label,           strlen(label) },
 		{ CKA_ID,               objID,           objIDLen },
 		{ CKA_SIGN,             &ckTrue,         sizeof(ckTrue) },
-		{ CKA_DECRYPT,          &ckFalse,        sizeof(ckFalse) },
-		{ CKA_UNWRAP,           &ckFalse,        sizeof(ckFalse) },
+		{ CKA_DECRYPT,          &ckTrue,         sizeof(ckTrue) },
+		{ CKA_UNWRAP,           &ckTrue,         sizeof(ckTrue) },
 		{ CKA_SENSITIVE,        &ckTrue,         sizeof(ckTrue) },
 		{ CKA_TOKEN,            &ckTrue,         sizeof(ckTrue) },
 		{ CKA_PRIVATE,          &ckTrue,         sizeof(ckTrue) },
