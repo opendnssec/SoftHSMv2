@@ -83,6 +83,7 @@
     <ClInclude Include="..\..\src\lib\crypto\odd.h" />
 @IF OPENSSL
      <ClInclude Include="..\..\src\lib\crypto\OSSLAES.h" />
+     <ClInclude Include="..\..\src\lib\crypto\OSSLComp.h" />
      <ClInclude Include="..\..\src\lib\crypto\OSSLCryptoFactory.h" />
      <ClInclude Include="..\..\src\lib\crypto\OSSLDES.h" />
      <ClInclude Include="..\..\src\lib\crypto\OSSLDH.h" />
@@ -165,6 +166,7 @@
     <ClCompile Include="..\..\src\lib\common\MutexFactory.cpp" />
     <ClCompile Include="..\..\src\lib\common\osmutex.cpp" />
     <ClCompile Include="..\..\src\lib\common\SimpleConfigLoader.cpp" />
+    <ClCompile Include="..\..\src\lib\crypto\AESKey.cpp" />
     <ClCompile Include="..\..\src\lib\crypto\AsymmetricAlgorithm.cpp" />
     <ClCompile Include="..\..\src\lib\crypto\AsymmetricKeyPair.cpp" />
 @IF BOTAN
@@ -226,6 +228,7 @@
     <ClCompile Include="..\..\src\lib\crypto\MacAlgorithm.cpp" />
 @IF OPENSSL
      <ClCompile Include="..\..\src\lib\crypto\OSSLAES.cpp" />
+     <ClCompile Include="..\..\src\lib\crypto\OSSLComp.cpp" />
      <ClCompile Include="..\..\src\lib\crypto\OSSLCryptoFactory.cpp" />
      <ClCompile Include="..\..\src\lib\crypto\OSSLDES.cpp" />
      <ClCompile Include="..\..\src\lib\crypto\OSSLDH.cpp" />

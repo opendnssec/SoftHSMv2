@@ -419,7 +419,7 @@ void OSTokenTests::testCreateDeleteObjects()
 	{
 		CPPUNIT_ASSERT(present4[j] == true);
 	}
-	
+
 
 	// Release the test token
 	delete testToken;
@@ -446,7 +446,7 @@ void OSTokenTests::testClearToken()
 
 	// Set the SO PIN
 	ByteString soPIN = "3132333435363738"; // 12345678
-	
+
 	CPPUNIT_ASSERT(newToken->setSOPIN(soPIN));
 
 	// Set the user PIN
@@ -470,7 +470,7 @@ void OSTokenTests::testClearToken()
 
 	// Retrieve the flags, user PIN and so PIN
 	ByteString retrievedSOPIN, retrievedUserPIN;
-	
+
 	CPPUNIT_ASSERT(reopenedToken.getSOPIN(retrievedSOPIN));
 	CPPUNIT_ASSERT(reopenedToken.getUserPIN(retrievedUserPIN));
 	CPPUNIT_ASSERT(reopenedToken.getTokenFlags(flags));
@@ -478,6 +478,15 @@ void OSTokenTests::testClearToken()
 	CPPUNIT_ASSERT(retrievedSOPIN == soPIN);
 	CPPUNIT_ASSERT(retrievedUserPIN == userPIN);
 	CPPUNIT_ASSERT(flags == (CKF_RNG | CKF_LOGIN_REQUIRED | CKF_RESTORE_KEY_NOT_NEEDED | CKF_TOKEN_INITIALIZED | CKF_USER_PIN_INITIALIZED));
+
+	// Now reset the token
+	CPPUNIT_ASSERT(reopenedToken.resetToken(label));
+	CPPUNIT_ASSERT(reopenedToken.getSOPIN(retrievedSOPIN));
+	CPPUNIT_ASSERT(!reopenedToken.getUserPIN(retrievedUserPIN));
+	CPPUNIT_ASSERT(reopenedToken.getTokenFlags(flags));
+	CPPUNIT_ASSERT(retrievedSOPIN == soPIN);
+	CPPUNIT_ASSERT(flags == (CKF_RNG | CKF_LOGIN_REQUIRED | CKF_RESTORE_KEY_NOT_NEEDED | CKF_TOKEN_INITIALIZED));
+	CPPUNIT_ASSERT(reopenedToken.isValid());
 
 	// Now clear the token
 	CPPUNIT_ASSERT(reopenedToken.clearToken());

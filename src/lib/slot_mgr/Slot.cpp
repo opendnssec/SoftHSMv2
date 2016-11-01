@@ -37,9 +37,10 @@
 #include "Token.h"
 #include <stdio.h>
 #include <string.h>
+#include <sstream>
 
 // Constructor
-Slot::Slot(ObjectStore* inObjectStore, size_t inSlotID, ObjectStoreToken* inToken /* = NULL */)
+Slot::Slot(ObjectStore* inObjectStore, CK_SLOT_ID inSlotID, ObjectStoreToken* inToken /* = NULL */)
 {
 	objectStore = inObjectStore;
 	slotID = inSlotID;
@@ -80,15 +81,16 @@ CK_RV Slot::getSlotInfo(CK_SLOT_INFO_PTR info)
 		return CKR_ARGUMENTS_BAD;
 	}
 
-	char description[65];
-	char mfgID[33];
+	std::ostringstream osDescription;
+	osDescription << "SoftHSM slot ID 0x" << std::hex << slotID;
+	const std::string sDescription(osDescription.str());
 
-	snprintf(description, 65, "SoftHSM slot %d", (int) slotID);
+	char mfgID[33];
 	snprintf(mfgID, 33, "SoftHSM project");
 
 	memset(info->slotDescription, ' ', 64);
 	memset(info->manufacturerID, ' ', 32);
-	memcpy(info->slotDescription, description, strlen(description));
+	memcpy(info->slotDescription, sDescription.data(), sDescription.size());
 	memcpy(info->manufacturerID, mfgID, strlen(mfgID));
 
 	info->flags = CKF_TOKEN_PRESENT;
@@ -102,7 +104,7 @@ CK_RV Slot::getSlotInfo(CK_SLOT_INFO_PTR info)
 }
 
 // Get the slot ID
-size_t Slot::getSlotID()
+CK_SLOT_ID Slot::getSlotID()
 {
 	return slotID;
 }

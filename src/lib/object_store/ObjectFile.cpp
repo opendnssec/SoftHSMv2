@@ -230,6 +230,35 @@ bool ObjectFile::setAttribute(CK_ATTRIBUTE_TYPE type, const OSAttribute& attribu
 	return valid;
 }
 
+// Delete the specified attribute
+bool ObjectFile::deleteAttribute(CK_ATTRIBUTE_TYPE type)
+{
+	if (!valid)
+	{
+		DEBUG_MSG("Cannot update invalid object %s", path.c_str());
+
+		return false;
+	}
+
+	{
+		MutexLocker lock(objectMutex);
+
+		if (attributes[type] == NULL)
+		{
+			DEBUG_MSG("Cannot delete attribute that doesn't exist in object %s", path.c_str());
+
+			return false;
+		}
+
+		delete attributes[type];
+		attributes.erase(type);
+	}
+
+	store();
+
+	return valid;
+}
+
 // The validity state of the object (refresh from disk as a side effect)
 bool ObjectFile::isValid()
 {

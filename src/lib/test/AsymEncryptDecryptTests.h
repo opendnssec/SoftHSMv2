@@ -34,10 +34,10 @@
 #ifndef _SOFTHSM_V2_ASYMENCRYPTDECRYPTTESTS_H
 #define _SOFTHSM_V2_ASYMENCRYPTDECRYPTTESTS_H
 
+#include "TestsBase.h"
 #include <cppunit/extensions/HelperMacros.h>
-#include "cryptoki.h"
 
-class AsymEncryptDecryptTests : public CppUnit::TestFixture
+class AsymEncryptDecryptTests : public TestsBase
 {
 	CPPUNIT_TEST_SUITE(AsymEncryptDecryptTests);
 	CPPUNIT_TEST(testRsaEncryptDecrypt);
@@ -45,9 +45,6 @@ class AsymEncryptDecryptTests : public CppUnit::TestFixture
 
 public:
 	void testRsaEncryptDecrypt();
-
-	void setUp();
-	void tearDown();
 
 protected:
 	CK_RV generateRsaKeyPair(CK_SESSION_HANDLE hSession, CK_BBOOL bTokenPuk, CK_BBOOL bPrivatePuk, CK_BBOOL bTokenPrk, CK_BBOOL bPrivatePrk, CK_OBJECT_HANDLE &hPuk, CK_OBJECT_HANDLE &hPrk);

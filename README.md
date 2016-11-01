@@ -2,7 +2,8 @@
 
 SoftHSM is part of the OpenDNSSEC project. Read more at www.opendnssec.org.
 
-[![Build Status](https://api.travis-ci.org/opendnssec/SoftHSMv2.png)](https://travis-ci.org/opendnssec/SoftHSMv2)
+[![Travis Build Status](https://api.travis-ci.org/opendnssec/SoftHSMv2.png)](https://travis-ci.org/opendnssec/SoftHSMv2)
+[![AppVeyor Build Status](https://ci.appveyor.com/api/projects/status/github/opendnssec/SoftHSMv2?svg=true)](https://ci.appveyor.com/project/bellgrim/softhsmv2)
 
 ## Introduction
 
@@ -24,7 +25,7 @@ because of the PKCS#11 interface.
 
 ## Developers
 
-- Rickard Bellgrim (.SE, The Internet Infrastructure Foundation, www.iis.se)
+- Rickard Bellgrim (Knowit Secure AB, www.knowitgroup.com)
 - Francis Dupont (ISC, www.isc.org)
 - René Post (XPT Software and Consulting, www.xpt.nl)
 - Roland van Rijswijk (SURFnet bv, www.surfnet.nl)
@@ -71,6 +72,9 @@ Options:
 	--with-objectstore-backend-db
 				Build with database object store (SQLite3)
 	--with-sqlite3=PATH	Specify prefix of path of SQLite3
+	--disable-p11-kit	Disable p11-kit integration (default enabled)
+	--with-p11-kit=PATH	Specify install path of the p11-kit module, will
+				override path given by pkg-config
 
 For more options:
 

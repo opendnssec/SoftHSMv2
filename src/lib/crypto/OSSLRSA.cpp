@@ -33,6 +33,7 @@
 #include "config.h"
 #include "log.h"
 #include "OSSLRSA.h"
+#include "OSSLUtil.h"
 #include "CryptoFactory.h"
 #include "RSAParameters.h"
 #include "OSSLRSAKeyPair.h"
@@ -513,21 +514,23 @@ bool OSSLRSA::signFinal(ByteString& signature)
 	}
 
 	bool rv;
+	int result;
 
 	if (isPSS)
 	{
 		ByteString em;
 		em.resize(pk->getN().size());
 
-		rv = (RSA_padding_add_PKCS1_PSS(pk->getOSSLKey(), &em[0], &digest[0],
+		result = (RSA_padding_add_PKCS1_PSS(pk->getOSSLKey(), &em[0], &digest[0],
 						hash, sLen) == 1);
-		if (!rv)
+		if (!result)
 		{
 			ERROR_MSG("RSA PSS padding failed (0x%08X)", ERR_get_error());
+			rv = false;
 		}
 		else
 		{
-			int result = RSA_private_encrypt(em.size(), &em[0], &signature[0],
+			result = RSA_private_encrypt(em.size(), &em[0], &signature[0],
 							 pk->getOSSLKey(), RSA_NO_PADDING);
 			if (result >= 0)
 			{
@@ -536,15 +539,24 @@ bool OSSLRSA::signFinal(ByteString& signature)
 			}
 			else
 			{
-				rv = false;
 				ERROR_MSG("RSA private encrypt failed (0x%08X)", ERR_get_error());
+				rv = false;
 			}
 		}
 	}
 	else
 	{
-		rv = (RSA_sign(type, &digest[0], digest.size(), &signature[0],
-			       &sigLen, pk->getOSSLKey()) == 1);
+		result = RSA_sign(type, &digest[0], digest.size(), &signature[0],
+			       &sigLen, pk->getOSSLKey());
+		if (result > 0)
+		{
+			rv = true;
+		}
+		else
+		{
+			ERROR_MSG("RSA sign failed (0x%08X)", ERR_get_error());
+			rv = false;
+		}
 	}
 
 	RSA_blinding_off(rsa);
@@ -1180,15 +1192,26 @@ bool OSSLRSA::generateKeyPair(AsymmetricKeyPair** ppKeyPair, AsymmetricParameter
 	}
 
 	// Generate the key-pair
-	RSA* rsa = RSA_generate_key(params->getBitLength(), e, NULL, NULL);
-
-	// Check if the key was successfully generated
+	RSA* rsa = RSA_new();
 	if (rsa == NULL)
 	{
-		ERROR_MSG("RSA key generation failed (0x%08X)", ERR_get_error());
+		ERROR_MSG("Failed to instantiate OpenSSL RSA object");
 
 		return false;
 	}
+
+	BIGNUM* bn_e = OSSL::byteString2bn(params->getE());
+
+	// Check if the key was successfully generated
+	if (!RSA_generate_key_ex(rsa, params->getBitLength(), bn_e, NULL))
+	{
+		ERROR_MSG("RSA key generation failed (0x%08X)", ERR_get_error());
+		BN_free(bn_e);
+		RSA_free(rsa);
+
+		return false;
+	}
+	BN_free(bn_e);
 
 	// Create an asymmetric key-pair object to return
 	OSSLRSAKeyPair* kp = new OSSLRSAKeyPair();

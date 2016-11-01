@@ -7,9 +7,9 @@
 # Program version
 
 define([SOFTHSM_VERSION_MAJOR], [2])
-define([SOFTHSM_VERSION_MINOR], [1])
+define([SOFTHSM_VERSION_MINOR], [2])
 define([SOFTHSM_VERSION_FIX], [0])
-define([PACKAGE_SUFFIX], [])
+define([PACKAGE_SUFFIX], [rc1])
 
 # Library version
 
@@ -20,7 +20,7 @@ define([PACKAGE_SUFFIX], [])
 
 define([SOFTHSM_VERSION_CURRENT], [2])
 define([SOFTHSM_VERSION_AGE], [1])
-define([SOFTHSM_VERSION_REVISION], [1])
+define([SOFTHSM_VERSION_REVISION], [2])
 
 ##################
 #                #
@@ -34,7 +34,7 @@ AC_INIT([SoftHSM],[SOFTHSM_VERSION_MAJOR.SOFTHSM_VERSION_MINOR.SOFTHSM_VERSION_F
 AC_CONFIG_HEADER([config.h])
 AC_CONFIG_SRCDIR([src/Makefile.am])
 AC_CONFIG_MACRO_DIR([m4])
-AM_INIT_AUTOMAKE(foreign)
+AM_INIT_AUTOMAKE([foreign subdir-objects])
 ACX_PREFIXHACK
 
 # Version info for the library
@@ -49,6 +49,7 @@ AC_PROG_CXX
 ACX_PEDANTIC
 ACX_STRICT
 ACX_64BIT
+AX_CXX_COMPILE_STDCXX_11([noext],[optional])
 
 # Check for libraries (-ldl can be required by OpenSSL too)
 ACX_DLOPEN
@@ -113,6 +114,9 @@ fi
 # Set visibility flags so only PKCS#11 entry points are exported
 ACX_VISIBILITY
 
+# If we should install the p11-kit module
+ACX_P11KIT
+
 # Set full directory paths
 full_sysconfdir=`eval eval eval eval eval echo "${sysconfdir}" | sed "s#NONE#${prefix}#" | sed "s#NONE#${ac_default_prefix}#"`
 full_localstatedir=`eval eval eval eval eval echo "${localstatedir}" | sed "s#NONE#${prefix}#" | sed "s#NONE#${ac_default_prefix}#"`
@@ -123,6 +127,7 @@ softhsmtokendir=${full_localstatedir}/lib/softhsm/tokens/
 # Install the library in a sub-directory
 full_libdir="$full_libdir/softhsm"
 libdir=$full_libdir
+default_softhsm2_lib="$full_libdir/libsofthsm2.so"
 
 # For getConfigPath()
 AC_CHECK_FUNCS([getpwuid_r])
@@ -170,12 +175,13 @@ AC_DEFINE_UNQUOTED(
 )
 AC_DEFINE_UNQUOTED(
 	[DEFAULT_PKCS11_LIB],
-	["$full_libdir/libsofthsm2.so"],
+	["$default_softhsm2_lib"],
 	[The default PKCS#11 library]
 )
 
 AC_SUBST([softhsmtokendir])
 AC_SUBST([default_softhsm2_conf])
+AC_SUBST([default_softhsm2_lib])
 
 # Generate the libtool script and install script
 AC_PROG_INSTALL
@@ -184,6 +190,7 @@ AC_PROG_LIBTOOL
 # Generate the makefiles
 AC_CONFIG_FILES([
 	Makefile
+	softhsm2.module
 	src/Makefile
 	src/lib/Makefile
 	src/lib/common/Makefile

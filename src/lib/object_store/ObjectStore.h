@@ -60,7 +60,7 @@ public:
 
 	// Create a new token
 	ObjectStoreToken* newToken(const ByteString& label);
-	
+
 	// Destroy a token
 	bool destroyToken(ObjectStoreToken* token);
 

@@ -37,11 +37,15 @@
 #include "CryptoFactory.h"
 #include "ECParameters.h"
 #include "OSSLECKeyPair.h"
+#include "OSSLComp.h"
 #include "OSSLUtil.h"
 #include <algorithm>
 #include <openssl/ecdsa.h>
 #include <openssl/pem.h>
 #include <openssl/err.h>
+#ifdef WITH_FIPS
+#include <openssl/fips.h>
+#endif
 #include <string.h>
 
 // Signing functions
@@ -74,7 +78,20 @@ bool OSSLECDSA::sign(PrivateKey* privateKey, const ByteString& dataToSign,
 	}
 
 	// Use the OpenSSL implementation and not any engine
-	ECDSA_set_method(eckey, ECDSA_get_default_method());
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+
+#ifdef WITH_FIPS
+	if (FIPS_mode())
+		ECDSA_set_method(eckey, FIPS_ecdsa_openssl());
+	else
+		ECDSA_set_method(eckey, ECDSA_OpenSSL());
+#else
+	ECDSA_set_method(eckey, ECDSA_OpenSSL());
+#endif
+
+#else
+	EC_KEY_set_method(eckey, EC_KEY_OpenSSL());
+#endif
 
 	// Perform the signature operation
 	size_t len = pk->getOrderLength();
@@ -92,8 +109,11 @@ bool OSSLECDSA::sign(PrivateKey* privateKey, const ByteString& dataToSign,
 		return false;
 	}
 	// Store the 2 values with padding
-	BN_bn2bin(sig->r, &signature[len - BN_num_bytes(sig->r)]);
-	BN_bn2bin(sig->s, &signature[2 * len - BN_num_bytes(sig->s)]);
+	const BIGNUM* bn_r = NULL;
+	const BIGNUM* bn_s = NULL;
+	ECDSA_SIG_get0(sig, &bn_r, &bn_s);
+	BN_bn2bin(bn_r, &signature[len - BN_num_bytes(bn_r)]);
+	BN_bn2bin(bn_s, &signature[2 * len - BN_num_bytes(bn_s)]);
 	ECDSA_SIG_free(sig);
 	return true;
 }
@@ -150,7 +170,20 @@ bool OSSLECDSA::verify(PublicKey* publicKey, const ByteString& originalData,
 	}
 
 	// Use the OpenSSL implementation and not any engine
-	ECDSA_set_method(eckey, ECDSA_get_default_method());
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+
+#ifdef WITH_FIPS
+	if (FIPS_mode())
+		ECDSA_set_method(eckey, FIPS_ecdsa_openssl());
+	else
+		ECDSA_set_method(eckey, ECDSA_OpenSSL());
+#else
+	ECDSA_set_method(eckey, ECDSA_OpenSSL());
+#endif
+
+#else
+	EC_KEY_set_method(eckey, EC_KEY_OpenSSL());
+#endif
 
 	// Perform the verify operation
 	size_t len = pk->getOrderLength();
@@ -170,14 +203,11 @@ bool OSSLECDSA::verify(PublicKey* publicKey, const ByteString& originalData,
 		ERROR_MSG("Could not create an ECDSA_SIG object");
 		return false;
 	}
-	if (sig->r != NULL)
-		BN_clear_free(sig->r);
 	const unsigned char *s = signature.const_byte_str();
-	sig->r = BN_bin2bn(s, len, NULL);
-	if (sig->s != NULL)
-		BN_clear_free(sig->s);
-	sig->s = BN_bin2bn(s + len, len, NULL);
-	if (sig->r == NULL || sig->s == NULL)
+	BIGNUM* bn_r = BN_bin2bn(s, len, NULL);
+	BIGNUM* bn_s = BN_bin2bn(s + len, len, NULL);
+	if (bn_r == NULL || bn_s == NULL ||
+	    !ECDSA_SIG_set0(sig, bn_r, bn_s))
 	{
 		ERROR_MSG("Could not add data to the ECDSA_SIG object");
 		ECDSA_SIG_free(sig);
@@ -258,7 +288,6 @@ bool OSSLECDSA::generateKeyPair(AsymmetricKeyPair** ppKeyPair, AsymmetricParamet
 
 	// Generate the key-pair
 	EC_KEY* eckey = EC_KEY_new();
-
 	if (eckey == NULL)
 	{
 		ERROR_MSG("Failed to instantiate OpenSSL ECDSA object");

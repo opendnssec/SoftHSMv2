@@ -31,6 +31,9 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\src\bin\common\findslot.h">
+      <Filter>Common Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\src\bin\common\getpw.h">
       <Filter>Common Header Files</Filter>
     </ClInclude>
@@ -49,6 +52,9 @@
     <ClInclude Include="..\..\src\bin\util\softhsm2-util-ossl.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\OSSLComp.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
 @END OPENSSL
     <ClInclude Include="..\..\src\lib\cryptoki_compat\pkcs11.h">
       <Filter>Header Files</Filter>
@@ -58,6 +64,9 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\src\bin\common\findslot.cpp">
+      <Filter>Common Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\src\bin\common\getpw.cpp">
       <Filter>Common Source Files</Filter>
     </ClCompile>
@@ -74,6 +83,9 @@
 @END BOTAN
 @IF OPENSSL
     <ClCompile Include="..\..\src\bin\util\softhsm2-util-ossl.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\OSSLComp.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
 @END OPENSSL

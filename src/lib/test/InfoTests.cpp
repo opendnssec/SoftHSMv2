@@ -34,41 +34,9 @@
 #include <config.h>
 #include <stdlib.h>
 #include <string.h>
-#include <cppunit/extensions/HelperMacros.h>
 #include "InfoTests.h"
-#include "testconfig.h"
 
 CPPUNIT_TEST_SUITE_REGISTRATION(InfoTests);
-
-void InfoTests::setUp()
-{
-//    printf("\nInfoTests\n");
-
-#ifndef _WIN32
-    setenv("SOFTHSM2_CONF", "./softhsm2.conf", 1);
-#else
-    setenv("SOFTHSM2_CONF", ".\\softhsm2.conf", 1);
-#endif
-
-	CK_UTF8CHAR pin[] = SLOT_0_SO1_PIN;
-	CK_ULONG pinLength = sizeof(pin) - 1;
-	CK_UTF8CHAR label[32];
-	memset(label, ' ', 32);
-	memcpy(label, "token1", strlen("token1"));
-
-	// (Re)initialize the token
-	CK_RV rv = C_Initialize(NULL_PTR);
-	CPPUNIT_ASSERT(rv == CKR_OK);
-	rv = C_InitToken(SLOT_INIT_TOKEN, pin, pinLength, label);
-	CPPUNIT_ASSERT(rv == CKR_OK);
-	C_Finalize(NULL_PTR);
-}
-
-void InfoTests::tearDown()
-{
-	// Just make sure that we finalize any previous failed tests
-	C_Finalize(NULL_PTR);
-}
 
 void InfoTests::testGetInfo()
 {
@@ -76,21 +44,21 @@ void InfoTests::testGetInfo()
 	CK_INFO ckInfo;
 
 	// Just make sure that we finalize any previous failed tests
-	C_Finalize(NULL_PTR);
+	CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
 
-	rv = C_GetInfo(&ckInfo);
+	rv = CRYPTOKI_F_PTR( C_GetInfo(&ckInfo) );
 	CPPUNIT_ASSERT(rv == CKR_CRYPTOKI_NOT_INITIALIZED);
 
-	rv = C_Initialize(NULL_PTR);
+	rv = CRYPTOKI_F_PTR( C_Initialize(NULL_PTR) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	rv = C_GetInfo(NULL_PTR);
+	rv = CRYPTOKI_F_PTR( C_GetInfo(NULL_PTR) );
 	CPPUNIT_ASSERT(rv == CKR_ARGUMENTS_BAD);
 
-	rv = C_GetInfo(&ckInfo);
+	rv = CRYPTOKI_F_PTR( C_GetInfo(&ckInfo) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	C_Finalize(NULL_PTR);
+	CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
 }
 
 void InfoTests::testGetFunctionList()
@@ -98,10 +66,10 @@ void InfoTests::testGetFunctionList()
 	CK_RV rv;
 	CK_FUNCTION_LIST_PTR ckFuncList;
 
-	rv = C_GetFunctionList(NULL_PTR);
+	rv = CRYPTOKI_F_PTR( C_GetFunctionList(NULL_PTR) );
 	CPPUNIT_ASSERT(rv == CKR_ARGUMENTS_BAD);
 
-	rv = C_GetFunctionList(&ckFuncList);
+	rv = CRYPTOKI_F_PTR( C_GetFunctionList(&ckFuncList) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 }
 
@@ -112,48 +80,48 @@ void InfoTests::testGetSlotList()
 	CK_SLOT_ID_PTR pSlotList;
 
 	// Just make sure that we finalize any previous failed tests
-	C_Finalize(NULL_PTR);
+	CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
 
-	rv = C_GetSlotList(CK_FALSE, NULL_PTR, &ulSlotCount);
+	rv = CRYPTOKI_F_PTR( C_GetSlotList(CK_FALSE, NULL_PTR, &ulSlotCount) );
 	CPPUNIT_ASSERT(rv == CKR_CRYPTOKI_NOT_INITIALIZED);
 
-	rv = C_Initialize(NULL_PTR);
+	rv = CRYPTOKI_F_PTR( C_Initialize(NULL_PTR) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	rv = C_GetSlotList(CK_FALSE, NULL_PTR, NULL_PTR);
+	rv = CRYPTOKI_F_PTR( C_GetSlotList(CK_FALSE, NULL_PTR, NULL_PTR) );
 	CPPUNIT_ASSERT(rv == CKR_ARGUMENTS_BAD);
 
 	// Get the size of the buffer
-	rv = C_GetSlotList(CK_FALSE, NULL_PTR, &ulSlotCount);
+	rv = CRYPTOKI_F_PTR( C_GetSlotList(CK_FALSE, NULL_PTR, &ulSlotCount) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 	pSlotList = (CK_SLOT_ID_PTR)malloc(ulSlotCount * sizeof(CK_SLOT_ID));
 
 	// Check if we have a too small buffer
 	ulSlotCount = 0;
-	rv = C_GetSlotList(CK_FALSE, pSlotList, &ulSlotCount);
+	rv = CRYPTOKI_F_PTR( C_GetSlotList(CK_FALSE, pSlotList, &ulSlotCount) );
 	CPPUNIT_ASSERT(rv == CKR_BUFFER_TOO_SMALL);
 
 	// Get the slot list
-	rv = C_GetSlotList(CK_FALSE, pSlotList, &ulSlotCount);
+	rv = CRYPTOKI_F_PTR( C_GetSlotList(CK_FALSE, pSlotList, &ulSlotCount) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 	free(pSlotList);
 
 	// Get the number of slots with tokens
-	rv = C_GetSlotList(CK_TRUE, NULL_PTR, &ulSlotCount);
+	rv = CRYPTOKI_F_PTR( C_GetSlotList(CK_TRUE, NULL_PTR, &ulSlotCount) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 	pSlotList = (CK_SLOT_ID_PTR)malloc(ulSlotCount * sizeof(CK_SLOT_ID));
 
 	// Check if we have a too small buffer
 	ulSlotCount = 0;
-	rv = C_GetSlotList(CK_TRUE, pSlotList, &ulSlotCount);
+	rv = CRYPTOKI_F_PTR( C_GetSlotList(CK_TRUE, pSlotList, &ulSlotCount) );
 	CPPUNIT_ASSERT(rv == CKR_BUFFER_TOO_SMALL);
 
 	// Get the slot list
-	rv = C_GetSlotList(CK_TRUE, pSlotList, &ulSlotCount);
+	rv = CRYPTOKI_F_PTR( C_GetSlotList(CK_TRUE, pSlotList, &ulSlotCount) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 	free(pSlotList);
 
-	C_Finalize(NULL_PTR);
+	CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
 }
 
 void InfoTests::testGetSlotInfo()
@@ -162,26 +130,26 @@ void InfoTests::testGetSlotInfo()
 	CK_SLOT_INFO slotInfo;
 
 	// Just make sure that we finalize any previous failed tests
-	C_Finalize(NULL_PTR);
+	CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
 
-	rv = C_GetSlotInfo(SLOT_NO_INIT_TOKEN, &slotInfo);
+	rv = CRYPTOKI_F_PTR( C_GetSlotInfo(m_notInitializedTokenSlotID, &slotInfo) );
 	CPPUNIT_ASSERT(rv == CKR_CRYPTOKI_NOT_INITIALIZED);
 
-	rv = C_Initialize(NULL_PTR);
+	rv = CRYPTOKI_F_PTR( C_Initialize(NULL_PTR) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	rv = C_GetSlotInfo(SLOT_NO_INIT_TOKEN, NULL_PTR);
+	rv = CRYPTOKI_F_PTR( C_GetSlotInfo(m_notInitializedTokenSlotID, NULL_PTR) );
 	CPPUNIT_ASSERT(rv == CKR_ARGUMENTS_BAD);
 
-	rv = C_GetSlotInfo(SLOT_INVALID, &slotInfo);
+	rv = CRYPTOKI_F_PTR( C_GetSlotInfo(m_invalidSlotID, &slotInfo) );
 	CPPUNIT_ASSERT(rv == CKR_SLOT_ID_INVALID);
 
-	rv = C_GetSlotInfo(SLOT_NO_INIT_TOKEN, &slotInfo);
+	rv = CRYPTOKI_F_PTR( C_GetSlotInfo(m_notInitializedTokenSlotID, &slotInfo) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 	CPPUNIT_ASSERT((slotInfo.flags & CKF_TOKEN_PRESENT ) == CKF_TOKEN_PRESENT);
 	CPPUNIT_ASSERT((slotInfo.flags & CKF_REMOVABLE_DEVICE ) == 0);
 
-	C_Finalize(NULL_PTR);
+	CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
 }
 
 void InfoTests::testGetSlotInfoAlt()
@@ -190,7 +158,7 @@ void InfoTests::testGetSlotInfoAlt()
 	CK_SLOT_INFO slotInfo;
 
 	// Just make sure that we finalize any previous failed tests
-	C_Finalize(NULL_PTR);
+	CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
 
 #ifndef _WIN32
     setenv("SOFTHSM2_CONF", "./softhsm2-alt.conf", 1);
@@ -198,37 +166,40 @@ void InfoTests::testGetSlotInfoAlt()
     setenv("SOFTHSM2_CONF", ".\\softhsm2-alt.conf", 1);
 #endif
 
-	CK_UTF8CHAR pin[] = SLOT_0_SO1_PIN;
-	CK_ULONG pinLength = sizeof(pin) - 1;
 	CK_UTF8CHAR label[32];
 	memset(label, ' ', 32);
 	memcpy(label, "token1", strlen("token1"));
 
 	// (Re)initialize the token
-	rv = C_Initialize(NULL_PTR);
+	rv = CRYPTOKI_F_PTR( C_Initialize(NULL_PTR) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
-	rv = C_InitToken(SLOT_INIT_TOKEN, pin, pinLength, label);
+	rv = CRYPTOKI_F_PTR( C_InitToken(m_initializedTokenSlotID, m_soPin1, m_soPin1Length, label) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
-	C_Finalize(NULL_PTR);
+	CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
 
-	rv = C_GetSlotInfo(SLOT_NO_INIT_TOKEN, &slotInfo);
+	rv = CRYPTOKI_F_PTR( C_GetSlotInfo(m_notInitializedTokenSlotID, &slotInfo) );
 	CPPUNIT_ASSERT(rv == CKR_CRYPTOKI_NOT_INITIALIZED);
 
-	rv = C_Initialize(NULL_PTR);
+	rv = CRYPTOKI_F_PTR( C_Initialize(NULL_PTR) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	rv = C_GetSlotInfo(SLOT_NO_INIT_TOKEN, NULL_PTR);
+	rv = CRYPTOKI_F_PTR( C_GetSlotInfo(m_notInitializedTokenSlotID, NULL_PTR) );
 	CPPUNIT_ASSERT(rv == CKR_ARGUMENTS_BAD);
 
-	rv = C_GetSlotInfo(SLOT_INVALID, &slotInfo);
+	rv = CRYPTOKI_F_PTR( C_GetSlotInfo(m_invalidSlotID, &slotInfo) );
 	CPPUNIT_ASSERT(rv == CKR_SLOT_ID_INVALID);
 
-	rv = C_GetSlotInfo(SLOT_NO_INIT_TOKEN, &slotInfo);
+	rv = CRYPTOKI_F_PTR( C_GetSlotInfo(m_notInitializedTokenSlotID, &slotInfo) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 	CPPUNIT_ASSERT((slotInfo.flags & CKF_TOKEN_PRESENT ) == CKF_TOKEN_PRESENT);
 	CPPUNIT_ASSERT((slotInfo.flags & CKF_REMOVABLE_DEVICE ) == CKF_REMOVABLE_DEVICE);
 
-	C_Finalize(NULL_PTR);
+	CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
+#ifndef _WIN32
+	setenv("SOFTHSM2_CONF", "./softhsm2.conf", 1);
+#else
+	setenv("SOFTHSM2_CONF", ".\\softhsm2.conf", 1);
+#endif
 }
 
 
@@ -238,31 +209,31 @@ void InfoTests::testGetTokenInfo()
 	CK_TOKEN_INFO tokenInfo;
 
 	// Just make sure that we finalize any previous failed tests
-	C_Finalize(NULL_PTR);
+	CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
 
-	rv = C_GetTokenInfo(SLOT_NO_INIT_TOKEN, &tokenInfo);
+	rv = CRYPTOKI_F_PTR( C_GetTokenInfo(m_notInitializedTokenSlotID, &tokenInfo) );
 	CPPUNIT_ASSERT(rv == CKR_CRYPTOKI_NOT_INITIALIZED);
 
-	rv = C_Initialize(NULL_PTR);
+	rv = CRYPTOKI_F_PTR( C_Initialize(NULL_PTR) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	rv = C_GetTokenInfo(SLOT_NO_INIT_TOKEN, NULL_PTR);
+	rv = CRYPTOKI_F_PTR( C_GetTokenInfo(m_notInitializedTokenSlotID, NULL_PTR) );
 	CPPUNIT_ASSERT(rv == CKR_ARGUMENTS_BAD);
 
-	rv = C_GetTokenInfo(SLOT_INVALID, &tokenInfo);
+	rv = CRYPTOKI_F_PTR( C_GetTokenInfo(m_invalidSlotID, &tokenInfo) );
 	CPPUNIT_ASSERT(rv == CKR_SLOT_ID_INVALID);
 
-	rv = C_GetTokenInfo(SLOT_NO_INIT_TOKEN, &tokenInfo);
+	rv = CRYPTOKI_F_PTR( C_GetTokenInfo(m_notInitializedTokenSlotID, &tokenInfo) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	CPPUNIT_ASSERT((tokenInfo.flags & CKF_TOKEN_INITIALIZED) == 0);
 
-	rv = C_GetTokenInfo(SLOT_INIT_TOKEN, &tokenInfo);
+	rv = CRYPTOKI_F_PTR( C_GetTokenInfo(m_initializedTokenSlotID, &tokenInfo) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	CPPUNIT_ASSERT((tokenInfo.flags & CKF_TOKEN_INITIALIZED) == CKF_TOKEN_INITIALIZED);
 
-	C_Finalize(NULL_PTR);
+	CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
 }
 
 void InfoTests::testGetMechanismList()
@@ -272,36 +243,36 @@ void InfoTests::testGetMechanismList()
 	CK_MECHANISM_TYPE_PTR pMechanismList;
 
 	// Just make sure that we finalize any previous failed tests
-	C_Finalize(NULL_PTR);
+	CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
 
-	rv = C_GetMechanismList(SLOT_INIT_TOKEN, NULL_PTR, &ulMechCount);
+	rv = CRYPTOKI_F_PTR( C_GetMechanismList(m_initializedTokenSlotID, NULL_PTR, &ulMechCount) );
 	CPPUNIT_ASSERT(rv == CKR_CRYPTOKI_NOT_INITIALIZED);
 
-	rv = C_Initialize(NULL_PTR);
+	rv = CRYPTOKI_F_PTR( C_Initialize(NULL_PTR) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	rv = C_GetMechanismList(SLOT_INIT_TOKEN, NULL_PTR, NULL_PTR);
+	rv = CRYPTOKI_F_PTR( C_GetMechanismList(m_initializedTokenSlotID, NULL_PTR, NULL_PTR) );
 	CPPUNIT_ASSERT(rv == CKR_ARGUMENTS_BAD);
 
-	rv = C_GetMechanismList(SLOT_INVALID, NULL_PTR, &ulMechCount);
+	rv = CRYPTOKI_F_PTR( C_GetMechanismList(m_invalidSlotID, NULL_PTR, &ulMechCount) );
 	CPPUNIT_ASSERT(rv == CKR_SLOT_ID_INVALID);
 
 	// Get the size of the buffer
-	rv = C_GetMechanismList(SLOT_INIT_TOKEN, NULL_PTR, &ulMechCount);
+	rv = CRYPTOKI_F_PTR( C_GetMechanismList(m_initializedTokenSlotID, NULL_PTR, &ulMechCount) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 	pMechanismList = (CK_MECHANISM_TYPE_PTR)malloc(ulMechCount * sizeof(CK_MECHANISM_TYPE_PTR));
 
 	// Check if we have a too small buffer
 	ulMechCount = 0;
-	rv = C_GetMechanismList(SLOT_INIT_TOKEN, pMechanismList, &ulMechCount);
+	rv = CRYPTOKI_F_PTR( C_GetMechanismList(m_initializedTokenSlotID, pMechanismList, &ulMechCount) );
 	CPPUNIT_ASSERT(rv == CKR_BUFFER_TOO_SMALL);
 
 	// Get the mechanism list
-	rv = C_GetMechanismList(SLOT_INIT_TOKEN, pMechanismList, &ulMechCount);
+	rv = CRYPTOKI_F_PTR( C_GetMechanismList(m_initializedTokenSlotID, pMechanismList, &ulMechCount) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 	free(pMechanismList);
 
-	C_Finalize(NULL_PTR);
+	CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
 }
 
 void InfoTests::testGetMechanismInfo()
@@ -312,38 +283,38 @@ void InfoTests::testGetMechanismInfo()
 	CK_MECHANISM_TYPE_PTR pMechanismList;
 
 	// Just make sure that we finalize any previous failed tests
-	C_Finalize(NULL_PTR);
+	CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
 
-	rv = C_GetMechanismInfo(SLOT_INIT_TOKEN, CKM_RSA_PKCS, &info);
+	rv = CRYPTOKI_F_PTR( C_GetMechanismInfo(m_initializedTokenSlotID, CKM_RSA_PKCS, &info) );
 	CPPUNIT_ASSERT(rv == CKR_CRYPTOKI_NOT_INITIALIZED);
 
-	rv = C_Initialize(NULL_PTR);
+	rv = CRYPTOKI_F_PTR( C_Initialize(NULL_PTR) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// Get the mechanism list
-	rv = C_GetMechanismList(SLOT_INIT_TOKEN, NULL_PTR, &ulMechCount);
+	rv = CRYPTOKI_F_PTR( C_GetMechanismList(m_initializedTokenSlotID, NULL_PTR, &ulMechCount) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 	CPPUNIT_ASSERT(ulMechCount != 0);
 	pMechanismList = (CK_MECHANISM_TYPE_PTR)malloc(ulMechCount * sizeof(CK_MECHANISM_TYPE_PTR));
-	rv = C_GetMechanismList(SLOT_INIT_TOKEN, pMechanismList, &ulMechCount);
+	rv = CRYPTOKI_F_PTR( C_GetMechanismList(m_initializedTokenSlotID, pMechanismList, &ulMechCount) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	rv = C_GetMechanismInfo(SLOT_INIT_TOKEN, pMechanismList[0], NULL_PTR);
+	rv = CRYPTOKI_F_PTR( C_GetMechanismInfo(m_initializedTokenSlotID, pMechanismList[0], NULL_PTR) );
 	CPPUNIT_ASSERT(rv == CKR_ARGUMENTS_BAD);
 
-	rv = C_GetMechanismInfo(SLOT_INVALID, pMechanismList[0], &info);
+	rv = CRYPTOKI_F_PTR( C_GetMechanismInfo(m_invalidSlotID, pMechanismList[0], &info) );
 	CPPUNIT_ASSERT(rv == CKR_SLOT_ID_INVALID);
 
-	rv = C_GetMechanismInfo(SLOT_INIT_TOKEN, CKM_VENDOR_DEFINED, &info);
+	rv = CRYPTOKI_F_PTR( C_GetMechanismInfo(m_initializedTokenSlotID, CKM_VENDOR_DEFINED, &info) );
 	CPPUNIT_ASSERT(rv == CKR_MECHANISM_INVALID);
 
 	for (unsigned int i = 0; i < ulMechCount; i++)
 	{
-		rv = C_GetMechanismInfo(SLOT_INIT_TOKEN, pMechanismList[i], &info);
+		rv = CRYPTOKI_F_PTR( C_GetMechanismInfo(m_initializedTokenSlotID, pMechanismList[i], &info) );
 		CPPUNIT_ASSERT(rv == CKR_OK);
 	}
 
 	free(pMechanismList);
 
-	C_Finalize(NULL_PTR);
+	CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
 }

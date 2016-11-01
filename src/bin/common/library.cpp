@@ -48,7 +48,7 @@ CK_C_GetFunctionList loadLibrary(char* module, void** moduleHandle,
 #if defined(HAVE_LOADLIBRARY)
 	HINSTANCE hDLL = NULL;
 	DWORD dw = NULL;
-	static const char errMsg[100];
+	static char errMsg[100];
 
 	// Load PKCS #11 library
 	if (module)
@@ -64,13 +64,13 @@ CK_C_GetFunctionList loadLibrary(char* module, void** moduleHandle,
 	{
 		// Failed to load the PKCS #11 library
 		dw = GetLastError();
-		snprintf((char*)errMsg, sizeof(errMsg), "LoadLibraryA failed: 0x%x", dw);
-		pErrMsg = (char**)&errMsg;
+		snprintf((char*)errMsg, sizeof(errMsg), "LoadLibraryA failed: 0x%08X", dw);
+		*pErrMsg = errMsg;
 		return NULL;
 	}
 	else
 	{
-		pErrMsg = NULL;
+		*pErrMsg = NULL;
 	}
 
 	// Retrieve the entry point for C_GetFunctionList
@@ -78,8 +78,10 @@ CK_C_GetFunctionList loadLibrary(char* module, void** moduleHandle,
 	if (pGetFunctionList == NULL)
 	{
 		dw = GetLastError();
-		snprintf((char*)errMsg, sizeof(errMsg), "getProcAddress failed: 0x%x", dw);
-		pErrMsg = (char**)&errMsg;
+		snprintf((char*)errMsg, sizeof(errMsg), "getProcAddress failed: 0x%08X", dw);
+		*pErrMsg = errMsg;
+		FreeLibrary(hDLL);
+		return NULL;
 	}
 
 	// Store the handle so we can FreeLibrary it later

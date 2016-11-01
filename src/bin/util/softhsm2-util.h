@@ -35,20 +35,28 @@
 #define _SOFTHSM_V2_SOFTHSM2_UTIL_H
 
 #include "pkcs11.h"
+#include <string>
 
 // Main functions
 
 void usage();
-int initToken(char* slot, int freeToken, char* label, char* soPIN, char* userPIN);
+int initToken(CK_SLOT_ID slotID, char* label, char* soPIN, char* userPIN);
+bool deleteToken(char* serial, char* token);
+bool findTokenDirectory(std::string basedir, std::string& tokendir, char* serial, char* label);
+bool rmdir(std::string path);
+bool rm(std::string path);
 int showSlots();
-int importKeyPair(char* filePath, char* filePIN, char* slot, char* userPIN, char* objectLabel, char* objectID, int forceExec, int noPublicKey);
+int importKeyPair(char* filePath, char* filePIN, CK_SLOT_ID slotID, char* userPIN, char* objectLabel, char* objectID, int forceExec, int noPublicKey);
 int crypto_import_key_pair(CK_SESSION_HANDLE hSession, char* filePath, char* filePIN, char* label, char* objID, size_t objIDLen, int noPublicKey);
 
 // Support functions
 
 void crypto_init();
 void crypto_final();
-int getFirstFreeToken(CK_SLOT_ID &slot);
+
+/// SoftHSM internal funtions
+bool initSoftHSM();
+void finalizeSoftHSM();
 
 /// Hex
 char* hexStrToBin(char* objectID, int idLength, size_t* newLen);

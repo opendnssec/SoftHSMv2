@@ -42,6 +42,7 @@ class SlotManagerTests : public CppUnit::TestFixture
 	CPPUNIT_TEST(testExistingTokens);
 	CPPUNIT_TEST(testInitialiseTokenInLastSlot);
 	CPPUNIT_TEST(testReinitialiseExistingToken);
+	CPPUNIT_TEST(testUninitialisedToken);
 	CPPUNIT_TEST_SUITE_END();
 
 public:
@@ -49,6 +50,7 @@ public:
 	void testExistingTokens();
 	void testInitialiseTokenInLastSlot();
 	void testReinitialiseExistingToken();
+	void testUninitialisedToken();
 
 	void setUp();
 	void tearDown();

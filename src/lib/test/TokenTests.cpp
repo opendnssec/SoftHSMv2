@@ -33,75 +33,66 @@
 #include <config.h>
 #include <stdlib.h>
 #include <string.h>
-#include <cppunit/extensions/HelperMacros.h>
 #include "TokenTests.h"
-#include "testconfig.h"
 
 CPPUNIT_TEST_SUITE_REGISTRATION(TokenTests);
-
-void TokenTests::setUp()
-{
-//    printf("\nTokenTests\n");
-
-#ifndef _WIN32
-	setenv("SOFTHSM2_CONF", "./softhsm2.conf", 1);
-#else
-	setenv("SOFTHSM2_CONF", ".\\softhsm2.conf", 1);
-#endif
-}
-
-void TokenTests::tearDown()
-{
-	// Just make sure that we finalize any previous failed tests
-	C_Finalize(NULL_PTR);
-}
 
 void TokenTests::testInitToken()
 {
 	CK_RV rv;
-	CK_UTF8CHAR pin[] = SLOT_0_SO1_PIN;
-	CK_ULONG pinLength = sizeof(pin) - 1;
 	CK_UTF8CHAR label[32];
 	CK_SESSION_HANDLE hSession;
+	CK_TOKEN_INFO tokenInfo;
+	CK_CHAR serialNumber[16];
 
 	memset(label, ' ', 32);
 	memcpy(label, "token1", strlen("token1"));
 
 	// Just make sure that we finalize any previous failed tests
-	C_Finalize(NULL_PTR);
+	CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
 
-	rv = C_InitToken(SLOT_INIT_TOKEN, pin, pinLength, label);
+	rv = CRYPTOKI_F_PTR( C_InitToken(m_initializedTokenSlotID, m_soPin1, m_soPin1Length, label) );
 	CPPUNIT_ASSERT(rv == CKR_CRYPTOKI_NOT_INITIALIZED);
 
-	rv = C_Initialize(NULL_PTR);
+	rv = CRYPTOKI_F_PTR( C_Initialize(NULL_PTR) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	rv = C_InitToken(SLOT_INIT_TOKEN, NULL_PTR, pinLength, label);
+	rv = CRYPTOKI_F_PTR( C_InitToken(m_initializedTokenSlotID, NULL_PTR, m_soPin1Length, label) );
 	CPPUNIT_ASSERT(rv == CKR_ARGUMENTS_BAD);
 
-	rv = C_InitToken(SLOT_INVALID, pin, pinLength, label);
+	rv = CRYPTOKI_F_PTR( C_InitToken(m_invalidSlotID, m_soPin1, m_soPin1Length, label) );
 	CPPUNIT_ASSERT(rv == CKR_SLOT_ID_INVALID);
 
 	// Initialize
-	rv = C_InitToken(SLOT_INIT_TOKEN, pin, pinLength, label);
+	rv = CRYPTOKI_F_PTR( C_InitToken(m_initializedTokenSlotID, m_soPin1, m_soPin1Length, label) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Get token serial
+	rv = CRYPTOKI_F_PTR( C_GetTokenInfo(m_initializedTokenSlotID, &tokenInfo) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	memcpy(serialNumber, tokenInfo.serialNumber, 16);
 
 	// Initialize with wrong password
-	rv = C_InitToken(SLOT_INIT_TOKEN, pin, pinLength - 1, label);
+	rv = CRYPTOKI_F_PTR( C_InitToken(m_initializedTokenSlotID, m_soPin1, m_soPin1Length - 1, label) );
 	CPPUNIT_ASSERT(rv == CKR_PIN_INCORRECT);
 
-	rv = C_OpenSession(SLOT_INIT_TOKEN, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSession);
+	rv = CRYPTOKI_F_PTR( C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSession) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	rv = C_InitToken(SLOT_INIT_TOKEN, pin, pinLength, label);
+	rv = CRYPTOKI_F_PTR( C_InitToken(m_initializedTokenSlotID, m_soPin1, m_soPin1Length, label) );
 	CPPUNIT_ASSERT(rv == CKR_SESSION_EXISTS);
 
-	rv = C_CloseSession(hSession);
+	rv = CRYPTOKI_F_PTR( C_CloseSession(hSession) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// Re-initialize
-	rv = C_InitToken(SLOT_INIT_TOKEN, pin, pinLength, label);
+	rv = CRYPTOKI_F_PTR( C_InitToken(m_initializedTokenSlotID, m_soPin1, m_soPin1Length, label) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	C_Finalize(NULL_PTR);
+	// Compare token serial
+	rv = CRYPTOKI_F_PTR( C_GetTokenInfo(m_initializedTokenSlotID, &tokenInfo) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	CPPUNIT_ASSERT(memcmp(serialNumber, tokenInfo.serialNumber, 16) == 0);
+
+	CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
 }

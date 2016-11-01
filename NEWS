@@ -1,5 +1,52 @@
 NEWS for SoftHSM -- History of user visible changes
 
+SoftHSM 2.2.0 - 2016-??-??
+
+* Issue #143: Delete a token using softhsm2-util.
+* Issue #185: Change access mode bits for /var/lib/softhsm/tokens/
+  to 1777. All users can now create tokens, but only access their own.
+  (Patch from Rick van Rein)
+* Issue #186: Reinitializing a token will now keep the token, but all
+  token objects are deleted, the user PIN is removed and the token
+  label is updated.
+* Issue #190: Support for OpenSSL 1.1.0.
+* Issue #198: Calling C_GetSlotList with NULL_PTR will make sure that
+  there is always a slot with an uninitialized token available.
+* Issue #199: The token serial number will be used when setting the slot
+  number. The serial number is set after the token has been initialized.
+  (Patch from Lars Silvén)
+* Issue #203: Update the command utils to use the token label or serial
+  to find the token and its slot number.
+* Issue #209: Possibility to test other PKCS#11 implementations with the
+  CppUnit test.
+  (Patch from Lars Silvén)
+* Issue #223: Mark public key as non private by default.
+  (Patch from Nikos Mavrogiannopoulos)
+* Issue #230: Install p11-kit module, to disable use --disable-p11-kit.
+  (Patch from David Woodhouse)
+* Issue #237: Add windows continuous integration build.
+  (Patch from Peter Polačko)
+
+Bugfixes:
+* Issue #201: Missing new source file and test configuration in the
+  Windows build project.
+* Issue #205: ECDSA P-521 support for OpenSSL and better test coverage.
+* Issue #207: Fix segmentation faults in loadLibrary function.
+  (Patch from Jaroslav Imrich)
+* Issue #215: Update the Homebrew install notes for OSX.
+* Issue #218: Fix build warnings.
+* Issue #235: Add the libtool install command for OSX.
+  (Patch from Mark Wylde)
+* Issue #236: Use GetEnvironmentVariable instead of getenv on Windows.
+  (Patch from Jaroslav Imrich)
+* Issue #239: Crash on module unload with OpenSSL.
+  (Patch from David Woodhouse)
+* Issue #241: Added EXTRALIBS to Windows utils project.
+  (Patch from Peter Polačko)
+* Issue #250: C++11 not detected.
+* Issue #255: API changes in Botan 1.11.27.
+
+
 SoftHSM 2.1.0 - 2016-03-14
 
 * Issue #136: Improved guide and build scripts for Windows.

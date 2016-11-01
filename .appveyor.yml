@@ -1,0 +1,63 @@
+version: 2.1.{build}
+configuration: Release
+platform:
+- x86
+- x64
+init:
+- ps: >-
+    If ($env:Platform -Match "x86") {
+            $env:VCVARS_PLATFORM="x86"
+            $env:MSBUILD_PLATFORM="Win32"
+            $env:ENV_PLATFORM="x86"
+            $env:CONFIGURE_OPTIONS="disable-debug $env:ADDITIONAL_CONFIGURE_OPTIONS"
+    } Else {
+            $env:VCVARS_PLATFORM="amd64"
+            $env:MSBUILD_PLATFORM="x64"
+            $env:ENV_PLATFORM="x64"
+            $env:CONFIGURE_OPTIONS="enable-64bit disable-debug $env:ADDITIONAL_CONFIGURE_OPTIONS"
+    }
+
+
+    $CURRENT_DIR_PATH = (Get-Item -Path ".\" -Verbose).FullName
+
+    $env:BUILD_DIR = Join-Path $CURRENT_DIR_PATH build
+
+    $env:CRYPTO_PACKAGE= "$env:CRYPTO_PACKAGE_NAME-$env:ENV_PLATFORM.zip"
+
+    $env:CRYPTO_PACKAGE_PATH = Join-Path $env:BUILD_DIR "$env:CRYPTO_PACKAGE_NAME-$env:ENV_PLATFORM"
+
+    $env:CPPUNIT_VERSION_NAME = "CppUnit-1.13.2"
+
+    $env:CPPUNIT_PACKAGE_NAME = "cppunit-1.13.2"
+
+    $env:CPPUNIT_PACKAGE = "$env:CPPUNIT_PACKAGE_NAME-$env:ENV_PLATFORM.zip"
+
+    $env:PYTHON_PATH = Join-Path $env:BUILD_DIR python
+
+    $env:CPPUNIT_PATH = Join-Path $env:BUILD_DIR "$env:CPPUNIT_PACKAGE_NAME-$env:ENV_PLATFORM"
+
+    $env:PYTHON_EXE = Join-Path $env:PYTHON_PATH python.exe
+
+    $env:RELEASE_DIR=Join-Path $env:BUILD_DIR "SoftHSMv2-$env:ENV_PLATFORM"
+
+    $env:CONFIGURE_OPTIONS = "$env:CONFIGURE_OPTIONS with-crypto-backend=$env:CRYPTO_BACKEND with-$env:CRYPTO_BACKEND=$env:CRYPTO_PACKAGE_PATH\ with-cppunit=$env:CPPUNIT_PATH\"
+environment:
+  matrix:
+  - CRYPTO_BACKEND: openssl
+    PACKAGE_VERSION_NAME: OpenSSL-1.0.2g
+    CRYPTO_PACKAGE_NAME: openssl-1.0.2g
+  - CRYPTO_BACKEND: botan
+    PACKAGE_VERSION_NAME: Botan-1.10.13
+    CRYPTO_PACKAGE_NAME: botan-1.10.13
+  - CRYPTO_BACKEND: openssl
+    PACKAGE_VERSION_NAME: OpenSSL-1.1.0b
+    CRYPTO_PACKAGE_NAME: openssl-1.1.0b
+    ADDITIONAL_CONFIGURE_OPTIONS: disable-gost
+install:
+- cmd: powershell -File testing/appveyor/appveyor_download_requirements.ps1
+build_script:
+- cmd: testing/appveyor/appveyor_build.bat
+test: off
+artifacts:
+- path: build/SoftHSMv2-$(Platform)
+  name: SoftHSMv2-$(PACKAGE_VERSION_NAME)-$(Platform)

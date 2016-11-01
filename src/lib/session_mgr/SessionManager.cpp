@@ -129,7 +129,7 @@ CK_RV SessionManager::closeSession(CK_SESSION_HANDLE hSession)
 
 	// Check if this is the last session on the token
 	bool lastSession = true;
-	CK_ULONG slotID = sessions[sessionID]->getSlot()->getSlotID();
+	const CK_SLOT_ID slotID( sessions[sessionID]->getSlot()->getSlotID() );
 	for (size_t i = 0; i < sessions.size(); i++)
 	{
 		if (sessions[i] == NULL) continue;
@@ -167,7 +167,7 @@ CK_RV SessionManager::closeAllSessions(Slot* slot)
 	if (token == NULL) return CKR_TOKEN_NOT_PRESENT;
 
 	// Close all sessions on this slot
-	CK_ULONG slotID = slot->getSlotID();
+	const CK_SLOT_ID slotID( slot->getSlotID() );
 	for (std::vector<Session*>::iterator i = sessions.begin(); i != sessions.end(); i++)
 	{
 		if (*i == NULL) continue;
@@ -210,7 +210,7 @@ Session* SessionManager::getSession(CK_SESSION_HANDLE hSession)
 	return sessions[hSession - 1];
 }
 
-bool SessionManager::haveSession(size_t slotID)
+bool SessionManager::haveSession(CK_SLOT_ID slotID)
 {
 	// Lock access to the vector
 	MutexLocker lock(sessionsMutex);
@@ -228,7 +228,7 @@ bool SessionManager::haveSession(size_t slotID)
 	return false;
 }
 
-bool SessionManager::haveROSession(size_t slotID)
+bool SessionManager::haveROSession(CK_SLOT_ID slotID)
 {
 	// Lock access to the vector
 	MutexLocker lock(sessionsMutex);

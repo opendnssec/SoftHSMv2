@@ -32,27 +32,25 @@
 
 #include "config.h"
 #include "log.h"
+#include "OSSLComp.h"
 #include "OSSLDHPrivateKey.h"
 #include "OSSLUtil.h"
 #include <openssl/bn.h>
 #include <openssl/x509.h>
+#ifdef WITH_FIPS
+#include <openssl/fips.h>
+#endif
 #include <string.h>
 
 // Constructors
 OSSLDHPrivateKey::OSSLDHPrivateKey()
 {
-	dh = DH_new();
-
-	// Use the OpenSSL implementation and not any engine
-	DH_set_method(dh, DH_get_default_method());
+	dh = NULL;
 }
 
 OSSLDHPrivateKey::OSSLDHPrivateKey(const DH* inDH)
 {
-	dh = DH_new();
-
-	// Use the OpenSSL implementation and not any engine
-	DH_set_method(dh, DH_OpenSSL());
+	dh = NULL;
 
 	setFromOSSL(inDH);
 }
@@ -69,19 +67,26 @@ OSSLDHPrivateKey::~OSSLDHPrivateKey()
 // Set from OpenSSL representation
 void OSSLDHPrivateKey::setFromOSSL(const DH* inDH)
 {
-	if (inDH->p)
+	const BIGNUM* bn_p = NULL;
+	const BIGNUM* bn_g = NULL;
+	const BIGNUM* bn_priv_key = NULL;
+
+	DH_get0_pqg(inDH, &bn_p, NULL, &bn_g);
+	DH_get0_key(inDH, NULL, &bn_priv_key);
+
+	if (bn_p)
 	{
-		ByteString inP = OSSL::bn2ByteString(inDH->p);
+		ByteString inP = OSSL::bn2ByteString(bn_p);
 		setP(inP);
 	}
-	if (inDH->g)
+	if (bn_g)
 	{
-		ByteString inG = OSSL::bn2ByteString(inDH->g);
+		ByteString inG = OSSL::bn2ByteString(bn_g);
 		setG(inG);
 	}
-	if (inDH->priv_key)
+	if (bn_priv_key)
 	{
-		ByteString inX = OSSL::bn2ByteString(inDH->priv_key);
+		ByteString inX = OSSL::bn2ByteString(bn_priv_key);
 		setX(inX);
 	}
 }
@@ -97,13 +102,11 @@ void OSSLDHPrivateKey::setX(const ByteString& inX)
 {
 	DHPrivateKey::setX(inX);
 
-	if (dh->priv_key)
+	if (dh)
 	{
-		BN_clear_free(dh->priv_key);
-		dh->priv_key = NULL;
+		DH_free(dh);
+		dh = NULL;
 	}
-
-	dh->priv_key = OSSL::byteString2bn(inX);
 }
 
 
@@ -112,32 +115,29 @@ void OSSLDHPrivateKey::setP(const ByteString& inP)
 {
 	DHPrivateKey::setP(inP);
 
-	if (dh->p)
+	if (dh)
 	{
-		BN_clear_free(dh->p);
-		dh->p = NULL;
+		DH_free(dh);
+		dh = NULL;
 	}
-
-	dh->p = OSSL::byteString2bn(inP);
 }
 
 void OSSLDHPrivateKey::setG(const ByteString& inG)
 {
 	DHPrivateKey::setG(inG);
 
-	if (dh->g)
+	if (dh)
 	{
-		BN_clear_free(dh->g);
-		dh->g = NULL;
+		DH_free(dh);
+		dh = NULL;
 	}
-
-	dh->g = OSSL::byteString2bn(inG);
 }
 
 // Encode into PKCS#8 DER
 ByteString OSSLDHPrivateKey::PKCS8Encode()
 {
 	ByteString der;
+	if (dh == NULL) createOSSLKey();
 	if (dh == NULL) return der;
 	EVP_PKEY* pkey = EVP_PKEY_new();
 	if (pkey == NULL) return der;
@@ -185,6 +185,55 @@ bool OSSLDHPrivateKey::PKCS8Decode(const ByteString& ber)
 // Retrieve the OpenSSL representation of the key
 DH* OSSLDHPrivateKey::getOSSLKey()
 {
+	if (dh == NULL) createOSSLKey();
+
 	return dh;
+}
+
+// Create the OpenSSL representation of the key
+void OSSLDHPrivateKey::createOSSLKey()
+{
+	if (dh != NULL) return;
+
+	BN_CTX *ctx = BN_CTX_new();
+	if (ctx == NULL)
+	{
+		ERROR_MSG("Could not create BN_CTX");
+		return;
+	}
+
+	dh = DH_new();
+	if (dh == NULL)
+	{
+		ERROR_MSG("Could not create DH object");
+		return;
+	}
+
+	// Use the OpenSSL implementation and not any engine
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+
+#ifdef WITH_FIPS
+	if (FIPS_mode())
+		DH_set_method(dh, FIPS_dh_openssl());
+	else
+		DH_set_method(dh, DH_OpenSSL());
+#else
+	DH_set_method(dh, DH_OpenSSL());
+#endif
+
+#else
+	DH_set_method(dh, DH_OpenSSL());
+#endif
+
+	BIGNUM* bn_p = OSSL::byteString2bn(p);
+	BIGNUM* bn_g = OSSL::byteString2bn(g);
+	BIGNUM* bn_priv_key = OSSL::byteString2bn(x);
+	BIGNUM* bn_pub_key = BN_new();
+
+	BN_mod_exp(bn_pub_key, bn_g, bn_priv_key, bn_p, ctx);
+	BN_CTX_free(ctx);
+
+	DH_set0_pqg(dh, bn_p, NULL, bn_g);
+	DH_set0_key(dh, bn_pub_key, bn_priv_key);
 }
 

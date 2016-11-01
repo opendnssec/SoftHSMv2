@@ -35,6 +35,7 @@
 #include "OSSLDH.h"
 #include "CryptoFactory.h"
 #include "DHParameters.h"
+#include "OSSLComp.h"
 #include "OSSLDHKeyPair.h"
 #include "OSSLUtil.h"
 #include <algorithm>
@@ -127,7 +128,6 @@ bool OSSLDH::generateKeyPair(AsymmetricKeyPair** ppKeyPair, AsymmetricParameters
 
 	// Generate the key-pair
 	DH* dh = DH_new();
-
 	if (dh == NULL)
 	{
 		ERROR_MSG("Failed to instantiate OpenSSL DH object");
@@ -135,22 +135,25 @@ bool OSSLDH::generateKeyPair(AsymmetricKeyPair** ppKeyPair, AsymmetricParameters
 		return false;
 	}
 
-	if (dh->p != NULL)
-		BN_clear_free(dh->p);
-	dh->p = OSSL::byteString2bn(params->getP());
-	if (dh->g != NULL)
-		BN_clear_free(dh->g);
-	dh->g = OSSL::byteString2bn(params->getG());
+	BIGNUM* bn_p = OSSL::byteString2bn(params->getP());
+	BIGNUM* bn_g = OSSL::byteString2bn(params->getG());
 
-	// PKCS#3: 2^(l-1) <= x < 2^l
+	if (!DH_set0_pqg(dh, bn_p, NULL, bn_g))
+	{
+		ERROR_MSG("DH set pqg failed (0x%08X)", ERR_get_error());
+
+		BN_free(bn_p);
+		BN_free(bn_g);
+		DH_free(dh);
+
+		return false;
+	}
+
 	if (params->getXBitLength() > 0)
 	{
-		if (dh->priv_key == NULL)
-			dh->priv_key = BN_new();
-
-		if (BN_rand(dh->priv_key, params->getXBitLength(), 0, 0) != 1)
+		if (!DH_set_length(dh, params->getXBitLength()))
 		{
-			ERROR_MSG("DH private key generation failed (0x%08X)", ERR_get_error());
+			ERROR_MSG("DH set length failed (0x%08X)", ERR_get_error());
 
 			DH_free(dh);
 
@@ -194,7 +197,15 @@ bool OSSLDH::deriveKey(SymmetricKey **ppSymmetricKey, PublicKey* publicKey, Priv
 	// Get keys
 	DH *pub = ((OSSLDHPublicKey *)publicKey)->getOSSLKey();
 	DH *priv = ((OSSLDHPrivateKey *)privateKey)->getOSSLKey();
-	if (pub == NULL || pub->pub_key == NULL || priv == NULL)
+	if (pub == NULL || priv == NULL)
+	{
+		ERROR_MSG("Failed to get OpenSSL DH keys");
+
+		return false;
+	}
+	const BIGNUM* bn_pub_key = NULL;
+	DH_get0_key(pub, &bn_pub_key, NULL);
+	if (bn_pub_key == NULL)
 	{
 		ERROR_MSG("Failed to get OpenSSL DH keys");
 
@@ -206,7 +217,7 @@ bool OSSLDH::deriveKey(SymmetricKey **ppSymmetricKey, PublicKey* publicKey, Priv
 	int size = DH_size(priv);
 	secret.wipe(size);
 	derivedSecret.wipe(size);
-	int keySize = DH_compute_key(&derivedSecret[0], pub->pub_key, priv);
+	int keySize = DH_compute_key(&derivedSecret[0], bn_pub_key, priv);
 
 	if (keySize <= 0)
 	{
@@ -262,11 +273,19 @@ bool OSSLDH::generateParameters(AsymmetricParameters** ppParams, void* parameter
 		return false;
 	}
 
-	DH* dh = DH_generate_parameters(bitLen, 2, NULL, NULL);
-
+	DH* dh = DH_new();
 	if (dh == NULL)
 	{
+		ERROR_MSG("Failed to create DH object");
+
+		return false;
+	}
+
+	if (!DH_generate_parameters_ex(dh, bitLen, 2, NULL))
+	{
 		ERROR_MSG("Failed to generate %d bit DH parameters", bitLen);
+
+		DH_free(dh);
 
 		return false;
 	}
@@ -274,8 +293,12 @@ bool OSSLDH::generateParameters(AsymmetricParameters** ppParams, void* parameter
 	// Store the DH parameters
 	DHParameters* params = new DHParameters();
 
-	ByteString p = OSSL::bn2ByteString(dh->p); params->setP(p);
-	ByteString g = OSSL::bn2ByteString(dh->g); params->setG(g);
+	const BIGNUM* bn_p = NULL;
+	const BIGNUM* bn_g = NULL;
+
+	DH_get0_pqg(dh, &bn_p, NULL, &bn_g);
+	ByteString p = OSSL::bn2ByteString(bn_p); params->setP(p);
+	ByteString g = OSSL::bn2ByteString(bn_g); params->setG(g);
 
 	*ppParams = params;
 

@@ -762,7 +762,7 @@ bool P11AttrCheckValue::setDefault()
 }
 
 // Update the value if allowed
-CK_RV P11AttrCheckValue::updateAttr(Token *token, bool isPrivate, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op)
+CK_RV P11AttrCheckValue::updateAttr(Token *token, bool isPrivate, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int /*op*/)
 {
 	ByteString plaintext((unsigned char*)pValue, ulValueLen);
 	ByteString value;

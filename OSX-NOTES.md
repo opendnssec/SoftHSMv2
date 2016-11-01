@@ -37,7 +37,7 @@ There is a community supported command line package manager for installing the
 dependencies we need. It's called homebrew. First we'll need to install it as
 follows:
 
-	$ ruby -e "$(curl -fsSL https://raw.github.com/mxcl/homebrew/go/install)"
+	$ ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
 
 Now we need to install some dependencies
 
@@ -45,6 +45,7 @@ Now we need to install some dependencies
 	$ brew install openssl
 	$ brew install sqlite
 	$ brew install cppunit
+	$ brew install libtool
 
 Because both openssl and sqlite are pre-installed on the system, the new
 downloads are stored in an alternative location. /usr/local/opt

@@ -33,6 +33,7 @@
 
 #include <config.h>
 #include "softhsm2-migrate.h"
+#include "findslot.h"
 #include "getpw.h"
 #include "library.h"
 
@@ -63,7 +64,9 @@ void usage()
 	printf("  --module <path>   Use another PKCS#11 library than SoftHSM.\n");
 	printf("  --no-public-key   Do not migrate the public key.\n");
 	printf("  --pin <PIN>       The PIN for the normal user.\n");
+	printf("  --serial <number> Will use the token with a matching serial number.\n");
 	printf("  --slot <number>   The slot where the token is located.\n");
+	printf("  --token <label>   Will use the token with a matching token label.\n");
 	printf("  -v                Show version info.\n");
 	printf("  --version         Show version info.\n");
 }
@@ -75,7 +78,9 @@ enum {
 	OPT_MODULE,
 	OPT_NO_PUBLIC_KEY,
 	OPT_PIN,
+	OPT_SERIAL,
 	OPT_SLOT,
+	OPT_TOKEN,
 	OPT_VERSION
 };
 
@@ -86,7 +91,9 @@ static const struct option long_options[] = {
 	{ "module",          1, NULL, OPT_MODULE },
 	{ "no-public-key",   0, NULL, OPT_NO_PUBLIC_KEY },
 	{ "pin",             1, NULL, OPT_PIN },
+	{ "serial",          1, NULL, OPT_SERIAL },
 	{ "slot",            1, NULL, OPT_SLOT },
+	{ "token" ,          1, NULL, OPT_TOKEN },
 	{ "version",         0, NULL, OPT_VERSION },
 	{ NULL,              0, NULL, 0 }
 };
@@ -109,6 +116,8 @@ int main(int argc, char* argv[])
 	char* userPIN = NULL;
 	char* module = NULL;
 	char* slot = NULL;
+	char* serial = NULL;
+	char* token = NULL;
 	char *errMsg = NULL;
 	int noPublicKey = 0;
 
@@ -117,6 +126,7 @@ int main(int argc, char* argv[])
 
 	moduleHandle = NULL;
 	p11 = NULL;
+	CK_SLOT_ID slotID = 0;
 
 	if (argc == 1)
 	{
@@ -133,6 +143,12 @@ int main(int argc, char* argv[])
 				break;
 			case OPT_SLOT:
 				slot = optarg;
+				break;
+			case OPT_SERIAL:
+				serial = optarg;
+				break;
+			case OPT_TOKEN:
+				token = optarg;
 				break;
 			case OPT_MODULE:
 				module = optarg;
@@ -176,8 +192,14 @@ int main(int argc, char* argv[])
 		exit(1);
 	}
 
-	// Migrate the database
-	result = migrate(dbPath, slot, userPIN, noPublicKey);
+	// Get the slotID
+	result = findSlot(slot, serial, token, slotID);
+
+	if (!result)
+	{
+		// Migrate the database
+		result = migrate(dbPath, slotID, userPIN, noPublicKey);
+	}
 
 	// Finalize the library
 	p11->C_Finalize(NULL_PTR);
@@ -187,7 +209,7 @@ int main(int argc, char* argv[])
 }
 
 // Migrate the database
-int migrate(char* dbPath, char* slot, char* userPIN, int noPublicKey)
+int migrate(char* dbPath, CK_SLOT_ID slotID, char* userPIN, int noPublicKey)
 {
 	CK_SESSION_HANDLE hSession;
 	sqlite3* db = NULL;
@@ -200,13 +222,6 @@ int migrate(char* dbPath, char* slot, char* userPIN, int noPublicKey)
 		return 1;
 	}
 
-	if (slot == NULL)
-	{
-		fprintf(stderr, "ERROR: A slot number must be supplied. "
-				"Use --slot <number>\n");
-		return 1;
-	}
-
 	// Open the database
 	db = openDB(dbPath);
 	if (db == NULL)
@@ -215,7 +230,7 @@ int migrate(char* dbPath, char* slot, char* userPIN, int noPublicKey)
 	}
 
 	// Connect to the PKCS#11 library
-	result = openP11(slot, userPIN, &hSession);
+	result = openP11(slotID, userPIN, &hSession);
 	if (result)
 	{
 		sqlite3_close(db);
@@ -358,14 +373,10 @@ sqlite3* openDB(char* dbPath)
 }
 
 // Connect and login to the token
-int openP11(char* slot, char* userPIN, CK_SESSION_HANDLE* hSession)
+int openP11(CK_SLOT_ID slotID, char* userPIN, CK_SESSION_HANDLE* hSession)
 {
 	char user_pin_copy[MAX_PIN_LEN+1];
 	CK_RV rv;
-	CK_SLOT_ID slotID;
-
-	// Load the variable
-	slotID = atoi(slot);
 
 	rv = p11->C_OpenSession(slotID, CKF_SERIAL_SESSION | CKF_RW_SESSION,
 					NULL_PTR, NULL_PTR, hSession);

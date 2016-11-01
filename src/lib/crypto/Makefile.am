@@ -39,6 +39,7 @@ EXTRA_DIST =			$(srcdir)/*.h $(srcdir)/*.cpp
 # Compile with support of OpenSSL
 if WITH_OPENSSL
 libsofthsm_crypto_la_SOURCES +=	OSSLAES.cpp \
+				OSSLComp.cpp \
 				OSSLCryptoFactory.cpp \
 				OSSLDES.cpp \
 				OSSLDH.cpp \

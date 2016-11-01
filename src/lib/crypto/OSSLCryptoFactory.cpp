@@ -55,12 +55,11 @@
 #include "OSSLGOST.h"
 #endif
 
-#ifdef HAVE_PTHREAD_H
-#include <pthread.h>
-#endif
 #include <algorithm>
 #include <string.h>
+#include <openssl/opensslv.h>
 #include <openssl/ssl.h>
+#include <openssl/crypto.h>
 #include <openssl/err.h>
 #include <openssl/rand.h>
 #ifdef WITH_GOST
@@ -70,14 +69,6 @@
 #ifdef WITH_FIPS
 // Initialise the FIPS 140-2 selftest status
 bool OSSLCryptoFactory::FipsSelfTestStatus = false;
-#endif
-
-// Thread ID callback
-#ifdef HAVE_PTHREAD_H
-static unsigned long id_callback()
-{
-	return (unsigned long) pthread_self();
-}
 #endif
 
 static unsigned nlocks;
@@ -116,9 +107,6 @@ OSSLCryptoFactory::OSSLCryptoFactory()
 	{
 		locks[i] = MutexFactory::i()->getMutex();
 	}
-#ifdef HAVE_PTHREAD_H
-	CRYPTO_set_id_callback(id_callback);
-#endif
 	CRYPTO_set_locking_callback(lock_callback);
 
 #ifdef WITH_FIPS
@@ -146,7 +134,12 @@ OSSLCryptoFactory::OSSLCryptoFactory()
 
 #ifdef WITH_GOST
 	// Load engines
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
 	ENGINE_load_builtin_engines();
+#else
+	OPENSSL_init_crypto(OPENSSL_INIT_ENGINE_ALL_BUILTIN |
+			    OPENSSL_INIT_LOAD_CONFIG, NULL);
+#endif
 
 	// Initialise the GOST engine
 	eg = ENGINE_by_id("gost");

@@ -40,6 +40,11 @@
     <ClInclude Include="..\..\src\bin\keyconv\softhsm2-keyconv.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+@IF OPENSSL
+    <ClInclude Include="..\..\src\lib\crypto\OSSLComp.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+@END OPENSSL
     <ClInclude Include="..\config.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -58,6 +63,9 @@
 @END BOTAN
 @IF OPENSSL
     <ClCompile Include="..\..\src\bin\keyconv\softhsm2-keyconv-ossl.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\OSSLComp.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
 @END OPENSSL

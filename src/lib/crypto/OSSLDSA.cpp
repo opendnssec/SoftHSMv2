@@ -36,6 +36,7 @@
 #include "CryptoFactory.h"
 #include "DSAParameters.h"
 #include "OSSLDSAKeyPair.h"
+#include "OSSLComp.h"
 #include "OSSLUtil.h"
 #include <algorithm>
 #include <openssl/dsa.h>
@@ -86,8 +87,11 @@ bool OSSLDSA::sign(PrivateKey* privateKey, const ByteString& dataToSign,
 		if (sig == NULL)
 			return false;
 		// Store the 2 values with padding
-		BN_bn2bin(sig->r, &signature[sigLen / 2 - BN_num_bytes(sig->r)]);
-		BN_bn2bin(sig->s, &signature[sigLen - BN_num_bytes(sig->s)]);
+		const BIGNUM* bn_r = NULL;
+		const BIGNUM* bn_s = NULL;
+		DSA_SIG_get0(sig, &bn_r, &bn_s);
+		BN_bn2bin(bn_r, &signature[sigLen / 2 - BN_num_bytes(bn_r)]);
+		BN_bn2bin(bn_s, &signature[sigLen - BN_num_bytes(bn_s)]);
 		DSA_SIG_free(sig);
 		return true;
 	}
@@ -222,8 +226,11 @@ bool OSSLDSA::signFinal(ByteString& signature)
 	if (sig == NULL)
 		return false;
 	// Store the 2 values with padding
-	BN_bn2bin(sig->r, &signature[sigLen / 2 - BN_num_bytes(sig->r)]);
-	BN_bn2bin(sig->s, &signature[sigLen - BN_num_bytes(sig->s)]);
+	const BIGNUM* bn_r = NULL;
+	const BIGNUM* bn_s = NULL;
+	DSA_SIG_get0(sig, &bn_r, &bn_s);
+	BN_bn2bin(bn_r, &signature[sigLen / 2 - BN_num_bytes(bn_r)]);
+	BN_bn2bin(bn_s, &signature[sigLen - BN_num_bytes(bn_s)]);
 	DSA_SIG_free(sig);
 	return true;
 }
@@ -254,9 +261,10 @@ bool OSSLDSA::verify(PublicKey* publicKey, const ByteString& originalData,
 		if (sig == NULL)
 			return false;
 		const unsigned char *s = signature.const_byte_str();
-		sig->r = BN_bin2bn(s, sigLen / 2, NULL);
-		sig->s = BN_bin2bn(s + sigLen / 2, sigLen / 2, NULL);
-		if (sig->r == NULL || sig->s == NULL)
+		BIGNUM* bn_r = BN_bin2bn(s, sigLen / 2, NULL);
+		BIGNUM* bn_s = BN_bin2bn(s + sigLen / 2, sigLen / 2, NULL);
+		if (bn_r == NULL || bn_s == NULL ||
+		    !DSA_SIG_set0(sig, bn_r, bn_s))
 		{
 			DSA_SIG_free(sig);
 			return false;
@@ -405,9 +413,10 @@ bool OSSLDSA::verifyFinal(const ByteString& signature)
 	if (sig == NULL)
 		return false;
 	const unsigned char *s = signature.const_byte_str();
-	sig->r = BN_bin2bn(s, sigLen / 2, NULL);
-	sig->s = BN_bin2bn(s + sigLen / 2, sigLen / 2, NULL);
-	if (sig->r == NULL || sig->s == NULL)
+	BIGNUM* bn_r = BN_bin2bn(s, sigLen / 2, NULL);
+	BIGNUM* bn_s = BN_bin2bn(s + sigLen / 2, sigLen / 2, NULL);
+	if (bn_r == NULL || bn_s == NULL ||
+	    !DSA_SIG_set0(sig, bn_r, bn_s))
 	{
 		DSA_SIG_free(sig);
 		return false;
@@ -465,7 +474,6 @@ bool OSSLDSA::generateKeyPair(AsymmetricKeyPair** ppKeyPair, AsymmetricParameter
 
 	// Generate the key-pair
 	DSA* dsa = DSA_new();
-
 	if (dsa == NULL)
 	{
 		ERROR_MSG("Failed to instantiate OpenSSL DSA object");
@@ -476,9 +484,10 @@ bool OSSLDSA::generateKeyPair(AsymmetricKeyPair** ppKeyPair, AsymmetricParameter
 	// Use the OpenSSL implementation and not any engine
 	DSA_set_method(dsa, DSA_get_default_method());
 
-	dsa->p = OSSL::byteString2bn(params->getP());
-	dsa->q = OSSL::byteString2bn(params->getQ());
-	dsa->g = OSSL::byteString2bn(params->getG());
+	BIGNUM* bn_p = OSSL::byteString2bn(params->getP());
+	BIGNUM* bn_q = OSSL::byteString2bn(params->getQ());
+	BIGNUM* bn_g = OSSL::byteString2bn(params->getG());
+	DSA_set0_pqg(dsa, bn_p, bn_q, bn_g);
 
 	if (DSA_generate_key(dsa) != 1)
 	{
@@ -534,9 +543,10 @@ bool OSSLDSA::generateParameters(AsymmetricParameters** ppParams, void* paramete
 		return false;
 	}
 
-	DSA* dsa = DSA_generate_parameters(bitLen, NULL, 0, NULL, NULL, NULL, NULL);
+	DSA* dsa = DSA_new();
 
-	if (dsa == NULL)
+	if (dsa == NULL ||
+	    !DSA_generate_parameters_ex(dsa, bitLen, NULL, 0, NULL, NULL, NULL))
 	{
 		ERROR_MSG("Failed to generate %d bit DSA parameters", bitLen);
 
@@ -546,9 +556,14 @@ bool OSSLDSA::generateParameters(AsymmetricParameters** ppParams, void* paramete
 	// Store the DSA parameters
 	DSAParameters* params = new DSAParameters();
 
-	ByteString p = OSSL::bn2ByteString(dsa->p); params->setP(p);
-	ByteString q = OSSL::bn2ByteString(dsa->q); params->setQ(q);
-	ByteString g = OSSL::bn2ByteString(dsa->g); params->setG(g);
+	const BIGNUM* bn_p = NULL;
+	const BIGNUM* bn_q = NULL;
+	const BIGNUM* bn_g = NULL;
+	DSA_get0_pqg(dsa, &bn_p, &bn_q, &bn_g);
+
+	ByteString p = OSSL::bn2ByteString(bn_p); params->setP(p);
+	ByteString q = OSSL::bn2ByteString(bn_q); params->setQ(q);
+	ByteString g = OSSL::bn2ByteString(bn_g); params->setG(g);
 
 	*ppParams = params;
 

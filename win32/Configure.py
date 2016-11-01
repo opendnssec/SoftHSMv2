@@ -395,6 +395,10 @@ def docleantest():
         os.unlink("botan.dll")
     if os.path.isfile("libeay32.dll"):
         os.unlink("libeay32.dll")
+    if os.path.isfile("libcrypto-1_1.dll"):
+        os.unlink("libcrypto-1_1.dll")
+    if os.path.isfile("libcrypto-1_1-x64.dll"):
+        os.unlink("libcrypto-1_1-x64.dll")
 
 def doclean():
     """clean"""
@@ -634,25 +638,37 @@ int main() {\n\
     else:
 
         condvals["OPENSSL"] = True
-        varvals["LIBNAME"] = "libeay32.lib"
-        varvals["EXTRALIBS"] = "crypt32.lib;"
+        varvals["EXTRALIBS"] = "crypt32.lib;ws2_32.lib;"
         openssl_path = os.path.abspath(openssl_path)
-        openssl_dll = os.path.join(openssl_path, "bin\\libeay32.dll")
-        varvals["DLLPATH"] = openssl_dll
         openssl_inc = os.path.join(openssl_path, "include")
         if not os.path.exists(os.path.join(openssl_inc, "openssl\\ssl.h")):
             print("can't find OpenSSL headers", file=sys.stderr)
             sys.exit(1)
         varvals["INCLUDEPATH"] = openssl_inc
         openssl_lib = os.path.join(openssl_path, "lib")
-        if not os.path.exists(os.path.join(openssl_lib, "libeay32.lib")):
+        openssl_lib_name = ""
+        openssl_lib_dll = ""
+        if os.path.exists(os.path.join(openssl_lib, "libeay32.lib")):
+            openssl_lib_name = "libeay32.lib"
+            openssl_lib_dll = "bin\\libeay32.dll"
+        elif os.path.exists(os.path.join(openssl_lib, "libcrypto.lib")):
+            openssl_lib_name = "libcrypto.lib"
+            if platform == 32:
+                openssl_lib_dll = "bin\\libcrypto-1_1.dll"
+            else:
+                openssl_lib_dll = "bin\\libcrypto-1_1-x64.dll"
+                
+        else:
             print("can't find OpenSSL library", file=sys.stderr)
             sys.exit(1)
+        openssl_dll = os.path.join(openssl_path,openssl_lib_dll)
         varvals["LIBPATH"] = openssl_lib
+        varvals["LIBNAME"] = openssl_lib_name
+        varvals["DLLPATH"] = openssl_dll
         if enable_debug:
             debug_openssl_path = os.path.abspath(debug_openssl_path)
             varvals["DEBUGDLLPATH"] = \
-                os.path.join(debug_openssl_path, "bin\\libeay32.dll")
+                os.path.join(debug_openssl_path, openssl_lib_dll)
             debug_openssl_inc = os.path.join(debug_openssl_path, "include")
             if not os.path.exists(os.path.join(debug_openssl_inc,
                                                "openssl\\ssl.h")):
@@ -661,7 +677,7 @@ int main() {\n\
             varvals["DEBUGINCPATH"] = debug_openssl_inc
             debug_openssl_lib = os.path.join(debug_openssl_path, "lib")
             if not os.path.exists(os.path.join(debug_openssl_lib,
-                                               "libeay32.lib")):
+                                               openssl_lib_name)):
                 print("can't find debug OpenSSL library", file=sys.stderr)
                 sys.exit(1)
             varvals["DEBUGLIBPATH"] = debug_openssl_lib
@@ -677,9 +693,9 @@ int main() {\n\
         if os.path.exists(openssl_dll):
             subprocess.call(["copy", openssl_dll, "."], shell=True)
         else:
-            system_libs = ["user32.lib", "advapi32.lib", "gdi32.lib", "crypt32.lib"]
+            system_libs = ["user32.lib", "advapi32.lib", "gdi32.lib", "crypt32.lib", "ws2_32.lib"]
         inc = openssl_inc
-        lib = os.path.join(openssl_lib, "libeay32.lib")
+        lib = os.path.join(openssl_lib, openssl_lib_name)
         testfile = open("testossl.c", "w")
         print('\
 #include <openssl/err.h>\n\
@@ -735,10 +751,11 @@ int main() {\n\
 #include <openssl/ecdsa.h>\n\
 #include <openssl/objects.h>\n\
 int main() {\n\
- EC_KEY *ec256, *ec384;\n\
+ EC_KEY *ec256, *ec384, *ec521;\n\
  ec256 = EC_KEY_new_by_curve_name(NID_X9_62_prime256v1);\n\
  ec384 = EC_KEY_new_by_curve_name(NID_secp384r1);\n\
- if (ec256 == NULL || ec384 == NULL)\n\
+ ec521 = EC_KEY_new_by_curve_name(NID_secp521r1);\n\
+ if (ec256 == NULL || ec384 == NULL || ec521 == NULL)\n\
   return 1;\n\
  return 0;\n\
 }', file=testfile)
@@ -750,7 +767,7 @@ int main() {\n\
                 print("can't create .\\testecc.exe", file=sys.stderr)
                 sys.exit(1)
             if subprocess.call(".\\testecc.exe") != 0:
-                print("can't find P256 or P384: no ECC support", file=sys.stderr)
+                print("can't find P256, P384, or P521: no ECC support", file=sys.stderr)
                 sys.exit(1)
 
         # OpenSSL GOST support
@@ -761,15 +778,29 @@ int main() {\n\
             print('\
 #include <openssl/conf.h>\n\
 #include <openssl/engine.h>\n\
+#include <openssl/crypto.h>\n\
+#include <openssl/opensslv.h>\n\
 int main() {\n\
- ENGINE *e;\n\
- EC_KEY *ek;\n\
- ek = NULL;\n\
- OPENSSL_config(NULL);\n\
- e = ENGINE_by_id("gost");\n\
- if (e == NULL)\n\
+ ENGINE *eg;\n\
+ const EVP_MD* EVP_GOST_34_11;\n\
+ OpenSSL_add_all_algorithms();\n\
+#if OPENSSL_VERSION_NUMBER < 0x10100000L\n\
+ ENGINE_load_builtin_engines();\n\
+#else\n\
+ OPENSSL_init_crypto(OPENSSL_INIT_ENGINE_ALL_BUILTIN | OPENSSL_INIT_LOAD_CONFIG, NULL);\n\
+#endif\n\
+ eg = ENGINE_by_id("gost");\n\
+ if (eg == NULL)\n\
   return 1;\n\
- if (ENGINE_init(e) <= 0)\n\
+ if (ENGINE_init(eg) <= 0)\n\
+  return 1;\n\
+ EVP_GOST_34_11 = ENGINE_get_digest(eg, NID_id_GostR3411_94);\n\
+ if (EVP_GOST_34_11 == NULL)\n\
+  return 1;\n\
+ if (ENGINE_register_pkey_asn1_meths(eg) <= 0)\n\
+  return 1;\n\
+ if (ENGINE_ctrl_cmd_string(eg, "CRYPT_PARAMS",\n\
+     "id-Gost28147-89-CryptoPro-A-ParamSet", 0) <= 0)\n\
   return 1;\n\
  return 0;\n\
 }', file=testfile)

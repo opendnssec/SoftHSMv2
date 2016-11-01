@@ -76,6 +76,9 @@ public:
 private:
 	// The internal OpenSSL representation
 	DH* dh;
+
+	// Create the OpenSSL representation of the key
+	void createOSSLKey();
 };
 
 #endif // !_SOFTHSM_V2_OSSLDHPRIVATEKEY_H

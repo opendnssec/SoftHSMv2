@@ -602,9 +602,9 @@ bool BotanDSA::generateParameters(AsymmetricParameters** ppParams, void* paramet
 		BotanRNG* brng = (BotanRNG*)BotanCryptoFactory::i()->getRNG();
 		group = new Botan::DL_Group(*brng->getRNG(), Botan::DL_Group::Prime_Subgroup, bitLen, qLen);
 	}
-	catch (...)
+	catch (std::exception& e)
 	{
-		ERROR_MSG("Failed to generate %d bit DSA parameters", bitLen);
+		ERROR_MSG("Failed to generate %d bit DSA parameters: %s", bitLen, e.what());
 
 		return false;
 	}

@@ -34,10 +34,10 @@
 #ifndef _SOFTHSM_V2_INFOTESTS_H
 #define _SOFTHSM_V2_INFOTESTS_H
 
+#include "TestsNoPINInitBase.h"
 #include <cppunit/extensions/HelperMacros.h>
-#include "cryptoki.h"
 
-class InfoTests : public CppUnit::TestFixture
+class InfoTests : public TestsNoPINInitBase
 {
 	CPPUNIT_TEST_SUITE(InfoTests);
 	CPPUNIT_TEST(testGetInfo);
@@ -59,9 +59,6 @@ public:
 	void testGetMechanismList();
 	void testGetMechanismInfo();
 	void testGetSlotInfoAlt();
-
-	void setUp();
-	void tearDown();
 };
 
 #endif // !_SOFTHSM_V2_INFOTESTS_H
