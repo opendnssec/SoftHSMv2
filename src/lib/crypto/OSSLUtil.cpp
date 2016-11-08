@@ -132,31 +132,21 @@ EC_POINT* OSSL::byteString2pt(const ByteString& byteString, const EC_GROUP* grp)
 
 	ByteString repr = byteString;
 
+	// RAW uncompressed point starts with 0x04 
+	// and V_ASN1_OCTET_STRING also equals 4 
+	// need to test if its ASN.1 DER
 	if (repr[0] != V_ASN1_OCTET_STRING)
 	{
-		ERROR_MSG("EC point tag is not OCTET STRING");
-
-		return NULL;
+		controlOctets = 0; // assume RAW
 	}
 
-	// Definite, short
-	if (repr[1] < 0x80)
+	else if (repr[1] < 0x80)
 	{
 		if (repr[1] != (len - controlOctets))
 		{
-			if (repr[1] < (len - controlOctets))
-			{
-				ERROR_MSG("Underrun EC point");
-			}
-			else
-			{
-				ERROR_MSG("Overrun EC point");
-			}
-
-			return NULL;
+			controlOctets = 0; // not ASN.1 looks like RAW
 		}
 	}
-	// Definite, long
 	else
 	{
 		size_t lengthOctets = repr[1] & 0x7f;
@@ -164,26 +154,40 @@ EC_POINT* OSSL::byteString2pt(const ByteString& byteString, const EC_GROUP* grp)
 
 		if (controlOctets >= repr.size())
 		{
-			ERROR_MSG("Undersized EC point");
-
-			return NULL;
+			controlOctets = 0; // not ASN.1 assume RAW
 		}
-
-		ByteString length(&repr[2], lengthOctets);
-
-		if (length.long_val() != (len - controlOctets))
+		else
 		{
-			if (length.long_val() < (len - controlOctets))
+			ByteString length(&repr[2], lengthOctets);
+
+			if (length.long_val() != (len - controlOctets))
 			{
-				ERROR_MSG("Underrun EC point");
-			}
+				controlOctets = 0; // Not ASN.1 assume RAW
+			} 
 			else
 			{
-				ERROR_MSG("Overrun EC point");
+				// First byte must be 0x02, 0x03 or 0x04
+				if (repr[controlOctets] != 0x02
+					&& repr[controlOctets] != 0x03
+					&& repr[controlOctets] != 0x04)
+					{
+						controlOctets = 0; // Assume RAW
+					}
+				// still a chance it is not ASN.1
+				// But PKCS#11 says RAW is the default,
+				// and ASN.1(DER) is for compatability with 
+				// PKCS#11 2.20
 			}
-
-			return NULL;
 		}
+
+	}
+	if (controlOctets == 0)
+	{
+		INFO_MSG("EC point is in RAW format");
+	} 
+	else
+	{
+		INFO_MSG("EC point assumed ASN.1 DER format");
 	}
 
 	EC_POINT* pt = EC_POINT_new(grp);
