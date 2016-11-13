@@ -45,6 +45,9 @@ Bugfixes:
   (Patch from Peter Polačko)
 * Issue #250: C++11 not detected.
 * Issue #255: API changes in Botan 1.11.27.
+* Issue #260: Fix include guard to check WITH_FIPS.
+  (Patch from Matt Hauck)
+* Issue #268: p11test fails on 32-bit systems.
 
 
 SoftHSM 2.1.0 - 2016-03-14
