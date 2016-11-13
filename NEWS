@@ -48,6 +48,7 @@ Bugfixes:
 * Issue #260: Fix include guard to check WITH_FIPS.
   (Patch from Matt Hauck)
 * Issue #268: p11test fails on 32-bit systems.
+* Issue #270: Build warning about "converting a string constant".
 
 
 SoftHSM 2.1.0 - 2016-03-14
