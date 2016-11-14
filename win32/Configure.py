@@ -653,7 +653,7 @@ int main() {\n\
         if os.path.exists(os.path.join(openssl_lib, "libeay32.lib")):
             openssl_lib_name = "libeay32.lib"
             openssl_lib_dll = "bin\\libeay32.dll"
-        if os.path.exists(os.path.join(openssl_lib, "libeaycompat32.lib")):
+        elif os.path.exists(os.path.join(openssl_lib, "libeaycompat32.lib")):
             openssl_lib_name = "libeaycompat32.lib"
             openssl_lib_dll = "bin\\libeaycompat32.dll"
         elif os.path.exists(os.path.join(openssl_lib, "libcrypto.lib")):
