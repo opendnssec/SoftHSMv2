@@ -251,7 +251,7 @@ static char *get_env_var_path(void)
 	if (size == 0) {
 		return NULL;
 	}
-	
+
 	value = (LPSTR) malloc(size);
 	if (NULL == value) {
 		return NULL;
@@ -280,19 +280,23 @@ static char *get_env_var_path(void)
 char* SimpleConfigLoader::getConfigPath()
 {
 	char* configPath = get_env_var_path();
-	char *tpath;
+	char* tpath;
 
-	if (configPath != NULL) {
+	if (configPath != NULL)
+	{
 		return configPath;
-	} else {
+	}
+	else
+	{
 		tpath = get_user_path();
-		if (tpath != NULL) {
+		if (tpath != NULL)
+		{
 			return tpath;
 		}
-		configPath = DEFAULT_SOFTHSM2_CONF;
-		return strdup(configPath);
 	}
-} 
+
+	return strdup(DEFAULT_SOFTHSM2_CONF);
+}
 
 char* SimpleConfigLoader::trimString(char* text)
 {

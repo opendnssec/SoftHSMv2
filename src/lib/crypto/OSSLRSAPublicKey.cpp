@@ -37,6 +37,9 @@
 #include "OSSLUtil.h"
 #include <string.h>
 #include <openssl/bn.h>
+#ifdef WITH_FIPS
+#include <openssl/fips.h>
+#endif
 
 // Constructors
 OSSLRSAPublicKey::OSSLRSAPublicKey()
@@ -132,7 +135,7 @@ void OSSLRSAPublicKey::createOSSLKey()
 	// Use the OpenSSL implementation and not any engine
 #if OPENSSL_VERSION_NUMBER < 0x10100000L
 
-#ifdef OPENSSL_FIPS
+#ifdef WITH_FIPS
 	if (FIPS_mode())
 		RSA_set_method(rsa, FIPS_rsa_pkcs1_ssleay());
 	else

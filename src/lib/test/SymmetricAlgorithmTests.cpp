@@ -140,6 +140,7 @@ void SymmetricAlgorithmTests::encryptDecrypt(
 	private:        // we want to know for sure that no part length is causing any problem.
 		const int blockSize;
 		const unsigned* pRandom;// point to memory with random data. We are using the data to be encrypted.
+		const unsigned* pBack;// point to memory where random data ends.
 		int current;// the current size.
 	public:
 		PartSize(
@@ -147,13 +148,23 @@ void SymmetricAlgorithmTests::encryptDecrypt(
 				const std::vector<CK_BYTE>* pvData) :
 					blockSize(_blockSize),
 					pRandom((const unsigned*)&pvData->front()),
+					pBack((const unsigned*)&pvData->back()),
 					current(blockSize*4){};
 		int getCurrent() {// current part size
 			return current;
 		}
-		int getNext() {// get nex part size.
+		int getNext() {// get next part size.
+			// Check if we do not have more random data
+			if ((pRandom+sizeof(unsigned)-1) > pBack) {
+				current = blockSize*4;
+				return current;
+			}
 			const unsigned random(*(pRandom++));
-			current = ((unsigned long)random)*blockSize*0x100/UINT_MAX + 1;
+			// Bit shift to handle 32- and 64-bit systems.
+			// Just want a simple random part length,
+			// not a perfect random number (bit shifting will
+			// give some loss of precision).
+			current = ((unsigned long)random >> 20)*blockSize*0x100/(UINT_MAX >> 20) + 1;
 			//std::cout << "New random " << std::hex << random << " current " << std::hex << std::setfill('0') << std::setw(4) << current << " block size " << std::hex << blockSize << std::endl;
 			return current;
 		}
