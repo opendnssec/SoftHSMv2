@@ -49,6 +49,8 @@ Bugfixes:
   (Patch from Matt Hauck)
 * Issue #268: p11test fails on 32-bit systems.
 * Issue #270: Build warning about "converting a string constant".
+* Issue #272: Fix C++11 check to look for unique_ptr.
+  (Patch from Matt Hauck)
 
 
 SoftHSM 2.1.0 - 2016-03-14
