@@ -155,7 +155,7 @@ toolset = ""
 def dodetectplatform(visualstudio):
     # detect platform tool set >= VS2010
     global toolset
-    
+
     if "Microsoft Visual Studio 10.0" in visualstudio:
         toolset="v100"
     elif "Microsoft Visual Studio 11.0" in visualstudio:
@@ -240,7 +240,7 @@ def appargs(arg):
     global configargs
     # escape backslashes, spaces and double quotes
     escaped = ""
-    
+
     for x in arg:
         if (x == "\\") or (x == " ") or (x == "\""):
             escaped += "\\"
@@ -362,7 +362,7 @@ def mywith(key, val, detail=None):
             want_tests = False
             return
         if detail:
-            toolset=detail.lower() 
+            toolset=detail.lower()
         return
     want_unknown = True
     if not val:
@@ -395,6 +395,8 @@ def docleantest():
         os.unlink("botan.dll")
     if os.path.isfile("libeay32.dll"):
         os.unlink("libeay32.dll")
+    if os.path.isfile("libeaycompat32.dll"):
+        os.unlink("libeaycompat32.dll")
     if os.path.isfile("libcrypto-1_1.dll"):
         os.unlink("libcrypto-1_1.dll")
     if os.path.isfile("libcrypto-1_1-x64.dll"):
@@ -651,13 +653,16 @@ int main() {\n\
         if os.path.exists(os.path.join(openssl_lib, "libeay32.lib")):
             openssl_lib_name = "libeay32.lib"
             openssl_lib_dll = "bin\\libeay32.dll"
+        elif os.path.exists(os.path.join(openssl_lib, "libeaycompat32.lib")):
+            openssl_lib_name = "libeaycompat32.lib"
+            openssl_lib_dll = "bin\\libeaycompat32.dll"
         elif os.path.exists(os.path.join(openssl_lib, "libcrypto.lib")):
             openssl_lib_name = "libcrypto.lib"
             if platform == 32:
                 openssl_lib_dll = "bin\\libcrypto-1_1.dll"
             else:
                 openssl_lib_dll = "bin\\libcrypto-1_1-x64.dll"
-                
+
         else:
             print("can't find OpenSSL library", file=sys.stderr)
             sys.exit(1)
@@ -858,7 +863,7 @@ int main() {\n\
         else:
             if verbose:
                 print("can't compile OpenSSL RFC 5649")
-        
+
     # configure CppUnit
     if want_tests:
         condvals["TESTS"] = True
@@ -1022,8 +1027,8 @@ def main(args):
         if want_tests:
             print("cppunit-path: " + cppunit_path)
         print("toolset: "+toolset)
-    
-    
+
+
     doconfig()
 
     # status after config
