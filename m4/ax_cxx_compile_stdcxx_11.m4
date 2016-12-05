@@ -37,6 +37,8 @@
 #serial 4
 
 m4_define([_AX_CXX_COMPILE_STDCXX_11_testbody], [[
+  #include <memory>
+
   template <typename T>
     struct check
     {
@@ -49,6 +51,8 @@ m4_define([_AX_CXX_COMPILE_STDCXX_11_testbody], [[
     struct Child : public Base {
     virtual void f() override {}
     };
+
+    std::unique_ptr<Base> ptr_to_base;
 
     typedef check<check<bool>> right_angle_brackets;
 
