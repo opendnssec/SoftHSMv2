@@ -1,5 +1,7 @@
 NEWS for SoftHSM -- History of user visible changes
 
+SoftHSM 2.3.0 - 2017-xx-xx
+
 SoftHSM 2.2.0 - 2016-12-05
 
 * Issue #143: Delete a token using softhsm2-util.
