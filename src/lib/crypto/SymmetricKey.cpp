@@ -89,6 +89,29 @@ ByteString SymmetricKey::getKeyCheckValue() const
 	return digest;
 }
 
+// Get Hash of key value
+const ByteString SymmetricKey::getKeyHash() const
+{
+	ByteString hashValue;
+
+	HashAlgorithm* hash = CryptoFactory::i()->getHashAlgorithm(HashAlgo::SHA256);
+	if (hash == NULL) return hashValue;
+
+	bool hInit = hash->hashInit();
+	bool hUpdate = hash->hashUpdate(keyData);
+	bool hFinal = hash->hashFinal(hashValue);
+
+	if (!hInit || !hUpdate || !hFinal)
+	{
+		CryptoFactory::i()->recycleHashAlgorithm(hash);
+		return hashValue;
+	}
+	CryptoFactory::i()->recycleHashAlgorithm(hash);
+
+	return hashValue;
+}
+
+
 // Serialisation
 ByteString SymmetricKey::serialise() const
 {
@@ -106,4 +129,3 @@ size_t SymmetricKey::getBitLen() const
 {
 	return bitLen;
 }
-

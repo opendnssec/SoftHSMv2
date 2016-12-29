@@ -10037,6 +10037,12 @@ CK_RV SoftHSM::deriveDH
 			ByteString plainKCV;
 			ByteString kcv;
 
+			//If CKD_SHA256_KDF is kdf, do sha before returning result
+			if(CK_ECDH1_DERIVE_PARAMS_PTR(pMechanism->pParameter)->kdf == CKD_SHA256_KDF)
+			{
+				secretValue = secret->getKeyHash();
+			}
+
 			if (byteLen > secretValue.size())
 			{
 				INFO_MSG("The derived secret is too short");
@@ -10147,9 +10153,10 @@ CK_RV SoftHSM::deriveECDH
 		DEBUG_MSG("pParameter must be of type CK_ECDH1_DERIVE_PARAMS");
 		return CKR_MECHANISM_PARAM_INVALID;
 	}
-	if (CK_ECDH1_DERIVE_PARAMS_PTR(pMechanism->pParameter)->kdf != CKD_NULL)
+	if (CK_ECDH1_DERIVE_PARAMS_PTR(pMechanism->pParameter)->kdf != CKD_NULL &&
+			(CK_ECDH1_DERIVE_PARAMS_PTR(pMechanism->pParameter)->kdf != CKD_SHA256_KDF))
 	{
-		DEBUG_MSG("kdf must be CKD_NULL");
+		DEBUG_MSG("kdf must be CKD_NULL or CKD_SHA256_KDF");
 		return CKR_MECHANISM_PARAM_INVALID;
 	}
 	if ((CK_ECDH1_DERIVE_PARAMS_PTR(pMechanism->pParameter)->ulSharedDataLen != 0) ||
