@@ -1,9 +1,9 @@
-# Building SoftHSMv2 on Mac OS X 10.8.5 (Mountain Lion)
+# Building SoftHSMv2 on macOS 10.12.3 (Sierra)
 
 This document contains instructions for building SoftHSMv2 from the command
-line on Mac OS X 10.8.5.
+line on macOS 10.12.3.
 
-This may work for other version of OS X, but that has not been verified.
+This may work for other versions of OS X/macOS, but this has not been verified.
 
 ## Command Line Tools
 
@@ -17,19 +17,19 @@ The gcc compiler in this case can be found at
 /Applications/Xcode.app/Contents/Developer/usr/bin/gcc
 
 Alternatively if you don't want to install XCode you could install command line
-tools for os x that can be downloaded from apple.
+tools for macOS that can be downloaded from Apple.
 
-E.g. currently the following package for the mountain lion release of OS X is
+e.g. currently the following package for the Sierra release of macOS is
 available for download.
 
-	command_line_tools_os_x_mountain_lion_for_xcode__october_2013.dmg
+	Command_Line_Tools_macOS_10.12_for_Xcode_8.2.dmg
 
-This dmg file is still 100MB but at least orders of magnitude smaller than
+This dmg file is ~150MB but it is at least orders of magnitude smaller than
 installing all of XCode.
 
 ## Homebrew
 
-The libraries that come as part of OS X are rather old. We need to use more
+The libraries that come as part of macOS are rather old. We need to use more
 recent versions of these libraries to avoid unexpected failures during building
 and running.
 
@@ -47,10 +47,19 @@ Now we need to install some dependencies
 	$ brew install cppunit
 	$ brew install libtool
 
-Because both openssl and sqlite are pre-installed on the system, the new
-downloads are stored in an alternative location. /usr/local/opt
+openssl, sqlite, and libtool are pre-installed on the system. The versions downloaded
+by brew are stored in an alternative location under /usr/local
 
-During configure the paths to the newly installed libraries needs to be passed
+The only brew warning of note is for libtool:
+
+	==> Caveats
+	In order to prevent conflicts with Apple's own libtool we have prepended a "g"
+	so, you have instead: glibtool and glibtoolize.
+
+Note: gblitoolize seems to be found in the configuration step below just fine. It's unclear
+if glibtool is used since autogen.sh generates its own libtool script that is used by make.
+
+During configure, the paths to the newly installed libraries need to be passed
 in so configure can actually find the libraries. We'll show how to do that
 later.
 
@@ -60,19 +69,6 @@ We now need to clone SoftHSMv2 from github.
 
 	$ git clone https://github.com/opendnssec/SoftHSMv2.git
 	$ cd SoftHSMv2
-
-I needed to change a line in configure.ac in order to prevent some errors
-during configure.
-
-Instead of the line:
-
-	AM_INIT_AUTOMAKE(foreign)
-
-I'm using
-
-	AM_INIT_AUTOMAKE([foreign subdir-objects])
-
-After changing this we can configure the build.
 
 ## Configuring the build
 
@@ -126,6 +122,16 @@ Then change src/lib/test/softhsm2.conf so it contains the following lines.
 	# SoftHSM v2 configuration file
 	directories.tokendir = ./tokens
 	objectstore.backend = db
+	log.level = INFO
+	slots.removable = false
+
+Then change src/lib/test/softhsm2-alt.conf so it contains the following lines.
+
+	# SoftHSM v2 configuration file
+	directories.tokendir = ./tokens
+	objectstore.backend = db
+	log.level = INFO
+	slots.removable = true
 
 We are now ready to run the tests again.
 
@@ -172,3 +178,4 @@ token, a solution would be to copy the whole of the token database to a
 ramdisk. This should only be used when the application doesn't modify the
 token, because a power-cycle of the host will wipe out the ramdisk.
 
+3-January-2017
