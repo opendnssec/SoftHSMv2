@@ -117,6 +117,9 @@ ACX_VISIBILITY
 # If we should install the p11-kit module
 ACX_P11KIT
 
+# cppunit setetings
+ACX_CPPUNIT
+
 # Set full directory paths
 full_sysconfdir=`eval eval eval eval eval echo "${sysconfdir}" | sed "s#NONE#${prefix}#" | sed "s#NONE#${ac_default_prefix}#"`
 full_localstatedir=`eval eval eval eval eval echo "${localstatedir}" | sed "s#NONE#${prefix}#" | sed "s#NONE#${ac_default_prefix}#"`

@@ -8,8 +8,9 @@ AM_CPPFLAGS = 			-I$(srcdir)/.. \
 				-I$(srcdir)/../../data_mgr \
 				-I$(srcdir)/../../session_mgr \
 				-I$(srcdir)/../../slot_mgr \
-				-I$(srcdir)/../../object_store \
-				`cppunit-config --cflags`
+				-I$(srcdir)/../../object_store
+
+AM_CFLAGS =			@CPPUNIT_CFLAGS@
 
 check_PROGRAMS =		sessionmgrtest
 
@@ -18,7 +19,7 @@ sessionmgrtest_SOURCES =	sessionmgrtest.cpp \
 
 sessionmgrtest_LDADD =		../../libsofthsm_convarch.la 
 
-sessionmgrtest_LDFLAGS =	@CRYPTO_LIBS@ -no-install `cppunit-config --libs` -pthread
+sessionmgrtest_LDFLAGS =	@CRYPTO_LIBS@ @CPPUNIT_LIBS@ -no-install -pthread
 
 TESTS = 			sessionmgrtest
 
