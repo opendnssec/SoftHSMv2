@@ -8,8 +8,9 @@ AM_CPPFLAGS = 			-I$(srcdir)/.. \
 				-I$(srcdir)/../../object_store \
 				-I$(srcdir)/../../session_mgr \
 				-I$(srcdir)/../../slot_mgr \
-				@CRYPTO_INCLUDES@ \
-				`cppunit-config --cflags`
+				@CRYPTO_INCLUDES@
+
+AM_CFLAGS =			@CPPUNIT_CFLAGS@
 
 check_PROGRAMS =		datamgrtest
 
@@ -20,7 +21,7 @@ datamgrtest_SOURCES =		datamgrtest.cpp \
 
 datamgrtest_LDADD =		../../libsofthsm_convarch.la 
 
-datamgrtest_LDFLAGS = 		@CRYPTO_LIBS@ -no-install `cppunit-config --libs`
+datamgrtest_LDFLAGS = 		@CRYPTO_LIBS@ @CPPUNIT_LIBS@ -no-install
 
 TESTS = 			datamgrtest
 

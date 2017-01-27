@@ -8,8 +8,9 @@ AM_CPPFLAGS = 			-I$(srcdir)/.. \
 				-I$(srcdir)/../../object_store \
 				-I$(srcdir)/../../session_mgr \
 				-I$(srcdir)/../../data_mgr \
-				@CRYPTO_INCLUDES@ \
-				`cppunit-config --cflags`
+				@CRYPTO_INCLUDES@
+
+AM_CFLAGS =			@CPPUNIT_CFLAGS@
 
 check_PROGRAMS =		slotmgrtest
 
@@ -18,7 +19,7 @@ slotmgrtest_SOURCES =		slotmgrtest.cpp \
 
 slotmgrtest_LDADD =		../../libsofthsm_convarch.la 
 
-slotmgrtest_LDFLAGS = 		@CRYPTO_LIBS@ -no-install `cppunit-config --libs` -pthread
+slotmgrtest_LDFLAGS = 		@CRYPTO_LIBS@ @CPPUNIT_LIBS@ -no-install -pthread
 
 TESTS = 			slotmgrtest
 
