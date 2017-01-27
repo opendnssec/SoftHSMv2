@@ -25,6 +25,7 @@ p11test_SOURCES =		p11test.cpp \
 				AsymWrapUnwrapTests.cpp \
 				TestsBase.cpp \
 				TestsNoPINInitBase.cpp \
+				../common/log.cpp \
 				../common/osmutex.cpp
 
 p11test_LDADD =			../libsofthsm2.la 
