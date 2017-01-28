@@ -78,7 +78,7 @@ bool OSSLECDSA::sign(PrivateKey* privateKey, const ByteString& dataToSign,
 	}
 
 	// Use the OpenSSL implementation and not any engine
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
+#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
 
 #ifdef WITH_FIPS
 	if (FIPS_mode())
@@ -170,7 +170,7 @@ bool OSSLECDSA::verify(PublicKey* publicKey, const ByteString& originalData,
 	}
 
 	// Use the OpenSSL implementation and not any engine
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
+#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
 
 #ifdef WITH_FIPS
 	if (FIPS_mode())

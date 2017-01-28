@@ -187,7 +187,7 @@ bool OSSLECDH::deriveKey(SymmetricKey **ppSymmetricKey, PublicKey* publicKey, Pr
 	}
 
 	// Use the OpenSSL implementation and not any engine
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
+#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
 
 #ifdef WITH_FIPS
 	if (FIPS_mode())

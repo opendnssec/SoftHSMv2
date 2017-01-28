@@ -789,7 +789,7 @@ int main() {\n\
  ENGINE *eg;\n\
  const EVP_MD* EVP_GOST_34_11;\n\
  OpenSSL_add_all_algorithms();\n\
-#if OPENSSL_VERSION_NUMBER < 0x10100000L\n\
+#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)\n\
  ENGINE_load_builtin_engines();\n\
 #else\n\
  OPENSSL_init_crypto(OPENSSL_INIT_ENGINE_ALL_BUILTIN | OPENSSL_INIT_LOAD_CONFIG, NULL);\n\
