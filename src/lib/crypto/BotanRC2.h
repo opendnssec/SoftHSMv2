@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010 SURFnet bv
+ * Copyright (c) 2010 .SE (The Internet Infrastructure Foundation)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,58 +25,36 @@
  */
 
 /*****************************************************************************
- HashAlgorithm.h
+ BotanRC2.h
 
- Base class for hash algorithm classes
+ Botan (3)RC2 implementation
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_HASHALGORITHM_H
-#define _SOFTHSM_V2_HASHALGORITHM_H
+#ifndef _SOFTHSM_V2_BOTANRC2_H
+#define _SOFTHSM_V2_BOTANRC2_H
 
+#include <string>
 #include "config.h"
-#include "ByteString.h"
+#include "BotanSymmetricAlgorithm.h"
 
-struct HashAlgo
-{
-	enum Type
-	{
-		Unknown,
-		MD5,
-		SHA1,
-		SHA224,
-		SHA256,
-		SHA384,
-		SHA512,
-		GOST,
-		MD2,
-		MD4
-	};
-};
-
-class HashAlgorithm
+class BotanRC2 : public BotanSymmetricAlgorithm
 {
 public:
-	// Base constructors
-	HashAlgorithm();
+	// RC2tructor
+	virtual ~BotanRC2() { }
 
-	// Destructor
-	virtual ~HashAlgorithm() { }
+	// Wrap/Unwrap keys
+	virtual bool wrapKey(const SymmetricKey* key, const SymWrap::Type mode, const ByteString& in, ByteString& out);
 
-	// Hashing functions
-	virtual bool hashInit();
-	virtual bool hashUpdate(const ByteString& data);
-	virtual bool hashFinal(ByteString& hashedData);
+	virtual bool unwrapKey(const SymmetricKey* key, const SymWrap::Type mode, const ByteString& in, ByteString& out);
 
-	virtual int getHashSize() = 0;
+	// Return the block size
+	virtual size_t getBlockSize() const;
+
 protected:
-	// The current operation
-	enum
-	{
-		NONE,
-		HASHING
-	}
-	currentOperation;
+	// Return the right Botan cipher for the operation
+	virtual std::string getCipher() const;
 };
 
-#endif // !_SOFTHSM_V2_HASHALGORITHM_H
+#endif // !_SOFTHSM_V2_BOTANRC2_H
 

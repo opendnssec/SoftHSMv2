@@ -121,6 +121,18 @@ bool OSSLEVPSymmetricAlgorithm::encryptInit(const SymmetricKey* key, const SymMo
 	}
 
 	EVP_CIPHER_CTX_set_padding(pCurCTX, padding ? 1 : 0);
+	switch (EVP_CIPHER_nid(cipher)) {
+	case NID_rc2_cbc:
+	case NID_rc2_ecb:
+	case NID_rc2_cfb64:
+	case NID_rc2_ofb64:
+	case NID_rc2_40_cbc:
+	case NID_rc2_64_cbc:
+		EVP_CIPHER_CTX_ctrl(pCurCTX, EVP_CTRL_SET_RC2_KEY_BITS, currentKey->getBitLen(), NULL);
+		break;
+	default:
+		break;
+	}
 
 	return true;
 }

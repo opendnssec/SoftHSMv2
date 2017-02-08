@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010 SURFnet bv
+ * Copyright (c) 2010 .SE (The Internet Infrastructure Foundation)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,58 +25,55 @@
  */
 
 /*****************************************************************************
- HashAlgorithm.h
+ BotanRC4.cpp
 
- Base class for hash algorithm classes
+ Botan (3)RC4 implementation
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_HASHALGORITHM_H
-#define _SOFTHSM_V2_HASHALGORITHM_H
-
 #include "config.h"
-#include "ByteString.h"
+#include "BotanRC4.h"
+#include <algorithm>
 
-struct HashAlgo
+bool BotanRC4::wrapKey(const SymmetricKey* /*key*/, const SymWrap::Type /*mode*/, const ByteString& /*in*/, ByteString& /*out*/)
 {
-	enum Type
-	{
-		Unknown,
-		MD5,
-		SHA1,
-		SHA224,
-		SHA256,
-		SHA384,
-		SHA512,
-		GOST,
-		MD2,
-		MD4
-	};
-};
+	ERROR_MSG("RC4 does not support key wrapping");
 
-class HashAlgorithm
+	return false;
+}
+
+bool BotanRC4::unwrapKey(const SymmetricKey* /*key*/, const SymWrap::Type /*mode*/, const ByteString& /*in*/, ByteString& /*out*/)
 {
-public:
-	// Base constructors
-	HashAlgorithm();
+	ERROR_MSG("RC4 does not support key unwrapping");
 
-	// Destructor
-	virtual ~HashAlgorithm() { }
+	return false;
+}
 
-	// Hashing functions
-	virtual bool hashInit();
-	virtual bool hashUpdate(const ByteString& data);
-	virtual bool hashFinal(ByteString& hashedData);
+std::string BotanRC4::getCipher() const
+{
+	std::string algo;
 
-	virtual int getHashSize() = 0;
-protected:
-	// The current operation
-	enum
-	{
-		NONE,
-		HASHING
+	if (currentKey == NULL) return "";
+
+	if ((currentKey->getBitLen() % 8) != 0 ||
+            (currentKey->getBitLen() < 8 || currentKey->getBitLen() > 2048))
+        {
+		ERROR_MSG("Invalid RC4 currentKey length (%d bits)", currentKey->getBitLen());
+		return "";
 	}
-	currentOperation;
-};
 
-#endif // !_SOFTHSM_V2_HASHALGORITHM_H
+	// Determine the cipher mode
+	if (currentCipherMode != SymMode::Stream)
+	{
+		ERROR_MSG("Invalid RC4 cipher mode %i", currentCipherMode);
+		return "";
+	}
+
+	return "RC4/()";
+}
+
+size_t BotanRC4::getBlockSize() const
+{
+	// The block size is 8 bits
+	return 8 >> 3;
+}
 

@@ -45,7 +45,9 @@ struct SymAlgo
 		Unknown,
 		AES,
 		DES,
-		DES3
+		DES3,
+		RC2,
+		RC4
 	};
 };
 
@@ -57,7 +59,8 @@ struct SymMode
 		CBC,
 		CFB,
 		ECB,
-		OFB
+		OFB,
+		Stream
 	};
 };
 

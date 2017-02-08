@@ -25,58 +25,24 @@
  */
 
 /*****************************************************************************
- HashAlgorithm.h
+ RC4Key.h
 
- Base class for hash algorithm classes
+ RC4 key symmetric key class
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_HASHALGORITHM_H
-#define _SOFTHSM_V2_HASHALGORITHM_H
+#ifndef _SOFTHSM_V2_RC4KEY_H
+#define _SOFTHSM_V2_RC4KEY_H
 
 #include "config.h"
 #include "ByteString.h"
+#include "SymmetricKey.h"
 
-struct HashAlgo
-{
-	enum Type
-	{
-		Unknown,
-		MD5,
-		SHA1,
-		SHA224,
-		SHA256,
-		SHA384,
-		SHA512,
-		GOST,
-		MD2,
-		MD4
-	};
-};
-
-class HashAlgorithm
+class RC4Key : public SymmetricKey
 {
 public:
-	// Base constructors
-	HashAlgorithm();
-
-	// Destructor
-	virtual ~HashAlgorithm() { }
-
-	// Hashing functions
-	virtual bool hashInit();
-	virtual bool hashUpdate(const ByteString& data);
-	virtual bool hashFinal(ByteString& hashedData);
-
-	virtual int getHashSize() = 0;
-protected:
-	// The current operation
-	enum
-	{
-		NONE,
-		HASHING
-	}
-	currentOperation;
+	// Base constructor
+	RC4Key(size_t inBitLen = 0) : SymmetricKey(inBitLen) { }
 };
 
-#endif // !_SOFTHSM_V2_HASHALGORITHM_H
+#endif // !SOFTHSM_V2_RC4KEY_H
 

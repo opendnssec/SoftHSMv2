@@ -25,58 +25,40 @@
  */
 
 /*****************************************************************************
- HashAlgorithm.h
+ OSSLRC2.h
 
- Base class for hash algorithm classes
+ OpenSSL RC2 implementation
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_HASHALGORITHM_H
-#define _SOFTHSM_V2_HASHALGORITHM_H
+#ifndef _SOFTHSM_V2_OSSLRC2_H
+#define _SOFTHSM_V2_OSSLRC2_H
 
+#include <openssl/evp.h>
+#include <string>
 #include "config.h"
-#include "ByteString.h"
+#include "OSSLEVPSymmetricAlgorithm.h"
 
-struct HashAlgo
-{
-	enum Type
-	{
-		Unknown,
-		MD5,
-		SHA1,
-		SHA224,
-		SHA256,
-		SHA384,
-		SHA512,
-		GOST,
-		MD2,
-		MD4
-	};
-};
-
-class HashAlgorithm
+class OSSLRC2 : public OSSLEVPSymmetricAlgorithm
 {
 public:
-	// Base constructors
-	HashAlgorithm();
-
 	// Destructor
-	virtual ~HashAlgorithm() { }
+	virtual ~OSSLRC2() { }
 
-	// Hashing functions
-	virtual bool hashInit();
-	virtual bool hashUpdate(const ByteString& data);
-	virtual bool hashFinal(ByteString& hashedData);
+	// Wrap/Unwrap keys
+	virtual bool wrapKey(const SymmetricKey* key, const SymWrap::Type mode, const ByteString& in, ByteString& out);
 
-	virtual int getHashSize() = 0;
+	virtual bool unwrapKey(const SymmetricKey* key, const SymWrap::Type mode, const ByteString& in, ByteString& out);
+
+	// Generate key
+	virtual bool generateKey(SymmetricKey& key, RNG* rng = NULL);
+
+	// Return the block size
+	virtual size_t getBlockSize() const;
+
 protected:
-	// The current operation
-	enum
-	{
-		NONE,
-		HASHING
-	}
-	currentOperation;
+	// Return the right EVP cipher for the operation
+	virtual const EVP_CIPHER* getCipher() const;
 };
 
-#endif // !_SOFTHSM_V2_HASHALGORITHM_H
+#endif // !_SOFTHSM_V2_OSSLRC2_H
 

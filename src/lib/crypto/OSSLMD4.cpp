@@ -25,58 +25,22 @@
  */
 
 /*****************************************************************************
- HashAlgorithm.h
+ OSSLMD4.cpp
 
- Base class for hash algorithm classes
+ OpenSSL MD4 implementation
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_HASHALGORITHM_H
-#define _SOFTHSM_V2_HASHALGORITHM_H
-
 #include "config.h"
-#include "ByteString.h"
+#include "OSSLMD4.h"
+#include <openssl/evp.h>
 
-struct HashAlgo
+int OSSLMD4::getHashSize()
 {
-	enum Type
-	{
-		Unknown,
-		MD5,
-		SHA1,
-		SHA224,
-		SHA256,
-		SHA384,
-		SHA512,
-		GOST,
-		MD2,
-		MD4
-	};
-};
+	return 16;
+}
 
-class HashAlgorithm
+const EVP_MD* OSSLMD4::getEVPHash() const
 {
-public:
-	// Base constructors
-	HashAlgorithm();
-
-	// Destructor
-	virtual ~HashAlgorithm() { }
-
-	// Hashing functions
-	virtual bool hashInit();
-	virtual bool hashUpdate(const ByteString& data);
-	virtual bool hashFinal(ByteString& hashedData);
-
-	virtual int getHashSize() = 0;
-protected:
-	// The current operation
-	enum
-	{
-		NONE,
-		HASHING
-	}
-	currentOperation;
-};
-
-#endif // !_SOFTHSM_V2_HASHALGORITHM_H
+	return EVP_md4();
+}
 

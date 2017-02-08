@@ -25,15 +25,19 @@ mkinstalldirs
 stamp-h*
 obj
 test-driver
+.deps/
 
 # Object files
 *.o
+*.lo
 
 # Libraries
+.libs/
 *.lib
 *.a
 
 # Shared objects (inc. Windows DLLs)
+*.la
 *.dll
 *.so
 *.so.*
