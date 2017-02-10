@@ -212,7 +212,7 @@ void SymmetricAlgorithmTests::encryptDecrypt(
 	}
 	{
 		CK_ULONG ulLastEncryptedPartLen;
-		CK_RV rv( C_EncryptFinal(hSession,NULL_PTR,&ulLastEncryptedPartLen) );
+		const CK_RV rv( CRYPTOKI_F_PTR( C_EncryptFinal(hSession,NULL_PTR,&ulLastEncryptedPartLen) ) );
 		if ( isSizeOK ) {
 			CPPUNIT_ASSERT_EQUAL( (CK_RV)CKR_OK, rv );
 			const size_t oldSize( vEncryptedDataParted.size() );
