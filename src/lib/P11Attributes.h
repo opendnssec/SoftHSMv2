@@ -67,20 +67,20 @@ public:
 	// Update the value if allowed
 	CK_RV update(Token *token, bool isPrivate, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op);
 
-	// Checks are determined by footnotes from table 15 on page 62 in the PKCS#11 v2.3 spec.
-	// Table 15 contains common footnotes for object attribute tables that determine the checks to perform on attributes.
-	// There are also checks not in table 15 that have been added here to allow enforcing additional contraints.
+	// Checks are determined by footnotes from table 10 under section 4.2 in the PKCS#11 v2.40 spec.
+	// Table 10 contains common footnotes for object attribute tables that determine the checks to perform on attributes.
+	// There are also checks not in table 10 that have been added here to allow enforcing additional contraints.
 	enum {
-		ck1=1,          //  1  Must be specified when object is created with C_CreateObject.
-		ck2=2,          //  2  Must not be specified when object is created with C_CreateObject.
-		ck3=4,          //  3  Must be specified when object is generated with C_GenerateKey or C_GenerateKeyPair.
-		ck4=8,          //  4  Must not be specified when object is generated with C_GenerateKey or C_GenerateKeyPair.
-		ck5=0x10,       //  5  Must be specified when object is unwrapped with C_UnwrapKey.
-		ck6=0x20,       //  6  Must not be specified when object is unwrapped with C_UnwrapKey.
+		ck1=1,          //  1  MUST be specified when object is created with C_CreateObject.
+		ck2=2,          //  2  MUST not be specified when object is created with C_CreateObject.
+		ck3=4,          //  3  MUST be specified when object is generated with C_GenerateKey or C_GenerateKeyPair.
+		ck4=8,          //  4  MUST not be specified when object is generated with C_GenerateKey or C_GenerateKeyPair.
+		ck5=0x10,       //  5  MUST be specified when object is unwrapped with C_UnwrapKey.
+		ck6=0x20,       //  6  MUST not be specified when object is unwrapped with C_UnwrapKey.
 		ck7=0x40,       //  7  Cannot be revealed if object has its CKA_SENSITIVE attribute set to CK_TRUE or
 		                //      its CKA_EXTRACTABLE attribute set to CK_FALSE.
-		ck8=0x80,       //  8  May be modified after object is created with a C_SetAttributeValue call
-		                //      or in the process of copying an object with a C_CopyObject call.
+		ck8=0x80,       //  8  May be modified after object is created with a C_SetAttributeValue call,
+		                //      or in the process of copying object with a C_CopyObject call.
 		                //      However, it is possible that a particular token may not permit modification of
 		                //      the attribute during the course of a C_CopyObject call.
 		ck9=0x100,      //  9  Default value is token-specific, and may depend on the values of other attributes.
@@ -88,9 +88,9 @@ public:
 		ck11=0x400,     // 11  Attribute cannot be changed once set to CK_TRUE. It becomes a read only attribute.
 		ck12=0x800,     // 12  Attribute cannot be changed once set to CK_FALSE. It becomes a read only attribute.
 		ck13=0x1000,    // Intentionally not defined
-		ck14=0x2000,    // 14  Must be non-empty if CKA_URL is empty (CKA_VALUE)
-		ck15=0x4000,    // 15  Must be non-empty if CKA_VALUE is empty (CKA_URL)
-		ck16=0x8000,    // 16  Can only be empty if CKA_URL is empty
+		ck14=0x2000,    // 14  MUST be non-empty if CKA_URL is empty. (CKA_VALUE)
+		ck15=0x4000,    // 15  MUST be non-empty if CKA_VALUE is empty. (CKA_URL)
+		ck16=0x8000,    // 16  Can only be empty if CKA_URL is empty.
 		ck17=0x10000,   // 17  Can be changed in the process of copying the object using C_CopyObject.
 		ck18=0x20000,
 		ck19=0x40000,
@@ -261,6 +261,24 @@ class P11AttrCopyable : public P11Attribute
 public:
 	// Constructor
 	P11AttrCopyable(OSObject* inobject) : P11Attribute(inobject) { type = CKA_COPYABLE; size = sizeof(CK_BBOOL); checks = ck12; }
+
+protected:
+	// Set the default value of the attribute
+	virtual bool setDefault();
+
+	// Update the value if allowed
+	virtual CK_RV updateAttr(Token *token, bool isPrivate, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op);
+};
+
+/*****************************************
+ * CKA_DESTROYABLE
+ *****************************************/
+
+class P11AttrDestroyable : public P11Attribute
+{
+public:
+	// Constructor
+	P11AttrDestroyable(OSObject* inobject) : P11Attribute(inobject) { type = CKA_DESTROYABLE; size = sizeof(CK_BBOOL); checks = ck17; }
 
 protected:
 	// Set the default value of the attribute

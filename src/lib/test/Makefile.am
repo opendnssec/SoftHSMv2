@@ -1,8 +1,8 @@
 MAINTAINERCLEANFILES = 		$(srcdir)/Makefile.in
 
 AM_CPPFLAGS = 			-I$(srcdir)/.. \
-				-I$(srcdir)/../cryptoki_compat \
-				-I$(srcdir)/../common
+				-I$(srcdir)/../common \
+				-I$(srcdir)/../pkcs11
 
 AM_CFLAGS =			@CPPUNIT_CFLAGS@
 

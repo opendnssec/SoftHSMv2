@@ -1,10 +1,10 @@
 MAINTAINERCLEANFILES = 			$(srcdir)/Makefile.in
 
-AM_CPPFLAGS =				-I$(srcdir)/../cryptoki_compat \
+AM_CPPFLAGS =				-I$(srcdir)/.. \
+					-I$(srcdir)/../common \
 					-I$(srcdir)/../crypto \
 					-I$(srcdir)/../data_mgr \
-					-I$(srcdir)/../common \
-					-I$(srcdir)/.. \
+					-I$(srcdir)/../pkcs11 \
 					@SQLITE3_INCLUDES@
 
 noinst_LTLIBRARIES =			libsofthsm_objectstore.la

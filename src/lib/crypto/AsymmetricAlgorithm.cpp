@@ -140,7 +140,7 @@ bool AsymmetricAlgorithm::verifyFinal(const ByteString& /*signature*/)
 	return true;
 }
 
-// Returns true for mechanisms which have 'tick mark' in Wrap&Unwrap column in PKCS #11 Mechanisms v2.30
+// Returns true for mechanisms which have 'tick mark' in Wrap&Unwrap column in PKCS #11 Mechanisms v2.40
 bool AsymmetricAlgorithm::isWrappingMech(AsymMech::Type padding)
 {
 	switch (padding)

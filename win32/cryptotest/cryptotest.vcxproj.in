@@ -52,7 +52,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..;..\..\src\lib;..\..\src\lib\crypto;..\..\src\lib\common;..\..\src\lib\cryptoki_compat;..\..\src\lib\data_mgr;..\..\src\lib\object_store;..\..\src\lib\session_mgr;..\..\src\lib\slot_mgr;..\..\src\lib\win32;@CUINCPATH@;@DEBUGINCPATH@;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..;..\..\src\lib;..\..\src\lib\crypto;..\..\src\lib\common;..\..\src\lib\pkcs11;..\..\src\lib\data_mgr;..\..\src\lib\object_store;..\..\src\lib\session_mgr;..\..\src\lib\slot_mgr;..\..\src\lib\win32;@CUINCPATH@;@DEBUGINCPATH@;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -70,7 +70,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..;..\..\src\lib;..\..\src\lib\crypto;..\..\src\lib\common;..\..\src\lib\cryptoki_compat;..\..\src\lib\data_mgr;..\..\src\lib\object_store;..\..\src\lib\session_mgr;..\..\src\lib\slot_mgr;..\..\src\lib\win32;@CUINCPATH@;@INCLUDEPATH@;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..;..\..\src\lib;..\..\src\lib\crypto;..\..\src\lib\common;..\..\src\lib\pkcs11;..\..\src\lib\data_mgr;..\..\src\lib\object_store;..\..\src\lib\session_mgr;..\..\src\lib\slot_mgr;..\..\src\lib\win32;@CUINCPATH@;@INCLUDEPATH@;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -82,7 +82,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\src\lib\cryptoki_compat\pkcs11.h" />
+    <ClInclude Include="..\..\src\lib\pkcs11\cryptoki.h" />
+    <ClInclude Include="..\..\src\lib\pkcs11\pkcs11.h" />
+    <ClInclude Include="..\..\src\lib\pkcs11\pkcs11f.h" />
+    <ClInclude Include="..\..\src\lib\pkcs11\pkcs11t.h" />
     <ClInclude Include="..\..\src\lib\crypto\test\AESTests.h" />
     <ClInclude Include="..\..\src\lib\crypto\test\DESTests.h" />
     <ClInclude Include="..\..\src\lib\crypto\test\DHTests.h" />

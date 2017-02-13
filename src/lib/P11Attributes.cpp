@@ -180,7 +180,7 @@ static CK_RV retrieveArray(CK_ATTRIBUTE_PTR pTemplate, const std::map<CK_ATTRIBU
 		std::map<CK_ATTRIBUTE_TYPE,OSAttribute>::const_iterator a = array.find(pTemplate[i].type);
 		if (a == array.end())
 		{
-			pTemplate[i].ulValueLen = (CK_ULONG)-1;
+			pTemplate[i].ulValueLen = CK_UNAVAILABLE_INFORMATION;
 			return CKR_ATTRIBUTE_TYPE_INVALID;
 		}
 		const OSAttribute& attr = a->second;
@@ -188,7 +188,7 @@ static CK_RV retrieveArray(CK_ATTRIBUTE_PTR pTemplate, const std::map<CK_ATTRIBU
 		{
 			if (pTemplate[i].ulValueLen < sizeof(CK_BBOOL))
 			{
-				pTemplate[i].ulValueLen = (CK_ULONG)-1;
+				pTemplate[i].ulValueLen = CK_UNAVAILABLE_INFORMATION;
 				return CKR_BUFFER_TOO_SMALL;
 			}
 			pTemplate[i].ulValueLen = sizeof(CK_BBOOL);
@@ -198,7 +198,7 @@ static CK_RV retrieveArray(CK_ATTRIBUTE_PTR pTemplate, const std::map<CK_ATTRIBU
 		{
 			if (pTemplate[i].ulValueLen < sizeof(CK_ULONG))
 			{
-				pTemplate[i].ulValueLen= (CK_ULONG)-1;
+				pTemplate[i].ulValueLen= CK_UNAVAILABLE_INFORMATION;
 				return CKR_BUFFER_TOO_SMALL;
 			}
 			pTemplate[i].ulValueLen = sizeof(CK_ULONG);
@@ -209,7 +209,7 @@ static CK_RV retrieveArray(CK_ATTRIBUTE_PTR pTemplate, const std::map<CK_ATTRIBU
 			ByteString value = attr.getByteStringValue();
 			if (pTemplate[i].ulValueLen < value.size())
 			{
-				pTemplate[i].ulValueLen= (CK_ULONG)-1;
+				pTemplate[i].ulValueLen= CK_UNAVAILABLE_INFORMATION;
 				return CKR_BUFFER_TOO_SMALL;
 			}
 			pTemplate[i].ulValueLen = value.size();
@@ -241,18 +241,17 @@ CK_RV P11Attribute::retrieve(Token *token, bool isPrivate, CK_VOID_PTR pValue, C
 		return CKR_GENERAL_ERROR;
 	}
 
-	// [PKCS#11 v2.3 pg.131 C_GetAttributeValue]
-	// 1. If the specified attribute (i.e. the attribute specified by the
+	// [PKCS#11 v2.40, C_GetAttributeValue]
+	// 1. If the specified attribute (i.e., the attribute specified by the
 	//    type field) for the object cannot be revealed because the object
 	//    is sensitive or unextractable, then the ulValueLen field in that
-	//    tripple is modified to hold the value -1 (i.e., when it is cast
-	//    to a CK_LONG, it holds -1).
+	//    triple is modified to hold the value CK_UNAVAILABLE_INFORMATION.
 	//
-	// [PKCS#11 v2.3 pg. 62 table 15]
+	// [PKCS#11 v2.40, 4.2 Common attributes, table 10]
 	//  7  Cannot be revealed if object has its CKA_SENSITIVE attribute
 	//     set to CK_TRUE or its CKA_EXTRACTABLE attribute set to CK_FALSE.
 	if ((checks & ck7) == ck7 && (isSensitive() || !isExtractable())) {
-		*pulValueLen = (CK_ULONG)-1;
+		*pulValueLen = CK_UNAVAILABLE_INFORMATION;
 		return CKR_ATTRIBUTE_SENSITIVE;
 	}
 
@@ -299,7 +298,7 @@ CK_RV P11Attribute::retrieve(Token *token, bool isPrivate, CK_VOID_PTR pValue, C
 		}
 	}
 
-	// [PKCS#11 v2.3 pg.131 C_GetAttributeValue]
+	// [PKCS#11 v2.40, C_GetAttributeValue]
 	// 3. Otherwise, if the pValue field has the value NULL_PTR, then the
 	//    ulValueLen field is modified to hold the exact length of the
 	//    specified attribute for the object.
@@ -309,12 +308,12 @@ CK_RV P11Attribute::retrieve(Token *token, bool isPrivate, CK_VOID_PTR pValue, C
 		return CKR_OK;
 	}
 
-	// [PKCS#11 v2.3 pg.131 C_GetAttributeValue]
+	// [PKCS#11 v2.40, C_GetAttributeValue]
 	// 4. Otherwise, if the length specified in ulValueLen is large enough
-	// to hold the value of the specified attribute for the object, then
-	// that attribute is copied into the buffer located at pValue, and
-	// the ulValueLen field is modified to hold the exact length of the
-	// attribute.
+	//    to hold the value of the specified attribute for the object, then
+	//    that attribute is copied into the buffer located at pValue, and
+	//    the ulValueLen field is modified to hold the exact length of the
+	//    attribute.
 	if (*pulValueLen >= attrSize)
 	{
 		// Only copy when there is actually something to copy
@@ -355,9 +354,9 @@ CK_RV P11Attribute::retrieve(Token *token, bool isPrivate, CK_VOID_PTR pValue, C
 		return rv;
 	}
 
-	// [PKCS#11 v2.3 pg.131]
-	// 5. Otherwise, the ulValueLen field is modified to hold the value -1.
-	*pulValueLen = (CK_ULONG)-1;
+	// [PKCS#11 v2.40, C_GetAttributeValue]
+	// 5. Otherwise, the ulValueLen field is modified to hold the value CK_UNAVAILABLE_INFORMATION.
+	*pulValueLen = CK_UNAVAILABLE_INFORMATION;
 	return CKR_BUFFER_TOO_SMALL;
 }
 
@@ -369,7 +368,7 @@ CK_RV P11Attribute::update(Token* token, bool isPrivate, CK_VOID_PTR pValue, CK_
 		return CKR_GENERAL_ERROR;
 	}
 
-	// [PKCS#11 v2.3 pg. 60]
+	// [PKCS#11 v2.40, 4.1.1 Creating objects]
 	//    2. If the supplied template specifies an invalid value for a valid attribute, then the
 	//    attempt should fail with the error code CKR_ATTRIBUTE_VALUE_INVALID.
 	//    The valid values for Cryptoki attributes are described in the Cryptoki specification.
@@ -386,7 +385,7 @@ CK_RV P11Attribute::update(Token* token, bool isPrivate, CK_VOID_PTR pValue, CK_
 		return CKR_ATTRIBUTE_VALUE_INVALID;
 	}
 
-	// [PKCS#11 v2.3 pg. 60] OBJECT_OP_CREATE | OBJECT_OP_SET | OBJECT_OP_COPY
+	// [PKCS#11 v2.40, 4.1.1 Creating objects] OBJECT_OP_CREATE | OBJECT_OP_SET | OBJECT_OP_COPY
 	//    3. If the supplied template specifies a value for a read-only attribute, then the attempt
 	//    should fail with the error code CKR_ATTRIBUTE_READ_ONLY.
 	//    Whether or not a given Cryptoki attribute is read-only is explicitly stated in the Cryptoki
@@ -395,7 +394,6 @@ CK_RV P11Attribute::update(Token* token, bool isPrivate, CK_VOID_PTR pValue, CK_
 	//    nonetheless be read-only under certain circumstances (i.e., in conjunction with some
 	//    combinations of other attributes) for a particular library and token. Whether or not a
 	//    given non-Cryptoki attribute is read-only is obviously outside the scope of Cryptoki.
-
 
 	// Attributes cannot be changed if CKA_MODIFIABLE is set to false
 	if (!isModifiable() && op != OBJECT_OP_GENERATE && op != OBJECT_OP_CREATE) {
@@ -412,7 +410,7 @@ CK_RV P11Attribute::update(Token* token, bool isPrivate, CK_VOID_PTR pValue, CK_
 		}
 	}
 
-	//  ck2  Must not be specified when object is created with C_CreateObject.
+	//  ck2  MUST not be specified when object is created with C_CreateObject.
 	if ((checks & ck2) == ck2)
 	{
 		if (OBJECT_OP_CREATE==op)
@@ -422,7 +420,7 @@ CK_RV P11Attribute::update(Token* token, bool isPrivate, CK_VOID_PTR pValue, CK_
 		}
 	}
 
-	//  ck4  Must not be specified when object is generated with C_GenerateKey or C_GenerateKeyPair.
+	//  ck4  MUST not be specified when object is generated with C_GenerateKey or C_GenerateKeyPair.
 	if ((checks & ck4) == ck4)
 	{
 		if (OBJECT_OP_GENERATE==op)
@@ -432,7 +430,7 @@ CK_RV P11Attribute::update(Token* token, bool isPrivate, CK_VOID_PTR pValue, CK_
 		}
 	}
 
-	//  ck6  Must not be specified when object is unwrapped with C_UnwrapKey.
+	//  ck6  MUST not be specified when object is unwrapped with C_UnwrapKey.
 	if ((checks & ck6) == ck6)
 	{
 		if (OBJECT_OP_UNWRAP==op)
@@ -534,7 +532,7 @@ CK_RV P11AttrKeyType::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_P
 /*****************************************
  * CKA_CERTIFICATE_TYPE
  * footnote 1
- *  1  Must be specified when object is created with C_CreateObject.
+ *  1  MUST be specified when object is created with C_CreateObject.
  *****************************************/
 
 // Set default value
@@ -723,6 +721,44 @@ CK_RV P11AttrCopyable::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_
 		{
 			return CKR_ATTRIBUTE_READ_ONLY;
 		}
+	}
+
+	return CKR_OK;
+}
+
+/*****************************************
+ * CKA_DESTROYABLE
+ *****************************************/
+
+// Set default value
+bool P11AttrDestroyable::setDefault()
+{
+	OSAttribute attr(true);
+	return osobject->setAttribute(type, attr);
+}
+
+// Update the value if allowed
+CK_RV P11AttrDestroyable::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int /*op*/)
+{
+	OSAttribute attrTrue(true);
+	OSAttribute attrFalse(false);
+
+	// Attribute specific checks
+
+	if (ulValueLen !=sizeof(CK_BBOOL))
+	{
+		return CKR_ATTRIBUTE_VALUE_INVALID;
+	}
+
+	// Store data
+
+	if (*(CK_BBOOL*)pValue == CK_FALSE)
+	{
+		osobject->setAttribute(type, attrFalse);
+	}
+	else
+	{
+		osobject->setAttribute(type, attrTrue);
 	}
 
 	return CKR_OK;

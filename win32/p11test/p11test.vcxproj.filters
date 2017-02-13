@@ -85,10 +85,16 @@
     <ClInclude Include="..\..\src\lib\access.h">
       <Filter>Lib Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\lib\cryptoki.h">
+    <ClInclude Include="..\..\src\lib\pkcs11\cryptoki.h">
       <Filter>Lib Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\lib\cryptoki_compat\pkcs11.h">
+    <ClInclude Include="..\..\src\lib\pkcs11\pkcs11.h">
+      <Filter>Other Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\pkcs11\pkcs11f.h">
+      <Filter>Other Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lib\pkcs11\pkcs11t.h">
       <Filter>Other Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\lib\P11Attributes.h">

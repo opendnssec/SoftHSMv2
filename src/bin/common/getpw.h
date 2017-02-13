@@ -33,7 +33,7 @@
 #ifndef _SOFTHSM_V2_BIN_GETPW_H
 #define _SOFTHSM_V2_BIN_GETPW_H
 
-#include "pkcs11.h"
+#include "cryptoki.h"
 
 int getPW(char* pin, char* newPIN, CK_ULONG userType);
 
