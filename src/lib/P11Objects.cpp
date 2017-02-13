@@ -194,6 +194,15 @@ CK_RV P11Object::saveTemplate(Token *token, bool isPrivate, CK_ATTRIBUTE_PTR pTe
 	if (osobject->startTransaction() == false)
 		return CKR_GENERAL_ERROR;
 
+	if (op == OBJECT_OP_SET)
+	{
+		if (!isModifiable())
+		{
+			osobject->abortTransaction();
+			return CKR_ACTION_PROHIBITED;
+		}
+	}
+
 	// [PKCS#11 v2.40, 4.1.3 Copying objects] OBJECT_OP_COPY
 	//    If the CKA_COPYABLE attribute of the object to be copied is set
 	//    to CK_FALSE, C_CopyObject returns CKR_ACTION_PROHIBITED.

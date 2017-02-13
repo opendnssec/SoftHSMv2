@@ -178,7 +178,7 @@ protected:
 	);
 
 	CK_RV createDataObjectMinimal(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_OBJECT_HANDLE &hObject);
-	CK_RV createDataObjectCopyDestroy(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_BBOOL bCopyable, CK_BBOOL bDestroyable, CK_OBJECT_HANDLE &hObject);
+	CK_RV createDataObjectMCD(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_BBOOL bModifiable, CK_BBOOL bCopyable, CK_BBOOL bDestroyable, CK_OBJECT_HANDLE &hObject);
 	CK_RV createDataObjectNormal(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_OBJECT_HANDLE &hObject);
 
 	CK_RV createCertificateObjectIncomplete(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_OBJECT_HANDLE &hObject);

@@ -1647,6 +1647,10 @@ CK_RV SoftHSM::C_SetAttributeValue(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE 
 		return rv;
 	}
 
+	// Check if the object is modifiable
+	CK_BBOOL isModifiable = object->getBooleanValue(CKA_MODIFIABLE, true);
+	if (!isModifiable) return CKR_ACTION_PROHIBITED;
+
 	// Wrap a P11Object around the OSObject so we can access the attributes in the
 	// context of the object in which it is defined.
 	P11Object* p11object = NULL;

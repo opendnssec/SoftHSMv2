@@ -536,7 +536,7 @@ CK_RV ObjectTests::createDataObjectMinimal(CK_SESSION_HANDLE hSession, CK_BBOOL 
 	return CRYPTOKI_F_PTR( C_CreateObject(hSession, objTemplate, sizeof(objTemplate)/sizeof(CK_ATTRIBUTE),&hObject) );
 }
 
-CK_RV ObjectTests::createDataObjectCopyDestroy(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_BBOOL bCopyable, CK_BBOOL bDestroyable, CK_OBJECT_HANDLE &hObject)
+CK_RV ObjectTests::createDataObjectMCD(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_BBOOL bModifiable, CK_BBOOL bCopyable, CK_BBOOL bDestroyable, CK_OBJECT_HANDLE &hObject)
 {
 	CK_OBJECT_CLASS cClass = CKO_DATA;
 	CK_UTF8CHAR label[] = "A data object";
@@ -547,7 +547,7 @@ CK_RV ObjectTests::createDataObjectCopyDestroy(CK_SESSION_HANDLE hSession, CK_BB
 		// Storage
 		{ CKA_TOKEN, &bToken, sizeof(bToken) },
 		{ CKA_PRIVATE, &bPrivate, sizeof(bPrivate) },
-		//CKA_MODIFIABLE
+		{ CKA_MODIFIABLE, &bModifiable, sizeof(bModifiable) },
 		{ CKA_LABEL, label, sizeof(label)-1 },
 		{ CKA_COPYABLE, &bCopyable, sizeof(bCopyable) },
 		{ CKA_DESTROYABLE, &bDestroyable, sizeof(bDestroyable) }
@@ -929,7 +929,7 @@ void ObjectTests::testCopyObject()
 	// Get a public session object
 	rv = createDataObjectMinimal(hSession, IN_SESSION, IS_PUBLIC, hObject);
 	CPPUNIT_ASSERT(rv == CKR_OK);
-	rv = createDataObjectCopyDestroy(hSession, IN_SESSION, IS_PUBLIC, CK_FALSE, CK_TRUE, hObjectCopy);
+	rv = createDataObjectMCD(hSession, IN_SESSION, IS_PUBLIC, CK_TRUE, CK_FALSE, CK_TRUE, hObjectCopy);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// Allowed to copy it
@@ -1095,7 +1095,7 @@ void ObjectTests::testDestroyObject()
 	CPPUNIT_ASSERT(rv == CKR_OK);
 	rv = createDataObjectMinimal(hSessionRW, ON_TOKEN, IS_PRIVATE, hObjectTokenPrivate);
 	CPPUNIT_ASSERT(rv == CKR_OK);
-	rv = createDataObjectCopyDestroy(hSessionRW, IN_SESSION, IS_PUBLIC, CK_TRUE, CK_FALSE, hObjectDestroy);
+	rv = createDataObjectMCD(hSessionRW, IN_SESSION, IS_PUBLIC, CK_TRUE, CK_TRUE, CK_FALSE, hObjectDestroy);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// We should not be able to destroy a non-destroyable object.
@@ -1284,6 +1284,7 @@ void ObjectTests::testSetAttributeValue()
 	CK_OBJECT_HANDLE hObjectSessionPrivate;
 	CK_OBJECT_HANDLE hObjectTokenPublic;
 	CK_OBJECT_HANDLE hObjectTokenPrivate;
+	CK_OBJECT_HANDLE hObjectSet;
 
 	// Just make sure that we finalize any previous tests
 	CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
@@ -1317,6 +1318,8 @@ void ObjectTests::testSetAttributeValue()
 	CPPUNIT_ASSERT(rv == CKR_OK);
 	rv = createDataObjectMinimal(hSessionRW, ON_TOKEN, IS_PRIVATE, hObjectTokenPrivate);
 	CPPUNIT_ASSERT(rv == CKR_OK);
+	rv = createDataObjectMCD(hSessionRO, IN_SESSION, IS_PUBLIC, CK_FALSE, CK_TRUE, CK_TRUE, hObjectSet);
+	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// Check that label can be modified on all combintations of session/token and public/private objects
 	const char  *pLabel = "Label modified via C_SetAttributeValue";
@@ -1336,6 +1339,8 @@ void ObjectTests::testSetAttributeValue()
 	CPPUNIT_ASSERT(rv == CKR_SESSION_READ_ONLY);
 	rv = CRYPTOKI_F_PTR( C_SetAttributeValue (hSessionRW,hObjectTokenPrivate,&attribs[0],1) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
+	rv = CRYPTOKI_F_PTR( C_SetAttributeValue (hSessionRO,hObjectSet,&attribs[0],1) );
+	CPPUNIT_ASSERT(rv == CKR_ACTION_PROHIBITED);
 
 	attribs[0].pValue = NULL_PTR;
 	rv = CRYPTOKI_F_PTR( C_GetAttributeValue(hSessionRO,hObjectSessionPublic,&attribs[0],1) );
@@ -1349,7 +1354,6 @@ void ObjectTests::testSetAttributeValue()
 	CPPUNIT_ASSERT(rv == CKR_OK);
 	CPPUNIT_ASSERT(attribs[0].ulValueLen == strlen(pLabel));
 	CPPUNIT_ASSERT(memcmp(pLabel,pStoredLabel,strlen(pLabel)) == 0);
-
 
 	// Close session
 	rv = CRYPTOKI_F_PTR( C_CloseSession(hSessionRO) );
