@@ -39,6 +39,7 @@
 
 // 1. CK_PTR: The indirection string for making a pointer to an
 // object.
+
 #define CK_PTR *
 
 // 2. CK_DECLARE_FUNCTION(returnType, name): A macro which makes
@@ -70,15 +71,11 @@
 // a function pointer type for an application callback out of
 // a return type for the callback and a name for the callback.
 
-#ifdef _WIN32
 #define CK_CALLBACK_FUNCTION(returnType, name) \
    returnType (* name)
-#else
-#define CK_CALLBACK_FUNCTION(returnType, name) \
-   returnType (* name)
-#endif
 
 // 5. NULL_PTR: This macro is the value of a NULL pointer.
+
 #ifndef NULL_PTR
 #define NULL_PTR 0
 #endif
