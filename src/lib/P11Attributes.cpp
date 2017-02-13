@@ -884,6 +884,17 @@ CK_RV P11AttrCheckValue::updateAttr(Token *token, bool isPrivate, CK_VOID_PTR pV
 }
 
 /*****************************************
+ * CKA_PUBLIC_KEY_INFO
+ *****************************************/
+
+// Set default value
+bool P11AttrPublicKeyInfo::setDefault()
+{
+	OSAttribute attr(ByteString(""));
+	return osobject->setAttribute(type, attr);
+}
+
+/*****************************************
  * CKA_ID
  *****************************************/
 

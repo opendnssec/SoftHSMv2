@@ -2,7 +2,12 @@ NEWS for SoftHSM -- History of user visible changes
 
 SoftHSM 2.3.0 - 2017-xx-xx
 
-* Issue #130: Upgraded to PKCS#11 v2.40
+* Issue #130: Upgraded to PKCS#11 v2.40.
+  * Minor changes to some return values.
+  * Added CKA_DESTROYABLE to all objects. Used by C_DestroyObject().
+  * Added CKA_PUBLIC_KEY_INFO to certificates, private, and public key
+    objects. Will be accepted from application, but SoftHSM will
+    currently not calculate it.
 
 
 SoftHSM 2.2.0 - 2016-12-05

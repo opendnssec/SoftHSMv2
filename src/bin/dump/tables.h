@@ -83,6 +83,7 @@ void fill_CKA_table(std::map<unsigned long, std::string> &t)
 	t[CKA_EXPONENT_1] = "CKA_EXPONENT_1";
 	t[CKA_EXPONENT_2] = "CKA_EXPONENT_2";
 	t[CKA_COEFFICIENT] = "CKA_COEFFICIENT";
+	t[CKA_PUBLIC_KEY_INFO] = "CKA_PUBLIC_KEY_INFO";
 	t[CKA_PRIME] = "CKA_PRIME";
 	t[CKA_SUBPRIME] = "CKA_SUBPRIME";
 	t[CKA_BASE] = "CKA_BASE";

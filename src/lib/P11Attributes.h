@@ -338,6 +338,21 @@ protected:
 };
 
 /*****************************************
+ * CKA_PUBLIC_KEY_INFO
+ *****************************************/
+
+class P11AttrPublicKeyInfo : public P11Attribute
+{
+public:
+	// Constructor
+	P11AttrPublicKeyInfo(OSObject* inobject, CK_ULONG inchecks) : P11Attribute(inobject) { type = CKA_OBJECT_ID; checks = inchecks; }
+
+protected:
+	// Set the default value of the attribute
+	virtual bool setDefault();
+};
+
+/*****************************************
  * CKA_ID
  *****************************************/
 

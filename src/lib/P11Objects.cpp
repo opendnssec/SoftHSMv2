@@ -405,6 +405,8 @@ bool P11CertificateObj::init(OSObject *inobject)
 	P11Attribute* attrCheckValue = new P11AttrCheckValue(osobject, 0);
 	P11Attribute* attrStartDate = new P11AttrStartDate(osobject,0);
 	P11Attribute* attrEndDate = new P11AttrEndDate(osobject,0);
+	// TODO: CKA_PUBLIC_KEY_INFO is accepted, but we do not calculate it.
+	P11Attribute* attrPublicKeyInfo = new P11AttrPublicKeyInfo(osobject,0);
 
 	// Initialize the attributes
 	if
@@ -414,7 +416,8 @@ bool P11CertificateObj::init(OSObject *inobject)
 		!attrCertificateCategory->init() ||
 		!attrCheckValue->init() ||
 		!attrStartDate->init() ||
-		!attrEndDate->init()
+		!attrEndDate->init() ||
+		!attrPublicKeyInfo->init()
 	)
 	{
 		ERROR_MSG("Could not initialize the attribute");
@@ -424,6 +427,7 @@ bool P11CertificateObj::init(OSObject *inobject)
 		delete attrCheckValue;
 		delete attrStartDate;
 		delete attrEndDate;
+		delete attrPublicKeyInfo;
 		return false;
 	}
 
@@ -434,6 +438,7 @@ bool P11CertificateObj::init(OSObject *inobject)
 	attributes[attrCheckValue->getType()] = attrCheckValue;
 	attributes[attrStartDate->getType()] = attrStartDate;
 	attributes[attrEndDate->getType()] = attrEndDate;
+	attributes[attrPublicKeyInfo->getType()] = attrPublicKeyInfo;
 
 	initialized = true;
 	return true;
@@ -668,6 +673,8 @@ bool P11PublicKeyObj::init(OSObject *inobject)
 	P11Attribute* attrWrap = new P11AttrWrap(osobject);
 	P11Attribute* attrTrusted = new P11AttrTrusted(osobject);
 	P11Attribute* attrWrapTemplate = new P11AttrWrapTemplate(osobject);
+	// TODO: CKA_PUBLIC_KEY_INFO is accepted, but we do not calculate it
+	P11Attribute* attrPublicKeyInfo = new P11AttrPublicKeyInfo(osobject,0);
 
 	// Initialize the attributes
 	if
@@ -678,7 +685,8 @@ bool P11PublicKeyObj::init(OSObject *inobject)
 		!attrVerifyRecover->init() ||
 		!attrWrap->init() ||
 		!attrTrusted->init() ||
-		!attrWrapTemplate->init()
+		!attrWrapTemplate->init() ||
+		!attrPublicKeyInfo->init()
 	)
 	{
 		ERROR_MSG("Could not initialize the attribute");
@@ -689,6 +697,7 @@ bool P11PublicKeyObj::init(OSObject *inobject)
 		delete attrWrap;
 		delete attrTrusted;
 		delete attrWrapTemplate;
+		delete attrPublicKeyInfo;
 		return false;
 	}
 
@@ -700,6 +709,7 @@ bool P11PublicKeyObj::init(OSObject *inobject)
 	attributes[attrWrap->getType()] = attrWrap;
 	attributes[attrTrusted->getType()] = attrTrusted;
 	attributes[attrWrapTemplate->getType()] = attrWrapTemplate;
+	attributes[attrPublicKeyInfo->getType()] = attrPublicKeyInfo;
 
 	initialized = true;
 	return true;
@@ -988,6 +998,8 @@ bool P11PrivateKeyObj::init(OSObject *inobject)
 	P11Attribute* attrUnwrapTemplate = new P11AttrUnwrapTemplate(osobject);
 	// TODO: CKA_ALWAYS_AUTHENTICATE is accepted, but we do not use it
 	P11Attribute* attrAlwaysAuthenticate = new P11AttrAlwaysAuthenticate(osobject);
+	// TODO: CKA_PUBLIC_KEY_INFO is accepted, but we do not calculate it
+	P11Attribute* attrPublicKeyInfo = new P11AttrPublicKeyInfo(osobject,P11Attribute::ck8);
 
 	// Initialize the attributes
 	if
@@ -1003,7 +1015,8 @@ bool P11PrivateKeyObj::init(OSObject *inobject)
 		!attrNeverExtractable->init() ||
 		!attrWrapWithTrusted->init() ||
 		!attrUnwrapTemplate->init() ||
-		!attrAlwaysAuthenticate->init()
+		!attrAlwaysAuthenticate->init() ||
+		!attrPublicKeyInfo->init()
 	)
 	{
 		ERROR_MSG("Could not initialize the attribute");
@@ -1019,6 +1032,7 @@ bool P11PrivateKeyObj::init(OSObject *inobject)
 		delete attrWrapWithTrusted;
 		delete attrUnwrapTemplate;
 		delete attrAlwaysAuthenticate;
+		delete attrPublicKeyInfo;
 		return false;
 	}
 
@@ -1035,6 +1049,7 @@ bool P11PrivateKeyObj::init(OSObject *inobject)
 	attributes[attrWrapWithTrusted->getType()] = attrWrapWithTrusted;
 	attributes[attrUnwrapTemplate->getType()] = attrUnwrapTemplate;
 	attributes[attrAlwaysAuthenticate->getType()] = attrAlwaysAuthenticate;
+	attributes[attrPublicKeyInfo->getType()] = attrPublicKeyInfo;
 
 	initialized = true;
 	return true;
