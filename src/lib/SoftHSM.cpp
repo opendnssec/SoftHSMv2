@@ -10240,9 +10240,80 @@ CK_RV SoftHSM::getECDHPublicKey(ECPublicKey* publicKey, ECPrivateKey* privateKey
 	publicKey->setEC(privateKey->getEC());
 
 	// Set value
-	publicKey->setQ(pubData);
+	ByteString data = getECDHPubData(pubData);
+	publicKey->setQ(data);
 
 	return CKR_OK;
+}
+
+// ECDH pubData can be in RAW or DER format.
+// Need to convert RAW as SoftHSM uses DER.
+ByteString SoftHSM::getECDHPubData(ByteString& pubData)
+{
+	size_t len = pubData.size();
+	size_t controlOctets = 2;
+
+	if (len < controlOctets || pubData[0] != 0x04)
+	{
+		controlOctets = 0;
+	}
+	else if (pubData[1] < 0x80)
+	{
+		if (pubData[1] != (len - controlOctets)) controlOctets = 0;
+	}
+	else
+	{
+		size_t lengthOctets = pubData[1] & 0x7F;
+		controlOctets += lengthOctets;
+
+		if (controlOctets >= len)
+		{
+			controlOctets = 0;
+		}
+		else
+		{
+			ByteString length(&pubData[2], lengthOctets);
+
+			if (length.long_val() != (len - controlOctets))
+			{
+				controlOctets = 0;
+			}
+		}
+	}
+
+	// DER format
+	if (controlOctets != 0) return pubData;
+
+	// RAW format
+	ByteString header;
+	if (len < 0x80)
+	{
+		header.resize(2);
+		header[0] = (unsigned char)0x04;
+		header[1] = (unsigned char)(len & 0x7F);
+	}
+	else
+	{
+		// Count significate bytes
+		size_t bytes = sizeof(size_t);
+		for(; bytes > 0; bytes--)
+		{
+			size_t value = len >> ((bytes - 1) * 8);
+			if (value & 0xFF) break;
+		}
+
+		// Set header data
+		header.resize(2 + bytes);
+		header[0] = (unsigned char)0x04;
+		header[1] = (unsigned char)(0x80 | bytes);
+		for (size_t i = 1; i <= bytes; i++)
+		{
+			header[2+bytes-i] = (unsigned char) (len & 0xFF);
+			len >>= 8;
+		}
+	}
+
+	return header + pubData;
 }
 
 CK_RV SoftHSM::getGOSTPrivateKey(GOSTPrivateKey* privateKey, Token* token, OSObject* key)

@@ -385,6 +385,8 @@ private:
 	CK_RV getGOSTPublicKey(GOSTPublicKey* publicKey, Token* token, OSObject* key);
 	CK_RV getSymmetricKey(SymmetricKey* skey, Token* token, OSObject* key);
 
+	ByteString getECDHPubData(ByteString& pubData);
+
 	bool setRSAPrivateKey(OSObject* key, const ByteString &ber, Token* token, bool isPrivate) const;
 	bool setDSAPrivateKey(OSObject* key, const ByteString &ber, Token* token, bool isPrivate) const;
 	bool setDHPrivateKey(OSObject* key, const ByteString &ber, Token* token, bool isPrivate) const;

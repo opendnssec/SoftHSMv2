@@ -92,6 +92,59 @@ CK_RV DeriveTests::generateDhKeyPair(CK_SESSION_HANDLE hSession, CK_BBOOL bToken
 			&hPuk, &hPrk) );
 }
 
+#ifdef WITH_ECC
+CK_RV DeriveTests::generateEcKeyPair(const char* curve, CK_SESSION_HANDLE hSession, CK_BBOOL bTokenPuk, CK_BBOOL bPrivatePuk, CK_BBOOL bTokenPrk, CK_BBOOL bPrivatePrk, CK_OBJECT_HANDLE &hPuk, CK_OBJECT_HANDLE &hPrk)
+{
+	CK_MECHANISM mechanism = { CKM_EC_KEY_PAIR_GEN, NULL_PTR, 0 };
+	CK_KEY_TYPE keyType = CKK_EC;
+	CK_BYTE oidP256[] = { 0x06, 0x08, 0x2A, 0x86, 0x48, 0xCE, 0x3D, 0x03, 0x01, 0x07 };
+	CK_BYTE oidP384[] = { 0x06, 0x05, 0x2B, 0x81, 0x04, 0x00, 0x22 };
+	CK_BYTE oidP521[] = { 0x06, 0x05, 0x2B, 0x81, 0x04, 0x00, 0x23 };
+	CK_BBOOL bTrue = CK_TRUE;
+	CK_ATTRIBUTE pukAttribs[] = {
+		{ CKA_EC_PARAMS, NULL, 0 },
+		{ CKA_KEY_TYPE, &keyType, sizeof(keyType) },
+		{ CKA_TOKEN, &bTokenPuk, sizeof(bTokenPuk) },
+		{ CKA_PRIVATE, &bPrivatePuk, sizeof(bPrivatePuk) }
+	};
+	CK_ATTRIBUTE prkAttribs[] = {
+		{ CKA_KEY_TYPE, &keyType, sizeof(keyType) },
+		{ CKA_TOKEN, &bTokenPrk, sizeof(bTokenPrk) },
+		{ CKA_PRIVATE, &bPrivatePrk, sizeof(bPrivatePrk) },
+		{ CKA_SENSITIVE, &bTrue, sizeof(bTrue) },
+		{ CKA_DERIVE, &bTrue, sizeof(bTrue) }
+	};
+
+	/* Select the curve */
+	if (strcmp(curve, "P-256") == 0)
+	{
+		pukAttribs[0].pValue = oidP256;
+		pukAttribs[0].ulValueLen = sizeof(oidP256);
+	}
+	else if (strcmp(curve, "P-384") == 0)
+	{
+		pukAttribs[0].pValue = oidP384;
+		pukAttribs[0].ulValueLen = sizeof(oidP384);
+	}
+	else if (strcmp(curve, "P-521") == 0)
+	{
+		pukAttribs[0].pValue = oidP521;
+		pukAttribs[0].ulValueLen = sizeof(oidP521);
+	}
+	else
+	{
+		return CKR_GENERAL_ERROR;
+	}
+
+	hPuk = CK_INVALID_HANDLE;
+	hPrk = CK_INVALID_HANDLE;
+	return CRYPTOKI_F_PTR( C_GenerateKeyPair(hSession, &mechanism,
+			pukAttribs, sizeof(pukAttribs)/sizeof(CK_ATTRIBUTE),
+			prkAttribs, sizeof(prkAttribs)/sizeof(CK_ATTRIBUTE),
+			&hPuk, &hPrk) );
+}
+#endif
+
 CK_RV DeriveTests::generateAesKey(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_OBJECT_HANDLE &hKey)
 {
 	CK_MECHANISM mechanism = { CKM_AES_KEY_GEN, NULL_PTR, 0 };
@@ -183,7 +236,7 @@ void DeriveTests::dhDerive(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hPublicK
 	CK_KEY_TYPE keyType = CKK_GENERIC_SECRET;
 	CK_BBOOL bFalse = CK_FALSE;
 	CK_BBOOL bTrue = CK_TRUE;
-	CK_ULONG secLen = 100;
+	CK_ULONG secLen = 32;
 	CK_ATTRIBUTE keyAttribs[] = {
 		{ CKA_CLASS, &keyClass, sizeof(keyClass) },
 		{ CKA_KEY_TYPE, &keyType, sizeof(keyType) },
@@ -201,6 +254,71 @@ void DeriveTests::dhDerive(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hPublicK
 	CPPUNIT_ASSERT(rv == CKR_OK);
 }
 
+#ifdef WITH_ECC
+void DeriveTests::ecdhDerive(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hPublicKey, CK_OBJECT_HANDLE hPrivateKey, CK_OBJECT_HANDLE &hKey, bool useRaw)
+{
+	CK_ATTRIBUTE valAttrib = { CKA_EC_POINT, NULL_PTR, 0 };
+	CK_RV rv = CRYPTOKI_F_PTR( C_GetAttributeValue(hSession, hPublicKey, &valAttrib, 1) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	valAttrib.pValue = (CK_BYTE_PTR)malloc(valAttrib.ulValueLen);
+	rv = CRYPTOKI_F_PTR( C_GetAttributeValue(hSession, hPublicKey, &valAttrib, 1) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	CK_ECDH1_DERIVE_PARAMS parms = { CKD_NULL, 0, NULL_PTR, 0, NULL_PTR };
+	// Use RAW or DER format
+	if (useRaw)
+	{
+		size_t offset = 0;
+		unsigned char* buf = (unsigned char*)valAttrib.pValue;
+		if (valAttrib.ulValueLen > 2 && buf[0] == 0x04)
+		{
+			if (buf[1] < 0x80)
+			{
+				offset = 2;
+			}
+			else
+			{
+				if (valAttrib.ulValueLen > ((buf[1] & 0x7F) + (unsigned int)2))
+				{
+					offset = 2 + (buf[1] & 0x7F);
+				}
+			}
+		}
+		parms.pPublicData = buf + offset;
+		parms.ulPublicDataLen = valAttrib.ulValueLen - offset;
+	}
+	else
+	{
+		parms.pPublicData = (unsigned char*)valAttrib.pValue;
+		parms.ulPublicDataLen = valAttrib.ulValueLen;
+	}
+
+	CK_MECHANISM mechanism = { CKM_ECDH1_DERIVE, NULL, 0 };
+	mechanism.pParameter = &parms;
+	mechanism.ulParameterLen = sizeof(parms);
+	CK_OBJECT_CLASS keyClass = CKO_SECRET_KEY;
+	CK_KEY_TYPE keyType = CKK_GENERIC_SECRET;
+	CK_BBOOL bFalse = CK_FALSE;
+	CK_BBOOL bTrue = CK_TRUE;
+	CK_ULONG secLen = 32;
+	CK_ATTRIBUTE keyAttribs[] = {
+		{ CKA_CLASS, &keyClass, sizeof(keyClass) },
+		{ CKA_KEY_TYPE, &keyType, sizeof(keyType) },
+		{ CKA_PRIVATE, &bFalse, sizeof(bFalse) },
+		{ CKA_SENSITIVE, &bFalse, sizeof(bFalse) },
+		{ CKA_EXTRACTABLE, &bTrue, sizeof(bTrue) },
+		{ CKA_VALUE_LEN, &secLen, sizeof(secLen) }
+	};
+
+	hKey = CK_INVALID_HANDLE;
+	rv = CRYPTOKI_F_PTR( C_DeriveKey(hSession, &mechanism, hPrivateKey,
+			 keyAttribs, sizeof(keyAttribs)/sizeof(CK_ATTRIBUTE),
+			 &hKey) );
+	free(valAttrib.pValue);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+}
+#endif
+
 bool DeriveTests::compareSecret(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hKey1, CK_OBJECT_HANDLE hKey2)
 {
 	CK_ATTRIBUTE keyAttribs[] = {
@@ -215,7 +333,7 @@ bool DeriveTests::compareSecret(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hKe
 	keyAttribs[1].ulValueLen = sizeof(check1);
 	CK_RV rv = CRYPTOKI_F_PTR( C_GetAttributeValue(hSession, hKey1, keyAttribs, 2) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
-	CPPUNIT_ASSERT(keyAttribs[0].ulValueLen == 100);
+	CPPUNIT_ASSERT(keyAttribs[0].ulValueLen == 32);
 	CPPUNIT_ASSERT(keyAttribs[1].ulValueLen == 3);
 	CK_BYTE val2[128];
 	CK_BYTE check2[3];
@@ -225,9 +343,9 @@ bool DeriveTests::compareSecret(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hKe
 	keyAttribs[1].ulValueLen = sizeof(check2);
 	rv = CRYPTOKI_F_PTR( C_GetAttributeValue(hSession, hKey2, keyAttribs, 2) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
-	CPPUNIT_ASSERT(keyAttribs[0].ulValueLen == 100);
+	CPPUNIT_ASSERT(keyAttribs[0].ulValueLen == 32);
 	CPPUNIT_ASSERT(keyAttribs[1].ulValueLen == 3);
-	return memcmp(val1, val2, 100) == 0 &&
+	return memcmp(val1, val2, 32) == 0 &&
 	       memcmp(check1, check2, 3) == 0;
 }
 
@@ -303,6 +421,81 @@ void DeriveTests::testDhDerive()
 	dhDerive(hSessionRW,hPuk2,hPrk1,hKey2);
 	CPPUNIT_ASSERT(compareSecret(hSessionRW,hKey1,hKey2));
 }
+
+#ifdef WITH_ECC
+void DeriveTests::testEcdhDerive()
+{
+	CK_RV rv;
+	CK_SESSION_HANDLE hSessionRO;
+	CK_SESSION_HANDLE hSessionRW;
+
+	// Just make sure that we finalize any previous tests
+	CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
+
+	// Open read-only session on when the token is not initialized should fail
+	rv = CRYPTOKI_F_PTR( C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSessionRO) );
+	CPPUNIT_ASSERT(rv == CKR_CRYPTOKI_NOT_INITIALIZED);
+
+	// Initialize the library and start the test.
+	rv = CRYPTOKI_F_PTR( C_Initialize(NULL_PTR) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Open read-only session
+	rv = CRYPTOKI_F_PTR( C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSessionRO) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Open read-write session
+	rv = CRYPTOKI_F_PTR( C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSessionRW) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Login USER into the sessions so we can create a private objects
+	rv = CRYPTOKI_F_PTR( C_Login(hSessionRO,CKU_USER,m_userPin1,m_userPin1Length) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Public Session keys
+	CK_OBJECT_HANDLE hPuk1 = CK_INVALID_HANDLE;
+	CK_OBJECT_HANDLE hPrk1 = CK_INVALID_HANDLE;
+	CK_OBJECT_HANDLE hPuk2 = CK_INVALID_HANDLE;
+	CK_OBJECT_HANDLE hPrk2 = CK_INVALID_HANDLE;
+
+	rv = generateEcKeyPair("P-256",hSessionRW,IN_SESSION,IS_PUBLIC,IN_SESSION,IS_PUBLIC,hPuk1,hPrk1);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	rv = generateEcKeyPair("P-256",hSessionRW,IN_SESSION,IS_PUBLIC,IN_SESSION,IS_PUBLIC,hPuk2,hPrk2);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	CK_OBJECT_HANDLE hKey1 = CK_INVALID_HANDLE;
+	ecdhDerive(hSessionRW,hPuk1,hPrk2,hKey1,true);
+	CK_OBJECT_HANDLE hKey2 = CK_INVALID_HANDLE;
+	ecdhDerive(hSessionRW,hPuk2,hPrk1,hKey2,false);
+	CPPUNIT_ASSERT(compareSecret(hSessionRW,hKey1,hKey2));
+
+	// Private Session Keys
+	rv = generateEcKeyPair("P-384",hSessionRW,IN_SESSION,IS_PRIVATE,IN_SESSION,IS_PRIVATE,hPuk1,hPrk1);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	rv = generateEcKeyPair("P-384",hSessionRW,IN_SESSION,IS_PRIVATE,IN_SESSION,IS_PRIVATE,hPuk2,hPrk2);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	ecdhDerive(hSessionRW,hPuk1,hPrk2,hKey1,true);
+	ecdhDerive(hSessionRW,hPuk2,hPrk1,hKey2,false);
+	CPPUNIT_ASSERT(compareSecret(hSessionRW,hKey1,hKey2));
+
+	// Public Token Keys
+	rv = generateEcKeyPair("P-521",hSessionRW,ON_TOKEN,IS_PUBLIC,ON_TOKEN,IS_PUBLIC,hPuk1,hPrk1);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	rv = generateEcKeyPair("P-521",hSessionRW,ON_TOKEN,IS_PUBLIC,ON_TOKEN,IS_PUBLIC,hPuk2,hPrk2);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	ecdhDerive(hSessionRW,hPuk1,hPrk2,hKey1,true);
+	ecdhDerive(hSessionRW,hPuk2,hPrk1,hKey2,false);
+	CPPUNIT_ASSERT(compareSecret(hSessionRW,hKey1,hKey2));
+
+	// Private Token Keys
+	rv = generateEcKeyPair("P-256",hSessionRW,ON_TOKEN,IS_PRIVATE,ON_TOKEN,IS_PRIVATE,hPuk1,hPrk1);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	rv = generateEcKeyPair("P-256",hSessionRW,ON_TOKEN,IS_PRIVATE,ON_TOKEN,IS_PRIVATE,hPuk2,hPrk2);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	ecdhDerive(hSessionRW,hPuk1,hPrk2,hKey1,true);
+	ecdhDerive(hSessionRW,hPuk2,hPrk1,hKey2,false);
+	CPPUNIT_ASSERT(compareSecret(hSessionRW,hKey1,hKey2));
+}
+#endif
 
 void DeriveTests::symDerive(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hKey, CK_OBJECT_HANDLE &hDerive, CK_MECHANISM_TYPE mechType, CK_KEY_TYPE keyType)
 {
