@@ -42,6 +42,7 @@
 #include <botan/ber_dec.h>
 #include <botan/der_enc.h>
 #include <botan/oids.h>
+#include <botan/version.h>
 
 // Constructors
 BotanRSAPrivateKey::BotanRSAPrivateKey()
@@ -229,8 +230,12 @@ bool BotanRSAPrivateKey::PKCS8Decode(const ByteString& ber)
 
 			return false;
 		}
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,34)
+		key = new Botan::RSA_PrivateKey(alg_id, keydata);
+#else
 		BotanRNG* rng = (BotanRNG*)BotanCryptoFactory::i()->getRNG();
 		key = new Botan::RSA_PrivateKey(alg_id, keydata, *rng->getRNG());
+#endif
 		if (key == NULL) return false;
 
 		setFromBotan(key);
@@ -274,6 +279,14 @@ void BotanRSAPrivateKey::createBotanKey()
 
 		try
 		{
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,34)
+			rsa = new Botan::RSA_PrivateKey(
+						BotanUtil::byteString2bigInt(p),
+						BotanUtil::byteString2bigInt(q),
+						BotanUtil::byteString2bigInt(e),
+						BotanUtil::byteString2bigInt(d),
+						BotanUtil::byteString2bigInt(n));
+#else
 			BotanRNG* rng = (BotanRNG*)BotanCryptoFactory::i()->getRNG();
 			rsa = new Botan::RSA_PrivateKey(*rng->getRNG(),
 						BotanUtil::byteString2bigInt(p),
@@ -281,6 +294,7 @@ void BotanRSAPrivateKey::createBotanKey()
 						BotanUtil::byteString2bigInt(e),
 						BotanUtil::byteString2bigInt(d),
 						BotanUtil::byteString2bigInt(n));
+#endif
 		}
 		catch (...)
 		{

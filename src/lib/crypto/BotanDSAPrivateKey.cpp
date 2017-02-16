@@ -41,6 +41,7 @@
 #include <botan/ber_dec.h>
 #include <botan/der_enc.h>
 #include <botan/oids.h>
+#include <botan/version.h>
 
 // Constructors
 BotanDSAPrivateKey::BotanDSAPrivateKey()
@@ -176,8 +177,12 @@ bool BotanDSAPrivateKey::PKCS8Decode(const ByteString& ber)
 
 			return false;
 		}
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,34)
+		key = new Botan::DSA_PrivateKey(alg_id, keydata);
+#else
 		BotanRNG* rng = (BotanRNG*)BotanCryptoFactory::i()->getRNG();
 		key = new Botan::DSA_PrivateKey(alg_id, keydata, *rng->getRNG());
+#endif
 		if (key == NULL) return false;
 
 		setFromBotan(key);

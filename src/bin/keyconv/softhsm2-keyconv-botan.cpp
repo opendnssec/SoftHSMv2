@@ -46,6 +46,7 @@
 #include <botan/rsa.h>
 #include <botan/dsa.h>
 #include <botan/bigint.h>
+#include <botan/version.h>
 
 // Init Botan
 void crypto_init()
@@ -91,7 +92,11 @@ int save_rsa_pkcs8(char* out_path, char* file_pin, key_material_t* pkey)
 
 	try
 	{
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,34)
+		priv_key = new Botan::RSA_PrivateKey(bigP, bigQ, bigE, bigD, bigN);
+#else
 		priv_key = new Botan::RSA_PrivateKey(*rng, bigP, bigQ, bigE, bigD, bigN);
+#endif
 	}
 	catch(std::exception& e)
 	{
