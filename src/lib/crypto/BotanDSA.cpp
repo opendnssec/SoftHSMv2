@@ -42,6 +42,7 @@
 #include <algorithm>
 #include <botan/dl_group.h>
 #include <botan/dsa.h>
+#include <botan/version.h>
 #include <iostream>
 
 // Constructor
@@ -106,7 +107,7 @@ bool BotanDSA::sign(PrivateKey* privateKey, const ByteString& dataToSign,
 	}
 
 	// Perform the signature operation
-#if BOTAN_VERSION_MINOR == 11
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,0)
 	std::vector<Botan::byte> signResult;
 #else
 	Botan::SecureVector<Botan::byte> signResult;
@@ -128,7 +129,7 @@ bool BotanDSA::sign(PrivateKey* privateKey, const ByteString& dataToSign,
 
 	// Return the result
 	signature.resize(signResult.size());
-#if BOTAN_VERSION_MINOR == 11
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,0)
 	memcpy(&signature[0], signResult.data(), signResult.size());
 #else
 	memcpy(&signature[0], signResult.begin(), signResult.size());
@@ -257,7 +258,7 @@ bool BotanDSA::signFinal(ByteString& signature)
 	}
 
 	// Perform the signature operation
-#if BOTAN_VERSION_MINOR == 11
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,0)
 	std::vector<Botan::byte> signResult;
 #else
 	Botan::SecureVector<Botan::byte> signResult;
@@ -279,7 +280,7 @@ bool BotanDSA::signFinal(ByteString& signature)
 
 	// Return the result
 	signature.resize(signResult.size());
-#if BOTAN_VERSION_MINOR == 11
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,0)
 	memcpy(&signature[0], signResult.data(), signResult.size());
 #else
 	memcpy(&signature[0], signResult.begin(), signResult.size());

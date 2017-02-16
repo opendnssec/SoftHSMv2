@@ -171,7 +171,7 @@ Botan::Private_Key* crypto_read_file(char* filePath, char* filePIN)
 
 	try
 	{
-#if BOTAN_VERSION_MINOR == 11
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,0)
 		if (filePIN == NULL)
 		{
 			pkey = Botan::PKCS8::load_key(std::string(filePath), *rng);
@@ -591,7 +591,7 @@ ecdsa_key_material_t* crypto_malloc_ecdsa(Botan::ECDSA_PrivateKey* ecdsa)
 		return NULL;
 	}
 
-#if BOTAN_VERSION_MINOR == 11
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,0)
 	std::vector<Botan::byte> derEC = ecdsa->domain().DER_encode(Botan::EC_DOMPAR_ENC_OID);
 	Botan::secure_vector<Botan::byte> derPoint;
 #else
@@ -601,7 +601,7 @@ ecdsa_key_material_t* crypto_malloc_ecdsa(Botan::ECDSA_PrivateKey* ecdsa)
 
 	try
 	{
-#if BOTAN_VERSION_MINOR == 11
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,0)
 		Botan::secure_vector<Botan::byte> repr = Botan::EC2OSP(ecdsa->public_point(),
 			Botan::PointGFp::UNCOMPRESSED);
 #else

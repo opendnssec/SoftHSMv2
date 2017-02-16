@@ -35,6 +35,7 @@
 #include <botan/der_enc.h>
 #include <botan/ber_dec.h>
 #include <botan/asn1_obj.h>
+#include <botan/version.h>
 
 // Convert a Botan BigInt to a ByteString
 ByteString BotanUtil::bigInt2ByteString(const Botan::BigInt& bigInt)
@@ -80,7 +81,7 @@ Botan::BigInt BotanUtil::byteString2bigInt(const ByteString& byteString)
 // Convert a Botan EC group to a ByteString
 ByteString BotanUtil::ecGroup2ByteString(const Botan::EC_Group& ecGroup)
 {
-#if BOTAN_VERSION_MINOR == 11
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,0)
 	std::vector<Botan::byte> der = ecGroup.DER_encode(Botan::EC_DOMPAR_ENC_OID);
 #else
 	Botan::SecureVector<Botan::byte> der = ecGroup.DER_encode(Botan::EC_DOMPAR_ENC_OID);
@@ -91,7 +92,7 @@ ByteString BotanUtil::ecGroup2ByteString(const Botan::EC_Group& ecGroup)
 // Convert a ByteString to a Botan EC group
 Botan::EC_Group BotanUtil::byteString2ECGroup(const ByteString& byteString)
 {
-#if BOTAN_VERSION_MINOR == 11
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,0)
 	std::vector<Botan::byte> der(byteString.size());
 	memcpy(&der[0], byteString.const_byte_str(), byteString.size());
 	return Botan::EC_Group(der);
@@ -107,7 +108,7 @@ ByteString BotanUtil::ecPoint2ByteString(const Botan::PointGFp& ecPoint)
 
 	try
 	{
-#if BOTAN_VERSION_MINOR == 11
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,0)
 		Botan::secure_vector<Botan::byte> repr = Botan::EC2OSP(ecPoint, Botan::PointGFp::UNCOMPRESSED);
 		Botan::secure_vector<Botan::byte> der;
 #else
@@ -132,7 +133,7 @@ ByteString BotanUtil::ecPoint2ByteString(const Botan::PointGFp& ecPoint)
 // Convert a ByteString to a Botan EC point
 Botan::PointGFp BotanUtil::byteString2ECPoint(const ByteString& byteString, const Botan::EC_Group& ecGroup)
 {
-#if BOTAN_VERSION_MINOR == 11
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,0)
 	std::vector<Botan::byte> repr;
 #else
 	Botan::SecureVector<Botan::byte> repr;

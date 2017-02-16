@@ -43,6 +43,7 @@
 #include <botan/der_enc.h>
 #include <botan/asn1_oid.h>
 #include <botan/oids.h>
+#include <botan/version.h>
 
 // Constructors
 BotanECDSAPrivateKey::BotanECDSAPrivateKey()
@@ -129,7 +130,7 @@ ByteString BotanECDSAPrivateKey::PKCS8Encode()
 	if (eckey == NULL) return der;
 	// Force EC_DOMPAR_ENC_OID
 	const size_t PKCS8_VERSION = 0;
-#if BOTAN_VERSION_MINOR == 11
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,0)
 	const std::vector<Botan::byte> parameters = eckey->domain().DER_encode(Botan::EC_DOMPAR_ENC_OID);
 	const Botan::AlgorithmIdentifier alg_id(eckey->get_oid(), parameters);
 	const Botan::secure_vector<Botan::byte> ber =
@@ -162,7 +163,7 @@ bool BotanECDSAPrivateKey::PKCS8Decode(const ByteString& ber)
 {
 	Botan::DataSource_Memory source(ber.const_byte_str(), ber.size());
 	if (source.end_of_data()) return false;
-#if BOTAN_VERSION_MINOR == 11
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,0)
 	Botan::secure_vector<Botan::byte> keydata;
 #else
 	Botan::SecureVector<Botan::byte> keydata;

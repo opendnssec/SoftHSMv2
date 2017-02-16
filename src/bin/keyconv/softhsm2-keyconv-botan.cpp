@@ -123,7 +123,7 @@ int save_rsa_pkcs8(char* out_path, char* file_pin, key_material_t* pkey)
 		}
 		else
 		{
-#if BOTAN_VERSION_MINOR == 11
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,0)
 			priv_file << Botan::PKCS8::PEM_encode(*priv_key, *rng, file_pin, std::chrono::milliseconds(300), "PBE-PKCS5v15(MD5,DES/CBC)");
 #else
 			priv_file << Botan::PKCS8::PEM_encode(*priv_key, *rng, file_pin, "PBE-PKCS5v15(MD5,DES/CBC)");
@@ -203,7 +203,7 @@ int save_dsa_pkcs8(char* out_path, char* file_pin, key_material_t* pkey)
 		}
 		else
 		{
-#if BOTAN_VERSION_MINOR == 11
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,0)
 			priv_file << Botan::PKCS8::PEM_encode(*priv_key, *rng, file_pin, std::chrono::milliseconds(300), "PBE-PKCS5v15(MD5,DES/CBC)");
 #else
 			priv_file << Botan::PKCS8::PEM_encode(*priv_key, *rng, file_pin, "PBE-PKCS5v15(MD5,DES/CBC)");

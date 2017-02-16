@@ -137,7 +137,7 @@ ByteString BotanDSAPrivateKey::PKCS8Encode()
 	ByteString der;
 	createBotanKey();
 	if (dsa == NULL) return der;
-#if BOTAN_VERSION_MINOR == 11
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,0)
 	const Botan::secure_vector<Botan::byte> ber = Botan::PKCS8::BER_encode(*dsa);
 #else
 	const Botan::SecureVector<Botan::byte> ber = Botan::PKCS8::BER_encode(*dsa);
@@ -152,7 +152,7 @@ bool BotanDSAPrivateKey::PKCS8Decode(const ByteString& ber)
 {
 	Botan::DataSource_Memory source(ber.const_byte_str(), ber.size());
 	if (source.end_of_data()) return false;
-#if BOTAN_VERSION_MINOR == 11
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,0)
 	Botan::secure_vector<Botan::byte> keydata;
 #else
 	Botan::SecureVector<Botan::byte> keydata;

@@ -43,6 +43,7 @@
 #include <algorithm>
 #include <botan/ec_group.h>
 #include <botan/gost_3410.h>
+#include <botan/version.h>
 #include <iostream>
 
 // Constructor
@@ -168,7 +169,7 @@ bool BotanGOST::signFinal(ByteString& signature)
 	}
 
 	// Perform the signature operation
-#if BOTAN_VERSION_MINOR == 11
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,0)
 	std::vector<Botan::byte> signResult;
 #else
 	Botan::SecureVector<Botan::byte> signResult;
@@ -190,7 +191,7 @@ bool BotanGOST::signFinal(ByteString& signature)
 
 	// Return the result
 	signature.resize(signResult.size());
-#if BOTAN_VERSION_MINOR == 11
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,0)
 	memcpy(&signature[0], signResult.data(), signResult.size());
 #else
 	memcpy(&signature[0], signResult.begin(), signResult.size());
