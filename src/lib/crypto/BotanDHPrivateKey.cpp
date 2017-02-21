@@ -183,7 +183,18 @@ ByteString BotanDHPrivateKey::PKCS8Encode()
 	if (dh == NULL) return der;
 	// Force PKCS3_DH_PARAMETERS for p, g and no q.
 	const size_t PKCS8_VERSION = 0;
-#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,0)
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(2,0,0)
+	const std::vector<Botan::byte> parameters = dh->impl->get_domain().DER_encode(Botan::DL_Group::PKCS3_DH_PARAMETERS);
+	const Botan::AlgorithmIdentifier alg_id(dh->impl->get_oid(), parameters);
+	const Botan::secure_vector<Botan::byte> ber =
+		Botan::DER_Encoder()
+		.start_cons(Botan::SEQUENCE)
+		    .encode(PKCS8_VERSION)
+		    .encode(alg_id)
+		    .encode(dh->impl->private_key_bits(), Botan::OCTET_STRING)
+		.end_cons()
+	    .get_contents();
+#elif BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,0)
 	const std::vector<Botan::byte> parameters = dh->impl->get_domain().DER_encode(Botan::DL_Group::PKCS3_DH_PARAMETERS);
 	const Botan::AlgorithmIdentifier alg_id(dh->impl->get_oid(), parameters);
 	const Botan::secure_vector<Botan::byte> ber =

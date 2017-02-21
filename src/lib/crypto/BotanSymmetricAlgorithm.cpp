@@ -45,6 +45,11 @@
 #include <botan/key_filt.h>
 #endif
 
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(2,0,0)
+#include "Botan_ecb.h"
+#include <botan/cipher_filter.h>
+#endif
+
 // Constructor
 BotanSymmetricAlgorithm::BotanSymmetricAlgorithm()
 {
@@ -108,7 +113,26 @@ bool BotanSymmetricAlgorithm::encryptInit(const SymmetricKey* key, const SymMode
 		Botan::SymmetricKey botanKey = Botan::SymmetricKey(key->getKeyBits().const_byte_str(), key->getKeyBits().size());
 		if (mode == SymMode::ECB)
 		{
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(2,0,0)
+			// ECB cipher mode was dropped in Botan 2.0
+			const std::vector<std::string> algo_parts = Botan::split_on(cipherName, '/');
+			const std::string cipher_name = algo_parts[0];
+			Botan::BlockCipherModePaddingMethod* pad;
+			if (algo_parts.size() == 3 && algo_parts[2] == "PKCS7")
+			{
+				pad = new Botan::PKCS7_Padding();
+			}
+			else
+			{
+				pad = new Botan::Null_Padding();
+			}
+			std::unique_ptr<Botan::BlockCipher> bc(Botan::BlockCipher::create(cipher_name));
+			Botan::Keyed_Filter* cipher = new Botan::Cipher_Mode_Filter(new Botan::ECB_Encryption(bc.release(),pad));
+			cipher->set_key(botanKey);
+			cryption = new Botan::Pipe(cipher);
+#else
 			cryption = new Botan::Pipe(Botan::get_cipher(cipherName, botanKey, Botan::ENCRYPTION));
+#endif
 		}
 		else
 		{
@@ -117,9 +141,9 @@ bool BotanSymmetricAlgorithm::encryptInit(const SymmetricKey* key, const SymMode
 		}
 		cryption->start_msg();
 	}
-	catch (...)
+	catch (std::exception &e)
 	{
-		ERROR_MSG("Failed to create the encryption token");
+		ERROR_MSG("Failed to create the encryption token: %s", e.what());
 
 		ByteString dummy;
 		SymmetricAlgorithm::encryptFinal(dummy);
@@ -281,7 +305,26 @@ bool BotanSymmetricAlgorithm::decryptInit(const SymmetricKey* key, const SymMode
 		Botan::SymmetricKey botanKey = Botan::SymmetricKey(key->getKeyBits().const_byte_str(), key->getKeyBits().size());
 		if (mode == SymMode::ECB)
 		{
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(2,0,0)
+			// ECB cipher mode was dropped in Botan 2.0
+			const std::vector<std::string> algo_parts = Botan::split_on(cipherName, '/');
+			const std::string cipher_name = algo_parts[0];
+			Botan::BlockCipherModePaddingMethod* pad;
+			if (algo_parts.size() == 3 && algo_parts[2] == "PKCS7")
+			{
+				pad = new Botan::PKCS7_Padding();
+			}
+			else
+			{
+				pad = new Botan::Null_Padding();
+			}
+			std::unique_ptr<Botan::BlockCipher> bc(Botan::BlockCipher::create(cipher_name));
+			Botan::Keyed_Filter* cipher = new Botan::Cipher_Mode_Filter(new Botan::ECB_Decryption(bc.release(),pad));
+			cipher->set_key(botanKey);
+			cryption = new Botan::Pipe(cipher);
+#else
 			cryption = new Botan::Pipe(Botan::get_cipher(cipherName, botanKey, Botan::DECRYPTION));
+#endif
 		}
 		else
 		{
