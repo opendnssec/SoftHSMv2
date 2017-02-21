@@ -47,6 +47,14 @@ test-driver
 *.log
 *.trs
 
+# Temporary files
+*~
+
+# Building directories
+build
+Botan-*
+ROOT
+
 # Specifics
 softhsm2.module
 src/bin/common/.dirstamp

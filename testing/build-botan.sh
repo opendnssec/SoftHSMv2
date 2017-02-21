@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 source `dirname "$0"`/lib.sh && init || exit 1
 
-BOTAN="Botan-1.10.7"
-BOTAN_URL="http://botan.randombit.net/files/$BOTAN.tgz"
+BOTAN="Botan-1.10.15"
+BOTAN_URL="https://botan.randombit.net/releases/$BOTAN.tgz"
 BOTAN_FILENAME="$BOTAN.tgz"
 BOTAN_HASH_TYPE="sha1"
-BOTAN_HASH="54552cdafabea710f48cd4536a938ed329ef60dd"
+BOTAN_HASH="2fb9c5798f1157fff830b4aeeacffac4b659864d"
 
 check_if_built botan && exit 0
 start_build botan
@@ -18,6 +18,7 @@ case "$DISTRIBUTION" in
 	redhat | \
 	fedora | \
 	sl | \
+	slackware | \
 	ubuntu | \
 	debian | \
 	opensuse | \

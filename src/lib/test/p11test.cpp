@@ -38,6 +38,8 @@
 #include <cppunit/SourceLine.h>
 #include <cppunit/Message.h>
 #include <cppunit/Exception.h>
+#include <cppunit/XmlOutputter.h>
+#include <fstream>
 #include <stdlib.h>
 #include <iostream>
 #ifdef _WIN32
@@ -81,6 +83,10 @@ int main(int argc, char**const argv)
 	controller.addListener( &progress );
 
 	runner.run(controller);
+
+	std::ofstream xmlFileOut("test-results.xml");
+	CppUnit::XmlOutputter xmlOut(&result, xmlFileOut);
+	xmlOut.write();
+
 	return result.wasSuccessful() ? 0 : 1;
 }
-
