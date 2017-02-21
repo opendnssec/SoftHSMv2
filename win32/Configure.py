@@ -474,6 +474,7 @@ def doconfig():
         # Botan version
         if verbose:
             print("checking Botan version")
+        botan_version_major = 0
         botan_version_minor = 0
         system_libs = []
         if os.path.exists(botan_dll):
@@ -489,11 +490,14 @@ def doconfig():
 int main() {\n\
  using namespace Botan;\n\
  LibraryInitializer::initialize();\n\
-#if BOTAN_VERSION_CODE < BOTAN_VERSION_CODE_FOR(1,10,0)\n\
- return 1;\n\
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(2,0,0)\n\
+ return 3;\n\
 #endif\n\
-#if BOTAN_VERSION_CODE > BOTAN_VERSION_CODE_FOR(1,11,0)\n\
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,0)\n\
  return 2;\n\
+#endif\n\
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,10,0)\n\
+ return 1;\n\
 #endif\n\
  return 0;\n\
 }', file=testfile)
@@ -505,18 +509,25 @@ int main() {\n\
             print("can't create .\\testbotan.exe", file=sys.stderr)
             sys.exit(1)
         ret = subprocess.call(".\\testbotan.exe")
-        if ret == 1:
+        if ret == 0:
             print("Botan version too old", file=sys.stderr)
             sys.exit(1)
-        if ret == 2:
+        elif ret == 1:
+            botan_version_major = 1
+            botan_version_minor = 10
+        elif ret == 2:
+            botan_version_major = 1
             botan_version_minor = 11
-            print("Botan version 11 not yet supported", file=sys.stderr)
+            print("Botan version 1.11 not yet supported", file=sys.stderr)
             sys.exit(1)
-        if ret != 0:
-            print("Botan test failed", file=sys.stderr)
+        elif ret == 3:
+            botan_version_major = 2
+            botan_version_minor = 0
+            print("Botan version 2.0 not yet supported", file=sys.stderr)
             sys.exit(1)
         else:
-            botan_version_minor = 10
+            print("Botan test failed", file=sys.stderr)
+            sys.exit(1)
 
         # Botan ECC support
         if enable_ecc:
@@ -527,14 +538,20 @@ int main() {\n\
 #include <botan/init.h>\n\
 #include <botan/ec_group.h>\n\
 #include <botan/oids.h>\n\
+#include <botan/version.h>\n\
 int main() {\n\
  Botan::LibraryInitializer::initialize();\n\
  const std::string name("secp256r1");\n\
  const Botan::OID oid(Botan::OIDS::lookup(name));\n\
  const Botan::EC_Group ecg(oid);\n\
  try {\n\
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,0)\n\
+  const std::vector<Botan::byte> der =\n\
+   ecg.DER_encode(Botan::EC_DOMPAR_ENC_OID);\n\
+#else
   const Botan::SecureVector<Botan::byte> der =\n\
    ecg.DER_encode(Botan::EC_DOMPAR_ENC_OID);\n\
+#endif\n\
  } catch(...) {\n\
   return 1;\n\
  }\n\
@@ -560,14 +577,20 @@ int main() {\n\
 #include <botan/init.h>\n\
 #include <botan/gost_3410.h>\n\
 #include <botan/oids.h>\n\
+#include <botan/version.h>\n\
 int main() {\n\
  Botan::LibraryInitializer::initialize();\n\
  const std::string name("gost_256A");\n\
  const Botan::OID oid(Botan::OIDS::lookup(name));\n\
  const Botan::EC_Group ecg(oid);\n\
  try {\n\
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,0)\n\
+  const std::vector<Botan::byte> der =\n\
+   ecg.DER_encode(Botan::EC_DOMPAR_ENC_OID);\n\
+#else\n\
   const Botan::SecureVector<Botan::byte> der =\n\
    ecg.DER_encode(Botan::EC_DOMPAR_ENC_OID);\n\
+#endif\n\
  } catch(...) {\n\
   return 1;\n\
  }\n\
@@ -615,7 +638,7 @@ int main() {\n\
                 print("can't compile Botan AES key wrap with pad")
 
         # Botan GNU MP support
-        if botan_version_minor == 10:
+        if botan_version_major == 1 && botan_version_minor == 10:
             if verbose:
                 print("checking Botan GNU MP support")
             testfile = open("testgnump.cpp", "w")
