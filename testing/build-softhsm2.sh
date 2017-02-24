@@ -19,6 +19,7 @@ case "$DISTRIBUTION" in
 	redhat | \
 	fedora | \
 	sl | \
+	slackware | \
 	debian | \
 	ubuntu | \
 	opensuse )

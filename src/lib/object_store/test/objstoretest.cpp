@@ -32,6 +32,10 @@
 
 #include <cppunit/extensions/TestFactoryRegistry.h>
 #include <cppunit/ui/text/TestRunner.h>
+#include <cppunit/TestResult.h>
+#include <cppunit/TestResultCollector.h>
+#include <cppunit/XmlOutputter.h>
+#include <fstream>
 
 #include "config.h"
 #include "MutexFactory.h"
@@ -68,14 +72,20 @@ std::auto_ptr<BotanCryptoFactory> BotanCryptoFactory::instance(NULL);
 
 int main(int /*argc*/, char** /*argv*/)
 {
+	CppUnit::TestResult controller;
+	CppUnit::TestResultCollector result;
 	CppUnit::TextUi::TestRunner runner;
+	controller.addListener(&result);
 	CppUnit::TestFactoryRegistry &registry = CppUnit::TestFactoryRegistry::getRegistry();
 
 	runner.addTest(registry.makeTest());
-	bool wasSucessful = runner.run();
+	runner.run(controller);
+
+	std::ofstream xmlFileOut("test-results.xml");
+	CppUnit::XmlOutputter xmlOut(&result, xmlFileOut);
+	xmlOut.write();
 
 	CryptoFactory::reset();
 
-	return wasSucessful ? 0 : 1;
+	return result.wasSuccessful() ? 0 : 1;
 }
-
