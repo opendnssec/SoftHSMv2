@@ -10,7 +10,7 @@ AC_DEFUN([ACX_BOTAN],[
 
 	BOTAN_VERSION_MAJOR=2
 	BOTAN_VERSION_MINOR=0
-	AC_CHECK_FILE($BOTAN_PATH/include/botan-2.0/botan/version.h,
+	AC_CHECK_FILE($BOTAN_PATH/include/botan-2/botan/version.h,
 		      BOTAN_VERSION_MAJOR=2
 		      BOTAN_VERSION_MINOR=0,
 		      AC_CHECK_FILE($BOTAN_PATH/include/botan-1.11/botan/version.h,
@@ -21,7 +21,11 @@ AC_DEFUN([ACX_BOTAN],[
 						  BOTAN_VERSION_MINOR=10,
 						  AC_MSG_ERROR([Cannot find Botan includes]))))
 	AC_MSG_CHECKING(what are the Botan includes)
-	BOTAN_INCLUDES="-I$BOTAN_PATH/include/botan-$BOTAN_VERSION_MAJOR.$BOTAN_VERSION_MINOR"
+	if test "x${BOTAN_VERSION_MAJOR}" = "x2"; then
+		BOTAN_INCLUDES="-I$BOTAN_PATH/include/botan-2"
+	else
+		BOTAN_INCLUDES="-I$BOTAN_PATH/include/botan-1.$BOTAN_VERSION_MINOR"
+	fi
 	AC_MSG_RESULT($BOTAN_INCLUDES)
 
 	AC_MSG_CHECKING(what are the Botan libs)
