@@ -78,7 +78,11 @@ bool BotanMacAlgorithm::signInit(const SymmetricKey* key)
 	// Allocate the context
 	try
 	{
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,26)
+		hmac = new Botan::HMAC(Botan::HashFunction::create(hashName).release());
+#else
 		hmac = new Botan::HMAC(Botan::get_hash(hashName));
+#endif
 		hmac->set_key(key->getKeyBits().const_byte_str(), key->getKeyBits().size());
 	}
 	catch (...)
@@ -197,7 +201,11 @@ bool BotanMacAlgorithm::verifyInit(const SymmetricKey* key)
 	// Allocate the context
 	try
 	{
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,26)
+		hmac = new Botan::HMAC(Botan::HashFunction::create(hashName).release());
+#else
 		hmac = new Botan::HMAC(Botan::get_hash(hashName));
+#endif
 		hmac->set_key(key->getKeyBits().const_byte_str(), key->getKeyBits().size());
 	}
 	catch (...)

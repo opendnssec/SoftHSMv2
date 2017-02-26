@@ -97,7 +97,12 @@ bool BotanRSA::sign(PrivateKey* privateKey, const ByteString& dataToSign,
 
 	try
 	{
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,33)
+		BotanRNG* rng = (BotanRNG*)BotanCryptoFactory::i()->getRNG();
+		signer = new Botan::PK_Signer(*botanKey, *rng->getRNG(), emsa);
+#else
 		signer = new Botan::PK_Signer(*botanKey, emsa);
+#endif
 		// Should we add DISABLE_FAULT_PROTECTION? Makes this operation faster.
 	}
 	catch (...)
@@ -322,7 +327,12 @@ bool BotanRSA::signInit(PrivateKey* privateKey, const AsymMech::Type mechanism,
 
 	try
 	{
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,33)
+		BotanRNG* rng = (BotanRNG*)BotanCryptoFactory::i()->getRNG();
+		signer = new Botan::PK_Signer(*botanKey, *rng->getRNG(), emsa);
+#else
 		signer = new Botan::PK_Signer(*botanKey, emsa);
+#endif
 		// Should we add DISABLE_FAULT_PROTECTION? Makes this operation faster.
 	}
 	catch (...)
@@ -784,7 +794,12 @@ bool BotanRSA::encrypt(PublicKey* publicKey, const ByteString& data,
 	Botan::PK_Encryptor_EME* encryptor = NULL;
 	try
 	{
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,33)
+		BotanRNG* rng = (BotanRNG*)BotanCryptoFactory::i()->getRNG();
+		encryptor = new Botan::PK_Encryptor_EME(*botanKey, *rng->getRNG(), eme);
+#else
 		encryptor = new Botan::PK_Encryptor_EME(*botanKey, eme);
+#endif
 	}
 	catch (...)
 	{
@@ -870,7 +885,12 @@ bool BotanRSA::decrypt(PrivateKey* privateKey, const ByteString& encryptedData,
 	Botan::PK_Decryptor_EME* decryptor = NULL;
 	try
 	{
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,33)
+		BotanRNG* rng = (BotanRNG*)BotanCryptoFactory::i()->getRNG();
+		decryptor = new Botan::PK_Decryptor_EME(*botanKey, *rng->getRNG(), eme);
+#else
 		decryptor = new Botan::PK_Decryptor_EME(*botanKey, eme);
+#endif
 	}
 	catch (...)
 	{

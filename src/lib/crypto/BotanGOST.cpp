@@ -114,7 +114,12 @@ bool BotanGOST::signInit(PrivateKey* privateKey, const AsymMech::Type mechanism,
 
 	try
 	{
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,33)
+		BotanRNG* rng = (BotanRNG*)BotanCryptoFactory::i()->getRNG();
+		signer = new Botan::PK_Signer(*botanKey, *rng->getRNG(), emsa);
+#else
 		signer = new Botan::PK_Signer(*botanKey, emsa);
+#endif
 		// Should we add DISABLE_FAULT_PROTECTION? Makes this operation faster.
 	}
 	catch (...)
