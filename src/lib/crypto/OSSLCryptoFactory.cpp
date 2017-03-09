@@ -134,7 +134,7 @@ OSSLCryptoFactory::OSSLCryptoFactory()
 
 #ifdef WITH_GOST
 	// Load engines
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
+#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
 	ENGINE_load_builtin_engines();
 #else
 	OPENSSL_init_crypto(OPENSSL_INIT_ENGINE_ALL_BUILTIN |
