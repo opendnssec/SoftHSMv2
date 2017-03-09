@@ -8,8 +8,9 @@ AM_CPPFLAGS = 			-I$(srcdir)/.. \
 				-I$(srcdir)/../../data_mgr \
 				-I$(srcdir)/../../session_mgr \
 				-I$(srcdir)/../../slot_mgr \
-				@CRYPTO_INCLUDES@ \
-				`cppunit-config --cflags`
+				@CRYPTO_INCLUDES@
+
+AM_CFLAGS =			@CPPUNIT_CFLAGS@
 
 check_PROGRAMS =		objstoretest
 
@@ -32,7 +33,7 @@ endif
 
 objstoretest_LDADD =		../../libsofthsm_convarch.la 
 
-objstoretest_LDFLAGS = 		@CRYPTO_LIBS@ -no-install `cppunit-config --libs` -pthread
+objstoretest_LDFLAGS = 		@CRYPTO_LIBS@ @CPPUNIT_LIBS@ -no-install -pthread
 
 TESTS = 			objstoretest
 
