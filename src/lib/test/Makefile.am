@@ -2,8 +2,9 @@ MAINTAINERCLEANFILES = 		$(srcdir)/Makefile.in
 
 AM_CPPFLAGS = 			-I$(srcdir)/.. \
 				-I$(srcdir)/../cryptoki_compat \
-				-I$(srcdir)/../common \
-				`cppunit-config --cflags`
+				-I$(srcdir)/../common
+
+AM_CFLAGS =			@CPPUNIT_CFLAGS@
 
 check_PROGRAMS =		p11test
 
@@ -25,11 +26,12 @@ p11test_SOURCES =		p11test.cpp \
 				AsymWrapUnwrapTests.cpp \
 				TestsBase.cpp \
 				TestsNoPINInitBase.cpp \
+				../common/log.cpp \
 				../common/osmutex.cpp
 
 p11test_LDADD =			../libsofthsm2.la 
 
-p11test_LDFLAGS = 		@CRYPTO_LIBS@ -no-install `cppunit-config --libs` -pthread -static
+p11test_LDFLAGS = 		@CRYPTO_LIBS@ @CPPUNIT_LIBS@ -no-install -pthread -static
 
 TESTS = 			p11test
 
