@@ -43,6 +43,7 @@
 #include <botan/der_enc.h>
 #include <botan/asn1_oid.h>
 #include <botan/oids.h>
+#include <botan/version.h>
 
 // Constructors
 BotanECDHPrivateKey::BotanECDHPrivateKey()
@@ -131,7 +132,18 @@ ByteString BotanECDHPrivateKey::PKCS8Encode()
 	// No OID for ECDH
 	const Botan::OID oid("1.2.840.10045.2.1");
 	// Force EC_DOMPAR_ENC_OID
-#if BOTAN_VERSION_MINOR == 11
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(2,0,0)
+	const std::vector<Botan::byte> parameters = eckey->domain().DER_encode(Botan::EC_DOMPAR_ENC_OID);
+	const Botan::AlgorithmIdentifier alg_id(oid, parameters);
+	const Botan::secure_vector<Botan::byte> ber =
+		Botan::DER_Encoder()
+		.start_cons(Botan::SEQUENCE)
+		    .encode(PKCS8_VERSION)
+		    .encode(alg_id)
+		    .encode(eckey->private_key_bits(), Botan::OCTET_STRING)
+		.end_cons()
+	    .get_contents();
+#elif BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,0)
 	const std::vector<Botan::byte> parameters = eckey->domain().DER_encode(Botan::EC_DOMPAR_ENC_OID);
 	const Botan::AlgorithmIdentifier alg_id(oid, parameters);
 	const Botan::secure_vector<Botan::byte> ber =
@@ -164,7 +176,7 @@ bool BotanECDHPrivateKey::PKCS8Decode(const ByteString& ber)
 {
 	Botan::DataSource_Memory source(ber.const_byte_str(), ber.size());
 	if (source.end_of_data()) return false;
-#if BOTAN_VERSION_MINOR == 11
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,0)
 	Botan::secure_vector<Botan::byte> keydata;
 #else
 	Botan::SecureVector<Botan::byte> keydata;

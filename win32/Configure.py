@@ -441,31 +441,50 @@ def doconfig():
         condvals["BOTAN"] = True
         varvals["LIBNAME"] = "botan.lib"
         botan_path = os.path.abspath(botan_path)
-        botan_dll = os.path.join(botan_path, "botan.dll")
-        varvals["DLLPATH"] = botan_dll
         botan_inc = os.path.join(botan_path, "include")
-        if not os.path.exists(os.path.join(botan_inc, "botan\\init.h")):
+        botan_dll = ""
+        if os.path.exists(os.path.join(botan_inc, "botan-2\\botan\\init.h")):
+            varvals["INCLUDEPATH"] = os.path.join(botan_inc, "botan-2")
+        elif os.path.exists(os.path.join(botan_inc, "botan-1.11\\botan\\init.h")):
+            varvals["INCLUDEPATH"] = os.path.join(botan_inc, "botan-1.11")
+        elif os.path.exists(os.path.join(botan_inc, "botan\\init.h")):
+            varvals["INCLUDEPATH"] = botan_inc
+        else:
             print("can't find Botan includes", file=sys.stderr)
             sys.exit(1)
-        varvals["INCLUDEPATH"] = botan_inc
-        if not os.path.exists(os.path.join(botan_path, "botan.lib")):
+        if os.path.exists(os.path.join(botan_path, "lib\\botan.lib")):
+            varvals["LIBPATH"] = os.path.join(botan_path, "lib")
+            botan_dll = os.path.join(botan_path, "lib\\botan.dll")
+        elif os.path.exists(os.path.join(botan_path, "botan.lib")):
+            varvals["LIBPATH"] = botan_path
+            botan_dll = os.path.join(botan_path, "botan.dll")
+        else:
             print("can't find Botan library", file=sys.stderr)
             sys.exit(1)
-        varvals["LIBPATH"] = botan_path
+        varvals["DLLPATH"] = botan_dll
         if enable_debug:
             debug_botan_path = os.path.abspath(debug_botan_path)
-            varvals["DEBUGDLLPATH"] = \
-                os.path.join(debug_botan_path, "botan.dll")
             debug_botan_inc = os.path.join(debug_botan_path, "include")
-            if not os.path.exists(os.path.join(debug_botan_inc,
-                                               "botan\\init.h")):
+            debug_botan_dll = ""
+            if os.path.exists(os.path.join(debug_botan_inc, "botan-2\\botan\\init.h")):
+                varvals["DEBUGINCPATH"] = os.path.join(debug_botan_inc, "botan-2")
+            elif os.path.exists(os.path.join(debug_botan_inc, "botan-1.11\\botan\\init.h")):
+                varvals["DEBUGINCPATH"] = os.path.join(debug_botan_inc, "botan-1.11")
+            elif os.path.exists(os.path.join(debug_botan_inc, "botan\\init.h")):
+                varvals["DEBUGINCPATH"] = debug_botan_inc
+            else:
                 print("can't find debug Botan includes", file=sys.stderr)
                 sys.exit(1)
-            varvals["DEBUGINCPATH"] = debug_botan_inc
-            if not os.path.exists(os.path.join(debug_botan_path, "botan.lib")):
+            if os.path.exists(os.path.join(debug_botan_path, "lib\\botan.lib")):
+                varvals["DEBUGLIBPATH"] = os.path.join(debug_botan_path, "lib")
+                debug_botan_dll = os.path.join(debug_botan_path, "lib\\botan.dll")
+            if os.path.exists(os.path.join(debug_botan_path, "botan.lib")):
+                varvals["DEBUGLIBPATH"] = debug_botan_path
+                debug_botan_dll = os.path.join(debug_botan_path, "botan.dll")
+            else:
                 print("can't find debug Botan library", file=sys.stderr)
                 sys.exit(1)
-            varvals["DEBUGLIBPATH"] = debug_botan_path
+            varvals["DEBUGDLLPATH"] = debug_botan_dll
         else:
             varvals["DEBUGDLLPATH"] = varvals["DLLPATH"]
             varvals["DEBUGINCPATH"] = varvals["INCLUDEPATH"]
@@ -474,28 +493,28 @@ def doconfig():
         # Botan version
         if verbose:
             print("checking Botan version")
+        botan_version_major = 0
         botan_version_minor = 0
         system_libs = []
         if os.path.exists(botan_dll):
             subprocess.call(["copy", botan_dll, "."], shell=True)
         else:
             system_libs = ["user32.lib", "advapi32.lib"]
-        inc = botan_inc
-        lib = os.path.join(botan_path, "botan.lib")
+        inc = varvals["INCLUDEPATH"]
+        lib = os.path.join(varvals["LIBPATH"], "botan.lib")
         testfile = open("testbotan.cpp", "w")
         print('\
-#include <botan/init.h>\n\
 #include <botan/version.h>\n\
 int main() {\n\
- using namespace Botan;\n\
- LibraryInitializer::initialize();\n\
-#if BOTAN_VERSION_CODE < BOTAN_VERSION_CODE_FOR(1,10,0)\n\
- return 1;\n\
-#endif\n\
-#if BOTAN_VERSION_CODE > BOTAN_VERSION_CODE_FOR(1,11,0)\n\
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(2,0,0)\n\
+ return 3;\n\
+#elif BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,0)\n\
  return 2;\n\
-#endif\n\
+#elif BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,10,0)\n\
+ return 1;\n\
+#else\n\
  return 0;\n\
+#endif\n\
 }', file=testfile)
         testfile.close()
         command = ["cl", "/nologo", "/MD", "/I", inc, "testbotan.cpp", lib]
@@ -505,18 +524,25 @@ int main() {\n\
             print("can't create .\\testbotan.exe", file=sys.stderr)
             sys.exit(1)
         ret = subprocess.call(".\\testbotan.exe")
-        if ret == 1:
+        if ret == 0:
             print("Botan version too old", file=sys.stderr)
             sys.exit(1)
-        if ret == 2:
+        elif ret == 1:
+            botan_version_major = 1
+            botan_version_minor = 10
+        elif ret == 2:
+            botan_version_major = 1
             botan_version_minor = 11
-            print("Botan version 11 not yet supported", file=sys.stderr)
+            print("Botan version 1.11 not yet supported", file=sys.stderr)
             sys.exit(1)
-        if ret != 0:
-            print("Botan test failed", file=sys.stderr)
+        elif ret == 3:
+            botan_version_major = 2
+            botan_version_minor = 0
+            print("Botan version 2.0 not yet supported", file=sys.stderr)
             sys.exit(1)
         else:
-            botan_version_minor = 10
+            print("Botan test failed", file=sys.stderr)
+            sys.exit(1)
 
         # Botan ECC support
         if enable_ecc:
@@ -527,14 +553,20 @@ int main() {\n\
 #include <botan/init.h>\n\
 #include <botan/ec_group.h>\n\
 #include <botan/oids.h>\n\
+#include <botan/version.h>\n\
 int main() {\n\
  Botan::LibraryInitializer::initialize();\n\
  const std::string name("secp256r1");\n\
  const Botan::OID oid(Botan::OIDS::lookup(name));\n\
  const Botan::EC_Group ecg(oid);\n\
  try {\n\
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,0)\n\
+  const std::vector<Botan::byte> der =\n\
+   ecg.DER_encode(Botan::EC_DOMPAR_ENC_OID);\n\
+#else\n\
   const Botan::SecureVector<Botan::byte> der =\n\
    ecg.DER_encode(Botan::EC_DOMPAR_ENC_OID);\n\
+#endif\n\
  } catch(...) {\n\
   return 1;\n\
  }\n\
@@ -560,14 +592,20 @@ int main() {\n\
 #include <botan/init.h>\n\
 #include <botan/gost_3410.h>\n\
 #include <botan/oids.h>\n\
+#include <botan/version.h>\n\
 int main() {\n\
  Botan::LibraryInitializer::initialize();\n\
  const std::string name("gost_256A");\n\
  const Botan::OID oid(Botan::OIDS::lookup(name));\n\
  const Botan::EC_Group ecg(oid);\n\
  try {\n\
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,0)\n\
+  const std::vector<Botan::byte> der =\n\
+   ecg.DER_encode(Botan::EC_DOMPAR_ENC_OID);\n\
+#else\n\
   const Botan::SecureVector<Botan::byte> der =\n\
    ecg.DER_encode(Botan::EC_DOMPAR_ENC_OID);\n\
+#endif\n\
  } catch(...) {\n\
   return 1;\n\
  }\n\
@@ -594,16 +632,23 @@ int main() {\n\
         print('\
 #include <botan/botan.h>\n\
 #include <botan/rfc3394.h>\n\
+#include <botan/version.h>\n\
+using namespace Botan;\n\
 int main() {\n\
- using namespace Botan;\n\
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,0)\n\
+ secure_vector<byte> key(10);\n\
+ SymmetricKey kek("AABB");\n\
+ secure_vector<byte> x = rfc5649_keywrap(key, kek);\n\
+#else\n\
  SecureVector<byte> key(10);\n\
  SymmetricKey kek("AABB");\n\
  Algorithm_Factory& af = global_state().algorithm_factory();\n\
  SecureVector<byte> x = rfc5649_keywrap(key, kek, af);\n\
+#endif\n\
  return 1;\n\
 }', file=testfile)
         testfile.close()
-        command = ["cl", "/nologo", "/MD", "/I", inc, "testrfc5649.cpp", lib]
+        command = ["cl", "/nologo", "/MD", "/EHsc","/I", inc, "testrfc5649.cpp", lib]
         command.extend(system_libs)
         subprocess.call(command)
         if os.path.exists(".\\testrfc5649.exe"):
@@ -615,7 +660,7 @@ int main() {\n\
                 print("can't compile Botan AES key wrap with pad")
 
         # Botan GNU MP support
-        if botan_version_minor == 10:
+        if botan_version_major == 1 and botan_version_minor == 10:
             if verbose:
                 print("checking Botan GNU MP support")
             testfile = open("testgnump.cpp", "w")

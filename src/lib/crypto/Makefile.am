@@ -119,5 +119,6 @@ libsofthsm_crypto_la_SOURCES +=	BotanAES.cpp \
 				BotanSHA384.cpp \
 				BotanSHA512.cpp \
 				BotanSymmetricAlgorithm.cpp \
-				BotanUtil.cpp
+				BotanUtil.cpp \
+				Botan_ecb.cpp
 endif

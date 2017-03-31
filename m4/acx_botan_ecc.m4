@@ -13,6 +13,7 @@ AC_DEFUN([ACX_BOTAN_ECC],[
 			#include <botan/init.h>
 			#include <botan/ec_group.h>
 			#include <botan/oids.h>
+			#include <botan/version.h>
 			int main()
 			{
 				Botan::LibraryInitializer::initialize();
@@ -20,7 +21,7 @@ AC_DEFUN([ACX_BOTAN_ECC],[
 				const Botan::OID oid(Botan::OIDS::lookup(name));
 				const Botan::EC_Group ecg(oid);
 				try {
-#if BOTAN_VERSION_MINOR == 11
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,0)
 					const std::vector<Botan::byte> der =
 					    ecg.DER_encode(Botan::EC_DOMPAR_ENC_OID);
 #else

@@ -64,6 +64,8 @@
     <ClInclude Include="..\..\src\lib\crypto\BotanSHA512.h" />
     <ClInclude Include="..\..\src\lib\crypto\BotanSymmetricAlgorithm.h" />
     <ClInclude Include="..\..\src\lib\crypto\BotanUtil.h" />
+    <ClInclude Include="..\..\src\lib\crypto\Botan_ecb.h" />
+    <ClInclude Include="..\..\src\lib\crypto\Botan_rounding.h" />
 @END BOTAN
     <ClInclude Include="..\..\src\lib\crypto\CryptoFactory.h" />
     <ClInclude Include="..\..\src\lib\crypto\DESKey.h" />
@@ -210,6 +212,7 @@
     <ClCompile Include="..\..\src\lib\crypto\BotanSHA512.cpp" />
     <ClCompile Include="..\..\src\lib\crypto\BotanSymmetricAlgorithm.cpp" />
     <ClCompile Include="..\..\src\lib\crypto\BotanUtil.cpp" />
+    <ClCompile Include="..\..\src\lib\crypto\Botan_ecb.cpp" />
 @END BOTAN
     <ClCompile Include="..\..\src\lib\crypto\CryptoFactory.cpp" />
     <ClCompile Include="..\..\src\lib\crypto\DESKey.cpp" />
