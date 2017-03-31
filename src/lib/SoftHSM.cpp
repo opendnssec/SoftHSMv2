@@ -6399,8 +6399,8 @@ CK_RV SoftHSM::generateAES
 		return CKR_TEMPLATE_INCOMPLETE;
 	}
 
-	// keyLen must be 16, 24 or 32
-	if ((keyLen != 16) && (keyLen != 24) && (keyLen != 32))
+	// keyLen must be 16, 24, or 32
+	if (keyLen != 16 && keyLen != 24 && keyLen != 32)
 	{
 		INFO_MSG("bad AES key length");
 		return CKR_ATTRIBUTE_VALUE_INVALID;
@@ -8793,7 +8793,7 @@ CK_RV SoftHSM::deriveDH
 		case CKK_AES:
 			if (byteLen != 16 && byteLen != 24 && byteLen != 32)
 			{
-				INFO_MSG("CKA_VALUE_LEN must be 16, 24 or 32");
+				INFO_MSG("CKA_VALUE_LEN must be 16, 24, or 32");
 				return CKR_ATTRIBUTE_VALUE_INVALID;
 			}
 			break;
@@ -9091,45 +9091,41 @@ CK_RV SoftHSM::deriveECDH
 	}
 
 	// Check the length
+	// byteLen == 0 impiles return max size the ECC can derive
 	switch (keyType)
 	{
 		case CKK_GENERIC_SECRET:
-			if (byteLen == 0)
-			{
-				INFO_MSG("CKA_VALUE_LEN must be set");
-				return CKR_TEMPLATE_INCOMPLETE;
-			}
 			break;
 #ifndef WITH_FIPS
 		case CKK_DES:
-			if (byteLen != 0)
+			if (byteLen != 0 && byteLen != 8)
 			{
-				INFO_MSG("CKA_VALUE_LEN must not be set");
-				return CKR_ATTRIBUTE_READ_ONLY;
+				INFO_MSG("CKA_VALUE_LEN must be 0 or 8");
+				return CKR_ATTRIBUTE_VALUE_INVALID;
 			}
 			byteLen = 8;
 			break;
 #endif
 		case CKK_DES2:
-			if (byteLen != 0)
+			if (byteLen != 0 && byteLen != 16)
 			{
-				INFO_MSG("CKA_VALUE_LEN must not be set");
-				return CKR_ATTRIBUTE_READ_ONLY;
+				INFO_MSG("CKA_VALUE_LEN must be 0 or 16");
+				return CKR_ATTRIBUTE_VALUE_INVALID;
 			}
 			byteLen = 16;
 			break;
 		case CKK_DES3:
-			if (byteLen != 0)
+			if (byteLen != 0 && byteLen != 24)
 			{
-				INFO_MSG("CKA_VALUE_LEN must not be set");
-				return CKR_ATTRIBUTE_READ_ONLY;
+				INFO_MSG("CKA_VALUE_LEN must be 0 or 24");
+				return CKR_ATTRIBUTE_VALUE_INVALID;
 			}
 			byteLen = 24;
 			break;
 		case CKK_AES:
-			if (byteLen != 16 && byteLen != 24 && byteLen != 32)
+			if (byteLen != 0 && byteLen != 16 && byteLen != 24 && byteLen != 32)
 			{
-				INFO_MSG("CKA_VALUE_LEN must be 16, 24 or 32");
+				INFO_MSG("CKA_VALUE_LEN must be 0, 16, 24, or 32");
 				return CKR_ATTRIBUTE_VALUE_INVALID;
 			}
 			break;
@@ -9258,6 +9254,25 @@ CK_RV SoftHSM::deriveECDH
 			ByteString value;
 			ByteString plainKCV;
 			ByteString kcv;
+
+			// For generic and AES keys:
+			// default to return max size available.
+			if (byteLen == 0)
+			{
+				switch (keyType)
+				{
+					case CKK_GENERIC_SECRET:
+						byteLen = secretValue.size();
+						break;
+					case CKK_AES:
+						if (secretValue.size() >= 32)
+							byteLen = 32;
+						else if (secretValue.size() >= 24)
+							byteLen = 24;
+						else
+							byteLen = 16;
+				}
+			}
 
 			if (byteLen > secretValue.size())
 			{
@@ -9541,7 +9556,7 @@ CK_RV SoftHSM::deriveSymmetric
 		case CKK_AES:
 			if (byteLen != 16 && byteLen != 24 && byteLen != 32)
 			{
-				INFO_MSG("CKA_VALUE_LEN must be 16, 24 or 32");
+				INFO_MSG("CKA_VALUE_LEN must be 16, 24, or 32");
 				return CKR_ATTRIBUTE_VALUE_INVALID;
 			}
 			break;
@@ -10230,9 +10245,80 @@ CK_RV SoftHSM::getECDHPublicKey(ECPublicKey* publicKey, ECPrivateKey* privateKey
 	publicKey->setEC(privateKey->getEC());
 
 	// Set value
-	publicKey->setQ(pubData);
+	ByteString data = getECDHPubData(pubData);
+	publicKey->setQ(data);
 
 	return CKR_OK;
+}
+
+// ECDH pubData can be in RAW or DER format.
+// Need to convert RAW as SoftHSM uses DER.
+ByteString SoftHSM::getECDHPubData(ByteString& pubData)
+{
+	size_t len = pubData.size();
+	size_t controlOctets = 2;
+
+	if (len < controlOctets || pubData[0] != 0x04)
+	{
+		controlOctets = 0;
+	}
+	else if (pubData[1] < 0x80)
+	{
+		if (pubData[1] != (len - controlOctets)) controlOctets = 0;
+	}
+	else
+	{
+		size_t lengthOctets = pubData[1] & 0x7F;
+		controlOctets += lengthOctets;
+
+		if (controlOctets >= len)
+		{
+			controlOctets = 0;
+		}
+		else
+		{
+			ByteString length(&pubData[2], lengthOctets);
+
+			if (length.long_val() != (len - controlOctets))
+			{
+				controlOctets = 0;
+			}
+		}
+	}
+
+	// DER format
+	if (controlOctets != 0) return pubData;
+
+	// RAW format
+	ByteString header;
+	if (len < 0x80)
+	{
+		header.resize(2);
+		header[0] = (unsigned char)0x04;
+		header[1] = (unsigned char)(len & 0x7F);
+	}
+	else
+	{
+		// Count significate bytes
+		size_t bytes = sizeof(size_t);
+		for(; bytes > 0; bytes--)
+		{
+			size_t value = len >> ((bytes - 1) * 8);
+			if (value & 0xFF) break;
+		}
+
+		// Set header data
+		header.resize(2 + bytes);
+		header[0] = (unsigned char)0x04;
+		header[1] = (unsigned char)(0x80 | bytes);
+		for (size_t i = 1; i <= bytes; i++)
+		{
+			header[2+bytes-i] = (unsigned char) (len & 0xFF);
+			len >>= 8;
+		}
+	}
+
+	return header + pubData;
 }
 
 CK_RV SoftHSM::getGOSTPrivateKey(GOSTPrivateKey* privateKey, Token* token, OSObject* key)
