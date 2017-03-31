@@ -1300,10 +1300,10 @@ CK_RV SoftHSM::C_Logout(CK_SESSION_HANDLE hSession)
 	// Logout
 	token->logout();
 
-	// [PKCS#11 v2.3 p124] When logout is successful...
+	// [PKCS#11 v2.40, C_Logout] When logout is successful...
 	// a. Any of the application's handles to private objects become invalid.
 	// b. Even if a user is later logged back into the token those handles remain invalid.
-	// c. All private session objects from sessions belonging to the application area destroyed.
+	// c. All private session objects from sessions belonging to the application are destroyed.
 
 	// Have the handle manager remove all handles pointing to private objects for this slot.
 	CK_SLOT_ID slotID = session->getSlot()->getSlotID();
@@ -1359,7 +1359,7 @@ CK_RV SoftHSM::C_CopyObject(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject
 
 	// Check if the object is copyable
 	CK_BBOOL isCopyable = object->getBooleanValue(CKA_COPYABLE, true);
-	if (!isCopyable) return CKR_COPY_PROHIBITED;
+	if (!isCopyable) return CKR_ACTION_PROHIBITED;
 
 	// Extract critical information from the template
 	CK_BBOOL isOnToken = wasOnToken;
@@ -1528,6 +1528,10 @@ CK_RV SoftHSM::C_DestroyObject(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObj
 		return rv;
 	}
 
+	// Check if the object is destroyable
+	CK_BBOOL isDestroyable = object->getBooleanValue(CKA_DESTROYABLE, true);
+	if (!isDestroyable) return CKR_ACTION_PROHIBITED;
+
 	// Tell the handleManager to forget about the object.
 	handleManager->destroyObject(hObject);
 
@@ -1642,6 +1646,10 @@ CK_RV SoftHSM::C_SetAttributeValue(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE 
 
 		return rv;
 	}
+
+	// Check if the object is modifiable
+	CK_BBOOL isModifiable = object->getBooleanValue(CKA_MODIFIABLE, true);
+	if (!isModifiable) return CKR_ACTION_PROHIBITED;
 
 	// Wrap a P11Object around the OSObject so we can access the attributes in the
 	// context of the object in which it is defined.
@@ -2254,7 +2262,6 @@ static CK_RV AsymEncrypt(Session* session, CK_BYTE_PTR pData, CK_ULONG ulDataLen
 	ByteString data;
 	ByteString encryptedData;
 
-	// PKCS #11 Mechanisms v2.30: Cryptoki Draft 7 page 32
 	// We must allow input length <= k and therfore need to prepend the data with zeroes.
 	if (mechanism == AsymMech::RSA) {
 		data.wipe(size-ulDataLen);
@@ -3927,7 +3934,6 @@ static CK_RV AsymSign(Session* session, CK_BYTE_PTR pData, CK_ULONG ulDataLen, C
 	// Get the data
 	ByteString data;
 
-	// PKCS #11 Mechanisms v2.30: Cryptoki Draft 7 page 32
 	// We must allow input length <= k and therfore need to prepend the data with zeroes.
 	if (mechanism == AsymMech::RSA) {
 		data.wipe(size-ulDataLen);
@@ -4719,7 +4725,6 @@ static CK_RV AsymVerify(Session* session, CK_BYTE_PTR pData, CK_ULONG ulDataLen,
 	// Get the data
 	ByteString data;
 
-	// PKCS #11 Mechanisms v2.30: Cryptoki Draft 7 page 32
 	// We must allow input length <= k and therfore need to prepend the data with zeroes.
 	if (mechanism == AsymMech::RSA) {
 		data.wipe(size-ulDataLen);

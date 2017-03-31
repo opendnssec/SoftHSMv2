@@ -1,12 +1,12 @@
 MAINTAINERCLEANFILES =	$(srcdir)/Makefile.in
 
-AM_CPPFLAGS = 		-I$(srcdir)/../../lib/cryptoki_compat \
-			-I$(srcdir)/../common \
+AM_CPPFLAGS =		-I$(srcdir)/../common \
 			-I$(srcdir)/../../lib/ \
 			-I$(srcdir)/../../lib/common \
 			-I$(srcdir)/../../lib/crypto \
 			-I$(srcdir)/../../lib/data_mgr \
 			-I$(srcdir)/../../lib/object_store \
+			-I$(srcdir)/../../lib/pkcs11 \
 			@CRYPTO_INCLUDES@ \
 			@SQLITE3_INCLUDES@
 

@@ -52,7 +52,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;_DEBUG;_WINDOWS;_USRDLL;SOFTHSM2_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..;..\..\src\lib;..\..\src\lib\cryptoki_compat;..\..\src\lib\common;..\..\src\lib\object_store;..\..\src\lib\slot_mgr;..\..\src\lib\session_mgr;..\..\src\lib\data_mgr;..\..\src\lib\handle_mgr;..\..\src\lib\crypto;..\..\src\lib\win32;@INCLUDEPATH@;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..;..\..\src\lib;..\..\src\lib\pkcs11;..\..\src\lib\common;..\..\src\lib\object_store;..\..\src\lib\slot_mgr;..\..\src\lib\session_mgr;..\..\src\lib\data_mgr;..\..\src\lib\handle_mgr;..\..\src\lib\crypto;..\..\src\lib\win32;@INCLUDEPATH@;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -70,7 +70,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;NDEBUG;_WINDOWS;_USRDLL;SOFTHSM2_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..;..\..\src\lib;..\..\src\lib\cryptoki_compat;..\..\src\lib\common;..\..\src\lib\object_store;..\..\src\lib\slot_mgr;..\..\src\lib\session_mgr;..\..\src\lib\data_mgr;..\..\src\lib\handle_mgr;..\..\src\lib\crypto;..\..\src\lib\win32;@INCLUDEPATH@;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..;..\..\src\lib;..\..\src\lib\pkcs11;..\..\src\lib\common;..\..\src\lib\object_store;..\..\src\lib\slot_mgr;..\..\src\lib\session_mgr;..\..\src\lib\data_mgr;..\..\src\lib\handle_mgr;..\..\src\lib\crypto;..\..\src\lib\win32;@INCLUDEPATH@;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -83,8 +83,10 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\lib\access.h" />
-    <ClInclude Include="..\..\src\lib\cryptoki.h" />
-    <ClInclude Include="..\..\src\lib\cryptoki_compat\pkcs11.h" />
+    <ClInclude Include="..\..\src\lib\pkcs11\cryptoki.h" />
+    <ClInclude Include="..\..\src\lib\pkcs11\pkcs11.h" />
+    <ClInclude Include="..\..\src\lib\pkcs11\pkcs11f.h" />
+    <ClInclude Include="..\..\src\lib\pkcs11\pkcs11t.h" />
     <ClInclude Include="..\..\src\lib\P11Attributes.h" />
     <ClInclude Include="..\..\src\lib\P11Objects.h" />
     <ClInclude Include="..\..\src\lib\SoftHSM.h" />

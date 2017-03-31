@@ -1,7 +1,7 @@
 /*
- * Copyright (c) 2010 SURFnet bv
+ * Copyright (c) 2017 SURFnet bv
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -10,7 +10,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -27,24 +27,63 @@
 /*****************************************************************************
  cryptoki.h
 
- This include file turns on export of functions by the SoftHSM v2 library by
- setting the #define symbol CRYPTOKI_EXPORTS before the main PKCS #11 header
- file is included. Include this header file in alle SoftHSM v2 code that
- links into a PKCS #11 library; currently that will only by softhsm.cpp
+ Set the PKCS#11 macros.
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_CRYPTOKI_H
-#define _SOFTHSM_V2_CRYPTOKI_H
+#ifndef _CRYPTOKI_H
+#define _CRYPTOKI_H
 
-#ifndef CRYPTOKI_EXPORTS
-#define CRYPTOKI_EXPORTS
-#endif // !CRYPTOKI_EXPORTS
+#ifdef _WIN32
+#pragma pack(push, cryptoki, 1)
+#endif
 
-#ifndef CRYPTOKI_COMPAT
-#define CRYPTOKI_COMPAT
-#endif // !CRYPTOKI_COMPAT
+// 1. CK_PTR: The indirection string for making a pointer to an
+// object.
+
+#define CK_PTR *
+
+// 2. CK_DECLARE_FUNCTION(returnType, name): A macro which makes
+// an importable Cryptoki library function declaration out of a
+// return type and a function name.
+
+#ifdef _WIN32
+#define CK_DECLARE_FUNCTION(returnType, name) \
+   returnType __declspec(dllimport) name
+#else
+#define CK_DECLARE_FUNCTION(returnType, name) \
+   returnType name
+#endif
+
+// 3. CK_DECLARE_FUNCTION_POINTER(returnType, name): A macro
+// which makes a Cryptoki API function pointer declaration or
+// function pointer type declaration out of a return type and a
+// function name.
+
+#ifdef _WIN32
+#define CK_DECLARE_FUNCTION_POINTER(returnType, name) \
+   returnType __declspec(dllimport) (* name)
+#else
+#define CK_DECLARE_FUNCTION_POINTER(returnType, name) \
+   returnType (* name)
+#endif
+
+// 4. CK_CALLBACK_FUNCTION(returnType, name): A macro which makes
+// a function pointer type for an application callback out of
+// a return type for the callback and a name for the callback.
+
+#define CK_CALLBACK_FUNCTION(returnType, name) \
+   returnType (* name)
+
+// 5. NULL_PTR: This macro is the value of a NULL pointer.
+
+#ifndef NULL_PTR
+#define NULL_PTR 0
+#endif
 
 #include "pkcs11.h"
 
-#endif // !_SOFTHSM_V2_CRYPTOKI_H
+#ifdef _WIN32
+#pragma pack(pop, cryptoki)
+#endif
 
+#endif // !_CRYPTOKI_H

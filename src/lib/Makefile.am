@@ -1,13 +1,13 @@
 MAINTAINERCLEANFILES = 		$(srcdir)/Makefile.in
 
-AM_CPPFLAGS = 			-I$(srcdir)/cryptoki_compat \
-				-I$(srcdir)/common \
-				-I$(srcdir)/object_store \
-				-I$(srcdir)/slot_mgr \
-				-I$(srcdir)/session_mgr \
+AM_CPPFLAGS =			-I$(srcdir)/common \
+				-I$(srcdir)/crypto \
 				-I$(srcdir)/data_mgr \
 				-I$(srcdir)/handle_mgr \
-				-I$(srcdir)/crypto \
+				-I$(srcdir)/object_store \
+				-I$(srcdir)/pkcs11 \
+				-I$(srcdir)/session_mgr \
+				-I$(srcdir)/slot_mgr \
 				@CRYPTO_INCLUDES@
 
 lib_LTLIBRARIES =		libsofthsm2.la
@@ -46,7 +46,7 @@ SUBDIRS = 			common \
 				test
 
 EXTRA_DIST =			$(srcdir)/*.h \
-				$(srcdir)/cryptoki_compat/*.h \
+				$(srcdir)/pkcs11/*.h \
 				$(srcdir)/win32/*.cc \
 				$(srcdir)/win32/*.cpp \
 				$(srcdir)/win32/*.h

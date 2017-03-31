@@ -34,7 +34,7 @@
 #ifndef _SOFTHSM_V2_SOFTHSM2_MIGRATE_H
 #define _SOFTHSM_V2_SOFTHSM2_MIGRATE_H
 
-#include "pkcs11.h"
+#include "cryptoki.h"
 #include <sqlite3.h>
 
 // Main functions

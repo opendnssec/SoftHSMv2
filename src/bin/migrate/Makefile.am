@@ -1,6 +1,6 @@
 MAINTAINERCLEANFILES =	$(srcdir)/Makefile.in
 
-AM_CPPFLAGS = 		-I$(srcdir)/../../lib/cryptoki_compat \
+AM_CPPFLAGS = 		-I$(srcdir)/../../lib/pkcs11 \
 			-I$(srcdir)/../common \
 			@SQLITE3_INCLUDES@
 

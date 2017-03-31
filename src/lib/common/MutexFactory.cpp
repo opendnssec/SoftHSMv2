@@ -34,6 +34,7 @@
 #include "MutexFactory.h"
 #include "osmutex.h"
 #include <memory>
+#include <stddef.h>
 
 /*****************************************************************************
  Mutex implementation
