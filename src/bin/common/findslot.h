@@ -37,5 +37,6 @@
 
 int findSlot(char* slot, char* serial, char* token, bool freeToken, CK_SLOT_ID& slotID);
 int findSlot(char* slot, char* serial, char* token, CK_SLOT_ID& slotID);
+int findSlot(CK_TOKEN_INFO tokenInfo, CK_SLOT_ID& slotID);
 
 #endif // !_SOFTHSM_V2_BIN_FINDSLOT_H
