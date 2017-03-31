@@ -9091,18 +9091,15 @@ CK_RV SoftHSM::deriveECDH
 	}
 
 	// Check the length
+	// byteLen == 0 impiles return max size the ECC can derive
+	// 
 	switch (keyType)
 	{
 		case CKK_GENERIC_SECRET:
-			if (byteLen == 0)
-			{
-				INFO_MSG("CKA_VALUE_LEN must be set");
-				return CKR_TEMPLATE_INCOMPLETE;
-			}
 			break;
 #ifndef WITH_FIPS
 		case CKK_DES:
-			if (byteLen != 0)
+			if (byteLen != 0 && byteLen != 8)
 			{
 				INFO_MSG("CKA_VALUE_LEN must not be set");
 				return CKR_ATTRIBUTE_READ_ONLY;
@@ -9111,7 +9108,7 @@ CK_RV SoftHSM::deriveECDH
 			break;
 #endif
 		case CKK_DES2:
-			if (byteLen != 0)
+			if (byteLen != 0 && byteLen != 16)
 			{
 				INFO_MSG("CKA_VALUE_LEN must not be set");
 				return CKR_ATTRIBUTE_READ_ONLY;
@@ -9119,7 +9116,7 @@ CK_RV SoftHSM::deriveECDH
 			byteLen = 16;
 			break;
 		case CKK_DES3:
-			if (byteLen != 0)
+			if (byteLen != 0 && byteLen != 24)
 			{
 				INFO_MSG("CKA_VALUE_LEN must not be set");
 				return CKR_ATTRIBUTE_READ_ONLY;
@@ -9127,9 +9124,9 @@ CK_RV SoftHSM::deriveECDH
 			byteLen = 24;
 			break;
 		case CKK_AES:
-			if (byteLen != 16 && byteLen != 24 && byteLen != 32)
+			if (byteLen != 0 && byteLen != 16 && byteLen != 24 && byteLen != 32)
 			{
-				INFO_MSG("CKA_VALUE_LEN must be 16, 24 or 32");
+				INFO_MSG("CKA_VALUE_LEN must be 0, 16, 24 or 32");
 				return CKR_ATTRIBUTE_VALUE_INVALID;
 			}
 			break;
@@ -9258,6 +9255,25 @@ CK_RV SoftHSM::deriveECDH
 			ByteString value;
 			ByteString plainKCV;
 			ByteString kcv;
+
+			// for generic and AES keys
+			// default to return max size available. 
+			if (byteLen == 0)
+			{
+				switch (keyType)
+				{
+					case CKK_GENERIC_SECRET:
+						byteLen = secretValue.size();
+						break;
+					case CKK_AES:
+					    if (secretValue.size() >= 32)
+						    byteLen = 32;
+					    else if (secretValue.size() >= 24)
+						    byteLen = 24;
+					    else
+						    byteLen = 16;
+				}
+			}
 
 			if (byteLen > secretValue.size())
 			{
