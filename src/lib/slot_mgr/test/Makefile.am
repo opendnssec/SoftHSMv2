@@ -8,9 +8,8 @@ AM_CPPFLAGS = 			-I$(srcdir)/.. \
 				-I$(srcdir)/../../object_store \
 				-I$(srcdir)/../../pkcs11 \
 				-I$(srcdir)/../../session_mgr \
+				@CPPUNIT_CFLAGS@ \
 				@CRYPTO_INCLUDES@
-
-AM_CFLAGS =			@CPPUNIT_CFLAGS@
 
 check_PROGRAMS =		slotmgrtest
 

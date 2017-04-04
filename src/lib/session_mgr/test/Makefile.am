@@ -8,9 +8,8 @@ AM_CPPFLAGS = 			-I$(srcdir)/.. \
 				-I$(srcdir)/../../object_store \
 				-I$(srcdir)/../../pkcs11 \
 				-I$(srcdir)/../../session_mgr \
-				-I$(srcdir)/../../slot_mgr
-
-AM_CFLAGS =			@CPPUNIT_CFLAGS@
+				-I$(srcdir)/../../slot_mgr \
+				@CPPUNIT_CFLAGS@
 
 check_PROGRAMS =		sessionmgrtest
 
