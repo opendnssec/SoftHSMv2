@@ -8,8 +8,9 @@ SoftHSM 2.3.0 - 2017-xx-xx
   * Added CKA_PUBLIC_KEY_INFO to certificates, private, and public key
     objects. Will be accepted from application, but SoftHSM will
     currently not calculate it.
-* Issue #189: CKR_KEY_INDIGESTIBLE in C_DigestKey when key
-  CKA_EXTRACTABLE = false.
+* Issue #189: C_DigestKey returns CKR_KEY_INDIGESTIBLE when key
+  attribute CKA_EXTRACTABLE = false. Whitelist SHA algorithms to allow
+  C_DigestKey in this case.
 * Issue #225: Show slot id after initialization.
 * Issue #257: Set CKA_DECRYPT/CKA_ENCRYPT flags on key import to true.
   (Patch from Martin Domke)
