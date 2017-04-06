@@ -348,9 +348,10 @@ CK_RV SoftHSM::C_Initialize(CK_VOID_PTR pInitArgs)
 {
 	CK_C_INITIALIZE_ARGS_PTR args;
 
-	// Check if PKCS #11 is already initialised
+	// Check if PKCS#11 is already initialized
 	if (isInitialised)
 	{
+		ERROR_MSG("SoftHSM is already initialized");
 		return CKR_CRYPTOKI_ALREADY_INITIALIZED;
 	}
 
@@ -362,7 +363,7 @@ CK_RV SoftHSM::C_Initialize(CK_VOID_PTR pInitArgs)
 		// Must be set to NULL_PTR in this version of PKCS#11
 		if (args->pReserved != NULL_PTR)
 		{
-			DEBUG_MSG("pReserved must be set to NULL_PTR");
+			ERROR_MSG("pReserved must be set to NULL_PTR");
 			return CKR_ARGUMENTS_BAD;
 		}
 
@@ -409,7 +410,7 @@ CK_RV SoftHSM::C_Initialize(CK_VOID_PTR pInitArgs)
 				args->UnlockMutex == NULL_PTR
 			)
 			{
-				DEBUG_MSG("Not all mutex functions are supplied");
+				ERROR_MSG("Not all mutex functions are supplied");
 				return CKR_ARGUMENTS_BAD;
 			}
 
@@ -433,12 +434,14 @@ CK_RV SoftHSM::C_Initialize(CK_VOID_PTR pInitArgs)
 	// Initiate SecureMemoryRegistry
 	if (SecureMemoryRegistry::i() == NULL)
 	{
+		ERROR_MSG("Could not load the SecureMemoryRegistry");
 		return CKR_GENERAL_ERROR;
 	}
 
 	// Build the CryptoFactory
 	if (CryptoFactory::i() == NULL)
 	{
+		ERROR_MSG("Could not load the CryptoFactory");
 		return CKR_GENERAL_ERROR;
 	}
 
@@ -446,6 +449,7 @@ CK_RV SoftHSM::C_Initialize(CK_VOID_PTR pInitArgs)
 	// Check the FIPS status
 	if (!CryptoFactory::i()->getFipsSelfTestStatus())
 	{
+		ERROR_MSG("The FIPS self test failed");
 		return CKR_FIPS_SELF_TEST_FAILED;
 	}
 #endif
@@ -453,18 +457,21 @@ CK_RV SoftHSM::C_Initialize(CK_VOID_PTR pInitArgs)
 	// (Re)load the configuration
 	if (!Configuration::i()->reload(SimpleConfigLoader::i()))
 	{
+		ERROR_MSG("Could not load the configuration");
 		return CKR_GENERAL_ERROR;
 	}
 
 	// Configure the log level
 	if (!setLogLevel(Configuration::i()->getString("log.level", DEFAULT_LOG_LEVEL)))
 	{
+		ERROR_MSG("Could not set the log level");
 		return CKR_GENERAL_ERROR;
 	}
 
 	// Configure object store storage backend used by all tokens.
 	if (!ObjectStoreToken::selectBackend(Configuration::i()->getString("objectstore.backend", DEFAULT_OBJECTSTORE_BACKEND)))
 	{
+		ERROR_MSG("Could not set the storage backend");
 		return CKR_GENERAL_ERROR;
 	}
 
