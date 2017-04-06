@@ -3169,6 +3169,7 @@ CK_RV SoftHSM::C_DigestInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechan
 
 	session->setOpType(SESSION_OP_DIGEST);
 	session->setDigestOp(hash);
+	session->setHashAlgo(algo);
 
 	return CKR_OK;
 }
@@ -3298,11 +3299,20 @@ CK_RV SoftHSM::C_DigestKey(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject)
 		return CKR_GENERAL_ERROR;
 	}
 
-	// Parano...
-	if (!key->getBooleanValue(CKA_EXTRACTABLE, false))
-		return CKR_KEY_INDIGESTIBLE;
-	if (key->getBooleanValue(CKA_SENSITIVE, false))
-		return CKR_KEY_INDIGESTIBLE;
+	// Whitelist
+	HashAlgo::Type algo = session->getHashAlgo();
+	if (algo != HashAlgo::SHA1 &&
+	    algo != HashAlgo::SHA224 &&
+	    algo != HashAlgo::SHA256 &&
+	    algo != HashAlgo::SHA384 &&
+	    algo != HashAlgo::SHA512)
+	{
+		// Parano...
+		if (!key->getBooleanValue(CKA_EXTRACTABLE, false))
+			return CKR_KEY_INDIGESTIBLE;
+		if (key->getBooleanValue(CKA_SENSITIVE, false))
+			return CKR_KEY_INDIGESTIBLE;
+	}
 
 	// Get value
 	if (!key->attributeExists(CKA_VALUE))

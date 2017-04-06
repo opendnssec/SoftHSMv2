@@ -45,6 +45,7 @@ Session::Session(Slot* inSlot, bool inIsReadWrite, CK_VOID_PTR inPApplication, C
 	operation = SESSION_OP_NONE;
 	findOp = NULL;
 	digestOp = NULL;
+	hashAlgo = HashAlgo::Unknown;
 	macOp = NULL;
 	asymmetricCryptoOp = NULL;
 	symmetricCryptoOp = NULL;
@@ -70,6 +71,7 @@ Session::Session()
 	operation = SESSION_OP_NONE;
 	findOp = NULL;
 	digestOp = NULL;
+	hashAlgo = HashAlgo::Unknown;
 	macOp = NULL;
 	asymmetricCryptoOp = NULL;
 	symmetricCryptoOp = NULL;
@@ -264,6 +266,16 @@ void Session::setDigestOp(HashAlgorithm* inDigestOp)
 HashAlgorithm* Session::getDigestOp()
 {
 	return digestOp;
+}
+
+void Session::setHashAlgo(HashAlgo::Type inHashAlgo)
+{
+	hashAlgo = inHashAlgo;
+}
+
+HashAlgo::Type Session::getHashAlgo()
+{
+	return hashAlgo;
 }
 
 // Set the MACing operator

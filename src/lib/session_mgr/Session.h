@@ -85,6 +85,8 @@ public:
 	// Digest
 	void setDigestOp(HashAlgorithm* inDigestOp);
 	HashAlgorithm* getDigestOp();
+	void setHashAlgo(HashAlgo::Type inHashAlgo);
+	HashAlgo::Type getHashAlgo();
 
 	// Mac
 	void setMacOp(MacAlgorithm* inMacOp);
@@ -143,6 +145,7 @@ private:
 
 	// Digest
 	HashAlgorithm* digestOp;
+	HashAlgo::Type hashAlgo;
 
 	// Mac
 	MacAlgorithm* macOp;

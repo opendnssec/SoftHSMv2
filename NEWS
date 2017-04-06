@@ -8,6 +8,34 @@ SoftHSM 2.3.0 - 2017-xx-xx
   * Added CKA_PUBLIC_KEY_INFO to certificates, private, and public key
     objects. Will be accepted from application, but SoftHSM will
     currently not calculate it.
+* Issue #189: C_DigestKey returns CKR_KEY_INDIGESTIBLE when key
+  attribute CKA_EXTRACTABLE = false. Whitelist SHA algorithms to allow
+  C_DigestKey in this case.
+* Issue #225: Show slot id after initialization.
+* Issue #257: Set CKA_DECRYPT/CKA_ENCRYPT flags on key import to true.
+  (Patch from Martin Domke)
+* Issue #261: Add support for libeaycompat lib for FIPS on Windows.
+  (Patch from Matt Hauck)
+* Issue #262: Support importing ECDSA P-521 in softhsm-util.
+* Issue #276: Support for Botan 2.0.
+* Issue #279: Editorial changes from Mountain Lion to Sierra.
+  (Patch from Mike Neumann)
+* Issue #285: Support for LibreSSL.
+  (Patch from Alon Bar-Lev)
+* Issue #286: Update .gitignore.
+  (Patch from Alon Bar-Lev)
+* Issue #291: Change to enable builds and reports on new Jenkinks
+  environment.
+* Issue #293: Detect cppunit in autoconf.
+  (Patch from Alon Bar-Lev)
+
+Bugfixes:
+* Issue #216: Better handling of CRYPTO_set_locking_callback() for OpenSSL.
+* Issue #265: Fix deriving shared secret with ECC.
+* Issue #281: Fix test of p11 shared library.
+  (Patch from Lars Silvén)
+* Issue #289: Minor fix of 'EVP_CipherFinal_ex'.
+  (Patch from Viktor Tarasov)
 
 
 SoftHSM 2.2.0 - 2016-12-05
