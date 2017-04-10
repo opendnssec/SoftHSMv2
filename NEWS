@@ -36,6 +36,7 @@ Bugfixes:
   (Patch from Lars Silvén)
 * Issue #289: Minor fix of 'EVP_CipherFinal_ex'.
   (Patch from Viktor Tarasov)
+* Issue #305: Zero pad key to fit the block in CKM_AES_KEY_WRAP.
 
 
 SoftHSM 2.2.0 - 2016-12-05
