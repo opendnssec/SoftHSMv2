@@ -587,7 +587,7 @@ void SignVerifyTests::testHmacSignVerify()
 
 	rv = generateKey(hSessionRW,CKK_SHA224_HMAC,IN_SESSION,IS_PRIVATE,hKey);
 	CPPUNIT_ASSERT(rv == CKR_OK);
-	hmacSignVerify(CKM_SHA256_HMAC, hSessionRW, hKey);
+	hmacSignVerify(CKM_SHA224_HMAC, hSessionRW, hKey);
 
 	rv = generateKey(hSessionRW,CKK_SHA256_HMAC,IN_SESSION,IS_PRIVATE,hKey);
 	CPPUNIT_ASSERT(rv == CKR_OK);
