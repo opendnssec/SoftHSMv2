@@ -438,7 +438,7 @@ CK_RV SignVerifyTests::generateKey(CK_SESSION_HANDLE hSession, CK_KEY_TYPE keyTy
 #ifndef WITH_BOTAN
 #define GEN_KEY_LEN	75
 #else
-#define GEN_KEY_LEN	55
+#define GEN_KEY_LEN	64
 #endif
 	CK_RV rv;
 	CK_OBJECT_CLASS keyClass = CKO_SECRET_KEY;
