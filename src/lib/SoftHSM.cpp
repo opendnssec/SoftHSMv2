@@ -5327,6 +5327,17 @@ CK_RV SoftHSM::WrapKeySym
 	size_t bb = 8;
 #ifdef HAVE_AES_KEY_WRAP
 	CK_ULONG wrappedlen = keydata.size();
+
+	// [PKCS#11 v2.40, 2.14.3 AES Key Wrap]
+	// A key whose length is not a multiple of the AES Key Wrap block
+	// size (8 bytes) will be zero padded to fit.
+	CK_ULONG alignment = wrappedlen % 8;
+	if (alignment != 0)
+	{
+		keydata.resize(wrappedlen + 8 - alignment);
+		memset(&keydata[wrappedlen], 0, 8 - alignment);
+		wrappedlen = keydata.size();
+	}
 #endif
 	switch(pMechanism->mechanism) {
 #ifdef HAVE_AES_KEY_WRAP
