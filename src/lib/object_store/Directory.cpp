@@ -226,10 +226,19 @@ bool Directory::mkdir(std::string name)
 	std::string fullPath = path + OS_PATHSEP + name;
 
 #ifndef _WIN32
-	return (!::mkdir(fullPath.c_str(), S_IFDIR | S_IRWXU) && refresh());
+	int rv = ::mkdir(fullPath.c_str(), S_IFDIR | S_IRWXU);
 #else
-	return (!_mkdir(fullPath.c_str()) && refresh());
+	int rv = _mkdir(fullPath.c_str());
 #endif
+
+	if (rv != 0)
+	{
+		ERROR_MSG("Failed to create the directory (%s): %s", strerror(errno), fullPath.c_str());
+
+		return false;
+	}
+
+	return refresh();
 }
 
 // Delete a subdirectory in the directory

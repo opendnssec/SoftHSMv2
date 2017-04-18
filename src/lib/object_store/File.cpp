@@ -90,6 +90,7 @@ File::File(std::string inPath, bool forRead /* = true */, bool forWrite /* = fal
 		fd = open(path.c_str(), flags, 0600);
 		if (fd == -1)
 		{
+			ERROR_MSG("Could not open the file (%s): %s", strerror(errno), path.c_str());
 			valid = false;
 			return;
 		}
@@ -111,6 +112,7 @@ File::File(std::string inPath, bool forRead /* = true */, bool forWrite /* = fal
 		fd = _open(path.c_str(), flags, _S_IREAD | _S_IWRITE);
 		if (fd == -1)
 		{
+			ERROR_MSG("Could not open the file (%s): %s", strerror(errno), path.c_str());
 			valid = false;
 			return;
 		}

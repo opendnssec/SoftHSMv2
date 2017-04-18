@@ -424,7 +424,8 @@ int initToken(CK_SLOT_ID slotID, char* label, char* soPIN, char* userPIN)
 			return 1;
 			break;
 		default:
-			fprintf(stderr, "ERROR %X: Could not initialize the token.\n", (unsigned int)rv);
+			fprintf(stderr, "ERROR rv=0x%08X: Could not initialize the token.\n", (unsigned int)rv);
+			fprintf(stderr, "Please check log files for additional information.\n");
 			return 1;
 			break;
 	}
