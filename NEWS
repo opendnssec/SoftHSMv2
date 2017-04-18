@@ -32,6 +32,9 @@ SoftHSM 2.3.0 - 2017-xx-xx
 Bugfixes:
 * Issue #216: Better handling of CRYPTO_set_locking_callback() for OpenSSL.
 * Issue #265: Fix deriving shared secret with ECC.
+* Issue #280: HMAC with sizes less than L bytes is strongly discouraged.
+  Set a lower bound equal to L bytes in ulMinKeySize and check it when
+  initializing the operation.
 * Issue #281: Fix test of p11 shared library.
   (Patch from Lars Silvén)
 * Issue #289: Minor fix of 'EVP_CipherFinal_ex'.

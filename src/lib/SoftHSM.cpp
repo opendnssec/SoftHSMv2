@@ -848,15 +848,34 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 			break;
 #ifndef WITH_FIPS
 		case CKM_MD5_HMAC:
+			pInfo->ulMinKeySize = 16;
+			pInfo->ulMaxKeySize = 512;
+			pInfo->flags = CKF_SIGN | CKF_VERIFY;
+			break;
 #endif
 		case CKM_SHA_1_HMAC:
+			pInfo->ulMinKeySize = 20;
+			pInfo->ulMaxKeySize = 512;
+			pInfo->flags = CKF_SIGN | CKF_VERIFY;
+			break;
 		case CKM_SHA224_HMAC:
+			pInfo->ulMinKeySize = 28;
+			pInfo->ulMaxKeySize = 512;
+			pInfo->flags = CKF_SIGN | CKF_VERIFY;
+			break;
 		case CKM_SHA256_HMAC:
+			pInfo->ulMinKeySize = 32;
+			pInfo->ulMaxKeySize = 512;
+			pInfo->flags = CKF_SIGN | CKF_VERIFY;
+			break;
 		case CKM_SHA384_HMAC:
+			pInfo->ulMinKeySize = 48;
+			pInfo->ulMaxKeySize = 512;
+			pInfo->flags = CKF_SIGN | CKF_VERIFY;
+			break;
 		case CKM_SHA512_HMAC:
-			// Key size is not in use
-			pInfo->ulMinKeySize = 0;
-			pInfo->ulMaxKeySize = 0;
+			pInfo->ulMinKeySize = 64;
+			pInfo->ulMaxKeySize = 512;
 			pInfo->flags = CKF_SIGN | CKF_VERIFY;
 			break;
 		case CKM_RSA_PKCS_KEY_PAIR_GEN:
@@ -1018,8 +1037,8 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 			break;
 		case CKM_GOSTR3411_HMAC:
 			// Key size is not in use
-			pInfo->ulMinKeySize = 0;
-			pInfo->ulMaxKeySize = 0;
+			pInfo->ulMinKeySize = 32;
+			pInfo->ulMaxKeySize = 512;
 			pInfo->flags = CKF_SIGN | CKF_VERIFY;
 			break;
 		case CKM_GOSTR3410_KEY_PAIR_GEN:
@@ -3450,31 +3469,57 @@ CK_RV SoftHSM::MacSignInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechani
         if (!key->getBooleanValue(CKA_SIGN, false))
 		return CKR_KEY_FUNCTION_NOT_PERMITTED;
 
+	// Get key info
+	CK_KEY_TYPE keyType = key->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED);
+
 	// Get the MAC algorithm matching the mechanism
+	// Also check mechanism constraints
 	MacAlgo::Type algo = MacAlgo::Unknown;
+	size_t minSize = 0;
 	switch(pMechanism->mechanism) {
 #ifndef WITH_FIPS
 		case CKM_MD5_HMAC:
+			if (keyType != CKK_GENERIC_SECRET && keyType != CKK_MD5_HMAC)
+				return CKR_KEY_TYPE_INCONSISTENT;
+			minSize = 16;
 			algo = MacAlgo::HMAC_MD5;
 			break;
 #endif
 		case CKM_SHA_1_HMAC:
+			if (keyType != CKK_GENERIC_SECRET && keyType != CKK_SHA_1_HMAC)
+				return CKR_KEY_TYPE_INCONSISTENT;
+			minSize = 20;
 			algo = MacAlgo::HMAC_SHA1;
 			break;
 		case CKM_SHA224_HMAC:
+			if (keyType != CKK_GENERIC_SECRET && keyType != CKK_SHA224_HMAC)
+				return CKR_KEY_TYPE_INCONSISTENT;
+			minSize = 28;
 			algo = MacAlgo::HMAC_SHA224;
 			break;
 		case CKM_SHA256_HMAC:
+			if (keyType != CKK_GENERIC_SECRET && keyType != CKK_SHA256_HMAC)
+				return CKR_KEY_TYPE_INCONSISTENT;
+			minSize = 32;
 			algo = MacAlgo::HMAC_SHA256;
 			break;
 		case CKM_SHA384_HMAC:
+			if (keyType != CKK_GENERIC_SECRET && keyType != CKK_SHA384_HMAC)
+				return CKR_KEY_TYPE_INCONSISTENT;
+			minSize = 48;
 			algo = MacAlgo::HMAC_SHA384;
 			break;
 		case CKM_SHA512_HMAC:
+			if (keyType != CKK_GENERIC_SECRET && keyType != CKK_SHA512_HMAC)
+				return CKR_KEY_TYPE_INCONSISTENT;
+			minSize = 64;
 			algo = MacAlgo::HMAC_SHA512;
 			break;
 #ifdef WITH_GOST
 		case CKM_GOSTR3411_HMAC:
+			if (keyType != CKK_GENERIC_SECRET && keyType != CKK_GOST28147)
+				return CKR_KEY_TYPE_INCONSISTENT;
+			minSize = 32;
 			algo = MacAlgo::HMAC_GOST;
 			break;
 #endif
@@ -3491,6 +3536,17 @@ CK_RV SoftHSM::MacSignInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechani
 		mac->recycleKey(privkey);
 		CryptoFactory::i()->recycleMacAlgorithm(mac);
 		return CKR_GENERAL_ERROR;
+	}
+
+	// Adjust key bit length
+	privkey->setBitLen(privkey->getKeyBits().size() * 8);
+
+	// Check key size
+	if (privkey->getBitLen() < (minSize*8))
+	{
+		mac->recycleKey(privkey);
+		CryptoFactory::i()->recycleMacAlgorithm(mac);
+		return CKR_KEY_SIZE_RANGE;
 	}
 
 	// Initialize signing
@@ -4257,31 +4313,57 @@ CK_RV SoftHSM::MacVerifyInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMecha
         if (!key->getBooleanValue(CKA_VERIFY, false))
 		return CKR_KEY_FUNCTION_NOT_PERMITTED;
 
+	// Get key info
+	CK_KEY_TYPE keyType = key->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED);
+
 	// Get the MAC algorithm matching the mechanism
+	// Also check mechanism constraints
 	MacAlgo::Type algo = MacAlgo::Unknown;
+	size_t minSize = 0;
 	switch(pMechanism->mechanism) {
 #ifndef WITH_FIPS
 		case CKM_MD5_HMAC:
+			if (keyType != CKK_GENERIC_SECRET && keyType != CKK_MD5_HMAC)
+				return CKR_KEY_TYPE_INCONSISTENT;
+			minSize = 16;
 			algo = MacAlgo::HMAC_MD5;
 			break;
 #endif
 		case CKM_SHA_1_HMAC:
+			if (keyType != CKK_GENERIC_SECRET && keyType != CKK_SHA_1_HMAC)
+				return CKR_KEY_TYPE_INCONSISTENT;
+			minSize = 20;
 			algo = MacAlgo::HMAC_SHA1;
 			break;
 		case CKM_SHA224_HMAC:
+			if (keyType != CKK_GENERIC_SECRET && keyType != CKK_SHA224_HMAC)
+				return CKR_KEY_TYPE_INCONSISTENT;
+			minSize = 28;
 			algo = MacAlgo::HMAC_SHA224;
 			break;
 		case CKM_SHA256_HMAC:
+			if (keyType != CKK_GENERIC_SECRET && keyType != CKK_SHA256_HMAC)
+				return CKR_KEY_TYPE_INCONSISTENT;
+			minSize = 32;
 			algo = MacAlgo::HMAC_SHA256;
 			break;
 		case CKM_SHA384_HMAC:
+			if (keyType != CKK_GENERIC_SECRET && keyType != CKK_SHA384_HMAC)
+				return CKR_KEY_TYPE_INCONSISTENT;
+			minSize = 48;
 			algo = MacAlgo::HMAC_SHA384;
 			break;
 		case CKM_SHA512_HMAC:
+			if (keyType != CKK_GENERIC_SECRET && keyType != CKK_SHA512_HMAC)
+				return CKR_KEY_TYPE_INCONSISTENT;
+			minSize = 64;
 			algo = MacAlgo::HMAC_SHA512;
 			break;
 #ifdef WITH_GOST
 		case CKM_GOSTR3411_HMAC:
+			if (keyType != CKK_GENERIC_SECRET && keyType != CKK_GOST28147)
+				return CKR_KEY_TYPE_INCONSISTENT;
+			minSize = 32;
 			algo = MacAlgo::HMAC_GOST;
 			break;
 #endif
@@ -4298,6 +4380,17 @@ CK_RV SoftHSM::MacVerifyInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMecha
 		mac->recycleKey(pubkey);
 		CryptoFactory::i()->recycleMacAlgorithm(mac);
 		return CKR_GENERAL_ERROR;
+	}
+
+	// Adjust key bit length
+	pubkey->setBitLen(pubkey->getKeyBits().size() * 8);
+
+	// Check key size
+	if (pubkey->getBitLen() < (minSize*8))
+	{
+		mac->recycleKey(pubkey);
+		CryptoFactory::i()->recycleMacAlgorithm(mac);
+		return CKR_KEY_SIZE_RANGE;
 	}
 
 	// Initialize verifying
