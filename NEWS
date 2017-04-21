@@ -20,6 +20,7 @@ SoftHSM 2.3.0 - 2017-xx-xx
 * Issue #276: Support for Botan 2.0.
 * Issue #279: Editorial changes from Mountain Lion to Sierra.
   (Patch from Mike Neumann)
+* Issue #283: More detailed error messages when initializing SoftHSM.
 * Issue #285: Support for LibreSSL.
   (Patch from Alon Bar-Lev)
 * Issue #286: Update .gitignore.
