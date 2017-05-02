@@ -8,6 +8,7 @@ SoftHSM 2.3.0 - 2017-xx-xx
   * Added CKA_PUBLIC_KEY_INFO to certificates, private, and public key
     objects. Will be accepted from application, but SoftHSM will
     currently not calculate it.
+* Issue #155: Add unit tests for SessionManager.
 * Issue #189: C_DigestKey returns CKR_KEY_INDIGESTIBLE when key
   attribute CKA_EXTRACTABLE = false. Whitelist SHA algorithms to allow
   C_DigestKey in this case.
