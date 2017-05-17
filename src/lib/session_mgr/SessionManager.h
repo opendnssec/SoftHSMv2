@@ -50,7 +50,7 @@ public:
 
 	CK_RV openSession(Slot* slot, CK_FLAGS flags, CK_VOID_PTR pApplication, CK_NOTIFY Notify, CK_SESSION_HANDLE_PTR phSession);
 	CK_RV closeSession(CK_SESSION_HANDLE hSession);
-    CK_RV closeAllSessions(Slot* slot);
+	CK_RV closeAllSessions(Slot* slot);
 	CK_RV getSessionInfo(CK_SESSION_HANDLE hSession, CK_SESSION_INFO_PTR pInfo);
 	Session* getSession(CK_SESSION_HANDLE hSession);
 	bool haveSession(CK_SLOT_ID slotID);
