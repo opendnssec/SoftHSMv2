@@ -56,6 +56,7 @@ struct SymMode
 		Unknown,
 		CBC,
 		CFB,
+		CTR,
 		ECB,
 		OFB
 	};
