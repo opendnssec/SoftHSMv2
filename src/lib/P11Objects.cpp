@@ -399,6 +399,11 @@ bool P11CertificateObj::init(OSObject *inobject)
 		OSAttribute setClass((unsigned long)CKO_CERTIFICATE);
 		inobject->setAttribute(CKA_CLASS, setClass);
 	}
+	// Make certificates public
+	if (!inobject->attributeExists(CKA_PRIVATE) || inobject->getBooleanValue(CKA_PRIVATE, true) != false) {
+		OSAttribute setPrivate(false);
+		inobject->setAttribute(CKA_PRIVATE, setPrivate);
+	}
 
 	// Create parent
 	if (!P11Object::init(inobject)) return false;

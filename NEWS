@@ -29,6 +29,7 @@ SoftHSM 2.3.0 - 2017-xx-xx
   environment.
 * Issue #293: Detect cppunit in autoconf.
   (Patch from Alon Bar-Lev)
+* Issue #309: Certificates now defaults to CKA_PRIVATE=false.
 
 Bugfixes:
 * Issue #216: Better handling of CRYPTO_set_locking_callback() for OpenSSL.
