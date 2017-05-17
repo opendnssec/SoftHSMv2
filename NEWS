@@ -32,6 +32,7 @@ SoftHSM 2.3.0 - 2017-xx-xx
   (Patch from Alon Bar-Lev)
 * Issue #309: CKO_CERTIFICATE and CKO_PUBLIC_KEY now defaults to
   CKA_PRIVATE=false.
+* Issue #314: Update README with information about logging.
 
 Bugfixes:
 * Issue #216: Better handling of CRYPTO_set_locking_callback() for OpenSSL.
