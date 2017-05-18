@@ -277,6 +277,12 @@ static CK_RV extractObjectInformation(CK_ATTRIBUTE_PTR pTemplate,
 		}
 	}
 
+	if (objClass == CKO_PUBLIC_KEY && !bHasPrivate)
+	{
+		// Change default value for public keys
+		isPrivate = CK_FALSE;
+	}
+
 	return CKR_OK;
 }
 

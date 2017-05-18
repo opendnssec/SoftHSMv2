@@ -1705,7 +1705,7 @@ void ObjectTests::testDefaultRSAPubAttributes()
 
 	// Check attributes in RSA public key object
 	checkCommonObjectAttributes(hSession, hObject, objClass);
-	checkCommonStorageObjectAttributes(hSession, hObject, CK_FALSE, CK_TRUE, CK_TRUE, NULL_PTR, 0, CK_TRUE, CK_TRUE);
+	checkCommonStorageObjectAttributes(hSession, hObject, CK_FALSE, CK_FALSE, CK_TRUE, NULL_PTR, 0, CK_TRUE, CK_TRUE);
 	memset(&emptyDate, 0, sizeof(emptyDate));
 	checkCommonKeyAttributes(hSession, hObject, objType, NULL_PTR, 0, emptyDate, 0, emptyDate, 0, CK_FALSE, CK_FALSE, CK_UNAVAILABLE_INFORMATION, NULL_PTR, 0);
 	checkCommonPublicKeyAttributes(hSession, hObject, NULL_PTR, 0, CK_TRUE, CK_TRUE, CK_TRUE, CK_TRUE, CK_FALSE, NULL_PTR, 0);
