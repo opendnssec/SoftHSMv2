@@ -128,6 +128,13 @@ All of the tokens and their objects are stored in the location given by
 softhsm2.conf. Backup can thus be done as a regular file copy.
 
 
+## Log information
+
+Log information is sent to syslog or the Windows event log and the log
+level is set in the configuration file. Each log event is prepended with
+the source file name and line number.
+
+
 ## Building from the repository
 
 If the code is downloaded directly from the code repository, you have to
