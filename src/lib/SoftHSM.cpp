@@ -202,6 +202,7 @@ static CK_RV extractObjectInformation(CK_ATTRIBUTE_PTR pTemplate,
 	bool bHasClass = false;
 	bool bHasKeyType = false;
 	bool bHasCertType = false;
+	bool bHasPrivate = false;
 
 	// Extract object information
 	for (CK_ULONG i = 0; i < ulCount; ++i)
@@ -239,6 +240,7 @@ static CK_RV extractObjectInformation(CK_ATTRIBUTE_PTR pTemplate,
 				if (pTemplate[i].ulValueLen == sizeof(CK_BBOOL))
 				{
 					isPrivate = *(CK_BBOOL*)pTemplate[i].pValue;
+					bHasPrivate = true;
 				}
 				break;
 			default:
@@ -262,10 +264,23 @@ static CK_RV extractObjectInformation(CK_ATTRIBUTE_PTR pTemplate,
 		 return CKR_TEMPLATE_INCOMPLETE;
 	}
 
-	bool bCertTypeRequired = (objClass == CKO_CERTIFICATE);
-	if (bCertTypeRequired && !bHasCertType)
+	if (objClass == CKO_CERTIFICATE)
 	{
-		return CKR_TEMPLATE_INCOMPLETE;
+		if (!bHasCertType)
+		{
+			return CKR_TEMPLATE_INCOMPLETE;
+		}
+		if (!bHasPrivate)
+		{
+			// Change default value for certificates
+			isPrivate = CK_FALSE;
+		}
+	}
+
+	if (objClass == CKO_PUBLIC_KEY && !bHasPrivate)
+	{
+		// Change default value for public keys
+		isPrivate = CK_FALSE;
 	}
 
 	return CKR_OK;
