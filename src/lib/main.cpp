@@ -32,6 +32,9 @@
  on the boundary of the library.
  *****************************************************************************/
 
+// The functions are exported library/DLL entry points
+#define CRYPTOKI_EXPORTS
+
 #include "config.h"
 #include "log.h"
 #include "fatal.h"
@@ -42,6 +45,8 @@
 	(__GNUC__ >= 4 || (__GNUC__ == 3 && __GNUC_MINOR__ >= 3)) || \
 	defined(__SUNPRO_C) && __SUNPRO_C >= 0x590
 #define PKCS_API __attribute__ ((visibility("default")))
+#else
+#define PKCS_API
 #endif
 
 // PKCS #11 function list
