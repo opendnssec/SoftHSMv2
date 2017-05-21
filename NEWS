@@ -45,6 +45,8 @@ Bugfixes:
 * Issue #289: Minor fix of 'EVP_CipherFinal_ex'.
   (Patch from Viktor Tarasov)
 * Issue #305: Zero pad key to fit the block in CKM_AES_KEY_WRAP.
+* Issue #313: Detecting CppUnit when using Macports.
+  (Patch from mouse07410)
 
 
 SoftHSM 2.2.0 - 2016-12-05
