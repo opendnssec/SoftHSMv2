@@ -69,8 +69,7 @@ protected:
 			CK_SESSION_HANDLE hSession,
 			CK_OBJECT_HANDLE hKey,
 			size_t messageSize,
-			bool isSizeOK=true,
-			bool isCBC=true);
+			bool isSizeOK=true);
 	void aesWrapUnwrap(CK_MECHANISM_TYPE mechanismType, CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hKey);
 	CK_RV generateRsaPrivateKey(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_OBJECT_HANDLE &hKey);
 };

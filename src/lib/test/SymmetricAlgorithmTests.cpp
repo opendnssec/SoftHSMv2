@@ -133,8 +133,7 @@ void SymmetricAlgorithmTests::encryptDecrypt(
 		const CK_SESSION_HANDLE hSession,
 		const CK_OBJECT_HANDLE hKey,
 		const size_t messageSize,
-		const bool isSizeOK,
-		const bool isCBC)
+		const bool isSizeOK)
 {
 	class PartSize {// class to get random size for part
 	private:        // we want to know for sure that no part length is causing any problem.
@@ -177,8 +176,35 @@ void SymmetricAlgorithmTests::encryptDecrypt(
 
 	CPPUNIT_ASSERT_EQUAL( (CK_RV)CKR_OK, CRYPTOKI_F_PTR( C_GenerateRandom(hSession, (CK_BYTE_PTR)&vData.front(), messageSize) ) );
 
-	const CK_MECHANISM mechanism = { mechanismType, isCBC ? (CK_VOID_PTR)&vData.front() : NULL_PTR, isCBC ? blockSize : 0 };
+	const CK_MECHANISM mechanism = { mechanismType, NULL_PTR, 0 };
 	CK_MECHANISM_PTR pMechanism((CK_MECHANISM_PTR)&mechanism);
+	CK_AES_CTR_PARAMS ctrParams =
+	{
+		32,
+		{
+			0x00, 0x00, 0x00, 0x30, 0x00, 0x00, 0x00, 0x00,
+			0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01
+		}
+	};
+
+	switch (mechanismType)
+	{
+		case CKM_DES_CBC:
+		case CKM_DES_CBC_PAD:
+		case CKM_DES3_CBC:
+		case CKM_DES3_CBC_PAD:
+		case CKM_AES_CBC:
+		case CKM_AES_CBC_PAD:
+			pMechanism->pParameter = (CK_VOID_PTR)&vData.front();
+			pMechanism->ulParameterLen = blockSize;
+			break;
+		case CKM_AES_CTR:
+			pMechanism->pParameter = &ctrParams;
+			pMechanism->ulParameterLen = sizeof(ctrParams);
+			break;
+		default:
+			break;
+	}
 
 	// Single-part encryption
 	CPPUNIT_ASSERT_EQUAL( (CK_RV)CKR_OK, CRYPTOKI_F_PTR( C_EncryptInit(hSession,pMechanism,hKey) ) );
@@ -531,11 +557,12 @@ void SymmetricAlgorithmTests::testAesEncryptDecrypt()
 	encryptDecrypt(CKM_AES_CBC_PAD,blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST+1);
 	encryptDecrypt(CKM_AES_CBC_PAD,blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST);
 	encryptDecrypt(CKM_AES_CBC,blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST);
-	encryptDecrypt(CKM_AES_CBC,blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST);
 	encryptDecrypt(CKM_AES_CBC,blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST+1, false);
-	encryptDecrypt(CKM_AES_ECB,blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST, true, false);
-	encryptDecrypt(CKM_AES_ECB,blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST, true, false);
-	encryptDecrypt(CKM_AES_ECB,blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST+1, false, false);
+	encryptDecrypt(CKM_AES_ECB,blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST);
+	encryptDecrypt(CKM_AES_ECB,blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST+1, false);
+	encryptDecrypt(CKM_AES_CTR,blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST-1);
+	encryptDecrypt(CKM_AES_CTR,blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST+1);
+	encryptDecrypt(CKM_AES_CTR,blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST);
 }
 
 void SymmetricAlgorithmTests::testAesWrapUnwrap()
@@ -619,11 +646,9 @@ void SymmetricAlgorithmTests::testDesEncryptDecrypt()
 	encryptDecrypt(CKM_DES_CBC_PAD,blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST+1);
 	encryptDecrypt(CKM_DES_CBC_PAD,blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST);
 	encryptDecrypt(CKM_DES_CBC,blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST);
-	encryptDecrypt(CKM_DES_CBC,blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST);
 	encryptDecrypt(CKM_DES_CBC,blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST+1, false);
-	encryptDecrypt(CKM_DES_ECB,blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST, true, false);
-	encryptDecrypt(CKM_DES_ECB,blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST, true, false);
-	encryptDecrypt(CKM_DES_ECB,blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST+1, false, false);
+	encryptDecrypt(CKM_DES_ECB,blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST);
+	encryptDecrypt(CKM_DES_ECB,blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST+1, false);
 
 	CK_OBJECT_HANDLE hKey2 = CK_INVALID_HANDLE;
 
@@ -635,11 +660,9 @@ void SymmetricAlgorithmTests::testDesEncryptDecrypt()
 	encryptDecrypt(CKM_DES3_CBC_PAD,blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST+1);
 	encryptDecrypt(CKM_DES3_CBC_PAD,blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST);
 	encryptDecrypt(CKM_DES3_CBC,blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST);
-	encryptDecrypt(CKM_DES3_CBC,blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST);
 	encryptDecrypt(CKM_DES3_CBC,blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST+1, false);
-	encryptDecrypt(CKM_DES3_ECB,blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST, true, false);
-	encryptDecrypt(CKM_DES3_ECB,blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST, true, false);
-	encryptDecrypt(CKM_DES3_ECB,blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST+1, false, false);
+	encryptDecrypt(CKM_DES3_ECB,blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST);
+	encryptDecrypt(CKM_DES3_ECB,blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST+1, false);
 #endif
 
 	CK_OBJECT_HANDLE hKey3 = CK_INVALID_HANDLE;
@@ -652,11 +675,9 @@ void SymmetricAlgorithmTests::testDesEncryptDecrypt()
 	encryptDecrypt(CKM_DES3_CBC_PAD,blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST+1);
 	encryptDecrypt(CKM_DES3_CBC_PAD,blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST);
 	encryptDecrypt(CKM_DES3_CBC,blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST);
-	encryptDecrypt(CKM_DES3_CBC,blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST);
 	encryptDecrypt(CKM_DES3_CBC,blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST+1, false);
-	encryptDecrypt(CKM_DES3_ECB,blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST, true, false);
-	encryptDecrypt(CKM_DES3_ECB,blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST, true, false);
-	encryptDecrypt(CKM_DES3_ECB,blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST+1, false, false);
+	encryptDecrypt(CKM_DES3_ECB,blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST);
+	encryptDecrypt(CKM_DES3_ECB,blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST+1, false);
 }
 
 void SymmetricAlgorithmTests::testNullTemplate()

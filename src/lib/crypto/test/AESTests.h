@@ -42,6 +42,7 @@ class AESTests : public CppUnit::TestFixture
 	CPPUNIT_TEST(testBlockSize);
 	CPPUNIT_TEST(testCBC);
 	CPPUNIT_TEST(testECB);
+	CPPUNIT_TEST(testCTR);
 #ifdef HAVE_AES_KEY_WRAP
 	CPPUNIT_TEST(testWrapWoPad);
 #endif
@@ -54,6 +55,7 @@ public:
 	void testBlockSize();
 	void testCBC();
 	void testECB();
+	void testCTR();
 	void testWrapWoPad();
 	void testWrapPad();
 

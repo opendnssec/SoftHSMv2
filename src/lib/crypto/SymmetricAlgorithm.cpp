@@ -179,3 +179,28 @@ unsigned long SymmetricAlgorithm::getBufferSize()
 {
 	return currentBufferSize;
 }
+
+bool SymmetricAlgorithm::isStreamCipher()
+{
+	switch (currentCipherMode)
+	{
+		case SymMode::CFB:
+		case SymMode::CTR:
+		case SymMode::OFB:
+			return true;
+	}
+
+	return false;
+}
+
+bool SymmetricAlgorithm::isBlockCipher()
+{
+	switch (currentCipherMode)
+	{
+		case SymMode::CBC:
+		case SymMode::ECB:
+			return true;
+	}
+
+	return false;
+}

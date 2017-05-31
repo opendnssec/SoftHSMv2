@@ -106,6 +106,8 @@ public:
 	virtual SymMode::Type getCipherMode();
 	virtual bool getPaddingMode();
 	virtual unsigned long getBufferSize();
+	virtual bool isStreamCipher();
+	virtual bool isBlockCipher();
 
 protected:
 	// The current key
