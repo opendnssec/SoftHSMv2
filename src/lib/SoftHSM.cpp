@@ -2073,6 +2073,8 @@ CK_RV SoftHSM::SymEncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 				DEBUG_MSG("Invalid ulCounterBits");
 				return CKR_MECHANISM_PARAM_INVALID;
 			}
+			// TODO: Make sure that we do not cause an overflow of the counter
+			// block’s counter bits.
 
 			iv.resize(16);
 			memcpy(&iv[0], CK_AES_CTR_PARAMS_PTR(pMechanism->pParameter)->cb, 16);
@@ -2714,6 +2716,8 @@ CK_RV SoftHSM::SymDecryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 				DEBUG_MSG("Invalid ulCounterBits");
 				return CKR_MECHANISM_PARAM_INVALID;
 			}
+			// TODO: Make sure that we do not cause an overflow of the counter
+			// block’s counter bits.
 
 			iv.resize(16);
 			memcpy(&iv[0], CK_AES_CTR_PARAMS_PTR(pMechanism->pParameter)->cb, 16);
