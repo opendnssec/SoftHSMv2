@@ -34,7 +34,7 @@
 #ifndef _SOFTHSM_V2_SOFTHSM2_UTIL_H
 #define _SOFTHSM_V2_SOFTHSM2_UTIL_H
 
-#include "pkcs11.h"
+#include "cryptoki.h"
 #include <string>
 
 // Main functions

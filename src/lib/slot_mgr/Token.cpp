@@ -374,6 +374,7 @@ CK_RV Token::createToken(ObjectStore* objectStore, ByteString& soPIN, CK_UTF8CHA
 
 		if (newToken == NULL)
 		{
+			ERROR_MSG("Could not create the token");
 			return CKR_DEVICE_ERROR;
 		}
 

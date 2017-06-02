@@ -202,6 +202,7 @@ static CK_RV extractObjectInformation(CK_ATTRIBUTE_PTR pTemplate,
 	bool bHasClass = false;
 	bool bHasKeyType = false;
 	bool bHasCertType = false;
+	bool bHasPrivate = false;
 
 	// Extract object information
 	for (CK_ULONG i = 0; i < ulCount; ++i)
@@ -239,6 +240,7 @@ static CK_RV extractObjectInformation(CK_ATTRIBUTE_PTR pTemplate,
 				if (pTemplate[i].ulValueLen == sizeof(CK_BBOOL))
 				{
 					isPrivate = *(CK_BBOOL*)pTemplate[i].pValue;
+					bHasPrivate = true;
 				}
 				break;
 			default:
@@ -262,10 +264,23 @@ static CK_RV extractObjectInformation(CK_ATTRIBUTE_PTR pTemplate,
 		 return CKR_TEMPLATE_INCOMPLETE;
 	}
 
-	bool bCertTypeRequired = (objClass == CKO_CERTIFICATE);
-	if (bCertTypeRequired && !bHasCertType)
+	if (objClass == CKO_CERTIFICATE)
 	{
-		return CKR_TEMPLATE_INCOMPLETE;
+		if (!bHasCertType)
+		{
+			return CKR_TEMPLATE_INCOMPLETE;
+		}
+		if (!bHasPrivate)
+		{
+			// Change default value for certificates
+			isPrivate = CK_FALSE;
+		}
+	}
+
+	if (objClass == CKO_PUBLIC_KEY && !bHasPrivate)
+	{
+		// Change default value for public keys
+		isPrivate = CK_FALSE;
 	}
 
 	return CKR_OK;
@@ -348,9 +363,10 @@ CK_RV SoftHSM::C_Initialize(CK_VOID_PTR pInitArgs)
 {
 	CK_C_INITIALIZE_ARGS_PTR args;
 
-	// Check if PKCS #11 is already initialised
+	// Check if PKCS#11 is already initialized
 	if (isInitialised)
 	{
+		ERROR_MSG("SoftHSM is already initialized");
 		return CKR_CRYPTOKI_ALREADY_INITIALIZED;
 	}
 
@@ -362,7 +378,7 @@ CK_RV SoftHSM::C_Initialize(CK_VOID_PTR pInitArgs)
 		// Must be set to NULL_PTR in this version of PKCS#11
 		if (args->pReserved != NULL_PTR)
 		{
-			DEBUG_MSG("pReserved must be set to NULL_PTR");
+			ERROR_MSG("pReserved must be set to NULL_PTR");
 			return CKR_ARGUMENTS_BAD;
 		}
 
@@ -409,7 +425,7 @@ CK_RV SoftHSM::C_Initialize(CK_VOID_PTR pInitArgs)
 				args->UnlockMutex == NULL_PTR
 			)
 			{
-				DEBUG_MSG("Not all mutex functions are supplied");
+				ERROR_MSG("Not all mutex functions are supplied");
 				return CKR_ARGUMENTS_BAD;
 			}
 
@@ -433,12 +449,14 @@ CK_RV SoftHSM::C_Initialize(CK_VOID_PTR pInitArgs)
 	// Initiate SecureMemoryRegistry
 	if (SecureMemoryRegistry::i() == NULL)
 	{
+		ERROR_MSG("Could not load the SecureMemoryRegistry");
 		return CKR_GENERAL_ERROR;
 	}
 
 	// Build the CryptoFactory
 	if (CryptoFactory::i() == NULL)
 	{
+		ERROR_MSG("Could not load the CryptoFactory");
 		return CKR_GENERAL_ERROR;
 	}
 
@@ -446,6 +464,7 @@ CK_RV SoftHSM::C_Initialize(CK_VOID_PTR pInitArgs)
 	// Check the FIPS status
 	if (!CryptoFactory::i()->getFipsSelfTestStatus())
 	{
+		ERROR_MSG("The FIPS self test failed");
 		return CKR_FIPS_SELF_TEST_FAILED;
 	}
 #endif
@@ -453,18 +472,21 @@ CK_RV SoftHSM::C_Initialize(CK_VOID_PTR pInitArgs)
 	// (Re)load the configuration
 	if (!Configuration::i()->reload(SimpleConfigLoader::i()))
 	{
+		ERROR_MSG("Could not load the configuration");
 		return CKR_GENERAL_ERROR;
 	}
 
 	// Configure the log level
 	if (!setLogLevel(Configuration::i()->getString("log.level", DEFAULT_LOG_LEVEL)))
 	{
+		ERROR_MSG("Could not set the log level");
 		return CKR_GENERAL_ERROR;
 	}
 
 	// Configure object store storage backend used by all tokens.
 	if (!ObjectStoreToken::selectBackend(Configuration::i()->getString("objectstore.backend", DEFAULT_OBJECTSTORE_BACKEND)))
 	{
+		ERROR_MSG("Could not set the storage backend");
 		return CKR_GENERAL_ERROR;
 	}
 
@@ -848,15 +870,34 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 			break;
 #ifndef WITH_FIPS
 		case CKM_MD5_HMAC:
+			pInfo->ulMinKeySize = 16;
+			pInfo->ulMaxKeySize = 512;
+			pInfo->flags = CKF_SIGN | CKF_VERIFY;
+			break;
 #endif
 		case CKM_SHA_1_HMAC:
+			pInfo->ulMinKeySize = 20;
+			pInfo->ulMaxKeySize = 512;
+			pInfo->flags = CKF_SIGN | CKF_VERIFY;
+			break;
 		case CKM_SHA224_HMAC:
+			pInfo->ulMinKeySize = 28;
+			pInfo->ulMaxKeySize = 512;
+			pInfo->flags = CKF_SIGN | CKF_VERIFY;
+			break;
 		case CKM_SHA256_HMAC:
+			pInfo->ulMinKeySize = 32;
+			pInfo->ulMaxKeySize = 512;
+			pInfo->flags = CKF_SIGN | CKF_VERIFY;
+			break;
 		case CKM_SHA384_HMAC:
+			pInfo->ulMinKeySize = 48;
+			pInfo->ulMaxKeySize = 512;
+			pInfo->flags = CKF_SIGN | CKF_VERIFY;
+			break;
 		case CKM_SHA512_HMAC:
-			// Key size is not in use
-			pInfo->ulMinKeySize = 0;
-			pInfo->ulMaxKeySize = 0;
+			pInfo->ulMinKeySize = 64;
+			pInfo->ulMaxKeySize = 512;
 			pInfo->flags = CKF_SIGN | CKF_VERIFY;
 			break;
 		case CKM_RSA_PKCS_KEY_PAIR_GEN:
@@ -1018,8 +1059,8 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 			break;
 		case CKM_GOSTR3411_HMAC:
 			// Key size is not in use
-			pInfo->ulMinKeySize = 0;
-			pInfo->ulMaxKeySize = 0;
+			pInfo->ulMinKeySize = 32;
+			pInfo->ulMaxKeySize = 512;
 			pInfo->flags = CKF_SIGN | CKF_VERIFY;
 			break;
 		case CKM_GOSTR3410_KEY_PAIR_GEN:
@@ -1300,10 +1341,10 @@ CK_RV SoftHSM::C_Logout(CK_SESSION_HANDLE hSession)
 	// Logout
 	token->logout();
 
-	// [PKCS#11 v2.3 p124] When logout is successful...
+	// [PKCS#11 v2.40, C_Logout] When logout is successful...
 	// a. Any of the application's handles to private objects become invalid.
 	// b. Even if a user is later logged back into the token those handles remain invalid.
-	// c. All private session objects from sessions belonging to the application area destroyed.
+	// c. All private session objects from sessions belonging to the application are destroyed.
 
 	// Have the handle manager remove all handles pointing to private objects for this slot.
 	CK_SLOT_ID slotID = session->getSlot()->getSlotID();
@@ -1359,7 +1400,7 @@ CK_RV SoftHSM::C_CopyObject(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject
 
 	// Check if the object is copyable
 	CK_BBOOL isCopyable = object->getBooleanValue(CKA_COPYABLE, true);
-	if (!isCopyable) return CKR_COPY_PROHIBITED;
+	if (!isCopyable) return CKR_ACTION_PROHIBITED;
 
 	// Extract critical information from the template
 	CK_BBOOL isOnToken = wasOnToken;
@@ -1528,6 +1569,10 @@ CK_RV SoftHSM::C_DestroyObject(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObj
 		return rv;
 	}
 
+	// Check if the object is destroyable
+	CK_BBOOL isDestroyable = object->getBooleanValue(CKA_DESTROYABLE, true);
+	if (!isDestroyable) return CKR_ACTION_PROHIBITED;
+
 	// Tell the handleManager to forget about the object.
 	handleManager->destroyObject(hObject);
 
@@ -1642,6 +1687,10 @@ CK_RV SoftHSM::C_SetAttributeValue(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE 
 
 		return rv;
 	}
+
+	// Check if the object is modifiable
+	CK_BBOOL isModifiable = object->getBooleanValue(CKA_MODIFIABLE, true);
+	if (!isModifiable) return CKR_ACTION_PROHIBITED;
 
 	// Wrap a P11Object around the OSObject so we can access the attributes in the
 	// context of the object in which it is defined.
@@ -2254,7 +2303,6 @@ static CK_RV AsymEncrypt(Session* session, CK_BYTE_PTR pData, CK_ULONG ulDataLen
 	ByteString data;
 	ByteString encryptedData;
 
-	// PKCS #11 Mechanisms v2.30: Cryptoki Draft 7 page 32
 	// We must allow input length <= k and therfore need to prepend the data with zeroes.
 	if (mechanism == AsymMech::RSA) {
 		data.wipe(size-ulDataLen);
@@ -3162,6 +3210,7 @@ CK_RV SoftHSM::C_DigestInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechan
 
 	session->setOpType(SESSION_OP_DIGEST);
 	session->setDigestOp(hash);
+	session->setHashAlgo(algo);
 
 	return CKR_OK;
 }
@@ -3291,11 +3340,20 @@ CK_RV SoftHSM::C_DigestKey(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject)
 		return CKR_GENERAL_ERROR;
 	}
 
-	// Parano...
-	if (!key->getBooleanValue(CKA_EXTRACTABLE, false))
-		return CKR_KEY_INDIGESTIBLE;
-	if (key->getBooleanValue(CKA_SENSITIVE, false))
-		return CKR_KEY_INDIGESTIBLE;
+	// Whitelist
+	HashAlgo::Type algo = session->getHashAlgo();
+	if (algo != HashAlgo::SHA1 &&
+	    algo != HashAlgo::SHA224 &&
+	    algo != HashAlgo::SHA256 &&
+	    algo != HashAlgo::SHA384 &&
+	    algo != HashAlgo::SHA512)
+	{
+		// Parano...
+		if (!key->getBooleanValue(CKA_EXTRACTABLE, false))
+			return CKR_KEY_INDIGESTIBLE;
+		if (key->getBooleanValue(CKA_SENSITIVE, false))
+			return CKR_KEY_INDIGESTIBLE;
+	}
 
 	// Get value
 	if (!key->attributeExists(CKA_VALUE))
@@ -3433,31 +3491,57 @@ CK_RV SoftHSM::MacSignInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechani
         if (!key->getBooleanValue(CKA_SIGN, false))
 		return CKR_KEY_FUNCTION_NOT_PERMITTED;
 
+	// Get key info
+	CK_KEY_TYPE keyType = key->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED);
+
 	// Get the MAC algorithm matching the mechanism
+	// Also check mechanism constraints
 	MacAlgo::Type algo = MacAlgo::Unknown;
+	size_t minSize = 0;
 	switch(pMechanism->mechanism) {
 #ifndef WITH_FIPS
 		case CKM_MD5_HMAC:
+			if (keyType != CKK_GENERIC_SECRET && keyType != CKK_MD5_HMAC)
+				return CKR_KEY_TYPE_INCONSISTENT;
+			minSize = 16;
 			algo = MacAlgo::HMAC_MD5;
 			break;
 #endif
 		case CKM_SHA_1_HMAC:
+			if (keyType != CKK_GENERIC_SECRET && keyType != CKK_SHA_1_HMAC)
+				return CKR_KEY_TYPE_INCONSISTENT;
+			minSize = 20;
 			algo = MacAlgo::HMAC_SHA1;
 			break;
 		case CKM_SHA224_HMAC:
+			if (keyType != CKK_GENERIC_SECRET && keyType != CKK_SHA224_HMAC)
+				return CKR_KEY_TYPE_INCONSISTENT;
+			minSize = 28;
 			algo = MacAlgo::HMAC_SHA224;
 			break;
 		case CKM_SHA256_HMAC:
+			if (keyType != CKK_GENERIC_SECRET && keyType != CKK_SHA256_HMAC)
+				return CKR_KEY_TYPE_INCONSISTENT;
+			minSize = 32;
 			algo = MacAlgo::HMAC_SHA256;
 			break;
 		case CKM_SHA384_HMAC:
+			if (keyType != CKK_GENERIC_SECRET && keyType != CKK_SHA384_HMAC)
+				return CKR_KEY_TYPE_INCONSISTENT;
+			minSize = 48;
 			algo = MacAlgo::HMAC_SHA384;
 			break;
 		case CKM_SHA512_HMAC:
+			if (keyType != CKK_GENERIC_SECRET && keyType != CKK_SHA512_HMAC)
+				return CKR_KEY_TYPE_INCONSISTENT;
+			minSize = 64;
 			algo = MacAlgo::HMAC_SHA512;
 			break;
 #ifdef WITH_GOST
 		case CKM_GOSTR3411_HMAC:
+			if (keyType != CKK_GENERIC_SECRET && keyType != CKK_GOST28147)
+				return CKR_KEY_TYPE_INCONSISTENT;
+			minSize = 32;
 			algo = MacAlgo::HMAC_GOST;
 			break;
 #endif
@@ -3474,6 +3558,17 @@ CK_RV SoftHSM::MacSignInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechani
 		mac->recycleKey(privkey);
 		CryptoFactory::i()->recycleMacAlgorithm(mac);
 		return CKR_GENERAL_ERROR;
+	}
+
+	// Adjust key bit length
+	privkey->setBitLen(privkey->getKeyBits().size() * 8);
+
+	// Check key size
+	if (privkey->getBitLen() < (minSize*8))
+	{
+		mac->recycleKey(privkey);
+		CryptoFactory::i()->recycleMacAlgorithm(mac);
+		return CKR_KEY_SIZE_RANGE;
 	}
 
 	// Initialize signing
@@ -3927,7 +4022,6 @@ static CK_RV AsymSign(Session* session, CK_BYTE_PTR pData, CK_ULONG ulDataLen, C
 	// Get the data
 	ByteString data;
 
-	// PKCS #11 Mechanisms v2.30: Cryptoki Draft 7 page 32
 	// We must allow input length <= k and therfore need to prepend the data with zeroes.
 	if (mechanism == AsymMech::RSA) {
 		data.wipe(size-ulDataLen);
@@ -4241,31 +4335,57 @@ CK_RV SoftHSM::MacVerifyInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMecha
         if (!key->getBooleanValue(CKA_VERIFY, false))
 		return CKR_KEY_FUNCTION_NOT_PERMITTED;
 
+	// Get key info
+	CK_KEY_TYPE keyType = key->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED);
+
 	// Get the MAC algorithm matching the mechanism
+	// Also check mechanism constraints
 	MacAlgo::Type algo = MacAlgo::Unknown;
+	size_t minSize = 0;
 	switch(pMechanism->mechanism) {
 #ifndef WITH_FIPS
 		case CKM_MD5_HMAC:
+			if (keyType != CKK_GENERIC_SECRET && keyType != CKK_MD5_HMAC)
+				return CKR_KEY_TYPE_INCONSISTENT;
+			minSize = 16;
 			algo = MacAlgo::HMAC_MD5;
 			break;
 #endif
 		case CKM_SHA_1_HMAC:
+			if (keyType != CKK_GENERIC_SECRET && keyType != CKK_SHA_1_HMAC)
+				return CKR_KEY_TYPE_INCONSISTENT;
+			minSize = 20;
 			algo = MacAlgo::HMAC_SHA1;
 			break;
 		case CKM_SHA224_HMAC:
+			if (keyType != CKK_GENERIC_SECRET && keyType != CKK_SHA224_HMAC)
+				return CKR_KEY_TYPE_INCONSISTENT;
+			minSize = 28;
 			algo = MacAlgo::HMAC_SHA224;
 			break;
 		case CKM_SHA256_HMAC:
+			if (keyType != CKK_GENERIC_SECRET && keyType != CKK_SHA256_HMAC)
+				return CKR_KEY_TYPE_INCONSISTENT;
+			minSize = 32;
 			algo = MacAlgo::HMAC_SHA256;
 			break;
 		case CKM_SHA384_HMAC:
+			if (keyType != CKK_GENERIC_SECRET && keyType != CKK_SHA384_HMAC)
+				return CKR_KEY_TYPE_INCONSISTENT;
+			minSize = 48;
 			algo = MacAlgo::HMAC_SHA384;
 			break;
 		case CKM_SHA512_HMAC:
+			if (keyType != CKK_GENERIC_SECRET && keyType != CKK_SHA512_HMAC)
+				return CKR_KEY_TYPE_INCONSISTENT;
+			minSize = 64;
 			algo = MacAlgo::HMAC_SHA512;
 			break;
 #ifdef WITH_GOST
 		case CKM_GOSTR3411_HMAC:
+			if (keyType != CKK_GENERIC_SECRET && keyType != CKK_GOST28147)
+				return CKR_KEY_TYPE_INCONSISTENT;
+			minSize = 32;
 			algo = MacAlgo::HMAC_GOST;
 			break;
 #endif
@@ -4282,6 +4402,17 @@ CK_RV SoftHSM::MacVerifyInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMecha
 		mac->recycleKey(pubkey);
 		CryptoFactory::i()->recycleMacAlgorithm(mac);
 		return CKR_GENERAL_ERROR;
+	}
+
+	// Adjust key bit length
+	pubkey->setBitLen(pubkey->getKeyBits().size() * 8);
+
+	// Check key size
+	if (pubkey->getBitLen() < (minSize*8))
+	{
+		mac->recycleKey(pubkey);
+		CryptoFactory::i()->recycleMacAlgorithm(mac);
+		return CKR_KEY_SIZE_RANGE;
 	}
 
 	// Initialize verifying
@@ -4719,7 +4850,6 @@ static CK_RV AsymVerify(Session* session, CK_BYTE_PTR pData, CK_ULONG ulDataLen,
 	// Get the data
 	ByteString data;
 
-	// PKCS #11 Mechanisms v2.30: Cryptoki Draft 7 page 32
 	// We must allow input length <= k and therfore need to prepend the data with zeroes.
 	if (mechanism == AsymMech::RSA) {
 		data.wipe(size-ulDataLen);
@@ -5312,6 +5442,17 @@ CK_RV SoftHSM::WrapKeySym
 	size_t bb = 8;
 #ifdef HAVE_AES_KEY_WRAP
 	CK_ULONG wrappedlen = keydata.size();
+
+	// [PKCS#11 v2.40, 2.14.3 AES Key Wrap]
+	// A key whose length is not a multiple of the AES Key Wrap block
+	// size (8 bytes) will be zero padded to fit.
+	CK_ULONG alignment = wrappedlen % 8;
+	if (alignment != 0)
+	{
+		keydata.resize(wrappedlen + 8 - alignment);
+		memset(&keydata[wrappedlen], 0, 8 - alignment);
+		wrappedlen = keydata.size();
+	}
 #endif
 	switch(pMechanism->mechanism) {
 #ifdef HAVE_AES_KEY_WRAP
@@ -6394,8 +6535,8 @@ CK_RV SoftHSM::generateAES
 		return CKR_TEMPLATE_INCOMPLETE;
 	}
 
-	// keyLen must be 16, 24 or 32
-	if ((keyLen != 16) && (keyLen != 24) && (keyLen != 32))
+	// keyLen must be 16, 24, or 32
+	if (keyLen != 16 && keyLen != 24 && keyLen != 32)
 	{
 		INFO_MSG("bad AES key length");
 		return CKR_ATTRIBUTE_VALUE_INVALID;
@@ -8788,7 +8929,7 @@ CK_RV SoftHSM::deriveDH
 		case CKK_AES:
 			if (byteLen != 16 && byteLen != 24 && byteLen != 32)
 			{
-				INFO_MSG("CKA_VALUE_LEN must be 16, 24 or 32");
+				INFO_MSG("CKA_VALUE_LEN must be 16, 24, or 32");
 				return CKR_ATTRIBUTE_VALUE_INVALID;
 			}
 			break;
@@ -9086,45 +9227,41 @@ CK_RV SoftHSM::deriveECDH
 	}
 
 	// Check the length
+	// byteLen == 0 impiles return max size the ECC can derive
 	switch (keyType)
 	{
 		case CKK_GENERIC_SECRET:
-			if (byteLen == 0)
-			{
-				INFO_MSG("CKA_VALUE_LEN must be set");
-				return CKR_TEMPLATE_INCOMPLETE;
-			}
 			break;
 #ifndef WITH_FIPS
 		case CKK_DES:
-			if (byteLen != 0)
+			if (byteLen != 0 && byteLen != 8)
 			{
-				INFO_MSG("CKA_VALUE_LEN must not be set");
-				return CKR_ATTRIBUTE_READ_ONLY;
+				INFO_MSG("CKA_VALUE_LEN must be 0 or 8");
+				return CKR_ATTRIBUTE_VALUE_INVALID;
 			}
 			byteLen = 8;
 			break;
 #endif
 		case CKK_DES2:
-			if (byteLen != 0)
+			if (byteLen != 0 && byteLen != 16)
 			{
-				INFO_MSG("CKA_VALUE_LEN must not be set");
-				return CKR_ATTRIBUTE_READ_ONLY;
+				INFO_MSG("CKA_VALUE_LEN must be 0 or 16");
+				return CKR_ATTRIBUTE_VALUE_INVALID;
 			}
 			byteLen = 16;
 			break;
 		case CKK_DES3:
-			if (byteLen != 0)
+			if (byteLen != 0 && byteLen != 24)
 			{
-				INFO_MSG("CKA_VALUE_LEN must not be set");
-				return CKR_ATTRIBUTE_READ_ONLY;
+				INFO_MSG("CKA_VALUE_LEN must be 0 or 24");
+				return CKR_ATTRIBUTE_VALUE_INVALID;
 			}
 			byteLen = 24;
 			break;
 		case CKK_AES:
-			if (byteLen != 16 && byteLen != 24 && byteLen != 32)
+			if (byteLen != 0 && byteLen != 16 && byteLen != 24 && byteLen != 32)
 			{
-				INFO_MSG("CKA_VALUE_LEN must be 16, 24 or 32");
+				INFO_MSG("CKA_VALUE_LEN must be 0, 16, 24, or 32");
 				return CKR_ATTRIBUTE_VALUE_INVALID;
 			}
 			break;
@@ -9253,6 +9390,25 @@ CK_RV SoftHSM::deriveECDH
 			ByteString value;
 			ByteString plainKCV;
 			ByteString kcv;
+
+			// For generic and AES keys:
+			// default to return max size available.
+			if (byteLen == 0)
+			{
+				switch (keyType)
+				{
+					case CKK_GENERIC_SECRET:
+						byteLen = secretValue.size();
+						break;
+					case CKK_AES:
+						if (secretValue.size() >= 32)
+							byteLen = 32;
+						else if (secretValue.size() >= 24)
+							byteLen = 24;
+						else
+							byteLen = 16;
+				}
+			}
 
 			if (byteLen > secretValue.size())
 			{
@@ -9536,7 +9692,7 @@ CK_RV SoftHSM::deriveSymmetric
 		case CKK_AES:
 			if (byteLen != 16 && byteLen != 24 && byteLen != 32)
 			{
-				INFO_MSG("CKA_VALUE_LEN must be 16, 24 or 32");
+				INFO_MSG("CKA_VALUE_LEN must be 16, 24, or 32");
 				return CKR_ATTRIBUTE_VALUE_INVALID;
 			}
 			break;
@@ -10225,9 +10381,80 @@ CK_RV SoftHSM::getECDHPublicKey(ECPublicKey* publicKey, ECPrivateKey* privateKey
 	publicKey->setEC(privateKey->getEC());
 
 	// Set value
-	publicKey->setQ(pubData);
+	ByteString data = getECDHPubData(pubData);
+	publicKey->setQ(data);
 
 	return CKR_OK;
+}
+
+// ECDH pubData can be in RAW or DER format.
+// Need to convert RAW as SoftHSM uses DER.
+ByteString SoftHSM::getECDHPubData(ByteString& pubData)
+{
+	size_t len = pubData.size();
+	size_t controlOctets = 2;
+
+	if (len < controlOctets || pubData[0] != 0x04)
+	{
+		controlOctets = 0;
+	}
+	else if (pubData[1] < 0x80)
+	{
+		if (pubData[1] != (len - controlOctets)) controlOctets = 0;
+	}
+	else
+	{
+		size_t lengthOctets = pubData[1] & 0x7F;
+		controlOctets += lengthOctets;
+
+		if (controlOctets >= len)
+		{
+			controlOctets = 0;
+		}
+		else
+		{
+			ByteString length(&pubData[2], lengthOctets);
+
+			if (length.long_val() != (len - controlOctets))
+			{
+				controlOctets = 0;
+			}
+		}
+	}
+
+	// DER format
+	if (controlOctets != 0) return pubData;
+
+	// RAW format
+	ByteString header;
+	if (len < 0x80)
+	{
+		header.resize(2);
+		header[0] = (unsigned char)0x04;
+		header[1] = (unsigned char)(len & 0x7F);
+	}
+	else
+	{
+		// Count significate bytes
+		size_t bytes = sizeof(size_t);
+		for(; bytes > 0; bytes--)
+		{
+			size_t value = len >> ((bytes - 1) * 8);
+			if (value & 0xFF) break;
+		}
+
+		// Set header data
+		header.resize(2 + bytes);
+		header[0] = (unsigned char)0x04;
+		header[1] = (unsigned char)(0x80 | bytes);
+		for (size_t i = 1; i <= bytes; i++)
+		{
+			header[2+bytes-i] = (unsigned char) (len & 0xFF);
+			len >>= 8;
+		}
+	}
+
+	return header + pubData;
 }
 
 CK_RV SoftHSM::getGOSTPrivateKey(GOSTPrivateKey* privateKey, Token* token, OSObject* key)

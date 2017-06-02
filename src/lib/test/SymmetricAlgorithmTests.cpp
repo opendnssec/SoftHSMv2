@@ -212,7 +212,7 @@ void SymmetricAlgorithmTests::encryptDecrypt(
 	}
 	{
 		CK_ULONG ulLastEncryptedPartLen;
-		CK_RV rv( C_EncryptFinal(hSession,NULL_PTR,&ulLastEncryptedPartLen) );
+		const CK_RV rv( CRYPTOKI_F_PTR( C_EncryptFinal(hSession,NULL_PTR,&ulLastEncryptedPartLen) ) );
 		if ( isSizeOK ) {
 			CPPUNIT_ASSERT_EQUAL( (CK_RV)CKR_OK, rv );
 			const size_t oldSize( vEncryptedDataParted.size() );
@@ -277,7 +277,6 @@ void SymmetricAlgorithmTests::encryptDecrypt(
 	}
 }
 
-#ifdef HAVE_AES_KEY_WRAP_PAD
 CK_RV SymmetricAlgorithmTests::generateRsaPrivateKey(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_OBJECT_HANDLE &hKey)
 {
 	CK_MECHANISM mechanism = { CKM_RSA_PKCS_KEY_PAIR_GEN, NULL_PTR, 0 };
@@ -322,7 +321,6 @@ CK_RV SymmetricAlgorithmTests::generateRsaPrivateKey(CK_SESSION_HANDLE hSession,
 	}
 	return rv;
 }
-#endif
 
 void SymmetricAlgorithmTests::aesWrapUnwrap(CK_MECHANISM_TYPE mechanismType, CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hKey)
 {
@@ -410,9 +408,6 @@ void SymmetricAlgorithmTests::aesWrapUnwrap(CK_MECHANISM_TYPE mechanismType, CK_
 	rv = CRYPTOKI_F_PTR( C_DestroyObject(hSession, hSecret) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-#ifdef HAVE_AES_KEY_WRAP_PAD
-	if (mechanismType != CKM_AES_KEY_WRAP_PAD) return;
-
 	CK_OBJECT_HANDLE hRsa;
 	hRsa = CK_INVALID_HANDLE;
 	rv = generateRsaPrivateKey(hSession, CK_TRUE, CK_TRUE, hRsa);
@@ -489,7 +484,6 @@ void SymmetricAlgorithmTests::aesWrapUnwrap(CK_MECHANISM_TYPE mechanismType, CK_
 	free(p2Ptr);
 	rv = CRYPTOKI_F_PTR( C_DestroyObject(hSession, hRsa) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
-#endif
 }
 
 void SymmetricAlgorithmTests::testAesEncryptDecrypt()

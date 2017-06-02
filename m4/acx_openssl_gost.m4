@@ -22,7 +22,7 @@ AC_DEFUN([ACX_OPENSSL_GOST],[
 				OpenSSL_add_all_algorithms();
 
 				/* Load engines */
-			#if OPENSSL_VERSION_NUMBER < 0x10100000L
+			#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
 				ENGINE_load_builtin_engines();
 			#else
 				OPENSSL_init_crypto(OPENSSL_INIT_ENGINE_ALL_BUILTIN | OPENSSL_INIT_LOAD_CONFIG, NULL);

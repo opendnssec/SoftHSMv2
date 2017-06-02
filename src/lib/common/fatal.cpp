@@ -36,7 +36,7 @@
 #include "log.h"
 #include "fatal.h"
 #include "SecureMemoryRegistry.h"
-#include "pkcs11.h"
+#include "cryptoki.h"
 
 void FatalException(void)
 {

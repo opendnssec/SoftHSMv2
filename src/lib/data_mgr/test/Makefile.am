@@ -3,13 +3,13 @@ MAINTAINERCLEANFILES = 		$(srcdir)/Makefile.in
 AM_CPPFLAGS = 			-I$(srcdir)/.. \
 				-I$(srcdir)/../.. \
 				-I$(srcdir)/../../common \
-				-I$(srcdir)/../../cryptoki_compat \
 				-I$(srcdir)/../../crypto \
 				-I$(srcdir)/../../object_store \
+				-I$(srcdir)/../../pkcs11 \
 				-I$(srcdir)/../../session_mgr \
 				-I$(srcdir)/../../slot_mgr \
-				@CRYPTO_INCLUDES@ \
-				`cppunit-config --cflags`
+				@CPPUNIT_CFLAGS@ \
+				@CRYPTO_INCLUDES@
 
 check_PROGRAMS =		datamgrtest
 
@@ -20,7 +20,7 @@ datamgrtest_SOURCES =		datamgrtest.cpp \
 
 datamgrtest_LDADD =		../../libsofthsm_convarch.la 
 
-datamgrtest_LDFLAGS = 		@CRYPTO_LIBS@ -no-install `cppunit-config --libs`
+datamgrtest_LDFLAGS = 		@CRYPTO_LIBS@ @CPPUNIT_LIBS@ -no-install
 
 TESTS = 			datamgrtest
 

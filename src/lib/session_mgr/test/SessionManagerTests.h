@@ -39,10 +39,12 @@ class SessionManagerTests : public CppUnit::TestFixture
 {
 	CPPUNIT_TEST_SUITE(SessionManagerTests);
 	CPPUNIT_TEST(testOpenClose);
+	CPPUNIT_TEST(testSessionInfo);
 	CPPUNIT_TEST_SUITE_END();
 
 public:
 	void testOpenClose();
+	void testSessionInfo();
 
 	void setUp();
 	void tearDown();

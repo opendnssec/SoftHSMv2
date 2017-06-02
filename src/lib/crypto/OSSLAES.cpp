@@ -183,7 +183,7 @@ bool OSSLAES::wrapUnwrapKey(const SymmetricKey* key, const SymWrap::Type mode, c
 	rv = EVP_CipherUpdate(pWrapCTX, &out[0], &curBlockLen, in.const_byte_str(), in.size());
 	if (rv == 1) {
 		outLen = curBlockLen;
-		rv = EVP_CipherFinal_ex(pWrapCTX, &out[0], &curBlockLen);
+		rv = EVP_CipherFinal_ex(pWrapCTX, &out[0] + outLen, &curBlockLen);
 	}
 	if (rv != 1)
 	{

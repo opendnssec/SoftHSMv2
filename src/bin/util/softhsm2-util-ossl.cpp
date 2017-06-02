@@ -238,8 +238,8 @@ int crypto_save_rsa
 		{ CKA_ID,               objID,        objIDLen },
 		{ CKA_TOKEN,            &ckToken,     sizeof(ckToken) },
 		{ CKA_VERIFY,           &ckTrue,      sizeof(ckTrue) },
-		{ CKA_ENCRYPT,          &ckFalse,     sizeof(ckFalse) },
-		{ CKA_WRAP,             &ckFalse,     sizeof(ckFalse) },
+		{ CKA_ENCRYPT,          &ckTrue,      sizeof(ckTrue) },
+		{ CKA_WRAP,             &ckTrue,      sizeof(ckTrue) },
 		{ CKA_PUBLIC_EXPONENT,  keyMat->bigE, keyMat->sizeE },
 		{ CKA_MODULUS,          keyMat->bigN, keyMat->sizeN }
 	};
@@ -249,8 +249,8 @@ int crypto_save_rsa
 		{ CKA_LABEL,            label,           strlen(label) },
 		{ CKA_ID,               objID,           objIDLen },
 		{ CKA_SIGN,             &ckTrue,         sizeof(ckTrue) },
-		{ CKA_DECRYPT,          &ckFalse,        sizeof(ckFalse) },
-		{ CKA_UNWRAP,           &ckFalse,        sizeof(ckFalse) },
+		{ CKA_DECRYPT,          &ckTrue,         sizeof(ckTrue) },
+		{ CKA_UNWRAP,           &ckTrue,         sizeof(ckTrue) },
 		{ CKA_SENSITIVE,        &ckTrue,         sizeof(ckTrue) },
 		{ CKA_TOKEN,            &ckTrue,         sizeof(ckTrue) },
 		{ CKA_PRIVATE,          &ckTrue,         sizeof(ckTrue) },
@@ -622,19 +622,12 @@ ecdsa_key_material_t* crypto_malloc_ecdsa(EC_KEY* ec_key)
 
 	keyMat->sizeParams = i2d_ECPKParameters(group, NULL);
 	keyMat->sizeD = BN_num_bytes(d);
-	int point_length = EC_POINT_point2oct(group,
-					      point,
-					      POINT_CONVERSION_UNCOMPRESSED,
-					      NULL,
-					      0,
-					      NULL);
-	keyMat->sizeQ = point_length + 2;
 
 	keyMat->derParams = (CK_VOID_PTR)malloc(keyMat->sizeParams);
 	keyMat->bigD = (CK_VOID_PTR)malloc(keyMat->sizeD);
-	keyMat->derQ = (CK_VOID_PTR)malloc(keyMat->sizeQ);
+	keyMat->derQ = NULL;
 
-	if (!keyMat->derParams || !keyMat->bigD || !keyMat->derQ)
+	if (!keyMat->derParams || !keyMat->bigD)
 	{
 		crypto_free_ecdsa(keyMat);
 		return NULL;
@@ -651,29 +644,82 @@ ecdsa_key_material_t* crypto_malloc_ecdsa(EC_KEY* ec_key)
 		crypto_free_ecdsa(keyMat);
 		return NULL;
 	}
-
 	BN_bn2bin(d, (unsigned char*)keyMat->bigD);
 
-	/* Only sizes up to 0x7f are supported right now */
-	if (point_length > 0x7f)
-	{
-		crypto_free_ecdsa(keyMat);
-		return NULL;
-	}
+	size_t point_length = EC_POINT_point2oct(group,
+					      point,
+					      POINT_CONVERSION_UNCOMPRESSED,
+					      NULL,
+					      0,
+					      NULL);
 
-	unsigned char *derQ = (unsigned char *)keyMat->derQ;
-	derQ[0] = V_ASN1_OCTET_STRING;
-	derQ[1] = point_length & 0x7f;
-	result = EC_POINT_point2oct(group,
-				    point,
-				    POINT_CONVERSION_UNCOMPRESSED,
-				    &derQ[2],
-				    point_length,
-				    NULL);
-	if (result == 0)
+	// Definite, short
+	if (point_length <= 0x7f)
 	{
-		crypto_free_ecdsa(keyMat);
-		return NULL;
+		keyMat->sizeQ = 2 + point_length;
+		keyMat->derQ = (CK_VOID_PTR)malloc(keyMat->sizeQ);
+		if (!keyMat->derQ)
+		{
+			crypto_free_ecdsa(keyMat);
+			return NULL;
+		}
+
+		unsigned char *derQ = (unsigned char *)keyMat->derQ;
+		derQ[0] = V_ASN1_OCTET_STRING;
+		derQ[1] = point_length & 0x7f;
+		result = EC_POINT_point2oct(group,
+					    point,
+					    POINT_CONVERSION_UNCOMPRESSED,
+					    &derQ[2],
+					    point_length,
+					    NULL);
+		if (result == 0)
+		{
+			crypto_free_ecdsa(keyMat);
+			return NULL;
+		}
+	}
+	// Definite, long
+	else
+	{
+		// Count significate bytes
+		size_t bytes = sizeof(size_t);
+		for(; bytes > 0; bytes--)
+		{
+			size_t value = point_length >> ((bytes - 1) * 8);
+			if (value & 0xFF) break;
+		}
+
+		keyMat->sizeQ = 2 + bytes + point_length;
+		keyMat->derQ = (CK_VOID_PTR)malloc(keyMat->sizeQ);
+		if (!keyMat->derQ)
+		{
+			crypto_free_ecdsa(keyMat);
+			return NULL;
+		}
+
+		unsigned char *derQ = (unsigned char *)keyMat->derQ;
+		derQ[0] = V_ASN1_OCTET_STRING;
+		derQ[1] = 0x80 | bytes;
+
+		size_t len = point_length;
+		for (size_t i = 1; i <= bytes; i++)
+		{
+			derQ[2+bytes-i] = (unsigned char) (len & 0xFF);
+			len >>= 8;
+		}
+
+		result = EC_POINT_point2oct(group,
+					    point,
+					    POINT_CONVERSION_UNCOMPRESSED,
+					    &derQ[2+bytes],
+					    point_length,
+					    NULL);
+		if (result == 0)
+		{
+			crypto_free_ecdsa(keyMat);
+			return NULL;
+		}
 	}
 
 	return keyMat;

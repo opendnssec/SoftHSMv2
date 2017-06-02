@@ -309,3 +309,64 @@ int findSlot(char* slot, char* serial, char* token, CK_SLOT_ID& slotID)
 	fprintf(stderr, "ERROR: Could not find a slot/token using --serial, or --token\n");
 	return 1;
 }
+
+// Find the slot/token
+int findSlot(CK_TOKEN_INFO tokenInfo, CK_SLOT_ID& slotID)
+{
+	CK_ULONG ulSlotCount;
+	CK_RV rv = p11->C_GetSlotList(CK_TRUE, NULL_PTR, &ulSlotCount);
+	if (rv != CKR_OK)
+	{
+		fprintf(stderr, "ERROR: Could not get the number of slots.\n");
+		return 1;
+	}
+
+	CK_SLOT_ID_PTR pSlotList = (CK_SLOT_ID_PTR) malloc(ulSlotCount*sizeof(CK_SLOT_ID));
+	if (pSlotList == NULL)
+	{
+		fprintf(stderr, "ERROR: Could not allocate memory.\n");
+		return 1;
+	}
+
+	rv = p11->C_GetSlotList(CK_FALSE, pSlotList, &ulSlotCount);
+	if (rv != CKR_OK)
+	{
+		fprintf(stderr, "ERROR: Could not get the slot list.\n");
+		free(pSlotList);
+		return 1;
+	}
+
+	size_t counter = 0;
+	for (CK_ULONG i = 0; i < ulSlotCount; i++)
+	{
+		CK_TOKEN_INFO currentTokenInfo;
+
+		rv = p11->C_GetTokenInfo(pSlotList[i], &currentTokenInfo);
+		if (rv != CKR_OK)
+		{
+			fprintf(stderr, "ERROR: Could not get info about the token in slot %lu.\n",
+				pSlotList[i]);
+			free(pSlotList);
+			return 1;
+		}
+
+		if (memcmp(currentTokenInfo.serialNumber, tokenInfo.serialNumber, sizeof(tokenInfo.serialNumber)) == 0 &&
+		    memcmp(currentTokenInfo.label, tokenInfo.label, sizeof(tokenInfo.label)) == 0)
+		{
+			slotID = pSlotList[i];
+			counter++;
+		}
+	}
+
+	free(pSlotList);
+
+	if (counter == 1) return 0;
+	if (counter > 1)
+	{
+		fprintf(stderr, "ERROR: Found multiple matching slots/tokens.\n");
+		return 1;
+	}
+
+	fprintf(stderr, "ERROR: Could not find a slot/token using --serial, or --token\n");
+	return 1;
+}

@@ -1,4 +1,4 @@
-version: 2.1.{build}
+version: 2.2.{build}
 configuration: Release
 platform:
 - x86
@@ -44,8 +44,8 @@ init:
 environment:
   matrix:
   - CRYPTO_BACKEND: openssl
-    PACKAGE_VERSION_NAME: OpenSSL-1.0.2g
-    CRYPTO_PACKAGE_NAME: openssl-1.0.2g
+    PACKAGE_VERSION_NAME: OpenSSL-1.0.2j
+    CRYPTO_PACKAGE_NAME: openssl-1.0.2j
   - CRYPTO_BACKEND: botan
     PACKAGE_VERSION_NAME: Botan-1.10.13
     CRYPTO_PACKAGE_NAME: botan-1.10.13

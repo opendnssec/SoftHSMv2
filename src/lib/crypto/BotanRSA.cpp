@@ -40,6 +40,7 @@
 #include "BotanRSAKeyPair.h"
 #include <algorithm>
 #include <botan/rsa.h>
+#include <botan/version.h>
 #include <sstream>
 
 // Constructor
@@ -96,7 +97,12 @@ bool BotanRSA::sign(PrivateKey* privateKey, const ByteString& dataToSign,
 
 	try
 	{
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,33)
+		BotanRNG* rng = (BotanRNG*)BotanCryptoFactory::i()->getRNG();
+		signer = new Botan::PK_Signer(*botanKey, *rng->getRNG(), emsa);
+#else
 		signer = new Botan::PK_Signer(*botanKey, emsa);
+#endif
 		// Should we add DISABLE_FAULT_PROTECTION? Makes this operation faster.
 	}
 	catch (...)
@@ -107,7 +113,7 @@ bool BotanRSA::sign(PrivateKey* privateKey, const ByteString& dataToSign,
 	}
 
 	// Perform the signature operation
-#if BOTAN_VERSION_MINOR == 11
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,0)
 	std::vector<Botan::byte> signResult;
 #else
 	Botan::SecureVector<Botan::byte> signResult;
@@ -129,7 +135,7 @@ bool BotanRSA::sign(PrivateKey* privateKey, const ByteString& dataToSign,
 
 	// Return the result
 	signature.resize(signResult.size());
-#if BOTAN_VERSION_MINOR == 11
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,0)
 	memcpy(&signature[0], signResult.data(), signResult.size());
 #else
 	memcpy(&signature[0], signResult.begin(), signResult.size());
@@ -321,7 +327,12 @@ bool BotanRSA::signInit(PrivateKey* privateKey, const AsymMech::Type mechanism,
 
 	try
 	{
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,33)
+		BotanRNG* rng = (BotanRNG*)BotanCryptoFactory::i()->getRNG();
+		signer = new Botan::PK_Signer(*botanKey, *rng->getRNG(), emsa);
+#else
 		signer = new Botan::PK_Signer(*botanKey, emsa);
+#endif
 		// Should we add DISABLE_FAULT_PROTECTION? Makes this operation faster.
 	}
 	catch (...)
@@ -376,7 +387,7 @@ bool BotanRSA::signFinal(ByteString& signature)
 	}
 
 	// Perform the signature operation
-#if BOTAN_VERSION_MINOR == 11
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,0)
 	std::vector<Botan::byte> signResult;
 #else
 	Botan::SecureVector<Botan::byte> signResult;
@@ -398,7 +409,7 @@ bool BotanRSA::signFinal(ByteString& signature)
 
 	// Return the result
 	signature.resize(signResult.size());
-#if BOTAN_VERSION_MINOR == 11
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,0)
 	memcpy(&signature[0], signResult.data(), signResult.size());
 #else
 	memcpy(&signature[0], signResult.begin(), signResult.size());
@@ -783,7 +794,12 @@ bool BotanRSA::encrypt(PublicKey* publicKey, const ByteString& data,
 	Botan::PK_Encryptor_EME* encryptor = NULL;
 	try
 	{
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,33)
+		BotanRNG* rng = (BotanRNG*)BotanCryptoFactory::i()->getRNG();
+		encryptor = new Botan::PK_Encryptor_EME(*botanKey, *rng->getRNG(), eme);
+#else
 		encryptor = new Botan::PK_Encryptor_EME(*botanKey, eme);
+#endif
 	}
 	catch (...)
 	{
@@ -793,7 +809,7 @@ bool BotanRSA::encrypt(PublicKey* publicKey, const ByteString& data,
 	}
 
 	// Perform the encryption operation
-#if BOTAN_VERSION_MINOR == 11
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,0)
 	std::vector<Botan::byte> encResult;
 #else
 	Botan::SecureVector<Botan::byte> encResult;
@@ -814,7 +830,7 @@ bool BotanRSA::encrypt(PublicKey* publicKey, const ByteString& data,
 
 	// Return the result
 	encryptedData.resize(encResult.size());
-#if BOTAN_VERSION_MINOR == 11
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,0)
 	memcpy(&encryptedData[0], encResult.data(), encResult.size());
 #else
 	memcpy(&encryptedData[0], encResult.begin(), encResult.size());
@@ -869,7 +885,12 @@ bool BotanRSA::decrypt(PrivateKey* privateKey, const ByteString& encryptedData,
 	Botan::PK_Decryptor_EME* decryptor = NULL;
 	try
 	{
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,33)
+		BotanRNG* rng = (BotanRNG*)BotanCryptoFactory::i()->getRNG();
+		decryptor = new Botan::PK_Decryptor_EME(*botanKey, *rng->getRNG(), eme);
+#else
 		decryptor = new Botan::PK_Decryptor_EME(*botanKey, eme);
+#endif
 	}
 	catch (...)
 	{
@@ -879,7 +900,7 @@ bool BotanRSA::decrypt(PrivateKey* privateKey, const ByteString& encryptedData,
 	}
 
 	// Perform the decryption operation
-#if BOTAN_VERSION_MINOR == 11
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,0)
 	Botan::secure_vector<Botan::byte> decResult;
 #else
 	Botan::SecureVector<Botan::byte> decResult;
@@ -904,7 +925,7 @@ bool BotanRSA::decrypt(PrivateKey* privateKey, const ByteString& encryptedData,
 		int modSize = pk->getN().size();
 		int decSize = decResult.size();
 		data.resize(modSize);
-#if BOTAN_VERSION_MINOR == 11
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,0)
 		memcpy(&data[0] + modSize - decSize, decResult.data(), decSize);
 #else
 		memcpy(&data[0] + modSize - decSize, decResult.begin(), decSize);
@@ -913,7 +934,7 @@ bool BotanRSA::decrypt(PrivateKey* privateKey, const ByteString& encryptedData,
 	else
 	{
 		data.resize(decResult.size());
-#if BOTAN_VERSION_MINOR == 11
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,0)
 		memcpy(&data[0], decResult.data(), decResult.size());
 #else
 		memcpy(&data[0], decResult.begin(), decResult.size());

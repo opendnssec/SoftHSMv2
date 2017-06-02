@@ -25,12 +25,16 @@ mkinstalldirs
 stamp-h*
 obj
 test-driver
+.deps
+.libs
 
 # Object files
+*.lo
 *.o
 
 # Libraries
 *.lib
+*.la
 *.a
 
 # Shared objects (inc. Windows DLLs)
@@ -38,3 +42,37 @@ test-driver
 *.so
 *.so.*
 *.dylib
+
+# Test outputs
+*.log
+*.trs
+
+# Temporary files
+*~
+
+# Building directories
+build
+Botan-*
+ROOT
+
+# Specifics
+softhsm2.module
+src/bin/common/.dirstamp
+src/bin/dump/softhsm2-dump-file
+src/bin/keyconv/softhsm2-keyconv
+src/bin/util/softhsm2-util
+src/lib/common/.dirstamp
+src/lib/common/softhsm2.conf
+src/lib/common/softhsm2.conf.5
+src/lib/crypto/.dirstamp
+src/lib/crypto/test/cryptotest
+src/lib/data_mgr/test/datamgrtest
+src/lib/handle_mgr/test/handlemgrtest
+src/lib/object_store/test/objstoretest
+src/lib/session_mgr/test/sessionmgrtest
+src/lib/slot_mgr/test/slotmgrtest
+src/lib/test/p11test
+src/lib/test/softhsm2-alt.conf
+src/lib/test/softhsm2.conf
+src/lib/test/tokens/64d6c3fe-1575-1736-1d26-5ccb28440ea7/
+src/lib/test/tokens/dummy

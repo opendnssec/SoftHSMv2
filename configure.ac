@@ -7,9 +7,9 @@
 # Program version
 
 define([SOFTHSM_VERSION_MAJOR], [2])
-define([SOFTHSM_VERSION_MINOR], [2])
+define([SOFTHSM_VERSION_MINOR], [3])
 define([SOFTHSM_VERSION_FIX], [0])
-define([PACKAGE_SUFFIX], [])
+define([PACKAGE_SUFFIX], [rc1])
 
 # Library version
 
@@ -116,6 +116,9 @@ ACX_VISIBILITY
 
 # If we should install the p11-kit module
 ACX_P11KIT
+
+# cppunit settings
+ACX_CPPUNIT
 
 # Set full directory paths
 full_sysconfdir=`eval eval eval eval eval echo "${sysconfdir}" | sed "s#NONE#${prefix}#" | sed "s#NONE#${ac_default_prefix}#"`

@@ -44,6 +44,7 @@
 #include <botan/dl_group.h>
 #include <botan/ecdh.h>
 #include <botan/pubkey.h>
+#include <botan/version.h>
 
 // Signing functions
 bool BotanECDH::signInit(PrivateKey* /*privateKey*/, const AsymMech::Type /*mechanism*/,
@@ -180,7 +181,12 @@ bool BotanECDH::deriveKey(SymmetricKey **ppSymmetricKey, PublicKey* publicKey, P
 	Botan::SymmetricKey sk;
 	try
 	{
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,33)
+		BotanRNG* rng = (BotanRNG*)BotanCryptoFactory::i()->getRNG();
+		Botan::PK_Key_Agreement ka(*priv, *rng->getRNG(), "Raw");
+#else
 		Botan::PK_Key_Agreement ka(*priv, "Raw");
+#endif
 		sk = ka.derive_key(0, pub->public_value());
 	}
 	catch (...)

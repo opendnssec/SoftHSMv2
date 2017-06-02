@@ -79,6 +79,7 @@ const CK_BBOOL CKA_TOKEN_DEFAULT = CK_FALSE;
 const CK_BBOOL CKA_MODIFIABLE_DEFAULT = CK_TRUE;
 const CK_UTF8CHAR_PTR CKA_LABEL_DEFAULT = NULL;
 const CK_BBOOL CKA_COPYABLE_DEFAULT = CK_TRUE;
+const CK_BBOOL CKA_DESTROYABLE_DEFAULT = CK_TRUE;
 
 // Data Object Attributes
 const CK_UTF8CHAR_PTR CKA_APPLICATION_DEFAULT = NULL;
@@ -110,7 +111,7 @@ void ObjectTests::checkCommonObjectAttributes(CK_SESSION_HANDLE hSession, CK_OBJ
 	CPPUNIT_ASSERT(obj_class == objClass);
 }
 
-void ObjectTests::checkCommonStorageObjectAttributes(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject, CK_BBOOL bToken, CK_BBOOL /*bPrivate*/, CK_BBOOL bModifiable, CK_UTF8CHAR_PTR pLabel, CK_ULONG ulLabelLen, CK_BBOOL bCopyable)
+void ObjectTests::checkCommonStorageObjectAttributes(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject, CK_BBOOL bToken, CK_BBOOL /*bPrivate*/, CK_BBOOL bModifiable, CK_UTF8CHAR_PTR pLabel, CK_ULONG ulLabelLen, CK_BBOOL bCopyable, CK_BBOOL bDestroyable)
 {
 	CK_RV rv;
 
@@ -118,12 +119,14 @@ void ObjectTests::checkCommonStorageObjectAttributes(CK_SESSION_HANDLE hSession,
 	CK_BBOOL obj_private = CK_FALSE;
 	CK_BBOOL obj_modifiable = CK_FALSE;
 	CK_BBOOL obj_copyable = CK_FALSE;
+	CK_BBOOL obj_destroyable = CK_FALSE;
 	CK_ATTRIBUTE attribs[] = {
 		{ CKA_LABEL, NULL_PTR, 0 },
 		{ CKA_TOKEN, &obj_token, sizeof(obj_token) },
 		{ CKA_PRIVATE, &obj_private, sizeof(obj_private) },
 		{ CKA_MODIFIABLE, &obj_modifiable, sizeof(obj_modifiable) },
-		{ CKA_COPYABLE, &obj_copyable, sizeof(obj_copyable) }
+		{ CKA_COPYABLE, &obj_copyable, sizeof(obj_copyable) },
+		{ CKA_DESTROYABLE, &obj_destroyable, sizeof(obj_destroyable) }
 	};
 
 	// Get length
@@ -132,7 +135,7 @@ void ObjectTests::checkCommonStorageObjectAttributes(CK_SESSION_HANDLE hSession,
 	attribs[0].pValue = (CK_VOID_PTR)malloc(attribs[0].ulValueLen);
 
 	// Check values
-	rv = CRYPTOKI_F_PTR( C_GetAttributeValue(hSession, hObject, &attribs[0], 5) );
+	rv = CRYPTOKI_F_PTR( C_GetAttributeValue(hSession, hObject, &attribs[0], 6) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 	CPPUNIT_ASSERT(attribs[0].ulValueLen == ulLabelLen);
 	CPPUNIT_ASSERT(obj_token == bToken);
@@ -140,6 +143,7 @@ void ObjectTests::checkCommonStorageObjectAttributes(CK_SESSION_HANDLE hSession,
 	CPPUNIT_ASSERT(obj_private == bPrivate); */
 	CPPUNIT_ASSERT(obj_modifiable == bModifiable);
 	CPPUNIT_ASSERT(obj_copyable == bCopyable);
+	CPPUNIT_ASSERT(obj_destroyable == bDestroyable);
 	if (ulLabelLen > 0)
 		CPPUNIT_ASSERT(memcmp(attribs[0].pValue, pLabel, ulLabelLen) == 0);
 
@@ -523,6 +527,30 @@ CK_RV ObjectTests::createDataObjectMinimal(CK_SESSION_HANDLE hSession, CK_BBOOL 
 		//CKA_MODIFIABLE
 		{ CKA_LABEL, label, sizeof(label)-1 },
 		//CKA_COPYABLE
+		//CKA_DESTROYABLE
+
+		// Data
+	 };
+
+	hObject = CK_INVALID_HANDLE;
+	return CRYPTOKI_F_PTR( C_CreateObject(hSession, objTemplate, sizeof(objTemplate)/sizeof(CK_ATTRIBUTE),&hObject) );
+}
+
+CK_RV ObjectTests::createDataObjectMCD(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_BBOOL bModifiable, CK_BBOOL bCopyable, CK_BBOOL bDestroyable, CK_OBJECT_HANDLE &hObject)
+{
+	CK_OBJECT_CLASS cClass = CKO_DATA;
+	CK_UTF8CHAR label[] = "A data object";
+	CK_ATTRIBUTE objTemplate[] = {
+		// Common
+		{ CKA_CLASS, &cClass, sizeof(cClass) },
+
+		// Storage
+		{ CKA_TOKEN, &bToken, sizeof(bToken) },
+		{ CKA_PRIVATE, &bPrivate, sizeof(bPrivate) },
+		{ CKA_MODIFIABLE, &bModifiable, sizeof(bModifiable) },
+		{ CKA_LABEL, label, sizeof(label)-1 },
+		{ CKA_COPYABLE, &bCopyable, sizeof(bCopyable) },
+		{ CKA_DESTROYABLE, &bDestroyable, sizeof(bDestroyable) }
 
 		// Data
 	 };
@@ -550,6 +578,7 @@ CK_RV ObjectTests::createDataObjectNormal(CK_SESSION_HANDLE hSession, CK_BBOOL b
 		//CKA_MODIFIABLE
 		{ CKA_LABEL, label, sizeof(label)-1 },
 		//CKA_COPYABLE
+		//CKA_DESTROYABLE
 
 		// Data
 		{ CKA_APPLICATION, application, sizeof(application)-1 },
@@ -641,7 +670,7 @@ void ObjectTests::testCreateObject()
 {
 //    printf("\ntestCreateObject\n");
 
-	// [PKCS#11 v2.3 p126]
+	// [PKCS#11 v2.40, C_CreateObject]
 	// a. Only session objects can be created during read-only session.
 	// b. Only public objects can be created unless the normal user is logged in.
 	// c. Key object will have CKA_LOCAL == CK_FALSE.
@@ -698,7 +727,6 @@ void ObjectTests::testCreateObject()
 
 	// Only public objects can be created unless the normal user is logged in
 	rv = createDataObjectMinimal(hSession, IN_SESSION, IS_PRIVATE, hObject);
-	// [PKCS#11 v2.3 p97] seems to indicate CKR_OK while [PKCS#11 v2.3 p126] clearly indicates CKR_USER_NOT_LOGGED_IN
 	CPPUNIT_ASSERT(rv == CKR_USER_NOT_LOGGED_IN);
 
 	// We should not be allowed to create token objects because the session is read-only
@@ -751,7 +779,6 @@ void ObjectTests::testCreateObject()
 	rv = CRYPTOKI_F_PTR( C_DestroyObject(hSession,hObject) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	// [PKCS#11 v2.3 p97] seems to indicate CKR_OK while [PKCS#11 v2.3 p126] clearly indicates CKR_USER_NOT_LOGGED_IN
 	rv = createDataObjectMinimal(hSession, IN_SESSION, IS_PRIVATE, hObject);
 	CPPUNIT_ASSERT(rv ==  CKR_USER_NOT_LOGGED_IN);
 
@@ -886,6 +913,7 @@ void ObjectTests::testCopyObject()
 	CK_RV rv;
 	CK_SESSION_HANDLE hSession;
 	CK_OBJECT_HANDLE hObject;
+	CK_OBJECT_HANDLE hObjectCopy;
 	CK_OBJECT_HANDLE hObject1;
 
 	// Just make sure that we finalize any previous tests
@@ -900,6 +928,8 @@ void ObjectTests::testCopyObject()
 
 	// Get a public session object
 	rv = createDataObjectMinimal(hSession, IN_SESSION, IS_PUBLIC, hObject);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	rv = createDataObjectMCD(hSession, IN_SESSION, IS_PUBLIC, CK_TRUE, CK_FALSE, CK_TRUE, hObjectCopy);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// Allowed to copy it
@@ -918,12 +948,18 @@ void ObjectTests::testCopyObject()
 	rv = CRYPTOKI_F_PTR( C_DestroyObject(hSession, hObject1) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
+	// Not allowed to copy.
+	rv = CRYPTOKI_F_PTR( C_CopyObject(hSession, hObjectCopy, &attribs[0], 1, &hObject1) );
+	CPPUNIT_ASSERT(rv == CKR_ACTION_PROHIBITED);
+	rv = CRYPTOKI_F_PTR( C_DestroyObject(hSession, hObjectCopy) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
 	// Still allowed when still session and public
 	rv = CRYPTOKI_F_PTR( C_CopyObject(hSession, hObject, &attribs[0], 3, &hObject1) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 	rv = CRYPTOKI_F_PTR( C_DestroyObject(hSession, hObject1) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
-	
+
 	// Not allowed to overwrite an !ck8 attribute
 	rv = CRYPTOKI_F_PTR( C_CopyObject(hSession, hObject, &attribs[0], 4, &hObject1) );
 	CPPUNIT_ASSERT(rv == CKR_ATTRIBUTE_READ_ONLY);
@@ -997,12 +1033,12 @@ void ObjectTests::testDestroyObject()
 {
 //    printf("\ntestDestroyObject\n");
 
-	// [PKCS#11 v2.3 p124] When logout is successful...
+	// [PKCS#11 v2.40, C_Logout] When logout is successful...
 	// a. Any of the application's handles to private objects become invalid.
 	// b. Even if a user is later logged back into the token those handles remain invalid.
 	// c. All private session objects from sessions belonging to the application area destroyed.
 
-	// [PKCS#11 v2.3 p126]
+	// [PKCS#11 v2.40, C_CreateObject]
 	// Only session objects can be created during read-only session.
 	// Only public objects can be created unless the normal user is logged in.
 
@@ -1013,6 +1049,7 @@ void ObjectTests::testDestroyObject()
 	CK_OBJECT_HANDLE hObjectSessionPrivate;
 	CK_OBJECT_HANDLE hObjectTokenPublic;
 	CK_OBJECT_HANDLE hObjectTokenPrivate;
+	CK_OBJECT_HANDLE hObjectDestroy;
 
 	// Just make sure that we finalize any previous tests
 	CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
@@ -1058,6 +1095,12 @@ void ObjectTests::testDestroyObject()
 	CPPUNIT_ASSERT(rv == CKR_OK);
 	rv = createDataObjectMinimal(hSessionRW, ON_TOKEN, IS_PRIVATE, hObjectTokenPrivate);
 	CPPUNIT_ASSERT(rv == CKR_OK);
+	rv = createDataObjectMCD(hSessionRW, IN_SESSION, IS_PUBLIC, CK_TRUE, CK_TRUE, CK_FALSE, hObjectDestroy);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// We should not be able to destroy a non-destroyable object.
+	rv = CRYPTOKI_F_PTR( C_DestroyObject(hSessionRO,hObjectDestroy) );
+	CPPUNIT_ASSERT(rv == CKR_ACTION_PROHIBITED);
 
 	// On a read-only session we should not be able to destroy the public token object
 	rv = CRYPTOKI_F_PTR( C_DestroyObject(hSessionRO,hObjectTokenPublic) );
@@ -1189,8 +1232,7 @@ void ObjectTests::testGetAttributeValue()
 
 void ObjectTests::testSetAttributeValue()
 {
-	// [PKCS#11 v2.3 pg. 61]
-
+	// [PKCS#11 v2.40, 4.1.1 Creating objects]
 	//    1. If the supplied template specifies a value for an invalid attribute, then the attempt
 	//    should fail with the error code CKR_ATTRIBUTE_TYPE_INVALID. An attribute
 	//    is valid if it is either one of the attributes described in the Cryptoki specification or an
@@ -1235,8 +1277,6 @@ void ObjectTests::testSetAttributeValue()
 	//    application developers are strongly encouraged never to put a particular attribute into
 	//    a particular template more than once.
 
-
-
 	CK_RV rv;
 	CK_SESSION_HANDLE hSessionRO;
 	CK_SESSION_HANDLE hSessionRW;
@@ -1244,6 +1284,7 @@ void ObjectTests::testSetAttributeValue()
 	CK_OBJECT_HANDLE hObjectSessionPrivate;
 	CK_OBJECT_HANDLE hObjectTokenPublic;
 	CK_OBJECT_HANDLE hObjectTokenPrivate;
+	CK_OBJECT_HANDLE hObjectSet;
 
 	// Just make sure that we finalize any previous tests
 	CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
@@ -1277,6 +1318,8 @@ void ObjectTests::testSetAttributeValue()
 	CPPUNIT_ASSERT(rv == CKR_OK);
 	rv = createDataObjectMinimal(hSessionRW, ON_TOKEN, IS_PRIVATE, hObjectTokenPrivate);
 	CPPUNIT_ASSERT(rv == CKR_OK);
+	rv = createDataObjectMCD(hSessionRO, IN_SESSION, IS_PUBLIC, CK_FALSE, CK_TRUE, CK_TRUE, hObjectSet);
+	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// Check that label can be modified on all combintations of session/token and public/private objects
 	const char  *pLabel = "Label modified via C_SetAttributeValue";
@@ -1296,6 +1339,8 @@ void ObjectTests::testSetAttributeValue()
 	CPPUNIT_ASSERT(rv == CKR_SESSION_READ_ONLY);
 	rv = CRYPTOKI_F_PTR( C_SetAttributeValue (hSessionRW,hObjectTokenPrivate,&attribs[0],1) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
+	rv = CRYPTOKI_F_PTR( C_SetAttributeValue (hSessionRO,hObjectSet,&attribs[0],1) );
+	CPPUNIT_ASSERT(rv == CKR_ACTION_PROHIBITED);
 
 	attribs[0].pValue = NULL_PTR;
 	rv = CRYPTOKI_F_PTR( C_GetAttributeValue(hSessionRO,hObjectSessionPublic,&attribs[0],1) );
@@ -1309,7 +1354,6 @@ void ObjectTests::testSetAttributeValue()
 	CPPUNIT_ASSERT(rv == CKR_OK);
 	CPPUNIT_ASSERT(attribs[0].ulValueLen == strlen(pLabel));
 	CPPUNIT_ASSERT(memcmp(pLabel,pStoredLabel,strlen(pLabel)) == 0);
-
 
 	// Close session
 	rv = CRYPTOKI_F_PTR( C_CloseSession(hSessionRO) );
@@ -1564,7 +1608,7 @@ void ObjectTests::testDefaultDataAttributes()
 
 	// Check attributes in data object
 	checkCommonObjectAttributes(hSession, hObject, objClass);
-	checkCommonStorageObjectAttributes(hSession, hObject, CK_FALSE, CK_FALSE, CK_TRUE, NULL_PTR, 0, CK_TRUE);
+	checkCommonStorageObjectAttributes(hSession, hObject, CK_FALSE, CK_TRUE, CK_TRUE, NULL_PTR, 0, CK_TRUE, CK_TRUE);
 	checkDataObjectAttributes(hSession, hObject, NULL_PTR, 0, NULL_PTR, 0, NULL_PTR, 0);
 }
 
@@ -1609,7 +1653,7 @@ void ObjectTests::testDefaultX509CertAttributes()
 
 	// Check attributes in X509 certificate object
 	checkCommonObjectAttributes(hSession, hObject, objClass);
-	checkCommonStorageObjectAttributes(hSession, hObject, CK_FALSE, CK_FALSE, CK_TRUE, NULL_PTR, 0, CK_TRUE);
+	checkCommonStorageObjectAttributes(hSession, hObject, CK_FALSE, CK_FALSE, CK_TRUE, NULL_PTR, 0, CK_TRUE, CK_TRUE);
 	memset(&emptyDate, 0, sizeof(emptyDate));
 	checkCommonCertificateObjectAttributes(hSession, hObject, CKC_X_509, CK_FALSE, 0, pCheckValue, sizeof(pCheckValue), emptyDate, 0, emptyDate, 0);
 	checkX509CertificateObjectAttributes(hSession, hObject, pSubject, sizeof(pSubject)-1, NULL_PTR, 0, NULL_PTR, 0, NULL_PTR, 0, pValue, sizeof(pValue)-1, NULL_PTR, 0, NULL_PTR, 0, NULL_PTR, 0, 0, CKM_SHA_1);
@@ -1661,7 +1705,7 @@ void ObjectTests::testDefaultRSAPubAttributes()
 
 	// Check attributes in RSA public key object
 	checkCommonObjectAttributes(hSession, hObject, objClass);
-	checkCommonStorageObjectAttributes(hSession, hObject, CK_FALSE, CK_FALSE, CK_TRUE, NULL_PTR, 0, CK_TRUE);
+	checkCommonStorageObjectAttributes(hSession, hObject, CK_FALSE, CK_FALSE, CK_TRUE, NULL_PTR, 0, CK_TRUE, CK_TRUE);
 	memset(&emptyDate, 0, sizeof(emptyDate));
 	checkCommonKeyAttributes(hSession, hObject, objType, NULL_PTR, 0, emptyDate, 0, emptyDate, 0, CK_FALSE, CK_FALSE, CK_UNAVAILABLE_INFORMATION, NULL_PTR, 0);
 	checkCommonPublicKeyAttributes(hSession, hObject, NULL_PTR, 0, CK_TRUE, CK_TRUE, CK_TRUE, CK_TRUE, CK_FALSE, NULL_PTR, 0);
@@ -1725,7 +1769,7 @@ void ObjectTests::testDefaultRSAPrivAttributes()
 
 	// Check attributes in RSA public key object
 	checkCommonObjectAttributes(hSession, hObject, objClass);
-	checkCommonStorageObjectAttributes(hSession, hObject, CK_FALSE, CK_FALSE, CK_TRUE, NULL_PTR, 0, CK_TRUE);
+	checkCommonStorageObjectAttributes(hSession, hObject, CK_FALSE, CK_TRUE, CK_TRUE, NULL_PTR, 0, CK_TRUE, CK_TRUE);
 	memset(&emptyDate, 0, sizeof(emptyDate));
 	checkCommonKeyAttributes(hSession, hObject, objType, NULL_PTR, 0, emptyDate, 0, emptyDate, 0, CK_FALSE, CK_FALSE, CK_UNAVAILABLE_INFORMATION, NULL_PTR, 0);
 	checkCommonPrivateKeyAttributes(hSession, hObject, NULL_PTR, 0, CK_FALSE, CK_TRUE, CK_TRUE, CK_TRUE, CK_TRUE, CK_TRUE, CK_FALSE, CK_FALSE, CK_FALSE, NULL_PTR, 0, CK_FALSE);

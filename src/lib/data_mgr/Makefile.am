@@ -1,9 +1,9 @@
 MAINTAINERCLEANFILES = 		$(srcdir)/Makefile.in
 
-AM_CPPFLAGS =			-I$(srcdir)/../cryptoki_compat \
+AM_CPPFLAGS =			-I$(srcdir)/.. \
 				-I$(srcdir)/../crypto \
 				-I$(srcdir)/../common \
-				-I$(srcdir)/..
+				-I$(srcdir)/../pkcs11
 
 noinst_LTLIBRARIES =		libsofthsm_datamgr.la
 libsofthsm_datamgr_la_SOURCES =	ByteString.cpp \

@@ -131,7 +131,7 @@ AC_DEFUN([ACX_CRYPTO_BACKEND],[
 			ACX_BOTAN_GOST
 		fi
 
-		if test "x${BOTAN_VERSION_MINOR}" = "x10"; then
+		if test "x${BOTAN_VERSION_MAJOR}" = "x1" -a "x${BOTAN_VERSION_MINOR}" = "x10"; then
 			ACX_BOTAN_GNUMP
 		fi
 

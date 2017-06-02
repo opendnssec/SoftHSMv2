@@ -94,15 +94,25 @@ bool SimpleConfigLoader::loadConfiguration()
 	// <name> = <value>
 	// # Line is ignored
 
+	size_t line = 0;
 	while (fgets(fileBuf, sizeof(fileBuf), fp) != NULL)
 	{
+		line++;
+
 		// End the string at the first comment or newline
 		fileBuf[strcspn(fileBuf, "#\n\r")] = '\0';
+
+		// Skip empty lines
+		if (fileBuf[0] == '\0')
+		{
+			continue;
+		}
 
 		// Get the first part of the line
 		char* name = strtok(fileBuf, "=");
 		if (name == NULL)
 		{
+			WARNING_MSG("Bad format on line %lu, skip", (unsigned long)line);
 			continue;
 		}
 
@@ -110,12 +120,14 @@ bool SimpleConfigLoader::loadConfiguration()
 		char* trimmedName = trimString(name);
 		if (trimmedName == NULL)
 		{
+			WARNING_MSG("Bad format on line %lu, skip", (unsigned long)line);
 			continue;
 		}
 
 		// Get the second part of the line
 		char* value = strtok(NULL, "=");
 		if(value == NULL) {
+			WARNING_MSG("Bad format on line %lu, skip", (unsigned long)line);
 			free(trimmedName);
 			continue;
 		}
@@ -124,6 +136,7 @@ bool SimpleConfigLoader::loadConfiguration()
 		char* trimmedValue = trimString(value);
 		if (trimmedValue == NULL)
 		{
+			WARNING_MSG("Bad format on line %lu, skip", (unsigned long)line);
 			free(trimmedName);
 			continue;
 		}
