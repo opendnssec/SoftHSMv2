@@ -195,3 +195,27 @@ EC_POINT* OSSL::byteString2pt(const ByteString& byteString, const EC_GROUP* grp)
 	return pt;
 }
 #endif
+
+#ifdef WITH_EDDSA
+// Convert an OpenSSL NID to a ByteString
+ByteString OSSL::oid2ByteString(int nid)
+{
+	ByteString rv;
+
+	if (nid != NID_undef)
+	{
+		rv.resize(i2d_ASN1_OBJECT(OBJ_nid2obj(nid), NULL));
+		unsigned char *p = &rv[0];
+		i2d_ASN1_OBJECT(OBJ_nid2obj(nid), &p);
+	}
+
+	return rv;
+}
+
+// Convert a ByteString to an OpenSSL NID
+int OSSL::byteString2oid(const ByteString& byteString)
+{
+	const unsigned char *p = byteString.const_byte_str();
+	return OBJ_obj2nid(d2i_ASN1_OBJECT(NULL, &p, byteString.size()));
+}
+#endif

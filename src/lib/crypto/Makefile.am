@@ -21,6 +21,8 @@ libsofthsm_crypto_la_SOURCES =	AESKey.cpp \
 				ECParameters.cpp \
 				ECPublicKey.cpp \
 				ECPrivateKey.cpp \
+				EDPublicKey.cpp \
+				EDPrivateKey.cpp \
 				GOSTPublicKey.cpp \
 				GOSTPrivateKey.cpp \
 				HashAlgorithm.cpp \
@@ -55,6 +57,10 @@ libsofthsm_crypto_la_SOURCES +=	OSSLAES.cpp \
 				OSSLECKeyPair.cpp \
 				OSSLECPrivateKey.cpp \
 				OSSLECPublicKey.cpp \
+				OSSLEDDSA.cpp \
+				OSSLEDKeyPair.cpp \
+				OSSLEDPrivateKey.cpp \
+				OSSLEDPublicKey.cpp \
 				OSSLEVPHashAlgorithm.cpp \
 				OSSLEVPMacAlgorithm.cpp \
 				OSSLEVPSymmetricAlgorithm.cpp \
