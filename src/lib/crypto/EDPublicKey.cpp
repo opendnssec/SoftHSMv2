@@ -25,54 +25,80 @@
  */
 
 /*****************************************************************************
- OSSLUtil.h
+ EDPublicKey.cpp
 
- OpenSSL convenience functions
+ EDDSA public key class
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_OSSLUTIL_H
-#define _SOFTHSM_V2_OSSLUTIL_H
-
 #include "config.h"
-#include "ByteString.h"
-#include <openssl/bn.h>
-#ifdef WITH_ECC
-#include <openssl/ec.h>
-#endif
-#ifdef WITH_EDDSA
-#include <openssl/objects.h>
-#endif
+#include "log.h"
+#include "EDPublicKey.h"
+#include <string.h>
 
-namespace OSSL
+// Set the type
+/*static*/ const char* EDPublicKey::type = "Abstract EDDSA public key";
+
+// Check if the key is of the given type
+bool EDPublicKey::isOfType(const char* inType)
 {
-	// Convert an OpenSSL BIGNUM to a ByteString
-	ByteString bn2ByteString(const BIGNUM* bn);
-
-	// Convert a ByteString to an OpenSSL BIGNUM
-	BIGNUM* byteString2bn(const ByteString& byteString);
-
-#ifdef WITH_ECC
-	// Convert an OpenSSL EC GROUP to a ByteString
-	ByteString grp2ByteString(const EC_GROUP* grp);
-
-	// Convert a ByteString to an OpenSSL EC GROUP
-	EC_GROUP* byteString2grp(const ByteString& byteString);
-
-	// Convert an OpenSSL EC POINT in the given EC GROUP to a ByteString
-	ByteString pt2ByteString(const EC_POINT* pt, const EC_GROUP* grp);
-
-	// Convert a ByteString to an OpenSSL EC POINT in the given EC GROUP
-	EC_POINT* byteString2pt(const ByteString& byteString, const EC_GROUP* grp);
-#endif
-
-#ifdef WITH_EDDSA
-	// Convert an OpenSSL NID to a ByteString
-	ByteString oid2ByteString(int nid);
-
-	// Convert a ByteString to an OpenSSL NID
-	int byteString2oid(const ByteString& byteString);
-#endif
+	return !strcmp(type, inType);
 }
 
-#endif // !_SOFTHSM_V2_OSSLUTIL_H
+// Get the bit length
+unsigned long EDPublicKey::getBitLength() const
+{
+	return getA().size() * 8;
+}
+
+// Get the output length
+unsigned long EDPublicKey::getOutputLength() const
+{
+	return getOrderLength() * 2;
+}
+
+// Setters for the EC public key components
+void EDPublicKey::setEC(const ByteString& inEC)
+{
+	ec = inEC;
+}
+
+void EDPublicKey::setA(const ByteString& inA)
+{
+	a = inA;
+}
+
+// Getters for the EC public key components
+const ByteString& EDPublicKey::getEC() const
+{
+	return ec;
+}
+
+const ByteString& EDPublicKey::getA() const
+{
+	return a;
+}
+
+// Serialisation
+ByteString EDPublicKey::serialise() const
+{
+	return ec.serialise() +
+	       a.serialise();
+}
+
+bool EDPublicKey::deserialise(ByteString& serialised)
+{
+	ByteString dEC = ByteString::chainDeserialise(serialised);
+	ByteString dA = ByteString::chainDeserialise(serialised);
+
+	if ((dEC.size() == 0) ||
+	    (dA.size() == 0))
+	{
+		return false;
+	}
+
+	setEC(dEC);
+	setA(dA);
+
+	return true;
+}
 

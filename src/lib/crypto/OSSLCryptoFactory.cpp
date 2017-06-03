@@ -54,6 +54,9 @@
 #include "OSSLGOSTR3411.h"
 #include "OSSLGOST.h"
 #endif
+#ifdef WITH_EDDSA
+#include "OSSLEDDSA.h"
+#endif
 
 #include <algorithm>
 #include <string.h>
@@ -289,6 +292,10 @@ AsymmetricAlgorithm* OSSLCryptoFactory::getAsymmetricAlgorithm(AsymAlgo::Type al
 #ifdef WITH_GOST
 		case AsymAlgo::GOST:
 			return new OSSLGOST();
+#endif
+#ifdef WITH_EDDSA
+		case AsymAlgo::EDDSA:
+			return new OSSLEDDSA();
 #endif
 		default:
 			// No algorithm implementation is available

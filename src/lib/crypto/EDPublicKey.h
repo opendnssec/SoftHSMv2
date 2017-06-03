@@ -25,54 +25,51 @@
  */
 
 /*****************************************************************************
- OSSLUtil.h
+ EDPublicKey.h
 
- OpenSSL convenience functions
+ EDDSA public key class
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_OSSLUTIL_H
-#define _SOFTHSM_V2_OSSLUTIL_H
+#ifndef _SOFTHSM_V2_EDPUBLICKEY_H
+#define _SOFTHSM_V2_EDPUBLICKEY_H
 
 #include "config.h"
-#include "ByteString.h"
-#include <openssl/bn.h>
-#ifdef WITH_ECC
-#include <openssl/ec.h>
-#endif
-#ifdef WITH_EDDSA
-#include <openssl/objects.h>
-#endif
+#include "PublicKey.h"
 
-namespace OSSL
+class EDPublicKey : public PublicKey
 {
-	// Convert an OpenSSL BIGNUM to a ByteString
-	ByteString bn2ByteString(const BIGNUM* bn);
+public:
+	// The type
+	static const char* type;
 
-	// Convert a ByteString to an OpenSSL BIGNUM
-	BIGNUM* byteString2bn(const ByteString& byteString);
+	// Check if the key is of the given type
+	virtual bool isOfType(const char* inType);
 
-#ifdef WITH_ECC
-	// Convert an OpenSSL EC GROUP to a ByteString
-	ByteString grp2ByteString(const EC_GROUP* grp);
+	// Get the bit length
+	virtual unsigned long getBitLength() const;
 
-	// Convert a ByteString to an OpenSSL EC GROUP
-	EC_GROUP* byteString2grp(const ByteString& byteString);
+	// Get the output length
+	virtual unsigned long getOutputLength() const;
 
-	// Convert an OpenSSL EC POINT in the given EC GROUP to a ByteString
-	ByteString pt2ByteString(const EC_POINT* pt, const EC_GROUP* grp);
+	// Get the base point order length
+	virtual unsigned long getOrderLength() const = 0;
 
-	// Convert a ByteString to an OpenSSL EC POINT in the given EC GROUP
-	EC_POINT* byteString2pt(const ByteString& byteString, const EC_GROUP* grp);
-#endif
+	// Setters for the EDDSA public key components
+	virtual void setEC(const ByteString& inEc);
+	virtual void setA(const ByteString& inA);
 
-#ifdef WITH_EDDSA
-	// Convert an OpenSSL NID to a ByteString
-	ByteString oid2ByteString(int nid);
+	// Getters for the EDDSA public key components
+	virtual const ByteString& getEC() const;
+	virtual const ByteString& getA() const;
 
-	// Convert a ByteString to an OpenSSL NID
-	int byteString2oid(const ByteString& byteString);
-#endif
-}
+	// Serialisation
+	virtual ByteString serialise() const;
+	virtual bool deserialise(ByteString& serialised);
 
-#endif // !_SOFTHSM_V2_OSSLUTIL_H
+protected:
+	// Public components
+	ByteString ec, a;
+};
+
+#endif // !_SOFTHSM_V2_EDPUBLICKEY_H
 

@@ -383,7 +383,7 @@ typedef CK_ULONG          CK_KEY_TYPE;
 #define CKK_GOSTR3411           0x00000031UL
 #define CKK_GOST28147           0x00000032UL
 
-
+#define CKK_EDDSA               0x00008003UL
 
 #define CKK_VENDOR_DEFINED      0x80000000UL
 
@@ -972,6 +972,9 @@ typedef CK_ULONG          CK_MECHANISM_TYPE;
 
 #define CKM_RSA_PKCS_TPM_1_1           0x00004001UL
 #define CKM_RSA_PKCS_OAEP_TPM_1_1      0x00004002UL
+
+#define CKM_EDDSA_KEY_PAIR_GEN         0x00009040UL
+#define CKM_EDDSA                      0x00009041UL
 
 #define CKM_VENDOR_DEFINED             0x80000000UL
 
