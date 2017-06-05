@@ -46,6 +46,7 @@
 #include <openssl/evp.h>
 #include <openssl/err.h>
 #include <openssl/pkcs12.h>
+#include <openssl/objects.h>
 
 // Init OpenSSL
 void crypto_init()
@@ -94,6 +95,9 @@ int crypto_import_key_pair
 #ifdef WITH_ECC
 	EC_KEY* ecdsa = NULL;
 #endif
+#ifdef WITH_EDDSA
+	EVP_PKEY* eddsa = NULL;
+#endif
 
 	switch (EVP_PKEY_type(EVP_PKEY_id(pkey)))
 	{
@@ -106,6 +110,13 @@ int crypto_import_key_pair
 #ifdef WITH_ECC
 		case EVP_PKEY_EC:
 			ecdsa = EVP_PKEY_get1_EC_KEY(pkey);
+			break;
+#endif
+#ifdef WITH_EDDSA
+		case NID_ED25519:
+		case NID_ED448:
+			EVP_PKEY_up_ref(pkey);
+			eddsa = pkey;
 			break;
 #endif
 		default:
@@ -132,6 +143,13 @@ int crypto_import_key_pair
 	else if (ecdsa)
 	{
 		result = crypto_save_ecdsa(hSession, label, objID, objIDLen, noPublicKey, ecdsa);
+		EC_KEY_free(ecdsa);
+	}
+#endif
+#ifdef WITH_EDDSA
+	else if (eddsa)
+	{
+		result = crypto_save_eddsa(hSession, label, objID, objIDLen, noPublicKey, eddsa);
 		EC_KEY_free(ecdsa);
 	}
 #endif
@@ -732,6 +750,163 @@ void crypto_free_ecdsa(ecdsa_key_material_t* keyMat)
 	if (keyMat->derParams) free(keyMat->derParams);
 	if (keyMat->bigD) free(keyMat->bigD);
 	if (keyMat->derQ) free(keyMat->derQ);
+	free(keyMat);
+}
+
+#endif
+
+#ifdef WITH_EDDSA
+
+// OpenSSL internal representation
+typedef struct {
+        unsigned char pubkey[32];
+        unsigned char *privkey;
+} X25519_KEY;
+
+// Save the key data in PKCS#11
+int crypto_save_eddsa
+(
+	CK_SESSION_HANDLE hSession,
+	char* label,
+	char* objID,
+	size_t objIDLen,
+	int noPublicKey,
+	EVP_PKEY* eddsa
+)
+{
+	eddsa_key_material_t* keyMat = crypto_malloc_eddsa(eddsa);
+	if (keyMat == NULL)
+	{
+		fprintf(stderr, "ERROR: Could not convert the key material to binary information.\n");
+		return 1;
+	}
+
+	CK_OBJECT_CLASS pubClass = CKO_PUBLIC_KEY, privClass = CKO_PRIVATE_KEY;
+	CK_KEY_TYPE keyType = CKK_EDDSA;
+	CK_BBOOL ckTrue = CK_TRUE, ckFalse = CK_FALSE, ckToken = CK_TRUE;
+	if (noPublicKey)
+	{
+		ckToken = CK_FALSE;
+	}
+	CK_ATTRIBUTE pubTemplate[] = {
+		{ CKA_CLASS,          &pubClass,         sizeof(pubClass) },
+		{ CKA_KEY_TYPE,       &keyType,          sizeof(keyType) },
+		{ CKA_LABEL,          label,             strlen(label) },
+		{ CKA_ID,             objID,             objIDLen },
+		{ CKA_TOKEN,          &ckToken,          sizeof(ckToken) },
+		{ CKA_VERIFY,         &ckTrue,           sizeof(ckTrue) },
+		{ CKA_ENCRYPT,        &ckFalse,          sizeof(ckFalse) },
+		{ CKA_WRAP,           &ckFalse,          sizeof(ckFalse) },
+		{ CKA_EC_PARAMS,      keyMat->derOID,    keyMat->sizeOID },
+		{ CKA_VALUE,          keyMat->bigA,      keyMat->sizeA },
+	};
+	CK_ATTRIBUTE privTemplate[] = {
+		{ CKA_CLASS,          &privClass,        sizeof(privClass) },
+		{ CKA_KEY_TYPE,       &keyType,          sizeof(keyType) },
+		{ CKA_LABEL,          label,             strlen(label) },
+		{ CKA_ID,             objID,             objIDLen },
+		{ CKA_SIGN,           &ckTrue,           sizeof(ckTrue) },
+		{ CKA_DECRYPT,        &ckFalse,          sizeof(ckFalse) },
+		{ CKA_UNWRAP,         &ckFalse,          sizeof(ckFalse) },
+		{ CKA_SENSITIVE,      &ckTrue,           sizeof(ckTrue) },
+		{ CKA_TOKEN,          &ckTrue,           sizeof(ckTrue) },
+		{ CKA_PRIVATE,        &ckTrue,           sizeof(ckTrue) },
+		{ CKA_EXTRACTABLE,    &ckFalse,          sizeof(ckFalse) },
+		{ CKA_EC_PARAMS,      keyMat->derOID,    keyMat->sizeOID },
+		{ CKA_VALUE,          keyMat->bigK,      keyMat->sizeK }
+	};
+
+	CK_OBJECT_HANDLE hKey1, hKey2;
+	CK_RV rv = p11->C_CreateObject(hSession, privTemplate, 13, &hKey1);
+	if (rv != CKR_OK)
+	{
+		fprintf(stderr, "ERROR: Could not save the private key in the token. "
+				"Maybe the algorithm is not supported.\n");
+		crypto_free_eddsa(keyMat);
+		return 1;
+	}
+
+	rv = p11->C_CreateObject(hSession, pubTemplate, 10, &hKey2);
+	crypto_free_eddsa(keyMat);
+
+	if (rv != CKR_OK)
+	{
+		p11->C_DestroyObject(hSession, hKey1);
+		fprintf(stderr, "ERROR: Could not save the public key in the token.\n");
+		return 1;
+	}
+
+	printf("The key pair has been imported.\n");
+
+	return 0;
+}
+
+// Convert the OpenSSL key to binary
+eddsa_key_material_t* crypto_malloc_eddsa(EVP_PKEY* pkey)
+{
+	int result;
+
+	if (pkey == NULL)
+	{
+		return NULL;
+	}
+
+	int nid = EVP_PKEY_id(pkey);
+	if (nid != NID_ED25519)
+	{
+		fprintf(stderr, "ERROR: ED448 not yet supported.\n");
+		return NULL;
+	}
+	const X25519_KEY *xkey = (X25519_KEY *) EVP_PKEY_get0(pkey);
+	if (xkey == NULL)
+	{
+		return NULL;
+	}
+
+	eddsa_key_material_t* keyMat = (eddsa_key_material_t*)malloc(sizeof(eddsa_key_material_t));
+	if (keyMat == NULL)
+	{
+		return NULL;
+	}
+
+	keyMat->sizeOID = i2d_ASN1_OBJECT(OBJ_nid2obj(nid), NULL);
+	keyMat->sizeK = nid == NID_ED25519 ? 32 : 57;
+	keyMat->sizeA = keyMat->sizeK;
+
+	keyMat->derOID = (CK_VOID_PTR)malloc(keyMat->sizeOID);
+	keyMat->bigK = (CK_VOID_PTR)malloc(keyMat->sizeK);
+	keyMat->bigA = (CK_VOID_PTR)malloc(keyMat->sizeA);
+
+	if (!keyMat->derOID || !keyMat->bigK || !keyMat->bigA)
+	{
+		crypto_free_eddsa(keyMat);
+		return NULL;
+	}
+
+	/*
+	 * i2d functions increment the pointer, so we have to use a
+	 * sacrificial pointer
+	 */
+	unsigned char *derOID = (unsigned char*) keyMat->derOID;
+	result = i2d_ASN1_OBJECT(OBJ_nid2obj(nid), &derOID);
+	if (result == 0)
+	{
+		crypto_free_eddsa(keyMat);
+		return NULL;
+	}
+	memcpy(keyMat->bigA, xkey->pubkey, 32);
+	memcpy(keyMat->bigK, xkey->privkey, 32);
+
+	return keyMat;
+}
+
+// Free the memory of the key
+void crypto_free_eddsa(eddsa_key_material_t* keyMat)
+{
+	if (keyMat == NULL) return;
+	if (keyMat->derOID) free(keyMat->derOID);
+	if (keyMat->bigK) free(keyMat->bigK);
+	if (keyMat->bigA) free(keyMat->bigA);
 	free(keyMat);
 }
 

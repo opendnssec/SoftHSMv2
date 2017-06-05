@@ -476,6 +476,8 @@ void fill_CKM_table(std::map<unsigned long, std::string> &t)
 	t[CKM_AES_KEY_WRAP_PAD] = "CKM_AES_KEY_WRAP_PAD";
 	t[CKM_RSA_PKCS_TPM_1_1] = "CKM_RSA_PKCS_TPM_1_1";
 	t[CKM_RSA_PKCS_OAEP_TPM_1_1] = "CKM_RSA_PKCS_OAEP_TPM_1_1";
+	t[CKM_EDDSA_KEY_PAIR_GEN] = "CKM_EDDSA_KEY_PAIR_GEN";
+	t[CKM_EDDSA] = "CKM_EDDSA";
 }
 
 void fill_CKO_table(std::map<unsigned long, std::string> &t)
@@ -541,6 +543,7 @@ void fill_CKK_table(std::map<unsigned long, std::string> &t)
 	t[CKK_GOSTR3410] = "CKK_GOSTR3410";
 	t[CKK_GOSTR3411] = "CKK_GOSTR3411";
 	t[CKK_GOST28147] = "CKK_GOST28147";
+	t[CKK_EDDSA] = "CKK_EDDSA";
 }
 
 void fill_CKC_table(std::map<unsigned long, std::string> &t)
