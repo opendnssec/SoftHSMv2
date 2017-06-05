@@ -41,15 +41,21 @@ class EDDSATests : public CppUnit::TestFixture
 	CPPUNIT_TEST_SUITE(EDDSATests);
 	CPPUNIT_TEST(testKeyGeneration);
 	CPPUNIT_TEST(testSerialisation);
+	CPPUNIT_TEST(testPKCS8);
 	CPPUNIT_TEST(testSigningVerifying);
 	CPPUNIT_TEST(testSignVerifyKnownVector);
+	CPPUNIT_TEST(testDerivation);
+	CPPUNIT_TEST(testDeriveKnownVector);
 	CPPUNIT_TEST_SUITE_END();
 
 public:
 	void testKeyGeneration();
 	void testSerialisation();
+	void testPKCS8();
 	void testSigningVerifying();
 	void testSignVerifyKnownVector();
+	void testDerivation();
+	void testDeriveKnownVector();
 
 	void setUp();
 	void tearDown();
