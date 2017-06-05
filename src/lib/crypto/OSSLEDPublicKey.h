@@ -71,6 +71,9 @@ private:
 	// The internal OpenSSL representation
 	int nid;
 	EVP_PKEY* pkey;
+
+	// Create the OpenSSL representation of the key
+	void createOSSLKey();
 };
 
 #endif // !_SOFTHSM_V2_OSSLDSAPUBLICKEY_H

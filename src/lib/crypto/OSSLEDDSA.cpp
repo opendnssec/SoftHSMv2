@@ -283,16 +283,93 @@ bool OSSLEDDSA::generateKeyPair(AsymmetricKeyPair** ppKeyPair, AsymmetricParamet
 	return true;
 }
 
+bool OSSLEDDSA::deriveKey(SymmetricKey **ppSymmetricKey, PublicKey* publicKey, PrivateKey* privateKey)
+{
+	// Check parameters
+	if ((ppSymmetricKey == NULL) ||
+	    (publicKey == NULL) ||
+	    (privateKey == NULL))
+	{
+		return false;
+	}
+
+	// Get keys
+	EVP_PKEY *pub = ((OSSLEDPublicKey *)publicKey)->getOSSLKey();
+	EVP_PKEY *priv = ((OSSLEDPrivateKey *)privateKey)->getOSSLKey();
+	if (pub == NULL || priv == NULL)
+	{
+		ERROR_MSG("Failed to get OpenSSL ECDH keys");
+
+		return false;
+	}
+
+	// Get and set context
+	EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new(priv, NULL);
+	if (ctx == NULL)
+	{
+		ERROR_MSG("Failed to get OpenSSL ECDH context");
+
+		return false;
+	}
+	if (EVP_PKEY_derive_init(ctx) <= 0)
+	{
+		ERROR_MSG("Failed to init OpenSSL key derive");
+
+		EVP_PKEY_CTX_free(ctx);
+		return false;
+	}
+	if (EVP_PKEY_derive_set_peer(ctx, pub) <= 0)
+	{
+		ERROR_MSG("Failed to set OpenSSL ECDH public key");
+
+		EVP_PKEY_CTX_free(ctx);
+		return false;
+	}
+
+	// Derive the secret
+	size_t len;
+	if (EVP_PKEY_derive(ctx, NULL, &len) <= 0)
+	{
+		ERROR_MSG("Failed to get OpenSSL ECDH key length");
+
+		EVP_PKEY_CTX_free(ctx);
+		return false;
+	}
+	ByteString secret;
+	secret.resize(len);
+	if (EVP_PKEY_derive(ctx, &secret[0], &len) <= 0)
+	{
+		ERROR_MSG("Failed to derive OpenSSL ECDH secret");
+
+		EVP_PKEY_CTX_free(ctx);
+		return false;
+	}
+	EVP_PKEY_CTX_free(ctx);
+
+	// Create derived key
+	*ppSymmetricKey = new SymmetricKey(secret.size() * 8);
+	if (*ppSymmetricKey == NULL)
+		return false;
+	if (!(*ppSymmetricKey)->setKeyBits(secret))
+	{
+		delete *ppSymmetricKey;
+		*ppSymmetricKey = NULL;
+		return false;
+	}
+
+	return true;
+}
+
 unsigned long OSSLEDDSA::getMinKeySize()
 {
-	// Only Ed25519 is supported
+	// Ed25519 is supported
 	return 32*8;
 }
 
 unsigned long OSSLEDDSA::getMaxKeySize()
 {
-	// Only Ed25519 is supporte
-	return 32*8;
+	// Ed448 will be supported
+	return 57*8;
 }
 
 bool OSSLEDDSA::reconstructKeyPair(AsymmetricKeyPair** ppKeyPair, ByteString& serialisedData)

@@ -72,6 +72,8 @@ void EDDSATests::testKeyGeneration()
 
 	// Curves to test
 	std::vector<ByteString> curves;
+	// Add x25519
+	curves.push_back(ByteString("06032b656e"));
 	// Add ed25519
 	curves.push_back(ByteString("06032b6570"));
 
@@ -145,6 +147,38 @@ void EDDSATests::testSerialisation()
 	eddsa->recycleParameters(dEC);
 	eddsa->recycleKeyPair(kp);
 	eddsa->recycleKeyPair(dKP);
+}
+
+void EDDSATests::testPKCS8()
+{
+	// Get ed25519 domain parameters
+	ECParameters* p = new ECParameters;
+	p->setEC(ByteString("06032b6570"));
+
+	// Generate a key-pair
+	AsymmetricKeyPair* kp;
+
+	CPPUNIT_ASSERT(eddsa->generateKeyPair(&kp, p));
+	CPPUNIT_ASSERT(kp != NULL);
+
+	EDPrivateKey* priv = (EDPrivateKey*) kp->getPrivateKey();
+	CPPUNIT_ASSERT(priv != NULL);
+
+	// Encode and decode the private key
+	ByteString pkcs8 = priv->PKCS8Encode();
+	CPPUNIT_ASSERT(pkcs8.size() != 0);
+
+	EDPrivateKey* dPriv = (EDPrivateKey*) eddsa->newPrivateKey();
+	CPPUNIT_ASSERT(dPriv != NULL);
+
+	CPPUNIT_ASSERT(dPriv->PKCS8Decode(pkcs8));
+
+	CPPUNIT_ASSERT(priv->getEC() == dPriv->getEC());
+	CPPUNIT_ASSERT(priv->getK() == dPriv->getK());
+
+	eddsa->recycleParameters(p);
+	eddsa->recycleKeyPair(kp);
+	eddsa->recyclePrivateKey(dPriv);
 }
 
 void EDDSATests::testSigningVerifying()
@@ -233,5 +267,88 @@ void EDDSATests::testSignVerifyKnownVector()
 	eddsa->recyclePublicKey(pubKey2);
 	eddsa->recyclePrivateKey(privKey1);
 	eddsa->recyclePrivateKey(privKey2);
+}
+
+void EDDSATests::testDerivation()
+{
+	AsymmetricKeyPair* kpa;
+	AsymmetricKeyPair* kpb;
+	ECParameters* p;
+
+	// Curves to test
+	std::vector<ByteString> curves;
+	// Add x25519
+	curves.push_back(ByteString("06032b656e"));
+
+	for (std::vector<ByteString>::iterator c = curves.begin(); c != curves.end(); c++)
+	{
+		// Get parameters
+		p = new ECParameters;
+		CPPUNIT_ASSERT(p != NULL);
+		p->setEC(*c);
+
+		// Generate key-pairs
+		CPPUNIT_ASSERT(eddsa->generateKeyPair(&kpa, p));
+		CPPUNIT_ASSERT(eddsa->generateKeyPair(&kpb, p));
+
+		// Derive secrets
+		SymmetricKey* sa;
+		CPPUNIT_ASSERT(eddsa->deriveKey(&sa, kpb->getPublicKey(), kpa->getPrivateKey()));
+		SymmetricKey* sb;
+		CPPUNIT_ASSERT(eddsa->deriveKey(&sb, kpa->getPublicKey(), kpb->getPrivateKey()));
+
+		// Must be the same
+		CPPUNIT_ASSERT(sa->getKeyBits() == sb->getKeyBits());
+
+		// Clean up
+		eddsa->recycleSymmetricKey(sa);
+		eddsa->recycleSymmetricKey(sb);
+		eddsa->recycleKeyPair(kpa);
+		eddsa->recycleKeyPair(kpb);
+		eddsa->recycleParameters(p);
+	}
+}
+
+void EDDSATests::testDeriveKnownVector()
+{
+	EDPublicKey* pubKeya = (EDPublicKey*) eddsa->newPublicKey();
+	EDPublicKey* pubKeyb = (EDPublicKey*) eddsa->newPublicKey();
+	EDPrivateKey* privKeya = (EDPrivateKey*) eddsa->newPrivateKey();
+	EDPrivateKey* privKeyb = (EDPrivateKey*) eddsa->newPrivateKey();
+
+	// Reconstruct public and private key for Alice
+	ByteString ec = "06032b656e"; // x25519
+	ByteString ka = "77076d0a7318a57d3c16c17251b26645df4c2f87ebc0992ab177fba51db92c2a";
+	ByteString aa = "8520f0098930a754748b7ddcb43ef75a0dbf3a0d26381af4eba4a98eaa9b4e6a";
+
+	pubKeya->setEC(ec);
+	pubKeya->setA(aa);
+	privKeya->setEC(ec);
+	privKeya->setK(ka);
+
+	// Reconstruct public and private key for Bob
+	ByteString kb = "5dab087e624a8a4b79e17f8b83800ee66f3bb1292618b6fd1c2f8b27ff88e0eb";
+	ByteString ab = "de9edb7d7b7dc1b4d35b61c2ece435373f8343c85b78674dadfc7e146f882b4f";
+
+	pubKeyb->setEC(ec);
+	pubKeyb->setA(ab);
+	privKeyb->setEC(ec);
+	privKeyb->setK(kb);
+
+	// Test
+	ByteString expected = "4a5d9d5ba4ce2de1728e3bf480350f25e07e21c947d19e3376f09b3c1e161742";
+	SymmetricKey* sa;
+	CPPUNIT_ASSERT(eddsa->deriveKey(&sa, pubKeya, privKeyb));
+	CPPUNIT_ASSERT(sa->getKeyBits() == expected);
+	SymmetricKey* sb;
+	CPPUNIT_ASSERT(eddsa->deriveKey(&sb, pubKeyb, privKeya));
+	CPPUNIT_ASSERT(sb->getKeyBits() == expected);
+
+	eddsa->recyclePublicKey(pubKeya);
+	eddsa->recyclePublicKey(pubKeyb);
+	eddsa->recyclePrivateKey(privKeya);
+	eddsa->recyclePrivateKey(privKeyb);
+	eddsa->recycleSymmetricKey(sa);
+	eddsa->recycleSymmetricKey(sb);
 }
 #endif

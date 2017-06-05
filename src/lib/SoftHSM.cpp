@@ -647,7 +647,7 @@ CK_RV SoftHSM::C_GetMechanismList(CK_SLOT_ID slotID, CK_MECHANISM_TYPE_PTR pMech
 	nrSupportedMechanisms += 1;
 #endif
 #ifdef WITH_EDDSA
-	nrSupportedMechanisms += 2;
+	nrSupportedMechanisms += 3;
 #endif
 	CK_MECHANISM_TYPE supportedMechanisms[] =
 	{
@@ -736,7 +736,8 @@ CK_RV SoftHSM::C_GetMechanismList(CK_SLOT_ID slotID, CK_MECHANISM_TYPE_PTR pMech
 #endif
 #ifdef WITH_EDDSA
 		CKM_EDDSA_KEY_PAIR_GEN,
-		CKM_EDDSA
+		CKM_EDDSA,
+		CKM_EDDSA_DERIVE
 #endif
 	};
 
@@ -1121,6 +1122,11 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 			pInfo->ulMinKeySize = eddsaMinSize;
 			pInfo->ulMaxKeySize = eddsaMaxSize;
 			pInfo->flags = CKF_SIGN | CKF_VERIFY;
+			break;
+		case CKM_EDDSA_DERIVE:
+			pInfo->ulMinKeySize = eddsaMinSize;
+			pInfo->ulMaxKeySize = eddsaMaxSize;
+			pInfo->flags = CKF_DERIVE;
 			break;
 #endif
 		default:
@@ -6391,7 +6397,11 @@ CK_RV SoftHSM::C_DeriveKey
 		case CKM_DES3_CBC_ENCRYPT_DATA:
 		case CKM_AES_ECB_ENCRYPT_DATA:
 		case CKM_AES_CBC_ENCRYPT_DATA:
+#ifdef WITH_EDDSA
+		case CKM_EDDSA_DERIVE:
+#endif
 			break;
+
 		default:
 			ERROR_MSG("Invalid mechanism");
 			return CKR_MECHANISM_INVALID;
@@ -6481,6 +6491,20 @@ CK_RV SoftHSM::C_DeriveKey
 			return CKR_KEY_TYPE_INCONSISTENT;
 
 		return this->deriveECDH(hSession, pMechanism, hBaseKey, pTemplate, ulCount, phKey, keyType, isOnToken, isPrivate);
+	}
+#endif
+
+#ifdef WITH_EDDSA
+	// Derive ECDH secret using Montgomery curves
+	if (pMechanism->mechanism == CKM_EDDSA_DERIVE)
+	{
+		// Check key class and type
+		if (key->getUnsignedLongValue(CKA_CLASS, CKO_VENDOR_DEFINED) != CKO_PRIVATE_KEY)
+			return CKR_KEY_TYPE_INCONSISTENT;
+		if (key->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED) != CKK_EDDSA)
+			return CKR_KEY_TYPE_INCONSISTENT;
+
+		return this->deriveEDDSA(hSession, pMechanism, hBaseKey, pTemplate, ulCount, phKey, keyType, isOnToken, isPrivate);
 	}
 #endif
 
@@ -9870,6 +9894,362 @@ CK_RV SoftHSM::deriveECDH
 #endif
 }
 
+// Derive an ECDH secret using Montgomery curves
+CK_RV SoftHSM::deriveEDDSA
+(CK_SESSION_HANDLE hSession,
+	CK_MECHANISM_PTR pMechanism,
+	CK_OBJECT_HANDLE hBaseKey,
+	CK_ATTRIBUTE_PTR pTemplate,
+	CK_ULONG ulCount,
+	CK_OBJECT_HANDLE_PTR phKey,
+	CK_KEY_TYPE keyType,
+	CK_BBOOL isOnToken,
+	CK_BBOOL isPrivate)
+{
+#ifdef WITH_EDDSA
+	*phKey = CK_INVALID_HANDLE;
+
+	if ((pMechanism->pParameter == NULL_PTR) ||
+	    (pMechanism->ulParameterLen != sizeof(CK_ECDH1_DERIVE_PARAMS)))
+	{
+		DEBUG_MSG("pParameter must be of type CK_ECDH1_DERIVE_PARAMS");
+		return CKR_MECHANISM_PARAM_INVALID;
+	}
+	if (CK_ECDH1_DERIVE_PARAMS_PTR(pMechanism->pParameter)->kdf != CKD_NULL)
+	{
+		DEBUG_MSG("kdf must be CKD_NULL");
+		return CKR_MECHANISM_PARAM_INVALID;
+	}
+	if ((CK_ECDH1_DERIVE_PARAMS_PTR(pMechanism->pParameter)->ulSharedDataLen != 0) ||
+	    (CK_ECDH1_DERIVE_PARAMS_PTR(pMechanism->pParameter)->pSharedData != NULL_PTR))
+	{
+		DEBUG_MSG("there must be no shared data");
+		return CKR_MECHANISM_PARAM_INVALID;
+	}
+	if ((CK_ECDH1_DERIVE_PARAMS_PTR(pMechanism->pParameter)->ulPublicDataLen == 0) ||
+	    (CK_ECDH1_DERIVE_PARAMS_PTR(pMechanism->pParameter)->pPublicData == NULL_PTR))
+	{
+		DEBUG_MSG("there must be a public data");
+		return CKR_MECHANISM_PARAM_INVALID;
+	}
+
+	// Get the session
+	Session* session = (Session*)handleManager->getSession(hSession);
+	if (session == NULL)
+		return CKR_SESSION_HANDLE_INVALID;
+
+	// Get the token
+	Token* token = session->getToken();
+	if (token == NULL)
+		return CKR_GENERAL_ERROR;
+
+	// Extract desired parameter information
+	size_t byteLen = 0;
+	bool checkValue = true;
+	for (CK_ULONG i = 0; i < ulCount; i++)
+	{
+		switch (pTemplate[i].type)
+		{
+			case CKA_VALUE:
+				INFO_MSG("CKA_VALUE must not be included");
+				return CKR_ATTRIBUTE_READ_ONLY;
+			case CKA_VALUE_LEN:
+				if (pTemplate[i].ulValueLen != sizeof(CK_ULONG))
+				{
+					INFO_MSG("CKA_VALUE_LEN does not have the size of CK_ULONG");
+					return CKR_ATTRIBUTE_VALUE_INVALID;
+				}
+				byteLen = *(CK_ULONG*)pTemplate[i].pValue;
+				break;
+			case CKA_CHECK_VALUE:
+				if (pTemplate[i].ulValueLen > 0)
+				{
+					INFO_MSG("CKA_CHECK_VALUE must be a no-value (0 length) entry");
+					return CKR_ATTRIBUTE_VALUE_INVALID;
+				}
+				checkValue = false;
+				break;
+			default:
+				break;
+		}
+	}
+
+	// Check the length
+	// byteLen == 0 impiles return max size the ECC can derive
+	switch (keyType)
+	{
+		case CKK_GENERIC_SECRET:
+			break;
+#ifndef WITH_FIPS
+		case CKK_DES:
+			if (byteLen != 0 && byteLen != 8)
+			{
+				INFO_MSG("CKA_VALUE_LEN must be 0 or 8");
+				return CKR_ATTRIBUTE_VALUE_INVALID;
+			}
+			byteLen = 8;
+			break;
+#endif
+		case CKK_DES2:
+			if (byteLen != 0 && byteLen != 16)
+			{
+				INFO_MSG("CKA_VALUE_LEN must be 0 or 16");
+				return CKR_ATTRIBUTE_VALUE_INVALID;
+			}
+			byteLen = 16;
+			break;
+		case CKK_DES3:
+			if (byteLen != 0 && byteLen != 24)
+			{
+				INFO_MSG("CKA_VALUE_LEN must be 0 or 24");
+				return CKR_ATTRIBUTE_VALUE_INVALID;
+			}
+			byteLen = 24;
+			break;
+		case CKK_AES:
+			if (byteLen != 0 && byteLen != 16 && byteLen != 24 && byteLen != 32)
+			{
+				INFO_MSG("CKA_VALUE_LEN must be 0, 16, 24, or 32");
+				return CKR_ATTRIBUTE_VALUE_INVALID;
+			}
+			break;
+		default:
+			return CKR_ATTRIBUTE_VALUE_INVALID;
+	}
+
+	// Get the base key handle
+	OSObject *baseKey = (OSObject *)handleManager->getObject(hBaseKey);
+	if (baseKey == NULL || !baseKey->isValid())
+		return CKR_KEY_HANDLE_INVALID;
+
+	// Get the EDDSA algorithm handler
+	AsymmetricAlgorithm* eddsa = CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::EDDSA);
+	if (eddsa == NULL)
+		return CKR_MECHANISM_INVALID;
+
+	// Get the keys
+	PrivateKey* privateKey = eddsa->newPrivateKey();
+	if (privateKey == NULL)
+	{
+		CryptoFactory::i()->recycleAsymmetricAlgorithm(eddsa);
+		return CKR_HOST_MEMORY;
+	}
+	if (getEDPrivateKey((EDPrivateKey*)privateKey, token, baseKey) != CKR_OK)
+	{
+		eddsa->recyclePrivateKey(privateKey);
+		CryptoFactory::i()->recycleAsymmetricAlgorithm(eddsa);
+		return CKR_GENERAL_ERROR;
+	}
+
+	ByteString publicData;
+	publicData.resize(CK_ECDH1_DERIVE_PARAMS_PTR(pMechanism->pParameter)->ulPublicDataLen);
+	memcpy(&publicData[0],
+	       CK_ECDH1_DERIVE_PARAMS_PTR(pMechanism->pParameter)->pPublicData,
+	       CK_ECDH1_DERIVE_PARAMS_PTR(pMechanism->pParameter)->ulPublicDataLen);
+	PublicKey* publicKey = eddsa->newPublicKey();
+	if (publicKey == NULL)
+	{
+		eddsa->recyclePrivateKey(privateKey);
+		CryptoFactory::i()->recycleAsymmetricAlgorithm(eddsa);
+		return CKR_HOST_MEMORY;
+	}
+	if (getEDDHPublicKey((EDPublicKey*)publicKey, (EDPrivateKey*)privateKey, publicData) != CKR_OK)
+	{
+		eddsa->recyclePrivateKey(privateKey);
+		eddsa->recyclePublicKey(publicKey);
+		CryptoFactory::i()->recycleAsymmetricAlgorithm(eddsa);
+		return CKR_GENERAL_ERROR;
+	}
+
+	// Derive the secret
+	SymmetricKey* secret = NULL;
+	CK_RV rv = CKR_OK;
+	if (!eddsa->deriveKey(&secret, publicKey, privateKey))
+		rv = CKR_GENERAL_ERROR;
+	eddsa->recyclePrivateKey(privateKey);
+	eddsa->recyclePublicKey(publicKey);
+
+	// Create the secret object using C_CreateObject
+	const CK_ULONG maxAttribs = 32;
+	CK_OBJECT_CLASS objClass = CKO_SECRET_KEY;
+	CK_ATTRIBUTE secretAttribs[maxAttribs] = {
+		{ CKA_CLASS, &objClass, sizeof(objClass) },
+		{ CKA_TOKEN, &isOnToken, sizeof(isOnToken) },
+		{ CKA_PRIVATE, &isPrivate, sizeof(isPrivate) },
+		{ CKA_KEY_TYPE, &keyType, sizeof(keyType) },
+	};
+	CK_ULONG secretAttribsCount = 4;
+
+	// Add the additional
+	if (ulCount > (maxAttribs - secretAttribsCount))
+		rv = CKR_TEMPLATE_INCONSISTENT;
+	for (CK_ULONG i=0; i < ulCount && rv == CKR_OK; ++i)
+	{
+		switch (pTemplate[i].type)
+		{
+			case CKA_CLASS:
+			case CKA_TOKEN:
+			case CKA_PRIVATE:
+			case CKA_KEY_TYPE:
+			case CKA_CHECK_VALUE:
+				continue;
+		default:
+			secretAttribs[secretAttribsCount++] = pTemplate[i];
+		}
+	}
+
+	if (rv == CKR_OK)
+		rv = this->CreateObject(hSession, secretAttribs, secretAttribsCount, phKey, OBJECT_OP_DERIVE);
+
+	// Store the attributes that are being supplied
+	if (rv == CKR_OK)
+	{
+		OSObject* osobject = (OSObject*)handleManager->getObject(*phKey);
+		if (osobject == NULL_PTR || !osobject->isValid()) {
+			rv = CKR_FUNCTION_FAILED;
+		} else if (osobject->startTransaction()) {
+			bool bOK = true;
+
+			// Common Attributes
+			bOK = bOK && osobject->setAttribute(CKA_LOCAL,false);
+
+			// Common Secret Key Attributes
+			if (baseKey->getBooleanValue(CKA_ALWAYS_SENSITIVE, false))
+			{
+				bool bAlwaysSensitive = osobject->getBooleanValue(CKA_SENSITIVE, false);
+				bOK = bOK && osobject->setAttribute(CKA_ALWAYS_SENSITIVE,bAlwaysSensitive);
+			}
+			else
+			{
+				bOK = bOK && osobject->setAttribute(CKA_ALWAYS_SENSITIVE,false);
+			}
+			if (baseKey->getBooleanValue(CKA_NEVER_EXTRACTABLE, true))
+			{
+				bool bNeverExtractable = osobject->getBooleanValue(CKA_EXTRACTABLE, false) == false;
+				bOK = bOK && osobject->setAttribute(CKA_NEVER_EXTRACTABLE,bNeverExtractable);
+			}
+			else
+			{
+				bOK = bOK && osobject->setAttribute(CKA_NEVER_EXTRACTABLE,false);
+			}
+
+			// Secret Attributes
+			ByteString secretValue = secret->getKeyBits();
+			ByteString value;
+			ByteString plainKCV;
+			ByteString kcv;
+
+			// For generic and AES keys:
+			// default to return max size available.
+			if (byteLen == 0)
+			{
+				switch (keyType)
+				{
+					case CKK_GENERIC_SECRET:
+						byteLen = secretValue.size();
+						break;
+					case CKK_AES:
+						if (secretValue.size() >= 32)
+							byteLen = 32;
+						else if (secretValue.size() >= 24)
+							byteLen = 24;
+						else
+							byteLen = 16;
+				}
+			}
+
+			if (byteLen > secretValue.size())
+			{
+				INFO_MSG("The derived secret is too short");
+				bOK = false;
+			}
+			else
+			{
+				// Truncate value when requested, remove from the leading end
+				if (byteLen < secretValue.size())
+					secretValue.split(secretValue.size() - byteLen);
+
+				// Fix the odd parity for DES
+				if (keyType == CKK_DES ||
+				    keyType == CKK_DES2 ||
+				    keyType == CKK_DES3)
+				{
+					for (size_t i = 0; i < secretValue.size(); i++)
+					{
+						secretValue[i] = odd_parity[secretValue[i]];
+					}
+				}
+
+				// Get the KCV
+				switch (keyType)
+				{
+					case CKK_GENERIC_SECRET:
+						secret->setBitLen(byteLen * 8);
+						plainKCV = secret->getKeyCheckValue();
+						break;
+					case CKK_DES:
+					case CKK_DES2:
+					case CKK_DES3:
+						secret->setBitLen(byteLen * 7);
+						plainKCV = ((DESKey*)secret)->getKeyCheckValue();
+						break;
+					case CKK_AES:
+						secret->setBitLen(byteLen * 8);
+						plainKCV = ((AESKey*)secret)->getKeyCheckValue();
+						break;
+					default:
+						bOK = false;
+						break;
+				}
+
+				if (isPrivate)
+				{
+					token->encrypt(secretValue, value);
+					token->encrypt(plainKCV, kcv);
+				}
+				else
+				{
+					value = secretValue;
+					kcv = plainKCV;
+				}
+			}
+			bOK = bOK && osobject->setAttribute(CKA_VALUE, value);
+			if (checkValue)
+				bOK = bOK && osobject->setAttribute(CKA_CHECK_VALUE, kcv);
+
+			if (bOK)
+				bOK = osobject->commitTransaction();
+			else
+				osobject->abortTransaction();
+
+			if (!bOK)
+				rv = CKR_FUNCTION_FAILED;
+		} else
+			rv = CKR_FUNCTION_FAILED;
+	}
+
+	// Clean up
+	eddsa->recycleSymmetricKey(secret);
+	CryptoFactory::i()->recycleAsymmetricAlgorithm(eddsa);
+
+	// Remove secret that may have been created already when the function fails.
+	if (rv != CKR_OK)
+	{
+		if (*phKey != CK_INVALID_HANDLE)
+		{
+			OSObject* ossecret = (OSObject*)handleManager->getObject(*phKey);
+			handleManager->destroyObject(*phKey);
+			if (ossecret) ossecret->destroyObject();
+			*phKey = CK_INVALID_HANDLE;
+		}
+	}
+
+	return rv;
+#else
+	return CKR_MECHANISM_INVALID;
+#endif
+}
+
 // Derive an symmetric secret
 CK_RV SoftHSM::deriveSymmetric
 (CK_SESSION_HANDLE hSession,
@@ -10815,6 +11195,20 @@ CK_RV SoftHSM::getECDHPublicKey(ECPublicKey* publicKey, ECPrivateKey* privateKey
 	// Set value
 	ByteString data = getECDHPubData(pubData);
 	publicKey->setQ(data);
+
+	return CKR_OK;
+}
+
+CK_RV SoftHSM::getEDDHPublicKey(EDPublicKey* publicKey, EDPrivateKey* privateKey, ByteString& pubData)
+{
+	if (publicKey == NULL) return CKR_ARGUMENTS_BAD;
+	if (privateKey == NULL) return CKR_ARGUMENTS_BAD;
+
+	// Copy Domain Parameters from Private Key
+	publicKey->setEC(privateKey->getEC());
+
+	// Set value
+	publicKey->setA(pubData);
 
 	return CKR_OK;
 }

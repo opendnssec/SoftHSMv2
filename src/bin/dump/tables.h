@@ -478,6 +478,7 @@ void fill_CKM_table(std::map<unsigned long, std::string> &t)
 	t[CKM_RSA_PKCS_OAEP_TPM_1_1] = "CKM_RSA_PKCS_OAEP_TPM_1_1";
 	t[CKM_EDDSA_KEY_PAIR_GEN] = "CKM_EDDSA_KEY_PAIR_GEN";
 	t[CKM_EDDSA] = "CKM_EDDSA";
+	t[CKM_EDDSA_DERIVE] = "CKM_EDDSA_DERIVE";
 }
 
 void fill_CKO_table(std::map<unsigned long, std::string> &t)

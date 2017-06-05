@@ -113,7 +113,9 @@ int crypto_import_key_pair
 			break;
 #endif
 #ifdef WITH_EDDSA
+		case NID_X25519:
 		case NID_ED25519:
+		case NID_X448:
 		case NID_ED448:
 			EVP_PKEY_up_ref(pkey);
 			eddsa = pkey;
@@ -150,7 +152,7 @@ int crypto_import_key_pair
 	else if (eddsa)
 	{
 		result = crypto_save_eddsa(hSession, label, objID, objIDLen, noPublicKey, eddsa);
-		EC_KEY_free(ecdsa);
+		EVP_PKEY_free(eddsa);
 	}
 #endif
 	else
@@ -757,12 +759,6 @@ void crypto_free_ecdsa(ecdsa_key_material_t* keyMat)
 
 #ifdef WITH_EDDSA
 
-// OpenSSL internal representation
-typedef struct {
-        unsigned char pubkey[32];
-        unsigned char *privkey;
-} X25519_KEY;
-
 // Save the key data in PKCS#11
 int crypto_save_eddsa
 (
@@ -842,23 +838,20 @@ int crypto_save_eddsa
 }
 
 // Convert the OpenSSL key to binary
+
+#define X25519_KEYLEN	32
+#define X448_KEYLEN	57
+
+#define PUBPREFIXLEN	12
+#define PRIVPREFIXLEN	16
+
 eddsa_key_material_t* crypto_malloc_eddsa(EVP_PKEY* pkey)
 {
 	int result;
+	int len;
+	unsigned char *buf;
 
 	if (pkey == NULL)
-	{
-		return NULL;
-	}
-
-	int nid = EVP_PKEY_id(pkey);
-	if (nid != NID_ED25519)
-	{
-		fprintf(stderr, "ERROR: ED448 not yet supported.\n");
-		return NULL;
-	}
-	const X25519_KEY *xkey = (X25519_KEY *) EVP_PKEY_get0(pkey);
-	if (xkey == NULL)
 	{
 		return NULL;
 	}
@@ -869,33 +862,65 @@ eddsa_key_material_t* crypto_malloc_eddsa(EVP_PKEY* pkey)
 		return NULL;
 	}
 
+	int nid = EVP_PKEY_id(pkey);
+	memset(keyMat, 0, sizeof(*keyMat));
 	keyMat->sizeOID = i2d_ASN1_OBJECT(OBJ_nid2obj(nid), NULL);
-	keyMat->sizeK = nid == NID_ED25519 ? 32 : 57;
-	keyMat->sizeA = keyMat->sizeK;
-
 	keyMat->derOID = (CK_VOID_PTR)malloc(keyMat->sizeOID);
+
+	switch (nid) {
+	case NID_X25519:
+	case NID_ED25519:
+		keyMat->sizeK = X25519_KEYLEN;
+		keyMat->sizeA = X25519_KEYLEN;
+		break;
+	case NID_X448:
+	case NID_ED448:
+		keyMat->sizeK = X448_KEYLEN;
+		keyMat->sizeA = X448_KEYLEN;
+		break;
+	default:
+		crypto_free_eddsa(keyMat);
+		return NULL;
+	}
 	keyMat->bigK = (CK_VOID_PTR)malloc(keyMat->sizeK);
 	keyMat->bigA = (CK_VOID_PTR)malloc(keyMat->sizeA);
-
 	if (!keyMat->derOID || !keyMat->bigK || !keyMat->bigA)
 	{
 		crypto_free_eddsa(keyMat);
 		return NULL;
 	}
 
-	/*
-	 * i2d functions increment the pointer, so we have to use a
-	 * sacrificial pointer
-	 */
-	unsigned char *derOID = (unsigned char*) keyMat->derOID;
-	result = i2d_ASN1_OBJECT(OBJ_nid2obj(nid), &derOID);
-	if (result == 0)
+	unsigned char *p = (unsigned char*) keyMat->derOID;
+	result = i2d_ASN1_OBJECT(OBJ_nid2obj(nid), &p);
+	if (result <= 0)
 	{
 		crypto_free_eddsa(keyMat);
 		return NULL;
 	}
-	memcpy(keyMat->bigA, xkey->pubkey, 32);
-	memcpy(keyMat->bigK, xkey->privkey, 32);
+
+	len = i2d_PUBKEY(pkey, NULL);
+	if (((CK_ULONG) len != PUBPREFIXLEN + keyMat->sizeA) ||
+	    ((buf = (unsigned char*) malloc(len)) == NULL))
+	{
+		crypto_free_eddsa(keyMat);
+		return NULL;
+	}
+	p = buf;
+	i2d_PUBKEY(pkey, &p);
+	memcpy(keyMat->bigA, buf + PUBPREFIXLEN, keyMat->sizeA);
+	free(buf);
+
+	len = i2d_PrivateKey(pkey, NULL);
+	if (((CK_ULONG) len != PRIVPREFIXLEN + keyMat->sizeK) ||
+	    ((buf = (unsigned char*) malloc(len)) == NULL))
+	{
+		crypto_free_eddsa(keyMat);
+		return NULL;
+	}
+	p = buf;
+	i2d_PrivateKey(pkey, &p);
+	memcpy(keyMat->bigK, buf + PRIVPREFIXLEN, keyMat->sizeK);
+	free(buf);
 
 	return keyMat;
 }

@@ -35,26 +35,46 @@
 #include "log.h"
 #include "OSSLEDPublicKey.h"
 #include "OSSLUtil.h"
-#include <openssl/bn.h>
+#include <openssl/x509.h>
 #include <string.h>
 
-// OpenSSL internal representation
-typedef struct {
-	unsigned char pubkey[32];
-	unsigned char *privkey;
-} X25519_KEY;
+#define X25519_KEYLEN	32
+#define X448_KEYLEN	57
+
+#define PREFIXLEN	12
+
+// Prefixes
+const unsigned char x25519_prefix[] = {
+	0x30, 0x2a, 0x30, 0x05, 0x06, 0x03, 0x2b, 0x65,
+	0x6e, 0x03, 0x21, 0x00
+};
+
+const unsigned char x448_prefix[] = {
+	0x30, 0x2a, 0x30, 0x05, 0x06, 0x03, 0x2b, 0x65,
+	0x6f, 0x03, 0x21, 0x00
+};
+
+const unsigned char ed25519_prefix[] = {
+	0x30, 0x2a, 0x30, 0x05, 0x06, 0x03, 0x2b, 0x65,
+	0x70, 0x03, 0x21, 0x00
+};
+
+const unsigned char ed448_prefix[] = {
+	0x30, 0x2a, 0x30, 0x05, 0x06, 0x03, 0x2b, 0x65,
+	0x71, 0x03, 0x21, 0x00
+};
 
 // Constructors
 OSSLEDPublicKey::OSSLEDPublicKey()
 {
 	nid = NID_undef;
-	pkey = EVP_PKEY_new();
+	pkey = NULL;
 }
 
 OSSLEDPublicKey::OSSLEDPublicKey(const EVP_PKEY* inPKEY)
 {
 	nid = NID_undef;
-	pkey = EVP_PKEY_new();
+	pkey = NULL;
 
 	setFromOSSL(inPKEY);
 }
@@ -72,7 +92,9 @@ OSSLEDPublicKey::~OSSLEDPublicKey()
 unsigned long OSSLEDPublicKey::getOrderLength() const
 {
 	if (nid == NID_ED25519)
-		return 32;
+		return X25519_KEYLEN;
+	if (nid == NID_ED448)
+		return X448_KEYLEN;
 	return 0;
 }
 
@@ -80,17 +102,45 @@ unsigned long OSSLEDPublicKey::getOrderLength() const
 void OSSLEDPublicKey::setFromOSSL(const EVP_PKEY* inPKEY)
 {
 	nid = EVP_PKEY_id(inPKEY);
-	if (nid == NID_ED25519) {
-		ByteString inEC = OSSL::oid2ByteString(nid);
-		setEC(inEC);
-		const X25519_KEY* xk = (X25519_KEY*) EVP_PKEY_get0(inPKEY);
-		if (xk != NULL) {
-			ByteString inA;
-			inA.resize(32);
-			memcpy(&inA[0], xk->pubkey, 32);
-			setA(inA);
-		}
+	if (nid == NID_undef)
+	{
+		return;
 	}
+	ByteString inEC = OSSL::oid2ByteString(nid);
+	EDPublicKey::setEC(inEC);
+
+	// i2d_PUBKEY incorrectly does not const the key argument?!
+        EVP_PKEY* key = const_cast<EVP_PKEY*>(inPKEY);
+	int len = i2d_PUBKEY(key, NULL);
+	if (len <= 0)
+	{
+		ERROR_MSG("Could not encode EDDSA public key");
+		return;
+	}
+	ByteString der;
+	der.resize(len);
+	unsigned char *p = &der[0];
+	i2d_PUBKEY(key, &p);
+	ByteString inA;
+	switch (nid) {
+	case NID_X25519:
+	case NID_ED25519:
+		if (len != (X25519_KEYLEN + PREFIXLEN))
+			return;
+		inA.resize(X25519_KEYLEN);
+		memcpy(&inA[0], &der[PREFIXLEN], X25519_KEYLEN);
+		break;
+	case NID_X448:
+	case NID_ED448:
+		if (len != (X448_KEYLEN + PREFIXLEN))
+			return;
+		inA.resize(X448_KEYLEN);
+		memcpy(&inA[0], &der[PREFIXLEN], X448_KEYLEN);
+		break;
+	default:
+		return;
+	}
+	setA(inA);
 }
 
 // Check if the key is of the given type
@@ -105,23 +155,71 @@ void OSSLEDPublicKey::setEC(const ByteString& inEC)
 	EDPublicKey::setEC(inEC);
 
 	nid = OSSL::byteString2oid(inEC);
+	if (pkey)
+	{
+		EVP_PKEY_free(pkey);
+		pkey = NULL;
+	}
 }
 
 void OSSLEDPublicKey::setA(const ByteString& inA)
 {
 	EDPublicKey::setA(inA);
 
-	if (nid == NID_ED25519) {
-		X25519_KEY* xk = (X25519_KEY*)OPENSSL_malloc(sizeof(*xk));
-		xk->privkey = NULL;
-		memcpy(xk->pubkey, inA.const_byte_str(), 32);
-		(void)EVP_PKEY_assign(pkey, nid, xk);
+	if (pkey)
+	{
+		EVP_PKEY_free(pkey);
+		pkey = NULL;
 	}
 }
 
 // Retrieve the OpenSSL representation of the key
 EVP_PKEY* OSSLEDPublicKey::getOSSLKey()
 {
+	if (pkey == NULL) createOSSLKey();
+
 	return pkey;
+}
+
+// Create the OpenSSL representation of the key
+void OSSLEDPublicKey::createOSSLKey()
+{
+	if (pkey != NULL) return;
+
+	ByteString der;
+	switch (nid) {
+	case NID_X25519:
+		if (a.size() != X25519_KEYLEN)
+			return;
+		der.resize(PREFIXLEN + X25519_KEYLEN);
+		memcpy(&der[0], x25519_prefix, PREFIXLEN);
+		memcpy(&der[PREFIXLEN], a.const_byte_str(), X25519_KEYLEN);
+		break;
+	case NID_ED25519:
+		if (a.size() != X25519_KEYLEN)
+			return;
+		der.resize(PREFIXLEN + X25519_KEYLEN);
+		memcpy(&der[0], ed25519_prefix, PREFIXLEN);
+		memcpy(&der[PREFIXLEN], a.const_byte_str(), X25519_KEYLEN);
+		break;
+	case NID_X448:
+		if (a.size() != X448_KEYLEN)
+			return;
+		der.resize(PREFIXLEN + X448_KEYLEN);
+		memcpy(&der[0], x448_prefix, PREFIXLEN);
+		memcpy(&der[PREFIXLEN], a.const_byte_str(), X448_KEYLEN);
+		break;
+	case NID_ED448:
+		if (a.size() != X448_KEYLEN)
+			return;
+		der.resize(PREFIXLEN + X448_KEYLEN);
+		memcpy(&der[0], ed448_prefix, PREFIXLEN);
+		memcpy(&der[PREFIXLEN], a.const_byte_str(), X448_KEYLEN);
+		break;
+	default:
+		return;
+	}
+	const unsigned char *p = &der[0];
+	pkey = d2i_PUBKEY(NULL, &p, (long)der.size());
 }
 #endif

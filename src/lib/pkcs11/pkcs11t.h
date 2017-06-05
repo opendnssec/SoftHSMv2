@@ -975,6 +975,7 @@ typedef CK_ULONG          CK_MECHANISM_TYPE;
 
 #define CKM_EDDSA_KEY_PAIR_GEN         0x00009040UL
 #define CKM_EDDSA                      0x00009041UL
+#define CKM_EDDSA_DERIVE               0x00009050UL
 
 #define CKM_VENDOR_DEFINED             0x80000000UL
 
