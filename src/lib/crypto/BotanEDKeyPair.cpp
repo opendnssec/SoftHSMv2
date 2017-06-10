@@ -25,51 +25,45 @@
  */
 
 /*****************************************************************************
- BotanUtil.h
+ BotanEDKeyPair.cpp
 
- Botan convenience functions
+ Botan EDDSA key-pair class
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_BOTANUTIL_H
-#define _SOFTHSM_V2_BOTANUTIL_H
-
 #include "config.h"
-#include "ByteString.h"
-#include <botan/bigint.h>
-#if defined(WITH_ECC) || defined(WITH_GOST)
-#include <botan/ec_group.h>
-#endif
+#include "log.h"
+#include "BotanEDKeyPair.h"
 
-namespace BotanUtil
+// Set the public key
+void BotanEDKeyPair::setPublicKey(BotanEDPublicKey& publicKey)
 {
-	// Convert a Botan BigInt to a ByteString
-	ByteString bigInt2ByteString(const Botan::BigInt& bigInt);
-	ByteString bigInt2ByteStringPrefix(const Botan::BigInt& bigInt, size_t size);
-
-	// Convert a ByteString to a Botan BigInt
-	Botan::BigInt byteString2bigInt(const ByteString& byteString);
-
-#if defined(WITH_ECC) || defined(WITH_GOST)
-	// Convert a Botan EC group to a ByteString
-	ByteString ecGroup2ByteString(const Botan::EC_Group& ecGroup);
-
-	// Convert a ByteString to a Botan EC group
-	Botan::EC_Group byteString2ECGroup(const ByteString& byteString);
-
-	// Convert a Botan EC point to a ByteString
-	ByteString ecPoint2ByteString(const Botan::PointGFp& ecPoint);
-
-	// Convert a ByteString to a Botan EC point in the given EC group
-	Botan::PointGFp byteString2ECPoint(const ByteString& byteString, const Botan::EC_Group& ecGroup);
-#endif
-#ifdef WITH_EDDSA
-	// Convert a Botan OID to a ByteString
-	ByteString oid2ByteString(const Botan::OID& oid);
-
-	// Convert a ByteString to a Botan OID
-	Botan::OID byteString2Oid(const ByteString& byteString);
-#endif
+	pubKey = publicKey;
 }
 
-#endif // !_SOFTHSM_V2_BOTANUTIL_H
+// Set the private key
+void BotanEDKeyPair::setPrivateKey(BotanEDPrivateKey& privateKey)
+{
+	privKey = privateKey;
+}
 
+// Return the public key
+PublicKey* BotanEDKeyPair::getPublicKey()
+{
+	return &pubKey;
+}
+
+const PublicKey* BotanEDKeyPair::getConstPublicKey() const
+{
+	return &pubKey;
+}
+
+// Return the private key
+PrivateKey* BotanEDKeyPair::getPrivateKey()
+{
+	return &privKey;
+}
+
+const PrivateKey* BotanEDKeyPair::getConstPrivateKey() const
+{
+	return &privKey;
+}

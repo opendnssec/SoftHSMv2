@@ -105,6 +105,10 @@ libsofthsm_crypto_la_SOURCES +=	BotanAES.cpp \
 				BotanECDSAKeyPair.cpp \
 				BotanECDSAPrivateKey.cpp \
 				BotanECDSAPublicKey.cpp \
+				BotanEDDSA.cpp \
+				BotanEDKeyPair.cpp \
+				BotanEDPrivateKey.cpp \
+				BotanEDPublicKey.cpp \
 				BotanGOST.cpp \
 				BotanGOSTKeyPair.cpp \
 				BotanGOSTPrivateKey.cpp \
