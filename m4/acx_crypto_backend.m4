@@ -150,7 +150,7 @@ AC_DEFUN([ACX_CRYPTO_BACKEND],[
 		fi
 
 		if test "x${enable_eddsa}" = "xyes"; then
-			AC_MSG_ERROR([Botan does not support EDDSA])
+			ACX_BOTAN_EDDSA
 		fi
 
 		if test	"x${enable_fips}" = "xyes"; then

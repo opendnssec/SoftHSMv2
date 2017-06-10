@@ -25,51 +25,53 @@
  */
 
 /*****************************************************************************
- BotanUtil.h
+ BotanEDPublicKey.h
 
- Botan convenience functions
+ Botan EDDSA public key class
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_BOTANUTIL_H
-#define _SOFTHSM_V2_BOTANUTIL_H
+#ifndef _SOFTHSM_V2_BOTANEDPUBLICKEY_H
+#define _SOFTHSM_V2_BOTANEDPUBLICKEY_H
 
 #include "config.h"
-#include "ByteString.h"
-#include <botan/bigint.h>
-#if defined(WITH_ECC) || defined(WITH_GOST)
-#include <botan/ec_group.h>
-#endif
+#include "EDPublicKey.h"
+#include <botan/pk_keys.h>
 
-namespace BotanUtil
+class BotanEDPublicKey : public EDPublicKey
 {
-	// Convert a Botan BigInt to a ByteString
-	ByteString bigInt2ByteString(const Botan::BigInt& bigInt);
-	ByteString bigInt2ByteStringPrefix(const Botan::BigInt& bigInt, size_t size);
+public:
+	// Constructors
+	BotanEDPublicKey();
 
-	// Convert a ByteString to a Botan BigInt
-	Botan::BigInt byteString2bigInt(const ByteString& byteString);
+	BotanEDPublicKey(const Botan::Public_Key* inEDKEY);
 
-#if defined(WITH_ECC) || defined(WITH_GOST)
-	// Convert a Botan EC group to a ByteString
-	ByteString ecGroup2ByteString(const Botan::EC_Group& ecGroup);
+	// Destructor
+	virtual ~BotanEDPublicKey();
 
-	// Convert a ByteString to a Botan EC group
-	Botan::EC_Group byteString2ECGroup(const ByteString& byteString);
+	// The type
+	static const char* type;
 
-	// Convert a Botan EC point to a ByteString
-	ByteString ecPoint2ByteString(const Botan::PointGFp& ecPoint);
+	// Check if the key is of the given type
+	virtual bool isOfType(const char* inType);
 
-	// Convert a ByteString to a Botan EC point in the given EC group
-	Botan::PointGFp byteString2ECPoint(const ByteString& byteString, const Botan::EC_Group& ecGroup);
-#endif
-#ifdef WITH_EDDSA
-	// Convert a Botan OID to a ByteString
-	ByteString oid2ByteString(const Botan::OID& oid);
+	// Get the base point order length
+	virtual unsigned long getOrderLength() const;
 
-	// Convert a ByteString to a Botan OID
-	Botan::OID byteString2Oid(const ByteString& byteString);
-#endif
-}
+	// Setters for the ED public key components
+	virtual void setEC(const ByteString& inEC);
+	virtual void setA(const ByteString& inA);
 
-#endif // !_SOFTHSM_V2_BOTANUTIL_H
+	// Set from Botan representation
+	virtual void setFromBotan(const Botan::Public_Key* inEDKEY);
 
+	// Retrieve the Botan representation of the key
+	Botan::Public_Key* getBotanKey();
+
+private:
+	// The internal Botan representation
+	Botan::Public_Key* edkey;
+
+	// Create the Botan representation of the key
+	void createBotanKey();
+};
+#endif // !_SOFTHSM_V2_BOTANEDPUBLICKEY_H
