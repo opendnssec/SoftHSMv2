@@ -43,6 +43,7 @@
 #include <botan/der_enc.h>
 #include <botan/asn1_oid.h>
 #include <botan/oids.h>
+#include <botan/pkcs8.h>
 #include <botan/version.h>
 #include <botan/curve25519.h>
 #include <botan/ed25519.h>
@@ -101,6 +102,8 @@ void BotanEDPrivateKey::setFromBotan(const Botan::Private_Key* inEDKEY)
 		if (ed25519) {
 			oid = ed25519_oid;
 			priv = ed25519->get_private_key();
+			// Botan returns public part too
+			priv.resize(32);
 			break;
 		}
 		return;
@@ -149,46 +152,7 @@ ByteString BotanEDPrivateKey::PKCS8Encode()
 	ByteString der;
 	createBotanKey();
 	if (edkey == NULL) return der;
-	Botan::OID oid = BotanUtil::byteString2Oid(ec);
-	Botan::secure_vector<uint8_t> bits;
-	if (oid == x25519_oid)
-	{
-		Botan::Curve25519_PrivateKey* key = dynamic_cast<Botan::Curve25519_PrivateKey*>(edkey);
-		if (key)
-		{
-			bits = key->private_key_bits();
-		}
-		else
-		{
-			return der;
-		}
-	}
-	else if (oid == ed25519_oid)
-	{
-		Botan::Ed25519_PrivateKey* key = dynamic_cast<Botan::Ed25519_PrivateKey*>(edkey);
-		if (key)
-		{
-			bits = key->private_key_bits();
-		}
-		else
-		{
-			return der;
-		}
-	}
-	else
-	{
-		return der;
-	}
-	const size_t PKCS8_VERSION = 0;
-	const Botan::AlgorithmIdentifier alg_id(oid, Botan::AlgorithmIdentifier::USE_NULL_PARAM);
-	const Botan::secure_vector<Botan::byte> ber =
-		Botan::DER_Encoder()
-		.start_cons(Botan::SEQUENCE)
-		    .encode(PKCS8_VERSION)
-		    .encode(alg_id)
-		    .encode(bits, Botan::OCTET_STRING)
-		.end_cons()
-	    .get_contents();
+	const Botan::secure_vector<Botan::byte> ber = Botan::PKCS8::BER_encode(*edkey);
 	der.resize(ber.size());
 	memcpy(&der[0], &ber[0], ber.size());
 	return der;
@@ -200,7 +164,6 @@ bool BotanEDPrivateKey::PKCS8Decode(const ByteString& ber)
 	Botan::DataSource_Memory source(ber.const_byte_str(), ber.size());
 	if (source.end_of_data()) return false;
 	Botan::secure_vector<Botan::byte> keydata;
-	Botan::secure_vector<Botan::byte> privkey;
 	Botan::AlgorithmIdentifier alg_id;
 	Botan::Private_Key* key = NULL;
 	try
@@ -214,19 +177,13 @@ bool BotanEDPrivateKey::PKCS8Decode(const ByteString& ber)
 		.end_cons();
 		if (keydata.empty())
 			throw Botan::Decoding_Error("PKCS #8 private key decoding failed");
-		Botan::BER_Decoder(keydata)
-		.start_cons(Botan::SEQUENCE)
-			.decode(privkey, Botan::OCTET_STRING)
-		.end_cons();
-		if (privkey.empty())
-			throw Botan::Decoding_Error("private key decoding failed");
 		if (alg_id.oid == x25519_oid)
 		{
-			key = new Botan::Curve25519_PrivateKey(privkey);
+		  key = new Botan::Curve25519_PrivateKey(alg_id, keydata);
 		}
 		else if (alg_id.oid == ed25519_oid)
 		{
-			key = new Botan::Ed25519_PrivateKey(privkey);
+		  key = new Botan::Ed25519_PrivateKey(alg_id, keydata);
 		}
 		else
 		{
