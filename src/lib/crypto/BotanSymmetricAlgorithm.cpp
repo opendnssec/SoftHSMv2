@@ -34,6 +34,7 @@
 
 #include "config.h"
 #include "BotanSymmetricAlgorithm.h"
+#include "BotanUtil.h"
 #include "salloc.h"
 #include <iostream>
 
@@ -54,6 +55,9 @@
 BotanSymmetricAlgorithm::BotanSymmetricAlgorithm()
 {
 	cryption = NULL;
+	maximumBytes = Botan::BigInt(1);
+	maximumBytes.flip_sign();
+	counterBytes = Botan::BigInt(0);
 }
 
 // Destructor
@@ -64,10 +68,10 @@ BotanSymmetricAlgorithm::~BotanSymmetricAlgorithm()
 }
 
 // Encryption functions
-bool BotanSymmetricAlgorithm::encryptInit(const SymmetricKey* key, const SymMode::Type mode /* = SymMode:CBC */, const ByteString& IV /* = ByteString()*/, bool padding /* = true */)
+bool BotanSymmetricAlgorithm::encryptInit(const SymmetricKey* key, const SymMode::Type mode /* = SymMode:CBC */, const ByteString& IV /* = ByteString()*/, bool padding /* = true */, size_t counterBits /* = 0 */)
 {
 	// Call the superclass initialiser
-	if (!SymmetricAlgorithm::encryptInit(key, mode, IV, padding))
+	if (!SymmetricAlgorithm::encryptInit(key, mode, IV, padding, counterBits))
 	{
 		return false;
 	}
@@ -92,6 +96,36 @@ bool BotanSymmetricAlgorithm::encryptInit(const SymmetricKey* key, const SymMode
 	else
 	{
 		iv.wipe(getBlockSize());
+	}
+
+	// Check the counter bits
+	if (counterBits > 0)
+	{
+		Botan::BigInt counter = BotanUtil::byteString2bigInt(iv);
+		counter.mask_bits(counterBits);
+
+		// Reverse the bits
+		while (counterBits > 0)
+		{
+			counterBits--;
+			if (counter.get_bit(counterBits))
+			{
+				counter.clear_bit(counterBits);
+			}
+			else
+			{
+				counter.set_bit(counterBits);
+			}
+		}
+
+		// Set the maximum bytes
+		maximumBytes = (counter + 1) * getBlockSize();
+		counterBytes = Botan::BigInt(0);
+	}
+	else
+	{
+		maximumBytes = Botan::BigInt(1);
+		maximumBytes.flip_sign();
 	}
 
 	// Determine the cipher
@@ -186,6 +220,12 @@ bool BotanSymmetricAlgorithm::encryptUpdate(const ByteString& data, ByteString& 
 		return false;
 	}
 
+	// Count number of bytes written
+	if (maximumBytes.is_positive())
+	{
+		counterBytes += data.size();
+	}
+
 	// Read data
 	int bytesRead = 0;
 	try
@@ -256,10 +296,10 @@ bool BotanSymmetricAlgorithm::encryptFinal(ByteString& encryptedData)
 }
 
 // Decryption functions
-bool BotanSymmetricAlgorithm::decryptInit(const SymmetricKey* key, const SymMode::Type mode /* = SymMode::CBC */, const ByteString& IV /* = ByteString() */, bool padding /* = true */)
+bool BotanSymmetricAlgorithm::decryptInit(const SymmetricKey* key, const SymMode::Type mode /* = SymMode::CBC */, const ByteString& IV /* = ByteString() */, bool padding /* = true */, size_t counterBits /* = 0 */)
 {
 	// Call the superclass initialiser
-	if (!SymmetricAlgorithm::decryptInit(key, mode, IV, padding))
+	if (!SymmetricAlgorithm::decryptInit(key, mode, IV, padding, counterBits))
 	{
 		return false;
 	}
@@ -284,6 +324,36 @@ bool BotanSymmetricAlgorithm::decryptInit(const SymmetricKey* key, const SymMode
 	else
 	{
 		iv.wipe(getBlockSize());
+	}
+
+	// Check the counter bits
+	if (counterBits > 0)
+	{
+		Botan::BigInt counter = BotanUtil::byteString2bigInt(iv);
+		counter.mask_bits(counterBits);
+
+		// Reverse the bits
+		while (counterBits > 0)
+		{
+			counterBits--;
+			if (counter.get_bit(counterBits))
+			{
+				counter.clear_bit(counterBits);
+			}
+			else
+			{
+				counter.set_bit(counterBits);
+			}
+		}
+
+		// Set the maximum bytes
+		maximumBytes = (counter + 1) * getBlockSize();
+		counterBytes = Botan::BigInt(0);
+	}
+	else
+	{
+		maximumBytes = Botan::BigInt(1);
+		maximumBytes.flip_sign();
 	}
 
 	// Determine the cipher class
@@ -378,6 +448,12 @@ bool BotanSymmetricAlgorithm::decryptUpdate(const ByteString& encryptedData, Byt
 		return false;
 	}
 
+	// Count number of bytes written
+	if (maximumBytes.is_positive())
+	{
+		counterBytes += encryptedData.size();
+	}
+
 	// Read data
 	int bytesRead = 0;
 	try
@@ -447,3 +523,12 @@ bool BotanSymmetricAlgorithm::decryptFinal(ByteString& data)
 	return true;
 }
 
+// Check if more bytes of data can be encrypted
+bool BotanSymmetricAlgorithm::checkMaximumBytes(unsigned long bytes)
+{
+	if (maximumBytes.is_negative()) return true;
+
+	if (maximumBytes.cmp(counterBytes + bytes) >= 0) return true;
+
+	return false;
+}

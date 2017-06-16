@@ -1962,6 +1962,7 @@ CK_RV SoftHSM::SymEncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 	bool padding = false;
 	ByteString iv;
 	size_t bb = 8;
+	size_t counterBits = 0;
 	switch(pMechanism->mechanism) {
 #ifndef WITH_FIPS
 		case CKM_DES_ECB:
@@ -2067,15 +2068,12 @@ CK_RV SoftHSM::SymEncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 				DEBUG_MSG("CTR mode requires a counter block");
 				return CKR_ARGUMENTS_BAD;
 			}
-			if (CK_AES_CTR_PARAMS_PTR(pMechanism->pParameter)->ulCounterBits == 0 ||
-			    CK_AES_CTR_PARAMS_PTR(pMechanism->pParameter)->ulCounterBits > 128)
+			counterBits = CK_AES_CTR_PARAMS_PTR(pMechanism->pParameter)->ulCounterBits;
+			if (counterBits == 0 || counterBits > 128)
 			{
 				DEBUG_MSG("Invalid ulCounterBits");
 				return CKR_MECHANISM_PARAM_INVALID;
 			}
-			// TODO: Make sure that we do not cause an overflow of the counter
-			// block’s counter bits.
-
 			iv.resize(16);
 			memcpy(&iv[0], CK_AES_CTR_PARAMS_PTR(pMechanism->pParameter)->cb, 16);
 			break;
@@ -2098,7 +2096,7 @@ CK_RV SoftHSM::SymEncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 	secretkey->setBitLen(secretkey->getKeyBits().size() * bb);
 
 	// Initialize encryption
-	if (!cipher->encryptInit(secretkey, mode, iv, padding))
+	if (!cipher->encryptInit(secretkey, mode, iv, padding, counterBits))
 	{
 		cipher->recycleKey(secretkey);
 		CryptoFactory::i()->recycleSymmetricAlgorithm(cipher);
@@ -2253,6 +2251,11 @@ static CK_RV SymEncrypt(Session* session, CK_BYTE_PTR pData, CK_ULONG ulDataLen,
 			maxSize = ulDataLen + cipher->getBlockSize();
 		}
 	}
+	if (!cipher->checkMaximumBytes(ulDataLen))
+	{
+		session->resetOp();
+		return CKR_DATA_LEN_RANGE;
+	}
 
 	if (pEncryptedData == NULL_PTR)
 	{
@@ -2397,6 +2400,11 @@ static CK_RV SymEncryptUpdate(Session* session, CK_BYTE_PTR pData, CK_ULONG ulDa
 	{
 		int nrOfBlocks = (ulDataLen + remainingSize) / blockSize;
 		maxSize = nrOfBlocks * blockSize;
+	}
+	if (!cipher->checkMaximumBytes(ulDataLen))
+	{
+		session->resetOp();
+		return CKR_DATA_LEN_RANGE;
 	}
 
 	// Check data size
@@ -2605,6 +2613,7 @@ CK_RV SoftHSM::SymDecryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 	bool padding = false;
 	ByteString iv;
 	size_t bb = 8;
+	size_t counterBits = 0;
 	switch(pMechanism->mechanism) {
 #ifndef WITH_FIPS
 		case CKM_DES_ECB:
@@ -2710,15 +2719,12 @@ CK_RV SoftHSM::SymDecryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 				DEBUG_MSG("CTR mode requires a counter block");
 				return CKR_ARGUMENTS_BAD;
 			}
-			if (CK_AES_CTR_PARAMS_PTR(pMechanism->pParameter)->ulCounterBits == 0 ||
-			    CK_AES_CTR_PARAMS_PTR(pMechanism->pParameter)->ulCounterBits > 128)
+			counterBits = CK_AES_CTR_PARAMS_PTR(pMechanism->pParameter)->ulCounterBits;
+			if (counterBits == 0 || counterBits > 128)
 			{
 				DEBUG_MSG("Invalid ulCounterBits");
 				return CKR_MECHANISM_PARAM_INVALID;
 			}
-			// TODO: Make sure that we do not cause an overflow of the counter
-			// block’s counter bits.
-
 			iv.resize(16);
 			memcpy(&iv[0], CK_AES_CTR_PARAMS_PTR(pMechanism->pParameter)->cb, 16);
 			break;
@@ -2741,7 +2747,7 @@ CK_RV SoftHSM::SymDecryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 	secretkey->setBitLen(secretkey->getKeyBits().size() * bb);
 
 	// Initialize decryption
-	if (!cipher->decryptInit(secretkey, mode, iv, padding))
+	if (!cipher->decryptInit(secretkey, mode, iv, padding, counterBits))
 	{
 		cipher->recycleKey(secretkey);
 		CryptoFactory::i()->recycleSymmetricAlgorithm(cipher);
@@ -2890,6 +2896,11 @@ static CK_RV SymDecrypt(Session* session, CK_BYTE_PTR pEncryptedData, CK_ULONG u
 
 	// Check encrypted data size
 	if (cipher->isBlockCipher() && ulEncryptedDataLen % cipher->getBlockSize() != 0)
+	{
+		session->resetOp();
+		return CKR_ENCRYPTED_DATA_LEN_RANGE;
+	}
+	if (!cipher->checkMaximumBytes(ulEncryptedDataLen))
 	{
 		session->resetOp();
 		return CKR_ENCRYPTED_DATA_LEN_RANGE;
@@ -3044,6 +3055,11 @@ static CK_RV SymDecryptUpdate(Session* session, CK_BYTE_PTR pEncryptedData, CK_U
 		size_t paddingAdjustByte = cipher->getPaddingMode() ? 1 : 0;
 		int nrOfBlocks = (ulEncryptedDataLen + remainingSize - paddingAdjustByte) / blockSize;
 		maxSize = nrOfBlocks * blockSize;
+	}
+	if (!cipher->checkMaximumBytes(ulEncryptedDataLen))
+	{
+		session->resetOp();
+		return CKR_ENCRYPTED_DATA_LEN_RANGE;
 	}
 
 	// Give required output buffer size.
