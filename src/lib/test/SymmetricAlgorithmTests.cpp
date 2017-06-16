@@ -892,8 +892,7 @@ void SymmetricAlgorithmTests::testAesCtrOverflow()
 	rv = generateAesKey(hSession,IN_SESSION,IS_PUBLIC,hKey);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	const CK_MECHANISM mechanism = { CKM_AES_CTR, NULL_PTR, 0 };
-	CK_MECHANISM_PTR pMechanism((CK_MECHANISM_PTR)&mechanism);
+	CK_MECHANISM mechanism = { CKM_AES_CTR, NULL_PTR, 0 };
 	CK_AES_CTR_PARAMS ctrParams =
 	{
 		2,
@@ -902,8 +901,8 @@ void SymmetricAlgorithmTests::testAesCtrOverflow()
 			0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01
 		}
 	};
-	pMechanism->pParameter = &ctrParams;
-	pMechanism->ulParameterLen = sizeof(ctrParams);
+	mechanism.pParameter = &ctrParams;
+	mechanism.ulParameterLen = sizeof(ctrParams);
 
 	CK_BYTE plainText[] = { 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F,
 				0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F,
@@ -919,11 +918,11 @@ void SymmetricAlgorithmTests::testAesCtrOverflow()
 	CK_ULONG ulDataPartLen;
 
 	// Single-part encryption
-	rv = CRYPTOKI_F_PTR( C_EncryptInit(hSession,pMechanism,hKey) );
+	rv = CRYPTOKI_F_PTR( C_EncryptInit(hSession,&mechanism,hKey) );
 	CPPUNIT_ASSERT_EQUAL( (CK_RV)CKR_OK, rv );
 	rv = CRYPTOKI_F_PTR( C_Encrypt(hSession,plainText,sizeof(plainText),NULL_PTR,&ulEncryptedDataLen) );
 	CPPUNIT_ASSERT_EQUAL( (CK_RV)CKR_DATA_LEN_RANGE, rv );
-	rv = CRYPTOKI_F_PTR( C_EncryptInit(hSession,pMechanism,hKey) );
+	rv = CRYPTOKI_F_PTR( C_EncryptInit(hSession,&mechanism,hKey) );
 	CPPUNIT_ASSERT_EQUAL( (CK_RV)CKR_OK, rv );
 	rv = CRYPTOKI_F_PTR( C_Encrypt(hSession,plainText,sizeof(plainText)-1,NULL_PTR,&ulEncryptedDataLen) );
 	CPPUNIT_ASSERT_EQUAL( (CK_RV)CKR_OK, rv );
@@ -933,7 +932,7 @@ void SymmetricAlgorithmTests::testAesCtrOverflow()
 	vEncryptedData.resize(ulEncryptedDataLen);
 
 	// Multi-part encryption
-	rv = CRYPTOKI_F_PTR( C_EncryptInit(hSession,pMechanism,hKey) );
+	rv = CRYPTOKI_F_PTR( C_EncryptInit(hSession,&mechanism,hKey) );
 	CPPUNIT_ASSERT_EQUAL( (CK_RV)CKR_OK, rv );
 	rv = CRYPTOKI_F_PTR( C_EncryptUpdate(hSession,plainText,sizeof(plainText)-1,NULL_PTR,&ulEncryptedPartLen) );
 	CPPUNIT_ASSERT_EQUAL( (CK_RV)CKR_OK, rv );
@@ -945,11 +944,11 @@ void SymmetricAlgorithmTests::testAesCtrOverflow()
 	CPPUNIT_ASSERT_EQUAL( (CK_RV)CKR_DATA_LEN_RANGE, rv );
 
 	// Single-part decryption
-	rv = CRYPTOKI_F_PTR( C_DecryptInit(hSession,pMechanism,hKey) );
+	rv = CRYPTOKI_F_PTR( C_DecryptInit(hSession,&mechanism,hKey) );
 	CPPUNIT_ASSERT_EQUAL( (CK_RV)CKR_OK, rv );
 	rv = CRYPTOKI_F_PTR( C_Decrypt(hSession,&vEncryptedData.front(),vEncryptedData.size()+1,NULL_PTR,&ulDataLen) );
 	CPPUNIT_ASSERT_EQUAL( (CK_RV)CKR_ENCRYPTED_DATA_LEN_RANGE, rv );
-	rv = CRYPTOKI_F_PTR( C_DecryptInit(hSession,pMechanism,hKey) );
+	rv = CRYPTOKI_F_PTR( C_DecryptInit(hSession,&mechanism,hKey) );
 	CPPUNIT_ASSERT_EQUAL( (CK_RV)CKR_OK, rv );
 	rv = CRYPTOKI_F_PTR( C_Decrypt(hSession,&vEncryptedData.front(),vEncryptedData.size(),NULL_PTR,&ulDataLen) );
 	CPPUNIT_ASSERT_EQUAL( (CK_RV)CKR_OK, rv );
@@ -959,7 +958,7 @@ void SymmetricAlgorithmTests::testAesCtrOverflow()
 	vDecryptedData.resize(ulDataLen);
 
 	// Multi-part decryption
-	rv = CRYPTOKI_F_PTR( C_DecryptInit(hSession,pMechanism,hKey) );
+	rv = CRYPTOKI_F_PTR( C_DecryptInit(hSession,&mechanism,hKey) );
 	CPPUNIT_ASSERT_EQUAL( (CK_RV)CKR_OK, rv );
 	rv = CRYPTOKI_F_PTR( C_DecryptUpdate(hSession,&vEncryptedData.front(),vEncryptedData.size(),NULL_PTR,&ulDataPartLen) );
 	CPPUNIT_ASSERT_EQUAL( (CK_RV)CKR_OK, rv );
