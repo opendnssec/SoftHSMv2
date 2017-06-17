@@ -20,7 +20,7 @@ define([PACKAGE_SUFFIX], [rc1])
 
 define([SOFTHSM_VERSION_CURRENT], [2])
 define([SOFTHSM_VERSION_AGE], [1])
-define([SOFTHSM_VERSION_REVISION], [2])
+define([SOFTHSM_VERSION_REVISION], [3])
 
 ##################
 #                #
