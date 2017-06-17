@@ -1,6 +1,6 @@
 NEWS for SoftHSM -- History of user visible changes
 
-SoftHSM 2.3.0 - 2017-xx-xx
+SoftHSM 2.3.0 - 2017-06-xx
 
 * Issue #130: Upgraded to PKCS#11 v2.40.
   * Minor changes to some return values.
@@ -8,6 +8,7 @@ SoftHSM 2.3.0 - 2017-xx-xx
   * Added CKA_PUBLIC_KEY_INFO to certificates, private, and public key
     objects. Will be accepted from application, but SoftHSM will
     currently not calculate it.
+* Issue #142: Support for CKM_AES_CTR.
 * Issue #155: Add unit tests for SessionManager.
 * Issue #189: C_DigestKey returns CKR_KEY_INDIGESTIBLE when key
   attribute CKA_EXTRACTABLE = false. Whitelist SHA algorithms to allow
@@ -44,6 +45,10 @@ Bugfixes:
   (Patch from Lars Silvén)
 * Issue #289: Minor fix of 'EVP_CipherFinal_ex'.
   (Patch from Viktor Tarasov)
+* Issue #297: Fix build with cppunit.
+  (Patch from Ludovic Rousseau)
+* Issue #302: Export PKCS#11 symbols from the library.
+  (Patch from Ludovic Rousseau)
 * Issue #305: Zero pad key to fit the block in CKM_AES_KEY_WRAP.
 * Issue #313: Detecting CppUnit when using Macports.
   (Patch from mouse07410)
