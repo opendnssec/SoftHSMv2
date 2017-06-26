@@ -4,7 +4,7 @@ directories.tokendir = @softhsmtokendir@
 objectstore.backend = file
 
 # ERROR, WARNING, INFO, DEBUG
-log.level = INFO
+log.level = ERROR
 
 # If CKF_REMOVABLE_DEVICE flag should be set
 slots.removable = false
