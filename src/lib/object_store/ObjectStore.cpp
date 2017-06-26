@@ -75,6 +75,7 @@ ObjectStore::ObjectStore(std::string inStorePath)
 
 			delete token;
 
+			// Silently ignore tokens that we do not have access to
 			continue;
 		}
 

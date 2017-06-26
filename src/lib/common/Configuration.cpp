@@ -91,6 +91,7 @@ std::string Configuration::getString(std::string key, std::string ifEmpty /* = "
 	}
 	else
 	{
+		WARNING_MSG("Missing %s in configuration. Using default value: %s", key.c_str(), ifEmpty.c_str());
 		return ifEmpty;
 	}
 }
@@ -104,6 +105,7 @@ int Configuration::getInt(std::string key, int ifEmpty /* = 0 */)
 	}
 	else
 	{
+		WARNING_MSG("Missing %s in configuration. Using default value: %i", key.c_str(), ifEmpty);
 		return ifEmpty;
 	}
 }
@@ -117,6 +119,7 @@ bool Configuration::getBool(std::string key, bool ifEmpty /* = false */)
 	}
 	else
 	{
+		WARNING_MSG("Missing %s in configuration. Using default value: %s", key.c_str(), ifEmpty ? "true" : "false");
 		return ifEmpty;
 	}
 }

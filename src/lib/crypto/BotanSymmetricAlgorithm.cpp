@@ -34,6 +34,7 @@
 
 #include "config.h"
 #include "BotanSymmetricAlgorithm.h"
+#include "BotanUtil.h"
 #include "salloc.h"
 #include <iostream>
 
@@ -45,10 +46,18 @@
 #include <botan/key_filt.h>
 #endif
 
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(2,0,0)
+#include "Botan_ecb.h"
+#include <botan/cipher_filter.h>
+#endif
+
 // Constructor
 BotanSymmetricAlgorithm::BotanSymmetricAlgorithm()
 {
 	cryption = NULL;
+	maximumBytes = Botan::BigInt(1);
+	maximumBytes.flip_sign();
+	counterBytes = Botan::BigInt(0);
 }
 
 // Destructor
@@ -59,10 +68,10 @@ BotanSymmetricAlgorithm::~BotanSymmetricAlgorithm()
 }
 
 // Encryption functions
-bool BotanSymmetricAlgorithm::encryptInit(const SymmetricKey* key, const SymMode::Type mode /* = SymMode:CBC */, const ByteString& IV /* = ByteString()*/, bool padding /* = true */)
+bool BotanSymmetricAlgorithm::encryptInit(const SymmetricKey* key, const SymMode::Type mode /* = SymMode:CBC */, const ByteString& IV /* = ByteString()*/, bool padding /* = true */, size_t counterBits /* = 0 */)
 {
 	// Call the superclass initialiser
-	if (!SymmetricAlgorithm::encryptInit(key, mode, IV, padding))
+	if (!SymmetricAlgorithm::encryptInit(key, mode, IV, padding, counterBits))
 	{
 		return false;
 	}
@@ -89,6 +98,36 @@ bool BotanSymmetricAlgorithm::encryptInit(const SymmetricKey* key, const SymMode
 		iv.wipe(getBlockSize());
 	}
 
+	// Check the counter bits
+	if (counterBits > 0)
+	{
+		Botan::BigInt counter = BotanUtil::byteString2bigInt(iv);
+		counter.mask_bits(counterBits);
+
+		// Reverse the bits
+		while (counterBits > 0)
+		{
+			counterBits--;
+			if (counter.get_bit(counterBits))
+			{
+				counter.clear_bit(counterBits);
+			}
+			else
+			{
+				counter.set_bit(counterBits);
+			}
+		}
+
+		// Set the maximum bytes
+		maximumBytes = (counter + 1) * getBlockSize();
+		counterBytes = Botan::BigInt(0);
+	}
+	else
+	{
+		maximumBytes = Botan::BigInt(1);
+		maximumBytes.flip_sign();
+	}
+
 	// Determine the cipher
 	std::string cipherName = getCipher();
 
@@ -108,7 +147,26 @@ bool BotanSymmetricAlgorithm::encryptInit(const SymmetricKey* key, const SymMode
 		Botan::SymmetricKey botanKey = Botan::SymmetricKey(key->getKeyBits().const_byte_str(), key->getKeyBits().size());
 		if (mode == SymMode::ECB)
 		{
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(2,0,0)
+			// ECB cipher mode was dropped in Botan 2.0
+			const std::vector<std::string> algo_parts = Botan::split_on(cipherName, '/');
+			const std::string cipher_name = algo_parts[0];
+			Botan::BlockCipherModePaddingMethod* pad;
+			if (algo_parts.size() == 3 && algo_parts[2] == "PKCS7")
+			{
+				pad = new Botan::PKCS7_Padding();
+			}
+			else
+			{
+				pad = new Botan::Null_Padding();
+			}
+			std::unique_ptr<Botan::BlockCipher> bc(Botan::BlockCipher::create(cipher_name));
+			Botan::Keyed_Filter* cipher = new Botan::Cipher_Mode_Filter(new Botan::ECB_Encryption(bc.release(),pad));
+			cipher->set_key(botanKey);
+			cryption = new Botan::Pipe(cipher);
+#else
 			cryption = new Botan::Pipe(Botan::get_cipher(cipherName, botanKey, Botan::ENCRYPTION));
+#endif
 		}
 		else
 		{
@@ -117,9 +175,9 @@ bool BotanSymmetricAlgorithm::encryptInit(const SymmetricKey* key, const SymMode
 		}
 		cryption->start_msg();
 	}
-	catch (...)
+	catch (std::exception &e)
 	{
-		ERROR_MSG("Failed to create the encryption token");
+		ERROR_MSG("Failed to create the encryption token: %s", e.what());
 
 		ByteString dummy;
 		SymmetricAlgorithm::encryptFinal(dummy);
@@ -160,6 +218,12 @@ bool BotanSymmetricAlgorithm::encryptUpdate(const ByteString& data, ByteString& 
 		cryption = NULL;
 
 		return false;
+	}
+
+	// Count number of bytes written
+	if (maximumBytes.is_positive())
+	{
+		counterBytes += data.size();
 	}
 
 	// Read data
@@ -232,10 +296,10 @@ bool BotanSymmetricAlgorithm::encryptFinal(ByteString& encryptedData)
 }
 
 // Decryption functions
-bool BotanSymmetricAlgorithm::decryptInit(const SymmetricKey* key, const SymMode::Type mode /* = SymMode::CBC */, const ByteString& IV /* = ByteString() */, bool padding /* = true */)
+bool BotanSymmetricAlgorithm::decryptInit(const SymmetricKey* key, const SymMode::Type mode /* = SymMode::CBC */, const ByteString& IV /* = ByteString() */, bool padding /* = true */, size_t counterBits /* = 0 */)
 {
 	// Call the superclass initialiser
-	if (!SymmetricAlgorithm::decryptInit(key, mode, IV, padding))
+	if (!SymmetricAlgorithm::decryptInit(key, mode, IV, padding, counterBits))
 	{
 		return false;
 	}
@@ -262,6 +326,36 @@ bool BotanSymmetricAlgorithm::decryptInit(const SymmetricKey* key, const SymMode
 		iv.wipe(getBlockSize());
 	}
 
+	// Check the counter bits
+	if (counterBits > 0)
+	{
+		Botan::BigInt counter = BotanUtil::byteString2bigInt(iv);
+		counter.mask_bits(counterBits);
+
+		// Reverse the bits
+		while (counterBits > 0)
+		{
+			counterBits--;
+			if (counter.get_bit(counterBits))
+			{
+				counter.clear_bit(counterBits);
+			}
+			else
+			{
+				counter.set_bit(counterBits);
+			}
+		}
+
+		// Set the maximum bytes
+		maximumBytes = (counter + 1) * getBlockSize();
+		counterBytes = Botan::BigInt(0);
+	}
+	else
+	{
+		maximumBytes = Botan::BigInt(1);
+		maximumBytes.flip_sign();
+	}
+
 	// Determine the cipher class
 	std::string cipherName = getCipher();
 
@@ -281,7 +375,26 @@ bool BotanSymmetricAlgorithm::decryptInit(const SymmetricKey* key, const SymMode
 		Botan::SymmetricKey botanKey = Botan::SymmetricKey(key->getKeyBits().const_byte_str(), key->getKeyBits().size());
 		if (mode == SymMode::ECB)
 		{
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(2,0,0)
+			// ECB cipher mode was dropped in Botan 2.0
+			const std::vector<std::string> algo_parts = Botan::split_on(cipherName, '/');
+			const std::string cipher_name = algo_parts[0];
+			Botan::BlockCipherModePaddingMethod* pad;
+			if (algo_parts.size() == 3 && algo_parts[2] == "PKCS7")
+			{
+				pad = new Botan::PKCS7_Padding();
+			}
+			else
+			{
+				pad = new Botan::Null_Padding();
+			}
+			std::unique_ptr<Botan::BlockCipher> bc(Botan::BlockCipher::create(cipher_name));
+			Botan::Keyed_Filter* cipher = new Botan::Cipher_Mode_Filter(new Botan::ECB_Decryption(bc.release(),pad));
+			cipher->set_key(botanKey);
+			cryption = new Botan::Pipe(cipher);
+#else
 			cryption = new Botan::Pipe(Botan::get_cipher(cipherName, botanKey, Botan::DECRYPTION));
+#endif
 		}
 		else
 		{
@@ -333,6 +446,12 @@ bool BotanSymmetricAlgorithm::decryptUpdate(const ByteString& encryptedData, Byt
 		cryption = NULL;
 
 		return false;
+	}
+
+	// Count number of bytes written
+	if (maximumBytes.is_positive())
+	{
+		counterBytes += encryptedData.size();
 	}
 
 	// Read data
@@ -404,3 +523,12 @@ bool BotanSymmetricAlgorithm::decryptFinal(ByteString& data)
 	return true;
 }
 
+// Check if more bytes of data can be encrypted
+bool BotanSymmetricAlgorithm::checkMaximumBytes(unsigned long bytes)
+{
+	if (maximumBytes.is_negative()) return true;
+
+	if (maximumBytes.cmp(counterBytes + bytes) >= 0) return true;
+
+	return false;
+}

@@ -41,6 +41,7 @@
 #include <botan/ber_dec.h>
 #include <botan/der_enc.h>
 #include <botan/oids.h>
+#include <botan/version.h>
 
 // Constructors
 BotanDSAPrivateKey::BotanDSAPrivateKey()
@@ -136,7 +137,7 @@ ByteString BotanDSAPrivateKey::PKCS8Encode()
 	ByteString der;
 	createBotanKey();
 	if (dsa == NULL) return der;
-#if BOTAN_VERSION_MINOR == 11
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,0)
 	const Botan::secure_vector<Botan::byte> ber = Botan::PKCS8::BER_encode(*dsa);
 #else
 	const Botan::SecureVector<Botan::byte> ber = Botan::PKCS8::BER_encode(*dsa);
@@ -151,7 +152,7 @@ bool BotanDSAPrivateKey::PKCS8Decode(const ByteString& ber)
 {
 	Botan::DataSource_Memory source(ber.const_byte_str(), ber.size());
 	if (source.end_of_data()) return false;
-#if BOTAN_VERSION_MINOR == 11
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,0)
 	Botan::secure_vector<Botan::byte> keydata;
 #else
 	Botan::SecureVector<Botan::byte> keydata;
@@ -176,8 +177,12 @@ bool BotanDSAPrivateKey::PKCS8Decode(const ByteString& ber)
 
 			return false;
 		}
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,34)
+		key = new Botan::DSA_PrivateKey(alg_id, keydata);
+#else
 		BotanRNG* rng = (BotanRNG*)BotanCryptoFactory::i()->getRNG();
 		key = new Botan::DSA_PrivateKey(alg_id, keydata, *rng->getRNG());
+#endif
 		if (key == NULL) return false;
 
 		setFromBotan(key);

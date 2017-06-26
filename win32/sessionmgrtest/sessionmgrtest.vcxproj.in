@@ -52,13 +52,13 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..;..\..\src\lib;..\..\src\lib\session_mgr;..\..\src\lib\common;..\..\src\lib\cryptoki_compat;..\..\src\lib\crypto;..\..\src\lib\data_mgr;..\..\src\lib\slot_mgr;..\..\src\lib\object_store;..\..\src\lib\win32;@CUINCPATH@;@DEBUGINCPATH@;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..;..\..\src\lib;..\..\src\lib\session_mgr;..\..\src\lib\common;..\..\src\lib\pkcs11;..\..\src\lib\crypto;..\..\src\lib\data_mgr;..\..\src\lib\slot_mgr;..\..\src\lib\object_store;..\..\src\lib\win32;@CUINCPATH@;@DEBUGINCPATH@;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>..\@PLATFORMDIR@$(Configuration);@CULIBPATH@;@DEBUGLIBPATH@;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>convarch.lib;cppunitd.lib;@LIBNAME@;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>convarch.lib;cppunitd.lib;@LIBNAME@;@EXTRALIBS@%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|@PLATFORM@'">
@@ -70,7 +70,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..;..\..\src\lib;..\..\src\lib\session_mgr;..\..\src\lib\common;..\..\src\lib\cryptoki_compat;..\..\src\lib\crypto;..\..\src\lib\data_mgr;..\..\src\lib\slot_mgr;..\..\src\lib\object_store;..\..\src\lib\win32;@CUINCPATH@;@INCLUDEPATH@;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..;..\..\src\lib;..\..\src\lib\session_mgr;..\..\src\lib\common;..\..\src\lib\pkcs11;..\..\src\lib\crypto;..\..\src\lib\data_mgr;..\..\src\lib\slot_mgr;..\..\src\lib\object_store;..\..\src\lib\win32;@CUINCPATH@;@INCLUDEPATH@;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -78,11 +78,14 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalLibraryDirectories>..\@PLATFORMDIR@$(Configuration);@CULIBPATH@;@LIBPATH@;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>convarch.lib;cppunit.lib;@LIBNAME@;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>convarch.lib;cppunit.lib;@LIBNAME@;@EXTRALIBS@%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\src\lib\cryptoki_compat\pkcs11.h" />
+    <ClInclude Include="..\..\src\lib\pkcs11\cryptoki.h" />
+    <ClInclude Include="..\..\src\lib\pkcs11\pkcs11.h" />
+    <ClInclude Include="..\..\src\lib\pkcs11\pkcs11f.h" />
+    <ClInclude Include="..\..\src\lib\pkcs11\pkcs11t.h" />
     <ClInclude Include="..\..\src\lib\session_mgr\test\SessionManagerTests.h" />
   </ItemGroup>
   <ItemGroup>

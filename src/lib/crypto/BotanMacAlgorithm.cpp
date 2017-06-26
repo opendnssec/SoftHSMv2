@@ -38,6 +38,7 @@
 
 #include <botan/symkey.h>
 #include <botan/botan.h>
+#include <botan/version.h>
 
 // Constructor
 BotanMacAlgorithm::BotanMacAlgorithm()
@@ -77,7 +78,11 @@ bool BotanMacAlgorithm::signInit(const SymmetricKey* key)
 	// Allocate the context
 	try
 	{
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,26)
+		hmac = new Botan::HMAC(Botan::HashFunction::create(hashName).release());
+#else
 		hmac = new Botan::HMAC(Botan::get_hash(hashName));
+#endif
 		hmac->set_key(key->getKeyBits().const_byte_str(), key->getKeyBits().size());
 	}
 	catch (...)
@@ -138,7 +143,7 @@ bool BotanMacAlgorithm::signFinal(ByteString& signature)
 	}
 
 	// Perform the signature operation
-#if BOTAN_VERSION_MINOR == 11
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,0)
 	Botan::secure_vector<Botan::byte> signResult;
 #else
 	Botan::SecureVector<Botan::byte> signResult;
@@ -159,7 +164,7 @@ bool BotanMacAlgorithm::signFinal(ByteString& signature)
 
 	// Return the result
 	signature.resize(signResult.size());
-#if BOTAN_VERSION_MINOR == 11
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,0)
 	memcpy(&signature[0], signResult.data(), signResult.size());
 #else
 	memcpy(&signature[0], signResult.begin(), signResult.size());
@@ -196,7 +201,11 @@ bool BotanMacAlgorithm::verifyInit(const SymmetricKey* key)
 	// Allocate the context
 	try
 	{
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,26)
+		hmac = new Botan::HMAC(Botan::HashFunction::create(hashName).release());
+#else
 		hmac = new Botan::HMAC(Botan::get_hash(hashName));
+#endif
 		hmac->set_key(key->getKeyBits().const_byte_str(), key->getKeyBits().size());
 	}
 	catch (...)
@@ -257,7 +266,7 @@ bool BotanMacAlgorithm::verifyFinal(ByteString& signature)
 	}
 
 	// Perform the verify operation
-#if BOTAN_VERSION_MINOR == 11
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,0)
 	Botan::secure_vector<Botan::byte> macResult;
 #else
 	Botan::SecureVector<Botan::byte> macResult;
@@ -289,7 +298,7 @@ bool BotanMacAlgorithm::verifyFinal(ByteString& signature)
 	delete hmac;
 	hmac = NULL;
 
-#if BOTAN_VERSION_MINOR == 11
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,0)
 	return memcmp(&signature[0], macResult.data(), macResult.size()) == 0;
 #else
 	return memcmp(&signature[0], macResult.begin(), macResult.size()) == 0;

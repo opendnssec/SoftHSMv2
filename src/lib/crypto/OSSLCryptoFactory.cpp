@@ -107,7 +107,15 @@ OSSLCryptoFactory::OSSLCryptoFactory()
 	{
 		locks[i] = MutexFactory::i()->getMutex();
 	}
-	CRYPTO_set_locking_callback(lock_callback);
+
+#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
+	setLockingCallback = false;
+	if (CRYPTO_get_locking_callback() == NULL)
+	{
+		CRYPTO_set_locking_callback(lock_callback);
+		setLockingCallback = true;
+	}
+#endif
 
 #ifdef WITH_FIPS
 	// Already in FIPS mode on reenter (avoiding selftests)
@@ -134,7 +142,7 @@ OSSLCryptoFactory::OSSLCryptoFactory()
 
 #ifdef WITH_GOST
 	// Load engines
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
+#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
 	ENGINE_load_builtin_engines();
 #else
 	OPENSSL_init_crypto(OPENSSL_INIT_ENGINE_ALL_BUILTIN |
@@ -203,7 +211,12 @@ OSSLCryptoFactory::~OSSLCryptoFactory()
 	delete rng;
 
 	// Recycle locks
-	CRYPTO_set_locking_callback(NULL);
+#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
+	if (setLockingCallback)
+	{
+		CRYPTO_set_locking_callback(NULL);
+	}
+#endif
 	for (unsigned i = 0; i < nlocks; i++)
 	{
 		MutexFactory::i()->recycleMutex(locks[i]);

@@ -183,7 +183,7 @@ bool OSSLAES::wrapUnwrapKey(const SymmetricKey* key, const SymWrap::Type mode, c
 	rv = EVP_CipherUpdate(pWrapCTX, &out[0], &curBlockLen, in.const_byte_str(), in.size());
 	if (rv == 1) {
 		outLen = curBlockLen;
-		rv = EVP_CipherFinal_ex(pWrapCTX, &out[0], &curBlockLen);
+		rv = EVP_CipherFinal_ex(pWrapCTX, &out[0] + outLen, &curBlockLen);
 	}
 	if (rv != 1)
 	{
@@ -236,6 +236,18 @@ const EVP_CIPHER* OSSLAES::getCipher() const
 				return EVP_aes_192_ecb();
 			case 256:
 				return EVP_aes_256_ecb();
+		};
+	}
+	else if (currentCipherMode == SymMode::CTR)
+	{
+		switch(currentKey->getBitLen())
+		{
+			case 128:
+				return EVP_aes_128_ctr();
+			case 192:
+				return EVP_aes_192_ctr();
+			case 256:
+				return EVP_aes_256_ctr();
 		};
 	}
 

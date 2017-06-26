@@ -32,15 +32,80 @@
 
 #include <cppunit/extensions/TestFactoryRegistry.h>
 #include <cppunit/ui/text/TestRunner.h>
+#include <cppunit/TestResult.h>
+#include <cppunit/TestFailure.h>
+#include <cppunit/TestResultCollector.h>
+#include <cppunit/SourceLine.h>
+#include <cppunit/Message.h>
+#include <cppunit/Exception.h>
+#include <cppunit/XmlOutputter.h>
+#include <fstream>
+#include <stdlib.h>
+#include <iostream>
+
+#include "config.h"
+#include "MutexFactory.h"
+#include "SecureMemoryRegistry.h"
+
+#if defined(WITH_OPENSSL)
+#include "OSSLCryptoFactory.h"
+#else
+#include "BotanCryptoFactory.h"
+#endif
+
+// Initialise the one-and-only instance
+#ifdef HAVE_CXX11
+
+std::unique_ptr<MutexFactory> MutexFactory::instance(nullptr);
+std::unique_ptr<SecureMemoryRegistry> SecureMemoryRegistry::instance(nullptr);
+#if defined(WITH_OPENSSL)
+std::unique_ptr<OSSLCryptoFactory> OSSLCryptoFactory::instance(nullptr);
+#else
+std::unique_ptr<BotanCryptoFactory> BotanCryptoFactory::instance(nullptr);
+#endif
+
+#else
+
+std::auto_ptr<MutexFactory> MutexFactory::instance(NULL);
+std::auto_ptr<SecureMemoryRegistry> SecureMemoryRegistry::instance(NULL);
+#if defined(WITH_OPENSSL)
+std::auto_ptr<OSSLCryptoFactory> OSSLCryptoFactory::instance(NULL);
+#else
+std::auto_ptr<BotanCryptoFactory> BotanCryptoFactory::instance(NULL);
+#endif
+
+#endif
+
+class MyListener : public CPPUNIT_NS::TestListener {
+        virtual void startTest( CPPUNIT_NS::Test*const pTest ) {
+                std::cout << std::endl << pTest->getName() << ' ' << pTest->countTestCases() << std::endl << std::endl;
+        }
+        virtual void addFailure( const CPPUNIT_NS::TestFailure & failure ) {
+                const CPPUNIT_NS::SourceLine solurceLine( failure.sourceLine() );
+                CPPUNIT_NS::Message message( failure.thrownException()->message() );
+                std::cout << solurceLine.fileName() << ' ' << solurceLine.lineNumber() << ' ' << message.shortDescription() << std::endl;
+                std::cout << message.details() << std::endl << std::endl;
+        }
+};
 
 int main(int /*argc*/, char** /*argv*/)
 {
+	CppUnit::TestResult controller;
+	CppUnit::TestResultCollector result;
 	CppUnit::TextUi::TestRunner runner;
+	controller.addListener(&result);
+	MyListener progress;
+	controller.addListener(&progress);
 	CppUnit::TestFactoryRegistry &registry = CppUnit::TestFactoryRegistry::getRegistry();
 
 	runner.addTest(registry.makeTest());
-	bool wasSucessful = runner.run();
+	runner.run(controller);
 
-	return wasSucessful ? 0 : 1;
+	std::ofstream xmlFileOut("test-results.xml");
+	CppUnit::XmlOutputter xmlOut(&result, xmlFileOut);
+	xmlOut.write();
+
+	CryptoFactory::reset();
+
+	return result.wasSuccessful() ? 0 : 1;
 }
-

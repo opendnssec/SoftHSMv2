@@ -70,7 +70,7 @@ bool BotanAES::wrapKey(const SymmetricKey* key, const SymWrap::Type mode, const 
 			return false;
 		}
 
-#if BOTAN_VERSION_MINOR == 11
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,0)
 		Botan::secure_vector<Botan::byte> data(in.size());
 		memcpy(data.data(), in.const_byte_str(), in.size());
 		Botan::secure_vector<Botan::byte> wrapped;
@@ -99,7 +99,7 @@ bool BotanAES::wrapKey(const SymmetricKey* key, const SymWrap::Type mode, const 
 			return false;
 		}
 		out.resize(wrapped.size());
-#if BOTAN_VERSION_MINOR == 11
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,0)
 		memcpy(&out[0], wrapped.data(), out.size());
 #else
 		memcpy(&out[0], wrapped.begin(), out.size());
@@ -111,7 +111,7 @@ bool BotanAES::wrapKey(const SymmetricKey* key, const SymWrap::Type mode, const 
 	else if (mode == SymWrap::AES_KEYWRAP_PAD)
 	{
 		// RFC 5649 AES key wrap with pad
-#if BOTAN_VERSION_MINOR == 11
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,0)
 		Botan::secure_vector<Botan::byte> data(in.size());
 		memcpy(data.data(), in.const_byte_str(), in.size());
 		Botan::secure_vector<Botan::byte> wrapped;
@@ -140,7 +140,7 @@ bool BotanAES::wrapKey(const SymmetricKey* key, const SymWrap::Type mode, const 
 			return false;
 		}
 		out.resize(wrapped.size());
-#if BOTAN_VERSION_MINOR == 11
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,0)
 		memcpy(&out[0], wrapped.data(), out.size());
 #else
 		memcpy(&out[0], wrapped.begin(), out.size());
@@ -186,7 +186,7 @@ bool BotanAES::unwrapKey(const SymmetricKey* key, const SymWrap::Type mode, cons
 			return false;
 		}
 
-#if BOTAN_VERSION_MINOR == 11
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,0)
 		Botan::secure_vector<Botan::byte> wrapped(in.size());
 		memcpy(wrapped.data(), in.const_byte_str(), in.size());
 		Botan::secure_vector<Botan::byte> unwrapped;
@@ -215,7 +215,7 @@ bool BotanAES::unwrapKey(const SymmetricKey* key, const SymWrap::Type mode, cons
 			return false;
 		}
 		out.resize(unwrapped.size());
-#if BOTAN_VERSION_MINOR == 11
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,0)
 		memcpy(&out[0], unwrapped.data(), out.size());
 #else
 		memcpy(&out[0], unwrapped.begin(), out.size());
@@ -240,7 +240,7 @@ bool BotanAES::unwrapKey(const SymmetricKey* key, const SymWrap::Type mode, cons
 			return false;
 		}
 
-#if BOTAN_VERSION_MINOR == 11
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,0)
 		Botan::secure_vector<Botan::byte> wrapped(in.size());
 		memcpy(wrapped.data(), in.const_byte_str(), in.size());
 		Botan::secure_vector<Botan::byte> unwrapped;
@@ -269,7 +269,7 @@ bool BotanAES::unwrapKey(const SymmetricKey* key, const SymWrap::Type mode, cons
 			return false;
 		}
 		out.resize(unwrapped.size());
-#if BOTAN_VERSION_MINOR == 11
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,0)
 		memcpy(&out[0], unwrapped.data(), out.size());
 #else
 		memcpy(&out[0], unwrapped.begin(), out.size());
@@ -318,6 +318,8 @@ std::string BotanAES::getCipher() const
 		case SymMode::CBC:
 			mode = "CBC";
 			break;
+		case SymMode::CTR:
+			return algo + "/CTR-BE";
 		case SymMode::ECB:
 			mode = "ECB";
 			break;

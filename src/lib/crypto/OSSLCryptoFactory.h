@@ -94,6 +94,10 @@ private:
 	static std::auto_ptr<OSSLCryptoFactory> instance;
 #endif
 
+#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
+	bool setLockingCallback;
+#endif
+
 #ifdef WITH_FIPS
 	// The FIPS 140-2 selftest status
 	static bool FipsSelfTestStatus;

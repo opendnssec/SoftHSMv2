@@ -1,8 +1,8 @@
 MAINTAINERCLEANFILES =	$(srcdir)/Makefile.in
 
-AM_CPPFLAGS = 		-I$(srcdir)/../../lib/cryptoki_compat \
+AM_CPPFLAGS =		-I$(srcdir)/../../lib \
 			-I$(srcdir)/../../lib/object_store \
-			-I$(srcdir)/../../lib \
+			-I$(srcdir)/../../lib/pkcs11 \
 			@SQLITE3_INCLUDES@
 
 dist_man_MANS =		softhsm2-dump-file.1

@@ -1,5 +1,59 @@
 NEWS for SoftHSM -- History of user visible changes
 
+SoftHSM 2.3.0 - 2017-06-xx
+
+* Issue #130: Upgraded to PKCS#11 v2.40.
+  * Minor changes to some return values.
+  * Added CKA_DESTROYABLE to all objects. Used by C_DestroyObject().
+  * Added CKA_PUBLIC_KEY_INFO to certificates, private, and public key
+    objects. Will be accepted from application, but SoftHSM will
+    currently not calculate it.
+* Issue #142: Support for CKM_AES_CTR.
+* Issue #155: Add unit tests for SessionManager.
+* Issue #189: C_DigestKey returns CKR_KEY_INDIGESTIBLE when key
+  attribute CKA_EXTRACTABLE = false. Whitelist SHA algorithms to allow
+  C_DigestKey in this case.
+* Issue #225: Show slot id after initialization.
+* Issue #257: Set CKA_DECRYPT/CKA_ENCRYPT flags on key import to true.
+  (Patch from Martin Domke)
+* Issue #261: Add support for libeaycompat lib for FIPS on Windows.
+  (Patch from Matt Hauck)
+* Issue #262: Support importing ECDSA P-521 in softhsm-util.
+* Issue #276: Support for Botan 2.0.
+* Issue #279: Editorial changes from Mountain Lion to Sierra.
+  (Patch from Mike Neumann)
+* Issue #283: More detailed error messages when initializing SoftHSM.
+* Issue #285: Support for LibreSSL.
+  (Patch from Alon Bar-Lev)
+* Issue #286: Update .gitignore.
+  (Patch from Alon Bar-Lev)
+* Issue #291: Change to enable builds and reports on new Jenkinks
+  environment.
+* Issue #293: Detect cppunit in autoconf.
+  (Patch from Alon Bar-Lev)
+* Issue #309: CKO_CERTIFICATE and CKO_PUBLIC_KEY now defaults to
+  CKA_PRIVATE=false.
+* Issue #314: Update README with information about logging.
+
+Bugfixes:
+* Issue #216: Better handling of CRYPTO_set_locking_callback() for OpenSSL.
+* Issue #265: Fix deriving shared secret with ECC.
+* Issue #280: HMAC with sizes less than L bytes is strongly discouraged.
+  Set a lower bound equal to L bytes in ulMinKeySize and check it when
+  initializing the operation.
+* Issue #281: Fix test of p11 shared library.
+  (Patch from Lars Silvén)
+* Issue #289: Minor fix of 'EVP_CipherFinal_ex'.
+  (Patch from Viktor Tarasov)
+* Issue #297: Fix build with cppunit.
+  (Patch from Ludovic Rousseau)
+* Issue #302: Export PKCS#11 symbols from the library.
+  (Patch from Ludovic Rousseau)
+* Issue #305: Zero pad key to fit the block in CKM_AES_KEY_WRAP.
+* Issue #313: Detecting CppUnit when using Macports.
+  (Patch from mouse07410)
+
+
 SoftHSM 2.2.0 - 2016-12-05
 
 * Issue #143: Delete a token using softhsm2-util.

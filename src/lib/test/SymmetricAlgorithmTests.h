@@ -46,6 +46,8 @@ class SymmetricAlgorithmTests : public TestsBase
 #endif
 	CPPUNIT_TEST(testNullTemplate);
 	CPPUNIT_TEST(testNonModifiableDesKeyGeneration);
+	CPPUNIT_TEST(testCheckValue);
+	CPPUNIT_TEST(testAesCtrOverflow);
 	CPPUNIT_TEST_SUITE_END();
 
 public:
@@ -55,6 +57,7 @@ public:
 	void testNullTemplate();
 	void testNonModifiableDesKeyGeneration();
 	void testCheckValue();
+	void testAesCtrOverflow();
 
 protected:
 	CK_RV generateAesKey(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_OBJECT_HANDLE &hKey);
@@ -69,12 +72,9 @@ protected:
 			CK_SESSION_HANDLE hSession,
 			CK_OBJECT_HANDLE hKey,
 			size_t messageSize,
-			bool isSizeOK=true,
-			bool isCBC=true);
+			bool isSizeOK=true);
 	void aesWrapUnwrap(CK_MECHANISM_TYPE mechanismType, CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hKey);
-#ifdef HAVE_AES_KEY_WRAP_PAD
 	CK_RV generateRsaPrivateKey(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_OBJECT_HANDLE &hKey);
-#endif
 };
 
 #endif // !_SOFTHSM_V2_SYMENCRYPTDECRYPTTESTS_H

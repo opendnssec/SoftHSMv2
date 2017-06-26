@@ -40,11 +40,17 @@ class DeriveTests : public TestsBase
 {
 	CPPUNIT_TEST_SUITE(DeriveTests);
 	CPPUNIT_TEST(testDhDerive);
+#ifdef WITH_ECC
+	CPPUNIT_TEST(testEcdhDerive);
+#endif
 	CPPUNIT_TEST(testSymDerive);
 	CPPUNIT_TEST_SUITE_END();
 
 public:
 	void testDhDerive();
+#ifdef WITH_ECC
+	void testEcdhDerive();
+#endif
 	void testSymDerive();
 
 protected:
@@ -56,6 +62,10 @@ protected:
 	CK_RV generateDes2Key(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_OBJECT_HANDLE &hKey);
 	CK_RV generateDes3Key(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_OBJECT_HANDLE &hKey);
 	void dhDerive(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hPublicKey, CK_OBJECT_HANDLE hPrivateKey, CK_OBJECT_HANDLE &hKey);
+#ifdef WITH_ECC
+	CK_RV generateEcKeyPair(const char* curve, CK_SESSION_HANDLE hSession, CK_BBOOL bTokenPuk, CK_BBOOL bPrivatePuk, CK_BBOOL bTokenPrk, CK_BBOOL bPrivatePrk, CK_OBJECT_HANDLE &hPuk, CK_OBJECT_HANDLE &hPrk);
+	void ecdhDerive(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hPublicKey, CK_OBJECT_HANDLE hPrivateKey, CK_OBJECT_HANDLE &hKey, bool useRaw);
+#endif
 	bool compareSecret(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hKey1, CK_OBJECT_HANDLE hKey2);
 	void symDerive(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hKey, CK_OBJECT_HANDLE &hDerive, CK_MECHANISM_TYPE mechType, CK_KEY_TYPE keyType);
 };

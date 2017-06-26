@@ -12,6 +12,7 @@ exit ()
 			redhat | \
 			centos | \
 			sl | \
+			slackware | \
 			opensuse | \
 			suse | \
 			freebsd | \
@@ -408,6 +409,7 @@ find_tail ()
 		redhat | \
 		centos | \
 		sl | \
+		slackware | \
 		opensuse | \
 		suse | \
 		sunos )
@@ -532,6 +534,8 @@ detect_distribution ()
 		else
 			DISTRIBUTION="redhat"
 		fi
+	elif [ -f "/etc/slackware-version" ]; then
+		DISTRIBUTION="slackware"
 	elif [ -f "/etc/os-release" ]; then
 		if $GREP -q -i opensuse /etc/os-release 2>/dev/null; then
 			DISTRIBUTION="opensuse"
@@ -1687,6 +1691,7 @@ syslog_trace ()
 		redhat | \
 		centos | \
 		sl | \
+		slackware | \
 		opensuse | \
 		suse | \
 		freebsd | \

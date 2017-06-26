@@ -171,7 +171,7 @@ Botan::Private_Key* crypto_read_file(char* filePath, char* filePIN)
 
 	try
 	{
-#if BOTAN_VERSION_MINOR == 11
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,0)
 		if (filePIN == NULL)
 		{
 			pkey = Botan::PKCS8::load_key(std::string(filePath), *rng);
@@ -236,8 +236,8 @@ int crypto_save_rsa
 		{ CKA_ID,               objID,        objIDLen },
 		{ CKA_TOKEN,            &ckToken,     sizeof(ckToken) },
 		{ CKA_VERIFY,           &ckTrue,      sizeof(ckTrue) },
-		{ CKA_ENCRYPT,          &ckFalse,     sizeof(ckFalse) },
-		{ CKA_WRAP,             &ckFalse,     sizeof(ckFalse) },
+		{ CKA_ENCRYPT,          &ckTrue,      sizeof(ckTrue) },
+		{ CKA_WRAP,             &ckTrue,      sizeof(ckTrue) },
 		{ CKA_PUBLIC_EXPONENT,  keyMat->bigE, keyMat->sizeE },
 		{ CKA_MODULUS,          keyMat->bigN, keyMat->sizeN }
 	};
@@ -247,8 +247,8 @@ int crypto_save_rsa
 		{ CKA_LABEL,            label,           strlen(label) },
 		{ CKA_ID,               objID,           objIDLen },
 		{ CKA_SIGN,             &ckTrue,         sizeof(ckTrue) },
-		{ CKA_DECRYPT,          &ckFalse,        sizeof(ckFalse) },
-		{ CKA_UNWRAP,           &ckFalse,        sizeof(ckFalse) },
+		{ CKA_DECRYPT,          &ckTrue,         sizeof(ckTrue) },
+		{ CKA_UNWRAP,           &ckTrue,         sizeof(ckTrue) },
 		{ CKA_SENSITIVE,        &ckTrue,         sizeof(ckTrue) },
 		{ CKA_TOKEN,            &ckTrue,         sizeof(ckTrue) },
 		{ CKA_PRIVATE,          &ckTrue,         sizeof(ckTrue) },
@@ -591,7 +591,7 @@ ecdsa_key_material_t* crypto_malloc_ecdsa(Botan::ECDSA_PrivateKey* ecdsa)
 		return NULL;
 	}
 
-#if BOTAN_VERSION_MINOR == 11
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,0)
 	std::vector<Botan::byte> derEC = ecdsa->domain().DER_encode(Botan::EC_DOMPAR_ENC_OID);
 	Botan::secure_vector<Botan::byte> derPoint;
 #else
@@ -601,7 +601,7 @@ ecdsa_key_material_t* crypto_malloc_ecdsa(Botan::ECDSA_PrivateKey* ecdsa)
 
 	try
 	{
-#if BOTAN_VERSION_MINOR == 11
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,0)
 		Botan::secure_vector<Botan::byte> repr = Botan::EC2OSP(ecdsa->public_point(),
 			Botan::PointGFp::UNCOMPRESSED);
 #else

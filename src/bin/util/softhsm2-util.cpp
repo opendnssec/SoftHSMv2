@@ -296,7 +296,8 @@ int main(int argc, char* argv[])
 		CK_C_GetFunctionList pGetFunctionList = loadLibrary(module, &moduleHandle, &errMsg);
 		if (!pGetFunctionList)
 		{
-			fprintf(stderr, "ERROR: Could not load the library: %s\n", errMsg);
+			fprintf(stderr, "ERROR: Could not load the PKCS#11 library/module: %s\n", errMsg);
+			fprintf(stderr, "ERROR: Please check log files for additional information.\n");
 			exit(1);
 		}
 
@@ -307,7 +308,8 @@ int main(int argc, char* argv[])
 		CK_RV p11rv = p11->C_Initialize(NULL_PTR);
 		if (p11rv != CKR_OK)
 		{
-			fprintf(stderr, "ERROR: Could not initialize the library.\n");
+			fprintf(stderr, "ERROR: Could not initialize the PKCS#11 library/module: %s\n", module ? module : DEFAULT_PKCS11_LIB);
+			fprintf(stderr, "ERROR: Please check log files for additional information.\n");
 			exit(1);
 		}
 	}
@@ -422,7 +424,8 @@ int initToken(CK_SLOT_ID slotID, char* label, char* soPIN, char* userPIN)
 			return 1;
 			break;
 		default:
-			fprintf(stderr, "ERROR %X: Could not initialize the token.\n", (unsigned int)rv);
+			fprintf(stderr, "ERROR rv=0x%08X: Could not initialize the token.\n", (unsigned int)rv);
+			fprintf(stderr, "Please check log files for additional information.\n");
 			return 1;
 			break;
 	}
@@ -449,7 +452,39 @@ int initToken(CK_SLOT_ID slotID, char* label, char* soPIN, char* userPIN)
 		return 1;
 	}
 
-	printf("The token has been initialized.\n");
+	// Get the token info
+	CK_TOKEN_INFO tokenInfo;
+	rv = p11->C_GetTokenInfo(slotID, &tokenInfo);
+	if (rv != CKR_OK)
+	{
+		fprintf(stderr, "ERROR: Could not get info about the initialized token in slot %lu.\n", slotID);
+		return 1;
+	}
+
+	// Reload the library
+	p11->C_Finalize(NULL_PTR);
+	rv = p11->C_Initialize(NULL_PTR);
+	if (rv != CKR_OK)
+	{
+		fprintf(stderr, "ERROR: Could not initialize the library.\n");
+		return 1;
+	}
+
+	// Get the slotID
+	CK_SLOT_ID newSlotID;
+	if (findSlot(tokenInfo, newSlotID))
+	{
+		return 1;
+	}
+
+	if (slotID == newSlotID)
+	{
+		printf("The token has been initialized on slot %lu\n", newSlotID);
+	}
+	else
+	{
+		printf("The token has been initialized and is reassigned to slot %lu\n", newSlotID);
+	}
 
 	return 0;
 }
