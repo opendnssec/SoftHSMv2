@@ -496,7 +496,7 @@ CK_RV SoftHSM::C_Initialize(CK_VOID_PTR pInitArgs)
 	objectStore = new ObjectStore(Configuration::i()->getString("directories.tokendir", DEFAULT_TOKENDIR));
 	if (!objectStore->isValid())
 	{
-		ERROR_MSG("Could not load the object store");
+		WARNING_MSG("Could not load the object store");
 		delete objectStore;
 		objectStore = NULL;
 		delete sessionObjectStore;
