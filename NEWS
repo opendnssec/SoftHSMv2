@@ -1,6 +1,6 @@
 NEWS for SoftHSM -- History of user visible changes
 
-SoftHSM 2.3.0 - 2017-06-30
+SoftHSM 2.3.0 - 2017-07-03
 
 * Issue #130: Upgraded to PKCS#11 v2.40.
   * Minor changes to some return values.
