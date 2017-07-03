@@ -496,7 +496,7 @@ CK_RV SoftHSM::C_Initialize(CK_VOID_PTR pInitArgs)
 	objectStore = new ObjectStore(Configuration::i()->getString("directories.tokendir", DEFAULT_TOKENDIR));
 	if (!objectStore->isValid())
 	{
-		ERROR_MSG("Could not load the object store");
+		WARNING_MSG("Could not load the object store");
 		delete objectStore;
 		objectStore = NULL;
 		delete sessionObjectStore;
@@ -10463,13 +10463,19 @@ ByteString SoftHSM::getECDHPubData(ByteString& pubData)
 {
 	size_t len = pubData.size();
 	size_t controlOctets = 2;
-
-	if (len < controlOctets || pubData[0] != 0x04)
+	if (len == 65 || len == 97 || len == 133)
 	{
+		// Raw: Length matches the public key size of P-256, P-384, or P-521
+		controlOctets = 0;
+	}
+	else if (len < controlOctets || pubData[0] != 0x04)
+	{
+		// Raw: Too short or does not start with 0x04
 		controlOctets = 0;
 	}
 	else if (pubData[1] < 0x80)
 	{
+		// Raw: Length octet does not match remaining data length
 		if (pubData[1] != (len - controlOctets)) controlOctets = 0;
 	}
 	else
@@ -10479,6 +10485,7 @@ ByteString SoftHSM::getECDHPubData(ByteString& pubData)
 
 		if (controlOctets >= len)
 		{
+			// Raw: Too short
 			controlOctets = 0;
 		}
 		else
@@ -10487,6 +10494,7 @@ ByteString SoftHSM::getECDHPubData(ByteString& pubData)
 
 			if (length.long_val() != (len - controlOctets))
 			{
+				// Raw: Length octets does not match remaining data length
 				controlOctets = 0;
 			}
 		}
