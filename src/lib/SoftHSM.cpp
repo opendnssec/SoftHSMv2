@@ -640,6 +640,10 @@ CK_RV SoftHSM::C_GetMechanismList(CK_SLOT_ID slotID, CK_MECHANISM_TYPE_PTR pMech
 #ifdef HAVE_AES_KEY_WRAP_PAD
 	nrSupportedMechanisms += 1;
 #endif
+#ifdef WITH_OPENSSL
+	nrSupportedMechanisms += 1; // CKM_RSA_PKCS_PSS
+#endif
+
 	CK_MECHANISM_TYPE supportedMechanisms[] =
 	{
 #ifndef WITH_FIPS
@@ -670,6 +674,9 @@ CK_RV SoftHSM::C_GetMechanismList(CK_SLOT_ID slotID, CK_MECHANISM_TYPE_PTR pMech
 		CKM_SHA256_RSA_PKCS,
 		CKM_SHA384_RSA_PKCS,
 		CKM_SHA512_RSA_PKCS,
+#ifdef WITH_OPENSSL
+		CKM_RSA_PKCS_PSS,
+#endif
 		CKM_SHA1_RSA_PKCS_PSS,
 		CKM_SHA224_RSA_PKCS_PSS,
 		CKM_SHA256_RSA_PKCS_PSS,
@@ -924,6 +931,9 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 		case CKM_SHA256_RSA_PKCS:
 		case CKM_SHA384_RSA_PKCS:
 		case CKM_SHA512_RSA_PKCS:
+#ifdef WITH_OPENSSL
+		case CKM_RSA_PKCS_PSS:
+#endif
 		case CKM_SHA1_RSA_PKCS_PSS:
 		case CKM_SHA224_RSA_PKCS_PSS:
 		case CKM_SHA256_RSA_PKCS_PSS:
@@ -3749,6 +3759,58 @@ CK_RV SoftHSM::AsymSignInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechan
 			bAllowMultiPartOp = true;
 			isRSA = true;
 			break;
+		case CKM_RSA_PKCS_PSS:
+			if (pMechanism->pParameter == NULL_PTR ||
+			    pMechanism->ulParameterLen != sizeof(CK_RSA_PKCS_PSS_PARAMS))
+			{
+				ERROR_MSG("Invalid RSA-PSS parameters");
+				return CKR_ARGUMENTS_BAD;
+			}
+			mechanism = AsymMech::RSA_PKCS_PSS;
+			unsigned long allowedMgf;
+
+			switch(CK_RSA_PKCS_PSS_PARAMS_PTR(pMechanism->pParameter)->hashAlg) {
+				case CKM_SHA_1:
+					pssParam.hashAlg = HashAlgo::SHA1;
+					pssParam.mgf = AsymRSAMGF::MGF1_SHA1;
+					allowedMgf = CKG_MGF1_SHA1;
+					break;
+				case CKM_SHA224:
+					pssParam.hashAlg = HashAlgo::SHA224;
+					pssParam.mgf = AsymRSAMGF::MGF1_SHA224;
+					allowedMgf = CKG_MGF1_SHA224;
+					break;
+				case CKM_SHA256:
+					pssParam.hashAlg = HashAlgo::SHA256;
+					pssParam.mgf = AsymRSAMGF::MGF1_SHA256;
+					allowedMgf = CKG_MGF1_SHA256;
+					break;
+				case CKM_SHA384:
+					pssParam.hashAlg = HashAlgo::SHA384;
+					pssParam.mgf = AsymRSAMGF::MGF1_SHA384;
+					allowedMgf = CKG_MGF1_SHA384;
+					break;
+				case CKM_SHA512:
+					pssParam.hashAlg = HashAlgo::SHA512;
+					pssParam.mgf = AsymRSAMGF::MGF1_SHA512;
+					allowedMgf = CKG_MGF1_SHA512;
+					break;
+				default:
+					ERROR_MSG("Invalid RSA-PSS hash");
+					return CKR_ARGUMENTS_BAD;
+			}
+
+			if (CK_RSA_PKCS_PSS_PARAMS_PTR(pMechanism->pParameter)->mgf != allowedMgf) {
+				ERROR_MSG("Hash and MGF don't match");
+				return CKR_ARGUMENTS_BAD;
+			}
+
+			pssParam.sLen = CK_RSA_PKCS_PSS_PARAMS_PTR(pMechanism->pParameter)->sLen;
+			param = &pssParam;
+			paramLen = sizeof(pssParam);
+			bAllowMultiPartOp = false;
+			isRSA = true;
+			break;
 		case CKM_SHA1_RSA_PKCS_PSS:
 			if (pMechanism->pParameter == NULL_PTR ||
 			    pMechanism->ulParameterLen != sizeof(CK_RSA_PKCS_PSS_PARAMS) ||
@@ -4591,6 +4653,56 @@ CK_RV SoftHSM::AsymVerifyInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 		case CKM_SHA512_RSA_PKCS:
 			mechanism = AsymMech::RSA_SHA512_PKCS;
 			bAllowMultiPartOp = true;
+			isRSA = true;
+			break;
+		case CKM_RSA_PKCS_PSS:
+			if (pMechanism->pParameter == NULL_PTR ||
+			    pMechanism->ulParameterLen != sizeof(CK_RSA_PKCS_PSS_PARAMS))
+			{
+				ERROR_MSG("Invalid parameters");
+				return CKR_ARGUMENTS_BAD;
+			}
+			mechanism = AsymMech::RSA_PKCS_PSS;
+
+			unsigned long expectedMgf;
+			switch(CK_RSA_PKCS_PSS_PARAMS_PTR(pMechanism->pParameter)->hashAlg) {
+				case CKM_SHA_1:
+					pssParam.hashAlg = HashAlgo::SHA1;
+					pssParam.mgf = AsymRSAMGF::MGF1_SHA1;
+					expectedMgf = CKG_MGF1_SHA1;
+					break;
+				case CKM_SHA224:
+					pssParam.hashAlg = HashAlgo::SHA224;
+					pssParam.mgf = AsymRSAMGF::MGF1_SHA224;
+					expectedMgf = CKG_MGF1_SHA224;
+					break;
+				case CKM_SHA256:
+					pssParam.hashAlg = HashAlgo::SHA256;
+					pssParam.mgf = AsymRSAMGF::MGF1_SHA256;
+					expectedMgf = CKG_MGF1_SHA256;
+					break;
+				case CKM_SHA384:
+					pssParam.hashAlg = HashAlgo::SHA384;
+					pssParam.mgf = AsymRSAMGF::MGF1_SHA384;
+					expectedMgf = CKG_MGF1_SHA384;
+					break;
+				case CKM_SHA512:
+					pssParam.hashAlg = HashAlgo::SHA512;
+					pssParam.mgf = AsymRSAMGF::MGF1_SHA512;
+					expectedMgf = CKG_MGF1_SHA512;
+					break;
+				default:
+					return CKR_ARGUMENTS_BAD;
+			}
+
+			if (CK_RSA_PKCS_PSS_PARAMS_PTR(pMechanism->pParameter)->mgf != expectedMgf) {
+				return CKR_ARGUMENTS_BAD;
+			}
+
+			pssParam.sLen = CK_RSA_PKCS_PSS_PARAMS_PTR(pMechanism->pParameter)->sLen;
+			param = &pssParam;
+			paramLen = sizeof(pssParam);
+			bAllowMultiPartOp = false;
 			isRSA = true;
 			break;
 		case CKM_SHA1_RSA_PKCS_PSS:

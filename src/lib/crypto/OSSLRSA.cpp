@@ -121,6 +121,112 @@ bool OSSLRSA::sign(PrivateKey* privateKey, const ByteString& dataToSign,
 
 		return true;
 	}
+	else if (mechanism == AsymMech::RSA_PKCS_PSS)
+	{
+		const RSA_PKCS_PSS_PARAMS *pssParam = (RSA_PKCS_PSS_PARAMS*)param;
+
+		// Separate implementation for RSA PKCS #1 signing without hash computation
+
+		// Check if the private key is the right type
+		if (!privateKey->isOfType(OSSLRSAPrivateKey::type))
+		{
+			ERROR_MSG("Invalid key type supplied");
+
+			return false;
+		}
+
+		if (pssParam == NULL || paramLen != sizeof(RSA_PKCS_PSS_PARAMS))
+		{
+			ERROR_MSG("Invalid parameters supplied");
+
+			return false;
+		}
+
+		size_t allowedLen;
+		const EVP_MD* hash = NULL;
+
+		switch (pssParam->hashAlg)
+		{
+		case HashAlgo::SHA1:
+			hash = EVP_sha1();
+			allowedLen = 20;
+			break;
+		case HashAlgo::SHA224:
+			hash = EVP_sha224();
+			allowedLen = 28;
+			break;
+		case HashAlgo::SHA256:
+			hash = EVP_sha256();
+			allowedLen = 32;
+			break;
+		case HashAlgo::SHA384:
+			hash = EVP_sha384();
+			allowedLen = 48;
+			break;
+		case HashAlgo::SHA512:
+			hash = EVP_sha512();
+			allowedLen = 64;
+			break;
+		default:
+			return false;
+		}
+
+		OSSLRSAPrivateKey* osslKey = (OSSLRSAPrivateKey*) privateKey;
+
+		RSA* rsa = osslKey->getOSSLKey();
+
+		if (dataToSign.size() != allowedLen)
+		{
+			ERROR_MSG("Data to sign does not match expected (%d) for RSA PSS", (int)allowedLen);
+
+			return false;
+		}
+
+		size_t sLen = pssParam->sLen;
+		if (sLen > ((privateKey->getBitLength()+6)/8-2-allowedLen))
+		{
+			ERROR_MSG("sLen (%lu) is too large for current key size (%lu)",
+				  (unsigned long)sLen, privateKey->getBitLength());
+			return false;
+		}
+
+		ByteString em;
+		em.resize(osslKey->getN().size());
+
+		int status = RSA_padding_add_PKCS1_PSS_mgf1(rsa, &em[0], (unsigned char*) dataToSign.const_byte_str(), hash, hash, pssParam->sLen);
+		if (!status)
+		{
+			ERROR_MSG("Error in RSA PSS padding generation");
+
+			return false;
+		}
+
+
+		if (!RSA_blinding_on(rsa, NULL))
+		{
+			ERROR_MSG("Failed to turn on blinding for OpenSSL RSA key");
+
+			return false;
+		}
+
+		// Perform the signature operation
+		signature.resize(osslKey->getN().size());
+
+		int sigLen = RSA_private_encrypt(osslKey->getN().size(), &em[0], &signature[0], rsa, RSA_NO_PADDING);
+
+		RSA_blinding_off(rsa);
+
+		if (sigLen == -1)
+		{
+			ERROR_MSG("An error occurred while performing the RSA-PSS signature");
+
+			return false;
+		}
+
+		signature.resize(sigLen);
+
+		return true;
+	}
 	else if (mechanism == AsymMech::RSA)
 	{
 		// Separate implementation for raw RSA signing
@@ -606,6 +712,90 @@ bool OSSLRSA::verify(PublicKey* publicKey, const ByteString& originalData,
 		recoveredData.resize(retLen);
 
 		return (originalData == recoveredData);
+	}
+	else if (mechanism == AsymMech::RSA_PKCS_PSS)
+	{
+		const RSA_PKCS_PSS_PARAMS *pssParam = (RSA_PKCS_PSS_PARAMS*)param;
+
+		if (pssParam == NULL || paramLen != sizeof(RSA_PKCS_PSS_PARAMS))
+		{
+			ERROR_MSG("Invalid parameters supplied");
+
+			return false;
+		}
+
+		// Check if the public key is the right type
+		if (!publicKey->isOfType(OSSLRSAPublicKey::type))
+		{
+			ERROR_MSG("Invalid key type supplied");
+
+			return false;
+		}
+
+		// Perform the RSA public key operation
+		OSSLRSAPublicKey* osslKey = (OSSLRSAPublicKey*) publicKey;
+
+		ByteString recoveredData;
+
+		recoveredData.resize(osslKey->getN().size());
+
+		RSA* rsa = osslKey->getOSSLKey();
+
+		int retLen = RSA_public_decrypt(signature.size(), (unsigned char*) signature.const_byte_str(), &recoveredData[0], rsa, RSA_NO_PADDING);
+
+		if (retLen == -1)
+		{
+			ERROR_MSG("Public key operation failed");
+
+			return false;
+		}
+
+		recoveredData.resize(retLen);
+
+		size_t allowedLen;
+		const EVP_MD* hash = NULL;
+
+		switch (pssParam->hashAlg)
+		{
+		case HashAlgo::SHA1:
+			hash = EVP_sha1();
+			allowedLen = 20;
+			break;
+		case HashAlgo::SHA224:
+			hash = EVP_sha224();
+			allowedLen = 28;
+			break;
+		case HashAlgo::SHA256:
+			hash = EVP_sha256();
+			allowedLen = 32;
+			break;
+		case HashAlgo::SHA384:
+			hash = EVP_sha384();
+			allowedLen = 48;
+			break;
+		case HashAlgo::SHA512:
+			hash = EVP_sha512();
+			allowedLen = 64;
+			break;
+		default:
+			return false;
+		}
+
+		if (originalData.size() != allowedLen) {
+			return false;
+		}
+
+		size_t sLen = pssParam->sLen;
+		if (sLen > ((osslKey->getBitLength()+6)/8-2-allowedLen))
+		{
+			ERROR_MSG("sLen (%lu) is too large for current key size (%lu)",
+				  (unsigned long)sLen, osslKey->getBitLength());
+			return false;
+		}
+
+		int status = RSA_verify_PKCS1_PSS_mgf1(rsa, (unsigned char*)originalData.const_byte_str(), hash, hash, (unsigned char*) recoveredData.const_byte_str(), pssParam->sLen);
+
+		return (status == 1);
 	}
 	else if (mechanism == AsymMech::RSA)
 	{
