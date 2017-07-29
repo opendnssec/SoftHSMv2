@@ -430,5 +430,7 @@ private:
 	);
 
 	CK_RV MechParamCheckRSAPKCSOAEP(CK_MECHANISM_PTR pMechanism);
+
+	static bool isMechanismPermitted(OSObject* key, CK_MECHANISM_PTR pMechanism);
 };
 

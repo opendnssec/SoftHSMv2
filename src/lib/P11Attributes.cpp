@@ -2479,3 +2479,36 @@ CK_RV P11AttrUnwrapTemplate::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK
 
 	return CKR_OK;
 }
+
+/*****************************************
+ * CKA_ALLOWED_MECHANISMS
+ *****************************************/
+
+// Set default value
+bool P11AttrAllowedMechanisms::setDefault()
+{
+	std::set<CK_MECHANISM_TYPE> emptyMap;
+	return osobject->setAttribute(type, OSAttribute(emptyMap));
+}
+
+// Update the value if allowed
+CK_RV P11AttrAllowedMechanisms::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int /*op*/)
+{
+	if (ulValueLen == 0 || (ulValueLen % sizeof(CK_MECHANISM_TYPE)) != 0)
+	{
+		return CKR_ATTRIBUTE_VALUE_INVALID;
+	}
+
+	CK_MECHANISM_TYPE_PTR mechType = (CK_MECHANISM_TYPE_PTR) pValue;
+
+	// Fill the set with values
+	std::set<CK_MECHANISM_TYPE> data;
+	for (size_t i = 0; i < ulValueLen / sizeof(CK_MECHANISM_TYPE); ++i, ++mechType)
+	{
+		data.insert(*mechType);
+	}
+
+	// Store data
+	osobject->setAttribute(type, OSAttribute(data));
+	return CKR_OK;
+}
