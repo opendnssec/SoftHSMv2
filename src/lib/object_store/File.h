@@ -74,6 +74,9 @@ public:
 	// Read a boolean value; warning: not thread safe without locking!
 	bool readBool(bool& value);
 
+	// Read a mechanism type set value; warning: not thread safe without locking!
+	bool readMechanismTypeSet(std::set<CK_MECHANISM_TYPE>& value);
+
 	// Read an array value; warning: not thread safe without locking!
 	bool readAttributeMap(std::map<CK_ATTRIBUTE_TYPE,OSAttribute>& value);
 
@@ -88,6 +91,9 @@ public:
 
 	// Write a boolean value; warning: not thread safe without locking!
 	bool writeBool(const bool value);
+
+	// Write a mechanism type set value; warning: not thread safe without locking!
+	bool writeMechanismTypeSet(const std::set<CK_MECHANISM_TYPE>& value);
 
 	// Write an attribute map value; warning: not thread safe without locking!
 	bool writeAttributeMap(const std::map<CK_ATTRIBUTE_TYPE,OSAttribute>& value);

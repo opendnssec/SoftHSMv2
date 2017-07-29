@@ -41,6 +41,7 @@ class ObjectFileTests : public CppUnit::TestFixture
 	CPPUNIT_TEST(testBoolAttr);
 	CPPUNIT_TEST(testULongAttr);
 	CPPUNIT_TEST(testByteStrAttr);
+	CPPUNIT_TEST(testMechTypeSetAttr);
 	CPPUNIT_TEST(testAttrMapAttr);
 	CPPUNIT_TEST(testMixedAttr);
 	CPPUNIT_TEST(testDoubleAttr);
@@ -54,6 +55,7 @@ public:
 	void testBoolAttr();
 	void testULongAttr();
 	void testByteStrAttr();
+	void testMechTypeSetAttr();
 	void testAttrMapAttr();
 	void testMixedAttr();
 	void testDoubleAttr();

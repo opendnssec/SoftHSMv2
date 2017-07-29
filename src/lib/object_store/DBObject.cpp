@@ -396,7 +396,8 @@ enum AttributeKind {
 	akBoolean,
 	akInteger,
 	akBinary,
-	akAttrMap
+	akAttrMap,
+	akMechSet
 };
 
 static AttributeKind attributeKind(CK_ATTRIBUTE_TYPE type)
@@ -508,7 +509,7 @@ static AttributeKind attributeKind(CK_ATTRIBUTE_TYPE type)
 	case CKA_WRAP_TEMPLATE: return akAttrMap;
 	case CKA_UNWRAP_TEMPLATE: return akAttrMap;
 	case CKA_DERIVE_TEMPLATE: return akAttrMap;
-	case CKA_ALLOWED_MECHANISMS: return akUnknown; // TODO: add CKA_ALLOWED_MECHANISMS support
+	case CKA_ALLOWED_MECHANISMS: return akMechSet;
 
 	case CKA_OS_TOKENLABEL: return akBinary;
 	case CKA_OS_TOKENSERIAL: return akBinary;
@@ -517,6 +518,38 @@ static AttributeKind attributeKind(CK_ATTRIBUTE_TYPE type)
 	case CKA_OS_USERPIN: return akBinary;
 
 	default: return akUnknown;
+	}
+}
+
+static bool decodeMechanismTypeSet(std::set<CK_MECHANISM_TYPE>& set, const unsigned char *binary, size_t size)
+{
+	for (size_t pos = 0; pos < size; )
+	{
+		// finished?
+		if (pos == size) break;
+
+		CK_MECHANISM_TYPE mechType;
+		if (pos + sizeof(mechType) > size)
+		{
+			ERROR_MSG("mechanism type set overrun");
+			return false;
+		}
+
+		memcpy(&mechType, binary + pos, sizeof(mechType));
+		pos += sizeof(mechType);
+
+		set.insert(mechType);
+    }
+
+	return true;
+}
+
+static void encodeMechanismTypeSet(ByteString& value, const std::set<CK_MECHANISM_TYPE>& set)
+{
+	for (std::set<CK_MECHANISM_TYPE>::const_iterator i = set.begin(); i != set.end(); ++i)
+	{
+		CK_MECHANISM_TYPE mechType = *i;
+		value += ByteString((unsigned char *) &mechType, sizeof(mechType));
 	}
 }
 
@@ -598,6 +631,30 @@ static bool decodeAttributeMap(std::map<CK_ATTRIBUTE_TYPE,OSAttribute>& map, con
 			}
 			break;
 
+			case akMechSet:
+			{
+				unsigned long len;
+				if (pos + sizeof(len) > size)
+				{
+					goto overrun;
+				}
+				memcpy(&len, binary + pos, sizeof(len));
+				pos += sizeof(len);
+
+				if (pos + len > size)
+				{
+					goto overrun;
+				}
+
+				std::set<CK_MECHANISM_TYPE> value;
+				if (!decodeMechanismTypeSet(value, binary + pos, len)) {
+					return false;
+				}
+				pos += len;
+
+				map.insert(std::pair<CK_ATTRIBUTE_TYPE,OSAttribute> (attrType, value));
+			}
+
 			default:
 			ERROR_MSG("unsupported attribute kind in attribute map");
 
@@ -643,6 +700,18 @@ static bool encodeAttributeMap(ByteString& value, const std::map<CK_ATTRIBUTE_TY
 			value += ByteString((unsigned char*) &attrKind, sizeof(attrKind));
 
 			ByteString val = attr.getByteStringValue();
+			unsigned long len = val.size();
+			value += ByteString((unsigned char*) &len, sizeof(len));
+			value += val;
+		}
+		else if (attr.isMechanismTypeSetAttribute())
+		{
+			AttributeKind attrKind = akMechSet;
+			value += ByteString((unsigned char*) &attrKind, sizeof(attrKind));
+
+			ByteString val;
+			encodeMechanismTypeSet(val, attr.getMechanismTypeSetValue());
+
 			unsigned long len = val.size();
 			value += ByteString((unsigned char*) &len, sizeof(len));
 			value += val;
@@ -784,6 +853,56 @@ OSAttribute *DBObject::accessAttribute(CK_ATTRIBUTE_TYPE type)
 			else
 			{
 				attr = new OSAttribute(ByteString(value,size));
+				(*attrs)[type] = attr;
+				return attr;
+			}
+			return attr;
+		}
+		case akMechSet:
+		{
+			// try to find the attribute in the binary attribute table
+			DB::Statement statement = _connection->prepare(
+					"select value from attribute_binary where type=%lu and object_id=%lld",
+					type,
+					_objectId);
+			if (!statement.isValid())
+			{
+				return NULL;
+			}
+			DB::Result result = _connection->perform(statement);
+			if (!result.isValid())
+			{
+				return NULL;
+			}
+			// Store the attribute in the transaction when it is active.
+			std::map<CK_ATTRIBUTE_TYPE,OSAttribute*> *attrs = &_attributes;
+			if (_transaction)
+				attrs = _transaction;
+
+			const unsigned char *value = result.getBinary(1);
+			size_t size = result.getFieldLength(1);
+
+			std::set<CK_MECHANISM_TYPE> set;
+			if (!decodeMechanismTypeSet(set, value, size))
+			{
+				return NULL;
+			}
+
+			OSAttribute *attr;
+			std::map<CK_ATTRIBUTE_TYPE,OSAttribute*>::iterator it =	 attrs->find(type);
+			if (it != attrs->end())
+			{
+				if (it->second != NULL)
+				{
+					delete it->second;
+				}
+
+				it->second = new OSAttribute(set);
+				attr = it->second;
+			}
+			else
+			{
+				attr = new OSAttribute(set);
 				(*attrs)[type] = attr;
 				return attr;
 			}
@@ -1002,7 +1121,6 @@ bool DBObject::setAttribute(CK_ATTRIBUTE_TYPE type, const OSAttribute& attribute
 	if (attr)
 	{
 		DB::Statement statement;
-		bool bindByteString = true;
 		if (attr->isBooleanAttribute())
 		{
 			// update boolean attribute
@@ -1011,7 +1129,6 @@ bool DBObject::setAttribute(CK_ATTRIBUTE_TYPE type, const OSAttribute& attribute
 					attribute.getBooleanValue() ? 1 : 0,
 					type,
 					_objectId);
-			bindByteString = false;
 		}
 		else if (attr->isUnsignedLongAttribute())
 		{
@@ -1021,7 +1138,6 @@ bool DBObject::setAttribute(CK_ATTRIBUTE_TYPE type, const OSAttribute& attribute
 					static_cast<long long>(attribute.getUnsignedLongValue()),
 					type,
 					_objectId);
-			bindByteString = false;
 		}
 		else if (attr->isByteStringAttribute())
 		{
@@ -1030,7 +1146,19 @@ bool DBObject::setAttribute(CK_ATTRIBUTE_TYPE type, const OSAttribute& attribute
 					"update attribute_binary set value=? where type=%lu and object_id=%lld",
 					type,
 					_objectId);
-			//bindByteString = true;
+			DB::Bindings(statement).bindBlob(1, attribute.getByteStringValue().const_byte_str(), attribute.getByteStringValue().size(), SQLITE_STATIC);
+		}
+		else if (attr->isMechanismTypeSetAttribute())
+		{
+			// update binary attribute
+			ByteString value;
+			encodeMechanismTypeSet(value, attribute.getMechanismTypeSetValue());
+
+			statement = _connection->prepare(
+					"update attribute_binary set value=? where type=%lu and object_id=%lld",
+					type,
+					_objectId);
+			DB::Bindings(statement).bindBlob(1, value.const_byte_str(), value.size(), SQLITE_TRANSIENT);
 		}
 		else if (attr->isAttributeMapAttribute())
 		{
@@ -1046,12 +1174,6 @@ bool DBObject::setAttribute(CK_ATTRIBUTE_TYPE type, const OSAttribute& attribute
 					type,
 					_objectId);
 			DB::Bindings(statement).bindBlob(1, value.const_byte_str(), value.size(), SQLITE_TRANSIENT);
-			bindByteString = false;
-		}
-
-		if (bindByteString)
-		{
-			DB::Bindings(statement).bindBlob(1, attribute.getByteStringValue().const_byte_str(), attribute.getByteStringValue().size(), SQLITE_STATIC);
 		}
 
 		// Statement is valid when a prepared statement has been attached to it.
@@ -1107,6 +1229,18 @@ bool DBObject::setAttribute(CK_ATTRIBUTE_TYPE type, const OSAttribute& attribute
 					_objectId);
 
 		DB::Bindings(statement).bindBlob(1, attribute.getByteStringValue().const_byte_str(), attribute.getByteStringValue().size(), SQLITE_STATIC);
+	}
+	else if (attribute.isMechanismTypeSetAttribute())
+	{
+		// Could not update it, so we need to insert it.
+		ByteString value;
+		encodeMechanismTypeSet(value, attribute.getMechanismTypeSetValue());
+
+		statement = _connection->prepare(
+				"insert into attribute_binary (value,type,object_id) values (?,%lu,%lld)",
+				type,
+				_objectId);
+		DB::Bindings(statement).bindBlob(1, value.const_byte_str(), value.size(), SQLITE_TRANSIENT);
 	}
 	else if (attribute.isAttributeMapAttribute())
 	{
@@ -1184,7 +1318,7 @@ bool DBObject::deleteAttribute(CK_ATTRIBUTE_TYPE type)
 				type,
 				_objectId);
 	}
-	else if (attr->isByteStringAttribute())
+	else if (attr->isByteStringAttribute() || attr -> isMechanismTypeSetAttribute())
 	{
 		// delete binary attribute
 		statement = _connection->prepare(

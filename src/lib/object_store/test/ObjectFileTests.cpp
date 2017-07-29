@@ -270,6 +270,50 @@ void ObjectFileTests::testByteStrAttr()
 	}
 }
 
+void ObjectFileTests::testMechTypeSetAttr()
+{
+	// Create the test object
+	{
+#ifndef _WIN32
+		ObjectFile testObject(NULL, "testdir/test.object", "testdir/test.lock", true);
+#else
+		ObjectFile testObject(NULL, "testdir\\test.object", "testdir\\test.lock", true);
+#endif
+
+		CPPUNIT_ASSERT(testObject.isValid());
+
+		std::set<CK_MECHANISM_TYPE> set;
+		set.insert(CKM_SHA256);
+		set.insert(CKM_SHA512);
+		OSAttribute attr(set);
+
+		CPPUNIT_ASSERT(testObject.setAttribute(CKA_ALLOWED_MECHANISMS, attr));
+	}
+
+	// Now read back the object
+	{
+#ifndef _WIN32
+		ObjectFile testObject(NULL, "testdir/test.object", "testdir/test.lock");
+#else
+		ObjectFile testObject(NULL, "testdir\\test.object", "testdir\\test.lock");
+#endif
+
+		CPPUNIT_ASSERT(testObject.isValid());
+
+
+		CPPUNIT_ASSERT(testObject.attributeExists(CKA_ALLOWED_MECHANISMS));
+		CPPUNIT_ASSERT(testObject.getAttribute(CKA_ALLOWED_MECHANISMS).isMechanismTypeSetAttribute());
+
+		std::set<CK_MECHANISM_TYPE> retrieved =
+				testObject.getAttribute(CKA_ALLOWED_MECHANISMS).getMechanismTypeSetValue();
+
+		CPPUNIT_ASSERT(retrieved.size() == 2);
+		CPPUNIT_ASSERT(retrieved.find(CKM_SHA256) != retrieved.end());
+		CPPUNIT_ASSERT(retrieved.find(CKM_SHA384) == retrieved.end());
+		CPPUNIT_ASSERT(retrieved.find(CKM_SHA512) != retrieved.end());
+	}
+}
+
 void ObjectFileTests::testAttrMapAttr()
 {
 	ByteString value3 = "BDEBDBEDBBDBEBDEBE792759537328";

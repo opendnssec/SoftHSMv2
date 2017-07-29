@@ -56,7 +56,8 @@ enum AttributeKind {
 	akBoolean,
 	akInteger,
 	akBinary,
-	akAttrMap
+	akAttrMap,
+	akMechSet
 };
 
 // Constructor
@@ -259,6 +260,28 @@ bool File::readBool(bool& value)
 	return true;
 }
 
+// Read a mechanism type set value; warning: not thread safe without locking!
+bool File::readMechanismTypeSet(std::set<CK_MECHANISM_TYPE>& value)
+{
+	if (!valid) return false;
+
+	unsigned long count;
+	if (!readULong(count)) return false;
+
+	for (unsigned long i = 0; i < count; i++)
+	{
+		unsigned long mechType;
+		if (!readULong(mechType))
+		{
+			return false;
+		}
+
+		value.insert((CK_MECHANISM_TYPE) mechType);
+	}
+
+	return true;
+}
+
 // Read an attribute map value; warning: not thread safe without locking!
 bool File::readAttributeMap(std::map<CK_ATTRIBUTE_TYPE,OSAttribute>& value)
 {
@@ -430,6 +453,26 @@ bool File::writeString(const std::string& value)
 	return true;
 }
 
+// Write a mechanism type set value; warning: not thread safe without locking!
+bool File::writeMechanismTypeSet(const std::set<CK_MECHANISM_TYPE>& value)
+{
+	if (!valid) return false;
+
+	// write length
+	if (!writeULong(value.size()))
+	{
+		return false;
+	}
+
+	// write each value
+	for (std::set<CK_MECHANISM_TYPE>::const_iterator i = value.begin(); i != value.end(); ++i)
+	{
+		if (!writeULong(*i)) return false;
+	}
+
+	return true;
+}
+
 // Write an attribute map value; warning: not thread safe without locking!
 bool File::writeAttributeMap(const std::map<CK_ATTRIBUTE_TYPE,OSAttribute>& value)
 {
@@ -516,6 +559,20 @@ bool File::writeAttributeMap(const std::map<CK_ATTRIBUTE_TYPE,OSAttribute>& valu
 
 			ByteString val = attr.getByteStringValue();
 			if (!writeByteString(val))
+			{
+				return false;
+			}
+		}
+		else if (attr.isMechanismTypeSetAttribute())
+		{
+			unsigned long attrKind = akMechSet;
+			if (!writeULong(attrKind))
+			{
+				return false;
+			}
+
+			std::set<CK_MECHANISM_TYPE> val = attr.getMechanismTypeSetValue();
+			if (!writeMechanismTypeSet(val))
 			{
 				return false;
 			}

@@ -286,6 +286,10 @@ CK_RV P11Attribute::retrieve(Token *token, bool isPrivate, CK_VOID_PTR pValue, C
 			else
 				attrSize = attr.getByteStringValue().size();
 		}
+		else if (attr.isMechanismTypeSetAttribute())
+		{
+			attrSize = attr.getMechanismTypeSetValue().size() * sizeof(CK_MECHANISM_TYPE);
+		}
 		else if (attr.isAttributeMapAttribute())
 		{
 			attrSize = attr.getAttributeMapValue().size() * sizeof(CK_ATTRIBUTE);
@@ -344,6 +348,15 @@ CK_RV P11Attribute::retrieve(Token *token, bool isPrivate, CK_VOID_PTR pValue, C
 				const unsigned char* attrPtr = attr.getByteStringValue().const_byte_str();
 				memcpy(pValue,attrPtr,attrSize);
 			}
+		}
+		else if (attr.isMechanismTypeSetAttribute())
+		{
+			CK_MECHANISM_TYPE_PTR pTemplate = (CK_MECHANISM_TYPE_PTR) pValue;
+			size_t i = 0;
+
+			std::set<CK_MECHANISM_TYPE> set = attr.getMechanismTypeSetValue();
+			for (std::set<CK_MECHANISM_TYPE>::const_iterator it = set.begin(); it != set.end(); ++it)
+				pTemplate[++i] = *it;
 		}
 		else
 		{

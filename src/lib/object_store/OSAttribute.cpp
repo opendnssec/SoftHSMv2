@@ -40,6 +40,7 @@ OSAttribute::OSAttribute(const OSAttribute& in)
 	boolValue = in.boolValue;
 	ulongValue = in.ulongValue;
 	byteStrValue = in.byteStrValue;
+	mechSetValue = in.mechSetValue;
 	attrMapValue = in.attrMapValue;
 }
 
@@ -71,6 +72,16 @@ OSAttribute::OSAttribute(const ByteString& value)
 	ulongValue = 0;
 }
 
+// Constructor for a mechanism type set attribute
+OSAttribute::OSAttribute(const std::set<CK_MECHANISM_TYPE>& value)
+{
+	mechSetValue = value;
+	attributeType = MECHSET;
+
+	boolValue = false;
+	ulongValue = 0;
+}
+
 // Constructor for an attribute map type attribute
 OSAttribute::OSAttribute(const std::map<CK_ATTRIBUTE_TYPE,OSAttribute>& value)
 {
@@ -97,6 +108,11 @@ bool OSAttribute::isByteStringAttribute() const
 	return (attributeType == BYTESTR);
 }
 
+bool OSAttribute::isMechanismTypeSetAttribute() const
+{
+	return (attributeType == MECHSET);
+}
+
 bool OSAttribute::isAttributeMapAttribute() const
 {
 	return (attributeType == ATTRMAP);
@@ -116,6 +132,11 @@ unsigned long OSAttribute::getUnsignedLongValue() const
 const ByteString& OSAttribute::getByteStringValue() const
 {
 	return byteStrValue;
+}
+
+const std::set<CK_MECHANISM_TYPE>& OSAttribute::getMechanismTypeSetValue() const
+{
+	return mechSetValue;
 }
 
 const std::map<CK_ATTRIBUTE_TYPE,OSAttribute>& OSAttribute::getAttributeMapValue() const

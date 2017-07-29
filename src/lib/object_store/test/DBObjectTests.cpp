@@ -302,6 +302,42 @@ void test_a_dbobject_with_an_object::should_store_binary_attributes()
 	}
 }
 
+void test_a_dbobject_with_an_object::should_store_mechtypeset_attributes()
+{
+
+	// Create the test object
+	{
+		DBObject testObject(connection);
+		CPPUNIT_ASSERT(testObject.find(1));
+		CPPUNIT_ASSERT(testObject.isValid());
+
+		std::set<CK_MECHANISM_TYPE> set;
+		set.insert(CKM_SHA256);
+		set.insert(CKM_SHA512);
+		OSAttribute attr(set);
+
+		CPPUNIT_ASSERT(testObject.setAttribute(CKA_ALLOWED_MECHANISMS, attr));
+	}
+
+	// Now read back the object
+	{
+		DBObject testObject(connection);
+		CPPUNIT_ASSERT(testObject.find(1));
+		CPPUNIT_ASSERT(testObject.isValid());
+
+		CPPUNIT_ASSERT(testObject.attributeExists(CKA_ALLOWED_MECHANISMS));
+		CPPUNIT_ASSERT(testObject.getAttribute(CKA_ALLOWED_MECHANISMS).isMechanismTypeSetAttribute());
+
+		std::set<CK_MECHANISM_TYPE> retrieved =
+				testObject.getAttribute(CKA_ALLOWED_MECHANISMS).getMechanismTypeSetValue();
+
+		CPPUNIT_ASSERT(retrieved.size() == 2);
+		CPPUNIT_ASSERT(retrieved.find(CKM_SHA256) != retrieved.end());
+		CPPUNIT_ASSERT(retrieved.find(CKM_SHA384) == retrieved.end());
+		CPPUNIT_ASSERT(retrieved.find(CKM_SHA512) != retrieved.end());
+	}
+}
+
 void test_a_dbobject_with_an_object::should_store_attrmap_attributes()
 {
 	bool value1 = true;

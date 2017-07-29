@@ -36,6 +36,7 @@
 #include "config.h"
 #include "ByteString.h"
 #include <map>
+#include <set>
 
 class OSAttribute
 {
@@ -52,6 +53,9 @@ public:
 	// Constructor for a byte string type attribute
 	OSAttribute(const ByteString& value);
 
+	// Constructor for a mechanism type set type attribute
+	OSAttribute(const std::set<CK_MECHANISM_TYPE>& value);
+
 	// Constructor for an attribute map type attribute
 	OSAttribute(const std::map<CK_ATTRIBUTE_TYPE,OSAttribute>& value);
 
@@ -62,12 +66,14 @@ public:
 	bool isBooleanAttribute() const;
 	bool isUnsignedLongAttribute() const;
 	bool isByteStringAttribute() const;
+	bool isMechanismTypeSetAttribute() const;
 	bool isAttributeMapAttribute() const;
 
 	// Retrieve the attribute value
 	bool getBooleanValue() const;
 	unsigned long getUnsignedLongValue() const;
 	const ByteString& getByteStringValue() const;
+	const std::set<CK_MECHANISM_TYPE>& getMechanismTypeSetValue() const;
 	const std::map<CK_ATTRIBUTE_TYPE,OSAttribute>& getAttributeMapValue() const;
 
 	// Helper for template (aka array) matching
@@ -80,6 +86,7 @@ private:
 		BOOL,
 		ULONG,
 		BYTESTR,
+		MECHSET,
 		ATTRMAP
 	}
 	attributeType;
@@ -88,6 +95,7 @@ private:
 	bool boolValue;
 	unsigned long ulongValue;
 	ByteString byteStrValue;
+	std::set<CK_MECHANISM_TYPE> mechSetValue;
 	std::map<CK_ATTRIBUTE_TYPE,OSAttribute> attrMapValue;
 };
 

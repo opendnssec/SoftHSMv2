@@ -39,12 +39,14 @@
 #endif
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <set>
 
 // Attribute types
 #define BOOLEAN_ATTR			0x1
 #define ULONG_ATTR			0x2
 #define BYTESTR_ATTR			0x3
 #define ATTRMAP_ATTR			0x4
+#define MECHSET_ATTR			0x5
 
 // Constructor
 ObjectFile::ObjectFile(OSToken* parent, std::string inPath, std::string inLockpath, bool isNew /* = false */)
@@ -430,6 +432,26 @@ void ObjectFile::refresh(bool isFirstTime /* = false */)
 
 			attributes[p11AttrType] = new OSAttribute(value);
 		}
+		else if (osAttrType == MECHSET_ATTR)
+		{
+			std::set<CK_MECHANISM_TYPE> value;
+
+			if (!objectFile.readMechanismTypeSet(value))
+			{
+				DEBUG_MSG("Corrupt object file %s", path.c_str());
+
+				valid = false;
+
+				return;
+			}
+
+			if (attributes[p11AttrType] != NULL)
+			{
+				delete attributes[p11AttrType];
+			}
+
+			attributes[p11AttrType] = new OSAttribute(value);
+		}
 		else if (osAttrType == ATTRMAP_ATTR)
 		{
 			std::map<CK_ATTRIBUTE_TYPE,OSAttribute> value;
@@ -555,6 +577,20 @@ bool ObjectFile::writeAttributes(File &objectFile)
 			const ByteString& value = i->second->getByteStringValue();
 
 			if (!objectFile.writeULong(osAttrType) || !objectFile.writeByteString(value))
+			{
+				DEBUG_MSG("Failed to write attribute to object %s", path.c_str());
+
+				objectFile.unlock();
+
+				return false;
+			}
+		}
+		else if (i->second->isMechanismTypeSetAttribute())
+		{
+			unsigned long osAttrType = MECHSET_ATTR;
+			const std::set<CK_MECHANISM_TYPE>& value = i->second->getMechanismTypeSetValue();
+
+			if (!objectFile.writeULong(osAttrType) || !objectFile.writeMechanismTypeSet(value))
 			{
 				DEBUG_MSG("Failed to write attribute to object %s", path.c_str());
 

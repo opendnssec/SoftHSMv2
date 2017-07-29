@@ -63,6 +63,7 @@ class test_a_dbobject_with_an_object : public test_a_dbobject
 	CPPUNIT_TEST(should_store_boolean_attributes);
 	CPPUNIT_TEST(should_store_unsigned_long_attributes);
 	CPPUNIT_TEST(should_store_binary_attributes);
+	CPPUNIT_TEST(should_store_mechtypeset_attributes);
 	CPPUNIT_TEST(should_store_attrmap_attributes);
 	CPPUNIT_TEST(should_store_mixed_attributes);
 	CPPUNIT_TEST(should_store_double_attributes);
@@ -79,6 +80,7 @@ public:
 	void should_store_boolean_attributes();
 	void should_store_unsigned_long_attributes();
 	void should_store_binary_attributes();
+    void should_store_mechtypeset_attributes();
 	void should_store_attrmap_attributes();
 	void should_store_mixed_attributes();
 	void should_store_double_attributes();
