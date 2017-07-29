@@ -44,7 +44,7 @@
 #define BOOLEAN_ATTR			0x1
 #define ULONG_ATTR			0x2
 #define BYTESTR_ATTR			0x3
-#define ARRAY_ATTR			0x4
+#define ATTRMAP_ATTR			0x4
 
 // Constructor
 ObjectFile::ObjectFile(OSToken* parent, std::string inPath, std::string inLockpath, bool isNew /* = false */)
@@ -430,11 +430,11 @@ void ObjectFile::refresh(bool isFirstTime /* = false */)
 
 			attributes[p11AttrType] = new OSAttribute(value);
 		}
-		else if (osAttrType == ARRAY_ATTR)
+		else if (osAttrType == ATTRMAP_ATTR)
 		{
 			std::map<CK_ATTRIBUTE_TYPE,OSAttribute> value;
 
-			if (!objectFile.readArray(value))
+			if (!objectFile.readAttributeMap(value))
 			{
 				DEBUG_MSG("Corrupt object file %s", path.c_str());
 
@@ -563,12 +563,12 @@ bool ObjectFile::writeAttributes(File &objectFile)
 				return false;
 			}
 		}
-		else if (i->second->isArrayAttribute())
+		else if (i->second->isAttributeMapAttribute())
 		{
-			unsigned long osAttrType = ARRAY_ATTR;
-			const std::map<CK_ATTRIBUTE_TYPE,OSAttribute>& value = i->second->getArrayValue();
+			unsigned long osAttrType = ATTRMAP_ATTR;
+			const std::map<CK_ATTRIBUTE_TYPE,OSAttribute>& value = i->second->getAttributeMapValue();
 
-			if (!objectFile.writeULong(osAttrType) || !objectFile.writeArray(value))
+			if (!objectFile.writeULong(osAttrType) || !objectFile.writeAttributeMap(value))
 			{
 				DEBUG_MSG("Failed to write attribute to object %s", path.c_str());
 

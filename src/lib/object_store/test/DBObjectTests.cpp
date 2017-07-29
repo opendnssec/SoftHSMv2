@@ -302,7 +302,7 @@ void test_a_dbobject_with_an_object::should_store_binary_attributes()
 	}
 }
 
-void test_a_dbobject_with_an_object::should_store_array_attributes()
+void test_a_dbobject_with_an_object::should_store_attrmap_attributes()
 {
 	bool value1 = true;
 	unsigned long value2 = 0x87654321;
@@ -336,7 +336,8 @@ void test_a_dbobject_with_an_object::should_store_array_attributes()
 		CPPUNIT_ASSERT(testObject.attributeExists(CKA_WRAP_TEMPLATE));
 		CPPUNIT_ASSERT(!testObject.attributeExists(CKA_UNWRAP_TEMPLATE));
 
-		std::map<CK_ATTRIBUTE_TYPE,OSAttribute> mattrb = testObject.getAttribute(CKA_WRAP_TEMPLATE).getArrayValue();
+		std::map<CK_ATTRIBUTE_TYPE,OSAttribute> mattrb =
+				testObject.getAttribute(CKA_WRAP_TEMPLATE).getAttributeMapValue();
 		CPPUNIT_ASSERT(mattrb.size() == 3);
 		CPPUNIT_ASSERT(mattrb.find(CKA_TOKEN) != mattrb.end());
 		CPPUNIT_ASSERT(mattrb.at(CKA_TOKEN).isBooleanAttribute());

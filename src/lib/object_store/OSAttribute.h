@@ -52,7 +52,7 @@ public:
 	// Constructor for a byte string type attribute
 	OSAttribute(const ByteString& value);
 
-	// Constructor for an array type attribute
+	// Constructor for an attribute map type attribute
 	OSAttribute(const std::map<CK_ATTRIBUTE_TYPE,OSAttribute>& value);
 
 	// Destructor
@@ -62,13 +62,13 @@ public:
 	bool isBooleanAttribute() const;
 	bool isUnsignedLongAttribute() const;
 	bool isByteStringAttribute() const;
-	bool isArrayAttribute() const;
+	bool isAttributeMapAttribute() const;
 
 	// Retrieve the attribute value
 	bool getBooleanValue() const;
 	unsigned long getUnsignedLongValue() const;
 	const ByteString& getByteStringValue() const;
-	const std::map<CK_ATTRIBUTE_TYPE,OSAttribute>& getArrayValue() const;
+	const std::map<CK_ATTRIBUTE_TYPE,OSAttribute>& getAttributeMapValue() const;
 
 	// Helper for template (aka array) matching
 	bool peekValue(ByteString& value) const;
@@ -80,7 +80,7 @@ private:
 		BOOL,
 		ULONG,
 		BYTESTR,
-		ARRAY
+		ATTRMAP
 	}
 	attributeType;
 
@@ -88,7 +88,7 @@ private:
 	bool boolValue;
 	unsigned long ulongValue;
 	ByteString byteStrValue;
-	std::map<CK_ATTRIBUTE_TYPE,OSAttribute> arrayValue;
+	std::map<CK_ATTRIBUTE_TYPE,OSAttribute> attrMapValue;
 };
 
 #endif // !_SOFTHSM_V2_OSATTRIBUTE_H

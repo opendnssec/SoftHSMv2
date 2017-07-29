@@ -270,7 +270,7 @@ void ObjectFileTests::testByteStrAttr()
 	}
 }
 
-void ObjectFileTests::testArrayAttr()
+void ObjectFileTests::testAttrMapAttr()
 {
 	ByteString value3 = "BDEBDBEDBBDBEBDEBE792759537328";
 
@@ -313,7 +313,8 @@ void ObjectFileTests::testArrayAttr()
 		CPPUNIT_ASSERT(testObject.attributeExists(CKA_WRAP_TEMPLATE));
 		CPPUNIT_ASSERT(!testObject.attributeExists(CKA_UNWRAP_TEMPLATE));
 
-		std::map<CK_ATTRIBUTE_TYPE,OSAttribute> mattrb = testObject.getAttribute(CKA_WRAP_TEMPLATE).getArrayValue();
+		std::map<CK_ATTRIBUTE_TYPE,OSAttribute> mattrb =
+				testObject.getAttribute(CKA_WRAP_TEMPLATE).getAttributeMapValue();
 		CPPUNIT_ASSERT(mattrb.size() == 3);
 		CPPUNIT_ASSERT(mattrb.find(CKA_TOKEN) != mattrb.end());
 		CPPUNIT_ASSERT(mattrb.at(CKA_TOKEN).isBooleanAttribute());

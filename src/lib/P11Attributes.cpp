@@ -131,22 +131,22 @@ CK_ATTRIBUTE_TYPE P11Attribute::getChecks()
 	return checks;
 }
 
-// Retrieve a template array
-static CK_RV retrieveArray(CK_ATTRIBUTE_PTR pTemplate, const std::map<CK_ATTRIBUTE_TYPE,OSAttribute>& array)
+// Retrieve a template map
+static CK_RV retrieveAttributeMap(CK_ATTRIBUTE_PTR pTemplate, const std::map<CK_ATTRIBUTE_TYPE,OSAttribute>& map)
 {
 	size_t nullcnt = 0;
 
-	for (size_t i = 0; i < array.size(); ++i)
+	for (size_t i = 0; i < map.size(); ++i)
 	{
 		if (pTemplate[i].pValue == NULL_PTR)
 			++nullcnt;
 	}
 
 	// Caller wants type & size
-	if (nullcnt == array.size())
+	if (nullcnt == map.size())
 	{
-		std::map<CK_ATTRIBUTE_TYPE,OSAttribute>::const_iterator a = array.begin();
-		for (size_t i = 0; i < array.size(); ++i, ++a)
+		std::map<CK_ATTRIBUTE_TYPE,OSAttribute>::const_iterator a = map.begin();
+		for (size_t i = 0; i < map.size(); ++i, ++a)
 		{
 			pTemplate[i].type = a->first;
 			const OSAttribute& attr = a->second;
@@ -165,7 +165,7 @@ static CK_RV retrieveArray(CK_ATTRIBUTE_PTR pTemplate, const std::map<CK_ATTRIBU
 			else
 			{
 				// Impossible
-				ERROR_MSG("Internal error: bad attribute in array");
+				ERROR_MSG("Internal error: bad attribute in attribute map");
 
 				return CKR_GENERAL_ERROR;
 			}
@@ -175,10 +175,10 @@ static CK_RV retrieveArray(CK_ATTRIBUTE_PTR pTemplate, const std::map<CK_ATTRIBU
 	}
 
 	// Callers wants to get values
-	for (size_t i = 0; i < array.size(); ++i)
+	for (size_t i = 0; i < map.size(); ++i)
 	{
-		std::map<CK_ATTRIBUTE_TYPE,OSAttribute>::const_iterator a = array.find(pTemplate[i].type);
-		if (a == array.end())
+		std::map<CK_ATTRIBUTE_TYPE,OSAttribute>::const_iterator a = map.find(pTemplate[i].type);
+		if (a == map.end())
 		{
 			pTemplate[i].ulValueLen = CK_UNAVAILABLE_INFORMATION;
 			return CKR_ATTRIBUTE_TYPE_INVALID;
@@ -218,7 +218,7 @@ static CK_RV retrieveArray(CK_ATTRIBUTE_PTR pTemplate, const std::map<CK_ATTRIBU
 		else
 		{
 			// Impossible
-			ERROR_MSG("Internal error: bad attribute in array");
+			ERROR_MSG("Internal error: bad attribute in attribute map");
 
 			return CKR_GENERAL_ERROR;
 		}
@@ -286,9 +286,9 @@ CK_RV P11Attribute::retrieve(Token *token, bool isPrivate, CK_VOID_PTR pValue, C
 			else
 				attrSize = attr.getByteStringValue().size();
 		}
-		else if (attr.isArrayAttribute())
+		else if (attr.isAttributeMapAttribute())
 		{
-			attrSize = attr.getArrayValue().size() * sizeof(CK_ATTRIBUTE);
+			attrSize = attr.getAttributeMapValue().size() * sizeof(CK_ATTRIBUTE);
 		}
 		else
 		{
@@ -347,8 +347,8 @@ CK_RV P11Attribute::retrieve(Token *token, bool isPrivate, CK_VOID_PTR pValue, C
 		}
 		else
 		{
-			// attr is already retrieved and verified to be an Array
-			rv = retrieveArray((CK_ATTRIBUTE_PTR)pValue, attr.getArrayValue());
+			// attr is already retrieved and verified to be an Attribute Map
+			rv = retrieveAttributeMap((CK_ATTRIBUTE_PTR)pValue, attr.getAttributeMapValue());
 		}
 		*pulValueLen = attrSize;
 		return rv;

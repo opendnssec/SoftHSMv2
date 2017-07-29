@@ -5778,13 +5778,13 @@ CK_RV SoftHSM::C_WrapKey
 	{
 		OSAttribute attr = wrapKey->getAttribute(CKA_WRAP_TEMPLATE);
 
-		if (attr.isArrayAttribute())
+		if (attr.isAttributeMapAttribute())
 		{
-			typedef std::map<CK_ATTRIBUTE_TYPE,OSAttribute> array_type;
+			typedef std::map<CK_ATTRIBUTE_TYPE,OSAttribute> attrmap_type;
 
-			const array_type& array = attr.getArrayValue();
+			const attrmap_type& map = attr.getAttributeMapValue();
 
-			for (array_type::const_iterator it = array.begin(); it != array.end(); ++it)
+			for (attrmap_type::const_iterator it = map.begin(); it != map.end(); ++it)
 			{
 				if (!key->attributeExists(it->first))
 				{
@@ -6174,13 +6174,13 @@ CK_RV SoftHSM::C_UnwrapKey
 	{
 		OSAttribute unwrapAttr = unwrapKey->getAttribute(CKA_UNWRAP_TEMPLATE);
 
-		if (unwrapAttr.isArrayAttribute())
+		if (unwrapAttr.isAttributeMapAttribute())
 		{
-			typedef std::map<CK_ATTRIBUTE_TYPE,OSAttribute> array_type;
+			typedef std::map<CK_ATTRIBUTE_TYPE,OSAttribute> attrmap_type;
 
-			const array_type& array = unwrapAttr.getArrayValue();
+			const attrmap_type& map = unwrapAttr.getAttributeMapValue();
 
-			for (array_type::const_iterator it = array.begin(); it != array.end(); ++it)
+			for (attrmap_type::const_iterator it = map.begin(); it != map.end(); ++it)
 			{
 				CK_ATTRIBUTE* attr = NULL;
 				for (CK_ULONG i = 0; i < secretAttribsCount; ++i)

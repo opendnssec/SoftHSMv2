@@ -211,7 +211,7 @@ void SessionObjectTests::testByteStrAttr()
 	CPPUNIT_ASSERT(testObject.getByteStringValue(CKA_ISSUER) == value6);
 }
 
-void SessionObjectTests::testArrayAttr()
+void SessionObjectTests::testAttrMapAttr()
 {
 	SessionObject testObject(NULL, 1, 1);
 
@@ -238,9 +238,10 @@ void SessionObjectTests::testArrayAttr()
 	CPPUNIT_ASSERT(testObject.attributeExists(CKA_WRAP_TEMPLATE));
 	CPPUNIT_ASSERT(!testObject.attributeExists(CKA_UNWRAP_TEMPLATE));
 
-	CPPUNIT_ASSERT(testObject.getAttribute(CKA_WRAP_TEMPLATE).isArrayAttribute());
+	CPPUNIT_ASSERT(testObject.getAttribute(CKA_WRAP_TEMPLATE).isAttributeMapAttribute());
 
-	std::map<CK_ATTRIBUTE_TYPE,OSAttribute> mattrb = testObject.getAttribute(CKA_WRAP_TEMPLATE).getArrayValue();
+	std::map<CK_ATTRIBUTE_TYPE,OSAttribute> mattrb =
+			testObject.getAttribute(CKA_WRAP_TEMPLATE).getAttributeMapValue();
 	CPPUNIT_ASSERT(mattrb.size() == 3);
 	CPPUNIT_ASSERT(mattrb.find(CKA_TOKEN) != mattrb.end());
 	CPPUNIT_ASSERT(mattrb.at(CKA_TOKEN).isBooleanAttribute());

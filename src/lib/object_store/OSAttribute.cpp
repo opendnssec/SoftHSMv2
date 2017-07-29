@@ -40,7 +40,7 @@ OSAttribute::OSAttribute(const OSAttribute& in)
 	boolValue = in.boolValue;
 	ulongValue = in.ulongValue;
 	byteStrValue = in.byteStrValue;
-	arrayValue = in.arrayValue;
+	attrMapValue = in.attrMapValue;
 }
 
 // Constructor for a boolean type attribute
@@ -71,11 +71,11 @@ OSAttribute::OSAttribute(const ByteString& value)
 	ulongValue = 0;
 }
 
-// Constructor for an array type attribute
+// Constructor for an attribute map type attribute
 OSAttribute::OSAttribute(const std::map<CK_ATTRIBUTE_TYPE,OSAttribute>& value)
 {
-	arrayValue = value;
-	attributeType = ARRAY;
+	attrMapValue = value;
+	attributeType = ATTRMAP;
 
 	boolValue = false;
 	ulongValue = 0;
@@ -97,9 +97,9 @@ bool OSAttribute::isByteStringAttribute() const
 	return (attributeType == BYTESTR);
 }
 
-bool OSAttribute::isArrayAttribute() const
+bool OSAttribute::isAttributeMapAttribute() const
 {
-	return (attributeType == ARRAY);
+	return (attributeType == ATTRMAP);
 }
 
 // Retrieve the attribute value
@@ -118,9 +118,9 @@ const ByteString& OSAttribute::getByteStringValue() const
 	return byteStrValue;
 }
 
-const std::map<CK_ATTRIBUTE_TYPE,OSAttribute>& OSAttribute::getArrayValue() const
+const std::map<CK_ATTRIBUTE_TYPE,OSAttribute>& OSAttribute::getAttributeMapValue() const
 {
-	return arrayValue;
+	return attrMapValue;
 }
 
 // Helper for template (aka array) matching

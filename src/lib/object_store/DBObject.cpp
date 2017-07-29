@@ -396,7 +396,7 @@ enum AttributeKind {
 	akBoolean,
 	akInteger,
 	akBinary,
-	akArray
+	akAttrMap
 };
 
 static AttributeKind attributeKind(CK_ATTRIBUTE_TYPE type)
@@ -505,10 +505,10 @@ static AttributeKind attributeKind(CK_ATTRIBUTE_TYPE type)
 	case CKA_DEFAULT_CMS_ATTRIBUTES:
 	case CKA_SUPPORTED_CMS_ATTRIBUTES:
 */
-	case CKA_WRAP_TEMPLATE: return akArray;
-	case CKA_UNWRAP_TEMPLATE: return akArray;
-	case CKA_DERIVE_TEMPLATE: return akArray;
-	case CKA_ALLOWED_MECHANISMS: return akArray;
+	case CKA_WRAP_TEMPLATE: return akAttrMap;
+	case CKA_UNWRAP_TEMPLATE: return akAttrMap;
+	case CKA_DERIVE_TEMPLATE: return akAttrMap;
+	case CKA_ALLOWED_MECHANISMS: return akUnknown; // TODO: add CKA_ALLOWED_MECHANISMS support
 
 	case CKA_OS_TOKENLABEL: return akBinary;
 	case CKA_OS_TOKENSERIAL: return akBinary;
@@ -520,7 +520,7 @@ static AttributeKind attributeKind(CK_ATTRIBUTE_TYPE type)
 	}
 }
 
-static bool decodeArray(std::map<CK_ATTRIBUTE_TYPE,OSAttribute>& array, const unsigned char *binary, size_t size)
+static bool decodeAttributeMap(std::map<CK_ATTRIBUTE_TYPE,OSAttribute>& map, const unsigned char *binary, size_t size)
 {
 	for (size_t pos = 0; pos < size; )
 	{
@@ -557,7 +557,7 @@ static bool decodeArray(std::map<CK_ATTRIBUTE_TYPE,OSAttribute>& array, const un
 				memcpy(&value, binary + pos, sizeof(value));
 				pos += sizeof(value);
 
-				array.insert(std::pair<CK_ATTRIBUTE_TYPE,OSAttribute> (attrType, value));
+				map.insert(std::pair<CK_ATTRIBUTE_TYPE,OSAttribute> (attrType, value));
 			}
 			break;
 
@@ -571,7 +571,7 @@ static bool decodeArray(std::map<CK_ATTRIBUTE_TYPE,OSAttribute>& array, const un
 				memcpy(&value, binary + pos, sizeof(value));
 				pos += sizeof(value);
 
-				array.insert(std::pair<CK_ATTRIBUTE_TYPE,OSAttribute> (attrType, value));
+				map.insert(std::pair<CK_ATTRIBUTE_TYPE,OSAttribute> (attrType, value));
 			}
 			break;
 
@@ -594,12 +594,12 @@ static bool decodeArray(std::map<CK_ATTRIBUTE_TYPE,OSAttribute>& array, const un
 				memcpy(&value[0], binary + pos, len);
 				pos += len;
 
-				array.insert(std::pair<CK_ATTRIBUTE_TYPE,OSAttribute> (attrType, value));
+				map.insert(std::pair<CK_ATTRIBUTE_TYPE,OSAttribute> (attrType, value));
 			}
 			break;
 
 			default:
-			ERROR_MSG("unsupported attribute kind in array");
+			ERROR_MSG("unsupported attribute kind in attribute map");
 
 			return false;
 		}
@@ -608,12 +608,12 @@ static bool decodeArray(std::map<CK_ATTRIBUTE_TYPE,OSAttribute>& array, const un
 	return true;
 
 overrun:
-	ERROR_MSG("array template overrun");
+	ERROR_MSG("attribute map template overrun");
 
 	return false;
 }
 
-static bool encodeArray(ByteString& value, const std::map<CK_ATTRIBUTE_TYPE,OSAttribute>& attributes)
+static bool encodeAttributeMap(ByteString& value, const std::map<CK_ATTRIBUTE_TYPE,OSAttribute>& attributes)
 {
 	for (std::map<CK_ATTRIBUTE_TYPE,OSAttribute>::const_iterator i = attributes.begin(); i != attributes.end(); ++i)
 	{
@@ -649,7 +649,7 @@ static bool encodeArray(ByteString& value, const std::map<CK_ATTRIBUTE_TYPE,OSAt
 		}
 		else
 		{
-			ERROR_MSG("unsupported attribute kind for array");
+			ERROR_MSG("unsupported attribute kind for attribute map");
 
 			return false;
 		}
@@ -789,7 +789,7 @@ OSAttribute *DBObject::accessAttribute(CK_ATTRIBUTE_TYPE type)
 			}
 			return attr;
 		}
-		case akArray:
+		case akAttrMap:
 		{
 			// try to find the attribute in the array attribute table
 			DB::Statement statement = _connection->prepare(
@@ -817,7 +817,7 @@ OSAttribute *DBObject::accessAttribute(CK_ATTRIBUTE_TYPE type)
 			if (it != attrs->end())
 			{
 				std::map<CK_ATTRIBUTE_TYPE,OSAttribute> value;
-				if (!decodeArray(value,binary,size))
+				if (!decodeAttributeMap(value,binary,size))
 				{
 					return NULL;
 				}
@@ -833,7 +833,7 @@ OSAttribute *DBObject::accessAttribute(CK_ATTRIBUTE_TYPE type)
 			else
 			{
 				std::map<CK_ATTRIBUTE_TYPE,OSAttribute> value;
-				if (!decodeArray(value,binary,size))
+				if (!decodeAttributeMap(value,binary,size))
 				{
 					return NULL;
 				}
@@ -1032,11 +1032,11 @@ bool DBObject::setAttribute(CK_ATTRIBUTE_TYPE type, const OSAttribute& attribute
 					_objectId);
 			//bindByteString = true;
 		}
-		else if (attr->isArrayAttribute())
+		else if (attr->isAttributeMapAttribute())
 		{
-			// update array attribute
+			// update attribute map attribute
 			ByteString value;
-			if (!encodeArray(value, attribute.getArrayValue()))
+			if (!encodeAttributeMap(value, attribute.getAttributeMapValue()))
 			{
 				return false;
 			}
@@ -1108,11 +1108,11 @@ bool DBObject::setAttribute(CK_ATTRIBUTE_TYPE type, const OSAttribute& attribute
 
 		DB::Bindings(statement).bindBlob(1, attribute.getByteStringValue().const_byte_str(), attribute.getByteStringValue().size(), SQLITE_STATIC);
 	}
-	else if (attribute.isArrayAttribute())
+	else if (attribute.isAttributeMapAttribute())
 	{
 		// Could not update it, so we need to insert it.
 		ByteString value;
-		if (!encodeArray(value, attribute.getArrayValue()))
+		if (!encodeAttributeMap(value, attribute.getAttributeMapValue()))
 		{
 			return false;
 		}
@@ -1192,9 +1192,9 @@ bool DBObject::deleteAttribute(CK_ATTRIBUTE_TYPE type)
 				type,
 				_objectId);
 	}
-	else if (attr->isArrayAttribute())
+	else if (attr->isAttributeMapAttribute())
 	{
-		// delete array attribute
+		// delete attribute map attribute
 		statement = _connection->prepare(
 				"delete from attribute_array where type=%lu and object_id=%lld",
 				type,

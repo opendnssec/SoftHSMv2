@@ -1950,7 +1950,7 @@ void ObjectTests::testGetInvalidAttribute()
 	CPPUNIT_ASSERT(rv == CKR_ATTRIBUTE_TYPE_INVALID);
 }
 
-void ObjectTests::testArrayAttribute()
+void ObjectTests::testTemplateAttribute()
 {
 	CK_RV rv;
 	CK_SESSION_HANDLE hSession;

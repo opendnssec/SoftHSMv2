@@ -56,7 +56,7 @@ enum AttributeKind {
 	akBoolean,
 	akInteger,
 	akBinary,
-	akArray
+	akAttrMap
 };
 
 // Constructor
@@ -259,8 +259,8 @@ bool File::readBool(bool& value)
 	return true;
 }
 
-// Read an array value; warning: not thread safe without locking!
-bool File::readArray(std::map<CK_ATTRIBUTE_TYPE,OSAttribute>& value)
+// Read an attribute map value; warning: not thread safe without locking!
+bool File::readAttributeMap(std::map<CK_ATTRIBUTE_TYPE,OSAttribute>& value)
 {
 	if (!valid) return false;
 
@@ -430,8 +430,8 @@ bool File::writeString(const std::string& value)
 	return true;
 }
 
-// Write an array value; warning: not thread safe without locking!
-bool File::writeArray(const std::map<CK_ATTRIBUTE_TYPE,OSAttribute>& value)
+// Write an attribute map value; warning: not thread safe without locking!
+bool File::writeAttributeMap(const std::map<CK_ATTRIBUTE_TYPE,OSAttribute>& value)
 {
 	if (!valid) return false;
 
