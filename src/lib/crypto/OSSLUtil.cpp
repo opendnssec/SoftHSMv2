@@ -34,6 +34,7 @@
 #include "log.h"
 #include "OSSLUtil.h"
 #include <openssl/asn1.h>
+#include <openssl/err.h>
 
 // Convert an OpenSSL BIGNUM to a ByteString
 ByteString OSSL::bn2ByteString(const BIGNUM* bn)
@@ -189,6 +190,7 @@ EC_POINT* OSSL::byteString2pt(const ByteString& byteString, const EC_GROUP* grp)
 	EC_POINT* pt = EC_POINT_new(grp);
 	if (!EC_POINT_oct2point(grp, pt, &repr[controlOctets], len - controlOctets, NULL))
 	{
+		ERROR_MSG("EC_POINT_oct2point failed: %s", ERR_error_string(ERR_get_error(), NULL));
 		EC_POINT_free(pt);
 		return NULL;
 	}

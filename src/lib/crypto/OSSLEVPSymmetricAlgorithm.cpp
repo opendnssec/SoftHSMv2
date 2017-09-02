@@ -34,25 +34,33 @@
 
 #include "config.h"
 #include "OSSLEVPSymmetricAlgorithm.h"
+#include "OSSLUtil.h"
 #include "salloc.h"
 
 // Constructor
 OSSLEVPSymmetricAlgorithm::OSSLEVPSymmetricAlgorithm()
 {
 	pCurCTX = NULL;
+	maximumBytes = BN_new();
+	BN_one(maximumBytes);
+	BN_set_negative(maximumBytes, 1);
+	counterBytes = BN_new();
+	BN_zero(counterBytes);
 }
 
 // Destructor
 OSSLEVPSymmetricAlgorithm::~OSSLEVPSymmetricAlgorithm()
 {
 	EVP_CIPHER_CTX_free(pCurCTX);
+	BN_free(maximumBytes);
+	BN_free(counterBytes);
 }
 
 // Encryption functions
-bool OSSLEVPSymmetricAlgorithm::encryptInit(const SymmetricKey* key, const SymMode::Type mode /* = SymMode::CBC */, const ByteString& IV /* = ByteString()*/, bool padding /* = true */)
+bool OSSLEVPSymmetricAlgorithm::encryptInit(const SymmetricKey* key, const SymMode::Type mode /* = SymMode::CBC */, const ByteString& IV /* = ByteString()*/, bool padding /* = true */, size_t counterBits /* = 0 */)
 {
 	// Call the superclass initialiser
-	if (!SymmetricAlgorithm::encryptInit(key, mode, IV, padding))
+	if (!SymmetricAlgorithm::encryptInit(key, mode, IV, padding, counterBits))
 	{
 		return false;
 	}
@@ -77,6 +85,39 @@ bool OSSLEVPSymmetricAlgorithm::encryptInit(const SymmetricKey* key, const SymMo
 	else
 	{
 		iv.wipe(getBlockSize());
+	}
+
+	// Check the counter bits
+	if (counterBits > 0)
+	{
+		BIGNUM* counter = OSSL::byteString2bn(iv);
+		BN_mask_bits(counter, counterBits);
+
+		// Reverse the bits
+		while (counterBits > 0)
+		{
+			counterBits--;
+			if (BN_is_bit_set(counter, counterBits))
+			{
+				BN_clear_bit(counter, counterBits);
+			}
+			else
+			{
+				BN_set_bit(counter, counterBits);
+			}
+		}
+
+		// Set the maximum bytes
+		BN_add_word(counter, 1);
+		BN_mul_word(counter, getBlockSize());
+		BN_copy(maximumBytes, counter);
+		BN_free(counter);
+		BN_zero(counterBytes);
+	}
+	else
+	{
+		BN_one(maximumBytes);
+		BN_set_negative(maximumBytes, 1);
 	}
 
 	// Determine the cipher class
@@ -142,6 +183,12 @@ bool OSSLEVPSymmetricAlgorithm::encryptUpdate(const ByteString& data, ByteString
 		return true;
 	}
 
+	// Count number of bytes written
+	if (!BN_is_negative(maximumBytes))
+	{
+		BN_add_word(counterBytes, data.size());
+	}
+
 	// Prepare the output block
 	encryptedData.resize(data.size() + getBlockSize() - 1);
 
@@ -201,10 +248,10 @@ bool OSSLEVPSymmetricAlgorithm::encryptFinal(ByteString& encryptedData)
 }
 
 // Decryption functions
-bool OSSLEVPSymmetricAlgorithm::decryptInit(const SymmetricKey* key, const SymMode::Type mode /* = SymMode::CBC */, const ByteString& IV /* = ByteString() */, bool padding /* = true */)
+bool OSSLEVPSymmetricAlgorithm::decryptInit(const SymmetricKey* key, const SymMode::Type mode /* = SymMode::CBC */, const ByteString& IV /* = ByteString() */, bool padding /* = true */, size_t counterBits /* = 0 */)
 {
 	// Call the superclass initialiser
-	if (!SymmetricAlgorithm::decryptInit(key, mode, IV, padding))
+	if (!SymmetricAlgorithm::decryptInit(key, mode, IV, padding, counterBits))
 	{
 		return false;
 	}
@@ -229,6 +276,39 @@ bool OSSLEVPSymmetricAlgorithm::decryptInit(const SymmetricKey* key, const SymMo
 	else
 	{
 		iv.wipe(getBlockSize());
+	}
+
+	// Check the counter bits
+	if (counterBits > 0)
+	{
+		BIGNUM* counter = OSSL::byteString2bn(iv);
+		BN_mask_bits(counter, counterBits);
+
+		// Reverse the bits
+		while (counterBits > 0)
+		{
+			counterBits--;
+			if (BN_is_bit_set(counter, counterBits))
+			{
+				BN_clear_bit(counter, counterBits);
+			}
+			else
+			{
+				BN_set_bit(counter, counterBits);
+			}
+		}
+
+		// Set the maximum bytes
+		BN_add_word(counter, 1);
+		BN_mul_word(counter, getBlockSize());
+		BN_copy(maximumBytes, counter);
+		BN_free(counter);
+		BN_zero(counterBytes);
+	}
+	else
+	{
+		BN_one(maximumBytes);
+		BN_set_negative(maximumBytes, 1);
 	}
 
 	// Determine the cipher class
@@ -285,6 +365,12 @@ bool OSSLEVPSymmetricAlgorithm::decryptUpdate(const ByteString& encryptedData, B
 		pCurCTX = NULL;
 
 		return false;
+	}
+
+	// Count number of bytes written
+	if (!BN_is_negative(maximumBytes))
+	{
+		BN_add_word(counterBytes, encryptedData.size());
 	}
 
 	// Prepare the output block
@@ -351,3 +437,19 @@ bool OSSLEVPSymmetricAlgorithm::decryptFinal(ByteString& data)
 	return true;
 }
 
+// Check if more bytes of data can be encrypted
+bool OSSLEVPSymmetricAlgorithm::checkMaximumBytes(unsigned long bytes)
+{
+	if (BN_is_negative(maximumBytes)) return true;
+
+	BIGNUM* bigNum = BN_new();
+	BN_copy(bigNum, counterBytes);
+	BN_add_word(bigNum, bytes);
+
+	bool rv = false;
+	if (BN_cmp(maximumBytes, bigNum) >= 0) rv = true;
+
+	BN_free(bigNum);
+
+	return rv;
+}

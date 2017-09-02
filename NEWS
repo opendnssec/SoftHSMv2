@@ -1,6 +1,6 @@
 NEWS for SoftHSM -- History of user visible changes
 
-SoftHSM 2.3.0 - 2017-xx-xx
+SoftHSM 2.3.0 - 2017-07-03
 
 * Issue #130: Upgraded to PKCS#11 v2.40.
   * Minor changes to some return values.
@@ -8,11 +8,13 @@ SoftHSM 2.3.0 - 2017-xx-xx
   * Added CKA_PUBLIC_KEY_INFO to certificates, private, and public key
     objects. Will be accepted from application, but SoftHSM will
     currently not calculate it.
+* Issue #142: Support for CKM_AES_CTR.
 * Issue #155: Add unit tests for SessionManager.
 * Issue #189: C_DigestKey returns CKR_KEY_INDIGESTIBLE when key
   attribute CKA_EXTRACTABLE = false. Whitelist SHA algorithms to allow
   C_DigestKey in this case.
 * Issue #225: Show slot id after initialization.
+* Issue #247: Run AppVeyor (Windows CI) for each PR and merge.
 * Issue #257: Set CKA_DECRYPT/CKA_ENCRYPT flags on key import to true.
   (Patch from Martin Domke)
 * Issue #261: Add support for libeaycompat lib for FIPS on Windows.
@@ -33,6 +35,8 @@ SoftHSM 2.3.0 - 2017-xx-xx
 * Issue #309: CKO_CERTIFICATE and CKO_PUBLIC_KEY now defaults to
   CKA_PRIVATE=false.
 * Issue #314: Update README with information about logging.
+* Issue #330: Adjust log levels for failing to enumerate object store.
+  (Patch from Nikos Mavrogiannopoulos)
 
 Bugfixes:
 * Issue #216: Better handling of CRYPTO_set_locking_callback() for OpenSSL.
@@ -44,6 +48,10 @@ Bugfixes:
   (Patch from Lars Silvén)
 * Issue #289: Minor fix of 'EVP_CipherFinal_ex'.
   (Patch from Viktor Tarasov)
+* Issue #297: Fix build with cppunit.
+  (Patch from Ludovic Rousseau)
+* Issue #302: Export PKCS#11 symbols from the library.
+  (Patch from Ludovic Rousseau)
 * Issue #305: Zero pad key to fit the block in CKM_AES_KEY_WRAP.
 * Issue #313: Detecting CppUnit when using Macports.
   (Patch from mouse07410)

@@ -318,6 +318,8 @@ std::string BotanAES::getCipher() const
 		case SymMode::CBC:
 			mode = "CBC";
 			break;
+		case SymMode::CTR:
+			return algo + "/CTR-BE";
 		case SymMode::ECB:
 			mode = "ECB";
 			break;

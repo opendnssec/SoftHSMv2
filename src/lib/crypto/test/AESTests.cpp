@@ -594,6 +594,181 @@ void AESTests::testECB()
 	}
 }
 
+void AESTests::testCTR()
+{
+	// Test vectors from RFC3686
+
+	char testKeys128[][33] =
+	{
+		"AE6852F8121067CC4BF7A5765577F39E",
+		"7E24067817FAE0D743D6CE1F32539163",
+		"7691BE035E5020A8AC6E618529F9A0DC"
+	};
+
+	char testKeys192[][49] =
+	{
+		"16AF5B145FC9F579C175F93E3BFB0EED863D06CCFDB78515",
+		"7C5CB2401B3DC33C19E7340819E0F69C678C3DB8E6F6A91A",
+		"02BF391EE8ECB159B959617B0965279BF59B60A786D3E0FE"
+	};
+
+	char testKeys256[][65] =
+	{
+		"776BEFF2851DB06F4C8A0542C8696F6C6A81AF1EEC96B4D37FC1D689E6C1C104",
+		"F6D66D6BD52D59BB0796365879EFF886C66DD51A5B6A99744B50590C87A23884",
+		"FF7A617CE69148E4F1726E2F43581DE2AA62D9F805532EDFF1EED687FB54153D"
+	};
+
+	char testData[][256] =
+	{
+		"53696E676C6520626C6F636B206D7367",
+		"000102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F",
+		"000102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F20212223"
+	};
+
+	char testResult[3][3][256] =
+	{
+		{
+			"E4095D4FB7A7B3792D6175A3261311B8",
+			"4B55384FE259C9C84E7935A003CBE928",
+			"145AD01DBF824EC7560863DC71E3E0C0"
+		},
+		{
+			"5104A106168A72D9790D41EE8EDAD388EB2E1EFC46DA57C8FCE630DF9141BE28",
+			"453243FC609B23327EDFAAFA7131CD9F8490701C5AD4A79CFC1FE0FF42F4FB00",
+			"F05E231B3894612C49EE000B804EB2A9B8306B508F839D6A5530831D9344AF1C"
+		},
+		{
+			"C1CF48A89F2FFDD9CF4652E9EFDB72D74540A42BDE6D7836D59A5CEAAEF3105325B2072F",
+			"96893FC55E5C722F540B7DD1DDF7E758D288BC95C69165884536C811662F2188ABEE0935",
+			"EB6C52821D0BBBF7CE7594462ACA4FAAB407DF866569FD07F48CC0B583D6071F1EC0E6B8"
+		}
+	};
+
+	char testCB[3][3][33] =
+	{
+		{
+			"00000030000000000000000000000001",
+			"0000004836733C147D6D93CB00000001",
+			"00000060DB5672C97AA8F0B200000001"
+		},
+		{
+			"006CB6DBC0543B59DA48D90B00000001",
+			"0096B03B020C6EADC2CB500D00000001",
+			"00FAAC24C1585EF15A43D87500000001"
+		},
+		{
+			"00E0017B27777F3F4A1786F000000001",
+			"0007BDFD5CBD60278DCC091200000001",
+			"001CC5B751A51D70A1C1114800000001"
+		}
+	};
+
+	for (int i = 0; i < 3; i++)
+	{
+		ByteString keyData128(testKeys128[i]);
+		ByteString keyData192(testKeys192[i]);
+		ByteString keyData256(testKeys256[i]);
+
+		AESKey aesKey128(128);
+		CPPUNIT_ASSERT(aesKey128.setKeyBits(keyData128));
+		AESKey aesKey192(192);
+		CPPUNIT_ASSERT(aesKey192.setKeyBits(keyData192));
+		AESKey aesKey256(256);
+		CPPUNIT_ASSERT(aesKey256.setKeyBits(keyData256));
+
+
+		ByteString plainText(testData[i]), shsmPlainText;
+		ByteString CB;
+		ByteString cipherText;
+		ByteString shsmCipherText, OB;
+
+		// Test 128-bit key
+		CB = ByteString(testCB[i][0]);
+		cipherText = ByteString(testResult[i][0]);
+
+		// Now, do the same thing using our AES implementation
+		shsmCipherText.wipe();
+		CPPUNIT_ASSERT(aes->encryptInit(&aesKey128, SymMode::CTR, CB));
+
+		CPPUNIT_ASSERT(aes->encryptUpdate(plainText, OB));
+		shsmCipherText += OB;
+
+		CPPUNIT_ASSERT(aes->encryptFinal(OB));
+		shsmCipherText += OB;
+
+		CPPUNIT_ASSERT(shsmCipherText == cipherText);
+
+		// Check that we can get the plain text
+		shsmPlainText.wipe();
+		CPPUNIT_ASSERT(aes->decryptInit(&aesKey128, SymMode::CTR, CB));
+
+		CPPUNIT_ASSERT(aes->decryptUpdate(shsmCipherText, OB));
+		shsmPlainText += OB;
+
+		CPPUNIT_ASSERT(aes->decryptFinal(OB));
+		shsmPlainText += OB;
+
+		CPPUNIT_ASSERT(shsmPlainText == plainText);
+
+		// Test 192-bit key
+		CB = ByteString(testCB[i][1]);
+		cipherText = ByteString(testResult[i][1]);
+
+		// Now, do the same thing using our AES implementation
+		shsmCipherText.wipe();
+		CPPUNIT_ASSERT(aes->encryptInit(&aesKey192, SymMode::CTR, CB));
+
+		CPPUNIT_ASSERT(aes->encryptUpdate(plainText, OB));
+		shsmCipherText += OB;
+
+		CPPUNIT_ASSERT(aes->encryptFinal(OB));
+		shsmCipherText += OB;
+
+		CPPUNIT_ASSERT(shsmCipherText == cipherText);
+
+		// Check that we can get the plain text
+		shsmPlainText.wipe();
+		CPPUNIT_ASSERT(aes->decryptInit(&aesKey192, SymMode::CTR, CB));
+
+		CPPUNIT_ASSERT(aes->decryptUpdate(shsmCipherText, OB));
+		shsmPlainText += OB;
+
+		CPPUNIT_ASSERT(aes->decryptFinal(OB));
+		shsmPlainText += OB;
+
+		CPPUNIT_ASSERT(shsmPlainText == plainText);
+
+		// Test 256-bit key
+		CB = ByteString(testCB[i][2]);
+		cipherText = ByteString(testResult[i][2]);
+
+		// Now, do the same thing using our AES implementation
+		shsmCipherText.wipe();
+		CPPUNIT_ASSERT(aes->encryptInit(&aesKey256, SymMode::CTR, CB));
+
+		CPPUNIT_ASSERT(aes->encryptUpdate(plainText, OB));
+		shsmCipherText += OB;
+
+		CPPUNIT_ASSERT(aes->encryptFinal(OB));
+		shsmCipherText += OB;
+
+		CPPUNIT_ASSERT(shsmCipherText == cipherText);
+
+		// Check that we can get the plain text
+		shsmPlainText.wipe();
+		CPPUNIT_ASSERT(aes->decryptInit(&aesKey256, SymMode::CTR, CB));
+
+		CPPUNIT_ASSERT(aes->decryptUpdate(shsmCipherText, OB));
+		shsmPlainText += OB;
+
+		CPPUNIT_ASSERT(aes->decryptFinal(OB));
+		shsmPlainText += OB;
+
+		CPPUNIT_ASSERT(shsmPlainText == plainText);
+	}
+}
+
 void AESTests::testWrap(const char testKeK[][128], const char testKey[][128], const char testCt[][128], const int testCnt, SymWrap::Type mode)
 {
 	for (int i = 0; i < testCnt; i++)

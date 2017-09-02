@@ -39,6 +39,7 @@
 #include "SymmetricAlgorithm.h"
 
 #include <botan/pipe.h>
+#include <botan/bigint.h>
 
 class BotanSymmetricAlgorithm : public SymmetricAlgorithm
 {
@@ -50,17 +51,20 @@ public:
 	virtual ~BotanSymmetricAlgorithm();
 
 	// Encryption functions
-	virtual bool encryptInit(const SymmetricKey* key, const SymMode::Type mode = SymMode::CBC, const ByteString& IV = ByteString(), bool padding = true);
+	virtual bool encryptInit(const SymmetricKey* key, const SymMode::Type mode = SymMode::CBC, const ByteString& IV = ByteString(), bool padding = true, size_t counterBits = 0);
 	virtual bool encryptUpdate(const ByteString& data, ByteString& encryptedData);
 	virtual bool encryptFinal(ByteString& encryptedData);
 
 	// Decryption functions
-	virtual bool decryptInit(const SymmetricKey* key, const SymMode::Type mode = SymMode::CBC, const ByteString& IV = ByteString(), bool padding = true);
+	virtual bool decryptInit(const SymmetricKey* key, const SymMode::Type mode = SymMode::CBC, const ByteString& IV = ByteString(), bool padding = true, size_t counterBits = 0);
 	virtual bool decryptUpdate(const ByteString& encryptedData, ByteString& data);
 	virtual bool decryptFinal(ByteString& data);
 
 	// Return the block size
 	virtual size_t getBlockSize() const = 0;
+
+	// Check if more bytes of data can be encrypted
+	virtual bool checkMaximumBytes(unsigned long bytes);
 
 protected:
 	// Return the right cipher for the operation
@@ -69,6 +73,10 @@ protected:
 private:
 	// The current context
 	Botan::Pipe* cryption;
+
+	// The maximum bytes to encrypt/decrypt
+	Botan::BigInt maximumBytes;
+	Botan::BigInt counterBytes;
 };
 
 #endif // !_SOFTHSM_V2_BOTANSYMMETRICALGORITHM_H
