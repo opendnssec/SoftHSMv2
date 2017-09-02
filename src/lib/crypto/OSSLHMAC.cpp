@@ -96,6 +96,34 @@ size_t OSSLHMACSHA512::getMacSize() const
 	return 64;
 }
 
+#ifdef WITH_SHA3
+template<int bitlen>
+const EVP_MD* OSSLHMACSHA3<bitlen>::getEVPHash() const {
+	switch (bitlen) {
+	case 224:
+		return EVP_sha3_224();
+	case 256:
+		return EVP_sha3_256();
+	case 384:
+		return EVP_sha3_384();
+	case 512:
+		return EVP_sha3_512();
+	default:
+		return 0;
+	}
+}
+
+template<int bitlen>
+size_t OSSLHMACSHA3<bitlen>::getMacSize() const {
+	return bitlen / 8;
+}
+
+template class OSSLHMACSHA3<224>;
+template class OSSLHMACSHA3<256>;
+template class OSSLHMACSHA3<384>;
+template class OSSLHMACSHA3<512>;
+#endif
+
 #ifdef WITH_GOST
 const EVP_MD* OSSLHMACGOSTR3411::getEVPHash() const
 {
@@ -106,4 +134,5 @@ size_t OSSLHMACGOSTR3411::getMacSize() const
 {
 	return 32;
 }
+
 #endif

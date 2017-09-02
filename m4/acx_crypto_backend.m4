@@ -1,6 +1,28 @@
 AC_DEFUN([ACX_CRYPTO_BACKEND],[
 
-	# First check if we want to support ECC and GOST
+	# First check if we want to support SHA-3
+
+	AC_ARG_ENABLE(sha3,
+		AC_HELP_STRING([--enable-sha3],
+			[Enable support for SHA-3 (default enabled)]
+		),
+		[enable_sha3="${enableval}"],
+		[enable_sha3-"yes"]
+	)
+	AC_MSG_CHECKING(for SHA-3 support)
+	if test "x${enable_sha3}" = "xyes"; then
+		AC_MSG_RESULT(yes)
+		AC_DEFINE_UNQUOTED(
+			[WITH_SHA3],
+			[],
+			[Compile with SHA-3 support]
+		)
+	else
+		AC_MSG_RESULT(no)
+	fi
+	AM_CONDITIONAL([WITH_SHA3], [test "x${enable_sha3}" = "xyes"])
+
+	# Second check if we want to support ECC and GOST
 
 	AC_ARG_ENABLE(ecc,
 		AC_HELP_STRING([--enable-ecc],
@@ -42,7 +64,7 @@ AC_DEFUN([ACX_CRYPTO_BACKEND],[
 	fi
 	AM_CONDITIONAL([WITH_GOST], [test "x${enable_gost}" = "xyes"])
 
-	# Second check for the FIPS 140-2 mode
+	# Third check for the FIPS 140-2 mode
 
 	AC_ARG_ENABLE(fips,
 		AC_HELP_STRING([--enable-fips],
@@ -62,7 +84,7 @@ AC_DEFUN([ACX_CRYPTO_BACKEND],[
 	else
 		AC_MSG_RESULT(no)
 	fi
-	AM_CONDITIONAL([WITH_GOST], [test "x${enable_fips}" = "xyes"])
+	AM_CONDITIONAL([WITH_FIPS], [test "x${enable_fips}" = "xyes"])
 
 	# Then check what crypto library we want to use
 
@@ -79,7 +101,9 @@ AC_DEFUN([ACX_CRYPTO_BACKEND],[
 	if test "x${crypto_backend}" = "xopenssl"; then
 		AC_MSG_RESULT(OpenSSL)
 
-		if test "x${enable_fips}" = "xyes"; then
+		if test "x${enable_sha3}" = "xyes"; then
+			ACX_OPENSSL(1,1,1)
+		elif test "x${enable_fips}" = "xyes"; then
 			ACX_OPENSSL(1,0,1)
 		else
 			ACX_OPENSSL(1,0,0)
@@ -87,6 +111,10 @@ AC_DEFUN([ACX_CRYPTO_BACKEND],[
 
 		CRYPTO_INCLUDES=$OPENSSL_INCLUDES
 		CRYPTO_LIBS=$OPENSSL_LIBS
+
+		if test "x${enable_sha3}" = "xyes"; then
+			ACX_OPENSSL_SHA3
+		fi
 
 		if test "x${enable_ecc}" = "xyes"; then
 			ACX_OPENSSL_ECC
@@ -118,6 +146,10 @@ AC_DEFUN([ACX_CRYPTO_BACKEND],[
 
 		CRYPTO_INCLUDES=$BOTAN_INCLUDES
 		CRYPTO_LIBS=$BOTAN_LIBS
+
+		if test "x${enable_sha3}" = "xyes"; then
+			ACX_BOTAN_SHA3
+		fi
 
 		if test "x${enable_ecc}" = "xyes"; then
 			ACX_BOTAN_ECC

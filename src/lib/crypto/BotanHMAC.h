@@ -80,6 +80,15 @@ protected:
 	virtual size_t getMacSize() const;
 };
 
+#ifdef WITH_SHA3
+template<int bitlen> class BotanHMACSHA3 : public BotanMacAlgorithm
+{
+protected:
+	virtual std::string getHash() const;
+	virtual size_t getMacSize() const;
+};
+#endif
+
 #ifdef WITH_GOST
 class BotanHMACGOSTR3411 : public BotanMacAlgorithm
 {

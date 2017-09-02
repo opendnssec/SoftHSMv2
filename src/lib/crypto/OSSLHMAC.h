@@ -79,6 +79,15 @@ protected:
 	virtual size_t getMacSize() const;
 };
 
+#ifdef WITH_SHA3
+template<int bitlen> class OSSLHMACSHA3 : public OSSLEVPMacAlgorithm
+{
+protected:
+	virtual const EVP_MD* getEVPHash() const;
+	virtual size_t getMacSize() const;
+};
+#endif
+
 #ifdef WITH_GOST
 class OSSLHMACGOSTR3411 : public OSSLEVPMacAlgorithm
 {
