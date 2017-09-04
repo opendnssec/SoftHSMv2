@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010 .SE (The Internet Infrastructure Foundation)
+ * Copyright (c) 2010 SURFnet bv
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,78 +25,39 @@
  */
 
 /*****************************************************************************
- BotanHMAC.h
+ OSSLSHA3.cpp
 
- Botan HMAC implementation
+ OpenSSL SHA224 implementation
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_BOTANHMAC_H
-#define _SOFTHSM_V2_BOTANHMAC_H
-
 #include "config.h"
-#include "BotanMacAlgorithm.h"
-#include <botan/hmac.h>
-#include <botan/hash.h>
-
-class BotanHMACMD5 : public BotanMacAlgorithm
-{
-protected:
-	virtual std::string getHash() const;
-	virtual size_t getMacSize() const;
-};
-
-class BotanHMACSHA1 : public BotanMacAlgorithm
-{
-protected:
-	virtual std::string getHash() const;
-	virtual size_t getMacSize() const;
-};
-
-class BotanHMACSHA224 : public BotanMacAlgorithm
-{
-protected:
-	virtual std::string getHash() const;
-	virtual size_t getMacSize() const;
-};
-
-class BotanHMACSHA256 : public BotanMacAlgorithm
-{
-protected:
-	virtual std::string getHash() const;
-	virtual size_t getMacSize() const;
-};
-
-class BotanHMACSHA384 : public BotanMacAlgorithm
-{
-protected:
-	virtual std::string getHash() const;
-	virtual size_t getMacSize() const;
-};
-
-class BotanHMACSHA512 : public BotanMacAlgorithm
-{
-protected:
-	virtual std::string getHash() const;
-	virtual size_t getMacSize() const;
-};
-
 #ifdef WITH_SHA3
-template<int bitlen> class BotanHMACSHA3 : public BotanMacAlgorithm
-{
-protected:
-	virtual std::string getHash() const;
-	virtual size_t getMacSize() const;
-};
+#include "OSSLSHA3.h"
+
+template<int bitlen>
+int OSSLSHA3<bitlen>::getHashSize() {
+	return bitlen / 8;
+}
+
+template<int bitlen>
+const EVP_MD* OSSLSHA3<bitlen>::getEVPHash() const {
+	switch (bitlen) {
+	case 224:
+		return EVP_sha3_224();
+	case 256:
+		return EVP_sha3_256();
+	case 384:
+		return EVP_sha3_384();
+	case 512:
+		return EVP_sha3_512();
+	default:
+		return 0;
+	}
+}
+
+template class OSSLSHA3<224>;
+template class OSSLSHA3<256>;
+template class OSSLSHA3<384>;
+template class OSSLSHA3<512>;
+
 #endif
-
-#ifdef WITH_GOST
-class BotanHMACGOSTR3411 : public BotanMacAlgorithm
-{
-protected:
-	virtual std::string getHash() const;
-	virtual size_t getMacSize() const;
-};
-#endif
-
-#endif // !_SOFTHSM_V2_BOTANHMAC_H
-

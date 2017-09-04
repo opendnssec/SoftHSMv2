@@ -315,3 +315,40 @@ void MacTests::testHMACSHA512()
 	mac = NULL;
 	rng = NULL;
 }
+
+#ifdef WITH_SHA3
+void MacTests::testHMACSHA3()
+{
+	char testData[500] = "CDCDCDCDCDCDCDCDCDCDCDCDCDCDCDCDCDCDCDCDCDCDCDCDCDCDCDCDCDCDCDCDCDCDCDCDCDCDCDCDCDCDCDCDCDCDCDCDCDCD";
+	char testResult[100] = "57366A45E2305321A4BC5AA5FE2EF8A921F6AF8273D7FE7BE6CFEDB3F0AEA6D7";
+
+	// Get a HMAC-SHA3-256 instance
+	CPPUNIT_ASSERT((mac = CryptoFactory::i()->getMacAlgorithm(MacAlgo::HMAC_SHA3_256)) != NULL);
+
+	// Key
+	char pk[100] = "0102030405060708090A0B0C0D0E0F10111213141516171819";
+	ByteString k(pk);
+	SymmetricKey key;
+	CPPUNIT_ASSERT(key.setKeyBits(k));
+
+	ByteString b(testData);
+	ByteString osslMac(testResult);
+
+	// Now verify the MAC using our implementation in a single operation
+	CPPUNIT_ASSERT(mac->verifyInit(&key));
+	CPPUNIT_ASSERT(mac->verifyUpdate(b));
+	CPPUNIT_ASSERT(mac->verifyFinal(osslMac));
+
+	// Now verify the MAC in a multiple part operation
+	CPPUNIT_ASSERT(mac->verifyInit(&key));
+	CPPUNIT_ASSERT(mac->verifyUpdate(b.substr(0, 10)));
+	CPPUNIT_ASSERT(mac->verifyUpdate(b.substr(10, 10)));
+	CPPUNIT_ASSERT(mac->verifyUpdate(b.substr(10 + 10)));
+	CPPUNIT_ASSERT(mac->verifyFinal(osslMac));
+
+	CryptoFactory::i()->recycleMacAlgorithm(mac);
+
+	mac = NULL;
+	rng = NULL;
+}
+#endif

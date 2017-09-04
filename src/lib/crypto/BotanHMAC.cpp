@@ -93,6 +93,34 @@ size_t BotanHMACSHA512::getMacSize() const
 	return 64;
 }
 
+#ifdef WITH_SHA3
+template<int bitlen>
+std::string BotanHMACSHA3<bitlen>::getHash() const {
+	switch (bitlen) {
+	case 224:
+		return "SHA-3(224)";
+	case 256:
+		return "SHA-3(256)";
+	case 384:
+		return "SHA-3(384)";
+	case 512:
+		return "SHA-3(512)";
+	default:
+		return "";
+	}
+}
+
+template<int bitlen>
+size_t BotanHMACSHA3<bitlen>::getMacSize() const {
+	return bitlen / 8;
+}
+
+template class BotanHMACSHA3<224>;
+template class BotanHMACSHA3<256>;
+template class BotanHMACSHA3<384>;
+template class BotanHMACSHA3<512>;
+#endif
+
 #ifdef WITH_GOST
 std::string BotanHMACGOSTR3411::getHash() const
 {

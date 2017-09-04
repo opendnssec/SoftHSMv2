@@ -244,7 +244,13 @@ void SignVerifyTests::testRsaSignVerify()
 		{ CKM_SHA224, CKG_MGF1_SHA224, 28 },
 		{ CKM_SHA256, CKG_MGF1_SHA256, 32 },
 		{ CKM_SHA384, CKG_MGF1_SHA384, 0  },
-		{ CKM_SHA512, CKG_MGF1_SHA512, 0  }
+		{ CKM_SHA512, CKG_MGF1_SHA512, 0  },
+#ifdef WITH_SHA3
+		{ CKM_SHA3_224, CKG_MGF1_SHA3_224, 28 },
+		{ CKM_SHA3_256, CKG_MGF1_SHA3_256, 32 },
+		{ CKM_SHA3_384, CKG_MGF1_SHA3_384, 0  },
+		{ CKM_SHA3_512, CKG_MGF1_SHA3_512, 0  }
+#endif
 	};
 
 	// Just make sure that we finalize any previous tests
@@ -287,11 +293,23 @@ void SignVerifyTests::testRsaSignVerify()
 	signVerifyMulti(CKM_SHA256_RSA_PKCS, hSessionRO, hPuk,hPrk);
 	signVerifyMulti(CKM_SHA384_RSA_PKCS, hSessionRO, hPuk,hPrk);
 	signVerifyMulti(CKM_SHA512_RSA_PKCS, hSessionRO, hPuk,hPrk);
+#ifdef WITH_SHA3
+	signVerifyMulti(CKM_SHA3_224_RSA_PKCS, hSessionRO, hPuk,hPrk);
+	signVerifyMulti(CKM_SHA3_256_RSA_PKCS, hSessionRO, hPuk,hPrk);
+	signVerifyMulti(CKM_SHA3_384_RSA_PKCS, hSessionRO, hPuk,hPrk);
+	signVerifyMulti(CKM_SHA3_512_RSA_PKCS, hSessionRO, hPuk,hPrk);
+#endif
 	signVerifyMulti(CKM_SHA1_RSA_PKCS_PSS, hSessionRO, hPuk,hPrk, &params[0], sizeof(params[0]));
 	signVerifyMulti(CKM_SHA224_RSA_PKCS_PSS, hSessionRO, hPuk,hPrk, &params[1], sizeof(params[1]));
 	signVerifyMulti(CKM_SHA256_RSA_PKCS_PSS, hSessionRO, hPuk,hPrk, &params[2], sizeof(params[2]));
 	signVerifyMulti(CKM_SHA384_RSA_PKCS_PSS, hSessionRO, hPuk,hPrk, &params[3], sizeof(params[3]));
 	signVerifyMulti(CKM_SHA512_RSA_PKCS_PSS, hSessionRO, hPuk,hPrk, &params[4], sizeof(params[4]));
+#ifdef WITH_SHA3
+	signVerifyMulti(CKM_SHA3_224_RSA_PKCS_PSS, hSessionRO, hPuk,hPrk, &params[5], sizeof(params[5]));
+	signVerifyMulti(CKM_SHA3_256_RSA_PKCS_PSS, hSessionRO, hPuk,hPrk, &params[6], sizeof(params[6]));
+	signVerifyMulti(CKM_SHA3_384_RSA_PKCS_PSS, hSessionRO, hPuk,hPrk, &params[7], sizeof(params[7]));
+	signVerifyMulti(CKM_SHA3_512_RSA_PKCS_PSS, hSessionRO, hPuk,hPrk, &params[8], sizeof(params[8]));
+#endif
 
 	// Private Session Keys
 	rv = generateRSA(hSessionRW,IN_SESSION,IS_PRIVATE,IN_SESSION,IS_PRIVATE,hPuk,hPrk);
@@ -307,11 +325,23 @@ void SignVerifyTests::testRsaSignVerify()
 	signVerifyMulti(CKM_SHA256_RSA_PKCS, hSessionRW, hPuk,hPrk);
 	signVerifyMulti(CKM_SHA384_RSA_PKCS, hSessionRW, hPuk,hPrk);
 	signVerifyMulti(CKM_SHA512_RSA_PKCS, hSessionRW, hPuk,hPrk);
+#ifdef WITH_SHA3
+	signVerifyMulti(CKM_SHA3_224_RSA_PKCS, hSessionRW, hPuk,hPrk);
+	signVerifyMulti(CKM_SHA3_256_RSA_PKCS, hSessionRW, hPuk,hPrk);
+	signVerifyMulti(CKM_SHA3_384_RSA_PKCS, hSessionRW, hPuk,hPrk);
+	signVerifyMulti(CKM_SHA3_512_RSA_PKCS, hSessionRW, hPuk,hPrk);
+#endif
 	signVerifyMulti(CKM_SHA1_RSA_PKCS_PSS, hSessionRW, hPuk,hPrk, &params[0], sizeof(params[0]));
 	signVerifyMulti(CKM_SHA224_RSA_PKCS_PSS, hSessionRW, hPuk,hPrk, &params[1], sizeof(params[1]));
 	signVerifyMulti(CKM_SHA256_RSA_PKCS_PSS, hSessionRW, hPuk,hPrk, &params[2], sizeof(params[2]));
 	signVerifyMulti(CKM_SHA384_RSA_PKCS_PSS, hSessionRW, hPuk,hPrk, &params[3], sizeof(params[3]));
 	signVerifyMulti(CKM_SHA512_RSA_PKCS_PSS, hSessionRW, hPuk,hPrk, &params[4], sizeof(params[4]));
+#ifdef WITH_SHA3
+	signVerifyMulti(CKM_SHA3_224_RSA_PKCS_PSS, hSessionRW, hPuk,hPrk, &params[5], sizeof(params[5]));
+	signVerifyMulti(CKM_SHA3_256_RSA_PKCS_PSS, hSessionRW, hPuk,hPrk, &params[6], sizeof(params[6]));
+	signVerifyMulti(CKM_SHA3_384_RSA_PKCS_PSS, hSessionRW, hPuk,hPrk, &params[7], sizeof(params[7]));
+	signVerifyMulti(CKM_SHA3_512_RSA_PKCS_PSS, hSessionRW, hPuk,hPrk, &params[8], sizeof(params[8]));
+#endif
 
 	// Public Token Keys
 	rv = generateRSA(hSessionRW,ON_TOKEN,IS_PUBLIC,ON_TOKEN,IS_PUBLIC,hPuk,hPrk);
@@ -327,11 +357,23 @@ void SignVerifyTests::testRsaSignVerify()
 	signVerifyMulti(CKM_SHA256_RSA_PKCS, hSessionRW, hPuk,hPrk);
 	signVerifyMulti(CKM_SHA384_RSA_PKCS, hSessionRW, hPuk,hPrk);
 	signVerifyMulti(CKM_SHA512_RSA_PKCS, hSessionRW, hPuk,hPrk);
+#ifdef WITH_SHA3
+	signVerifyMulti(CKM_SHA3_224_RSA_PKCS, hSessionRW, hPuk,hPrk);
+	signVerifyMulti(CKM_SHA3_256_RSA_PKCS, hSessionRW, hPuk,hPrk);
+	signVerifyMulti(CKM_SHA3_384_RSA_PKCS, hSessionRW, hPuk,hPrk);
+	signVerifyMulti(CKM_SHA3_512_RSA_PKCS, hSessionRW, hPuk,hPrk);
+#endif
 	signVerifyMulti(CKM_SHA1_RSA_PKCS_PSS, hSessionRW, hPuk,hPrk, &params[0], sizeof(params[0]));
 	signVerifyMulti(CKM_SHA224_RSA_PKCS_PSS, hSessionRW, hPuk,hPrk, &params[1], sizeof(params[1]));
 	signVerifyMulti(CKM_SHA256_RSA_PKCS_PSS, hSessionRW, hPuk,hPrk, &params[2], sizeof(params[2]));
 	signVerifyMulti(CKM_SHA384_RSA_PKCS_PSS, hSessionRW, hPuk,hPrk, &params[3], sizeof(params[3]));
 	signVerifyMulti(CKM_SHA512_RSA_PKCS_PSS, hSessionRW, hPuk,hPrk, &params[4], sizeof(params[4]));
+#ifdef WITH_SHA3
+	signVerifyMulti(CKM_SHA3_224_RSA_PKCS_PSS, hSessionRW, hPuk,hPrk, &params[5], sizeof(params[5]));
+	signVerifyMulti(CKM_SHA3_256_RSA_PKCS_PSS, hSessionRW, hPuk,hPrk, &params[6], sizeof(params[6]));
+	signVerifyMulti(CKM_SHA3_384_RSA_PKCS_PSS, hSessionRW, hPuk,hPrk, &params[7], sizeof(params[7]));
+	signVerifyMulti(CKM_SHA3_512_RSA_PKCS_PSS, hSessionRW, hPuk,hPrk, &params[8], sizeof(params[8]));
+#endif
 
 	// Private Token Keys
 	rv = generateRSA(hSessionRW,ON_TOKEN,IS_PRIVATE,ON_TOKEN,IS_PRIVATE,hPuk,hPrk);
@@ -347,11 +389,23 @@ void SignVerifyTests::testRsaSignVerify()
 	signVerifyMulti(CKM_SHA256_RSA_PKCS, hSessionRW, hPuk,hPrk);
 	signVerifyMulti(CKM_SHA384_RSA_PKCS, hSessionRW, hPuk,hPrk);
 	signVerifyMulti(CKM_SHA512_RSA_PKCS, hSessionRW, hPuk,hPrk);
+#ifdef WITH_SHA3
+	signVerifyMulti(CKM_SHA3_224_RSA_PKCS, hSessionRW, hPuk,hPrk);
+	signVerifyMulti(CKM_SHA3_256_RSA_PKCS, hSessionRW, hPuk,hPrk);
+	signVerifyMulti(CKM_SHA3_384_RSA_PKCS, hSessionRW, hPuk,hPrk);
+	signVerifyMulti(CKM_SHA3_512_RSA_PKCS, hSessionRW, hPuk,hPrk);
+#endif
 	signVerifyMulti(CKM_SHA1_RSA_PKCS_PSS, hSessionRW, hPuk,hPrk, &params[0], sizeof(params[0]));
 	signVerifyMulti(CKM_SHA224_RSA_PKCS_PSS, hSessionRW, hPuk,hPrk, &params[1], sizeof(params[1]));
 	signVerifyMulti(CKM_SHA256_RSA_PKCS_PSS, hSessionRW, hPuk,hPrk, &params[2], sizeof(params[2]));
 	signVerifyMulti(CKM_SHA384_RSA_PKCS_PSS, hSessionRW, hPuk,hPrk, &params[3], sizeof(params[3]));
 	signVerifyMulti(CKM_SHA512_RSA_PKCS_PSS, hSessionRW, hPuk,hPrk, &params[4], sizeof(params[4]));
+#ifdef WITH_SHA3
+	signVerifyMulti(CKM_SHA3_224_RSA_PKCS_PSS, hSessionRW, hPuk,hPrk, &params[5], sizeof(params[5]));
+	signVerifyMulti(CKM_SHA3_256_RSA_PKCS_PSS, hSessionRW, hPuk,hPrk, &params[6], sizeof(params[6]));
+	signVerifyMulti(CKM_SHA3_384_RSA_PKCS_PSS, hSessionRW, hPuk,hPrk, &params[7], sizeof(params[7]));
+	signVerifyMulti(CKM_SHA3_512_RSA_PKCS_PSS, hSessionRW, hPuk,hPrk, &params[8], sizeof(params[8]));
+#endif
 }
 
 #ifdef WITH_ECC
@@ -568,6 +622,24 @@ void SignVerifyTests::testHmacSignVerify()
 	CPPUNIT_ASSERT(rv == CKR_OK);
 	hmacSignVerify(CKM_SHA512_HMAC, hSessionRO, hKey);
 
+#ifdef WITH_SHA3
+	rv = generateKey(hSessionRW,CKK_SHA3_224_HMAC,IN_SESSION,IS_PUBLIC,hKey);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	hmacSignVerify(CKM_SHA3_224_HMAC, hSessionRO, hKey);
+
+	rv = generateKey(hSessionRW,CKK_SHA3_256_HMAC,IN_SESSION,IS_PUBLIC,hKey);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	hmacSignVerify(CKM_SHA3_256_HMAC, hSessionRO, hKey);
+
+	rv = generateKey(hSessionRW,CKK_SHA3_384_HMAC,IN_SESSION,IS_PUBLIC,hKey);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	hmacSignVerify(CKM_SHA3_384_HMAC, hSessionRO, hKey);
+
+	rv = generateKey(hSessionRW,CKK_SHA3_512_HMAC,IN_SESSION,IS_PUBLIC,hKey);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	hmacSignVerify(CKM_SHA3_512_HMAC, hSessionRO, hKey);
+#endif
+
 #ifdef WITH_GOST
 	rv = generateKey(hSessionRW,CKK_GOST28147,IN_SESSION,IS_PUBLIC,hKey);
 	CPPUNIT_ASSERT(rv == CKR_OK);
@@ -600,6 +672,24 @@ void SignVerifyTests::testHmacSignVerify()
 	rv = generateKey(hSessionRW,CKK_SHA512_HMAC,IN_SESSION,IS_PRIVATE,hKey);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 	hmacSignVerify(CKM_SHA512_HMAC, hSessionRW, hKey);
+
+#ifdef WITH_SHA3
+	rv = generateKey(hSessionRW,CKK_SHA3_224_HMAC,IN_SESSION,IS_PRIVATE,hKey);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	hmacSignVerify(CKM_SHA3_224_HMAC, hSessionRW, hKey);
+
+	rv = generateKey(hSessionRW,CKK_SHA3_256_HMAC,IN_SESSION,IS_PRIVATE,hKey);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	hmacSignVerify(CKM_SHA3_256_HMAC, hSessionRW, hKey);
+
+	rv = generateKey(hSessionRW,CKK_SHA3_384_HMAC,IN_SESSION,IS_PRIVATE,hKey);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	hmacSignVerify(CKM_SHA3_384_HMAC, hSessionRW, hKey);
+
+	rv = generateKey(hSessionRW,CKK_SHA3_512_HMAC,IN_SESSION,IS_PRIVATE,hKey);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	hmacSignVerify(CKM_SHA3_512_HMAC, hSessionRW, hKey);
+#endif
 
 #ifdef WITH_GOST
 	rv = generateKey(hSessionRW,CKK_GOST28147,IN_SESSION,IS_PRIVATE,hKey);
@@ -634,6 +724,24 @@ void SignVerifyTests::testHmacSignVerify()
 	CPPUNIT_ASSERT(rv == CKR_OK);
 	hmacSignVerify(CKM_SHA512_HMAC, hSessionRW, hKey);
 
+#ifdef WITH_SHA3
+	rv = generateKey(hSessionRW,CKK_SHA3_224_HMAC,ON_TOKEN,IS_PUBLIC,hKey);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	hmacSignVerify(CKM_SHA3_224_HMAC, hSessionRW, hKey);
+
+	rv = generateKey(hSessionRW,CKK_SHA3_256_HMAC,ON_TOKEN,IS_PUBLIC,hKey);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	hmacSignVerify(CKM_SHA3_256_HMAC, hSessionRW, hKey);
+
+	rv = generateKey(hSessionRW,CKK_SHA3_384_HMAC,ON_TOKEN,IS_PUBLIC,hKey);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	hmacSignVerify(CKM_SHA3_384_HMAC, hSessionRW, hKey);
+
+	rv = generateKey(hSessionRW,CKK_SHA3_512_HMAC,ON_TOKEN,IS_PUBLIC,hKey);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	hmacSignVerify(CKM_SHA3_512_HMAC, hSessionRW, hKey);
+#endif
+
 #ifdef WITH_GOST
 	rv = generateKey(hSessionRW,CKK_GOST28147,ON_TOKEN,IS_PUBLIC,hKey);
 	CPPUNIT_ASSERT(rv == CKR_OK);
@@ -666,6 +774,24 @@ void SignVerifyTests::testHmacSignVerify()
 	rv = generateKey(hSessionRW,CKK_SHA512_HMAC,ON_TOKEN,IS_PRIVATE,hKey);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 	hmacSignVerify(CKM_SHA512_HMAC, hSessionRW, hKey);
+
+#ifdef WITH_SHA3
+	rv = generateKey(hSessionRW,CKK_SHA3_224_HMAC,ON_TOKEN,IS_PRIVATE,hKey);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	hmacSignVerify(CKM_SHA3_224_HMAC, hSessionRW, hKey);
+
+	rv = generateKey(hSessionRW,CKK_SHA3_256_HMAC,ON_TOKEN,IS_PRIVATE,hKey);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	hmacSignVerify(CKM_SHA3_256_HMAC, hSessionRW, hKey);
+
+	rv = generateKey(hSessionRW,CKK_SHA3_384_HMAC,ON_TOKEN,IS_PRIVATE,hKey);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	hmacSignVerify(CKM_SHA3_384_HMAC, hSessionRW, hKey);
+
+	rv = generateKey(hSessionRW,CKK_SHA3_512_HMAC,ON_TOKEN,IS_PRIVATE,hKey);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	hmacSignVerify(CKM_SHA3_512_HMAC, hSessionRW, hKey);
+#endif
 
 #ifdef WITH_GOST
 	rv = generateKey(hSessionRW,CKK_GOST28147,ON_TOKEN,IS_PRIVATE,hKey);

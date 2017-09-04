@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010 .SE (The Internet Infrastructure Foundation)
+ * Copyright (c) 2010 SURFnet bv
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,78 +25,24 @@
  */
 
 /*****************************************************************************
- BotanHMAC.h
+ OSSLSHA3.h
 
- Botan HMAC implementation
+ OpenSSL SHA3 implementation
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_BOTANHMAC_H
-#define _SOFTHSM_V2_BOTANHMAC_H
+#ifndef _SOFTHSM_V2_OSSLSHA3_H
+#define _SOFTHSM_V2_OSSLSHA3_H
 
 #include "config.h"
-#include "BotanMacAlgorithm.h"
-#include <botan/hmac.h>
-#include <botan/hash.h>
+#include "OSSLEVPHashAlgorithm.h"
+#include <openssl/evp.h>
 
-class BotanHMACMD5 : public BotanMacAlgorithm
+template<int bitlen> class OSSLSHA3 : public OSSLEVPHashAlgorithm
 {
+	virtual int getHashSize();
 protected:
-	virtual std::string getHash() const;
-	virtual size_t getMacSize() const;
+	virtual const EVP_MD* getEVPHash() const;
 };
 
-class BotanHMACSHA1 : public BotanMacAlgorithm
-{
-protected:
-	virtual std::string getHash() const;
-	virtual size_t getMacSize() const;
-};
-
-class BotanHMACSHA224 : public BotanMacAlgorithm
-{
-protected:
-	virtual std::string getHash() const;
-	virtual size_t getMacSize() const;
-};
-
-class BotanHMACSHA256 : public BotanMacAlgorithm
-{
-protected:
-	virtual std::string getHash() const;
-	virtual size_t getMacSize() const;
-};
-
-class BotanHMACSHA384 : public BotanMacAlgorithm
-{
-protected:
-	virtual std::string getHash() const;
-	virtual size_t getMacSize() const;
-};
-
-class BotanHMACSHA512 : public BotanMacAlgorithm
-{
-protected:
-	virtual std::string getHash() const;
-	virtual size_t getMacSize() const;
-};
-
-#ifdef WITH_SHA3
-template<int bitlen> class BotanHMACSHA3 : public BotanMacAlgorithm
-{
-protected:
-	virtual std::string getHash() const;
-	virtual size_t getMacSize() const;
-};
-#endif
-
-#ifdef WITH_GOST
-class BotanHMACGOSTR3411 : public BotanMacAlgorithm
-{
-protected:
-	virtual std::string getHash() const;
-	virtual size_t getMacSize() const;
-};
-#endif
-
-#endif // !_SOFTHSM_V2_BOTANHMAC_H
+#endif // !_SOFTHSM_V2_OSSLSHA3_H
 

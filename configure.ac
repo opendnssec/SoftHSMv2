@@ -57,7 +57,7 @@ ACX_DLOPEN
 # Check for headers
 AC_CHECK_HEADERS([pthread.h])
 
-# What crypto backend to use and if we want to have support GOST
+# What crypto backend to use and if we want to have support GOST & co
 ACX_CRYPTO_BACKEND
 
 # Non-paged memory for secure storage

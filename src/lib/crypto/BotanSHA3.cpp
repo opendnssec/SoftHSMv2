@@ -25,78 +25,42 @@
  */
 
 /*****************************************************************************
- BotanHMAC.h
+ BotanSHA3.cpp
 
- Botan HMAC implementation
+ Botan SHA-3 implementation
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_BOTANHMAC_H
-#define _SOFTHSM_V2_BOTANHMAC_H
-
 #include "config.h"
-#include "BotanMacAlgorithm.h"
-#include <botan/hmac.h>
-#include <botan/hash.h>
-
-class BotanHMACMD5 : public BotanMacAlgorithm
-{
-protected:
-	virtual std::string getHash() const;
-	virtual size_t getMacSize() const;
-};
-
-class BotanHMACSHA1 : public BotanMacAlgorithm
-{
-protected:
-	virtual std::string getHash() const;
-	virtual size_t getMacSize() const;
-};
-
-class BotanHMACSHA224 : public BotanMacAlgorithm
-{
-protected:
-	virtual std::string getHash() const;
-	virtual size_t getMacSize() const;
-};
-
-class BotanHMACSHA256 : public BotanMacAlgorithm
-{
-protected:
-	virtual std::string getHash() const;
-	virtual size_t getMacSize() const;
-};
-
-class BotanHMACSHA384 : public BotanMacAlgorithm
-{
-protected:
-	virtual std::string getHash() const;
-	virtual size_t getMacSize() const;
-};
-
-class BotanHMACSHA512 : public BotanMacAlgorithm
-{
-protected:
-	virtual std::string getHash() const;
-	virtual size_t getMacSize() const;
-};
-
 #ifdef WITH_SHA3
-template<int bitlen> class BotanHMACSHA3 : public BotanMacAlgorithm
+#include "BotanSHA3.h"
+#include <botan/sha3.h>
+
+template<int bitlen>
+int BotanSHA3<bitlen>::getHashSize()
 {
-protected:
-	virtual std::string getHash() const;
-	virtual size_t getMacSize() const;
-};
-#endif
+	return bitlen / 8;
+}
 
-#ifdef WITH_GOST
-class BotanHMACGOSTR3411 : public BotanMacAlgorithm
+template<int bitlen>
+Botan::HashFunction* BotanSHA3<bitlen>::getHash() const
 {
-protected:
-	virtual std::string getHash() const;
-	virtual size_t getMacSize() const;
-};
+	switch (bitlen) {
+	case 224:
+		return new Botan::SHA_3_224();
+	case 256:
+		return new Botan::SHA_3_256();
+	case 384:
+		return new Botan::SHA_3_384();
+	case 512:
+		return new Botan::SHA_3_512();
+	default:
+		return 0;
+	}
+}
+
+template class BotanSHA3<224>;
+template class BotanSHA3<256>;
+template class BotanSHA3<384>;
+template class BotanSHA3<512>;
+
 #endif
-
-#endif // !_SOFTHSM_V2_BOTANHMAC_H
-

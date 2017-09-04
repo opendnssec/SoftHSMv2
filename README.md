@@ -63,6 +63,7 @@ Options:
 				(default enabled)
 	--disable-ecc		Disable support for ECC (default enabled)
 	--disable-gost		Disable support for GOST (default enabled)
+	--disable-sha3		Disable support for SHA-3 (default enabled)
 	--disable-visibility	Disable hidden visibilty link mode [enabled]
 	--with-crypto-backend	Select crypto backend (openssl|botan)
 	--with-openssl=PATH	Specify prefix of path of OpenSSL

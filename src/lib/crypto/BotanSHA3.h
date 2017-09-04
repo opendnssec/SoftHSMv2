@@ -25,78 +25,24 @@
  */
 
 /*****************************************************************************
- BotanHMAC.h
+ BotanSHA3.h
 
- Botan HMAC implementation
+ Botan SHA-3 implementation
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_BOTANHMAC_H
-#define _SOFTHSM_V2_BOTANHMAC_H
+#ifndef _SOFTHSM_V2_BOTANSHA3_H
+#define _SOFTHSM_V2_BOTANSHA3_H
 
 #include "config.h"
-#include "BotanMacAlgorithm.h"
-#include <botan/hmac.h>
+#include "BotanHashAlgorithm.h"
 #include <botan/hash.h>
 
-class BotanHMACMD5 : public BotanMacAlgorithm
+template<int bitlen> class BotanSHA3 : public BotanHashAlgorithm
 {
+	virtual int getHashSize();
 protected:
-	virtual std::string getHash() const;
-	virtual size_t getMacSize() const;
+	virtual Botan::HashFunction* getHash() const;
 };
 
-class BotanHMACSHA1 : public BotanMacAlgorithm
-{
-protected:
-	virtual std::string getHash() const;
-	virtual size_t getMacSize() const;
-};
-
-class BotanHMACSHA224 : public BotanMacAlgorithm
-{
-protected:
-	virtual std::string getHash() const;
-	virtual size_t getMacSize() const;
-};
-
-class BotanHMACSHA256 : public BotanMacAlgorithm
-{
-protected:
-	virtual std::string getHash() const;
-	virtual size_t getMacSize() const;
-};
-
-class BotanHMACSHA384 : public BotanMacAlgorithm
-{
-protected:
-	virtual std::string getHash() const;
-	virtual size_t getMacSize() const;
-};
-
-class BotanHMACSHA512 : public BotanMacAlgorithm
-{
-protected:
-	virtual std::string getHash() const;
-	virtual size_t getMacSize() const;
-};
-
-#ifdef WITH_SHA3
-template<int bitlen> class BotanHMACSHA3 : public BotanMacAlgorithm
-{
-protected:
-	virtual std::string getHash() const;
-	virtual size_t getMacSize() const;
-};
-#endif
-
-#ifdef WITH_GOST
-class BotanHMACGOSTR3411 : public BotanMacAlgorithm
-{
-protected:
-	virtual std::string getHash() const;
-	virtual size_t getMacSize() const;
-};
-#endif
-
-#endif // !_SOFTHSM_V2_BOTANHMAC_H
+#endif // !_SOFTHSM_V2_BOTANSHA3_H
 

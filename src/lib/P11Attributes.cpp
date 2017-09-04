@@ -849,6 +849,10 @@ CK_RV P11AttrCheckValue::updateAttr(Token *token, bool isPrivate, CK_VOID_PTR pV
 			case CKK_SHA256_HMAC:
 			case CKK_SHA384_HMAC:
 			case CKK_SHA512_HMAC:
+			case CKK_SHA3_224_HMAC:
+			case CKK_SHA3_256_HMAC:
+			case CKK_SHA3_384_HMAC:
+			case CKK_SHA3_512_HMAC:
 				key.setKeyBits(keybits);
 				key.setBitLen(keybits.size() * 8);
 				checkValue = key.getKeyCheckValue();
@@ -1007,6 +1011,10 @@ CK_RV P11AttrValue::updateAttr(Token *token, bool isPrivate, CK_VOID_PTR pValue,
 			case CKK_SHA256_HMAC:
 			case CKK_SHA384_HMAC:
 			case CKK_SHA512_HMAC:
+			case CKK_SHA3_224_HMAC:
+			case CKK_SHA3_256_HMAC:
+			case CKK_SHA3_384_HMAC:
+			case CKK_SHA3_512_HMAC:
 				key.setKeyBits(plaintext);
 				key.setBitLen(plaintext.size() * 8);
 				checkValue = key.getKeyCheckValue();
