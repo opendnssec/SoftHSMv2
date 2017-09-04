@@ -268,11 +268,23 @@ void RSATests::testSigningVerifying()
 	mechanisms.push_back(AsymMech::RSA_SHA256_PKCS);
 	mechanisms.push_back(AsymMech::RSA_SHA384_PKCS);
 	mechanisms.push_back(AsymMech::RSA_SHA512_PKCS);
+#ifdef WITH_SHA3
+	mechanisms.push_back(AsymMech::RSA_SHA3_224_PKCS);
+	mechanisms.push_back(AsymMech::RSA_SHA3_256_PKCS);
+	mechanisms.push_back(AsymMech::RSA_SHA3_384_PKCS);
+	mechanisms.push_back(AsymMech::RSA_SHA3_512_PKCS);
+#endif
 	mechanisms.push_back(AsymMech::RSA_SHA1_PKCS_PSS);
 	mechanisms.push_back(AsymMech::RSA_SHA224_PKCS_PSS);
 	mechanisms.push_back(AsymMech::RSA_SHA256_PKCS_PSS);
 	mechanisms.push_back(AsymMech::RSA_SHA384_PKCS_PSS);
 	mechanisms.push_back(AsymMech::RSA_SHA512_PKCS_PSS);
+#ifdef WITH_SHA3
+	mechanisms.push_back(AsymMech::RSA_SHA3_224_PKCS_PSS);
+	mechanisms.push_back(AsymMech::RSA_SHA3_256_PKCS_PSS);
+	mechanisms.push_back(AsymMech::RSA_SHA3_384_PKCS_PSS);
+	mechanisms.push_back(AsymMech::RSA_SHA3_512_PKCS_PSS);
+#endif
 #ifndef WITH_FIPS
 	mechanisms.push_back(AsymMech::RSA_SSL);
 #endif
@@ -283,7 +295,13 @@ void RSATests::testSigningVerifying()
 		{ HashAlgo::SHA224, AsymRSAMGF::MGF1_SHA224, 0  },
 		{ HashAlgo::SHA256, AsymRSAMGF::MGF1_SHA256, 0  },
 		{ HashAlgo::SHA384, AsymRSAMGF::MGF1_SHA384, 48 },
-		{ HashAlgo::SHA512, AsymRSAMGF::MGF1_SHA512, 62 }
+		{ HashAlgo::SHA512, AsymRSAMGF::MGF1_SHA512, 62 },
+#ifdef WITH_SHA3
+		{ HashAlgo::SHA3_224, AsymRSAMGF::MGF1_SHA3_224, 0  },
+		{ HashAlgo::SHA3_256, AsymRSAMGF::MGF1_SHA3_256, 0  },
+		{ HashAlgo::SHA3_384, AsymRSAMGF::MGF1_SHA3_384, 48 },
+		{ HashAlgo::SHA3_512, AsymRSAMGF::MGF1_SHA3_512, 62 }
+#endif
 	};
 
 	for (std::vector<ByteString>::iterator e = exponents.begin(); e != exponents.end(); e++)
@@ -338,6 +356,28 @@ void RSATests::testSigningVerifying()
 						paramLen = sizeof(pssParams[4]);
 						isPSS = true;
 						break;
+#ifdef WITH_SHA3
+					case AsymMech::RSA_SHA3_224_PKCS_PSS:
+						param = &pssParams[5];
+						paramLen = sizeof(pssParams[1]);
+						isPSS = true;
+						break;
+					case AsymMech::RSA_SHA3_256_PKCS_PSS:
+						param = &pssParams[6];
+						paramLen = sizeof(pssParams[2]);
+						isPSS = true;
+						break;
+					case AsymMech::RSA_SHA3_384_PKCS_PSS:
+						param = &pssParams[7];
+						paramLen = sizeof(pssParams[3]);
+						isPSS = true;
+						break;
+					case AsymMech::RSA_SHA3_512_PKCS_PSS:
+						param = &pssParams[8];
+						paramLen = sizeof(pssParams[4]);
+						isPSS = true;
+						break;
+#endif
 					default:
 						break;
 				}

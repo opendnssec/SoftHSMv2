@@ -48,6 +48,9 @@ class MacTests : public CppUnit::TestFixture
 	CPPUNIT_TEST(testHMACSHA256);
 	CPPUNIT_TEST(testHMACSHA384);
 	CPPUNIT_TEST(testHMACSHA512);
+#ifdef WITH_SHA3
+	CPPUNIT_TEST(testHMACSHA3);
+#endif
 	CPPUNIT_TEST_SUITE_END();
 
 public:
@@ -59,6 +62,9 @@ public:
 	void testHMACSHA256();
 	void testHMACSHA384();
 	void testHMACSHA512();
+#ifdef WITH_SHA3
+	void testHMACSHA3();
+#endif
 
 	void setUp();
 	void tearDown();

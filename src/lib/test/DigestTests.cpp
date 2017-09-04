@@ -292,6 +292,12 @@ void DigestTests::testDigestAll()
 		{ CKM_SHA256, NULL_PTR, 0 },
 		{ CKM_SHA384, NULL_PTR, 0 },
 		{ CKM_SHA512, NULL_PTR, 0 },
+#ifdef WITH_SHA3
+		{ CKM_SHA3_224, NULL_PTR, 0 },
+		{ CKM_SHA3_256, NULL_PTR, 0 },
+		{ CKM_SHA3_384, NULL_PTR, 0 },
+		{ CKM_SHA3_512, NULL_PTR, 0 },
+#endif
 #ifdef WITH_GOST
 		{ CKM_GOSTR3411, NULL_PTR, 0 },
 #endif

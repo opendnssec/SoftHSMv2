@@ -267,3 +267,41 @@ void HashTests::testSHA512()
 	hash = NULL;
 	rng = NULL;
 }
+
+#ifdef WITH_SHA3
+void HashTests::testSHA3()
+{
+	std::string testData = "abcdefghbcdefghicdefghijdefghijkefghijklfghijklmghijklmnhijklmnoijklmnopjklmnopqklmnopqrlmnopqrsmnopqrstnopqrstu";
+	char testResult[512] = "AFEBB2EF542E6579C50CAD06D2E578F9F8DD6881D7DC824D26360FEEBF18A4FA73E3261122948EFCFD492E74E82E2189ED0FB440D187F382270CB455F21DD185";
+
+	// Get a SHA-3 hash instance
+	CPPUNIT_ASSERT((hash = CryptoFactory::i()->getHashAlgorithm(HashAlgo::SHA3_512)) != NULL);
+
+	ByteString b(reinterpret_cast<const unsigned char*>(testData.c_str()),
+		     testData.size());
+	ByteString osslHash(testResult), shsmHash;
+
+	// Now recreate the hash using our implementation in a single operation
+	CPPUNIT_ASSERT(hash->hashInit());
+	CPPUNIT_ASSERT(hash->hashUpdate(b));
+	CPPUNIT_ASSERT(hash->hashFinal(shsmHash));
+
+	CPPUNIT_ASSERT(osslHash == shsmHash);
+
+	// Now recreate the hash in a multiple part operation
+	shsmHash.wipe();
+
+	CPPUNIT_ASSERT(hash->hashInit());
+	CPPUNIT_ASSERT(hash->hashUpdate(b.substr(0, 567)));
+	CPPUNIT_ASSERT(hash->hashUpdate(b.substr(567, 989)));
+	CPPUNIT_ASSERT(hash->hashUpdate(b.substr(567 + 989)));
+	CPPUNIT_ASSERT(hash->hashFinal(shsmHash));
+
+	CPPUNIT_ASSERT(osslHash == shsmHash);
+
+	CryptoFactory::i()->recycleHashAlgorithm(hash);
+
+	hash = NULL;
+	rng = NULL;
+}
+#endif

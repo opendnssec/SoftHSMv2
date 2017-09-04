@@ -48,6 +48,9 @@ class HashTests : public CppUnit::TestFixture
 	CPPUNIT_TEST(testSHA256);
 	CPPUNIT_TEST(testSHA384);
 	CPPUNIT_TEST(testSHA512);
+#ifdef WITH_SHA3
+	CPPUNIT_TEST(testSHA3);
+#endif
 	CPPUNIT_TEST_SUITE_END();
 
 public:
@@ -59,6 +62,9 @@ public:
 	void testSHA256();
 	void testSHA384();
 	void testSHA512();
+#ifdef WITH_SHA3
+	void testSHA3();
+#endif
 
 	void setUp();
 	void tearDown();

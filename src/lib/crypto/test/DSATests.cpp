@@ -218,6 +218,10 @@ void DSATests::testSigningVerifying()
 	mechanisms.push_back(AsymMech::DSA_SHA1);
 	mechanisms.push_back(AsymMech::DSA_SHA224);
 	mechanisms.push_back(AsymMech::DSA_SHA256);
+#ifdef WITH_SHA3
+	mechanisms.push_back(AsymMech::DSA_SHA3_224);
+	mechanisms.push_back(AsymMech::DSA_SHA3_256);
+#endif
 
 	for (std::vector<size_t>::iterator k = keySizes.begin(); k != keySizes.end(); k++)
 	{
