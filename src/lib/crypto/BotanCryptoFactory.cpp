@@ -54,7 +54,6 @@
 #endif
 #include "BotanHMAC.h"
 #ifdef WITH_EDDSA
-#include "BotanEDDH.h"
 #include "BotanEDDSA.h"
 #endif
 
