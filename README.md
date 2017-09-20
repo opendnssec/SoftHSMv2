@@ -62,6 +62,7 @@ Options:
 				Disable non-paged memory for secure storage
 				(default enabled)
 	--disable-ecc		Disable support for ECC (default enabled)
+	--disable-eddsa		Disable support for EDDSA (default enabled)
 	--disable-gost		Disable support for GOST (default enabled)
 	--disable-visibility	Disable hidden visibilty link mode [enabled]
 	--with-crypto-backend	Select crypto backend (openssl|botan)
