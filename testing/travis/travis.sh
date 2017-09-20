@@ -6,11 +6,11 @@ CONF_OBJSTORE=""
 case $CRYPTO in
 botan)
 	CONF_CRYPTO="$CONF_CRYPTO --with-crypto-backend=botan --with-botan=/usr"
-	CONF_CRYPTO="$CONF_CRYPTO --disable-ecc --disable-gost"
+	CONF_CRYPTO="$CONF_CRYPTO --disable-ecc --disable-eddsa --disable-gost"
 	;;
 openssl)
 	CONF_CRYPTO="$CONF_CRYPTO --with-crypto-backend=openssl --with-openssl=/usr"
-	CONF_CRYPTO="$CONF_CRYPTO --disable-gost"
+	CONF_CRYPTO="$CONF_CRYPTO --disable-eddsa --disable-gost"
 	openssl version -a
 	;;
 *)
