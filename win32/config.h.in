@@ -124,6 +124,13 @@
 #undef WITH_OPENSSL
 @END OPENSSL
 
+/* Compile with raw PSS support */
+@IF RAWPSS
+#define WITH_RAW_PSS 1
+@ELSE RAWPSS
+#undef WITH_RAW_PSS
+@END RAWPSS
+
 /* Define to 1 if you have getpassphrase(). */
 #define HAVE_GETPASSPHRASE
 

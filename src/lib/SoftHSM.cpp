@@ -640,7 +640,7 @@ CK_RV SoftHSM::C_GetMechanismList(CK_SLOT_ID slotID, CK_MECHANISM_TYPE_PTR pMech
 #ifdef HAVE_AES_KEY_WRAP_PAD
 	nrSupportedMechanisms += 1;
 #endif
-#ifdef WITH_OPENSSL
+#ifdef WITH_RAW_PSS
 	nrSupportedMechanisms += 1; // CKM_RSA_PKCS_PSS
 #endif
 
@@ -674,7 +674,7 @@ CK_RV SoftHSM::C_GetMechanismList(CK_SLOT_ID slotID, CK_MECHANISM_TYPE_PTR pMech
 		CKM_SHA256_RSA_PKCS,
 		CKM_SHA384_RSA_PKCS,
 		CKM_SHA512_RSA_PKCS,
-#ifdef WITH_OPENSSL
+#ifdef WITH_RAW_PSS
 		CKM_RSA_PKCS_PSS,
 #endif
 		CKM_SHA1_RSA_PKCS_PSS,
@@ -931,7 +931,7 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 		case CKM_SHA256_RSA_PKCS:
 		case CKM_SHA384_RSA_PKCS:
 		case CKM_SHA512_RSA_PKCS:
-#ifdef WITH_OPENSSL
+#ifdef WITH_RAW_PSS
 		case CKM_RSA_PKCS_PSS:
 #endif
 		case CKM_SHA1_RSA_PKCS_PSS:
@@ -3759,6 +3759,7 @@ CK_RV SoftHSM::AsymSignInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechan
 			bAllowMultiPartOp = true;
 			isRSA = true;
 			break;
+#ifdef WITH_RAW_PSS
 		case CKM_RSA_PKCS_PSS:
 			if (pMechanism->pParameter == NULL_PTR ||
 			    pMechanism->ulParameterLen != sizeof(CK_RSA_PKCS_PSS_PARAMS))
@@ -3811,6 +3812,7 @@ CK_RV SoftHSM::AsymSignInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechan
 			bAllowMultiPartOp = false;
 			isRSA = true;
 			break;
+#endif
 		case CKM_SHA1_RSA_PKCS_PSS:
 			if (pMechanism->pParameter == NULL_PTR ||
 			    pMechanism->ulParameterLen != sizeof(CK_RSA_PKCS_PSS_PARAMS) ||
@@ -4655,6 +4657,7 @@ CK_RV SoftHSM::AsymVerifyInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 			bAllowMultiPartOp = true;
 			isRSA = true;
 			break;
+#ifdef WITH_RAW_PSS
 		case CKM_RSA_PKCS_PSS:
 			if (pMechanism->pParameter == NULL_PTR ||
 			    pMechanism->ulParameterLen != sizeof(CK_RSA_PKCS_PSS_PARAMS))
@@ -4705,6 +4708,7 @@ CK_RV SoftHSM::AsymVerifyInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 			bAllowMultiPartOp = false;
 			isRSA = true;
 			break;
+#endif
 		case CKM_SHA1_RSA_PKCS_PSS:
 			if (pMechanism->pParameter == NULL_PTR ||
 			    pMechanism->ulParameterLen != sizeof(CK_RSA_PKCS_PSS_PARAMS) ||
