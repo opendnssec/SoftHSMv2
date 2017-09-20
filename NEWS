@@ -1,5 +1,11 @@
 NEWS for SoftHSM -- History of user visible changes
 
+SoftHSM develop
+
+* Issue #335: Support for CKM_RSA_PKCS_PSS.
+  (Patch from Nikos Mavrogiannopoulos)
+
+
 SoftHSM 2.3.0 - 2017-07-03
 
 * Issue #130: Upgraded to PKCS#11 v2.40.
