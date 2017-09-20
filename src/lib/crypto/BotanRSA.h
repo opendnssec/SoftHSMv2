@@ -80,6 +80,10 @@ public:
 private:
 	Botan::PK_Signer* signer;
 	Botan::PK_Verifier* verifier;
+
+#ifdef WITH_RAW_PSS
+	std::string getCipherRawPss(size_t bitLength, size_t dataSize, const void* param, const size_t paramLen);
+#endif
 };
 
 #endif // !_SOFTHSM_V2_BOTANRSA_H

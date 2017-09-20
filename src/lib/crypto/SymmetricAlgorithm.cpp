@@ -193,6 +193,8 @@ bool SymmetricAlgorithm::isStreamCipher()
 		case SymMode::CTR:
 		case SymMode::OFB:
 			return true;
+		default:
+			break;
 	}
 
 	return false;
@@ -205,6 +207,8 @@ bool SymmetricAlgorithm::isBlockCipher()
 		case SymMode::CBC:
 		case SymMode::ECB:
 			return true;
+		default:
+			break;
 	}
 
 	return false;
