@@ -110,13 +110,14 @@ int crypto_import_aes_key
 	}
 	fclose(fp);
 
+	CK_BBOOL ckTrue = CK_TRUE;
 	CK_OBJECT_CLASS keyClass = CKO_SECRET_KEY;
 	CK_KEY_TYPE keyType = CKK_AES;
 	CK_ATTRIBUTE keyTemplate[] = {
 		{ CKA_CLASS,            &keyClass,    sizeof(keyClass) },
 		{ CKA_KEY_TYPE,         &keyType,     sizeof(keyType) },
 		{ CKA_LABEL,            label,        strlen(label) },
-		{ CKA_TOKEN,            &ckToken,     sizeof(ckToken) },
+		{ CKA_TOKEN,            &ckTrue,      sizeof(ckTrue) },
 		{ CKA_ENCRYPT,          &ckTrue,      sizeof(ckTrue) },
 		{ CKA_DECRYPT,          &ckTrue,      sizeof(ckTrue) },
 		{ CKA_SENSITIVE,        &ckTrue,      sizeof(ckTrue) },
@@ -124,7 +125,7 @@ int crypto_import_aes_key
 	};
 
 	CK_OBJECT_HANDLE hKey;
-    	CK_RV rv = p11->C_CreateObject(hSession, keyTemplate, 8, &hKey);
+	CK_RV rv = p11->C_CreateObject(hSession, keyTemplate, 8, &hKey);
 	if (rv != CKR_OK)
 	{
 		fprintf(stderr, "ERROR: Could not save the secret key in the token. "
