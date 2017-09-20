@@ -46,13 +46,15 @@ environment:
   - CRYPTO_BACKEND: openssl
     PACKAGE_VERSION_NAME: OpenSSL-1.0.2j
     CRYPTO_PACKAGE_NAME: openssl-1.0.2j
+    ADDITIONAL_CONFIGURE_OPTIONS: disable-eddsa
   - CRYPTO_BACKEND: botan
     PACKAGE_VERSION_NAME: Botan-1.10.13
     CRYPTO_PACKAGE_NAME: botan-1.10.13
+    ADDITIONAL_CONFIGURE_OPTIONS: disable-eddsa
   - CRYPTO_BACKEND: openssl
     PACKAGE_VERSION_NAME: OpenSSL-1.1.0b
     CRYPTO_PACKAGE_NAME: openssl-1.1.0b
-    ADDITIONAL_CONFIGURE_OPTIONS: disable-gost
+    ADDITIONAL_CONFIGURE_OPTIONS: disable-eddsa disable-gost
 install:
 - cmd: powershell -File testing/appveyor/appveyor_download_requirements.ps1
 build_script:
