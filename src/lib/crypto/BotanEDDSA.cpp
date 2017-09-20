@@ -402,13 +402,13 @@ bool BotanEDDSA::deriveKey(SymmetricKey **ppSymmetricKey, PublicKey* publicKey, 
 unsigned long BotanEDDSA::getMinKeySize()
 {
 	// Only Ed25519 is supported
-	return 32;
+	return 32*8;
 }
 
 unsigned long BotanEDDSA::getMaxKeySize()
 {
 	// Only Ed25519 is supported
-	return 32;
+	return 32*8;
 }
 
 bool BotanEDDSA::reconstructKeyPair(AsymmetricKeyPair** ppKeyPair, ByteString& serialisedData)
