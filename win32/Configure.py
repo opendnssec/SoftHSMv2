@@ -697,19 +697,19 @@ int main() {\n\
 #endif\n\
  return 1;\n\
 }', file=testfile)
-            testfile.close()
-            command = ["cl", "/nologo", "/MD", "/I", inc, "testrawpss.cpp", lib]
-            command.extend(system_libs)
-            subprocess.check_output(command, stderr=subprocess.STDOUT)
-            if not os.path.exists(".\\testrawpss.exe"):
+        testfile.close()
+        command = ["cl", "/nologo", "/MD", "/I", inc, "testrawpss.cpp", lib]
+        command.extend(system_libs)
+        subprocess.check_output(command, stderr=subprocess.STDOUT)
+        if not os.path.exists(".\\testrawpss.exe"):
+            if verbose:
+                print("can't create .\\testrawpss.exe", file=sys.stderr)
+        else:
+            if subprocess.call(".\\testrawpss.exe") != 0:
                 if verbose:
-                    print("can't create .\\testrawpss.exe", file=sys.stderr)
+                    print("can't find raw PSS: upgrade to Botan >= 2.3.0", file=sys.stderr)
             else:
-                if subprocess.call(".\\testrawpss.exe") != 0:
-                    if verbose:
-                        print("can't find raw PSS: upgrade to Botan >= 2.3.0", file=sys.stderr)
-                else:
-                    condvals["RAWPSS"] = True
+                condvals["RAWPSS"] = True
 
     else:
 
