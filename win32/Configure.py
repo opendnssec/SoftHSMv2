@@ -35,6 +35,7 @@ filelist = ["config.h",
 # test files
 testlist = ["botan",
             "ecc",
+            "eddsa",
             "gnump",
             "gost",
             "ossl",
@@ -66,6 +67,7 @@ condvals = {}
 
 condnames = ["BOTAN",
              "ECC",
+             "EDDSA",
              "GOST",
              "NONPAGE",
              "OPENSSL",
@@ -78,6 +80,7 @@ condnames = ["BOTAN",
 enablelist = ["64bit",
               "debug",
               "ecc",
+              "eddsa",
               "gost",
               "keep",
               "non-paged-memory",
@@ -117,6 +120,7 @@ usage + [\
 "  enable-64bit             enable 64-bit compiling [default=no]",
 "  enable-debug             enable build of Debug config [default=yes]",
 "  enable-ecc               enable support for ECC [default=yes]",
+"  enable-eddsa             enable support for EDDSA [default=yes]",
 "  enable-gost              enable support for GOST [default=yes]",
 "  enable-non-paged-memory  enable non-paged memory [default=yes]",
 "\nOptional Packages:",
@@ -140,6 +144,7 @@ unknown_value = None
 enable_keep = False
 enable_debug = True
 enable_ecc = True
+enable_eddsa = True
 enable_gost = True
 enable_non_paged = True
 platform = 32
@@ -255,6 +260,7 @@ def myenable(key, val):
     global platform
     global enable_debug
     global enable_ecc
+    global enable_eddsa
     global enable_gost
     global enable_non_paged
     global enable_keep
@@ -272,6 +278,10 @@ def myenable(key, val):
     if key.lower() == "ecc":
         if not val:
             enable_ecc = False
+        return
+    if key.lower() == "eddsa":
+        if not val:
+            enable_eddsa = False
         return
     if key.lower() == "gost":
         if not val:
@@ -430,9 +440,11 @@ def doconfig():
         varvals["PLATFORM"] = "x64"
         varvals["PLATFORMDIR"] = "x64\\"
 
-    # configure ECC and GOST
+    # configure ECC, EDDSA, and GOST
     if enable_ecc:
         condvals["ECC"] = True
+    if enable_eddsa:
+        condvals["EDDSA"] = True
     if enable_gost:
         condvals["GOST"] = True
 
@@ -581,6 +593,36 @@ int main() {\n\
                 sys.exit(1)
             if subprocess.call(".\\testecc.exe") != 0:
                 print("can't find P256: upgrade to Botan >= 1.10.6", file=sys.stderr)
+                sys.exit(1)
+
+        # Botan EDDSA support
+        if enable_eddsa:
+            if verbose:
+                print("checking Botan EDDSA support")
+            testfile = open("testeddsa.cpp", "w")
+            print('\
+#include <botan/init.h>\n\
+#include <botan/ed25519.h>\n\
+#include <botan/version.h>\n\
+int main() {\n\
+ Botan::secure_vector<uint8_t> k(32);\n\
+ try {\n\
+  Botan::Ed25519_PrivateKey* key =\n\
+   new Botan::Ed25519_PrivateKey(k);\n\
+ } catch(...) {\n\
+  return 1;\n\
+ }\n\
+ return 0;\n\
+}', file=testfile)
+            testfile.close()
+            command = ["cl", "/nologo", "/MD", "/I", inc, "testeddsa.cpp", lib]
+            command.extend(system_libs)
+            subprocess.check_output(command, stderr=subprocess.STDOUT)
+            if not os.path.exists(".\\testeddsa.exe"):
+                print("can't create .\\testeddsa.exe", file=sys.stderr)
+                sys.exit(1)
+            if subprocess.call(".\\testeddsa.exe") != 0:
+                print("can't find EDDSA: upgrade to Botan >= 2.2.0", file=sys.stderr)
                 sys.exit(1)
 
         # Botan GOST support
@@ -820,6 +862,33 @@ int main() {\n\
                 print("can't find P256, P384, or P521: no ECC support", file=sys.stderr)
                 sys.exit(1)
 
+        # OpenSSL EDDSA support
+        if enable_eddsa:
+            if verbose:
+                print("checking OpenSSL EDDSA support")
+            testfile = open("testeddsa.c", "w")
+            print('\
+#include <openssl/evp.h>\n\
+#include <openssl/objects.h>\n\
+int main()\n\
+{\n\
+ EVP_PKEY_CTX *ctx;\n\
+ ctx = EVP_PKEY_CTX_new_id(NID_ED25519, NULL);\n\
+ if (ctx == NULL)\n\
+  return 1;\n\
+ return 0;\n\
+}', file=testfile)
+            testfile.close()
+            command = ["cl", "/nologo", "/MD", "/I", inc, "testeddsa.c", lib]
+            command.extend(system_libs)
+            subprocess.check_output(command, stderr=subprocess.STDOUT)
+            if not os.path.exists(".\\testeddsa.exe"):
+                print("can't create .\\testeddsa.exe", file=sys.stderr)
+                sys.exit(1)
+            if subprocess.call(".\\testeddsa.exe") != 0:
+                print("can't find EDDSA", file=sys.stderr)
+                sys.exit(1)
+
         # OpenSSL GOST support
         if enable_gost:
             if verbose:
@@ -1052,6 +1121,10 @@ def main(args):
             print("ecc: enabled")
         else:
             print("ecc: disabled")
+        if enable_eddsa:
+            print("eddsa: enabled")
+        else:
+            print("eddsa: disabled")
         if enable_gost:
             print("gost: enabled")
         else:
@@ -1106,6 +1179,7 @@ main(sys.argv)
 # Notes: Unix configure.ac options
 #  --enable-64bit supported
 #  --enable-ecc supported
+#  --enable-eddsa supported
 #  --enable-gost supported
 #  --enable-non-paged-memory supported
 #  --enable-visibility (enforced by DLLs)
