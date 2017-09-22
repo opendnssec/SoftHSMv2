@@ -40,7 +40,8 @@ OSAttribute::OSAttribute(const OSAttribute& in)
 	boolValue = in.boolValue;
 	ulongValue = in.ulongValue;
 	byteStrValue = in.byteStrValue;
-	arrayValue = in.arrayValue;
+	mechSetValue = in.mechSetValue;
+	attrMapValue = in.attrMapValue;
 }
 
 // Constructor for a boolean type attribute
@@ -71,11 +72,21 @@ OSAttribute::OSAttribute(const ByteString& value)
 	ulongValue = 0;
 }
 
-// Constructor for an array type attribute
+// Constructor for a mechanism type set attribute
+OSAttribute::OSAttribute(const std::set<CK_MECHANISM_TYPE>& value)
+{
+	mechSetValue = value;
+	attributeType = MECHSET;
+
+	boolValue = false;
+	ulongValue = 0;
+}
+
+// Constructor for an attribute map type attribute
 OSAttribute::OSAttribute(const std::map<CK_ATTRIBUTE_TYPE,OSAttribute>& value)
 {
-	arrayValue = value;
-	attributeType = ARRAY;
+	attrMapValue = value;
+	attributeType = ATTRMAP;
 
 	boolValue = false;
 	ulongValue = 0;
@@ -97,9 +108,14 @@ bool OSAttribute::isByteStringAttribute() const
 	return (attributeType == BYTESTR);
 }
 
-bool OSAttribute::isArrayAttribute() const
+bool OSAttribute::isMechanismTypeSetAttribute() const
 {
-	return (attributeType == ARRAY);
+	return (attributeType == MECHSET);
+}
+
+bool OSAttribute::isAttributeMapAttribute() const
+{
+	return (attributeType == ATTRMAP);
 }
 
 // Retrieve the attribute value
@@ -118,15 +134,23 @@ const ByteString& OSAttribute::getByteStringValue() const
 	return byteStrValue;
 }
 
-const std::map<CK_ATTRIBUTE_TYPE,OSAttribute>& OSAttribute::getArrayValue() const
+const std::set<CK_MECHANISM_TYPE>& OSAttribute::getMechanismTypeSetValue() const
 {
-	return arrayValue;
+	return mechSetValue;
+}
+
+const std::map<CK_ATTRIBUTE_TYPE,OSAttribute>& OSAttribute::getAttributeMapValue() const
+{
+	return attrMapValue;
 }
 
 // Helper for template (aka array) matching
 
 bool OSAttribute::peekValue(ByteString& value) const
 {
+	size_t counter = 0;
+	CK_MECHANISM_TYPE mech;
+
 	switch (attributeType)
 	{
 		case BOOL:
@@ -143,6 +167,19 @@ bool OSAttribute::peekValue(ByteString& value) const
 			value.resize(byteStrValue.size());
 			memcpy(&value[0], byteStrValue.const_byte_str(), value.size());
 			return true;
+
+		case MECHSET:
+			value.resize(mechSetValue.size() * sizeof(mech));
+			for (std::set<CK_MECHANISM_TYPE>::const_iterator i = mechSetValue.begin(); i != mechSetValue.end(); ++i)
+			{
+				mech = *i;
+				memcpy(&value[0] + counter * sizeof(mech), &mech, sizeof(mech));
+				counter++;
+			}
+			return true;
+
+		case ATTRMAP:
+			return false;
 
 		default:
 			return false;

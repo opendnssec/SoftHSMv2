@@ -1243,4 +1243,22 @@ protected:
 	virtual CK_RV updateAttr(Token *token, bool isPrivate, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op);
 };
 
+/*****************************************
+ * CKA_ALLOWED_MECHANISMS
+ *****************************************/
+
+class P11AttrAllowedMechanisms : public P11Attribute
+{
+public:
+	// Constructor
+	P11AttrAllowedMechanisms(OSObject* inobject) : P11Attribute(inobject) { type = CKA_ALLOWED_MECHANISMS; checks = 0; }
+
+protected:
+	// Set the default value of the attribute
+	virtual bool setDefault();
+
+	// Update the value if allowed
+	virtual CK_RV updateAttr(Token *token, bool isPrivate, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op);
+};
+
 #endif // !_SOFTHSM_V2_P11ATTRIBUTES_H

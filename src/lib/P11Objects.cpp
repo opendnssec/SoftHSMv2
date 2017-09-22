@@ -619,7 +619,7 @@ bool P11KeyObj::init(OSObject *inobject)
 	P11Attribute* attrDerive = new P11AttrDerive(osobject);
 	P11Attribute* attrLocal = new P11AttrLocal(osobject,P11Attribute::ck6);
 	P11Attribute* attrKeyGenMechanism = new P11AttrKeyGenMechanism(osobject);
-	// TODO: CKA_ALLOWED_MECHANISMS is not supported
+	P11Attribute* attrAllowedMechanisms = new P11AttrAllowedMechanisms(osobject);
 
 	// Initialize the attributes
 	if
@@ -630,7 +630,8 @@ bool P11KeyObj::init(OSObject *inobject)
 		!attrEndDate->init() ||
 		!attrDerive->init() ||
 		!attrLocal->init() ||
-		!attrKeyGenMechanism->init()
+		!attrKeyGenMechanism->init() ||
+		!attrAllowedMechanisms->init()
 	)
 	{
 		ERROR_MSG("Could not initialize the attribute");
@@ -641,6 +642,7 @@ bool P11KeyObj::init(OSObject *inobject)
 		delete attrDerive;
 		delete attrLocal;
 		delete attrKeyGenMechanism;
+		delete attrAllowedMechanisms;
 		return false;
 	}
 
@@ -652,6 +654,7 @@ bool P11KeyObj::init(OSObject *inobject)
 	attributes[attrDerive->getType()] = attrDerive;
 	attributes[attrLocal->getType()] = attrLocal;
 	attributes[attrKeyGenMechanism->getType()] = attrKeyGenMechanism;
+	attributes[attrAllowedMechanisms->getType()] = attrAllowedMechanisms;
 
 	initialized = true;
 	return true;

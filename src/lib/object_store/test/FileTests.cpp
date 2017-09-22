@@ -100,7 +100,7 @@ void FileTests::testCreateNotCreate()
 	// Test pre-condition
 	CPPUNIT_ASSERT(!exists("nonExistentFile"));
 	CPPUNIT_ASSERT(!exists("nonExistentFile2"));
-	
+
 	// Attempt to open a file known not to exist
 #ifndef _WIN32
 	File doesntExist("testdir/nonExistentFile", true, true, false);
@@ -162,6 +162,9 @@ void FileTests::testWriteRead()
 
 	// More test data
 	std::string testString = "This is a test of the File class";
+	std::set<CK_MECHANISM_TYPE> testSet;
+	testSet.insert(CKM_RSA_PKCS);
+	testSet.insert(CKM_SHA256_RSA_PKCS);
 
 	// Create a file for writing
 	{
@@ -185,6 +188,9 @@ void FileTests::testWriteRead()
 
 		// Write a string into the file
 		CPPUNIT_ASSERT(newFile.writeString(testString));
+
+		// Write a set into the file
+		CPPUNIT_ASSERT(newFile.writeMechanismTypeSet(testSet));
 	}
 
 	CPPUNIT_ASSERT(exists("newFile"));
@@ -222,6 +228,12 @@ void FileTests::testWriteRead()
 
 		CPPUNIT_ASSERT(newFile.readString(stringVal));
 		CPPUNIT_ASSERT(!testString.compare(stringVal));
+
+		// Read back the set value
+		std::set<CK_MECHANISM_TYPE> setVal;
+
+		CPPUNIT_ASSERT(newFile.readMechanismTypeSet(setVal));
+		CPPUNIT_ASSERT(setVal == testSet);
 
 		// Check for EOF
 		CPPUNIT_ASSERT(!newFile.readBool(b1));
@@ -284,7 +296,7 @@ void FileTests::testSeek()
 
 	// Seek to the start of second byte string
 	CPPUNIT_ASSERT(testFile.seek(8+9));
-	
+
 	// Read it
 	ByteString trr2;
 
