@@ -66,6 +66,12 @@ bool Attribute::isBinary() const
 }
 
 template<>
+bool Attribute::isMechSet() const
+{
+	return kind == MECHSET_ATTR;
+}
+
+template<>
 void Attribute::dumpType() const
 {
 	dumpULong(type, true);
@@ -248,6 +254,39 @@ bool readMap(FILE* stream, uint64_t len, std::vector<Attribute>& value)
 				return false;
 			}
 			len -= size;
+		}
+		else if (attr.kind == MECHSET_ATTR)
+		{
+			uint64_t size;
+			if (len < 8)
+			{
+				(void) fsetpos(stream, &pos);
+				return false;
+			}
+			if (!readULong(stream, size))
+			{
+				(void) fsetpos(stream, &pos);
+				return false;
+			}
+			len -= 8;
+
+			if (len < size * 8)
+			{
+				(void) fsetpos(stream, &pos);
+				return false;
+			}
+
+			for (unsigned long i = 0; i < size; i++)
+			{
+				uint64_t mech;
+				if (!readULong(stream, mech))
+				{
+					(void) fsetpos(stream, &pos);
+					return false;
+				}
+				attr.mechSetValue.insert(mech);
+			}
+			len -= size * 8;
 		}
 		else
 		{

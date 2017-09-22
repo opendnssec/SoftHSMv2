@@ -654,6 +654,7 @@ static bool decodeAttributeMap(std::map<CK_ATTRIBUTE_TYPE,OSAttribute>& map, con
 
 				map.insert(std::pair<CK_ATTRIBUTE_TYPE,OSAttribute> (attrType, value));
 			}
+			break;
 
 			default:
 			ERROR_MSG("unsupported attribute kind in attribute map");

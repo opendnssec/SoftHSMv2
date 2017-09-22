@@ -39,6 +39,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <map>
+#include <set>
 #include <string>
 #include <stdexcept>
 #include <vector>
@@ -436,6 +437,7 @@ public:
 	uint8_t boolValue;
 	I ulongValue;
 	std::vector<uint8_t> bytestrValue;
+	std::set<I> mechSetValue;
 
 	// Dump an array (in fact an Attribute vector) value
 	void dumpType() const;
@@ -445,6 +447,7 @@ public:
 	bool isBoolean() const;
 	bool isInteger() const;
 	bool isBinary() const;
+	bool isMechSet() const;
 	void dump() const {
 		dumpType();
 		if ((sizeof(type) > 4) &&
@@ -479,6 +482,19 @@ public:
 			dumpULongValue(size);
 			printf("(length %lu)\n", (unsigned long) size);
 			dumpBytes(bytestrValue, true);
+		}
+		else if (isMechSet())
+		{
+			printf("mechanism set attribute\n");
+			I size = mechSetValue.size();
+			dumpULongValue(size);
+			printf("(length %lu)\n", (unsigned long) size);
+			for (typename std::set<I>::const_iterator i = mechSetValue.begin(); i != mechSetValue.end(); ++i)
+			{
+                                dumpULongValue(*i);
+                                dumpCKM(*i, 47);
+                                printf("\n");
+                        }
 		}
 		else
 		{

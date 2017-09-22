@@ -372,6 +372,23 @@ bool File::readAttributeMap(std::map<CK_ATTRIBUTE_TYPE,OSAttribute>& value)
 			}
 			break;
 
+			case akMechSet:
+			{
+				std::set<CK_MECHANISM_TYPE> val;
+				if (!readMechanismTypeSet(val))
+				{
+					return false;
+				}
+				if (8 + val.size() * 8 > len)
+				{
+					return false;
+				}
+				len -= 8 + val.size() * 8;
+
+				value.insert(std::pair<CK_ATTRIBUTE_TYPE,OSAttribute> (attrType, val));
+			}
+			break;
+
 			default:
 				return false;
 		}
@@ -498,6 +515,11 @@ bool File::writeAttributeMap(const std::map<CK_ATTRIBUTE_TYPE,OSAttribute>& valu
 		{
 			ByteString val = attr.getByteStringValue();
 			len += 8 + val.size();
+		}
+		else if (attr.isMechanismTypeSetAttribute())
+		{
+			std::set<CK_MECHANISM_TYPE> val = attr.getMechanismTypeSetValue();
+			len += 8 + val.size() * 8;
 		}
 		else
 		{

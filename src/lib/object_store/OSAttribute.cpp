@@ -148,6 +148,9 @@ const std::map<CK_ATTRIBUTE_TYPE,OSAttribute>& OSAttribute::getAttributeMapValue
 
 bool OSAttribute::peekValue(ByteString& value) const
 {
+	size_t counter = 0;
+	CK_MECHANISM_TYPE mech;
+
 	switch (attributeType)
 	{
 		case BOOL:
@@ -164,6 +167,19 @@ bool OSAttribute::peekValue(ByteString& value) const
 			value.resize(byteStrValue.size());
 			memcpy(&value[0], byteStrValue.const_byte_str(), value.size());
 			return true;
+
+		case MECHSET:
+			value.resize(mechSetValue.size() * sizeof(mech));
+			for (std::set<CK_MECHANISM_TYPE>::const_iterator i = mechSetValue.begin(); i != mechSetValue.end(); ++i)
+			{
+				mech = *i;
+				memcpy(&value[0] + counter * sizeof(mech), &mech, sizeof(mech));
+				counter++;
+			}
+			return true;
+
+		case ATTRMAP:
+			return false;
 
 		default:
 			return false;

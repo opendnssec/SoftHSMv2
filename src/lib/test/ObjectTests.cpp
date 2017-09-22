@@ -1989,8 +1989,6 @@ void ObjectTests::testAllowedMechanisms()
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	CK_BYTE data[] = { 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F };
-	CK_BYTE signature[256];
-	CK_ULONG ulSignatureLen = (CK_ULONG) 256;
 
 	// SHA_1_HMAC is not an allowed mechanism
 	CK_MECHANISM mechanism = { CKM_SHA_1_HMAC, NULL_PTR, 0 };
@@ -2029,13 +2027,15 @@ void ObjectTests::testTemplateAttribute()
 	CK_RV rv;
 	CK_SESSION_HANDLE hSession;
 	CK_OBJECT_HANDLE hObject = CK_INVALID_HANDLE;
-        CK_BYTE pE[] = { 0x01, 0x00, 0x01 };
+	CK_BYTE pE[] = { 0x01, 0x00, 0x01 };
+	CK_MECHANISM_TYPE allowedMechs[] = { CKM_SHA256_HMAC, CKM_SHA512_HMAC };
 
 	// Wrap template
 	CK_KEY_TYPE wrapType = CKK_SHA256_HMAC;;
 	CK_ATTRIBUTE wrapTemplate[] = {
 		{ CKA_KEY_TYPE, &wrapType, sizeof(wrapType) },
-		{ CKA_PUBLIC_EXPONENT, pE, sizeof(pE) }
+		{ CKA_PUBLIC_EXPONENT, pE, sizeof(pE) },
+		{ CKA_ALLOWED_MECHANISMS, &allowedMechs, sizeof(allowedMechs) }
 	};
 
 	// Minimal public key object
@@ -2077,6 +2077,7 @@ void ObjectTests::testTemplateAttribute()
 
 	CK_ATTRIBUTE wrapAttribs[] = {
 		{ 0, NULL_PTR, 0 },
+		{ 0, NULL_PTR, 0 },
 		{ 0, NULL_PTR, 0 }
 	};
 	CK_ATTRIBUTE wrapAttrib = { CKA_WRAP_TEMPLATE, NULL_PTR, 0 };
@@ -2084,48 +2085,58 @@ void ObjectTests::testTemplateAttribute()
 	// Get number of elements
 	rv = CRYPTOKI_F_PTR( C_GetAttributeValue(hSession, hObject, &wrapAttrib, 1) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
-	CPPUNIT_ASSERT(wrapAttrib.ulValueLen == 2 * sizeof(CK_ATTRIBUTE));
+	CPPUNIT_ASSERT(wrapAttrib.ulValueLen == 3 * sizeof(CK_ATTRIBUTE));
 
 	// Get element types and sizes
 	wrapAttrib.pValue = wrapAttribs;
 	rv = CRYPTOKI_F_PTR( C_GetAttributeValue(hSession, hObject, &wrapAttrib, 1) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
-	CPPUNIT_ASSERT(wrapAttrib.ulValueLen == 2 * sizeof(CK_ATTRIBUTE));
-	if (wrapAttribs[0].type == CKA_KEY_TYPE)
+	CPPUNIT_ASSERT(wrapAttrib.ulValueLen == 3 * sizeof(CK_ATTRIBUTE));
+	for (size_t i = 0; i < 3; i++)
 	{
-		CPPUNIT_ASSERT(wrapAttribs[0].ulValueLen == sizeof(CK_KEY_TYPE));
-		CPPUNIT_ASSERT(wrapAttribs[1].type == CKA_PUBLIC_EXPONENT);
-		CPPUNIT_ASSERT(wrapAttribs[1].ulValueLen == sizeof(pE));
-	}
-	else
-	{
-		CPPUNIT_ASSERT(wrapAttribs[0].type == CKA_PUBLIC_EXPONENT);
-		CPPUNIT_ASSERT(wrapAttribs[0].ulValueLen == sizeof(pE));
-		CPPUNIT_ASSERT(wrapAttribs[1].type == CKA_KEY_TYPE);
-		CPPUNIT_ASSERT(wrapAttribs[1].ulValueLen == sizeof(CK_KEY_TYPE));
+		switch (wrapAttribs[i].type)
+		{
+			case CKA_KEY_TYPE:
+				CPPUNIT_ASSERT(wrapAttribs[i].ulValueLen == sizeof(CK_KEY_TYPE));
+				break;
+			case CKA_PUBLIC_EXPONENT:
+				CPPUNIT_ASSERT(wrapAttribs[i].ulValueLen == sizeof(pE));
+				break;
+			case CKA_ALLOWED_MECHANISMS:
+				CPPUNIT_ASSERT(wrapAttribs[i].ulValueLen == sizeof(allowedMechs));
+				break;
+			default:
+				CPPUNIT_ASSERT(false);
+		}
 	}
 
 	// Get values
 	wrapAttribs[0].pValue = (CK_VOID_PTR)malloc(wrapAttribs[0].ulValueLen);
 	wrapAttribs[1].pValue = (CK_VOID_PTR)malloc(wrapAttribs[1].ulValueLen);
+	wrapAttribs[2].pValue = (CK_VOID_PTR)malloc(wrapAttribs[2].ulValueLen);
 	rv = CRYPTOKI_F_PTR( C_GetAttributeValue(hSession, hObject, &wrapAttrib, 1) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
-	if (wrapAttribs[0].type == CKA_KEY_TYPE)
+	for (size_t i = 0; i < 3; i++)
 	{
-		CK_KEY_TYPE kt = *(CK_KEY_TYPE*) wrapAttribs[0].pValue;
-		CPPUNIT_ASSERT(kt == CKK_SHA256_HMAC);
-		CPPUNIT_ASSERT(memcmp(wrapAttribs[1].pValue, pE, sizeof(pE)) == 0);
-	}
-	else
-	{
-		CPPUNIT_ASSERT(memcmp(wrapAttribs[0].pValue, pE, sizeof(pE)) == 0);
-		CK_KEY_TYPE kt = *(CK_KEY_TYPE*) wrapAttribs[1].pValue;
-		CPPUNIT_ASSERT(kt == CKK_SHA256_HMAC);
-
+		switch (wrapAttribs[i].type)
+		{
+			case CKA_KEY_TYPE:
+				CPPUNIT_ASSERT(*(CK_KEY_TYPE*) wrapAttribs[i].pValue == CKK_SHA256_HMAC);
+				break;
+			case CKA_PUBLIC_EXPONENT:
+				CPPUNIT_ASSERT(memcmp(wrapAttribs[i].pValue, pE, sizeof(pE)) == 0);
+				break;
+			case CKA_ALLOWED_MECHANISMS:
+				CPPUNIT_ASSERT(memcmp(wrapAttribs[i].pValue, allowedMechs, sizeof(allowedMechs)) == 0);
+				break;
+			default:
+				CPPUNIT_ASSERT(false);
+		}
 	}
 
 	free(wrapAttribs[0].pValue);
 	free(wrapAttribs[1].pValue);
+	free(wrapAttribs[2].pValue);
 }
 
 void ObjectTests::testCreateSecretKey()
