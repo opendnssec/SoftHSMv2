@@ -113,6 +113,7 @@ void usage()
 	printf("  -v                Show version info.\n");
 	printf("  --version         Show version info.\n");
 	printf("Options:\n");
+	printf("  --aes             Used to tell import to use file as is and import it as AES.\n");
 	printf("  --file-pin <PIN>  Supply a PIN if the file is encrypted.\n");
 	printf("  --force           Used to override a warning.\n");
 	printf("  --free            Use the first free/uninitialized token.\n");
@@ -148,7 +149,8 @@ enum {
 	OPT_SLOT,
 	OPT_SO_PIN,
 	OPT_TOKEN,
-	OPT_VERSION
+	OPT_VERSION,
+	OPT_AES
 };
 
 // Text representation of the long options
@@ -171,6 +173,7 @@ static const struct option long_options[] = {
 	{ "so-pin",          1, NULL, OPT_SO_PIN },
 	{ "token",           1, NULL, OPT_TOKEN },
 	{ "version",         0, NULL, OPT_VERSION },
+	{ "aes",             0, NULL, OPT_AES },
 	{ NULL,              0, NULL, 0 }
 };
 
@@ -196,6 +199,7 @@ int main(int argc, char* argv[])
 	int forceExec = 0;
 	bool freeToken = false;
 	int noPublicKey = 0;
+	bool importAES = false;
 
 	int doInitToken = 0;
 	int doShowSlots = 0;
@@ -228,6 +232,9 @@ int main(int argc, char* argv[])
 				action++;
 				inPath = optarg;
 				needP11 = true;
+				break;
+			case OPT_AES:
+				importAES = true;
 				break;
 			case OPT_DELETE_TOKEN:
 				doDeleteToken = 1;
@@ -338,8 +345,8 @@ int main(int argc, char* argv[])
 		rv = findSlot(slot, serial, token, slotID);
 		if (!rv)
 		{
-			rv = importKeyPair(inPath, filePIN, slotID, userPIN, label, objectID,
-						forceExec, noPublicKey);
+			rv = importAES ? importSecretKey(inPath, slotID, userPIN, label, objectID)
+					: importKeyPair(inPath, filePIN, slotID, userPIN, label, objectID, forceExec, noPublicKey);
 		}
 	}
 
@@ -1073,6 +1080,76 @@ int importKeyPair
 	crypto_final();
 
 	free(objID);
+
+	return result;
+}
+
+// Import a secret key from given path
+int importSecretKey(char* filePath, CK_SLOT_ID slotID, char* userPIN, char* label, char* objectID)
+{
+	char user_pin_copy[MAX_PIN_LEN+1];
+
+	if (label == NULL)
+	{
+		fprintf(stderr, "ERROR: A label for the object must be supplied. "
+				"Use --label <text>\n");
+		return 1;
+	}
+
+	if (objectID == NULL)
+	{
+		fprintf(stderr, "ERROR: An ID for the object must be supplied. "
+				"Use --id <hex>\n");
+		return 1;
+	}
+
+	size_t objIDLen = 0;
+	char* objID = hexStrToBin(objectID, strlen(objectID), &objIDLen);
+	if (objID == NULL)
+	{
+		fprintf(stderr, "Please edit --id <hex> to correct error.\n");
+		return 1;
+	}
+
+	// Get the password
+	if (getPW(userPIN, user_pin_copy, CKU_USER) != 0)
+	{
+		fprintf(stderr, "ERROR: Could not get user PIN\n");
+		return 1;
+	}
+
+	CK_SESSION_HANDLE hSession;
+	CK_RV rv = p11->C_OpenSession(slotID, CKF_SERIAL_SESSION | CKF_RW_SESSION,
+					NULL_PTR, NULL_PTR, &hSession);
+	if (rv != CKR_OK)
+	{
+		if (rv == CKR_SLOT_ID_INVALID)
+		{
+			fprintf(stderr, "ERROR: The given slot does not exist.\n");
+		}
+		else
+		{
+			fprintf(stderr, "ERROR: Could not open a session on the given slot.\n");
+		}
+		return 1;
+	}
+
+	rv = p11->C_Login(hSession, CKU_USER, (CK_UTF8CHAR_PTR)user_pin_copy, strlen(user_pin_copy));
+	if (rv != CKR_OK)
+	{
+		if (rv == CKR_PIN_INCORRECT) {
+			fprintf(stderr, "ERROR: The given user PIN does not match the one in the token.\n");
+		}
+		else
+		{
+			fprintf(stderr, "ERROR: Could not log in on the token.\n");
+		}
+		return 1;
+	}
+
+	crypto_init();
+	int result = crypto_import_aes_key(hSession, filePath, label, objID, objIDLen);
+	crypto_final();
 
 	return result;
 }
