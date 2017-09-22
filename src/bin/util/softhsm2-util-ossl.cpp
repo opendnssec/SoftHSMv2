@@ -75,7 +75,9 @@ int crypto_import_aes_key
 (
 	CK_SESSION_HANDLE hSession,
 	char* filePath,
-	char* label
+	char* label,
+	char* objID,
+	size_t objIDLen
 )
 {
 	const size_t cMaxAesKeySize = 1024 + 1; // including null-character
@@ -101,6 +103,7 @@ int crypto_import_aes_key
 		{ CKA_CLASS,            &keyClass,    sizeof(keyClass) },
 		{ CKA_KEY_TYPE,         &keyType,     sizeof(keyType) },
 		{ CKA_LABEL,            label,        strlen(label) },
+		{ CKA_ID,               objID,        objIDLen },
 		{ CKA_TOKEN,            &ckTrue,      sizeof(ckTrue) },
 		{ CKA_ENCRYPT,          &ckTrue,      sizeof(ckTrue) },
 		{ CKA_DECRYPT,          &ckTrue,      sizeof(ckTrue) },
@@ -109,7 +112,7 @@ int crypto_import_aes_key
 	};
 
 	CK_OBJECT_HANDLE hKey;
-	CK_RV rv = p11->C_CreateObject(hSession, keyTemplate, 8, &hKey);
+	CK_RV rv = p11->C_CreateObject(hSession, keyTemplate, 9, &hKey);
 	if (rv != CKR_OK)
 	{
 		fprintf(stderr, "ERROR: Could not save the secret key in the token. "

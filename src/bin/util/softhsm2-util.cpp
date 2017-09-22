@@ -345,7 +345,7 @@ int main(int argc, char* argv[])
 		rv = findSlot(slot, serial, token, slotID);
 		if (!rv)
 		{
-			rv = importAES ? importSecretKey(inPath, slotID, userPIN, label)
+			rv = importAES ? importSecretKey(inPath, slotID, userPIN, label, objectID)
 					: importKeyPair(inPath, filePIN, slotID, userPIN, label, objectID, forceExec, noPublicKey);
 		}
 	}
@@ -1085,7 +1085,7 @@ int importKeyPair
 }
 
 // Import a secret key from given path
-int importSecretKey(char* filePath, CK_SLOT_ID slotID, char* userPIN, char* label)
+int importSecretKey(char* filePath, CK_SLOT_ID slotID, char* userPIN, char* label, char* objectID)
 {
 	char user_pin_copy[MAX_PIN_LEN+1];
 
@@ -1093,6 +1093,21 @@ int importSecretKey(char* filePath, CK_SLOT_ID slotID, char* userPIN, char* labe
 	{
 		fprintf(stderr, "ERROR: A label for the object must be supplied. "
 				"Use --label <text>\n");
+		return 1;
+	}
+
+	if (objectID == NULL)
+	{
+		fprintf(stderr, "ERROR: An ID for the object must be supplied. "
+				"Use --id <hex>\n");
+		return 1;
+	}
+
+	size_t objIDLen = 0;
+	char* objID = hexStrToBin(objectID, strlen(objectID), &objIDLen);
+	if (objID == NULL)
+	{
+		fprintf(stderr, "Please edit --id <hex> to correct error.\n");
 		return 1;
 	}
 
@@ -1133,7 +1148,7 @@ int importSecretKey(char* filePath, CK_SLOT_ID slotID, char* userPIN, char* labe
 	}
 
 	crypto_init();
-	int result = crypto_import_aes_key(hSession, filePath, label);
+	int result = crypto_import_aes_key(hSession, filePath, label, objID, objIDLen);
 	crypto_final();
 
 	return result;
