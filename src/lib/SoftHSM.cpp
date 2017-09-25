@@ -5415,6 +5415,11 @@ CK_RV SoftHSM::C_GenerateKey(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMecha
 			objClass = CKO_SECRET_KEY;
 			keyType = CKK_SHA512_HMAC;
 			break;
+		case CKM_GENERIC_SECRET_KEY_GEN:
+			objClass = CKO_SECRET_KEY;
+			keyType = CKK_GENERIC_SECRET;
+			break;
+
 		default:
 			return CKR_MECHANISM_INVALID;
 	}
@@ -5451,13 +5456,13 @@ CK_RV SoftHSM::C_GenerateKey(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMecha
 		(objClass != CKO_SECRET_KEY || !(keyType == CKK_SHA256_HMAC || keyType == CKK_GENERIC_SECRET)))
 		return CKR_TEMPLATE_INCONSISTENT;
 	if ((pMechanism->mechanism == CKM_SHA224_HMAC || pMechanism->mechanism == CKM_SHA224_HMAC_GENERAL) &&
-		(objClass != CKO_SECRET_KEY || !(keyType == CKK_SHA224_HMAC /*|| keyType == CKK_GENERIC_SECRET*/)))
+		(objClass != CKO_SECRET_KEY || !(keyType == CKK_SHA224_HMAC || keyType == CKK_GENERIC_SECRET)))
 		return CKR_TEMPLATE_INCONSISTENT;
 	if ((pMechanism->mechanism == CKM_SHA384_HMAC || pMechanism->mechanism == CKM_SHA384_HMAC_GENERAL) &&
-		(objClass != CKO_SECRET_KEY || !(keyType == CKK_SHA384_HMAC /*|| keyType == CKK_GENERIC_SECRET*/)))
+		(objClass != CKO_SECRET_KEY || !(keyType == CKK_SHA384_HMAC || keyType == CKK_GENERIC_SECRET)))
 		return CKR_TEMPLATE_INCONSISTENT;
 	if ((pMechanism->mechanism == CKM_SHA512_HMAC || pMechanism->mechanism == CKM_SHA512_HMAC_GENERAL) &&
-		(objClass != CKO_SECRET_KEY || !(keyType == CKK_SHA512_HMAC /*|| keyType == CKK_GENERIC_SECRET*/)))
+		(objClass != CKO_SECRET_KEY || !(keyType == CKK_SHA512_HMAC || keyType == CKK_GENERIC_SECRET)))
 		return CKR_TEMPLATE_INCONSISTENT;
 
 	// Check authorization
@@ -5493,6 +5498,7 @@ CK_RV SoftHSM::C_GenerateKey(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMecha
 	case CKM_SHA384_HMAC_GENERAL:
 	case CKM_SHA512_HMAC:
 	case CKM_SHA512_HMAC_GENERAL:
+	case CKM_GENERIC_SECRET_KEY_GEN:
 		return this->generateHmacKey(hSession, pTemplate, ulCount, phKey, isOnToken, isPrivate);
 	}
 
