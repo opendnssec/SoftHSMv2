@@ -5399,6 +5399,22 @@ CK_RV SoftHSM::C_GenerateKey(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMecha
 			objClass = CKO_SECRET_KEY;
 			keyType = CKK_AES;
 			break;
+		case CKM_SHA256_HMAC:
+			objClass = CKO_SECRET_KEY;
+			keyType = CKK_SHA256_HMAC;
+			break;
+		case CKM_SHA224_HMAC:
+			objClass = CKO_SECRET_KEY;
+			keyType = CKK_SHA224_HMAC;
+			break;
+		case CKM_SHA384_HMAC:
+			objClass = CKO_SECRET_KEY;
+			keyType = CKK_SHA384_HMAC;
+			break;
+		case CKM_SHA512_HMAC:
+			objClass = CKO_SECRET_KEY;
+			keyType = CKK_SHA512_HMAC;
+			break;
 		default:
 			return CKR_MECHANISM_INVALID;
 	}
@@ -5431,6 +5447,18 @@ CK_RV SoftHSM::C_GenerateKey(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMecha
 	if (pMechanism->mechanism == CKM_AES_KEY_GEN &&
 	    (objClass != CKO_SECRET_KEY || keyType != CKK_AES))
 		return CKR_TEMPLATE_INCONSISTENT;
+	if ((pMechanism->mechanism == CKM_SHA256_HMAC || pMechanism->mechanism == CKM_SHA256_HMAC_GENERAL) &&
+		(objClass != CKO_SECRET_KEY || !(keyType == CKK_SHA256_HMAC || keyType == CKK_GENERIC_SECRET)))
+		return CKR_TEMPLATE_INCONSISTENT;
+	if ((pMechanism->mechanism == CKM_SHA224_HMAC || pMechanism->mechanism == CKM_SHA224_HMAC_GENERAL) &&
+		(objClass != CKO_SECRET_KEY || !(keyType == CKK_SHA224_HMAC /*|| keyType == CKK_GENERIC_SECRET*/)))
+		return CKR_TEMPLATE_INCONSISTENT;
+	if ((pMechanism->mechanism == CKM_SHA384_HMAC || pMechanism->mechanism == CKM_SHA384_HMAC_GENERAL) &&
+		(objClass != CKO_SECRET_KEY || !(keyType == CKK_SHA384_HMAC /*|| keyType == CKK_GENERIC_SECRET*/)))
+		return CKR_TEMPLATE_INCONSISTENT;
+	if ((pMechanism->mechanism == CKM_SHA512_HMAC || pMechanism->mechanism == CKM_SHA512_HMAC_GENERAL) &&
+		(objClass != CKO_SECRET_KEY || !(keyType == CKK_SHA512_HMAC /*|| keyType == CKK_GENERIC_SECRET*/)))
+		return CKR_TEMPLATE_INCONSISTENT;
 
 	// Check authorization
 	CK_RV rv = haveWrite(session->getState(), isOnToken, isPrivate);
@@ -5444,41 +5472,30 @@ CK_RV SoftHSM::C_GenerateKey(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMecha
 		return rv;
 	}
 
-	// Generate DSA domain parameters
-	if (pMechanism->mechanism == CKM_DSA_PARAMETER_GEN)
-	{
+	switch(pMechanism->mechanism) {
+	case CKM_DSA_PARAMETER_GEN:
 		return this->generateDSAParameters(hSession, pTemplate, ulCount, phKey, isOnToken, isPrivate);
-	}
-
-	// Generate DH domain parameters
-	if (pMechanism->mechanism == CKM_DH_PKCS_PARAMETER_GEN)
-	{
+	case CKM_DH_PKCS_PARAMETER_GEN:
 		return this->generateDHParameters(hSession, pTemplate, ulCount, phKey, isOnToken, isPrivate);
-	}
-
-	// Generate DES secret key
-	if (pMechanism->mechanism == CKM_DES_KEY_GEN)
-	{
+	case CKM_DES_KEY_GEN:
 		return this->generateDES(hSession, pTemplate, ulCount, phKey, isOnToken, isPrivate);
-	}
-
-	// Generate DES2 secret key
-	if (pMechanism->mechanism == CKM_DES2_KEY_GEN)
-	{
+	case CKM_DES2_KEY_GEN:
 		return this->generateDES2(hSession, pTemplate, ulCount, phKey, isOnToken, isPrivate);
-	}
-
-	// Generate DES3 secret key
-	if (pMechanism->mechanism == CKM_DES3_KEY_GEN)
-	{
+	case CKM_DES3_KEY_GEN:
 		return this->generateDES3(hSession, pTemplate, ulCount, phKey, isOnToken, isPrivate);
+	case CKM_AES_KEY_GEN:
+		return this->generateAES(hSession, pTemplate, ulCount, phKey, isOnToken, isPrivate);
+	case CKM_SHA256_HMAC:
+	case CKM_SHA256_HMAC_GENERAL:
+	case CKM_SHA224_HMAC:
+	case CKM_SHA224_HMAC_GENERAL:
+	case CKM_SHA384_HMAC:
+	case CKM_SHA384_HMAC_GENERAL:
+	case CKM_SHA512_HMAC:
+	case CKM_SHA512_HMAC_GENERAL:
+		return this->generateHmacKey(hSession, pTemplate, ulCount, phKey, isOnToken, isPrivate);
 	}
 
-	// Generate AES secret key
-	if (pMechanism->mechanism == CKM_AES_KEY_GEN)
-	{
-		return this->generateAES(hSession, pTemplate, ulCount, phKey, isOnToken, isPrivate);
-	}
 
 	return CKR_GENERAL_ERROR;
 }
@@ -6705,6 +6722,163 @@ CK_RV SoftHSM::C_WaitForSlotEvent(CK_FLAGS /*flags*/, CK_SLOT_ID_PTR /*pSlot*/, 
 {
 	return CKR_FUNCTION_NOT_SUPPORTED;
 }
+
+CK_RV SoftHSM::generateHmacKey(
+		CK_SESSION_HANDLE hSession,
+		CK_ATTRIBUTE_PTR pTemplate,
+		CK_ULONG ulCount,
+		CK_OBJECT_HANDLE_PTR phKey,
+		CK_BBOOL isOnToken,
+		CK_BBOOL isPrivate)
+{
+	*phKey = CK_INVALID_HANDLE;
+
+	// Get the session
+	Session* session = (Session*) handleManager->getSession(hSession);
+	if (session == NULL)
+		return CKR_SESSION_HANDLE_INVALID;
+
+	// Get the token
+	Token* token = session->getToken();
+	if (token == NULL)
+		return CKR_GENERAL_ERROR;
+
+
+	size_t keyLen = 0;
+	bool checkValue = true;
+	for (CK_ULONG i = 0; i < ulCount; i++)
+	{
+		switch (pTemplate[i].type)
+		{
+			case CKA_VALUE_LEN:
+				if (pTemplate[i].ulValueLen != sizeof(CK_ULONG))
+				{
+					INFO_MSG("CKA_VALUE_LEN does not have the size of CK_ULONG");
+					return CKR_ATTRIBUTE_VALUE_INVALID;
+				}
+				keyLen = *(CK_ULONG*)pTemplate[i].pValue;
+				break;
+			case CKA_CHECK_VALUE:
+				if (pTemplate[i].ulValueLen > 0)
+				{
+					INFO_MSG("CKA_CHECK_VALUE must be a no-value (0 length) entry");
+					return CKR_ATTRIBUTE_VALUE_INVALID;
+				}
+				checkValue = false;
+				break;
+			default:
+				break;
+		}
+	}
+
+	// Generate the secret key
+	SymmetricKey key(keyLen * 8);
+	RNG* rng = CryptoFactory::i()->getRNG();
+	if (rng == NULL) {
+		ERROR_MSG("Could not get RNG");
+		return CKR_GENERAL_ERROR;
+	}
+	ByteString keyBits;
+	if (!rng->generateRandom(keyBits, key.getBitLen() / 8)) {
+		ERROR_MSG("Could not generate generic secret key");
+		return CKR_GENERAL_ERROR;
+	}
+	key.setKeyBits(keyBits);
+
+	CK_RV rv = CKR_OK;
+
+	// Create the secret key object using C_CreateObject
+	const CK_ULONG maxAttribs = 32;
+	CK_OBJECT_CLASS objClass = CKO_SECRET_KEY;
+	CK_ATTRIBUTE keyAttribs[maxAttribs] = {
+			{ CKA_CLASS, &objClass,	sizeof(objClass) },
+			{ CKA_TOKEN, &isOnToken, sizeof(isOnToken) },
+			{CKA_PRIVATE, &isPrivate, sizeof(isPrivate) },
+	};
+	CK_ULONG keyAttribsCount = 3;
+
+	// Add the additional
+	if (ulCount > (maxAttribs - keyAttribsCount))
+		rv = CKR_TEMPLATE_INCONSISTENT;
+	for (CK_ULONG i = 0; i < ulCount && rv == CKR_OK; ++i) {
+		switch (pTemplate[i].type) {
+		case CKA_CLASS:
+		case CKA_TOKEN:
+		case CKA_PRIVATE:
+			continue;
+		default:
+			keyAttribs[keyAttribsCount++] = pTemplate[i];
+		}
+	}
+
+	if (rv == CKR_OK)
+		rv = this->CreateObject(hSession, keyAttribs, keyAttribsCount, phKey,
+				OBJECT_OP_GENERATE);
+
+	// Store the attributes that are being supplied
+	if (rv == CKR_OK) {
+		OSObject* osobject = (OSObject*) handleManager->getObject(*phKey);
+		if (osobject == NULL_PTR || !osobject->isValid()) {
+			rv = CKR_FUNCTION_FAILED;
+		} else if (osobject->startTransaction()) {
+			bool bOK = true;
+
+			// Common Attributes
+			bOK = bOK && osobject->setAttribute(CKA_LOCAL, true);
+			CK_ULONG ulKeyGenMechanism = (CK_ULONG) CKM_GENERIC_SECRET_KEY_GEN;
+			bOK = bOK
+					&& osobject->setAttribute(CKA_KEY_GEN_MECHANISM,
+							ulKeyGenMechanism);
+
+			// Common Secret Key Attributes
+			bool bAlwaysSensitive = osobject->getBooleanValue(CKA_SENSITIVE,
+					false);
+			bOK = bOK
+					&& osobject->setAttribute(CKA_ALWAYS_SENSITIVE,
+							bAlwaysSensitive);
+			bool bNeverExtractable = osobject->getBooleanValue(CKA_EXTRACTABLE,
+					false) == false;
+			bOK = bOK
+					&& osobject->setAttribute(CKA_NEVER_EXTRACTABLE,
+							bNeverExtractable);
+
+			// DES Secret Key Attributes
+			ByteString value;
+			ByteString kcv;
+			if (isPrivate) {
+				token->encrypt(key.getKeyBits(), value);
+				token->encrypt(key.getKeyCheckValue(), kcv);
+			} else {
+				value = key.getKeyBits();
+				kcv = key.getKeyCheckValue();
+			}
+			bOK = bOK && osobject->setAttribute(CKA_VALUE, value);
+			if(checkValue)
+				bOK = bOK && osobject->setAttribute(CKA_CHECK_VALUE, kcv);
+
+			if (bOK)
+				bOK = osobject->commitTransaction();
+			else
+				osobject->abortTransaction();
+			if (!bOK)
+				rv = CKR_FUNCTION_FAILED;
+		} else
+			rv = CKR_FUNCTION_FAILED;
+	}
+	// Remove the key that may have been created already when the function fails.
+	if (rv != CKR_OK) {
+		if (*phKey != CK_INVALID_HANDLE) {
+			OSObject* oskey = (OSObject*) handleManager->getObject(*phKey);
+			handleManager->destroyObject(*phKey);
+			if (oskey)
+				oskey->destroyObject();
+			*phKey = CK_INVALID_HANDLE;
+		}
+	}
+	return rv;
+}
+
+
 
 // Generate an AES secret key
 CK_RV SoftHSM::generateAES
