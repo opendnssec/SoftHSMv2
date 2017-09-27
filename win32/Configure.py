@@ -39,6 +39,7 @@ testlist = ["botan",
             "gost",
             "ossl",
             "osslv",
+            "rawpss",
             "rfc3394",
             "rfc5649"]
 
@@ -69,6 +70,7 @@ condnames = ["BOTAN",
              "GOST",
              "NONPAGE",
              "OPENSSL",
+             "RAWPSS",
              "RFC3394",
              "RFC5649",
              "TESTS"]
@@ -682,6 +684,33 @@ int main() {\n\
                 if verbose:
                     print("Botan GNU MP is not supported")
 
+        # Botan raw PSS support
+        if verbose:
+            print("checking Botan raw PSS support")
+        testfile = open("testrawpss.cpp", "w")
+        print('\
+#include <botan/botan.h>\n\
+#include <botan/version.h>\n\
+int main() {\n\
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(2,3,0)\n\
+ return 0;\n\
+#endif\n\
+ return 1;\n\
+}', file=testfile)
+        testfile.close()
+        command = ["cl", "/nologo", "/MD", "/I", inc, "testrawpss.cpp", lib]
+        command.extend(system_libs)
+        subprocess.check_output(command, stderr=subprocess.STDOUT)
+        if not os.path.exists(".\\testrawpss.exe"):
+            if verbose:
+                print("can't create .\\testrawpss.exe", file=sys.stderr)
+        else:
+            if subprocess.call(".\\testrawpss.exe") != 0:
+                if verbose:
+                    print("can't find raw PSS: upgrade to Botan >= 2.3.0", file=sys.stderr)
+            else:
+                condvals["RAWPSS"] = True
+
     else:
 
         condvals["OPENSSL"] = True
@@ -908,6 +937,9 @@ int main() {\n\
         else:
             if verbose:
                 print("can't compile OpenSSL RFC 5649")
+
+        # no check for OpenSSL raw PSS support
+        condvals["RAWPSS"] = True
 
     # configure CppUnit
     if want_tests:

@@ -195,6 +195,44 @@ void SignVerifyTests::signVerifySingle(CK_MECHANISM_TYPE mechanismType, CK_SESSI
 	CPPUNIT_ASSERT(rv==CKR_SIGNATURE_INVALID);
 }
 
+void SignVerifyTests::signVerifySingleData(size_t dataSize, CK_MECHANISM_TYPE mechanismType, CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hPublicKey, CK_OBJECT_HANDLE hPrivateKey, CK_VOID_PTR param /* = NULL_PTR */, CK_ULONG paramLen /* = 0 */)
+{
+	CK_RV rv;
+	CK_MECHANISM mechanism = { mechanismType, param, paramLen };
+	CK_BYTE *data = (CK_BYTE*)malloc(dataSize);
+	CK_BYTE signature[1024];
+	CK_ULONG ulSignatureLen = 0;
+	unsigned i;
+
+	CPPUNIT_ASSERT(data != NULL);
+
+	for (i=0;i<dataSize;i++)
+		data[i] = i;
+
+	rv = CRYPTOKI_F_PTR( C_SignInit(hSession,&mechanism,hPrivateKey) );
+	CPPUNIT_ASSERT(rv==CKR_OK);
+
+	ulSignatureLen = sizeof(signature);
+	rv = CRYPTOKI_F_PTR( C_Sign(hSession,data,dataSize,signature,&ulSignatureLen) );
+	CPPUNIT_ASSERT(rv==CKR_OK);
+
+	rv = CRYPTOKI_F_PTR( C_VerifyInit(hSession,&mechanism,hPublicKey) );
+	CPPUNIT_ASSERT(rv==CKR_OK);
+
+	rv = CRYPTOKI_F_PTR( C_Verify(hSession,data,dataSize,signature,ulSignatureLen) );
+	CPPUNIT_ASSERT(rv==CKR_OK);
+
+	// verify again, but now change the input that is being signed.
+	rv = CRYPTOKI_F_PTR( C_VerifyInit(hSession,&mechanism,hPublicKey) );
+	CPPUNIT_ASSERT(rv==CKR_OK);
+
+	data[0] = 0xff;
+	rv = CRYPTOKI_F_PTR( C_Verify(hSession,data,dataSize,signature,ulSignatureLen) );
+	CPPUNIT_ASSERT(rv==CKR_SIGNATURE_INVALID);
+
+	free(data);
+}
+
 void SignVerifyTests::signVerifyMulti(CK_MECHANISM_TYPE mechanismType, CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hPublicKey, CK_OBJECT_HANDLE hPrivateKey, CK_VOID_PTR param /* = NULL_PTR */, CK_ULONG paramLen /* = 0 */)
 {
 	CK_RV rv;
@@ -287,6 +325,15 @@ void SignVerifyTests::testRsaSignVerify()
 	signVerifyMulti(CKM_SHA256_RSA_PKCS, hSessionRO, hPuk,hPrk);
 	signVerifyMulti(CKM_SHA384_RSA_PKCS, hSessionRO, hPuk,hPrk);
 	signVerifyMulti(CKM_SHA512_RSA_PKCS, hSessionRO, hPuk,hPrk);
+
+#ifdef WITH_RAW_PSS
+	signVerifySingleData(20, CKM_RSA_PKCS_PSS, hSessionRO, hPuk,hPrk, &params[0], sizeof(params[0]));
+	signVerifySingleData(28, CKM_RSA_PKCS_PSS, hSessionRO, hPuk,hPrk, &params[1], sizeof(params[1]));
+	signVerifySingleData(32, CKM_RSA_PKCS_PSS, hSessionRO, hPuk,hPrk, &params[2], sizeof(params[2]));
+	signVerifySingleData(48, CKM_RSA_PKCS_PSS, hSessionRO, hPuk,hPrk, &params[3], sizeof(params[3]));
+	signVerifySingleData(64, CKM_RSA_PKCS_PSS, hSessionRO, hPuk,hPrk, &params[4], sizeof(params[4]));
+#endif
+
 	signVerifyMulti(CKM_SHA1_RSA_PKCS_PSS, hSessionRO, hPuk,hPrk, &params[0], sizeof(params[0]));
 	signVerifyMulti(CKM_SHA224_RSA_PKCS_PSS, hSessionRO, hPuk,hPrk, &params[1], sizeof(params[1]));
 	signVerifyMulti(CKM_SHA256_RSA_PKCS_PSS, hSessionRO, hPuk,hPrk, &params[2], sizeof(params[2]));

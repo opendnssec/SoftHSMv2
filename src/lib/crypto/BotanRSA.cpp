@@ -72,6 +72,15 @@ bool BotanRSA::sign(PrivateKey* privateKey, const ByteString& dataToSign,
 		case AsymMech::RSA_PKCS:
 			emsa = "EMSA3(Raw)";
 			break;
+#ifdef WITH_RAW_PSS
+		case AsymMech::RSA_PKCS_PSS:
+			emsa = getCipherRawPss(privateKey->getBitLength(), dataToSign.size(), param, paramLen);
+			if (emsa == "")
+			{
+				return false;
+			}
+			break;
+#endif
 		default:
 			// Call default implementation
 			return AsymmetricAlgorithm::sign(privateKey, dataToSign, signature, mechanism, param, paramLen);
@@ -436,6 +445,15 @@ bool BotanRSA::verify(PublicKey* publicKey, const ByteString& originalData,
 		case AsymMech::RSA_PKCS:
 			emsa = "EMSA3(Raw)";
 			break;
+#ifdef WITH_RAW_PSS
+		case AsymMech::RSA_PKCS_PSS:
+			emsa = getCipherRawPss(publicKey->getBitLength(), originalData.size(), param, paramLen);
+			if (emsa == "")
+			{
+				return false;
+			}
+			break;
+#endif
 		default:
 			// Call the generic function
 			return AsymmetricAlgorithm::verify(publicKey, originalData, signature, mechanism, param, paramLen);
@@ -1142,3 +1160,60 @@ bool BotanRSA::reconstructParameters(AsymmetricParameters** ppParams, ByteString
 	return true;
 }
 
+#ifdef WITH_RAW_PSS
+std::string BotanRSA::getCipherRawPss(size_t bitLength, size_t dataSize, const void* param, const size_t paramLen)
+{
+	if (param == NULL || paramLen != sizeof(RSA_PKCS_PSS_PARAMS))
+	{
+		ERROR_MSG("Invalid parameters");
+		return "";
+	}
+
+	std::string hashStr = "";
+	size_t allowedLen = 0;
+	switch (((RSA_PKCS_PSS_PARAMS*) param)->hashAlg)
+	{
+		case HashAlgo::SHA1:
+			hashStr = "SHA-160";
+			allowedLen = 20;
+			break;
+		case HashAlgo::SHA224:
+			hashStr = "SHA-224";
+			allowedLen = 28;
+			break;
+		case HashAlgo::SHA256:
+			hashStr = "SHA-256";
+			allowedLen = 32;
+			break;
+		case HashAlgo::SHA384:
+			hashStr = "SHA-384";
+			allowedLen = 48;
+			break;
+		case HashAlgo::SHA512:
+			hashStr = "SHA-512";
+			allowedLen = 64;
+			break;
+		default:
+			ERROR_MSG("Invalid hash parameter");
+			return "";
+	}
+
+	if (dataSize != allowedLen)
+	{
+		ERROR_MSG("Data to sign does not match expected (%d) for RSA PSS", (int)allowedLen);
+		return "";
+	}
+
+	size_t sLen = ((RSA_PKCS_PSS_PARAMS*) param)->sLen;
+	if (sLen > ((bitLength+6)/8-2-20))
+	{
+		ERROR_MSG("sLen (%lu) is too large for current key size (%lu)",
+			  (unsigned long)sLen, bitLength);
+		return "";
+	}
+
+	std::ostringstream request;
+	request << "PSSR_Raw(" << hashStr << ",MGF1," << sLen << ")";
+	return request.str();
+}
+#endif

@@ -70,6 +70,13 @@ bool Attribute::isBinary() const
 }
 
 template<>
+bool Attribute::isMechSet() const
+{
+	// Mechanism sets are stored as binary in the database
+	return false;
+}
+
+template<>
 void Attribute::dumpType() const
 {
 	if (sizeof(type) == 4)

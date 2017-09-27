@@ -47,7 +47,9 @@ bool rmdir(std::string path);
 bool rm(std::string path);
 int showSlots();
 int importKeyPair(char* filePath, char* filePIN, CK_SLOT_ID slotID, char* userPIN, char* objectLabel, char* objectID, int forceExec, int noPublicKey);
+int importSecretKey(char* filePath, CK_SLOT_ID slotID, char* userPIN, char* label, char* objectID);
 int crypto_import_key_pair(CK_SESSION_HANDLE hSession, char* filePath, char* filePIN, char* label, char* objID, size_t objIDLen, int noPublicKey);
+int crypto_import_aes_key(CK_SESSION_HANDLE hSession, char* filePath, char* label, char* objID, size_t objIDLen);
 
 // Support functions
 

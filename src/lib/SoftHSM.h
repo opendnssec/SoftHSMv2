@@ -203,6 +203,16 @@ private:
 	CK_RV MacVerifyInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechanism, CK_OBJECT_HANDLE hKey);
 	CK_RV AsymVerifyInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechanism, CK_OBJECT_HANDLE hKey);
 
+	// Generate generic Key
+	CK_RV generateHmacKey
+	(
+		CK_SESSION_HANDLE hSession,
+		CK_ATTRIBUTE_PTR pTemplate,
+		CK_ULONG ulCount,
+		CK_OBJECT_HANDLE_PTR phKey,
+		CK_BBOOL isOnToken,
+		CK_BBOOL isPrivate
+	);
 	// Key generation
 	CK_RV generateDES
 	(
@@ -430,5 +440,7 @@ private:
 	);
 
 	CK_RV MechParamCheckRSAPKCSOAEP(CK_MECHANISM_PTR pMechanism);
+
+	static bool isMechanismPermitted(OSObject* key, CK_MECHANISM_PTR pMechanism);
 };
 

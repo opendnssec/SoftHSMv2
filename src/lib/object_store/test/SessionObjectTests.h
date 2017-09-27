@@ -41,7 +41,8 @@ class SessionObjectTests : public CppUnit::TestFixture
 	CPPUNIT_TEST(testBoolAttr);
 	CPPUNIT_TEST(testULongAttr);
 	CPPUNIT_TEST(testByteStrAttr);
-	CPPUNIT_TEST(testArrayAttr);
+	CPPUNIT_TEST(testMechTypeSetAttr);
+	CPPUNIT_TEST(testAttrMapAttr);
 	CPPUNIT_TEST(testMixedAttr);
 	CPPUNIT_TEST(testDoubleAttr);
 	CPPUNIT_TEST(testCloseSession);
@@ -52,7 +53,8 @@ public:
 	void testBoolAttr();
 	void testULongAttr();
 	void testByteStrAttr();
-	void testArrayAttr();
+	void testMechTypeSetAttr();
+	void testAttrMapAttr();
 	void testMixedAttr();
 	void testDoubleAttr();
 	void testCloseSession();

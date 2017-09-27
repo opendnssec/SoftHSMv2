@@ -396,6 +396,33 @@ void RSATests::testSigningVerifying()
 			// Verify the signature
 			CPPUNIT_ASSERT(rsa->verify(kp->getPublicKey(), dataToSign, signature, AsymMech::RSA));
 
+#ifdef WITH_RAW_PSS
+			// Test raw (SHA1) PKCS PSS signing
+			CPPUNIT_ASSERT(rng->generateRandom(dataToSign, 20));
+			CPPUNIT_ASSERT(rsa->sign(kp->getPrivateKey(), dataToSign, signature, AsymMech::RSA_PKCS_PSS, &pssParams[0], sizeof(pssParams[0])));
+			CPPUNIT_ASSERT(rsa->verify(kp->getPublicKey(), dataToSign, signature, AsymMech::RSA_PKCS_PSS, &pssParams[0], sizeof(pssParams[0])));
+
+			// Test raw (SHA224) PKCS PSS signing
+			CPPUNIT_ASSERT(rng->generateRandom(dataToSign, 28));
+			CPPUNIT_ASSERT(rsa->sign(kp->getPrivateKey(), dataToSign, signature, AsymMech::RSA_PKCS_PSS, &pssParams[1], sizeof(pssParams[1])));
+			CPPUNIT_ASSERT(rsa->verify(kp->getPublicKey(), dataToSign, signature, AsymMech::RSA_PKCS_PSS, &pssParams[1], sizeof(pssParams[1])));
+
+			// Test raw (SHA256) PKCS PSS signing
+			CPPUNIT_ASSERT(rng->generateRandom(dataToSign, 32));
+			CPPUNIT_ASSERT(rsa->sign(kp->getPrivateKey(), dataToSign, signature, AsymMech::RSA_PKCS_PSS, &pssParams[2], sizeof(pssParams[2])));
+			CPPUNIT_ASSERT(rsa->verify(kp->getPublicKey(), dataToSign, signature, AsymMech::RSA_PKCS_PSS, &pssParams[2], sizeof(pssParams[2])));
+
+			// Test raw (SHA384) PKCS PSS signing
+			CPPUNIT_ASSERT(rng->generateRandom(dataToSign, 48));
+			CPPUNIT_ASSERT(rsa->sign(kp->getPrivateKey(), dataToSign, signature, AsymMech::RSA_PKCS_PSS, &pssParams[3], sizeof(pssParams[3])));
+			CPPUNIT_ASSERT(rsa->verify(kp->getPublicKey(), dataToSign, signature, AsymMech::RSA_PKCS_PSS, &pssParams[3], sizeof(pssParams[3])));
+
+			// Test raw (SHA512) PKCS PSS signing
+			CPPUNIT_ASSERT(rng->generateRandom(dataToSign, 64));
+			CPPUNIT_ASSERT(rsa->sign(kp->getPrivateKey(), dataToSign, signature, AsymMech::RSA_PKCS_PSS, &pssParams[4], sizeof(pssParams[4])));
+			CPPUNIT_ASSERT(rsa->verify(kp->getPublicKey(), dataToSign, signature, AsymMech::RSA_PKCS_PSS, &pssParams[4], sizeof(pssParams[4])));
+#endif
+
 			rsa->recycleKeyPair(kp);
 		}
 	}
