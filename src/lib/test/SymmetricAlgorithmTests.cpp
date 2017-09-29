@@ -186,6 +186,24 @@ void SymmetricAlgorithmTests::encryptDecrypt(
 			0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01
 		}
 	};
+	CK_BYTE gcmIV[] = {
+		0xCA, 0xFE, 0xBA, 0xBE, 0xFA, 0xCE,
+		0xDB, 0xAD, 0xDE, 0xCA, 0xF8, 0x88
+	};
+	CK_BYTE gcmAAD[] = {
+		0xFE, 0xED, 0xFA, 0xCE, 0xDE, 0xAD, 0xBE, 0xEF,
+		0xFE, 0xED, 0xFA, 0xCE, 0xDE, 0xAD, 0xBE, 0xEF,
+		0xAB, 0xAD, 0xDA, 0xD2
+	};
+	CK_GCM_PARAMS gcmParams =
+	{
+		&gcmIV[0],
+		sizeof(gcmIV),
+		sizeof(gcmIV)*8,
+		&gcmAAD[0],
+		sizeof(gcmAAD),
+		16*8
+	};
 
 	switch (mechanismType)
 	{
@@ -201,6 +219,10 @@ void SymmetricAlgorithmTests::encryptDecrypt(
 		case CKM_AES_CTR:
 			pMechanism->pParameter = &ctrParams;
 			pMechanism->ulParameterLen = sizeof(ctrParams);
+			break;
+		case CKM_AES_GCM:
+			pMechanism->pParameter = &gcmParams;
+			pMechanism->ulParameterLen = sizeof(gcmParams);
 			break;
 		default:
 			break;
@@ -563,6 +585,11 @@ void SymmetricAlgorithmTests::testAesEncryptDecrypt()
 	encryptDecrypt(CKM_AES_CTR,blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST-1);
 	encryptDecrypt(CKM_AES_CTR,blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST+1);
 	encryptDecrypt(CKM_AES_CTR,blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST);
+#ifdef WITH_AES_GCM
+	encryptDecrypt(CKM_AES_GCM,blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST-1);
+	encryptDecrypt(CKM_AES_GCM,blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST+1);
+	encryptDecrypt(CKM_AES_GCM,blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST);
+#endif
 }
 
 void SymmetricAlgorithmTests::testAesWrapUnwrap()

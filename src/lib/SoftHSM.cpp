@@ -643,6 +643,9 @@ CK_RV SoftHSM::C_GetMechanismList(CK_SLOT_ID slotID, CK_MECHANISM_TYPE_PTR pMech
 #ifdef WITH_RAW_PSS
 	nrSupportedMechanisms += 1; // CKM_RSA_PKCS_PSS
 #endif
+#ifdef WITH_AES_GCM
+	nrSupportedMechanisms += 1;
+#endif
 
 	CK_MECHANISM_TYPE supportedMechanisms[] =
 	{
@@ -704,6 +707,9 @@ CK_RV SoftHSM::C_GetMechanismList(CK_SLOT_ID slotID, CK_MECHANISM_TYPE_PTR pMech
 		CKM_AES_CBC,
 		CKM_AES_CBC_PAD,
 		CKM_AES_CTR,
+#ifdef WITH_AES_GCM
+		CKM_AES_GCM,
+#endif
 		CKM_AES_KEY_WRAP,
 #ifdef HAVE_AES_KEY_WRAP_PAD
 		CKM_AES_KEY_WRAP_PAD,
@@ -980,6 +986,9 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 		case CKM_AES_CBC:
 		case CKM_AES_CBC_PAD:
 		case CKM_AES_CTR:
+#ifdef WITH_AES_GCM
+		case CKM_AES_GCM:
+#endif
 			pInfo->ulMinKeySize = 16;
 			pInfo->ulMaxKeySize = 32;
 			pInfo->flags = CKF_ENCRYPT | CKF_DECRYPT;
@@ -1921,6 +1930,7 @@ static bool isSymMechanism(CK_MECHANISM_PTR pMechanism)
 		case CKM_AES_CBC:
 		case CKM_AES_CBC_PAD:
 		case CKM_AES_CTR:
+		case CKM_AES_GCM:
 			return true;
 		default:
 			return false;
@@ -1977,6 +1987,8 @@ CK_RV SoftHSM::SymEncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 	ByteString iv;
 	size_t bb = 8;
 	size_t counterBits = 0;
+	ByteString aad;
+	size_t tagBytes = 0;
 	switch(pMechanism->mechanism) {
 #ifndef WITH_FIPS
 		case CKM_DES_ECB:
@@ -2091,6 +2103,29 @@ CK_RV SoftHSM::SymEncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 			iv.resize(16);
 			memcpy(&iv[0], CK_AES_CTR_PARAMS_PTR(pMechanism->pParameter)->cb, 16);
 			break;
+#ifdef WITH_AES_GCM
+		case CKM_AES_GCM:
+			algo = SymAlgo::AES;
+			mode = SymMode::GCM;
+			if (pMechanism->pParameter == NULL_PTR ||
+			    pMechanism->ulParameterLen != sizeof(CK_GCM_PARAMS))
+			{
+				DEBUG_MSG("GCM mode requires parameters");
+				return CKR_ARGUMENTS_BAD;
+			}
+			iv.resize(CK_GCM_PARAMS_PTR(pMechanism->pParameter)->ulIvLen);
+			memcpy(&iv[0], CK_GCM_PARAMS_PTR(pMechanism->pParameter)->pIv, CK_GCM_PARAMS_PTR(pMechanism->pParameter)->ulIvLen);
+			aad.resize(CK_GCM_PARAMS_PTR(pMechanism->pParameter)->ulAADLen);
+			memcpy(&aad[0], CK_GCM_PARAMS_PTR(pMechanism->pParameter)->pAAD, CK_GCM_PARAMS_PTR(pMechanism->pParameter)->ulAADLen);
+			tagBytes = CK_GCM_PARAMS_PTR(pMechanism->pParameter)->ulTagBits;
+			if (tagBytes > 128 || tagBytes % 8 != 0)
+			{
+				DEBUG_MSG("Invalid ulTagBits value");
+				return CKR_ARGUMENTS_BAD;
+			}
+			tagBytes = tagBytes / 8;
+			break;
+#endif
 		default:
 			return CKR_MECHANISM_INVALID;
 	}
@@ -2110,7 +2145,7 @@ CK_RV SoftHSM::SymEncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 	secretkey->setBitLen(secretkey->getKeyBits().size() * bb);
 
 	// Initialize encryption
-	if (!cipher->encryptInit(secretkey, mode, iv, padding, counterBits))
+	if (!cipher->encryptInit(secretkey, mode, iv, padding, counterBits, aad, tagBytes))
 	{
 		cipher->recycleKey(secretkey);
 		CryptoFactory::i()->recycleSymmetricAlgorithm(cipher);
@@ -2245,7 +2280,7 @@ static CK_RV SymEncrypt(Session* session, CK_BYTE_PTR pData, CK_ULONG ulDataLen,
 	}
 
 	// Check data size
-	CK_ULONG maxSize = ulDataLen;
+	CK_ULONG maxSize = ulDataLen + cipher->getTagBytes();
 	if (cipher->isBlockCipher())
 	{
 		CK_ULONG remainder = ulDataLen % cipher->getBlockSize();
@@ -2502,7 +2537,7 @@ static CK_RV SymEncryptFinal(Session* session, CK_BYTE_PTR pEncryptedData, CK_UL
 	}
 
 	// Check data size
-	size_t remainingSize = cipher->getBufferSize();
+	size_t remainingSize = cipher->getBufferSize() + cipher->getTagBytes();
 	CK_ULONG size = remainingSize;
 	if (cipher->isBlockCipher())
 	{
@@ -2633,6 +2668,8 @@ CK_RV SoftHSM::SymDecryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 	ByteString iv;
 	size_t bb = 8;
 	size_t counterBits = 0;
+	ByteString aad;
+	size_t tagBytes = 0;
 	switch(pMechanism->mechanism) {
 #ifndef WITH_FIPS
 		case CKM_DES_ECB:
@@ -2747,6 +2784,29 @@ CK_RV SoftHSM::SymDecryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 			iv.resize(16);
 			memcpy(&iv[0], CK_AES_CTR_PARAMS_PTR(pMechanism->pParameter)->cb, 16);
 			break;
+#ifdef WITH_AES_GCM
+		case CKM_AES_GCM:
+			algo = SymAlgo::AES;
+			mode = SymMode::GCM;
+			if (pMechanism->pParameter == NULL_PTR ||
+			    pMechanism->ulParameterLen != sizeof(CK_GCM_PARAMS))
+			{
+				DEBUG_MSG("GCM mode requires parameters");
+				return CKR_ARGUMENTS_BAD;
+			}
+			iv.resize(CK_GCM_PARAMS_PTR(pMechanism->pParameter)->ulIvLen);
+			memcpy(&iv[0], CK_GCM_PARAMS_PTR(pMechanism->pParameter)->pIv, CK_GCM_PARAMS_PTR(pMechanism->pParameter)->ulIvLen);
+			aad.resize(CK_GCM_PARAMS_PTR(pMechanism->pParameter)->ulAADLen);
+			memcpy(&aad[0], CK_GCM_PARAMS_PTR(pMechanism->pParameter)->pAAD, CK_GCM_PARAMS_PTR(pMechanism->pParameter)->ulAADLen);
+			tagBytes = CK_GCM_PARAMS_PTR(pMechanism->pParameter)->ulTagBits;
+			if (tagBytes > 128 || tagBytes % 8 != 0)
+			{
+				DEBUG_MSG("Invalid ulTagBits value");
+				return CKR_ARGUMENTS_BAD;
+			}
+			tagBytes = tagBytes / 8;
+			break;
+#endif
 		default:
 			return CKR_MECHANISM_INVALID;
 	}
@@ -2766,7 +2826,7 @@ CK_RV SoftHSM::SymDecryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 	secretkey->setBitLen(secretkey->getKeyBits().size() * bb);
 
 	// Initialize decryption
-	if (!cipher->decryptInit(secretkey, mode, iv, padding, counterBits))
+	if (!cipher->decryptInit(secretkey, mode, iv, padding, counterBits, aad, tagBytes))
 	{
 		cipher->recycleKey(secretkey);
 		CryptoFactory::i()->recycleSymmetricAlgorithm(cipher);

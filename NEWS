@@ -2,6 +2,7 @@ NEWS for SoftHSM -- History of user visible changes
 
 SoftHSM develop
 
+* Issue #325: Support for CKM_AES_GCM.
 * Issue #335: Support for CKM_RSA_PKCS_PSS.
   (Patch from Nikos Mavrogiannopoulos)
 
