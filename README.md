@@ -117,6 +117,10 @@ it can interact with the token.
 Type in SO PIN and user PIN. Once a token has been initialized, more slots will
 be added automatically with a new uninitialized token.
 
+Initialized tokens will be reassigned to another slot (based on the token
+serial number). It is recommended to find and interact with the token by
+searching for the token label or serial number in the slot list / token info.
+
 ### Link
 
 Link to this library and use the PKCS#11 interface.

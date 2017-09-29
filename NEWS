@@ -2,7 +2,11 @@ NEWS for SoftHSM -- History of user visible changes
 
 SoftHSM develop
 
+* Issue #140: Support for CKA_ALLOWED_MECHANISMS.
+  (Patch from Brad Hess)
 * Issue #325: Support for CKM_AES_GCM.
+* Issue #334: Document that initialized tokens will be reassigned to another
+  slot (based on the token serial number).
 * Issue #335: Support for CKM_RSA_PKCS_PSS.
   (Patch from Nikos Mavrogiannopoulos)
 
