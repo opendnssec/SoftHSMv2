@@ -51,6 +51,10 @@
 #include <botan/cipher_filter.h>
 #endif
 
+#ifdef WITH_AES_GCM
+#include <botan/aead.h>
+#endif
+
 // Constructor
 BotanSymmetricAlgorithm::BotanSymmetricAlgorithm()
 {
@@ -68,16 +72,16 @@ BotanSymmetricAlgorithm::~BotanSymmetricAlgorithm()
 }
 
 // Encryption functions
-bool BotanSymmetricAlgorithm::encryptInit(const SymmetricKey* key, const SymMode::Type mode /* = SymMode:CBC */, const ByteString& IV /* = ByteString()*/, bool padding /* = true */, size_t counterBits /* = 0 */)
+bool BotanSymmetricAlgorithm::encryptInit(const SymmetricKey* key, const SymMode::Type mode /* = SymMode:CBC */, const ByteString& IV /* = ByteString()*/, bool padding /* = true */, size_t counterBits /* = 0 */, const ByteString& aad /* = ByteString() */, size_t tagBytes /* = 0 */)
 {
 	// Call the superclass initialiser
-	if (!SymmetricAlgorithm::encryptInit(key, mode, IV, padding, counterBits))
+	if (!SymmetricAlgorithm::encryptInit(key, mode, IV, padding, counterBits, aad, tagBytes))
 	{
 		return false;
 	}
 
 	// Check the IV
-	if ((IV.size() > 0) && (IV.size() != getBlockSize()))
+	if (mode != SymMode::GCM && (IV.size() > 0) && (IV.size() != getBlockSize()))
 	{
 		ERROR_MSG("Invalid IV size (%d bytes, expected %d bytes)", IV.size(), getBlockSize());
 
@@ -168,6 +172,19 @@ bool BotanSymmetricAlgorithm::encryptInit(const SymmetricKey* key, const SymMode
 			cryption = new Botan::Pipe(Botan::get_cipher(cipherName, botanKey, Botan::ENCRYPTION));
 #endif
 		}
+#ifdef WITH_AES_GCM
+		else if (mode == SymMode::GCM)
+		{
+			Botan::AEAD_Mode* aead = Botan::get_aead(cipherName, Botan::ENCRYPTION);
+			aead->set_key(botanKey);
+			aead->set_associated_data(aad.const_byte_str(), aad.size());
+
+			Botan::InitializationVector botanIV = Botan::InitializationVector(IV.const_byte_str(), IV.size());
+			Botan::Keyed_Filter* filter = new Botan::Cipher_Mode_Filter(aead);
+			filter->set_iv(botanIV);
+			cryption = new Botan::Pipe(filter);
+		}
+#endif
 		else
 		{
 			Botan::InitializationVector botanIV = Botan::InitializationVector(IV.const_byte_str(), IV.size());
@@ -296,16 +313,16 @@ bool BotanSymmetricAlgorithm::encryptFinal(ByteString& encryptedData)
 }
 
 // Decryption functions
-bool BotanSymmetricAlgorithm::decryptInit(const SymmetricKey* key, const SymMode::Type mode /* = SymMode::CBC */, const ByteString& IV /* = ByteString() */, bool padding /* = true */, size_t counterBits /* = 0 */)
+bool BotanSymmetricAlgorithm::decryptInit(const SymmetricKey* key, const SymMode::Type mode /* = SymMode::CBC */, const ByteString& IV /* = ByteString() */, bool padding /* = true */, size_t counterBits /* = 0 */, const ByteString& aad /* = ByteString() */, size_t tagBytes /* = 0 */)
 {
 	// Call the superclass initialiser
-	if (!SymmetricAlgorithm::decryptInit(key, mode, IV, padding, counterBits))
+	if (!SymmetricAlgorithm::decryptInit(key, mode, IV, padding, counterBits, aad, tagBytes))
 	{
 		return false;
 	}
 
 	// Check the IV
-	if ((IV.size() > 0) && (IV.size() != getBlockSize()))
+	if (mode != SymMode::GCM && (IV.size() > 0) && (IV.size() != getBlockSize()))
 	{
 		ERROR_MSG("Invalid IV size (%d bytes, expected %d bytes)", IV.size(), getBlockSize());
 
@@ -396,6 +413,19 @@ bool BotanSymmetricAlgorithm::decryptInit(const SymmetricKey* key, const SymMode
 			cryption = new Botan::Pipe(Botan::get_cipher(cipherName, botanKey, Botan::DECRYPTION));
 #endif
 		}
+#ifdef WITH_AES_GCM
+		else if (mode == SymMode::GCM)
+		{
+			Botan::AEAD_Mode* aead = Botan::get_aead(cipherName, Botan::DECRYPTION);
+			aead->set_key(botanKey);
+			aead->set_associated_data(aad.const_byte_str(), aad.size());
+
+			Botan::InitializationVector botanIV = Botan::InitializationVector(IV.const_byte_str(), IV.size());
+			Botan::Keyed_Filter* filter = new Botan::Cipher_Mode_Filter(aead);
+			filter->set_iv(botanIV);
+			cryption = new Botan::Pipe(filter);
+		}
+#endif
 		else
 		{
 			Botan::InitializationVector botanIV = Botan::InitializationVector(IV.const_byte_str(), IV.size());
@@ -427,6 +457,13 @@ bool BotanSymmetricAlgorithm::decryptUpdate(const ByteString& encryptedData, Byt
 		cryption = NULL;
 
 		return false;
+	}
+
+	// AEAD ciphers should not return decrypted data until final is called
+	if (currentCipherMode == SymMode::GCM)
+	{
+		data.resize(0);
+		return true;
 	}
 
 	// Write data
@@ -485,12 +522,34 @@ bool BotanSymmetricAlgorithm::decryptUpdate(const ByteString& encryptedData, Byt
 
 bool BotanSymmetricAlgorithm::decryptFinal(ByteString& data)
 {
+	SymMode::Type mode = currentCipherMode;
+	ByteString aeadBuffer = currentAEADBuffer;
+
 	if (!SymmetricAlgorithm::decryptFinal(data))
 	{
 		delete cryption;
 		cryption = NULL;
 
 		return false;
+	}
+
+	if (mode == SymMode::GCM)
+	{
+		// Write data
+		try
+		{
+			if (aeadBuffer.size() > 0)
+				cryption->write(aeadBuffer.const_byte_str(), aeadBuffer.size());
+		}
+		catch (...)
+		{
+			ERROR_MSG("Failed to write to the decryption token");
+
+			delete cryption;
+			cryption = NULL;
+
+			return false;
+		}
 	}
 
 	// Read data
@@ -503,9 +562,9 @@ bool BotanSymmetricAlgorithm::decryptFinal(ByteString& data)
 		if (outLen > 0)
 			bytesRead = cryption->read(&data[0], outLen);
 	}
-	catch (...)
+	catch (std::exception &e)
 	{
-		ERROR_MSG("Failed to decrypt the data");
+		ERROR_MSG("Failed to decrypt the data: %s", e.what());
 
 		delete cryption;
 		cryption = NULL;

@@ -36,6 +36,7 @@
 #include "OSSLEVPSymmetricAlgorithm.h"
 #include "OSSLUtil.h"
 #include "salloc.h"
+#include <openssl/err.h>
 
 // Constructor
 OSSLEVPSymmetricAlgorithm::OSSLEVPSymmetricAlgorithm()
@@ -57,16 +58,16 @@ OSSLEVPSymmetricAlgorithm::~OSSLEVPSymmetricAlgorithm()
 }
 
 // Encryption functions
-bool OSSLEVPSymmetricAlgorithm::encryptInit(const SymmetricKey* key, const SymMode::Type mode /* = SymMode::CBC */, const ByteString& IV /* = ByteString()*/, bool padding /* = true */, size_t counterBits /* = 0 */)
+bool OSSLEVPSymmetricAlgorithm::encryptInit(const SymmetricKey* key, const SymMode::Type mode /* = SymMode::CBC */, const ByteString& IV /* = ByteString()*/, bool padding /* = true */, size_t counterBits /* = 0 */, const ByteString& aad /* = ByteString() */, size_t tagBytes /* = 0 */)
 {
 	// Call the superclass initialiser
-	if (!SymmetricAlgorithm::encryptInit(key, mode, IV, padding, counterBits))
+	if (!SymmetricAlgorithm::encryptInit(key, mode, IV, padding, counterBits, aad, tagBytes))
 	{
 		return false;
 	}
 
 	// Check the IV
-	if ((IV.size() > 0) && (IV.size() != getBlockSize()))
+	if (mode != SymMode::GCM && (IV.size() > 0) && (IV.size() != getBlockSize()))
 	{
 		ERROR_MSG("Invalid IV size (%d bytes, expected %d bytes)", IV.size(), getBlockSize());
 
@@ -146,11 +147,25 @@ bool OSSLEVPSymmetricAlgorithm::encryptInit(const SymmetricKey* key, const SymMo
 		return false;
 	}
 
-	int rv = EVP_EncryptInit(pCurCTX, cipher, (unsigned char*) currentKey->getKeyBits().const_byte_str(), iv.byte_str());
+	int rv;
+	if (mode == SymMode::GCM)
+	{
+		rv = EVP_EncryptInit_ex(pCurCTX, cipher, NULL, NULL, NULL);
+
+		if (rv)
+		{
+			EVP_CIPHER_CTX_ctrl(pCurCTX, EVP_CTRL_GCM_SET_IVLEN, iv.size(), NULL);
+			rv = EVP_EncryptInit_ex(pCurCTX, NULL, NULL, (unsigned char*) currentKey->getKeyBits().const_byte_str(), iv.byte_str());
+		}
+	}
+	else
+	{
+		rv = EVP_EncryptInit(pCurCTX, cipher, (unsigned char*) currentKey->getKeyBits().const_byte_str(), iv.byte_str());
+	}
 
 	if (!rv)
 	{
-		ERROR_MSG("Failed to initialise EVP encrypt operation");
+		ERROR_MSG("Failed to initialise EVP encrypt operation: %s", ERR_error_string(ERR_get_error(), NULL));
 
 		EVP_CIPHER_CTX_free(pCurCTX);
 		pCurCTX = NULL;
@@ -162,6 +177,23 @@ bool OSSLEVPSymmetricAlgorithm::encryptInit(const SymmetricKey* key, const SymMo
 	}
 
 	EVP_CIPHER_CTX_set_padding(pCurCTX, padding ? 1 : 0);
+
+	if (mode == SymMode::GCM)
+	{
+		int outLen = 0;
+		if (aad.size() && !EVP_EncryptUpdate(pCurCTX, NULL, &outLen, (unsigned char*) aad.const_byte_str(), aad.size()))
+		{
+			ERROR_MSG("Failed to update with AAD: %s", ERR_error_string(ERR_get_error(), NULL));
+
+			EVP_CIPHER_CTX_free(pCurCTX);
+			pCurCTX = NULL;
+
+			ByteString dummy;
+			SymmetricAlgorithm::encryptFinal(dummy);
+
+			return false;
+		}
+	}
 
 	return true;
 }
@@ -195,7 +227,7 @@ bool OSSLEVPSymmetricAlgorithm::encryptUpdate(const ByteString& data, ByteString
 	int outLen = encryptedData.size();
 	if (!EVP_EncryptUpdate(pCurCTX, &encryptedData[0], &outLen, (unsigned char*) data.const_byte_str(), data.size()))
 	{
-		ERROR_MSG("EVP_EncryptUpdate failed");
+		ERROR_MSG("EVP_EncryptUpdate failed: %s", ERR_error_string(ERR_get_error(), NULL));
 
 		EVP_CIPHER_CTX_free(pCurCTX);
 		pCurCTX = NULL;
@@ -215,6 +247,9 @@ bool OSSLEVPSymmetricAlgorithm::encryptUpdate(const ByteString& data, ByteString
 
 bool OSSLEVPSymmetricAlgorithm::encryptFinal(ByteString& encryptedData)
 {
+	SymMode::Type mode = currentCipherMode;
+	size_t tagBytes = currentTagBytes;
+
 	if (!SymmetricAlgorithm::encryptFinal(encryptedData))
 	{
 		EVP_CIPHER_CTX_free(pCurCTX);
@@ -230,7 +265,7 @@ bool OSSLEVPSymmetricAlgorithm::encryptFinal(ByteString& encryptedData)
 
 	if (!EVP_EncryptFinal(pCurCTX, &encryptedData[0], &outLen))
 	{
-		ERROR_MSG("EVP_EncryptFinal failed");
+		ERROR_MSG("EVP_EncryptFinal failed: %s", ERR_error_string(ERR_get_error(), NULL));
 
 		EVP_CIPHER_CTX_free(pCurCTX);
 		pCurCTX = NULL;
@@ -241,6 +276,14 @@ bool OSSLEVPSymmetricAlgorithm::encryptFinal(ByteString& encryptedData)
 	// Resize the output block
 	encryptedData.resize(outLen);
 
+	if (mode == SymMode::GCM)
+	{
+		ByteString tag;
+		tag.resize(tagBytes);
+		EVP_CIPHER_CTX_ctrl(pCurCTX, EVP_CTRL_GCM_GET_TAG, tagBytes, &tag[0]);
+		encryptedData += tag;
+	}
+
 	EVP_CIPHER_CTX_free(pCurCTX);
 	pCurCTX = NULL;
 
@@ -248,16 +291,16 @@ bool OSSLEVPSymmetricAlgorithm::encryptFinal(ByteString& encryptedData)
 }
 
 // Decryption functions
-bool OSSLEVPSymmetricAlgorithm::decryptInit(const SymmetricKey* key, const SymMode::Type mode /* = SymMode::CBC */, const ByteString& IV /* = ByteString() */, bool padding /* = true */, size_t counterBits /* = 0 */)
+bool OSSLEVPSymmetricAlgorithm::decryptInit(const SymmetricKey* key, const SymMode::Type mode /* = SymMode::CBC */, const ByteString& IV /* = ByteString() */, bool padding /* = true */, size_t counterBits /* = 0 */, const ByteString& aad /* = ByteString() */, size_t tagBytes /* = 0 */)
 {
 	// Call the superclass initialiser
-	if (!SymmetricAlgorithm::decryptInit(key, mode, IV, padding, counterBits))
+	if (!SymmetricAlgorithm::decryptInit(key, mode, IV, padding, counterBits, aad, tagBytes))
 	{
 		return false;
 	}
 
 	// Check the IV
-	if ((IV.size() > 0) && (IV.size() != getBlockSize()))
+	if (mode != SymMode::GCM && (IV.size() > 0) && (IV.size() != getBlockSize()))
 	{
 		ERROR_MSG("Invalid IV size (%d bytes, expected %d bytes)", IV.size(), getBlockSize());
 
@@ -337,11 +380,25 @@ bool OSSLEVPSymmetricAlgorithm::decryptInit(const SymmetricKey* key, const SymMo
 		return false;
 	}
 
-	int rv = EVP_DecryptInit(pCurCTX, cipher, (unsigned char*) currentKey->getKeyBits().const_byte_str(), iv.byte_str());
+	int rv;
+	if (mode == SymMode::GCM)
+	{
+		rv = EVP_DecryptInit_ex(pCurCTX, cipher, NULL, NULL, NULL);
+
+		if (rv)
+		{
+			EVP_CIPHER_CTX_ctrl(pCurCTX, EVP_CTRL_GCM_SET_IVLEN, iv.size(), NULL);
+			rv = EVP_DecryptInit_ex(pCurCTX, NULL, NULL, (unsigned char*) currentKey->getKeyBits().const_byte_str(), iv.byte_str());
+		}
+	}
+	else
+	{
+		rv = EVP_DecryptInit(pCurCTX, cipher, (unsigned char*) currentKey->getKeyBits().const_byte_str(), iv.byte_str());
+	}
 
 	if (!rv)
 	{
-		ERROR_MSG("Failed to initialise EVP decrypt operation");
+		ERROR_MSG("Failed to initialise EVP decrypt operation: %s", ERR_error_string(ERR_get_error(), NULL));
 
 		EVP_CIPHER_CTX_free(pCurCTX);
 		pCurCTX = NULL;
@@ -354,6 +411,23 @@ bool OSSLEVPSymmetricAlgorithm::decryptInit(const SymmetricKey* key, const SymMo
 
 	EVP_CIPHER_CTX_set_padding(pCurCTX, padding ? 1 : 0);
 
+	if (mode == SymMode::GCM)
+	{
+		int outLen = 0;
+		if (aad.size() && !EVP_DecryptUpdate(pCurCTX, NULL, &outLen, (unsigned char*) aad.const_byte_str(), aad.size()))
+		{
+			ERROR_MSG("Failed to update with AAD: %s", ERR_error_string(ERR_get_error(), NULL));
+
+			EVP_CIPHER_CTX_free(pCurCTX);
+			pCurCTX = NULL;
+
+			ByteString dummy;
+			SymmetricAlgorithm::decryptFinal(dummy);
+
+			return false;
+		}
+	}
+
 	return true;
 }
 
@@ -365,6 +439,13 @@ bool OSSLEVPSymmetricAlgorithm::decryptUpdate(const ByteString& encryptedData, B
 		pCurCTX = NULL;
 
 		return false;
+	}
+
+	// AEAD ciphers should not return decrypted data until final is called
+	if (currentCipherMode == SymMode::GCM)
+	{
+		data.resize(0);
+		return true;
 	}
 
 	// Count number of bytes written
@@ -382,7 +463,7 @@ bool OSSLEVPSymmetricAlgorithm::decryptUpdate(const ByteString& encryptedData, B
 
 	if (!EVP_DecryptUpdate(pCurCTX, &data[0], &outLen, (unsigned char*) encryptedData.const_byte_str(), encryptedData.size()))
 	{
-		ERROR_MSG("EVP_DecryptUpdate failed");
+		ERROR_MSG("EVP_DecryptUpdate failed: %s", ERR_error_string(ERR_get_error(), NULL));
 
 		EVP_CIPHER_CTX_free(pCurCTX);
 		pCurCTX = NULL;
@@ -404,6 +485,10 @@ bool OSSLEVPSymmetricAlgorithm::decryptUpdate(const ByteString& encryptedData, B
 
 bool OSSLEVPSymmetricAlgorithm::decryptFinal(ByteString& data)
 {
+	SymMode::Type mode = currentCipherMode;
+	size_t tagBytes = currentTagBytes;
+	ByteString aeadBuffer = currentAEADBuffer;
+
 	if (!SymmetricAlgorithm::decryptFinal(data))
 	{
 		EVP_CIPHER_CTX_free(pCurCTX);
@@ -412,15 +497,50 @@ bool OSSLEVPSymmetricAlgorithm::decryptFinal(ByteString& data)
 		return false;
 	}
 
-	// Prepare the output block
-	data.resize(getBlockSize());
+	data.resize(0);
+	if (mode == SymMode::GCM)
+	{
+		// Check buffer size
+		if (aeadBuffer.size() < tagBytes)
+		{
+			ERROR_MSG("Tag bytes (%d) does not fit in AEAD buffer (%d)", tagBytes, aeadBuffer.size());
 
-	int outLen = data.size();
+			EVP_CIPHER_CTX_free(pCurCTX);
+			pCurCTX = NULL;
+
+			return false;
+		}
+
+		// Set the tag
+		EVP_CIPHER_CTX_ctrl(pCurCTX, EVP_CTRL_GCM_SET_TAG, tagBytes, &aeadBuffer[aeadBuffer.size()-tagBytes]);
+
+		// Prepare the output block
+		data.resize(aeadBuffer.size() - tagBytes + getBlockSize());
+		int outLen = data.size();
+
+		if (!EVP_DecryptUpdate(pCurCTX, &data[0], &outLen, (unsigned char*) aeadBuffer.const_byte_str(), aeadBuffer.size() - tagBytes))
+		{
+			ERROR_MSG("EVP_DecryptUpdate failed: %s", ERR_error_string(ERR_get_error(), NULL));
+
+			EVP_CIPHER_CTX_free(pCurCTX);
+			pCurCTX = NULL;
+
+			return false;
+		}
+
+		data.resize(outLen);
+	}
+
+	// Prepare the output block
+	int initialSize = data.size();
+	data.resize(initialSize + getBlockSize());
+
+	int outLen = data.size() - initialSize;
 	int rv;
 
-	if (!(rv = EVP_DecryptFinal(pCurCTX, &data[0], &outLen)))
+	if (!(rv = EVP_DecryptFinal(pCurCTX, &data[initialSize], &outLen)))
 	{
-		ERROR_MSG("EVP_DecryptFinal failed (0x%08X)", rv);
+		ERROR_MSG("EVP_DecryptFinal failed (0x%08X): %s", rv, ERR_error_string(ERR_get_error(), NULL));
 
 		EVP_CIPHER_CTX_free(pCurCTX);
 		pCurCTX = NULL;
@@ -429,7 +549,7 @@ bool OSSLEVPSymmetricAlgorithm::decryptFinal(ByteString& data)
 	}
 
 	// Resize the output block
-	data.resize(outLen);
+	data.resize(initialSize + outLen);
 
 	EVP_CIPHER_CTX_free(pCurCTX);
 	pCurCTX = NULL;
