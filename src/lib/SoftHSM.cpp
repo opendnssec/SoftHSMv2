@@ -627,7 +627,7 @@ CK_RV SoftHSM::C_GetTokenInfo(CK_SLOT_ID slotID, CK_TOKEN_INFO_PTR pInfo)
 CK_RV SoftHSM::C_GetMechanismList(CK_SLOT_ID slotID, CK_MECHANISM_TYPE_PTR pMechanismList, CK_ULONG_PTR pulCount)
 {
 	// A list with the supported mechanisms
-	CK_ULONG nrSupportedMechanisms = 59;
+	CK_ULONG nrSupportedMechanisms = 61;
 #ifdef WITH_ECC
 	nrSupportedMechanisms += 3;
 #endif
@@ -702,6 +702,7 @@ CK_RV SoftHSM::C_GetMechanismList(CK_SLOT_ID slotID, CK_MECHANISM_TYPE_PTR pMech
 		CKM_DES3_CBC_PAD,
 		CKM_DES3_ECB_ENCRYPT_DATA,
 		CKM_DES3_CBC_ENCRYPT_DATA,
+		CKM_DES3_CMAC,
 		CKM_AES_KEY_GEN,
 		CKM_AES_ECB,
 		CKM_AES_CBC,
@@ -716,6 +717,7 @@ CK_RV SoftHSM::C_GetMechanismList(CK_SLOT_ID slotID, CK_MECHANISM_TYPE_PTR pMech
 #endif
 		CKM_AES_ECB_ENCRYPT_DATA,
 		CKM_AES_CBC_ENCRYPT_DATA,
+		CKM_AES_CMAC,
 		CKM_DSA_PARAMETER_GEN,
 		CKM_DSA_KEY_PAIR_GEN,
 		CKM_DSA,
@@ -977,6 +979,12 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 			pInfo->ulMaxKeySize = 0;
 			pInfo->flags = CKF_ENCRYPT | CKF_DECRYPT;
 			break;
+		case CKM_DES3_CMAC:
+			// Key size is not in use
+			pInfo->ulMinKeySize = 0;
+			pInfo->ulMaxKeySize = 0;
+			pInfo->flags = CKF_SIGN | CKF_VERIFY;
+			break;
 		case CKM_AES_KEY_GEN:
 			pInfo->ulMinKeySize = 16;
 			pInfo->ulMaxKeySize = 32;
@@ -1017,6 +1025,11 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 			pInfo->ulMinKeySize = 0;
 			pInfo->ulMaxKeySize = 0;
 			pInfo->flags = CKF_DERIVE;
+			break;
+		case CKM_AES_CMAC:
+			pInfo->ulMinKeySize = 16;
+			pInfo->ulMaxKeySize = 32;
+			pInfo->flags = CKF_SIGN | CKF_VERIFY;
 			break;
 		case CKM_DSA_PARAMETER_GEN:
 			pInfo->ulMinKeySize = dsaMinSize;
@@ -3599,6 +3612,8 @@ static bool isMacMechanism(CK_MECHANISM_PTR pMechanism)
 #ifdef WITH_GOST
 		case CKM_GOSTR3411_HMAC:
 #endif
+		case CKM_DES3_CMAC:
+		case CKM_AES_CMAC:
 			return true;
 		default:
 			return false;
@@ -3654,6 +3669,7 @@ CK_RV SoftHSM::MacSignInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechani
 	// Get the MAC algorithm matching the mechanism
 	// Also check mechanism constraints
 	MacAlgo::Type algo = MacAlgo::Unknown;
+	size_t bb = 8;
 	size_t minSize = 0;
 	switch(pMechanism->mechanism) {
 #ifndef WITH_FIPS
@@ -3702,6 +3718,17 @@ CK_RV SoftHSM::MacSignInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechani
 			algo = MacAlgo::HMAC_GOST;
 			break;
 #endif
+		case CKM_DES3_CMAC:
+			if (keyType != CKK_DES2 && keyType != CKK_DES3)
+				return CKR_KEY_TYPE_INCONSISTENT;
+			algo = MacAlgo::CMAC_DES;
+			bb = 7;
+			break;
+		case CKM_AES_CMAC:
+			if (keyType != CKK_AES)
+				return CKR_KEY_TYPE_INCONSISTENT;
+			algo = MacAlgo::CMAC_AES;
+			break;
 		default:
 			return CKR_MECHANISM_INVALID;
 	}
@@ -3718,7 +3745,7 @@ CK_RV SoftHSM::MacSignInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechani
 	}
 
 	// Adjust key bit length
-	privkey->setBitLen(privkey->getKeyBits().size() * 8);
+	privkey->setBitLen(privkey->getKeyBits().size() * bb);
 
 	// Check key size
 	if (privkey->getBitLen() < (minSize*8))
@@ -4560,6 +4587,7 @@ CK_RV SoftHSM::MacVerifyInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMecha
 	// Get the MAC algorithm matching the mechanism
 	// Also check mechanism constraints
 	MacAlgo::Type algo = MacAlgo::Unknown;
+	size_t bb = 8;
 	size_t minSize = 0;
 	switch(pMechanism->mechanism) {
 #ifndef WITH_FIPS
@@ -4608,6 +4636,17 @@ CK_RV SoftHSM::MacVerifyInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMecha
 			algo = MacAlgo::HMAC_GOST;
 			break;
 #endif
+		case CKM_DES3_CMAC:
+			if (keyType != CKK_DES2 && keyType != CKK_DES3)
+				return CKR_KEY_TYPE_INCONSISTENT;
+			algo = MacAlgo::CMAC_DES;
+			bb = 7;
+			break;
+		case CKM_AES_CMAC:
+			if (keyType != CKK_AES)
+				return CKR_KEY_TYPE_INCONSISTENT;
+			algo = MacAlgo::CMAC_AES;
+			break;
 		default:
 			return CKR_MECHANISM_INVALID;
 	}
@@ -4624,7 +4663,7 @@ CK_RV SoftHSM::MacVerifyInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMecha
 	}
 
 	// Adjust key bit length
-	pubkey->setBitLen(pubkey->getKeyBits().size() * 8);
+	pubkey->setBitLen(pubkey->getKeyBits().size() * bb);
 
 	// Check key size
 	if (pubkey->getBitLen() < (minSize*8))

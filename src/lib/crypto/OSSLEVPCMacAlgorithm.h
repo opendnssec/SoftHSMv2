@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010 SURFnet bv
+ * Copyright (c) 2017 SURFnet bv
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,59 +25,53 @@
  */
 
 /*****************************************************************************
- MacTests.h
+ OSSLEVPCMacAlgorithm.h
 
- Contains test cases to test the MAC implementations
+ OpenSSL CMAC algorithm implementation
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_MACTESTS_H
-#define _SOFTHSM_V2_MACTESTS_H
+#ifndef _SOFTHSM_V2_OSSLEVPCMACALGORITHM_H
+#define _SOFTHSM_V2_OSSLEVPCMACALGORITHM_H
 
-#include <cppunit/extensions/HelperMacros.h>
+#include <string>
+#include "config.h"
+#include "SymmetricKey.h"
 #include "MacAlgorithm.h"
-#include "RNG.h"
+#include <openssl/evp.h>
+#include <openssl/cmac.h>
 
-class MacTests : public CppUnit::TestFixture
+class OSSLEVPCMacAlgorithm : public MacAlgorithm
 {
-	CPPUNIT_TEST_SUITE(MacTests);
-#ifndef WITH_FIPS
-	CPPUNIT_TEST(testHMACMD5);
-#endif
-	CPPUNIT_TEST(testHMACSHA1);
-	CPPUNIT_TEST(testHMACSHA224);
-	CPPUNIT_TEST(testHMACSHA256);
-	CPPUNIT_TEST(testHMACSHA384);
-	CPPUNIT_TEST(testHMACSHA512);
-	CPPUNIT_TEST(testCMACDES2);
-	CPPUNIT_TEST(testCMACDES3);
-	CPPUNIT_TEST(testCMACAES128);
-	CPPUNIT_TEST(testCMACAES192);
-	CPPUNIT_TEST(testCMACAES256);
-	CPPUNIT_TEST_SUITE_END();
-
 public:
-#ifndef WITH_FIPS
-	void testHMACMD5();
-#endif
-	void testHMACSHA1();
-	void testHMACSHA224();
-	void testHMACSHA256();
-	void testHMACSHA384();
-	void testHMACSHA512();
-	void testCMACDES2();
-	void testCMACDES3();
-	void testCMACAES128();
-	void testCMACAES192();
-	void testCMACAES256();
+	// Constructor
+	OSSLEVPCMacAlgorithm() {
+		curCTX = NULL;
+	};
 
-	void setUp();
-	void tearDown();
+	// Destructor
+	~OSSLEVPCMacAlgorithm();
+
+	// Signing functions
+	virtual bool signInit(const SymmetricKey* key);
+	virtual bool signUpdate(const ByteString& dataToSign);
+	virtual bool signFinal(ByteString& signature);
+
+	// Verification functions
+	virtual bool verifyInit(const SymmetricKey* key);
+	virtual bool verifyUpdate(const ByteString& originalData);
+	virtual bool verifyFinal(ByteString& signature);
+
+	// Return the MAC size
+	virtual size_t getMacSize() const = 0;
+
+protected:
+	// Return the right cipher for the operation
+	virtual const EVP_CIPHER* getEVPCipher() const = 0;
 
 private:
-	MacAlgorithm* mac;
-
-	RNG* rng;
+	// The current context
+	CMAC_CTX* curCTX;
 };
 
-#endif // !_SOFTHSM_V2_MACTESTS_H
+#endif // !_SOFTHSM_V2_OSSLEVPCMACALGORITHM_H
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010 SURFnet bv
+ * Copyright (c) 2017 SURFnet bv
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,59 +25,60 @@
  */
 
 /*****************************************************************************
- MacTests.h
+ OSSLHMAC.cpp
 
- Contains test cases to test the MAC implementations
+ OpenSSL HMAC implementation
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_MACTESTS_H
-#define _SOFTHSM_V2_MACTESTS_H
+#include "config.h"
+#include "OSSLCMAC.h"
 
-#include <cppunit/extensions/HelperMacros.h>
-#include "MacAlgorithm.h"
-#include "RNG.h"
-
-class MacTests : public CppUnit::TestFixture
+const EVP_CIPHER* OSSLCMACDES::getEVPCipher() const
 {
-	CPPUNIT_TEST_SUITE(MacTests);
-#ifndef WITH_FIPS
-	CPPUNIT_TEST(testHMACMD5);
-#endif
-	CPPUNIT_TEST(testHMACSHA1);
-	CPPUNIT_TEST(testHMACSHA224);
-	CPPUNIT_TEST(testHMACSHA256);
-	CPPUNIT_TEST(testHMACSHA384);
-	CPPUNIT_TEST(testHMACSHA512);
-	CPPUNIT_TEST(testCMACDES2);
-	CPPUNIT_TEST(testCMACDES3);
-	CPPUNIT_TEST(testCMACAES128);
-	CPPUNIT_TEST(testCMACAES192);
-	CPPUNIT_TEST(testCMACAES256);
-	CPPUNIT_TEST_SUITE_END();
+	switch(currentKey->getBitLen())
+	{
+		case 56:
+			ERROR_MSG("Only supporting 3DES");
+			return NULL;
+		case 112:
+			return EVP_des_ede_cbc();
+		case 168:
+			return EVP_des_ede3_cbc();
+		default:
+			break;
+	};
 
-public:
-#ifndef WITH_FIPS
-	void testHMACMD5();
-#endif
-	void testHMACSHA1();
-	void testHMACSHA224();
-	void testHMACSHA256();
-	void testHMACSHA384();
-	void testHMACSHA512();
-	void testCMACDES2();
-	void testCMACDES3();
-	void testCMACAES128();
-	void testCMACAES192();
-	void testCMACAES256();
+	ERROR_MSG("Invalid DES bit len %i", currentKey->getBitLen());
 
-	void setUp();
-	void tearDown();
+	return NULL;
+}
 
-private:
-	MacAlgorithm* mac;
+size_t OSSLCMACDES::getMacSize() const
+{
+	return 8;
+}
 
-	RNG* rng;
-};
+const EVP_CIPHER* OSSLCMACAES::getEVPCipher() const
+{
+	switch(currentKey->getBitLen())
+	{
+		case 128:
+			return EVP_aes_128_cbc();
+		case 192:
+			return EVP_aes_192_cbc();
+		case 256:
+			return EVP_aes_256_cbc();
+		default:
+			break;
+	};
 
-#endif // !_SOFTHSM_V2_MACTESTS_H
+	ERROR_MSG("Invalid AES bit len %i", currentKey->getBitLen());
+
+	return NULL;
+}
+
+size_t OSSLCMACAES::getMacSize() const
+{
+	return 16;
+}
 

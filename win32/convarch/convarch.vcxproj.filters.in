@@ -180,7 +180,7 @@
     <ClInclude Include="..\..\src\lib\crypto\BotanHashAlgorithm.h">
       <Filter>Crypto Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\lib\crypto\BotanHMAC.h">
+    <ClInclude Include="..\..\src\lib\crypto\BotanMAC.h">
       <Filter>Crypto Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\lib\crypto\BotanMacAlgorithm.h">
@@ -338,6 +338,9 @@
      <ClInclude Include="..\..\src\lib\crypto\OSSLEVPHashAlgorithm.h">
        <Filter>Crypto Header Files</Filter>
      </ClInclude>
+     <ClInclude Include="..\..\src\lib\crypto\OSSLEVPCMacAlgorithm.h">
+       <Filter>Crypto Header Files</Filter>
+     </ClInclude>
      <ClInclude Include="..\..\src\lib\crypto\OSSLEVPMacAlgorithm.h">
        <Filter>Crypto Header Files</Filter>
      </ClInclude>
@@ -357,6 +360,9 @@
        <Filter>Crypto Header Files</Filter>
      </ClInclude>
      <ClInclude Include="..\..\src\lib\crypto\OSSLGOSTR3411.h">
+       <Filter>Crypto Header Files</Filter>
+     </ClInclude>
+     <ClInclude Include="..\..\src\lib\crypto\OSSLCMAC.h">
        <Filter>Crypto Header Files</Filter>
      </ClInclude>
      <ClInclude Include="..\..\src\lib\crypto\OSSLHMAC.h">
@@ -612,7 +618,7 @@
     <ClCompile Include="..\..\src\lib\crypto\BotanHashAlgorithm.cpp">
       <Filter>Crypto Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\lib\crypto\BotanHMAC.cpp">
+    <ClCompile Include="..\..\src\lib\crypto\BotanMAC.cpp">
       <Filter>Crypto Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\lib\crypto\BotanMacAlgorithm.cpp">
@@ -761,6 +767,9 @@
      <ClCompile Include="..\..\src\lib\crypto\OSSLEVPHashAlgorithm.cpp">
        <Filter>Crypto Source Files</Filter>
      </ClCompile>
+     <ClCompile Include="..\..\src\lib\crypto\OSSLEVPCMacAlgorithm.cpp">
+       <Filter>Crypto Source Files</Filter>
+     </ClCompile>
      <ClCompile Include="..\..\src\lib\crypto\OSSLEVPMacAlgorithm.cpp">
        <Filter>Crypto Source Files</Filter>
      </ClCompile>
@@ -780,6 +789,9 @@
        <Filter>Crypto Source Files</Filter>
      </ClCompile>
      <ClCompile Include="..\..\src\lib\crypto\OSSLGOSTR3411.cpp">
+       <Filter>Crypto Source Files</Filter>
+     </ClCompile>
+     <ClCompile Include="..\..\src\lib\crypto\OSSLCMAC.cpp">
        <Filter>Crypto Source Files</Filter>
      </ClCompile>
      <ClCompile Include="..\..\src\lib\crypto\OSSLHMAC.cpp">

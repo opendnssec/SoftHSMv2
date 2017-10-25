@@ -49,7 +49,7 @@
     <ClInclude Include="..\..\src\lib\crypto\BotanGOSTPublicKey.h" />
     <ClInclude Include="..\..\src\lib\crypto\BotanGOSTR3411.h" />
     <ClInclude Include="..\..\src\lib\crypto\BotanHashAlgorithm.h" />
-    <ClInclude Include="..\..\src\lib\crypto\BotanHMAC.h" />
+    <ClInclude Include="..\..\src\lib\crypto\BotanMAC.h" />
     <ClInclude Include="..\..\src\lib\crypto\BotanMacAlgorithm.h" />
     <ClInclude Include="..\..\src\lib\crypto\BotanMD5.h" />
     <ClInclude Include="..\..\src\lib\crypto\BotanRNG.h" />
@@ -197,7 +197,7 @@
     <ClCompile Include="..\..\src\lib\crypto\BotanGOSTPublicKey.cpp" />
     <ClCompile Include="..\..\src\lib\crypto\BotanGOSTR3411.cpp" />
     <ClCompile Include="..\..\src\lib\crypto\BotanHashAlgorithm.cpp" />
-    <ClCompile Include="..\..\src\lib\crypto\BotanHMAC.cpp" />
+    <ClCompile Include="..\..\src\lib\crypto\BotanMAC.cpp" />
     <ClCompile Include="..\..\src\lib\crypto\BotanMacAlgorithm.cpp" />
     <ClCompile Include="..\..\src\lib\crypto\BotanMD5.cpp" />
     <ClCompile Include="..\..\src\lib\crypto\BotanRNG.cpp" />

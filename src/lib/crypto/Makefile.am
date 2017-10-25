@@ -57,12 +57,14 @@ libsofthsm_crypto_la_SOURCES +=	OSSLAES.cpp \
 				OSSLECPublicKey.cpp \
 				OSSLEVPHashAlgorithm.cpp \
 				OSSLEVPMacAlgorithm.cpp \
+				OSSLEVPCMacAlgorithm.cpp \
 				OSSLEVPSymmetricAlgorithm.cpp \
 				OSSLGOST.cpp \
 				OSSLGOSTKeyPair.cpp \
 				OSSLGOSTPrivateKey.cpp \
 				OSSLGOSTPublicKey.cpp \
 				OSSLGOSTR3411.cpp \
+				OSSLCMAC.cpp \
 				OSSLHMAC.cpp \
 				OSSLMD5.cpp \
 				OSSLRNG.cpp \
@@ -105,7 +107,7 @@ libsofthsm_crypto_la_SOURCES +=	BotanAES.cpp \
 				BotanGOSTPublicKey.cpp \
 				BotanGOSTR3411.cpp \
 				BotanHashAlgorithm.cpp \
-				BotanHMAC.cpp \
+				BotanMAC.cpp \
 				BotanMacAlgorithm.cpp \
 				BotanMD5.cpp \
 				BotanRNG.cpp \

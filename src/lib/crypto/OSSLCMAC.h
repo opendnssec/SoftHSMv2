@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010 SURFnet bv
+ * Copyright (c) 2017 SURFnet bv
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,59 +25,31 @@
  */
 
 /*****************************************************************************
- MacTests.h
+ OSSLCMAC.h
 
- Contains test cases to test the MAC implementations
+ OpenSSL CMAC implementation
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_MACTESTS_H
-#define _SOFTHSM_V2_MACTESTS_H
+#ifndef _SOFTHSM_V2_OSSLCMAC_H
+#define _SOFTHSM_V2_OSSLCMAC_H
 
-#include <cppunit/extensions/HelperMacros.h>
-#include "MacAlgorithm.h"
-#include "RNG.h"
+#include "config.h"
+#include "OSSLEVPCMacAlgorithm.h"
+#include <openssl/evp.h>
 
-class MacTests : public CppUnit::TestFixture
+class OSSLCMACDES : public OSSLEVPCMacAlgorithm
 {
-	CPPUNIT_TEST_SUITE(MacTests);
-#ifndef WITH_FIPS
-	CPPUNIT_TEST(testHMACMD5);
-#endif
-	CPPUNIT_TEST(testHMACSHA1);
-	CPPUNIT_TEST(testHMACSHA224);
-	CPPUNIT_TEST(testHMACSHA256);
-	CPPUNIT_TEST(testHMACSHA384);
-	CPPUNIT_TEST(testHMACSHA512);
-	CPPUNIT_TEST(testCMACDES2);
-	CPPUNIT_TEST(testCMACDES3);
-	CPPUNIT_TEST(testCMACAES128);
-	CPPUNIT_TEST(testCMACAES192);
-	CPPUNIT_TEST(testCMACAES256);
-	CPPUNIT_TEST_SUITE_END();
-
-public:
-#ifndef WITH_FIPS
-	void testHMACMD5();
-#endif
-	void testHMACSHA1();
-	void testHMACSHA224();
-	void testHMACSHA256();
-	void testHMACSHA384();
-	void testHMACSHA512();
-	void testCMACDES2();
-	void testCMACDES3();
-	void testCMACAES128();
-	void testCMACAES192();
-	void testCMACAES256();
-
-	void setUp();
-	void tearDown();
-
-private:
-	MacAlgorithm* mac;
-
-	RNG* rng;
+protected:
+	virtual const EVP_CIPHER* getEVPCipher() const;
+	virtual size_t getMacSize() const;
 };
 
-#endif // !_SOFTHSM_V2_MACTESTS_H
+class OSSLCMACAES : public OSSLEVPCMacAlgorithm
+{
+protected:
+	virtual const EVP_CIPHER* getEVPCipher() const;
+	virtual size_t getMacSize() const;
+};
+
+#endif // !_SOFTHSM_V2_OSSLHMAC_H
 
