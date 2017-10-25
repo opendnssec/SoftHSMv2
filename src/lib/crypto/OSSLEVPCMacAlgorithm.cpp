@@ -40,7 +40,8 @@
 // Destructor
 OSSLEVPCMacAlgorithm::~OSSLEVPCMacAlgorithm()
 {
-	CMAC_CTX_free(curCTX);
+	if (curCTX != NULL)
+		CMAC_CTX_free(curCTX);
 }
 
 // Signing functions
