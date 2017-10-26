@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010 .SE (The Internet Infrastructure Foundation)
+ * Copyright (c) 2017 SURFnet bv
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,82 +25,60 @@
  */
 
 /*****************************************************************************
- BotanHMAC.cpp
+ OSSLHMAC.cpp
 
- Botan HMAC implementation
+ OpenSSL HMAC implementation
  *****************************************************************************/
 
 #include "config.h"
-#include "BotanHMAC.h"
+#include "OSSLCMAC.h"
 
-std::string BotanHMACMD5::getHash() const
+const EVP_CIPHER* OSSLCMACDES::getEVPCipher() const
 {
-	return "MD5";
+	switch(currentKey->getBitLen())
+	{
+		case 56:
+			ERROR_MSG("Only supporting 3DES");
+			return NULL;
+		case 112:
+			return EVP_des_ede_cbc();
+		case 168:
+			return EVP_des_ede3_cbc();
+		default:
+			break;
+	};
+
+	ERROR_MSG("Invalid DES bit len %i", currentKey->getBitLen());
+
+	return NULL;
 }
 
-size_t BotanHMACMD5::getMacSize() const
+size_t OSSLCMACDES::getMacSize() const
+{
+	return 8;
+}
+
+const EVP_CIPHER* OSSLCMACAES::getEVPCipher() const
+{
+	switch(currentKey->getBitLen())
+	{
+		case 128:
+			return EVP_aes_128_cbc();
+		case 192:
+			return EVP_aes_192_cbc();
+		case 256:
+			return EVP_aes_256_cbc();
+		default:
+			break;
+	};
+
+	ERROR_MSG("Invalid AES bit len %i", currentKey->getBitLen());
+
+	return NULL;
+}
+
+size_t OSSLCMACAES::getMacSize() const
 {
 	return 16;
 }
 
-std::string BotanHMACSHA1::getHash() const
-{
-	return "SHA-1";
-}
-
-size_t BotanHMACSHA1::getMacSize() const
-{
-	return 20;
-}
-
-std::string BotanHMACSHA224::getHash() const
-{
-	return "SHA-224";
-}
-
-size_t BotanHMACSHA224::getMacSize() const
-{
-	return 28;
-}
-
-std::string BotanHMACSHA256::getHash() const
-{
-	return "SHA-256";
-}
-
-size_t BotanHMACSHA256::getMacSize() const
-{
-	return 32;
-}
-
-std::string BotanHMACSHA384::getHash() const
-{
-	return "SHA-384";
-}
-
-size_t BotanHMACSHA384::getMacSize() const
-{
-	return 48;
-}
-
-std::string BotanHMACSHA512::getHash() const
-{
-	return "SHA-512";
-}
-
-size_t BotanHMACSHA512::getMacSize() const
-{
-	return 64;
-}
-
-#ifdef WITH_GOST
-std::string BotanHMACGOSTR3411::getHash() const
-{
-	return "GOST-34.11";
-}
-
-size_t BotanHMACGOSTR3411::getMacSize() const
-{
-	return 32;
-}
-#endif

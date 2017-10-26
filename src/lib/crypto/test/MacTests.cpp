@@ -315,3 +315,373 @@ void MacTests::testHMACSHA512()
 	mac = NULL;
 	rng = NULL;
 }
+
+void MacTests::testCMACDES2()
+{
+	// Test vectors from NIST SP 800-38B
+	char pk[33] = "4cf15134a2850dd58a3d10ba80570d38";
+	char testData[4][2][256] = {
+		{
+			"",
+			"bd2ebf9a3ba00361"
+		},
+		{
+			"6bc1bee22e409f96",
+			"4ff2ab813c53ce83"
+		},
+		{
+			"6bc1bee22e409f96e93d7e117393172aae2d8a57",
+			"62dd1b471902bd4e"
+		},
+		{
+			"6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e51",
+			"31b1e431dabc4eb8"
+		}
+	};
+
+	// Get a CMAC-DES instance
+	CPPUNIT_ASSERT((mac = CryptoFactory::i()->getMacAlgorithm(MacAlgo::CMAC_DES)) != NULL);
+
+	// Key
+	ByteString k(pk);
+	SymmetricKey key;
+	CPPUNIT_ASSERT(key.setKeyBits(k));
+	key.setBitLen(112);
+
+	for (int i = 0; i < 4; i++)
+	{
+		ByteString b(testData[i][0]);
+		ByteString nistMac(testData[i][1]);
+		ByteString shsmMac;
+		size_t size, part1, part2;
+
+		// Now recreate the MAC using our implementation in a single operation
+		CPPUNIT_ASSERT(mac->signInit(&key));
+		CPPUNIT_ASSERT(mac->signUpdate(b));
+		CPPUNIT_ASSERT(mac->signFinal(shsmMac));
+		CPPUNIT_ASSERT(nistMac == shsmMac);
+
+		// Now verify the MAC in a single operation
+		CPPUNIT_ASSERT(mac->verifyInit(&key));
+		CPPUNIT_ASSERT(mac->verifyUpdate(b));
+		CPPUNIT_ASSERT(mac->verifyFinal(nistMac));
+
+		// Now sign the MAC in a multiple part operation
+		shsmMac.wipe();
+		size = b.size();
+		part1 = size / 2;
+		part2 = size - part1;
+		CPPUNIT_ASSERT(mac->signInit(&key));
+		CPPUNIT_ASSERT(mac->signUpdate(b.substr(0, part1)));
+		CPPUNIT_ASSERT(mac->signUpdate(b.substr(part2)));
+		CPPUNIT_ASSERT(mac->signFinal(shsmMac));
+		CPPUNIT_ASSERT(nistMac == shsmMac);
+
+		// Now verify the MAC in a multiple part operation
+		CPPUNIT_ASSERT(mac->verifyInit(&key));
+		CPPUNIT_ASSERT(mac->verifyUpdate(b.substr(0, part1)));
+		CPPUNIT_ASSERT(mac->verifyUpdate(b.substr(part2)));
+		CPPUNIT_ASSERT(mac->verifyFinal(nistMac));
+	}
+
+	CryptoFactory::i()->recycleMacAlgorithm(mac);
+
+	mac = NULL;
+	rng = NULL;
+}
+
+void MacTests::testCMACDES3()
+{
+	// Test vectors from NIST SP 800-38B
+	char pk[49] = "8aa83bf8cbda10620bc1bf19fbb6cd58bc313d4a371ca8b5";
+	char testData[4][2][256] = {
+		{
+			"",
+			"b7a688e122ffaf95"
+		},
+		{
+			"6bc1bee22e409f96",
+			"8e8f293136283797"
+		},
+		{
+			"6bc1bee22e409f96e93d7e117393172aae2d8a57",
+			"743ddbe0ce2dc2ed"
+		},
+		{
+			"6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e51",
+			"33e6b1092400eae5"
+		}
+	};
+
+	// Get a CMAC-DES instance
+	CPPUNIT_ASSERT((mac = CryptoFactory::i()->getMacAlgorithm(MacAlgo::CMAC_DES)) != NULL);
+
+	// Key
+	ByteString k(pk);
+	SymmetricKey key;
+	CPPUNIT_ASSERT(key.setKeyBits(k));
+	key.setBitLen(168);
+
+	for (int i = 0; i < 4; i++)
+	{
+		ByteString b(testData[i][0]);
+		ByteString nistMac(testData[i][1]);
+		ByteString shsmMac;
+		size_t size, part1, part2;
+
+		// Now recreate the MAC using our implementation in a single operation
+		CPPUNIT_ASSERT(mac->signInit(&key));
+		CPPUNIT_ASSERT(mac->signUpdate(b));
+		CPPUNIT_ASSERT(mac->signFinal(shsmMac));
+		CPPUNIT_ASSERT(nistMac == shsmMac);
+
+		// Now verify the MAC in a single operation
+		CPPUNIT_ASSERT(mac->verifyInit(&key));
+		CPPUNIT_ASSERT(mac->verifyUpdate(b));
+		CPPUNIT_ASSERT(mac->verifyFinal(nistMac));
+
+		// Now sign the MAC in a multiple part operation
+		shsmMac.wipe();
+		size = b.size();
+		part1 = size / 2;
+		part2 = size - part1;
+		CPPUNIT_ASSERT(mac->signInit(&key));
+		CPPUNIT_ASSERT(mac->signUpdate(b.substr(0, part1)));
+		CPPUNIT_ASSERT(mac->signUpdate(b.substr(part2)));
+		CPPUNIT_ASSERT(mac->signFinal(shsmMac));
+		CPPUNIT_ASSERT(nistMac == shsmMac);
+
+		// Now verify the MAC in a multiple part operation
+		CPPUNIT_ASSERT(mac->verifyInit(&key));
+		CPPUNIT_ASSERT(mac->verifyUpdate(b.substr(0, part1)));
+		CPPUNIT_ASSERT(mac->verifyUpdate(b.substr(part2)));
+		CPPUNIT_ASSERT(mac->verifyFinal(nistMac));
+	}
+
+	CryptoFactory::i()->recycleMacAlgorithm(mac);
+
+	mac = NULL;
+	rng = NULL;
+}
+
+void MacTests::testCMACAES128()
+{
+	// Test vectors from NIST SP 800-38B
+	char pk[33] = "2b7e151628aed2a6abf7158809cf4f3c";
+	char testData[4][2][256] = {
+		{
+			"",
+			"bb1d6929e95937287fa37d129b756746"
+		},
+		{
+			"6bc1bee22e409f96e93d7e117393172a",
+			"070a16b46b4d4144f79bdd9dd04a287c"
+		},
+		{
+			"6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e5130c81c46a35ce411",
+			"dfa66747de9ae63030ca32611497c827"
+		},
+		{
+			"6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e5130c81c46a35ce411e5fbc1191a0a52eff69f2445df4f9b17ad2b417be66c3710",
+			"51f0bebf7e3b9d92fc49741779363cfe"
+		}
+	};
+
+	// Get a CMAC-AES instance
+	CPPUNIT_ASSERT((mac = CryptoFactory::i()->getMacAlgorithm(MacAlgo::CMAC_AES)) != NULL);
+
+	// Key
+	ByteString k(pk);
+	SymmetricKey key;
+	CPPUNIT_ASSERT(key.setKeyBits(k));
+	key.setBitLen(128);
+
+	for (int i = 0; i < 4; i++)
+	{
+		ByteString b(testData[i][0]);
+		ByteString nistMac(testData[i][1]);
+		ByteString shsmMac;
+		size_t size, part1, part2;
+
+		// Now recreate the MAC using our implementation in a single operation
+		CPPUNIT_ASSERT(mac->signInit(&key));
+		CPPUNIT_ASSERT(mac->signUpdate(b));
+		CPPUNIT_ASSERT(mac->signFinal(shsmMac));
+		CPPUNIT_ASSERT(nistMac == shsmMac);
+
+		// Now verify the MAC in a single operation
+		CPPUNIT_ASSERT(mac->verifyInit(&key));
+		CPPUNIT_ASSERT(mac->verifyUpdate(b));
+		CPPUNIT_ASSERT(mac->verifyFinal(nistMac));
+
+		// Now sign the MAC in a multiple part operation
+		shsmMac.wipe();
+		size = b.size();
+		part1 = size / 2;
+		part2 = size - part1;
+		CPPUNIT_ASSERT(mac->signInit(&key));
+		CPPUNIT_ASSERT(mac->signUpdate(b.substr(0, part1)));
+		CPPUNIT_ASSERT(mac->signUpdate(b.substr(part2)));
+		CPPUNIT_ASSERT(mac->signFinal(shsmMac));
+		CPPUNIT_ASSERT(nistMac == shsmMac);
+
+		// Now verify the MAC in a multiple part operation
+		CPPUNIT_ASSERT(mac->verifyInit(&key));
+		CPPUNIT_ASSERT(mac->verifyUpdate(b.substr(0, part1)));
+		CPPUNIT_ASSERT(mac->verifyUpdate(b.substr(part2)));
+		CPPUNIT_ASSERT(mac->verifyFinal(nistMac));
+	}
+
+	CryptoFactory::i()->recycleMacAlgorithm(mac);
+
+	mac = NULL;
+	rng = NULL;
+}
+
+void MacTests::testCMACAES192()
+{
+	// Test vectors from NIST SP 800-38B
+	char pk[49] = "8e73b0f7da0e6452c810f32b809079e562f8ead2522c6b7b";
+	char testData[4][2][256] = {
+		{
+			"",
+			"d17ddf46adaacde531cac483de7a9367"
+		},
+		{
+			"6bc1bee22e409f96e93d7e117393172a",
+			"9e99a7bf31e710900662f65e617c5184"
+		},
+		{
+			"6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e5130c81c46a35ce411",
+			"8a1de5be2eb31aad089a82e6ee908b0e"
+		},
+		{
+			"6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e5130c81c46a35ce411e5fbc1191a0a52eff69f2445df4f9b17ad2b417be66c3710",
+			"a1d5df0eed790f794d77589659f39a11"
+		}
+	};
+
+	// Get a CMAC-AES instance
+	CPPUNIT_ASSERT((mac = CryptoFactory::i()->getMacAlgorithm(MacAlgo::CMAC_AES)) != NULL);
+
+	// Key
+	ByteString k(pk);
+	SymmetricKey key;
+	CPPUNIT_ASSERT(key.setKeyBits(k));
+	key.setBitLen(192);
+
+	for (int i = 0; i < 4; i++)
+	{
+		ByteString b(testData[i][0]);
+		ByteString nistMac(testData[i][1]);
+		ByteString shsmMac;
+		size_t size, part1, part2;
+
+		// Now recreate the MAC using our implementation in a single operation
+		CPPUNIT_ASSERT(mac->signInit(&key));
+		CPPUNIT_ASSERT(mac->signUpdate(b));
+		CPPUNIT_ASSERT(mac->signFinal(shsmMac));
+		CPPUNIT_ASSERT(nistMac == shsmMac);
+
+		// Now verify the MAC in a single operation
+		CPPUNIT_ASSERT(mac->verifyInit(&key));
+		CPPUNIT_ASSERT(mac->verifyUpdate(b));
+		CPPUNIT_ASSERT(mac->verifyFinal(nistMac));
+
+		// Now sign the MAC in a multiple part operation
+		shsmMac.wipe();
+		size = b.size();
+		part1 = size / 2;
+		part2 = size - part1;
+		CPPUNIT_ASSERT(mac->signInit(&key));
+		CPPUNIT_ASSERT(mac->signUpdate(b.substr(0, part1)));
+		CPPUNIT_ASSERT(mac->signUpdate(b.substr(part2)));
+		CPPUNIT_ASSERT(mac->signFinal(shsmMac));
+		CPPUNIT_ASSERT(nistMac == shsmMac);
+
+		// Now verify the MAC in a multiple part operation
+		CPPUNIT_ASSERT(mac->verifyInit(&key));
+		CPPUNIT_ASSERT(mac->verifyUpdate(b.substr(0, part1)));
+		CPPUNIT_ASSERT(mac->verifyUpdate(b.substr(part2)));
+		CPPUNIT_ASSERT(mac->verifyFinal(nistMac));
+	}
+
+	CryptoFactory::i()->recycleMacAlgorithm(mac);
+
+	mac = NULL;
+	rng = NULL;
+}
+
+void MacTests::testCMACAES256()
+{
+	// Test vectors from NIST SP 800-38B
+	char pk[65] = "603deb1015ca71be2b73aef0857d77811f352c073b6108d72d9810a30914dff4";
+	char testData[4][2][256] = {
+		{
+			"",
+			"028962f61b7bf89efc6b551f4667d983"
+		},
+		{
+			"6bc1bee22e409f96e93d7e117393172a",
+			"28a7023f452e8f82bd4bf28d8c37c35c"
+		},
+		{
+			"6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e5130c81c46a35ce411",
+			"aaf3d8f1de5640c232f5b169b9c911e6"
+		},
+		{
+			"6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e5130c81c46a35ce411e5fbc1191a0a52eff69f2445df4f9b17ad2b417be66c3710",
+			"e1992190549f6ed5696a2c056c315410"
+		}
+	};
+
+	// Get a CMAC-AES instance
+	CPPUNIT_ASSERT((mac = CryptoFactory::i()->getMacAlgorithm(MacAlgo::CMAC_AES)) != NULL);
+
+	// Key
+	ByteString k(pk);
+	SymmetricKey key;
+	CPPUNIT_ASSERT(key.setKeyBits(k));
+	key.setBitLen(256);
+
+	for (int i = 0; i < 4; i++)
+	{
+		ByteString b(testData[i][0]);
+		ByteString nistMac(testData[i][1]);
+		ByteString shsmMac;
+		size_t size, part1, part2;
+
+		// Now recreate the MAC using our implementation in a single operation
+		CPPUNIT_ASSERT(mac->signInit(&key));
+		CPPUNIT_ASSERT(mac->signUpdate(b));
+		CPPUNIT_ASSERT(mac->signFinal(shsmMac));
+		CPPUNIT_ASSERT(nistMac == shsmMac);
+
+		// Now verify the MAC in a single operation
+		CPPUNIT_ASSERT(mac->verifyInit(&key));
+		CPPUNIT_ASSERT(mac->verifyUpdate(b));
+		CPPUNIT_ASSERT(mac->verifyFinal(nistMac));
+
+		// Now sign the MAC in a multiple part operation
+		shsmMac.wipe();
+		size = b.size();
+		part1 = size / 2;
+		part2 = size - part1;
+		CPPUNIT_ASSERT(mac->signInit(&key));
+		CPPUNIT_ASSERT(mac->signUpdate(b.substr(0, part1)));
+		CPPUNIT_ASSERT(mac->signUpdate(b.substr(part2)));
+		CPPUNIT_ASSERT(mac->signFinal(shsmMac));
+		CPPUNIT_ASSERT(nistMac == shsmMac);
+
+		// Now verify the MAC in a multiple part operation
+		CPPUNIT_ASSERT(mac->verifyInit(&key));
+		CPPUNIT_ASSERT(mac->verifyUpdate(b.substr(0, part1)));
+		CPPUNIT_ASSERT(mac->verifyUpdate(b.substr(part2)));
+		CPPUNIT_ASSERT(mac->verifyFinal(nistMac));
+	}
+
+	CryptoFactory::i()->recycleMacAlgorithm(mac);
+
+	mac = NULL;
+	rng = NULL;
+}

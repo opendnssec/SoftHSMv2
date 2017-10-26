@@ -49,7 +49,7 @@
     <ClInclude Include="..\..\src\lib\crypto\BotanGOSTPublicKey.h" />
     <ClInclude Include="..\..\src\lib\crypto\BotanGOSTR3411.h" />
     <ClInclude Include="..\..\src\lib\crypto\BotanHashAlgorithm.h" />
-    <ClInclude Include="..\..\src\lib\crypto\BotanHMAC.h" />
+    <ClInclude Include="..\..\src\lib\crypto\BotanMAC.h" />
     <ClInclude Include="..\..\src\lib\crypto\BotanMacAlgorithm.h" />
     <ClInclude Include="..\..\src\lib\crypto\BotanMD5.h" />
     <ClInclude Include="..\..\src\lib\crypto\BotanRNG.h" />
@@ -102,6 +102,7 @@
      <ClInclude Include="..\..\src\lib\crypto\OSSLECPrivateKey.h" />
      <ClInclude Include="..\..\src\lib\crypto\OSSLECPublicKey.h" />
      <ClInclude Include="..\..\src\lib\crypto\OSSLEVPHashAlgorithm.h" />
+     <ClInclude Include="..\..\src\lib\crypto\OSSLEVPCMacAlgorithm.h" />
      <ClInclude Include="..\..\src\lib\crypto\OSSLEVPMacAlgorithm.h" />
      <ClInclude Include="..\..\src\lib\crypto\OSSLEVPSymmetricAlgorithm.h" />
      <ClInclude Include="..\..\src\lib\crypto\OSSLGOST.h" />
@@ -109,6 +110,7 @@
      <ClInclude Include="..\..\src\lib\crypto\OSSLGOSTPrivateKey.h" />
      <ClInclude Include="..\..\src\lib\crypto\OSSLGOSTPublicKey.h" />
      <ClInclude Include="..\..\src\lib\crypto\OSSLGOSTR3411.h" />
+     <ClInclude Include="..\..\src\lib\crypto\OSSLCMAC.h" />
      <ClInclude Include="..\..\src\lib\crypto\OSSLHMAC.h" />
      <ClInclude Include="..\..\src\lib\crypto\OSSLMD5.h" />
      <ClInclude Include="..\..\src\lib\crypto\OSSLRNG.h" />
@@ -197,7 +199,7 @@
     <ClCompile Include="..\..\src\lib\crypto\BotanGOSTPublicKey.cpp" />
     <ClCompile Include="..\..\src\lib\crypto\BotanGOSTR3411.cpp" />
     <ClCompile Include="..\..\src\lib\crypto\BotanHashAlgorithm.cpp" />
-    <ClCompile Include="..\..\src\lib\crypto\BotanHMAC.cpp" />
+    <ClCompile Include="..\..\src\lib\crypto\BotanMAC.cpp" />
     <ClCompile Include="..\..\src\lib\crypto\BotanMacAlgorithm.cpp" />
     <ClCompile Include="..\..\src\lib\crypto\BotanMD5.cpp" />
     <ClCompile Include="..\..\src\lib\crypto\BotanRNG.cpp" />
@@ -248,6 +250,7 @@
      <ClCompile Include="..\..\src\lib\crypto\OSSLECPrivateKey.cpp" />
      <ClCompile Include="..\..\src\lib\crypto\OSSLECPublicKey.cpp" />
      <ClCompile Include="..\..\src\lib\crypto\OSSLEVPHashAlgorithm.cpp" />
+     <ClCompile Include="..\..\src\lib\crypto\OSSLEVPCMacAlgorithm.cpp" />
      <ClCompile Include="..\..\src\lib\crypto\OSSLEVPMacAlgorithm.cpp" />
      <ClCompile Include="..\..\src\lib\crypto\OSSLEVPSymmetricAlgorithm.cpp" />
      <ClCompile Include="..\..\src\lib\crypto\OSSLGOST.cpp" />
@@ -255,6 +258,7 @@
      <ClCompile Include="..\..\src\lib\crypto\OSSLGOSTPrivateKey.cpp" />
      <ClCompile Include="..\..\src\lib\crypto\OSSLGOSTPublicKey.cpp" />
      <ClCompile Include="..\..\src\lib\crypto\OSSLGOSTR3411.cpp" />
+     <ClCompile Include="..\..\src\lib\crypto\OSSLCMAC.cpp" />
      <ClCompile Include="..\..\src\lib\crypto\OSSLHMAC.cpp" />
      <ClCompile Include="..\..\src\lib\crypto\OSSLMD5.cpp" />
      <ClCompile Include="..\..\src\lib\crypto\OSSLRNG.cpp" />
