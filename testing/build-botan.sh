@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 source `dirname "$0"`/lib.sh && init || exit 1
 
-BOTAN="Botan-1.10.15"
+BOTAN="Botan-2.3.0"
 BOTAN_URL="https://botan.randombit.net/releases/$BOTAN.tgz"
 BOTAN_FILENAME="$BOTAN.tgz"
 BOTAN_HASH_TYPE="sha1"
-BOTAN_HASH="2fb9c5798f1157fff830b4aeeacffac4b659864d"
+BOTAN_HASH="ae9e8c6dd55da7e38e1e862a4213373708b2c181"
 
 check_if_built botan && exit 0
 start_build botan
@@ -33,7 +33,8 @@ case "$DISTRIBUTION" in
 		build_ok=1
 		;;
 	freebsd | \
-	netbsd )
+	netbsd | \
+	openbsd )
 		opt=""
 		if uname -a 2>/dev/null | grep -q "FreeBSD 10" 2>/dev/null; then
 			opt="--cc=clang"
@@ -52,7 +53,7 @@ case "$DISTRIBUTION" in
 		opt=""
 		case "$platform" in
 			i386)
-				opt="--disable-asm --cpu=i686"
+				opt="--cpu=i686"
 				;;
 
 			sparc)
@@ -67,17 +68,6 @@ case "$DISTRIBUTION" in
 			gunzip -c "$BOTAN_SRC" | tar xf - &&
 			cd "$BOTAN" &&
 			./configure.py --prefix="$INSTALL_ROOT" $opt &&
-			$MAKE &&
-			$MAKE install
-		) &&
-		build_ok=1
-		;;
-	openbsd )
-		(
-			gunzip -c "$BOTAN_SRC" | tar xf - &&
-			cd "$BOTAN" &&
-			python2.7 ./configure.py --prefix="$INSTALL_ROOT" \
-				--disable-asm &&
 			$MAKE &&
 			$MAKE install
 		) &&
