@@ -16,6 +16,7 @@ SoftHSM develop
 Bugfixes:
 * Issue #345: Private objects are presented to security officer in search
   results.
+* Issue #358: Race condition when multiple applications are using SoftHSM.
 
 
 SoftHSM 2.3.0 - 2017-07-03
