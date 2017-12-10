@@ -1757,7 +1757,6 @@ CK_RV SoftHSM::C_FindObjectsInit(CK_SESSION_HANDLE hSession, CK_ATTRIBUTE_PTR pT
 	switch (session->getState()) {
 		case CKS_RO_USER_FUNCTIONS:
 		case CKS_RW_USER_FUNCTIONS:
-		case CKS_RW_SO_FUNCTIONS:
 			isPublicSession = false;
 			break;
 		default:

@@ -13,6 +13,10 @@ SoftHSM develop
 * Issue #341: Import AES keys with softhsm2-util.
   (Patch from Pavel Cherezov)
 
+Bugfixes:
+* Issue #345: Private objects are presented to security officer in search
+  results.
+
 
 SoftHSM 2.3.0 - 2017-07-03
 
