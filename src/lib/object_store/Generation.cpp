@@ -121,7 +121,7 @@ bool Generation::wasUpdated()
 
 		if (!objectFile.readULong(onDisk))
 		{
-			return (!objectFile.isEOF());
+			return true;
 		}
 
 		return (onDisk != currentValue);

@@ -296,14 +296,14 @@ void ObjectFile::refresh(bool isFirstTime /* = false */)
 	}
 
 	// Check the generation
-	if (!isFirstTime && (!valid || !gen->wasUpdated()))
+	if (!isFirstTime && (gen == NULL || !gen->wasUpdated()))
 	{
 		return;
 	}
 
 	File objectFile(path);
 
-	if (!objectFile.isValid())
+	if (!objectFile.isValid() || objectFile.isEmpty())
 	{
 		valid = false;
 
