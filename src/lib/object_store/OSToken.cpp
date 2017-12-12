@@ -586,12 +586,16 @@ bool OSToken::index(bool isFirstTime /* = false */)
 	// Check if re-indexing is required
 	if (!isFirstTime && (!valid || !gen->wasUpdated()))
 	{
+		DEBUG_MSG("No re-indexing is required");
+
 		return true;
 	}
 
 	// Check the integrity
 	if (!tokenDir->refresh() || !tokenObject->valid)
 	{
+		ERROR_MSG("Token integrity check failed");
+
 		valid = false;
 
 		return false;

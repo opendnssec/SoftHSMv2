@@ -285,6 +285,8 @@ void ObjectFile::refresh(bool isFirstTime /* = false */)
 	// Check if we're in the middle of a transaction
 	if (inTransaction)
 	{
+		DEBUG_MSG("The object is in a transaction");
+
 		return;
 	}
 
@@ -298,6 +300,8 @@ void ObjectFile::refresh(bool isFirstTime /* = false */)
 	// Check the generation
 	if (!isFirstTime && (gen == NULL || !gen->wasUpdated()))
 	{
+		DEBUG_MSG("The object generation has not been updated");
+
 		return;
 	}
 
@@ -305,6 +309,8 @@ void ObjectFile::refresh(bool isFirstTime /* = false */)
 
 	if (!objectFile.isValid() || objectFile.isEmpty())
 	{
+		DEBUG_MSG("The object file is invalid or empty");
+
 		valid = false;
 
 		return;
