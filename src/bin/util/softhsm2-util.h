@@ -40,6 +40,7 @@
 // Main functions
 
 void usage();
+bool checkSetup();
 int initToken(CK_SLOT_ID slotID, char* label, char* soPIN, char* userPIN);
 bool deleteToken(char* serial, char* token);
 bool findTokenDirectory(std::string basedir, std::string& tokendir, char* serial, char* label);

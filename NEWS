@@ -13,6 +13,8 @@ SoftHSM develop
 * Issue #341: Import AES keys with softhsm2-util.
   (Patch from Pavel Cherezov)
 * Issue #348: Document that OSX needs pkg-config to detect cppunit.
+* Issue #349: softhsm2-util will check the configuration and report any
+  issues before loading the PKCS#11 library.
 
 Bugfixes:
 * Issue #345: Private objects are presented to security officer in search

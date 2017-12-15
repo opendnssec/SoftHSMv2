@@ -299,6 +299,13 @@ int main(int argc, char* argv[])
 
 	if (needP11)
 	{
+		// Check the basic setup of SoftHSM
+		if (!checkSetup())
+		{
+			fprintf(stderr, "ERROR: Please verify that the SoftHSM configuration is correct.\n");
+			exit(1);
+		}
+
 		// Get a pointer to the function list for PKCS#11 library
 		CK_C_GetFunctionList pGetFunctionList = loadLibrary(module, &moduleHandle, &errMsg);
 		if (!pGetFunctionList)
@@ -371,6 +378,31 @@ int main(int argc, char* argv[])
 	}
 
 	return rv;
+}
+
+// Check the basic setup of SoftHSM
+bool checkSetup()
+{
+	// Initialize the SoftHSM internal functions
+	if (!initSoftHSM())
+	{
+		finalizeSoftHSM();
+		return false;
+	}
+
+	std::string basedir = Configuration::i()->getString("directories.tokendir", DEFAULT_TOKENDIR);
+
+	// Try open the token directory
+	Directory storeDir(basedir);
+	if (!storeDir.isValid())
+	{
+		fprintf(stderr, "ERROR: Failed to enumerate object store in %s\n", basedir.c_str());
+		finalizeSoftHSM();
+		return false;
+	}
+
+	finalizeSoftHSM();
+	return true;
 }
 
 // Initialize the token
@@ -642,7 +674,7 @@ bool findTokenDirectory(std::string basedir, std::string& tokendir, char* serial
 
 	if (!storeDir.isValid())
 	{
-		fprintf(stderr, "Failed to enumerate object store in %s", basedir.c_str());
+		fprintf(stderr, "Failed to enumerate object store in %s\n", basedir.c_str());
 
 		return false;
 	}
@@ -727,7 +759,7 @@ bool rmdir(std::string path)
 
 	if (dir == NULL)
 	{
-		fprintf(stderr, "ERROR: Failed to open directory %s", path.c_str());
+		fprintf(stderr, "ERROR: Failed to open directory %s\n", path.c_str());
 		return false;
 	}
 
@@ -814,7 +846,7 @@ bool rmdir(std::string path)
 		if (errno == ENOENT)
 			goto finished;
 
-		fprintf(stderr, "ERROR: Failed to open directory %s", path.c_str());
+		fprintf(stderr, "ERROR: Failed to open directory %s\n", path.c_str());
 
 		return false;
 	}
