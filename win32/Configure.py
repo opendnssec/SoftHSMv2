@@ -59,7 +59,8 @@ varnames = ["CUINCPATH",
             "LIBPATH",
             "PLATFORM",
             "PLATFORMDIR",
-            "PLATFORMTOOLSET"]
+            "PLATFORMTOOLSET",
+            "RUNTIMELIBRARY"]
 
 # conditions to stack
 
@@ -84,6 +85,7 @@ enablelist = ["64bit",
               "gost",
               "keep",
               "non-paged-memory",
+              "static-runtime",
               "verbose"]
 
 # with-xxx/without-xxx arguments
@@ -121,6 +123,7 @@ usage + [\
 "  enable-debug             enable build of Debug config [default=yes]",
 "  enable-ecc               enable support for ECC [default=yes]",
 "  enable-gost              enable support for GOST [default=yes]",
+"  enable-static-runtime    enable build with static CRT (/MT) [default=no]",
 "  enable-non-paged-memory  enable non-paged memory [default=yes]",
 "\nOptional Packages:",
 "  with-crypto-backend      select the crypto backend [openssl|botan]",
@@ -144,6 +147,7 @@ enable_keep = False
 enable_debug = True
 enable_ecc = True
 enable_gost = True
+enable_static_runtime = False
 enable_non_paged = True
 platform = 32
 crypto_backend = "openssl"
@@ -259,6 +263,7 @@ def myenable(key, val):
     global enable_debug
     global enable_ecc
     global enable_gost
+    global enable_static_runtime
     global enable_non_paged
     global enable_keep
     global verbose
@@ -279,6 +284,10 @@ def myenable(key, val):
     if key.lower() == "gost":
         if not val:
             enable_gost = False
+        return
+    if key.lower() == "static-runtime":
+        if val:
+            enable_static_runtime = True
         return
     if key.lower() == "non-paged-memory":
         if not val:
@@ -432,6 +441,12 @@ def doconfig():
     else:
         varvals["PLATFORM"] = "x64"
         varvals["PLATFORMDIR"] = "x64\\"
+
+    # configure the runtime library
+    if enable_static_runtime:
+        varvals["RUNTIMELIBRARY"] = "MultiThreaded"
+    else:
+        varvals["RUNTIMELIBRARY"] = "MultiThreadedDLL"
 
     # configure ECC and GOST
     if enable_ecc:

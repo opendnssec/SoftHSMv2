@@ -5,6 +5,8 @@ SoftHSM develop
 * Issue #140: Support for CKA_ALLOWED_MECHANISMS.
   (Patch from Brad Hess)
 * Issue #220: Support for CKM_DES3_CMAC and CKM_AES_CMAC.
+* Issue #226: Configuration option for Windows build to enable build with
+  static CRT (/MT).
 * Issue #325: Support for CKM_AES_GCM.
 * Issue #334: Document that initialized tokens will be reassigned to another
   slot (based on the token serial number).
