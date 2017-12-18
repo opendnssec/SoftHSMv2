@@ -46,6 +46,7 @@ test-driver
 # Test outputs
 *.log
 *.trs
+test-results.xml
 
 # Temporary files
 *~
@@ -58,6 +59,7 @@ ROOT
 # Specifics
 softhsm2.module
 src/bin/common/.dirstamp
+src/bin/dump/softhsm2-dump-db
 src/bin/dump/softhsm2-dump-file
 src/bin/keyconv/softhsm2-keyconv
 src/bin/util/softhsm2-util
