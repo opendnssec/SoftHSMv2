@@ -37,7 +37,7 @@
 #include "config.h"
 #include "SymmetricKey.h"
 #include "MacAlgorithm.h"
-#include <botan/hmac.h>
+#include <botan/mac.h>
 
 class BotanMacAlgorithm : public MacAlgorithm
 {
@@ -62,12 +62,12 @@ public:
 	virtual size_t getMacSize() const = 0;
 
 protected:
-	// Return the right hash for the operation
-	virtual std::string getHash() const = 0;
+	// Return the right algorithm for the operation
+	virtual std::string getAlgorithm() const = 0;
 
 private:
 	// The current context
-	Botan::HMAC* hmac;
+	Botan::MessageAuthenticationCode* mac;
 };
 
 #endif // !_SOFTHSM_V2_BOTANMACALGORITHM_H

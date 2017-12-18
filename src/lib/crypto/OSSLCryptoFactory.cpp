@@ -42,6 +42,7 @@
 #include "OSSLSHA256.h"
 #include "OSSLSHA384.h"
 #include "OSSLSHA512.h"
+#include "OSSLCMAC.h"
 #include "OSSLHMAC.h"
 #include "OSSLRSA.h"
 #include "OSSLDSA.h"
@@ -361,6 +362,10 @@ MacAlgorithm* OSSLCryptoFactory::getMacAlgorithm(MacAlgo::Type algorithm)
 		case MacAlgo::HMAC_GOST:
 			return new OSSLHMACGOSTR3411();
 #endif
+		case MacAlgo::CMAC_DES:
+			return new OSSLCMACDES();
+		case MacAlgo::CMAC_AES:
+			return new OSSLCMACAES();
 		default:
 			// No algorithm implementation is available
 			ERROR_MSG("Unknown algorithm '%i'", algorithm);

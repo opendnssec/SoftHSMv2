@@ -66,7 +66,8 @@ varnames = ["CUINCPATH",
 
 condvals = {}
 
-condnames = ["BOTAN",
+condnames = ["AESGCM",
+             "BOTAN",
              "ECC",
              "EDDSA",
              "GOST",
@@ -1009,6 +1010,8 @@ int main() {\n\
 
         # no check for OpenSSL raw PSS support
         condvals["RAWPSS"] = True
+        # no check for OpenSSL AES GCM
+        condvals["AESGCM"] = True
 
     # configure CppUnit
     if want_tests:

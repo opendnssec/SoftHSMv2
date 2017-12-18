@@ -138,6 +138,13 @@
 #undef WITH_RAW_PSS
 @END RAWPSS
 
+/* Compile with AES GCM support */
+@IF AESGCM
+#define WITH_AES_GCM 1
+@ELSE AESGCM
+#undef WITH_AES_GCM
+@END AESGCM
+
 /* Define to 1 if you have getpassphrase(). */
 #define HAVE_GETPASSPHRASE
 

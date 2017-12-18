@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010 SURFnet bv
+ * Copyright (c) 2017 SURFnet bv
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,54 +25,31 @@
  */
 
 /*****************************************************************************
- AESTests.h
+ OSSLCMAC.h
 
- Contains test cases to test the AES implementation
+ OpenSSL CMAC implementation
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_AESTESTS_H
-#define _SOFTHSM_V2_AESTESTS_H
+#ifndef _SOFTHSM_V2_OSSLCMAC_H
+#define _SOFTHSM_V2_OSSLCMAC_H
 
-#include <cppunit/extensions/HelperMacros.h>
-#include "SymmetricAlgorithm.h"
+#include "config.h"
+#include "OSSLEVPCMacAlgorithm.h"
+#include <openssl/evp.h>
 
-class AESTests : public CppUnit::TestFixture
+class OSSLCMACDES : public OSSLEVPCMacAlgorithm
 {
-	CPPUNIT_TEST_SUITE(AESTests);
-	CPPUNIT_TEST(testBlockSize);
-	CPPUNIT_TEST(testCBC);
-	CPPUNIT_TEST(testECB);
-	CPPUNIT_TEST(testCTR);
-#ifdef WITH_AES_GCM
-	CPPUNIT_TEST(testGCM);
-#endif
-#ifdef HAVE_AES_KEY_WRAP
-	CPPUNIT_TEST(testWrapWoPad);
-#endif
-#ifdef HAVE_AES_KEY_WRAP_PAD
-	CPPUNIT_TEST(testWrapPad);
-#endif
-	CPPUNIT_TEST_SUITE_END();
-
-public:
-	void testBlockSize();
-	void testCBC();
-	void testECB();
-	void testCTR();
-#ifdef WITH_AES_GCM
-	void testGCM();
-#endif
-	void testWrapWoPad();
-	void testWrapPad();
-
-	void setUp();
-	void tearDown();
-
-private:
-	// AES instance
-	SymmetricAlgorithm* aes;
-	void testWrap(const char testKeK[][128], const char testKey[][128], const char testCt[][128], const int testCnt, SymWrap::Type mode);
+protected:
+	virtual const EVP_CIPHER* getEVPCipher() const;
+	virtual size_t getMacSize() const;
 };
 
-#endif // !_SOFTHSM_V2_AESTESTS_H
+class OSSLCMACAES : public OSSLEVPCMacAlgorithm
+{
+protected:
+	virtual const EVP_CIPHER* getEVPCipher() const;
+	virtual size_t getMacSize() const;
+};
+
+#endif // !_SOFTHSM_V2_OSSLHMAC_H
 

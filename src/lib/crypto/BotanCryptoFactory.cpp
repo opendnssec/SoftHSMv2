@@ -52,7 +52,7 @@
 #include "BotanGOST.h"
 #include "BotanGOSTR3411.h"
 #endif
-#include "BotanHMAC.h"
+#include "BotanMAC.h"
 #ifdef WITH_EDDSA
 #include "BotanEDDSA.h"
 #endif
@@ -247,6 +247,10 @@ MacAlgorithm* BotanCryptoFactory::getMacAlgorithm(MacAlgo::Type algorithm)
 		case MacAlgo::HMAC_GOST:
 			return new BotanHMACGOSTR3411();
 #endif
+		case MacAlgo::CMAC_DES:
+			return new BotanCMACDES();
+		case MacAlgo::CMAC_AES:
+			return new BotanCMACAES();
 		default:
 			// No algorithm implementation is available
 			ERROR_MSG("Unknown algorithm '%i'", algorithm);

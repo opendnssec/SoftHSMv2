@@ -38,7 +38,8 @@
 #define BOOLEAN_ATTR		0x1
 #define ULONG_ATTR		0x2
 #define BYTES_ATTR		0x3
-#define ARRAY_ATTR		0x4
+#define ATTRMAP_ATTR		0x4
+#define MECHSET_ATTR		0x5
 
 // Maximum byte string length (1Gib)
 #define MAX_BYTES		0x3fffffff
@@ -65,6 +66,12 @@ bool Attribute::isBinary() const
 }
 
 template<>
+bool Attribute::isMechSet() const
+{
+	return kind == MECHSET_ATTR;
+}
+
+template<>
 void Attribute::dumpType() const
 {
 	dumpULong(type, true);
@@ -88,10 +95,10 @@ void Attribute::dumpULongValue(uint64_t value) const
 	dumpULong(value, true);
 }
 
-// dumpArray specialization
+// dumpMap specialization
 typedef std::vector<Attribute> va_type;
 
-void dumpArray(const va_type& value)
+void dumpMap(const va_type& value)
 {
 	for (va_type::const_iterator attr = value.begin(); attr != value.end(); ++attr)
 		attr->dump();
@@ -156,8 +163,8 @@ bool readBytes(FILE* stream, std::vector<uint8_t>& value)
 	return true;
 }
 
-// Read an array (aka Attribute vector) value
-bool readArray(FILE* stream, uint64_t len, std::vector<Attribute>& value)
+// Read a map (aka Attribute vector) value
+bool readMap(FILE* stream, uint64_t len, std::vector<Attribute>& value)
 {
 	fpos_t pos;
 	if (fgetpos(stream, &pos) != 0)
@@ -247,6 +254,39 @@ bool readArray(FILE* stream, uint64_t len, std::vector<Attribute>& value)
 				return false;
 			}
 			len -= size;
+		}
+		else if (attr.kind == MECHSET_ATTR)
+		{
+			uint64_t size;
+			if (len < 8)
+			{
+				(void) fsetpos(stream, &pos);
+				return false;
+			}
+			if (!readULong(stream, size))
+			{
+				(void) fsetpos(stream, &pos);
+				return false;
+			}
+			len -= 8;
+
+			if (len < size * 8)
+			{
+				(void) fsetpos(stream, &pos);
+				return false;
+			}
+
+			for (unsigned long i = 0; i < size; i++)
+			{
+				uint64_t mech;
+				if (!readULong(stream, mech))
+				{
+					(void) fsetpos(stream, &pos);
+					return false;
+				}
+				attr.mechSetValue.insert(mech);
+			}
+			len -= size * 8;
 		}
 		else
 		{
@@ -347,8 +387,11 @@ void dump(FILE* stream)
 		case BYTES_ATTR:
 			printf("byte string attribute\n");
 			break;
-		case ARRAY_ATTR:
-			printf("attribute array attribute\n");
+		case ATTRMAP_ATTR:
+			printf("attribute map attribute\n");
+			break;
+		case MECHSET_ATTR:
+			printf("mechanism set attribute\n");
 			break;
 		default:
 			printf("unknown attribute format\n");
@@ -402,7 +445,7 @@ void dump(FILE* stream)
 			}
 			dumpBytes(value);
 		}
-		else if (disktype == ARRAY_ATTR)
+		else if (disktype == ATTRMAP_ATTR)
 		{
 			uint64_t len;
 			if (!readULong(stream, len))
@@ -419,12 +462,41 @@ void dump(FILE* stream)
 			printf("(length %lu)\n", (unsigned long) len);
 
 			std::vector<Attribute> value;
-			if (!readArray(stream, len, value))
+			if (!readMap(stream, len, value))
 			{
 				corrupt(stream);
 				return;
 			}
-			dumpArray(value);
+			dumpMap(value);
+		}
+		else if (disktype == MECHSET_ATTR)
+		{
+			uint64_t len;
+			if (!readULong(stream, len))
+			{
+				corrupt(stream);
+				return;
+			}
+			dumpULong(len);
+			if (len > MAX_BYTES)
+			{
+				printf("overflow length...\n");
+				return;
+			}
+			printf("(length %lu)\n", (unsigned long) len);
+
+			for (unsigned long i = 0; i < len; i++)
+			{
+				uint64_t mech;
+				if (!readULong(stream, mech))
+				{
+					corrupt(stream);
+					return;
+				}
+				dumpULong(mech);
+				dumpCKM(mech, 48);
+				printf("\n");
+			}
 		}
 		else
 		{
