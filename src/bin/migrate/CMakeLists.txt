@@ -15,5 +15,5 @@ if(WITH_SQLITE3)
 
     include_directories(${INCLUDE_DIRS})
     add_executable(${PROJECT_NAME} ${SOURCES})
-    target_link_libraries(${PROJECT_NAME} ${SQLITE3_LIBS} ${YIELD_LIB})
+    target_link_libraries(${PROJECT_NAME} ${SQLITE3_LIBS} ${YIELD_LIB} ${CMAKE_DL_LIBS})
 endif(WITH_SQLITE3)

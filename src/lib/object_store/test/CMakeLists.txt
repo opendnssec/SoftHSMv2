@@ -11,13 +11,13 @@ set(SOURCES objstoretest.cpp
             SessionObjectStoreTests.cpp
             )
 
-if(BUILD_OBJECTSTORE_BACKEND_DB)
+if(WITH_OBJECTSTORE_BACKEND_DB)
     list(APPEND SOURCES DBTests.cpp
                         DBObjectTests.cpp
                         DBTokenTests.cpp
                         DBObjectStoreTests.cpp
                         )
-endif(BUILD_OBJECTSTORE_BACKEND_DB)
+endif(WITH_OBJECTSTORE_BACKEND_DB)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 add_executable(${PROJECT_NAME} ${SOURCES})

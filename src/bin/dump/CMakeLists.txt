@@ -11,7 +11,7 @@ include_directories(${INCLUDE_DIRS})
 
 add_executable(${PROJECT_NAME}-file softhsm2-dump-file.cpp)
 
-if(BUILD_OBJECTSTORE_BACKEND_DB)
+if(WITH_OBJECTSTORE_BACKEND_DB)
     add_executable(${PROJECT_NAME}-db softhsm2-dump-db.cpp)
     target_link_libraries(${PROJECT_NAME}-db ${SQLITE3_LIBS} ${YIELD_LIB})
-endif(BUILD_OBJECTSTORE_BACKEND_DB)
+endif(WITH_OBJECTSTORE_BACKEND_DB)
