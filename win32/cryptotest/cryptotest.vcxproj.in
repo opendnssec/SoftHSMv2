@@ -53,6 +53,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..;..\..\src\lib;..\..\src\lib\crypto;..\..\src\lib\common;..\..\src\lib\pkcs11;..\..\src\lib\data_mgr;..\..\src\lib\object_store;..\..\src\lib\session_mgr;..\..\src\lib\slot_mgr;..\..\src\lib\win32;@CUINCPATH@;@DEBUGINCPATH@;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <RuntimeLibrary>@RUNTIMELIBRARY@</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -71,6 +72,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..;..\..\src\lib;..\..\src\lib\crypto;..\..\src\lib\common;..\..\src\lib\pkcs11;..\..\src\lib\data_mgr;..\..\src\lib\object_store;..\..\src\lib\session_mgr;..\..\src\lib\slot_mgr;..\..\src\lib\win32;@CUINCPATH@;@INCLUDEPATH@;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <RuntimeLibrary>@RUNTIMELIBRARY@</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
