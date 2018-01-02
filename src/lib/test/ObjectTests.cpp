@@ -2103,12 +2103,12 @@ void ObjectTests::testAllowedMechanisms()
 
 	CK_KEY_TYPE keyType = CKK_GENERIC_SECRET;
 	CK_OBJECT_CLASS secretClass = CKO_SECRET_KEY;
-	CK_BYTE key[64];
+	CK_BYTE key[65] = { "0000000000000000000000000000000000000000000000000000000000000000" };
 	CK_MECHANISM_TYPE allowedMechs[] = { CKM_SHA256_HMAC, CKM_SHA512_HMAC };
 	CK_ATTRIBUTE attribs[] = {
 			{ CKA_KEY_TYPE, &keyType, sizeof(keyType) },
 			{ CKA_CLASS, &secretClass, sizeof(secretClass) },
-			{ CKA_VALUE, &key, sizeof(key) },
+			{ CKA_VALUE, &key, sizeof(key)-1 },
 			{ CKA_ALLOWED_MECHANISMS, &allowedMechs, sizeof(allowedMechs) }
 	};
 
