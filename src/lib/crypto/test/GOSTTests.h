@@ -47,6 +47,7 @@ class GOSTTests : public CppUnit::TestFixture
 	CPPUNIT_TEST(testHashKnownVector);
 	CPPUNIT_TEST(testKeyGeneration);
 	CPPUNIT_TEST(testSerialisation);
+	CPPUNIT_TEST(testPKCS8);
 	CPPUNIT_TEST(testSigningVerifying);
 	CPPUNIT_TEST(testSignVerifyKnownVector);
 	CPPUNIT_TEST_SUITE_END();
@@ -57,6 +58,7 @@ public:
 	void testHashKnownVector();
 	void testKeyGeneration();
 	void testSerialisation();
+	void testPKCS8();
 	void testSigningVerifying();
 	void testSignVerifyKnownVector();
 
