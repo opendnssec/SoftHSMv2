@@ -185,6 +185,60 @@ CK_RV Token::loginUser(ByteString& pin)
 	return CKR_OK;
 }
 
+CK_RV Token::reAuthenticate(ByteString& pin)
+{
+	CK_ULONG flags;
+
+	// Lock access to the token
+	MutexLocker lock(tokenMutex);
+
+	if (sdm == NULL) return CKR_GENERAL_ERROR;
+
+	// Get token flags
+	if (!token->getTokenFlags(flags))
+	{
+		ERROR_MSG("Could not get the token flags");
+		return CKR_GENERAL_ERROR;
+	}
+
+	if (sdm->isSOLoggedIn())
+	{
+		// Login
+		if (!sdm->reAuthenticateSO(pin))
+		{
+			flags |= CKF_SO_PIN_COUNT_LOW;
+			token->setTokenFlags(flags);
+			return CKR_PIN_INCORRECT;
+		}
+		else
+		{
+			flags &= ~CKF_SO_PIN_COUNT_LOW;
+			token->setTokenFlags(flags);
+		}
+	}
+	else if (sdm->isUserLoggedIn())
+	{
+		// Login
+		if (!sdm->reAuthenticateUser(pin))
+		{
+			flags |= CKF_USER_PIN_COUNT_LOW;
+			token->setTokenFlags(flags);
+			return CKR_PIN_INCORRECT;
+		}
+		else
+		{
+			flags &= ~CKF_USER_PIN_COUNT_LOW;
+			token->setTokenFlags(flags);
+		}
+	}
+	else
+	{
+		return CKR_OPERATION_NOT_INITIALIZED;
+	}
+
+	return CKR_OK;
+}
+
 // Logout any user on this token;
 void Token::logout()
 {
