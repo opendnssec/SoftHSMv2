@@ -1349,8 +1349,12 @@ CK_RV SoftHSM::C_Login(CK_SESSION_HANDLE hSession, CK_USER_TYPE userType, CK_UTF
 			rv = token->loginUser(pin);
 			break;
 		case CKU_CONTEXT_SPECIFIC:
-			// TODO: When do we want to use this user type?
-			return CKR_OPERATION_NOT_INITIALIZED;
+			// Check if re-authentication is required
+			if (!session->getReAuthentication()) return CKR_OPERATION_NOT_INITIALIZED;
+
+			// Re-authenticate
+			rv = token->reAuthenticate(pin);
+			if (rv == CKR_OK) session->setReAuthentication(false);
 			break;
 		default:
 			return CKR_USER_TYPE_INVALID;
@@ -2960,6 +2964,12 @@ CK_RV SoftHSM::AsymDecryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMec
 		return CKR_MECHANISM_INVALID;
         }
 
+	// Check if re-authentication is required
+	if (key->getBooleanValue(CKA_ALWAYS_AUTHENTICATE, false))
+	{
+		session->setReAuthentication(true);
+	}
+
 	session->setOpType(SESSION_OP_DECRYPT);
 	session->setAsymmetricCryptoOp(asymCrypto);
 	session->setMechanism(mechanism);
@@ -3059,6 +3069,13 @@ static CK_RV AsymDecrypt(Session* session, CK_BYTE_PTR pEncryptedData, CK_ULONG 
 	{
 		session->resetOp();
 		return CKR_OPERATION_NOT_INITIALIZED;
+	}
+
+	// Check if re-authentication is required
+	if (session->getReAuthentication())
+	{
+		session->resetOp();
+		return CKR_USER_NOT_LOGGED_IN;
 	}
 
 	// Size of the data
@@ -4154,6 +4171,12 @@ CK_RV SoftHSM::AsymSignInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechan
 		return CKR_MECHANISM_INVALID;
 	}
 
+	// Check if re-authentication is required
+	if (key->getBooleanValue(CKA_ALWAYS_AUTHENTICATE, false))
+	{
+		session->setReAuthentication(true);
+	}
+
 	session->setOpType(SESSION_OP_SIGN);
 	session->setAsymmetricCryptoOp(asymCrypto);
 	session->setMechanism(mechanism);
@@ -4243,6 +4266,13 @@ static CK_RV AsymSign(Session* session, CK_BYTE_PTR pData, CK_ULONG ulDataLen, C
 	{
 		session->resetOp();
 		return CKR_OPERATION_NOT_INITIALIZED;
+	}
+
+	// Check if re-authentication is required
+	if (session->getReAuthentication())
+	{
+		session->resetOp();
+		return CKR_USER_NOT_LOGGED_IN;
 	}
 
 	// Size of the signature
@@ -4359,6 +4389,13 @@ static CK_RV AsymSignUpdate(Session* session, CK_BYTE_PTR pPart, CK_ULONG ulPart
 		return CKR_OPERATION_NOT_INITIALIZED;
 	}
 
+	// Check if re-authentication is required
+	if (session->getReAuthentication())
+	{
+		session->resetOp();
+		return CKR_USER_NOT_LOGGED_IN;
+	}
+
 	// Get the part
 	ByteString part(pPart, ulPartLen);
 
@@ -4450,6 +4487,13 @@ static CK_RV AsymSignFinal(Session* session, CK_BYTE_PTR pSignature, CK_ULONG_PT
 	{
 		session->resetOp();
 		return CKR_OPERATION_NOT_INITIALIZED;
+	}
+
+	// Check if re-authentication is required
+	if (session->getReAuthentication())
+	{
+		session->resetOp();
+		return CKR_USER_NOT_LOGGED_IN;
 	}
 
 	// Size of the signature

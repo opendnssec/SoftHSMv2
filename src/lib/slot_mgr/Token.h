@@ -69,6 +69,9 @@ public:
 	CK_RV loginSO(ByteString& pin);
 	CK_RV loginUser(ByteString& pin);
 
+	// Re-authentication
+	CK_RV reAuthenticate(ByteString& pin);
+
 	// Logout any user on this token;
 	void logout();
 

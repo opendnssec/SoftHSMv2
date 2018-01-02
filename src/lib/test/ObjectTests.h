@@ -58,6 +58,7 @@ class ObjectTests : public TestsBase
 	CPPUNIT_TEST(testSensitiveAttributes);
 	CPPUNIT_TEST(testGetInvalidAttribute);
 	CPPUNIT_TEST(testAllowedMechanisms);
+	CPPUNIT_TEST(testReAuthentication);
 	CPPUNIT_TEST(testTemplateAttribute);
 	CPPUNIT_TEST(testCreateSecretKey);
 	CPPUNIT_TEST_SUITE_END();
@@ -79,6 +80,7 @@ public:
 	void testAlwaysNeverAttribute();
 	void testSensitiveAttributes();
 	void testGetInvalidAttribute();
+	void testReAuthentication();
 	void testAllowedMechanisms();
 	void testTemplateAttribute();
 	void testCreateSecretKey();

@@ -1953,6 +1953,134 @@ void ObjectTests::testGetInvalidAttribute()
 	CPPUNIT_ASSERT(rv == CKR_ATTRIBUTE_TYPE_INVALID);
 }
 
+void ObjectTests::testReAuthentication()
+{
+	CK_RV rv;
+	CK_SESSION_HANDLE hSession;
+	CK_OBJECT_HANDLE hPuk = CK_INVALID_HANDLE;
+	CK_OBJECT_HANDLE hPrk = CK_INVALID_HANDLE;
+
+	CK_MECHANISM mechanism = { CKM_RSA_PKCS_KEY_PAIR_GEN, NULL_PTR, 0 };
+	CK_ULONG bits = 1024;
+	CK_BBOOL bTrue = CK_TRUE;
+	CK_ATTRIBUTE pukAttribs[] = {
+		{ CKA_MODULUS_BITS, &bits, sizeof(bits) }
+	};
+	CK_ATTRIBUTE prkAttribs[] = {
+		{ CKA_PRIVATE, &bTrue, sizeof(bTrue) },
+		{ CKA_DECRYPT, &bTrue, sizeof(bTrue) },
+		{ CKA_SIGN, &bTrue, sizeof(bTrue) },
+		{ CKA_ALWAYS_AUTHENTICATE, &bTrue, sizeof(bTrue) }
+	};
+
+	CK_MECHANISM signMech = { CKM_SHA256_RSA_PKCS, NULL_PTR, 0 };
+	CK_BYTE data[] = { 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F };
+	CK_BYTE signature256[256];
+	CK_ULONG signature256Len = sizeof(signature256);
+
+	CK_MECHANISM encMech = { CKM_RSA_PKCS, NULL_PTR, 0 };
+	CK_BYTE cipherText[256];
+	CK_ULONG ulCipherTextLen = sizeof(cipherText);
+	CK_BYTE recoveredText[256];
+	CK_ULONG ulRecoveredTextLen = sizeof(recoveredText);
+
+	// Just make sure that we finalize any previous tests
+	CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
+
+	// Initialize the library and start the test.
+	rv = CRYPTOKI_F_PTR( C_Initialize(NULL_PTR) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Open read-write session
+	rv = CRYPTOKI_F_PTR( C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSession) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Login USER into the sessions so we can create private objects
+	rv = CRYPTOKI_F_PTR( C_Login(hSession,CKU_USER,m_userPin1,m_userPin1Length) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Create object
+	rv = CRYPTOKI_F_PTR( C_GenerateKeyPair(hSession, &mechanism, pukAttribs, 1, prkAttribs, 4, &hPuk, &hPrk) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Test C_Sign with re-authentication with invalid and valid PIN
+	rv = CRYPTOKI_F_PTR( C_Login(hSession,CKU_CONTEXT_SPECIFIC,m_userPin1,m_userPin1Length) );
+	CPPUNIT_ASSERT(rv == CKR_OPERATION_NOT_INITIALIZED);
+	rv = CRYPTOKI_F_PTR( C_SignInit(hSession, &signMech, hPrk) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	rv = CRYPTOKI_F_PTR( C_Login(hSession,CKU_CONTEXT_SPECIFIC,m_userPin1,m_userPin1Length-1) );
+	CPPUNIT_ASSERT(rv == CKR_PIN_INCORRECT);
+	rv = CRYPTOKI_F_PTR( C_Login(hSession,CKU_CONTEXT_SPECIFIC,m_userPin1,m_userPin1Length) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	rv = CRYPTOKI_F_PTR( C_Sign(hSession, data, sizeof(data), signature256, &signature256Len) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Test C_Sign without re-authentication
+	rv = CRYPTOKI_F_PTR( C_SignInit(hSession, &signMech, hPrk) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	rv = CRYPTOKI_F_PTR( C_Sign(hSession, data, sizeof(data), signature256, &signature256Len) );
+	CPPUNIT_ASSERT(rv == CKR_USER_NOT_LOGGED_IN);
+	rv = CRYPTOKI_F_PTR( C_Sign(hSession, data, sizeof(data), signature256, &signature256Len) );
+	CPPUNIT_ASSERT(rv == CKR_OPERATION_NOT_INITIALIZED);
+
+	// Test C_SignUpdate with re-authentication
+	rv = CRYPTOKI_F_PTR( C_SignInit(hSession, &signMech, hPrk) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	rv = CRYPTOKI_F_PTR( C_Login(hSession,CKU_CONTEXT_SPECIFIC,m_userPin1,m_userPin1Length) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	rv = CRYPTOKI_F_PTR( C_SignUpdate(hSession, data, sizeof(data)) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	rv = CRYPTOKI_F_PTR( C_SignFinal(hSession, signature256, &signature256Len) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Test C_SignUpdate without re-authentication
+	rv = CRYPTOKI_F_PTR( C_SignInit(hSession, &signMech, hPrk) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	rv = CRYPTOKI_F_PTR( C_SignUpdate(hSession, data, sizeof(data)) );
+	CPPUNIT_ASSERT(rv == CKR_USER_NOT_LOGGED_IN);
+	rv = CRYPTOKI_F_PTR( C_SignUpdate(hSession, data, sizeof(data)) );
+	CPPUNIT_ASSERT(rv == CKR_OPERATION_NOT_INITIALIZED);
+
+	// Test C_SignFinal with re-authentication
+	rv = CRYPTOKI_F_PTR( C_SignInit(hSession, &signMech, hPrk) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	rv = CRYPTOKI_F_PTR( C_Login(hSession,CKU_CONTEXT_SPECIFIC,m_userPin1,m_userPin1Length) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	rv = CRYPTOKI_F_PTR( C_SignFinal(hSession, signature256, &signature256Len) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Test C_SignFinal without re-authentication
+	rv = CRYPTOKI_F_PTR( C_SignInit(hSession, &signMech, hPrk) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	rv = CRYPTOKI_F_PTR( C_SignFinal(hSession, signature256, &signature256Len) );
+	CPPUNIT_ASSERT(rv == CKR_USER_NOT_LOGGED_IN);
+	rv = CRYPTOKI_F_PTR( C_SignFinal(hSession, signature256, &signature256Len) );
+	CPPUNIT_ASSERT(rv == CKR_OPERATION_NOT_INITIALIZED);
+
+	// Encrypt some data
+	rv = CRYPTOKI_F_PTR( C_EncryptInit(hSession,&encMech,hPuk) );
+	CPPUNIT_ASSERT(rv==CKR_OK);
+	rv = CRYPTOKI_F_PTR( C_Encrypt(hSession,data,sizeof(data),cipherText,&ulCipherTextLen) );
+	CPPUNIT_ASSERT(rv==CKR_OK);
+
+	// Test C_Decrypt with re-authentication
+	rv = CRYPTOKI_F_PTR( C_DecryptInit(hSession,&encMech,hPrk) );
+	CPPUNIT_ASSERT(rv==CKR_OK);
+	rv = CRYPTOKI_F_PTR( C_Login(hSession,CKU_CONTEXT_SPECIFIC,m_userPin1,m_userPin1Length) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	rv = CRYPTOKI_F_PTR( C_Decrypt(hSession,cipherText,ulCipherTextLen,recoveredText,&ulRecoveredTextLen) );
+	CPPUNIT_ASSERT(rv==CKR_OK);
+	CPPUNIT_ASSERT(memcmp(data, &recoveredText[ulRecoveredTextLen-sizeof(data)], sizeof(data)) == 0);
+
+	// Test C_Decrypt without re-authentication
+	rv = CRYPTOKI_F_PTR( C_DecryptInit(hSession,&encMech,hPrk) );
+	CPPUNIT_ASSERT(rv==CKR_OK);
+	rv = CRYPTOKI_F_PTR( C_Decrypt(hSession,cipherText,ulCipherTextLen,recoveredText,&ulRecoveredTextLen) );
+	CPPUNIT_ASSERT(rv == CKR_USER_NOT_LOGGED_IN);
+	rv = CRYPTOKI_F_PTR( C_Decrypt(hSession,cipherText,ulCipherTextLen,recoveredText,&ulRecoveredTextLen) );
+	CPPUNIT_ASSERT(rv == CKR_OPERATION_NOT_INITIALIZED);
+}
+
 void ObjectTests::testAllowedMechanisms()
 {
 	CK_RV rv;
