@@ -689,6 +689,7 @@ bool OSToken::index(bool isFirstTime /* = false */)
 		{
 			DEBUG_MSG("(0x%08X) New object %s (0x%08X) is invalid, not added", this, newObject->getFilename().c_str(), newObject);
 
+			currentFiles.erase(*i);
 			delete newObject;
 		}
 	}
