@@ -106,7 +106,13 @@ bool Generation::wasUpdated()
 			return true;
 		}
 
-		return (onDisk != currentValue);
+		if (onDisk != currentValue)
+		{
+			currentValue = onDisk;
+			return true;
+		}
+
+		return false;
 	}
 	else
 	{

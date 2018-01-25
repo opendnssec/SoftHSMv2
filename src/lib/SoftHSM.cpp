@@ -1784,6 +1784,9 @@ CK_RV SoftHSM::C_FindObjectsInit(CK_SESSION_HANDLE hSession, CK_ATTRIBUTE_PTR pT
 	std::set<OSObject*>::iterator it;
 	for (it=allObjects.begin(); it != allObjects.end(); ++it)
 	{
+		// Refresh object and check if it is valid
+		if (!(*it)->isValid())
+			continue;
 
 		// Determine if the object has CKA_PRIVATE set to CK_TRUE
 		bool isPrivateObject = (*it)->getBooleanValue(CKA_PRIVATE, true);
