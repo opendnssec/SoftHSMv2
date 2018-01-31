@@ -583,6 +583,9 @@ bool OSToken::resetToken(const ByteString& label)
 // Index the token
 bool OSToken::index(bool isFirstTime /* = false */)
 {
+	// No access to object mutable fields before
+	MutexLocker lock(tokenMutex);
+
 	// Check if re-indexing is required
 	if (!isFirstTime && (!valid || !gen->wasUpdated()))
 	{
@@ -626,9 +629,6 @@ bool OSToken::index(bool isFirstTime /* = false */)
 	// Compute the changes compared to the last list of files
 	std::set<std::string> addedFiles;
 	std::set<std::string> removedFiles;
-
-	// No access to object mutable fields before
-	MutexLocker lock(tokenMutex);
 
 	if (!isFirstTime)
 	{

@@ -99,6 +99,8 @@ bool Generation::wasUpdated()
 			return true;
 		}
 
+		genFile.lock();
+
 		unsigned long onDisk;
 
 		if (!genFile.readULong(onDisk))
@@ -122,6 +124,8 @@ bool Generation::wasUpdated()
 		{
 			return true;
 		}
+
+		objectFile.lock();
 
 		unsigned long onDisk;
 

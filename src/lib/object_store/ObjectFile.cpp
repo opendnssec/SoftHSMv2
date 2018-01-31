@@ -307,9 +307,20 @@ void ObjectFile::refresh(bool isFirstTime /* = false */)
 
 	File objectFile(path);
 
-	if (!objectFile.isValid() || objectFile.isEmpty())
+	if (!objectFile.isValid())
 	{
-		DEBUG_MSG("The object file is invalid or empty");
+		DEBUG_MSG("Object %s is invalid", path.c_str());
+
+		valid = false;
+
+		return;
+	}
+
+	objectFile.lock();
+
+	if (objectFile.isEmpty())
+	{
+		DEBUG_MSG("Object %s is empty", path.c_str());
 
 		valid = false;
 
@@ -320,8 +331,6 @@ void ObjectFile::refresh(bool isFirstTime /* = false */)
 
 	// Discard the existing set of attributes
 	discardAttributes();
-
-	objectFile.lock();
 
 	MutexLocker lock(objectMutex);
 
