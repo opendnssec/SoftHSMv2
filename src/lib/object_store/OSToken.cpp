@@ -677,21 +677,12 @@ bool OSToken::index(bool isFirstTime /* = false */)
 		// Create a new token object for the added file
 		ObjectFile* newObject = new ObjectFile(this, tokenPath + OS_PATHSEP + *i, tokenPath + OS_PATHSEP + lockName);
 
-		// Add the object if it is valid
-		if (newObject->valid)
-		{
-			DEBUG_MSG("(0x%08X) New object %s (0x%08X) added", this, newObject->getFilename().c_str(), newObject);
-
-			objects.insert(newObject);
-			allObjects.insert(newObject);
-		}
-		else
-		{
-			DEBUG_MSG("(0x%08X) New object %s (0x%08X) is invalid, not added", this, newObject->getFilename().c_str(), newObject);
-
-			currentFiles.erase(*i);
-			delete newObject;
-		}
+		// Add the object, even invalid ones.
+		// This is so the we can read the attributes once
+		// the other process has finished writing to disc.
+		DEBUG_MSG("(0x%08X) New object %s (0x%08X) added", this, newObject->getFilename().c_str(), newObject);
+		objects.insert(newObject);
+		allObjects.insert(newObject);
 	}
 
 	// Remove deleted objects
