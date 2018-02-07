@@ -2,6 +2,7 @@ NEWS for SoftHSM -- History of user visible changes
 
 SoftHSM develop
 
+* Issue #135: Support PKCS#8 for GOST.
 * Issue #140: Support for CKA_ALLOWED_MECHANISMS.
   (Patch from Brad Hess)
 * Issue #220: Support for CKM_DES3_CMAC and CKM_AES_CMAC.
