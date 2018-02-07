@@ -285,6 +285,8 @@ void ObjectFile::refresh(bool isFirstTime /* = false */)
 	// Check if we're in the middle of a transaction
 	if (inTransaction)
 	{
+		DEBUG_MSG("The object is in a transaction");
+
 		return;
 	}
 
@@ -296,8 +298,10 @@ void ObjectFile::refresh(bool isFirstTime /* = false */)
 	}
 
 	// Check the generation
-	if (!isFirstTime && (!valid || !gen->wasUpdated()))
+	if (!isFirstTime && (gen == NULL || !gen->wasUpdated()))
 	{
+		DEBUG_MSG("The object generation has not been updated");
+
 		return;
 	}
 
@@ -305,6 +309,19 @@ void ObjectFile::refresh(bool isFirstTime /* = false */)
 
 	if (!objectFile.isValid())
 	{
+		DEBUG_MSG("Object %s is invalid", path.c_str());
+
+		valid = false;
+
+		return;
+	}
+
+	objectFile.lock();
+
+	if (objectFile.isEmpty())
+	{
+		DEBUG_MSG("Object %s is empty", path.c_str());
+
 		valid = false;
 
 		return;
@@ -314,8 +331,6 @@ void ObjectFile::refresh(bool isFirstTime /* = false */)
 
 	// Discard the existing set of attributes
 	discardAttributes();
-
-	objectFile.lock();
 
 	MutexLocker lock(objectMutex);
 
@@ -368,6 +383,8 @@ void ObjectFile::refresh(bool isFirstTime /* = false */)
 
 			valid = false;
 
+			objectFile.unlock();
+
 			return;
 		}
 
@@ -381,6 +398,8 @@ void ObjectFile::refresh(bool isFirstTime /* = false */)
 				DEBUG_MSG("Corrupt object file %s", path.c_str());
 
 				valid = false;
+
+				objectFile.unlock();
 
 				return;
 			}
@@ -402,6 +421,8 @@ void ObjectFile::refresh(bool isFirstTime /* = false */)
 
 				valid = false;
 
+				objectFile.unlock();
+
 				return;
 			}
 
@@ -421,6 +442,8 @@ void ObjectFile::refresh(bool isFirstTime /* = false */)
 				DEBUG_MSG("Corrupt object file %s", path.c_str());
 
 				valid = false;
+
+				objectFile.unlock();
 
 				return;
 			}
@@ -442,6 +465,8 @@ void ObjectFile::refresh(bool isFirstTime /* = false */)
 
 				valid = false;
 
+				objectFile.unlock();
+
 				return;
 			}
 
@@ -462,6 +487,8 @@ void ObjectFile::refresh(bool isFirstTime /* = false */)
 
 				valid = false;
 
+				objectFile.unlock();
+
 				return;
 			}
 
@@ -477,6 +504,8 @@ void ObjectFile::refresh(bool isFirstTime /* = false */)
 			DEBUG_MSG("Corrupt object file %s with unknown attribute of type %d", path.c_str(), osAttrType);
 
 			valid = false;
+
+			objectFile.unlock();
 
 			return;
 		}
