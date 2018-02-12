@@ -6131,6 +6131,11 @@ CK_RV SoftHSM::C_WrapKey
 				alg = AsymAlgo::ECDSA;
 				break;
 #endif
+#ifdef WITH_GOST
+			case CKK_GOSTR3410:
+				alg = AsymAlgo::GOST;
+				break;
+#endif
 			default:
 				return CKR_KEY_NOT_WRAPPABLE;
 		}
@@ -6158,6 +6163,11 @@ CK_RV SoftHSM::C_WrapKey
 #ifdef WITH_ECC
 			case CKK_EC:
 				rv = getECPrivateKey((ECPrivateKey*)privateKey, token, key);
+				break;
+#endif
+#ifdef WITH_GOST
+			case CKK_GOSTR3410:
+				rv = getGOSTPrivateKey((GOSTPrivateKey*)privateKey, token, key);
 				break;
 #endif
 		}
@@ -6568,10 +6578,18 @@ CK_RV SoftHSM::C_UnwrapKey
 			{
 				bOK = bOK && setDHPrivateKey(osobject, keydata, token, isPrivate != CK_FALSE);
 			}
+#ifdef WITH_ECC
 			else if (keyType == CKK_EC)
 			{
 				bOK = bOK && setECPrivateKey(osobject, keydata, token, isPrivate != CK_FALSE);
 			}
+#endif
+#ifdef WITH_GOST
+			else if (keyType == CKK_GOSTR3410)
+			{
+				bOK = bOK && setGOSTPrivateKey(osobject, keydata, token, isPrivate != CK_FALSE);
+			}
+#endif
 			else
 				bOK = false;
 
@@ -11083,6 +11101,7 @@ bool SoftHSM::setDHPrivateKey(OSObject* key, const ByteString &ber, Token* token
 
 	return bOK;
 }
+
 bool SoftHSM::setECPrivateKey(OSObject* key, const ByteString &ber, Token* token, bool isPrivate) const
 {
 	AsymmetricAlgorithm* ecc = CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::ECDSA);
@@ -11119,6 +11138,46 @@ bool SoftHSM::setECPrivateKey(OSObject* key, const ByteString &ber, Token* token
 
 	ecc->recyclePrivateKey(priv);
 	CryptoFactory::i()->recycleAsymmetricAlgorithm(ecc);
+
+	return bOK;
+}
+
+bool SoftHSM::setGOSTPrivateKey(OSObject* key, const ByteString &ber, Token* token, bool isPrivate) const
+{
+	AsymmetricAlgorithm* gost = CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::GOST);
+	if (gost == NULL)
+		return false;
+	PrivateKey* priv = gost->newPrivateKey();
+	if (priv == NULL)
+	{
+		CryptoFactory::i()->recycleAsymmetricAlgorithm(gost);
+		return false;
+	}
+	if (!priv->PKCS8Decode(ber))
+	{
+		gost->recyclePrivateKey(priv);
+		CryptoFactory::i()->recycleAsymmetricAlgorithm(gost);
+		return false;
+	}
+	// GOST Private Key Attributes
+	ByteString value;
+	ByteString param_a;
+	if (isPrivate)
+	{
+		token->encrypt(((GOSTPrivateKey*)priv)->getD(), value);
+		token->encrypt(((GOSTPrivateKey*)priv)->getEC(), param_a);
+	}
+	else
+	{
+		value = ((GOSTPrivateKey*)priv)->getD();
+		param_a = ((GOSTPrivateKey*)priv)->getEC();
+	}
+	bool bOK = true;
+	bOK = bOK && key->setAttribute(CKA_VALUE, value);
+	bOK = bOK && key->setAttribute(CKA_GOSTR3410_PARAMS, param_a);
+
+	gost->recyclePrivateKey(priv);
+	CryptoFactory::i()->recycleAsymmetricAlgorithm(gost);
 
 	return bOK;
 }

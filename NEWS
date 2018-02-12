@@ -2,6 +2,7 @@ NEWS for SoftHSM -- History of user visible changes
 
 SoftHSM develop
 
+* Issue #135: Support PKCS#8 for GOST.
 * Issue #140: Support for CKA_ALLOWED_MECHANISMS.
   (Patch from Brad Hess)
 * Issue #141: Support CKA_ALWAYS_AUTHENTICATE for private key objects.
