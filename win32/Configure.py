@@ -39,6 +39,7 @@ testlist = ["botan",
             "gost",
             "ossl",
             "osslv",
+            "rawpss",
             "rfc3394",
             "rfc5649"]
 
@@ -58,17 +59,20 @@ varnames = ["CUINCPATH",
             "LIBPATH",
             "PLATFORM",
             "PLATFORMDIR",
-            "PLATFORMTOOLSET"]
+            "PLATFORMTOOLSET",
+            "RUNTIMELIBRARY"]
 
 # conditions to stack
 
 condvals = {}
 
-condnames = ["BOTAN",
+condnames = ["AESGCM",
+             "BOTAN",
              "ECC",
              "GOST",
              "NONPAGE",
              "OPENSSL",
+             "RAWPSS",
              "RFC3394",
              "RFC5649",
              "TESTS"]
@@ -81,6 +85,7 @@ enablelist = ["64bit",
               "gost",
               "keep",
               "non-paged-memory",
+              "static-runtime",
               "verbose"]
 
 # with-xxx/without-xxx arguments
@@ -118,6 +123,7 @@ usage + [\
 "  enable-debug             enable build of Debug config [default=yes]",
 "  enable-ecc               enable support for ECC [default=yes]",
 "  enable-gost              enable support for GOST [default=yes]",
+"  enable-static-runtime    enable build with static CRT (/MT) [default=no]",
 "  enable-non-paged-memory  enable non-paged memory [default=yes]",
 "\nOptional Packages:",
 "  with-crypto-backend      select the crypto backend [openssl|botan]",
@@ -141,6 +147,7 @@ enable_keep = False
 enable_debug = True
 enable_ecc = True
 enable_gost = True
+enable_static_runtime = False
 enable_non_paged = True
 platform = 32
 crypto_backend = "openssl"
@@ -256,6 +263,7 @@ def myenable(key, val):
     global enable_debug
     global enable_ecc
     global enable_gost
+    global enable_static_runtime
     global enable_non_paged
     global enable_keep
     global verbose
@@ -276,6 +284,10 @@ def myenable(key, val):
     if key.lower() == "gost":
         if not val:
             enable_gost = False
+        return
+    if key.lower() == "static-runtime":
+        if val:
+            enable_static_runtime = True
         return
     if key.lower() == "non-paged-memory":
         if not val:
@@ -429,6 +441,12 @@ def doconfig():
     else:
         varvals["PLATFORM"] = "x64"
         varvals["PLATFORMDIR"] = "x64\\"
+
+    # configure the runtime library
+    if enable_static_runtime:
+        varvals["RUNTIMELIBRARY"] = "MultiThreaded"
+    else:
+        varvals["RUNTIMELIBRARY"] = "MultiThreadedDLL"
 
     # configure ECC and GOST
     if enable_ecc:
@@ -682,6 +700,33 @@ int main() {\n\
                 if verbose:
                     print("Botan GNU MP is not supported")
 
+        # Botan raw PSS support
+        if verbose:
+            print("checking Botan raw PSS support")
+        testfile = open("testrawpss.cpp", "w")
+        print('\
+#include <botan/botan.h>\n\
+#include <botan/version.h>\n\
+int main() {\n\
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(2,3,0)\n\
+ return 0;\n\
+#endif\n\
+ return 1;\n\
+}', file=testfile)
+        testfile.close()
+        command = ["cl", "/nologo", "/MD", "/I", inc, "testrawpss.cpp", lib]
+        command.extend(system_libs)
+        subprocess.check_output(command, stderr=subprocess.STDOUT)
+        if not os.path.exists(".\\testrawpss.exe"):
+            if verbose:
+                print("can't create .\\testrawpss.exe", file=sys.stderr)
+        else:
+            if subprocess.call(".\\testrawpss.exe") != 0:
+                if verbose:
+                    print("can't find raw PSS: upgrade to Botan >= 2.3.0", file=sys.stderr)
+            else:
+                condvals["RAWPSS"] = True
+
     else:
 
         condvals["OPENSSL"] = True
@@ -908,6 +953,11 @@ int main() {\n\
         else:
             if verbose:
                 print("can't compile OpenSSL RFC 5649")
+
+        # no check for OpenSSL raw PSS support
+        condvals["RAWPSS"] = True
+        # no check for OpenSSL AES GCM
+        condvals["AESGCM"] = True
 
     # configure CppUnit
     if want_tests:

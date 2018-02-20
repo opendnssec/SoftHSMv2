@@ -264,6 +264,40 @@ void GOSTTests::testSerialisation()
 	gost->recycleKeyPair(dKP);
 }
 
+void GOSTTests::testPKCS8()
+{
+	AsymmetricKeyPair* kp;
+	ECParameters *p;
+	ByteString curve = "06072a850302022301";
+
+	// Get parameters
+	p = new ECParameters;
+	CPPUNIT_ASSERT(p != NULL);
+	p->setEC(curve);
+
+	// Generate key-pair
+	CPPUNIT_ASSERT(gost->generateKeyPair(&kp, p));
+	CPPUNIT_ASSERT(kp != NULL);
+
+	GOSTPrivateKey* priv = (GOSTPrivateKey*) kp->getPrivateKey();
+	CPPUNIT_ASSERT(priv != NULL);
+
+	// Encode and decode the private key
+	ByteString pkcs8 = priv->PKCS8Encode();
+	CPPUNIT_ASSERT(pkcs8.size() != 0);
+
+	GOSTPrivateKey* dPriv = (GOSTPrivateKey*) gost->newPrivateKey();
+	CPPUNIT_ASSERT(dPriv != NULL);
+
+	CPPUNIT_ASSERT(dPriv->PKCS8Decode(pkcs8));
+
+	CPPUNIT_ASSERT(priv->getD() == dPriv->getD());
+	CPPUNIT_ASSERT(priv->getEC() == dPriv->getEC());
+
+	gost->recycleKeyPair(kp);
+	gost->recyclePrivateKey(dPriv);
+}
+
 void GOSTTests::testSigningVerifying()
 {
 	AsymmetricKeyPair* kp;

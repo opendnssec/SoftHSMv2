@@ -42,6 +42,7 @@ follows:
 Now we need to install some dependencies
 
 	$ brew install automake
+	$ brew install pkg-config
 	$ brew install openssl
 	$ brew install sqlite
 	$ brew install cppunit

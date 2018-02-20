@@ -36,6 +36,7 @@
 #include "OSSLGOSTPrivateKey.h"
 #include "OSSLUtil.h"
 #include <string.h>
+#include <openssl/x509.h>
 #include <openssl/ec.h>
 
 // DER of a private key
@@ -172,13 +173,36 @@ bool OSSLGOSTPrivateKey::deserialise(ByteString& serialised)
 ByteString OSSLGOSTPrivateKey::PKCS8Encode()
 {
 	ByteString der;
-	// TODO
+	if (pkey == NULL) return der;
+	PKCS8_PRIV_KEY_INFO* p8inf = EVP_PKEY2PKCS8(pkey);
+	if (p8inf == NULL) return der;
+	int len = i2d_PKCS8_PRIV_KEY_INFO(p8inf, NULL);
+	if (len < 0)
+	{
+		PKCS8_PRIV_KEY_INFO_free(p8inf);
+		return der;
+	}
+	der.resize(len);
+	unsigned char* priv = &der[0];
+	int len2 = i2d_PKCS8_PRIV_KEY_INFO(p8inf, &priv);
+	PKCS8_PRIV_KEY_INFO_free(p8inf);
+	if (len2 != len) der.wipe();
 	return der;
 }
 
 // Decode from PKCS#8 BER
-bool OSSLGOSTPrivateKey::PKCS8Decode(const ByteString& /*ber*/)
+bool OSSLGOSTPrivateKey::PKCS8Decode(const ByteString& ber)
 {
-	return false;
+	int len = ber.size();
+	if (len <= 0) return false;
+	const unsigned char* priv = ber.const_byte_str();
+	PKCS8_PRIV_KEY_INFO* p8 = d2i_PKCS8_PRIV_KEY_INFO(NULL, &priv, len);
+	if (p8 == NULL) return false;
+	EVP_PKEY* key = EVP_PKCS82PKEY(p8);
+	PKCS8_PRIV_KEY_INFO_free(p8);
+	if (key == NULL) return false;
+	setFromOSSL(key);
+	EVP_PKEY_free(key);
+	return true;
 }
 #endif

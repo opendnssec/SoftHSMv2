@@ -1,4 +1,4 @@
-.TH SOFTHSM2-UTIL 1 "20 April 2016" "SoftHSM"
+.TH SOFTHSM2-UTIL 1 "22 September 2017" "SoftHSM"
 .SH NAME
 softhsm2-util \- support tool for libsofthsm2
 .SH SYNOPSIS
@@ -26,6 +26,20 @@ softhsm2-util \- support tool for libsofthsm2
 .RB [ \-\-pin
 .I PIN
 .B \-\-no\-public\-key]
+.B \-\-label
+.I text
+.B \-\-id
+.I hex
+.PP
+.B softhsm2-util \-\-import
+.I path
+.B \-\-aes
+.B \-\-token
+.I label
+\\
+.ti +0.7i
+.RB [ \-\-pin
+.I PIN]
 .B \-\-label
 .I text
 .B \-\-id
@@ -124,6 +138,10 @@ or
 .BR \-\-label ,
 and
 .BR \-\-id .
+.br
+Can also be used with
+.BR \-\-aes
+to use file as is and import it as AES.
 .TP
 .B \-\-init-token
 Initialize the token at a given slot, token label or token serial.
@@ -131,6 +149,8 @@ If the token is already initialized then this command
 will reinitialize it, thus erasing all the objects in the token.
 The matching Security Officer (SO) PIN must also
 be provided when doing reinitialization.
+Initialized tokens will be reassigned to another slot (based on
+the token serial number).
 .br
 Use with
 .BR \-\-slot
@@ -152,6 +172,9 @@ Display all the available slots and their current status.
 .B \-\-version\fR, \fB\-v\fR
 Show the version info.
 .SH OPTIONS
+.TP
+.B \-\-aes
+Used to tell import to use file as is and import it as AES.
 .TP
 .B \-\-file-pin \fIPIN\fR
 The

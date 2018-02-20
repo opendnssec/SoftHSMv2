@@ -181,6 +181,8 @@ Extract archive `cppunit-1.13.2.tar.gz` into `C:\build\src\cppunit-1.13.2-x86` d
 
 Open solution `C:\build\src\cppunit-1.13.2-x86\src\CppUnitLibraries2010.sln` in Visual Studio and rebuild the source with `Release Unicode\Win32` solution configuration.
 
+(If you want to compile SoftHSM with static CRT, then you must also compile CppUnit with static CRT. Change "Runtime Library" to "Multi-threaded (/MT)" in the project "cppunit". This will create some build errors for project "TestRunner", but that can be ignored since it is not used by SoftHSM.)
+
 Copy the results into `C:\build\bin\cppunit-1.13.2-x86` directory:
 
     mkdir C:\build\bin\cppunit-1.13.2-x86\lib
@@ -199,6 +201,8 @@ Extract archive `cppunit-1.13.2.tar.gz` into `C:\build\src\cppunit-1.13.2-x64` d
     del cppunit-1.13.2.tar*
 
 Open solution `C:\build\src\cppunit-1.13.2-x64\src\CppUnitLibraries2010.sln` in Visual Studio and rebuild the source with `Release Unicode\x64` solution configuration.
+
+(If you want to compile SoftHSM with static CRT, then you must also compile CppUnit with static CRT. Change "Runtime Library" to "Multi-threaded (/MT)" in the project "cppunit". This will create some build errors for project "TestRunner", but that can be ignored since it is not used by SoftHSM.)
 
 Copy the results into `C:\build\bin\cppunit-1.13.2-x64` directory:
 
@@ -235,6 +239,8 @@ OpenSSL (OpenSSL GOST engine does not support OpenSSL 1.1.0) or Botan crypto bac
 
     python Configure.py disable-debug disable-gost with-crypto-backend=openssl with-openssl=C:\build\bin\openssl-1.1.0a-x86\ with-cppunit=C:\build\bin\cppunit-1.13.2-x86\
     python Configure.py disable-debug with-crypto-backend=botan with-botan=C:\build\bin\botan-1.10.10-x86\ with-cppunit=C:\build\bin\cppunit-1.13.2-x86\
+
+(Add option enable-static-runtime if you want to compile with static CRT (/MT))
 
 Open solution `C:\build\src\SoftHSMv2\win32\softhsm2.sln` in Visual Studio and rebuild the source with `Release\Win32` solution configuration.
 
@@ -273,6 +279,8 @@ OpenSSL (OpenSSL GOST engine does not support OpenSSL 1.1.0) or Botan crypto bac
 
     python Configure.py enable-64bit disable-debug disable-gost with-crypto-backend=openssl with-openssl=C:\build\bin\openssl-1.1.0a-x64\ with-cppunit=C:\build\bin\cppunit-1.13.2-x64\
     python Configure.py enable-64bit disable-debug with-crypto-backend=botan with-botan=C:\build\bin\botan-1.10.10-x64\ with-cppunit=C:\build\bin\cppunit-1.13.2-x64\
+
+(Add option enable-static-runtime if you want to compile with static CRT (/MT))
 
 Open solution `C:\build\src\SoftHSMv2\win32\softhsm2.sln` in Visual Studio and rebuild the source with `Release\x64` solution configuration.
 

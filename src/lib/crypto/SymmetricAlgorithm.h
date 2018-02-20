@@ -58,6 +58,7 @@ struct SymMode
 		CFB,
 		CTR,
 		ECB,
+		GCM,
 		OFB
 	};
 };
@@ -82,12 +83,12 @@ public:
 	virtual ~SymmetricAlgorithm() { }
 
 	// Encryption functions
-	virtual bool encryptInit(const SymmetricKey* key, const SymMode::Type mode = SymMode::CBC, const ByteString& IV = ByteString(), bool padding = true, size_t counterBits = 0);
+	virtual bool encryptInit(const SymmetricKey* key, const SymMode::Type mode = SymMode::CBC, const ByteString& IV = ByteString(), bool padding = true, size_t counterBits = 0, const ByteString& aad = ByteString(), size_t tagBytes = 0);
 	virtual bool encryptUpdate(const ByteString& data, ByteString& encryptedData);
 	virtual bool encryptFinal(ByteString& encryptedData);
 
 	// Decryption functions
-	virtual bool decryptInit(const SymmetricKey* key, const SymMode::Type mode = SymMode::CBC, const ByteString& IV = ByteString(), bool padding = true, size_t counterBits = 0);
+	virtual bool decryptInit(const SymmetricKey* key, const SymMode::Type mode = SymMode::CBC, const ByteString& IV = ByteString(), bool padding = true, size_t counterBits = 0, const ByteString& aad = ByteString(), size_t tagBytes = 0);
 	virtual bool decryptUpdate(const ByteString& encryptedData, ByteString& data);
 	virtual bool decryptFinal(ByteString& data);
 
@@ -106,6 +107,7 @@ public:
 	virtual SymMode::Type getCipherMode();
 	virtual bool getPaddingMode();
 	virtual unsigned long getBufferSize();
+	virtual size_t getTagBytes();
 	virtual bool isStreamCipher();
 	virtual bool isBlockCipher();
 	virtual bool checkMaximumBytes(unsigned long bytes) = 0;
@@ -123,6 +125,9 @@ protected:
 	// The current counter bits
 	size_t currentCounterBits;
 
+	// The current tag bytes
+	size_t currentTagBytes;
+
 	// The current operation
 	enum
 	{
@@ -134,6 +139,9 @@ protected:
 
 	// The current number of bytes in buffer
 	unsigned long currentBufferSize;
+
+	// The current AEAD buffer
+	ByteString currentAEADBuffer;
 };
 
 #endif // !_SOFTHSM_V2_SYMMETRICALGORITHM_H

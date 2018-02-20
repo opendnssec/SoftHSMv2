@@ -86,6 +86,59 @@ void crypto_final()
 #endif
 }
 
+// Import a aes secret key from given path
+int crypto_import_aes_key
+(
+	CK_SESSION_HANDLE hSession,
+	char* filePath,
+	char* label,
+	char* objID,
+	size_t objIDLen
+)
+{
+	const size_t cMaxAesKeySize = 1024 + 1; // including null-character
+	char aesKeyValue[cMaxAesKeySize];
+	FILE* fp = fopen(filePath, "rb");
+	if (fp == NULL)
+	{
+		fprintf(stderr, "ERROR: Could not open the secret key file.\n");
+		return 1;
+	}
+	if (fgets(aesKeyValue, cMaxAesKeySize, fp) == NULL)
+	{
+		fprintf(stderr, "ERROR: Could not read the secret key file.\n");
+		fclose(fp);
+		return 1;
+	}
+	fclose(fp);
+
+	CK_BBOOL ckTrue = CK_TRUE;
+	CK_OBJECT_CLASS keyClass = CKO_SECRET_KEY;
+	CK_KEY_TYPE keyType = CKK_AES;
+	CK_ATTRIBUTE keyTemplate[] = {
+		{ CKA_CLASS,            &keyClass,    sizeof(keyClass) },
+		{ CKA_KEY_TYPE,         &keyType,     sizeof(keyType) },
+		{ CKA_LABEL,            label,        strlen(label) },
+		{ CKA_ID,               objID,        objIDLen },
+		{ CKA_TOKEN,            &ckTrue,      sizeof(ckTrue) },
+		{ CKA_ENCRYPT,          &ckTrue,      sizeof(ckTrue) },
+		{ CKA_DECRYPT,          &ckTrue,      sizeof(ckTrue) },
+		{ CKA_SENSITIVE,        &ckTrue,      sizeof(ckTrue) },
+        	{ CKA_VALUE,		&aesKeyValue, strlen(aesKeyValue) }
+	};
+
+	CK_OBJECT_HANDLE hKey;
+	CK_RV rv = p11->C_CreateObject(hSession, keyTemplate, 9, &hKey);
+	if (rv != CKR_OK)
+	{
+		fprintf(stderr, "ERROR: Could not save the secret key in the token. "
+				"Maybe the algorithm is not supported.\n");
+		return 1;
+	}
+
+	return 0;
+}
+
 // Import a key pair from given path
 int crypto_import_key_pair
 (

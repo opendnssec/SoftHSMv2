@@ -40,11 +40,12 @@ SymmetricAlgorithm::SymmetricAlgorithm()
 	currentCipherMode = SymMode::Unknown;
 	currentPaddingMode = true;
 	currentCounterBits = 0;
+	currentTagBytes = 0;
 	currentOperation = NONE;
 	currentBufferSize = 0;
 }
 
-bool SymmetricAlgorithm::encryptInit(const SymmetricKey* key, const SymMode::Type mode /* = SymMode::CBC */, const ByteString& /*IV = ByteString() */, bool padding /* = true */, size_t counterBits /* = 0 */)
+bool SymmetricAlgorithm::encryptInit(const SymmetricKey* key, const SymMode::Type mode /* = SymMode::CBC */, const ByteString& /*IV = ByteString() */, bool padding /* = true */, size_t counterBits /* = 0 */, const ByteString& /*aad = ByteString()*/, size_t tagBytes /* = 0 */)
 {
 	if ((key == NULL) || (currentOperation != NONE))
 	{
@@ -55,6 +56,7 @@ bool SymmetricAlgorithm::encryptInit(const SymmetricKey* key, const SymMode::Typ
 	currentCipherMode = mode;
 	currentPaddingMode = padding;
 	currentCounterBits = counterBits;
+	currentTagBytes = tagBytes;
 	currentOperation = ENCRYPT;
 	currentBufferSize = 0;
 
@@ -84,13 +86,14 @@ bool SymmetricAlgorithm::encryptFinal(ByteString& /*encryptedData*/)
 	currentCipherMode = SymMode::Unknown;
 	currentPaddingMode = true;
 	currentCounterBits = 0;
+	currentTagBytes = 0;
 	currentOperation = NONE;
 	currentBufferSize = 0;
 
 	return true;
 }
 
-bool SymmetricAlgorithm::decryptInit(const SymmetricKey* key, const SymMode::Type mode /* = SymMode::CBC */, const ByteString& /*IV = ByteString() */, bool padding /* = true */, size_t counterBits /* = 0 */)
+bool SymmetricAlgorithm::decryptInit(const SymmetricKey* key, const SymMode::Type mode /* = SymMode::CBC */, const ByteString& /*IV = ByteString() */, bool padding /* = true */, size_t counterBits /* = 0 */, const ByteString& /*aad = ByteString()*/, size_t tagBytes /* = 0 */)
 {
 	if ((key == NULL) || (currentOperation != NONE))
 	{
@@ -101,8 +104,10 @@ bool SymmetricAlgorithm::decryptInit(const SymmetricKey* key, const SymMode::Typ
 	currentCipherMode = mode;
 	currentPaddingMode = padding;
 	currentCounterBits = counterBits;
+	currentTagBytes = tagBytes;
 	currentOperation = DECRYPT;
 	currentBufferSize = 0;
+	currentAEADBuffer.wipe();
 
 	return true;
 }
@@ -116,6 +121,7 @@ bool SymmetricAlgorithm::decryptUpdate(const ByteString& encryptedData, ByteStri
 	}
 
 	currentBufferSize += encryptedData.size();
+	currentAEADBuffer += encryptedData;
 
 	return true;
 }
@@ -131,8 +137,10 @@ bool SymmetricAlgorithm::decryptFinal(ByteString& /*data*/)
 	currentCipherMode = SymMode::Unknown;
 	currentPaddingMode = true;
 	currentCounterBits = 0;
+	currentTagBytes = 0;
 	currentOperation = NONE;
 	currentBufferSize = 0;
+	currentAEADBuffer.wipe();
 
 	return true;
 }
@@ -185,14 +193,22 @@ unsigned long SymmetricAlgorithm::getBufferSize()
 	return currentBufferSize;
 }
 
+size_t SymmetricAlgorithm::getTagBytes()
+{
+	return currentTagBytes;
+}
+
 bool SymmetricAlgorithm::isStreamCipher()
 {
 	switch (currentCipherMode)
 	{
 		case SymMode::CFB:
 		case SymMode::CTR:
+		case SymMode::GCM:
 		case SymMode::OFB:
 			return true;
+		default:
+			break;
 	}
 
 	return false;
@@ -205,6 +221,8 @@ bool SymmetricAlgorithm::isBlockCipher()
 		case SymMode::CBC:
 		case SymMode::ECB:
 			return true;
+		default:
+			break;
 	}
 
 	return false;

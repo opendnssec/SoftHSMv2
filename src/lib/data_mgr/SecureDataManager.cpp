@@ -160,11 +160,11 @@ bool SecureDataManager::pbeEncryptKey(const ByteString& passphrase, ByteString& 
 		bool rv = aes->encryptUpdate(key, block);
 
 		remask(key);
-	
-		if (!rv) 
+
+		if (!rv)
 		{
 			delete pbeKey;
-		
+
 			return false;
 		}
 	}
@@ -172,10 +172,10 @@ bool SecureDataManager::pbeEncryptKey(const ByteString& passphrase, ByteString& 
 	encryptedKey += block;
 
 	// And finalise encryption
-	if (!aes->encryptFinal(block)) 
+	if (!aes->encryptFinal(block))
 	{
 		delete pbeKey;
-		
+
 		return false;
 	}
 
@@ -317,6 +317,71 @@ bool SecureDataManager::loginUser(const ByteString& userPIN)
 	return (userLoggedIn = login(userPIN, userEncryptedKey));
 }
 
+// Generic re-authentication function
+bool SecureDataManager::reAuthenticate(const ByteString& passphrase, const ByteString& encryptedKey)
+{
+	// First, take the salt from the encrypted key
+	ByteString salt = encryptedKey.substr(0,8);
+
+	// Then, take the IV from the encrypted key
+	ByteString IV = encryptedKey.substr(8, aes->getBlockSize());
+
+	// Now, take the encrypted data from the encrypted key
+	ByteString encryptedKeyData = encryptedKey.substr(8 + aes->getBlockSize());
+
+	// Derive the PBE key
+	AESKey* pbeKey = NULL;
+
+	if (!RFC4880::PBEDeriveKey(passphrase, salt, &pbeKey))
+	{
+		return false;
+	}
+
+	// Decrypt the key data
+	ByteString decryptedKeyData;
+	ByteString finalBlock;
+
+	// NOTE: The login will fail here if incorrect passphrase is supplied
+	if (!aes->decryptInit(pbeKey, SymMode::CBC, IV) ||
+	    !aes->decryptUpdate(encryptedKeyData, decryptedKeyData) ||
+	    !aes->decryptFinal(finalBlock))
+	{
+		delete pbeKey;
+
+		return false;
+	}
+
+	delete pbeKey;
+
+	decryptedKeyData += finalBlock;
+
+	// Check the magic
+	if (decryptedKeyData.substr(0, 3) != magic)
+	{
+		// The passphrase was incorrect
+		DEBUG_MSG("Incorrect passphrase supplied");
+
+		return false;
+	}
+
+	// And mask the key
+	decryptedKeyData.wipe();
+
+	return true;
+}
+
+// Re-authenticate the SO
+bool SecureDataManager::reAuthenticateSO(const ByteString& soPIN)
+{
+	return reAuthenticate(soPIN, soEncryptedKey);
+}
+
+// Re-authenticate the user
+bool SecureDataManager::reAuthenticateUser(const ByteString& userPIN)
+{
+	return reAuthenticate(userPIN, userEncryptedKey);
+}
+
 // Log out
 void SecureDataManager::logout()
 {
@@ -357,7 +422,7 @@ bool SecureDataManager::decrypt(const ByteString& encrypted, ByteString& plainte
 
 		remask(unmaskedKey);
 	}
-	
+
 	// Take the IV from the input data
 	ByteString IV = encrypted.substr(0, aes->getBlockSize());
 

@@ -39,12 +39,14 @@
 #endif
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <set>
 
 // Attribute types
 #define BOOLEAN_ATTR			0x1
 #define ULONG_ATTR			0x2
 #define BYTESTR_ATTR			0x3
-#define ARRAY_ATTR			0x4
+#define ATTRMAP_ATTR			0x4
+#define MECHSET_ATTR			0x5
 
 // Constructor
 ObjectFile::ObjectFile(OSToken* parent, std::string inPath, std::string inLockpath, bool isNew /* = false */)
@@ -283,6 +285,8 @@ void ObjectFile::refresh(bool isFirstTime /* = false */)
 	// Check if we're in the middle of a transaction
 	if (inTransaction)
 	{
+		DEBUG_MSG("The object is in a transaction");
+
 		return;
 	}
 
@@ -294,8 +298,10 @@ void ObjectFile::refresh(bool isFirstTime /* = false */)
 	}
 
 	// Check the generation
-	if (!isFirstTime && (!valid || !gen->wasUpdated()))
+	if (!isFirstTime && (gen == NULL || !gen->wasUpdated()))
 	{
+		DEBUG_MSG("The object generation has not been updated");
+
 		return;
 	}
 
@@ -303,6 +309,19 @@ void ObjectFile::refresh(bool isFirstTime /* = false */)
 
 	if (!objectFile.isValid())
 	{
+		DEBUG_MSG("Object %s is invalid", path.c_str());
+
+		valid = false;
+
+		return;
+	}
+
+	objectFile.lock();
+
+	if (objectFile.isEmpty())
+	{
+		DEBUG_MSG("Object %s is empty", path.c_str());
+
 		valid = false;
 
 		return;
@@ -312,8 +331,6 @@ void ObjectFile::refresh(bool isFirstTime /* = false */)
 
 	// Discard the existing set of attributes
 	discardAttributes();
-
-	objectFile.lock();
 
 	MutexLocker lock(objectMutex);
 
@@ -366,6 +383,8 @@ void ObjectFile::refresh(bool isFirstTime /* = false */)
 
 			valid = false;
 
+			objectFile.unlock();
+
 			return;
 		}
 
@@ -379,6 +398,8 @@ void ObjectFile::refresh(bool isFirstTime /* = false */)
 				DEBUG_MSG("Corrupt object file %s", path.c_str());
 
 				valid = false;
+
+				objectFile.unlock();
 
 				return;
 			}
@@ -400,6 +421,8 @@ void ObjectFile::refresh(bool isFirstTime /* = false */)
 
 				valid = false;
 
+				objectFile.unlock();
+
 				return;
 			}
 
@@ -420,6 +443,8 @@ void ObjectFile::refresh(bool isFirstTime /* = false */)
 
 				valid = false;
 
+				objectFile.unlock();
+
 				return;
 			}
 
@@ -430,15 +455,39 @@ void ObjectFile::refresh(bool isFirstTime /* = false */)
 
 			attributes[p11AttrType] = new OSAttribute(value);
 		}
-		else if (osAttrType == ARRAY_ATTR)
+		else if (osAttrType == MECHSET_ATTR)
 		{
-			std::map<CK_ATTRIBUTE_TYPE,OSAttribute> value;
+			std::set<CK_MECHANISM_TYPE> value;
 
-			if (!objectFile.readArray(value))
+			if (!objectFile.readMechanismTypeSet(value))
 			{
 				DEBUG_MSG("Corrupt object file %s", path.c_str());
 
 				valid = false;
+
+				objectFile.unlock();
+
+				return;
+			}
+
+			if (attributes[p11AttrType] != NULL)
+			{
+				delete attributes[p11AttrType];
+			}
+
+			attributes[p11AttrType] = new OSAttribute(value);
+		}
+		else if (osAttrType == ATTRMAP_ATTR)
+		{
+			std::map<CK_ATTRIBUTE_TYPE,OSAttribute> value;
+
+			if (!objectFile.readAttributeMap(value))
+			{
+				DEBUG_MSG("Corrupt object file %s", path.c_str());
+
+				valid = false;
+
+				objectFile.unlock();
 
 				return;
 			}
@@ -455,6 +504,8 @@ void ObjectFile::refresh(bool isFirstTime /* = false */)
 			DEBUG_MSG("Corrupt object file %s with unknown attribute of type %d", path.c_str(), osAttrType);
 
 			valid = false;
+
+			objectFile.unlock();
 
 			return;
 		}
@@ -563,12 +614,26 @@ bool ObjectFile::writeAttributes(File &objectFile)
 				return false;
 			}
 		}
-		else if (i->second->isArrayAttribute())
+		else if (i->second->isMechanismTypeSetAttribute())
 		{
-			unsigned long osAttrType = ARRAY_ATTR;
-			const std::map<CK_ATTRIBUTE_TYPE,OSAttribute>& value = i->second->getArrayValue();
+			unsigned long osAttrType = MECHSET_ATTR;
+			const std::set<CK_MECHANISM_TYPE>& value = i->second->getMechanismTypeSetValue();
 
-			if (!objectFile.writeULong(osAttrType) || !objectFile.writeArray(value))
+			if (!objectFile.writeULong(osAttrType) || !objectFile.writeMechanismTypeSet(value))
+			{
+				DEBUG_MSG("Failed to write attribute to object %s", path.c_str());
+
+				objectFile.unlock();
+
+				return false;
+			}
+		}
+		else if (i->second->isAttributeMapAttribute())
+		{
+			unsigned long osAttrType = ATTRMAP_ATTR;
+			const std::map<CK_ATTRIBUTE_TYPE,OSAttribute>& value = i->second->getAttributeMapValue();
+
+			if (!objectFile.writeULong(osAttrType) || !objectFile.writeAttributeMap(value))
 			{
 				DEBUG_MSG("Failed to write attribute to object %s", path.c_str());
 

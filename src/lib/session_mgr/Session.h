@@ -106,6 +106,9 @@ public:
 	void setParameters(void* inParam, size_t inParamLen);
 	void* getParameters(size_t& inParamLen);
 
+	void setReAuthentication(bool inReAuthentication);
+	bool getReAuthentication();
+
 	void setAllowMultiPartOp(bool inAllowMultiPartOp);
 	bool getAllowMultiPartOp();
 
@@ -159,6 +162,7 @@ private:
 	AsymMech::Type mechanism;
 	void* param;
 	size_t paramLen;
+	bool reAuthentication;
 	bool allowMultiPartOp;
 	bool allowSinglePartOp;
 	PublicKey* publicKey;

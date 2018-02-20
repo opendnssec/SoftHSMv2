@@ -1,5 +1,32 @@
 NEWS for SoftHSM -- History of user visible changes
 
+SoftHSM 2.4.0 - 2017-02-20
+
+* Issue #135: Support PKCS#8 for GOST.
+* Issue #140: Support for CKA_ALLOWED_MECHANISMS.
+  (Patch from Brad Hess)
+* Issue #141: Support CKA_ALWAYS_AUTHENTICATE for private key objects.
+* Issue #220: Support for CKM_DES3_CMAC and CKM_AES_CMAC.
+* Issue #226: Configuration option for Windows build to enable build with
+  static CRT (/MT).
+* Issue #325: Support for CKM_AES_GCM.
+* Issue #334: Document that initialized tokens will be reassigned to another
+  slot (based on the token serial number).
+* Issue #335: Support for CKM_RSA_PKCS_PSS.
+  (Patch from Nikos Mavrogiannopoulos)
+* Issue #341: Import AES keys with softhsm2-util.
+  (Patch from Pavel Cherezov)
+* Issue #348: Document that OSX needs pkg-config to detect cppunit.
+* Issue #349: softhsm2-util will check the configuration and report any
+  issues before loading the PKCS#11 library.
+
+Bugfixes:
+* Issue #345: Private objects are presented to security officer in search
+  results.
+* Issue #358: Race condition when multiple applications are creating and
+  reading object files.
+
+
 SoftHSM 2.3.0 - 2017-07-03
 
 * Issue #130: Upgraded to PKCS#11 v2.40.

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010 .SE (The Internet Infrastructure Foundation)
+ * Copyright (c) 2017 SURFnet bv
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,59 +25,53 @@
  */
 
 /*****************************************************************************
- BotanSymmetricAlgorithm.h
+ OSSLEVPCMacAlgorithm.h
 
- Botan symmetric algorithm implementation
+ OpenSSL CMAC algorithm implementation
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_BOTANSYMMETRICALGORITHM_H
-#define _SOFTHSM_V2_BOTANSYMMETRICALGORITHM_H
+#ifndef _SOFTHSM_V2_OSSLEVPCMACALGORITHM_H
+#define _SOFTHSM_V2_OSSLEVPCMACALGORITHM_H
 
 #include <string>
 #include "config.h"
 #include "SymmetricKey.h"
-#include "SymmetricAlgorithm.h"
+#include "MacAlgorithm.h"
+#include <openssl/evp.h>
+#include <openssl/cmac.h>
 
-#include <botan/pipe.h>
-#include <botan/bigint.h>
-
-class BotanSymmetricAlgorithm : public SymmetricAlgorithm
+class OSSLEVPCMacAlgorithm : public MacAlgorithm
 {
 public:
 	// Constructor
-	BotanSymmetricAlgorithm();
+	OSSLEVPCMacAlgorithm() {
+		curCTX = NULL;
+	};
 
 	// Destructor
-	virtual ~BotanSymmetricAlgorithm();
+	~OSSLEVPCMacAlgorithm();
 
-	// Encryption functions
-	virtual bool encryptInit(const SymmetricKey* key, const SymMode::Type mode = SymMode::CBC, const ByteString& IV = ByteString(), bool padding = true, size_t counterBits = 0, const ByteString& aad = ByteString(), size_t tagBytes = 0);
-	virtual bool encryptUpdate(const ByteString& data, ByteString& encryptedData);
-	virtual bool encryptFinal(ByteString& encryptedData);
+	// Signing functions
+	virtual bool signInit(const SymmetricKey* key);
+	virtual bool signUpdate(const ByteString& dataToSign);
+	virtual bool signFinal(ByteString& signature);
 
-	// Decryption functions
-	virtual bool decryptInit(const SymmetricKey* key, const SymMode::Type mode = SymMode::CBC, const ByteString& IV = ByteString(), bool padding = true, size_t counterBits = 0, const ByteString& aad = ByteString(), size_t tagBytes = 0);
-	virtual bool decryptUpdate(const ByteString& encryptedData, ByteString& data);
-	virtual bool decryptFinal(ByteString& data);
+	// Verification functions
+	virtual bool verifyInit(const SymmetricKey* key);
+	virtual bool verifyUpdate(const ByteString& originalData);
+	virtual bool verifyFinal(ByteString& signature);
 
-	// Return the block size
-	virtual size_t getBlockSize() const = 0;
-
-	// Check if more bytes of data can be encrypted
-	virtual bool checkMaximumBytes(unsigned long bytes);
+	// Return the MAC size
+	virtual size_t getMacSize() const = 0;
 
 protected:
 	// Return the right cipher for the operation
-	virtual std::string getCipher() const = 0;
+	virtual const EVP_CIPHER* getEVPCipher() const = 0;
 
 private:
 	// The current context
-	Botan::Pipe* cryption;
-
-	// The maximum bytes to encrypt/decrypt
-	Botan::BigInt maximumBytes;
-	Botan::BigInt counterBytes;
+	CMAC_CTX* curCTX;
 };
 
-#endif // !_SOFTHSM_V2_BOTANSYMMETRICALGORITHM_H
+#endif // !_SOFTHSM_V2_OSSLEVPCMACALGORITHM_H
 

@@ -99,6 +99,8 @@ bool Generation::wasUpdated()
 			return true;
 		}
 
+		genFile.lock();
+
 		unsigned long onDisk;
 
 		if (!genFile.readULong(onDisk))
@@ -106,7 +108,13 @@ bool Generation::wasUpdated()
 			return true;
 		}
 
-		return (onDisk != currentValue);
+		if (onDisk != currentValue)
+		{
+			currentValue = onDisk;
+			return true;
+		}
+
+		return false;
 	}
 	else
 	{
@@ -117,11 +125,13 @@ bool Generation::wasUpdated()
 			return true;
 		}
 
+		objectFile.lock();
+
 		unsigned long onDisk;
 
 		if (!objectFile.readULong(onDisk))
 		{
-			return (!objectFile.isEOF());
+			return true;
 		}
 
 		return (onDisk != currentValue);

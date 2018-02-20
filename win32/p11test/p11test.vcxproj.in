@@ -53,6 +53,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..;..\..\src\lib;..\..\src\lib\test;..\..\src\lib\pkcs11;..\..\src\lib\common;..\..\src\lib\crypto;..\..\src\lib\object_store;..\..\src\lib\data_mgr;..\..\src\lib\session_mgr;..\..\src\lib\slot_mgr;..\..\src\lib\handle_mgr;..\..\src\lib\win32;@CUINCPATH@;@INCLUDEPATH@;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <RuntimeLibrary>@RUNTIMELIBRARY@</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -80,6 +81,7 @@ copy ..\..\src\lib\test\tokens\dummy.in "$(TargetDir)\tokens\dummy"
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..;..\..\src\lib;..\..\src\lib\test;..\..\src\lib\pkcs11;..\..\src\lib\common;..\..\src\lib\crypto;..\..\src\lib\object_store;..\..\src\lib\data_mgr;..\..\src\lib\session_mgr;..\..\src\lib\slot_mgr;..\..\src\lib\handle_mgr;..\..\src\lib\win32;@CUINCPATH@;@INCLUDEPATH@;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <RuntimeLibrary>@RUNTIMELIBRARY@</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

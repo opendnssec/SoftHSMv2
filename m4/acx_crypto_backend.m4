@@ -106,6 +106,16 @@ AC_DEFUN([ACX_CRYPTO_BACKEND],[
 		fi
 
 		AC_DEFINE_UNQUOTED(
+			[WITH_RAW_PSS],
+			[1],
+			[Compile with raw RSA PKCS PSS]
+		)
+		AC_DEFINE_UNQUOTED(
+			[WITH_AES_GCM],
+			[1],
+			[Compile with AES_GCM]
+		)
+		AC_DEFINE_UNQUOTED(
 			[WITH_OPENSSL],
 			[],
 			[Compile with OpenSSL support]
@@ -136,6 +146,8 @@ AC_DEFUN([ACX_CRYPTO_BACKEND],[
 		fi
 
 		ACX_BOTAN_RFC5649
+		ACX_BOTAN_RAWPSS
+		ACX_BOTAN_AES_GCM
 
 		AC_DEFINE_UNQUOTED(
 			[WITH_BOTAN],
