@@ -1,6 +1,6 @@
 NEWS for SoftHSM -- History of user visible changes
 
-SoftHSM develop
+SoftHSM 2.4.0 - 2017-02-XX
 
 * Issue #135: Support PKCS#8 for GOST.
 * Issue #140: Support for CKA_ALLOWED_MECHANISMS.
@@ -19,7 +19,6 @@ SoftHSM develop
 * Issue #348: Document that OSX needs pkg-config to detect cppunit.
 * Issue #349: softhsm2-util will check the configuration and report any
   issues before loading the PKCS#11 library.
-* Issue #351: Upgrade Botan in Jenkins build.
 
 Bugfixes:
 * Issue #345: Private objects are presented to security officer in search
