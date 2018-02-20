@@ -1,6 +1,6 @@
 NEWS for SoftHSM -- History of user visible changes
 
-SoftHSM 2.4.0 - 2017-02-XX
+SoftHSM 2.4.0 - 2017-02-20
 
 * Issue #135: Support PKCS#8 for GOST.
 * Issue #140: Support for CKA_ALLOWED_MECHANISMS.
