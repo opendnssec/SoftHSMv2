@@ -20,7 +20,7 @@ set(INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/common
                  ${CMAKE_CURRENT_SOURCE_DIR}/pkcs11
                  ${CMAKE_CURRENT_SOURCE_DIR}/session_mgr
                  ${CMAKE_CURRENT_SOURCE_DIR}/slot_mgr
-                 ${CMAKE_SOURCE_DIR}
+                 ${CMAKE_BINARY_DIR}
                  )
 
 include_directories(${INCLUDE_DIRS})
