@@ -4,7 +4,6 @@ if(WITH_SQLITE3)
     set(INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/../../lib/pkcs11
                      ${PROJECT_SOURCE_DIR}/../common
                      ${SQLITE3_INCLUDES}
-                     ${CMAKE_SOURCE_DIR}
                      )
 
     set(SOURCES softhsm2-migrate.cpp

@@ -20,8 +20,8 @@ endfunction()
 
 # Configures C++11
 set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(HAVE_CXX11 ON)
+set(CMAKE_CXX_STANDARD_REQUIRED 1)
+set(HAVE_CXX11 1)
 
 if(ENABLE_PEDANTIC)
     enable_cxx_compiler_flag_if_supported(-pedantic)
@@ -37,7 +37,15 @@ if(ENABLE_SHARED)
 endif(ENABLE_SHARED)
 
 # Compiler Options/Macros
-check_symbol_exists(STDC_HEADERS "c++config.h" STDC_HEADERS)
+
+# FIXME: [Implement AC_HEADER_STDC]:
+# Find a CMake mechanism performs the check as defined in
+# AC_HEADER_STDC:
+# https://www.gnu.org/software/autoconf/manual/autoconf-2.67/html_node/Particular-Headers.html
+#
+# Not sure if this is a legacy check, or it's something that we need to
+# continue to check with modern compiler versions.
+set(STDC_HEADERS 1)
 
 # acx_strict.m4
 if(ENABLE_STRICT)
@@ -68,7 +76,7 @@ endif(DISABLE_VISIBILITY)
 if(DISABLE_NON_PAGED_MEMORY)
     message(STATUS "non-paged-memory disabled")
 else(DISABLE_NON_PAGED_MEMORY)
-    set(SENSITIVE_NON_PAGE ON)
+    set(SENSITIVE_NON_PAGE 1)
     check_include_files(sys/mman.h HAVE_SYS_MMAN_H)
     execute_process(COMMAND bash -c "ulimit -l"
                     OUTPUT_VARIABLE MLOCK_SIZE
@@ -108,6 +116,26 @@ endif(DISABLE_NON_PAGED_MEMORY)
 check_library_exists(dl dlopen "" HAVE_DLOPEN)
 check_function_exists(LoadLibrary HAVE_LOADLIBRARY)
 
+# acx_libtool.m4
+check_include_files(dlfcn.h HAVE_DLFCN_H)
+
+# configure:
+
+# STDC_HEADERS
+check_include_files(sys/types.h HAVE_SYS_TYPES_H)
+check_include_files(sys/stat.h HAVE_SYS_STAT_H)
+check_include_files(stdlib.h HAVE_STDLIB_H)
+check_include_files(stddef.h HAVE_STDDEF_H)
+check_include_files(string.h HAVE_STRING_H)
+check_include_files(strings.h HAVE_STRINGS_H)
+check_include_files(inttypes.h HAVE_INTTYPES_H)
+check_include_files(stdint.h HAVE_STDINT_H)
+check_include_files(unistd.h HAVE_UNISTD_H)
+
+check_include_files(memory.h HAVE_MEMORY_H)
+check_include_files(pthread.h HAVE_PTHREAD_H)
+check_function_exists(getpwuid_r HAVE_GETPWUID_R)
+
 # Find Botan Crypto Backend (equivalent of acx_botan.m4)
 if(WITH_BOTAN)
     include(FindBotan)
@@ -129,6 +157,11 @@ if(WITH_OPENSSL)
         set(CRYPTO_LIBS ${OPENSSL_LIBRARIES})
         set(WITH_RAW_PSS 1)
         set(WITH_AES_GCM 1)
+        
+        check_include_files(openssl/ssl.h HAVE_OPENSSL_SSL_H)
+        
+        get_filename_component(CRYPTO_LIB_DIR "${OPENSSL_CRYPTO_LIBRARY}" DIRECTORY)
+        check_library_exists(crypto "BN_new" "${CRYPTO_LIB_DIR}" HAVE_LIBCRYPTO)
 
         # acx_openssl_ecc.m4
         set(testfile ${CMAKE_SOURCE_DIR}/modules/tests/test_openssl_ecc.c)
@@ -200,7 +233,42 @@ if(WITH_OPENSSL)
         endif()
 
         # acx_openssl_rfc3349
+        set(testfile ${CMAKE_SOURCE_DIR}/modules/tests/test_openssl_rfc3394.c)
+        try_run(HAVE_AES_KEY_WRAP COMPILE_RESULT
+                "${CMAKE_BINARY_DIR}/prebuild_santity_tests" ${testfile}
+                LINK_LIBRARIES ${CRYPTO_LIBS}
+                CMAKE_FLAGS
+                    "-DINCLUDE_DIRECTORIES=${CRYPTO_INCLUDES}"
+                )
+        if(NOT COMPILE_RESULT)
+            message(WARNING "failed to compile: ${testfile}")
+        endif(NOT COMPILE_RESULT)
+
+        if(HAVE_AES_KEY_WRAP EQUAL 0)
+            message(STATUS "OpenSSL: RFC 3394 is supported")
+        else()
+            set(error_msg "OpenSSL: RFC 3394 is not supported!!")
+            message(WARNING ${error_msg})
+        endif()
+
         # acx_openssl_rfc5649
+        set(testfile ${CMAKE_SOURCE_DIR}/modules/tests/test_openssl_rfc5649.c)
+        try_run(HAVE_AES_KEY_WRAP_PAD COMPILE_RESULT
+                "${CMAKE_BINARY_DIR}/prebuild_santity_tests" ${testfile}
+                LINK_LIBRARIES ${CRYPTO_LIBS}
+                CMAKE_FLAGS
+                    "-DINCLUDE_DIRECTORIES=${CRYPTO_INCLUDES}"
+                )
+        if(NOT COMPILE_RESULT)
+            message(WARNING "failed to compile: ${testfile}")
+        endif(NOT COMPILE_RESULT)
+
+        if(HAVE_AES_KEY_WRAP_PAD EQUAL 0)
+            message(STATUS "OpenSSL: RFC 5649 is supported")
+        else()
+            set(error_msg "OpenSSL: RFC 5649 is not supported!!")
+            message(WARNING ${error_msg})
+        endif()
 
     else(OPENSSL_FOUND)
         message(FATAL_ERROR "Failed to find OpenSSL!")

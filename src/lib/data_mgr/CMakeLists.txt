@@ -4,7 +4,6 @@ set(INCLUDE_DIRS ${PROJECT_SOURCE_DIR}
                  ${PROJECT_SOURCE_DIR}/../crypto
                  ${PROJECT_SOURCE_DIR}/../common
                  ${PROJECT_SOURCE_DIR}/../pkcs11
-                 ${CMAKE_SOURCE_DIR}
                  )
 
 set(SOURCES ByteString.cpp

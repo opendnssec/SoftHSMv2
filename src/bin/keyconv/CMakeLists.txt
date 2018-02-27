@@ -2,7 +2,6 @@ project(softhsm2-keyconv)
 
 set(INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/../../lib/crypto
                  ${CRYPTO_INCLUDES}
-                 ${CMAKE_SOURCE_DIR}
                  )
 
 set(SOURCES softhsm2-keyconv.cpp

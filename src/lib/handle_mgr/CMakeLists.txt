@@ -7,7 +7,6 @@ set(INCLUDE_DIRS ${PROJECT_SOURCE_DIR}
                  ${PROJECT_SOURCE_DIR}/../object_store
                  ${PROJECT_SOURCE_DIR}/../pkcs11
                  ${PROJECT_SOURCE_DIR}/../slot_mgr
-                 ${CMAKE_SOURCE_DIR}
                  )
 
 set(SOURCES HandleManager.cpp

@@ -65,4 +65,7 @@ include(GenerateExportHeader)
 # Enable CTest
 enable_testing()
 
+# config.h include path
+include_directories(${CMAKE_BINARY_DIR})
+
 add_subdirectory(src)
