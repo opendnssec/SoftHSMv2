@@ -668,6 +668,7 @@ CK_RV SoftHSM::C_GetMechanismList(CK_SLOT_ID slotID, CK_MECHANISM_TYPE_PTR pMech
 		CKM_RSA_PKCS_KEY_PAIR_GEN,
 		CKM_RSA_PKCS,
 		CKM_RSA_X_509,
+        CKM_GENERIC_SECRET_KEY_GEN,
 #ifndef WITH_FIPS
 		CKM_MD5_RSA_PKCS,
 #endif
@@ -916,6 +917,11 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 			pInfo->ulMaxKeySize = 512;
 			pInfo->flags = CKF_SIGN | CKF_VERIFY;
 			break;
+        case CKM_GENERIC_SECRET_KEY_GEN:
+            pInfo->ulMinKeySize = 0;
+			pInfo->ulMaxKeySize = 0;
+			pInfo->flags = CKF_GENERATE;
+            break;
 		case CKM_RSA_PKCS_KEY_PAIR_GEN:
 			pInfo->ulMinKeySize = rsaMinSize;
 			pInfo->ulMaxKeySize = rsaMaxSize;
@@ -5546,6 +5552,10 @@ CK_RV SoftHSM::C_GenerateKey(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMecha
 			objClass = CKO_SECRET_KEY;
 			keyType = CKK_AES;
 			break;
+        case CKM_GENERIC_SECRET_KEY_GEN:
+			objClass = CKO_SECRET_KEY;
+			keyType = CKK_SHA256_HMAC;
+			break;
 		default:
 			return CKR_MECHANISM_INVALID;
 	}
@@ -5626,6 +5636,111 @@ CK_RV SoftHSM::C_GenerateKey(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMecha
 	{
 		return this->generateAES(hSession, pTemplate, ulCount, phKey, isOnToken, isPrivate);
 	}
+
+    if (pMechanism->mechanism == CKM_GENERIC_SECRET_KEY_GEN)
+    {
+        const CK_ULONG maxAttribs = 32;
+        CK_ATTRIBUTE keyAttribs[maxAttribs] = {
+            { CKA_CLASS, &objClass, sizeof(objClass) },
+            { CKA_TOKEN, &isOnToken, sizeof(isOnToken) },
+            { CKA_PRIVATE, &isPrivate, sizeof(isPrivate) },
+            { CKA_KEY_TYPE, &keyType, sizeof(keyType) },
+        };
+        CK_ULONG keyAttribsCount = 4;
+        CK_ULONG gen_key_len = 0;
+        // Add the additional
+        if (ulCount > (maxAttribs - keyAttribsCount))
+            rv = CKR_TEMPLATE_INCONSISTENT;
+        for (CK_ULONG i=0; i < ulCount && rv == CKR_OK; ++i)
+        {
+            switch (pTemplate[i].type)
+            {
+                case CKA_CLASS:
+                case CKA_TOKEN:
+                case CKA_PRIVATE:
+                case CKA_KEY_TYPE:
+                case CKA_CHECK_VALUE:
+                    continue;
+
+                case CKA_VALUE_LEN:
+				if (pTemplate[i].ulValueLen != sizeof(CK_ULONG))
+				{
+					INFO_MSG("CKA_VALUE_LEN does not have the size of CK_ULONG");
+					return CKR_ATTRIBUTE_VALUE_INVALID;
+				}
+				gen_key_len = *(CK_ULONG*)pTemplate[i].pValue;
+                keyAttribs[keyAttribsCount++] = pTemplate[i];
+				break;
+            default:
+                keyAttribs[keyAttribsCount++] = pTemplate[i];
+            }
+        }
+        CK_RV rv = CKR_OK;
+
+        CK_BYTE val[gen_key_len];
+        rv = C_GenerateRandom(hSession, val, gen_key_len);
+
+        if (keyType == CKK_GOST28147)
+        {
+            rv = CreateObject(hSession, keyAttribs, keyAttribsCount, phKey, OBJECT_OP_GENERATE);
+        }
+        else
+        {
+            rv = CreateObject(hSession, keyAttribs, keyAttribsCount, phKey, OBJECT_OP_GENERATE);
+        }
+
+        Session* session = (Session*)handleManager->getSession(hSession);
+        if (session == NULL)
+            return CKR_SESSION_HANDLE_INVALID;
+
+        // Get the token
+        Token* token = session->getToken();
+        if (token == NULL)
+            return CKR_GENERAL_ERROR;
+
+        // Store the attributes that are being supplied
+        if (rv == CKR_OK)
+        {
+            OSObject* osobject = (OSObject*)handleManager->getObject(*phKey);
+            if (osobject == NULL_PTR || !osobject->isValid()) {
+                rv = CKR_FUNCTION_FAILED;
+            } else if (osobject->startTransaction()) {
+                bool bOK = true;
+
+                // Common Attributes
+                bOK = bOK && osobject->setAttribute(CKA_LOCAL,true);
+                CK_ULONG ulKeyGenMechanism = (CK_ULONG)CKM_GENERIC_SECRET_KEY_GEN;
+                bOK = bOK && osobject->setAttribute(CKA_KEY_GEN_MECHANISM,ulKeyGenMechanism);
+
+                // Common Secret Key Attributes
+                bool bAlwaysSensitive = osobject->getBooleanValue(CKA_SENSITIVE, false);
+                bOK = bOK && osobject->setAttribute(CKA_ALWAYS_SENSITIVE,bAlwaysSensitive);
+                bool bNeverExtractable = osobject->getBooleanValue(CKA_EXTRACTABLE, false) == false;
+                bOK = bOK && osobject->setAttribute(CKA_NEVER_EXTRACTABLE, bNeverExtractable);
+
+                ByteString rawval = ByteString(val, gen_key_len);
+                ByteString value;
+                if (isPrivate)
+                {
+                    token->encrypt(rawval, value);
+                }
+                else
+                {
+                    value = rawval;
+                }
+                bOK = bOK && osobject->setAttribute(CKA_VALUE, value);
+                if (bOK)
+                    bOK = osobject->commitTransaction();
+                else
+                    osobject->abortTransaction();
+
+                if (!bOK)
+                    rv = CKR_FUNCTION_FAILED;
+            } else
+                rv = CKR_FUNCTION_FAILED;
+        }
+        return rv;
+    }
 
 	return CKR_GENERAL_ERROR;
 }
