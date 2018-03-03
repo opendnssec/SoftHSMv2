@@ -29,3 +29,10 @@ set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS -pthread)
 add_test(NAME ${PROJECT_NAME} COMMAND ${PROJECT_NAME}
          WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
          )
+
+file(COPY softhsm2.conf
+          softhsm2-alt.conf
+     DESTINATION ${PROJECT_BINARY_DIR}
+     )
+
+file(MAKE_DIRECTORY ${PROJECT_BINARY_DIR}/tokens)
