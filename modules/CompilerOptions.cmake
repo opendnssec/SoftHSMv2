@@ -38,6 +38,10 @@ endif(ENABLE_SHARED)
 
 # Compiler Options/Macros
 
+add_compile_options(-MD)
+add_compile_options(-MP)
+add_compile_options(-MF)
+
 # FIXME: [Implement AC_HEADER_STDC]:
 # Find a CMake mechanism performs the check as defined in
 # AC_HEADER_STDC:

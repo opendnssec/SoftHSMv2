@@ -20,23 +20,26 @@ option(WITH_OPENSSL "Compile with support of OpenSSL" ON)
 option(WITH_P11_KIT "Build with p11-kit module" OFF)
 option(WITH_SQLITE3 "Compiles with support of SQLite3" OFF)
 
+include(GNUInstallDirs)
+
 set(DEFAULT_LOG_LEVEL "INFO"
     CACHE STRING "The default log level")
 set(DEFAULT_OBJECTSTORE_BACKEND "file"
     CACHE STRING "Default storage backend for token objects")
-set(DEFAULT_PKCS11_LIB "/usr/local/lib/softhsm/libsofthsm2.so"
+set(DEFAULT_PKCS11_LIB "${CMAKE_INSTALL_LIBDIR}/softhsm/libsofthsm2.so"
     CACHE STRING "The default PKCS#11 library")
-set(DEFAULT_SOFTHSM2_CONF "/etc/softhsm2.conf"
+set(DEFAULT_SOFTHSM2_CONF "${CMAKE_INSTALL_SYSCONFDIR}/softhsm2.conf"
     CACHE STRING "The default location of softhsm.conf")
-set(DEFAULT_TOKENDIR "/var/lib/softhsm/tokens/"
+set(DEFAULT_TOKENDIR "${CMAKE_INSTALL_LOCALSTATEDIR}/lib/softhsm/tokens/"
     CACHE STRING "The default location of the token directory")
 
 set(MAX_PIN_LEN 255 CACHE STRING "Maximum PIN length")
 set(MIN_PIN_LEN 4 CACHE STRING "Minimum PIN length")
 
-set(VERSION "2.3.0")
+set(VERSION "2.5.0")
 set(VERSION_MAJOR 2)
-set(VERSION_MINOR 3)
+set(VERSION_MINOR 5)
+set(VERSION_PATCH 0)
 
 set(PACKAGE "softhsm")
 set(PACKAGE_BUGREPORT)
@@ -58,7 +61,8 @@ project(softhsm2)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}
                       ${CMAKE_SOURCE_DIR}/modules
                       )
-# Modules
+
+# Custom Modules
 include(CompilerOptions)
 include(GenerateExportHeader)
 
@@ -69,3 +73,15 @@ enable_testing()
 include_directories(${CMAKE_BINARY_DIR})
 
 add_subdirectory(src)
+
+# Packaging
+set(CPACK_PACKAGE_NAME ${PACKAGE_NAME})
+set(CPACK_PACKAGE_VENDOR "OpenDNSSEC")
+set(CPACK_PACKAGE_VERSION_MAJOR ${VERSION_MAJOR})
+set(CPACK_PACKAGE_VERSION_MINOR ${VERSION_MINOR})
+set(CPACK_PACKAGE_VERSION_PATCH ${VERSION_PATCH})
+set(CPACK_GENERATOR "TGZ")
+set(CPACK_SOURCE_GENERATOR "TGZ")
+set(CPACK_SOURCE_IGNORE_FILES "build/*;\.git/*")
+
+include(CPack)

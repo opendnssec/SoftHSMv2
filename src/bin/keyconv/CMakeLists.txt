@@ -21,3 +21,11 @@ endif(WITH_BOTAN)
 include_directories(${INCLUDE_DIRS})
 add_executable(${PROJECT_NAME} ${SOURCES})
 target_link_libraries(${PROJECT_NAME} ${CRYPTO_LIBS})
+
+install(TARGETS ${PROJECT_NAME}
+        DESTINATION ${CMAKE_INSTALL_BINDIR}
+        )
+
+install(FILES ${PROJECT_NAME}.1
+        DESTINATION ${CMAKE_INSTALL_MANDIR}/man1
+        )
