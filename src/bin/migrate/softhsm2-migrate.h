@@ -49,7 +49,7 @@ int openP11(CK_SLOT_ID slotID, char* userPIN, CK_SESSION_HANDLE* hSession);
 int db2session(sqlite3* db, CK_SESSION_HANDLE hSession, int noPublicKey);
 int dbRSAPub2session(sqlite3* db, CK_OBJECT_HANDLE objectID, CK_SESSION_HANDLE hSession);
 int dbRSAPriv2session(sqlite3* db, CK_OBJECT_HANDLE objectID, CK_SESSION_HANDLE hSession);
-void freeTemplate(CK_ATTRIBUTE* attTemplate, int size);
+void freeTemplate(CK_ATTRIBUTE* attTemplate, int startIndex, int size);
 
 // Database functions
 
