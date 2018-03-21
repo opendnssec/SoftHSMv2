@@ -20,6 +20,16 @@ option(WITH_OPENSSL "Compile with support of OpenSSL" ON)
 option(WITH_P11_KIT "Build with p11-kit module" OFF)
 option(WITH_SQLITE3 "Compiles with support of SQLite3" OFF)
 
+if(WITH_OBJECTSTORE_BACKEND_DB)
+    set(HAVE_OBJECTSTORE_BACKEND_DB 1)
+    set(WITH_MIGRATE ON)
+    set(WITH SQLITE3 ON)
+endif(WITH_OBJECTSTORE_BACKEND_DB)
+
+if(WITH_MIGRATE)
+    set(BUILD_MIGRATE ON)
+endif(WITH_MIGRATE)
+
 include(GNUInstallDirs)
 
 set(DEFAULT_LOG_LEVEL "INFO"

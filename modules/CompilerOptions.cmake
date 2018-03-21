@@ -38,9 +38,12 @@ endif(ENABLE_SHARED)
 
 # Compiler Options/Macros
 
-add_compile_options(-MD)
-add_compile_options(-MP)
-add_compile_options(-MF)
+# FIXME: These options need to be set on a per object file basis (*.o). Do not belong here.
+#        Are these even required? They just modify the Makefile representation of the target.
+#add_compile_options(-MD)
+#add_compile_options(-MP)
+#add_compile_options(-MF)
+#add_compile_options(-MT)
 
 # FIXME: [Implement AC_HEADER_STDC]:
 # Find a CMake mechanism performs the check as defined in
@@ -286,6 +289,12 @@ if(WITH_SQLITE3)
         message(STATUS "Found SQLite3")
         set(SQLITE3_INCLUDES ${SQLITE3_INCLUDE_DIRS})
         set(SQLITE3_LIBS ${SQLITE3_LIBRARIES})
+        check_include_files(sqlite3.h HAVE_SQLITE3_H)
+        check_library_exists(sqlite3 sqlite3_prepare_v2 "" HAVE_LIBSQLITE3)
+        find_program(SQLITE3_COMMAND NAMES sqlite3)
+        if(SQLITE3_COMMAND MATCHES "-NOTFOUND")
+            message(FATAL_ERROR "sqlite3 command was not found")
+        endif(SQLITE3_COMMAND MATCHES "-NOTFOUND")
     else(SQLITE3_FOUND)
         message(FATAL_ERROR "Failed to find SQLite3!")
     endif(SQLITE3_FOUND)

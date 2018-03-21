@@ -23,7 +23,7 @@ set(SOURCES p11test.cpp
 include_directories(${PROJECT_SOURCE_DIR})
 
 add_executable(${PROJECT_NAME} ${SOURCES})
-target_link_libraries(${PROJECT_NAME} softhsm2-static ${CRYPTO_LIBS} ${CPPUNIT_LIBS})
+target_link_libraries(${PROJECT_NAME} softhsm2-static ${CRYPTO_LIBS} ${CPPUNIT_LIBS} ${SQLITE3_LIBS})
 set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS -pthread)
 
 add_test(NAME ${PROJECT_NAME} COMMAND ${PROJECT_NAME}
