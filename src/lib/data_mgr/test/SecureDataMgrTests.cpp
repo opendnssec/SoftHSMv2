@@ -65,6 +65,8 @@ void SecureDataMgrTests::testSecureDataManager()
 	CPPUNIT_ASSERT(!s1.setUserPIN(userPIN));
 	CPPUNIT_ASSERT(!s1.loginSO(soPIN));
 	CPPUNIT_ASSERT(!s1.loginUser(userPIN));
+	CPPUNIT_ASSERT(!s1.reAuthenticateSO(soPIN));
+	CPPUNIT_ASSERT(!s1.reAuthenticateUser(userPIN));
 	CPPUNIT_ASSERT(!s1.encrypt(plaintext, encrypted));
 	CPPUNIT_ASSERT(!s1.decrypt(encrypted, plaintext));
 	CPPUNIT_ASSERT(s1.getSOPINBlob().size() == 0);
@@ -142,7 +144,7 @@ void SecureDataMgrTests::testSecureDataManager()
 
 	// Check that the SO PIN can be changed
 	CPPUNIT_ASSERT(s2.setSOPIN(newSOPIN));
-	
+
 	// Check that it is no longer possible to log in with the old SO PIN
 	CPPUNIT_ASSERT(!s2.loginSO(soPIN));
 
@@ -171,7 +173,7 @@ void SecureDataMgrTests::testSecureDataManager()
 
 	// Check that it is possible to log in with the new user PIN
 	CPPUNIT_ASSERT(s2.loginUser(newUserPIN));
-	
+
 	// Check that encrypting the data results in the different ciphertext because of the random IV
 	CPPUNIT_ASSERT(s2.encrypt(plaintext, encrypted2));
 	CPPUNIT_ASSERT(encrypted != encrypted2);
@@ -184,5 +186,22 @@ void SecureDataMgrTests::testSecureDataManager()
 	CPPUNIT_ASSERT(s2.encrypt(emptyPlaintext, encrypted));
 	CPPUNIT_ASSERT(s2.decrypt(encrypted, decrypted));
 	CPPUNIT_ASSERT(decrypted == emptyPlaintext);
+
+	// Check that is is possible to log in with the SO PIN and re-authenticate
+	CPPUNIT_ASSERT(s1.loginSO(soPIN));
+	CPPUNIT_ASSERT(!s1.reAuthenticateSO(userPIN));
+	CPPUNIT_ASSERT(s1.reAuthenticateSO(soPIN));
+
+	// Check that is is possible to log in with the user PIN and re-authenticate
+	CPPUNIT_ASSERT(s1.loginUser(userPIN));
+	CPPUNIT_ASSERT(!s1.reAuthenticateUser(soPIN));
+	CPPUNIT_ASSERT(s1.reAuthenticateUser(userPIN));
+
+	// Check that it is possible to encrypt and decrypt some data
+	CPPUNIT_ASSERT(s1.encrypt(plaintext, encrypted));
+	CPPUNIT_ASSERT(encrypted != plaintext);
+
+	CPPUNIT_ASSERT(s1.decrypt(encrypted, decrypted));
+	CPPUNIT_ASSERT(decrypted == plaintext);
 }
 

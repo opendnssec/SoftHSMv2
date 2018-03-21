@@ -81,6 +81,10 @@ public:
 	bool loginUser(const ByteString& userPIN);
 	bool isUserLoggedIn();
 
+	// Re-authentication
+	bool reAuthenticateSO(const ByteString& soPIN);
+	bool reAuthenticateUser(const ByteString& userPIN);
+
 	// Log out
 	void logout();
 
@@ -102,6 +106,9 @@ private:
 
 	// Generic login function
 	bool login(const ByteString& passphrase, const ByteString& encryptedKey);
+
+	// Generic re-authentication function
+	bool reAuthenticate(const ByteString& passphrase, const ByteString& encryptedKey);
 
 	// Generic function for creating an encrypted version of the key from the specified passphrase
 	bool pbeEncryptKey(const ByteString& passphrase, ByteString& encryptedKey);

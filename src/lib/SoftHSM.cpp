@@ -1396,8 +1396,12 @@ CK_RV SoftHSM::C_Login(CK_SESSION_HANDLE hSession, CK_USER_TYPE userType, CK_UTF
 			rv = token->loginUser(pin);
 			break;
 		case CKU_CONTEXT_SPECIFIC:
-			// TODO: When do we want to use this user type?
-			return CKR_OPERATION_NOT_INITIALIZED;
+			// Check if re-authentication is required
+			if (!session->getReAuthentication()) return CKR_OPERATION_NOT_INITIALIZED;
+
+			// Re-authenticate
+			rv = token->reAuthenticate(pin);
+			if (rv == CKR_OK) session->setReAuthentication(false);
 			break;
 		default:
 			return CKR_USER_TYPE_INVALID;
@@ -1831,6 +1835,11 @@ CK_RV SoftHSM::C_FindObjectsInit(CK_SESSION_HANDLE hSession, CK_ATTRIBUTE_PTR pT
 	std::set<OSObject*>::iterator it;
 	for (it=allObjects.begin(); it != allObjects.end(); ++it)
 	{
+		// Refresh object and check if it is valid
+		if (!(*it)->isValid()) {
+			DEBUG_MSG("Object is not valid, skipping");
+			continue;
+		}
 
 		// Determine if the object has CKA_PRIVATE set to CK_TRUE
 		bool isPrivateObject = (*it)->getBooleanValue(CKA_PRIVATE, true);
@@ -3007,6 +3016,12 @@ CK_RV SoftHSM::AsymDecryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMec
 		return CKR_MECHANISM_INVALID;
         }
 
+	// Check if re-authentication is required
+	if (key->getBooleanValue(CKA_ALWAYS_AUTHENTICATE, false))
+	{
+		session->setReAuthentication(true);
+	}
+
 	session->setOpType(SESSION_OP_DECRYPT);
 	session->setAsymmetricCryptoOp(asymCrypto);
 	session->setMechanism(mechanism);
@@ -3106,6 +3121,13 @@ static CK_RV AsymDecrypt(Session* session, CK_BYTE_PTR pEncryptedData, CK_ULONG 
 	{
 		session->resetOp();
 		return CKR_OPERATION_NOT_INITIALIZED;
+	}
+
+	// Check if re-authentication is required
+	if (session->getReAuthentication())
+	{
+		session->resetOp();
+		return CKR_USER_NOT_LOGGED_IN;
 	}
 
 	// Size of the data
@@ -4230,6 +4252,12 @@ CK_RV SoftHSM::AsymSignInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechan
 		return CKR_MECHANISM_INVALID;
 	}
 
+	// Check if re-authentication is required
+	if (key->getBooleanValue(CKA_ALWAYS_AUTHENTICATE, false))
+	{
+		session->setReAuthentication(true);
+	}
+
 	session->setOpType(SESSION_OP_SIGN);
 	session->setAsymmetricCryptoOp(asymCrypto);
 	session->setMechanism(mechanism);
@@ -4319,6 +4347,13 @@ static CK_RV AsymSign(Session* session, CK_BYTE_PTR pData, CK_ULONG ulDataLen, C
 	{
 		session->resetOp();
 		return CKR_OPERATION_NOT_INITIALIZED;
+	}
+
+	// Check if re-authentication is required
+	if (session->getReAuthentication())
+	{
+		session->resetOp();
+		return CKR_USER_NOT_LOGGED_IN;
 	}
 
 	// Size of the signature
@@ -4435,6 +4470,13 @@ static CK_RV AsymSignUpdate(Session* session, CK_BYTE_PTR pPart, CK_ULONG ulPart
 		return CKR_OPERATION_NOT_INITIALIZED;
 	}
 
+	// Check if re-authentication is required
+	if (session->getReAuthentication())
+	{
+		session->resetOp();
+		return CKR_USER_NOT_LOGGED_IN;
+	}
+
 	// Get the part
 	ByteString part(pPart, ulPartLen);
 
@@ -4526,6 +4568,13 @@ static CK_RV AsymSignFinal(Session* session, CK_BYTE_PTR pSignature, CK_ULONG_PT
 	{
 		session->resetOp();
 		return CKR_OPERATION_NOT_INITIALIZED;
+	}
+
+	// Check if re-authentication is required
+	if (session->getReAuthentication())
+	{
+		session->resetOp();
+		return CKR_USER_NOT_LOGGED_IN;
 	}
 
 	// Size of the signature
@@ -6209,7 +6258,11 @@ CK_RV SoftHSM::C_WrapKey
 #ifdef WITH_EDDSA
 			// Not yet
 #endif
-
+#ifdef WITH_GOST
+			case CKK_GOSTR3410:
+				alg = AsymAlgo::GOST;
+				break;
+#endif
 			default:
 				return CKR_KEY_NOT_WRAPPABLE;
 		}
@@ -6237,6 +6290,11 @@ CK_RV SoftHSM::C_WrapKey
 #ifdef WITH_ECC
 			case CKK_EC:
 				rv = getECPrivateKey((ECPrivateKey*)privateKey, token, key);
+				break;
+#endif
+#ifdef WITH_GOST
+			case CKK_GOSTR3410:
+				rv = getGOSTPrivateKey((GOSTPrivateKey*)privateKey, token, key);
 				break;
 #endif
 		}
@@ -6647,10 +6705,18 @@ CK_RV SoftHSM::C_UnwrapKey
 			{
 				bOK = bOK && setDHPrivateKey(osobject, keydata, token, isPrivate != CK_FALSE);
 			}
+#ifdef WITH_ECC
 			else if (keyType == CKK_EC)
 			{
 				bOK = bOK && setECPrivateKey(osobject, keydata, token, isPrivate != CK_FALSE);
 			}
+#endif
+#ifdef WITH_GOST
+			else if (keyType == CKK_GOSTR3410)
+			{
+				bOK = bOK && setGOSTPrivateKey(osobject, keydata, token, isPrivate != CK_FALSE);
+			}
+#endif
 			else
 				bOK = false;
 
@@ -11860,6 +11926,7 @@ bool SoftHSM::setDHPrivateKey(OSObject* key, const ByteString &ber, Token* token
 
 	return bOK;
 }
+
 bool SoftHSM::setECPrivateKey(OSObject* key, const ByteString &ber, Token* token, bool isPrivate) const
 {
 	AsymmetricAlgorithm* ecc = CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::ECDSA);
@@ -11896,6 +11963,46 @@ bool SoftHSM::setECPrivateKey(OSObject* key, const ByteString &ber, Token* token
 
 	ecc->recyclePrivateKey(priv);
 	CryptoFactory::i()->recycleAsymmetricAlgorithm(ecc);
+
+	return bOK;
+}
+
+bool SoftHSM::setGOSTPrivateKey(OSObject* key, const ByteString &ber, Token* token, bool isPrivate) const
+{
+	AsymmetricAlgorithm* gost = CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::GOST);
+	if (gost == NULL)
+		return false;
+	PrivateKey* priv = gost->newPrivateKey();
+	if (priv == NULL)
+	{
+		CryptoFactory::i()->recycleAsymmetricAlgorithm(gost);
+		return false;
+	}
+	if (!priv->PKCS8Decode(ber))
+	{
+		gost->recyclePrivateKey(priv);
+		CryptoFactory::i()->recycleAsymmetricAlgorithm(gost);
+		return false;
+	}
+	// GOST Private Key Attributes
+	ByteString value;
+	ByteString param_a;
+	if (isPrivate)
+	{
+		token->encrypt(((GOSTPrivateKey*)priv)->getD(), value);
+		token->encrypt(((GOSTPrivateKey*)priv)->getEC(), param_a);
+	}
+	else
+	{
+		value = ((GOSTPrivateKey*)priv)->getD();
+		param_a = ((GOSTPrivateKey*)priv)->getEC();
+	}
+	bool bOK = true;
+	bOK = bOK && key->setAttribute(CKA_VALUE, value);
+	bOK = bOK && key->setAttribute(CKA_GOSTR3410_PARAMS, param_a);
+
+	gost->recyclePrivateKey(priv);
+	CryptoFactory::i()->recycleAsymmetricAlgorithm(gost);
 
 	return bOK;
 }

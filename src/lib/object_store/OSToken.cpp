@@ -583,15 +583,22 @@ bool OSToken::resetToken(const ByteString& label)
 // Index the token
 bool OSToken::index(bool isFirstTime /* = false */)
 {
+	// No access to object mutable fields before
+	MutexLocker lock(tokenMutex);
+
 	// Check if re-indexing is required
 	if (!isFirstTime && (!valid || !gen->wasUpdated()))
 	{
+		DEBUG_MSG("No re-indexing is required");
+
 		return true;
 	}
 
 	// Check the integrity
 	if (!tokenDir->refresh() || !tokenObject->valid)
 	{
+		ERROR_MSG("Token integrity check failed");
+
 		valid = false;
 
 		return false;
@@ -622,9 +629,6 @@ bool OSToken::index(bool isFirstTime /* = false */)
 	// Compute the changes compared to the last list of files
 	std::set<std::string> addedFiles;
 	std::set<std::string> removedFiles;
-
-	// No access to object mutable fields before
-	MutexLocker lock(tokenMutex);
 
 	if (!isFirstTime)
 	{
@@ -673,8 +677,10 @@ bool OSToken::index(bool isFirstTime /* = false */)
 		// Create a new token object for the added file
 		ObjectFile* newObject = new ObjectFile(this, tokenPath + OS_PATHSEP + *i, tokenPath + OS_PATHSEP + lockName);
 
+		// Add the object, even invalid ones.
+		// This is so the we can read the attributes once
+		// the other process has finished writing to disc.
 		DEBUG_MSG("(0x%08X) New object %s (0x%08X) added", this, newObject->getFilename().c_str(), newObject);
-
 		objects.insert(newObject);
 		allObjects.insert(newObject);
 	}
