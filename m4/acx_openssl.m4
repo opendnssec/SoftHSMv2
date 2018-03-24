@@ -29,28 +29,35 @@ AC_DEFUN([ACX_OPENSSL],[
 	AC_MSG_CHECKING([for OpenSSL version])
 	CHECK_OPENSSL_VERSION=m4_format(0x%02x%02x%02x000L, $1, $2, $3)
 	AC_LANG_PUSH([C])
-	AC_RUN_IFELSE([
-		AC_LANG_SOURCE([[
-			#include <openssl/ssl.h>
-			#include <openssl/opensslv.h>
-			int main()
-			{
-			#ifndef OPENSSL_VERSION_NUMBER
-				return -1;
-			#endif
-			#if OPENSSL_VERSION_NUMBER >= $CHECK_OPENSSL_VERSION
-				return 0;
-			#else
-				return 1;
-			#endif
-			}
-		]])
-	],[
-		AC_MSG_RESULT([>= $1.$2.$3])
-	],[
-		AC_MSG_RESULT([< $1.$2.$3])
-		AC_MSG_ERROR([OpenSSL library too old ($1.$2.$3 or later required)])
-	],[])
+	AC_CACHE_VAL([acx_cv_lib_openssl_sufficient],[
+		acx_cv_lib_openssl_sufficient=no
+		AC_RUN_IFELSE([
+			AC_LANG_SOURCE([[
+				#include <openssl/ssl.h>
+				#include <openssl/opensslv.h>
+				int main()
+				{
+				#ifndef OPENSSL_VERSION_NUMBER
+					return -1;
+				#endif
+				#if OPENSSL_VERSION_NUMBER >= $CHECK_OPENSSL_VERSION
+					return 0;
+				#else
+					return 1;
+				#endif
+				}
+			]])
+		],[
+			AC_MSG_RESULT([>= $1.$2.$3])
+			acx_cv_lib_openssl_sufficient=yes
+		],[
+			AC_MSG_RESULT([< $1.$2.$3])
+			AC_MSG_ERROR([OpenSSL library too old ($1.$2.$3 or later required)])
+		],[
+			AC_MSG_WARN([Cannot test, assuming >= $1.$2.$3])
+			acx_cv_lib_openssl_sufficient=yes
+		])
+	])
 	AC_LANG_POP([C])
 
 	CPPFLAGS=$tmp_CPPFLAGS
