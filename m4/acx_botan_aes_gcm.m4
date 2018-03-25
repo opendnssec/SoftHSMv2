@@ -10,7 +10,7 @@ AC_DEFUN([ACX_BOTAN_AES_GCM],[
 	AC_LANG_PUSH([C++])
 	AC_CACHE_VAL([acx_cv_lib_botan_aes_gcm_support],[
 		acx_cv_lib_botan_aes_gcm_support=no
-		AC_RUN_IFELSE([
+		AC_COMPILE_IFELSE([
 			AC_LANG_SOURCE([[
 				#include <botan/botan.h>
 				#include <botan/version.h>
@@ -20,8 +20,9 @@ AC_DEFUN([ACX_BOTAN_AES_GCM],[
 
 #if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(2,0,0)
 					return 0;
+#else
+#error "Botan too old"
 #endif
-					return 1;
 				}
 			]])
 		],[
@@ -29,9 +30,6 @@ AC_DEFUN([ACX_BOTAN_AES_GCM],[
 			acx_cv_lib_botan_aes_gcm_support=yes
 		],[
 			AC_MSG_RESULT([Cannot find AES GCM support, upgrade to Botan >= v2.0.0])
-		],[
-			AC_MSG_RESULT([Cannot test, assuming AES GCM])
-			acx_cv_lib_botan_aes_gcm_support=yes
 		])
 	])
 	AC_LANG_POP([C++])
