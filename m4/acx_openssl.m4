@@ -2,18 +2,19 @@ AC_DEFUN([ACX_OPENSSL],[
 	AC_ARG_WITH(openssl,
         	AC_HELP_STRING([--with-openssl=PATH],[Specify prefix of path of OpenSSL]),
 		[
-			OPENSSL_PATH="$withval"
+			OPENSSL_INCLUDES="-I$withval/include"
+			OPENSSL_LIBDIRS="-L$withval/lib"
 		],
 		[
-			OPENSSL_PATH="/usr/local"
+			OPENSSL_INCLUDES=""
+			OPENSSL_LIBDIRS=""
 		])
 
 	AC_MSG_CHECKING(what are the OpenSSL includes)
-	OPENSSL_INCLUDES="-I$OPENSSL_PATH/include"
 	AC_MSG_RESULT($OPENSSL_INCLUDES)
 
 	AC_MSG_CHECKING(what are the OpenSSL libs)
-	OPENSSL_LIBS="-L$OPENSSL_PATH/lib -lcrypto"
+	OPENSSL_LIBS="$OPENSSL_LIBDIRS -lcrypto"
 	AC_MSG_RESULT($OPENSSL_LIBS)
 
 	tmp_CPPFLAGS=$CPPFLAGS
