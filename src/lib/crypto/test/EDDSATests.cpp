@@ -231,7 +231,7 @@ void EDDSATests::testSignVerifyKnownVector()
 	// Reconstruct public and private key #1
 	ByteString ec1 = "06032b6570"; // ed25519
 	ByteString k1 = "9d61b19deffd5a60ba844af492ec2cc44449c5697b326919703bac031cae7f60";
-	ByteString a1 = "d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a";
+	ByteString a1 = "0420d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a";
 
 	pubKey1->setEC(ec1);
 	pubKey1->setA(a1);
@@ -246,7 +246,7 @@ void EDDSATests::testSignVerifyKnownVector()
 	// Reconstruct public and private key #2
 	ByteString ec2 = "06032b6570"; // ed25519
 	ByteString k2 = "c5aa8df43f9f837bedb7442f31dcb7b166d38535076f094b85ce3a2e0b4458f7";
-	ByteString a2 = "fc51cd8e6218a1a38da47ed00230f0580816ed13ba3303ac5deb911548908025";
+	ByteString a2 = "0420fc51cd8e6218a1a38da47ed00230f0580816ed13ba3303ac5deb911548908025";
 
 	pubKey2->setEC(ec2);
 	pubKey2->setA(a2);
@@ -319,7 +319,7 @@ void EDDSATests::testDeriveKnownVector()
 	// Reconstruct public and private key for Alice
 	ByteString ec = "06032b656e"; // x25519
 	ByteString ka = "77076d0a7318a57d3c16c17251b26645df4c2f87ebc0992ab177fba51db92c2a";
-	ByteString aa = "8520f0098930a754748b7ddcb43ef75a0dbf3a0d26381af4eba4a98eaa9b4e6a";
+	ByteString aa = "04208520f0098930a754748b7ddcb43ef75a0dbf3a0d26381af4eba4a98eaa9b4e6a";
 
 	pubKeya->setEC(ec);
 	pubKeya->setA(aa);
@@ -328,7 +328,7 @@ void EDDSATests::testDeriveKnownVector()
 
 	// Reconstruct public and private key for Bob
 	ByteString kb = "5dab087e624a8a4b79e17f8b83800ee66f3bb1292618b6fd1c2f8b27ff88e0eb";
-	ByteString ab = "de9edb7d7b7dc1b4d35b61c2ece435373f8343c85b78674dadfc7e146f882b4f";
+	ByteString ab = "0420de9edb7d7b7dc1b4d35b61c2ece435373f8343c85b78674dadfc7e146f882b4f";
 
 	pubKeyb->setEC(ec);
 	pubKeyb->setA(ab);

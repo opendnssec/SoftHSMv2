@@ -35,6 +35,7 @@
 #include "log.h"
 #include "BotanEDPublicKey.h"
 #include "BotanUtil.h"
+#include "DerUtil.h"
 #include <string.h>
 #include <botan/curve25519.h>
 #include <botan/ed25519.h>
@@ -102,7 +103,7 @@ void BotanEDPublicKey::setFromBotan(const Botan::Public_Key* inEDKEY)
 	ByteString inA;
 	inA.resize(pub.size());
 	memcpy(&inA[0], &pub[0], pub.size());
-	setA(inA);
+	setA(DERUTIL::raw2Octet(inA));
 }
 
 // Check if the key is of the given type
@@ -144,7 +145,7 @@ Botan::Public_Key* BotanEDPublicKey::getBotanKey()
 
 	return edkey;
 }
- 
+
 // Create the Botan representation of the key
 void BotanEDPublicKey::createBotanKey()
 {
@@ -159,8 +160,12 @@ void BotanEDPublicKey::createBotanKey()
 
 		try
 		{
-			std::vector<uint8_t> pub(a.size());
-			memcpy(&pub[0], a.const_byte_str(), a.size());
+			ByteString raw = DERUTIL::octet2Raw(a);
+			size_t len = raw.size();
+			if (len == 0) return;
+
+			std::vector<uint8_t> pub(len);
+			memcpy(&pub[0], raw.const_byte_str(), len);
 			Botan::OID oid = BotanUtil::byteString2Oid(ec);
 			if (oid == x25519_oid)
 			{

@@ -42,6 +42,7 @@
 #include "AsymmetricAlgorithm.h"
 #include "SymmetricAlgorithm.h"
 #include "AESKey.h"
+#include "DerUtil.h"
 #include "DESKey.h"
 #include "RNG.h"
 #include "RSAParameters.h"
@@ -128,7 +129,7 @@ static CK_RV newP11Object(CK_OBJECT_CLASS objClass, CK_KEY_TYPE keyType, CK_CERT
 				*p11object = new P11DHPublicKeyObj();
 			else if (keyType == CKK_GOSTR3410)
 				*p11object = new P11GOSTPublicKeyObj();
-			else if (keyType == CKK_EDDSA)
+			else if (keyType == CKK_EC_EDWARDS)
 				*p11object = new P11EDPublicKeyObj();
 			else
 				return CKR_ATTRIBUTE_VALUE_INVALID;
@@ -145,7 +146,7 @@ static CK_RV newP11Object(CK_OBJECT_CLASS objClass, CK_KEY_TYPE keyType, CK_CERT
 				*p11object = new P11DHPrivateKeyObj();
 			else if (keyType == CKK_GOSTR3410)
 				*p11object = new P11GOSTPrivateKeyObj();
-			else if (keyType == CKK_EDDSA)
+			else if (keyType == CKK_EC_EDWARDS)
 				*p11object = new P11EDPrivateKeyObj();
 			else
 				return CKR_ATTRIBUTE_VALUE_INVALID;
@@ -635,7 +636,10 @@ CK_RV SoftHSM::C_GetMechanismList(CK_SLOT_ID slotID, CK_MECHANISM_TYPE_PTR pMech
 	// A list with the supported mechanisms
 	CK_ULONG nrSupportedMechanisms = 61;
 #ifdef WITH_ECC
-	nrSupportedMechanisms += 3;
+	nrSupportedMechanisms += 2;
+#endif
+#if defined(WITH_ECC) || defined(WITH_EDDSA)
+	nrSupportedMechanisms += 1;
 #endif
 #ifdef WITH_FIPS
 	nrSupportedMechanisms -= 9;
@@ -653,7 +657,7 @@ CK_RV SoftHSM::C_GetMechanismList(CK_SLOT_ID slotID, CK_MECHANISM_TYPE_PTR pMech
 	nrSupportedMechanisms += 1;
 #endif
 #ifdef WITH_EDDSA
-	nrSupportedMechanisms += 3;
+	nrSupportedMechanisms += 2;
 #endif
 
 	CK_MECHANISM_TYPE supportedMechanisms[] =
@@ -741,6 +745,8 @@ CK_RV SoftHSM::C_GetMechanismList(CK_SLOT_ID slotID, CK_MECHANISM_TYPE_PTR pMech
 #ifdef WITH_ECC
 		CKM_EC_KEY_PAIR_GEN,
 		CKM_ECDSA,
+#endif
+#if defined(WITH_ECC) || defined(WITH_EDDSA)
 		CKM_ECDH1_DERIVE,
 #endif
 #ifdef WITH_GOST
@@ -751,9 +757,8 @@ CK_RV SoftHSM::C_GetMechanismList(CK_SLOT_ID slotID, CK_MECHANISM_TYPE_PTR pMech
 		CKM_GOSTR3410_WITH_GOSTR3411,
 #endif
 #ifdef WITH_EDDSA
-		CKM_EDDSA_KEY_PAIR_GEN,
+		CKM_EC_EDWARDS_KEY_PAIR_GEN,
 		CKM_EDDSA,
-		CKM_EDDSA_DERIVE
 #endif
 	};
 
@@ -798,10 +803,10 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 	unsigned long dhMinSize, dhMaxSize;
 #ifdef WITH_ECC
 	unsigned long ecdsaMinSize, ecdsaMaxSize;
-	unsigned long ecdhMinSize, ecdhMaxSize;
 #endif
-#ifdef WITH_EDDSA
-	unsigned long eddsaMinSize, eddsaMaxSize;
+#if defined(WITH_ECC) || defined(WITH_EDDSA)
+	unsigned long ecdhMinSize = 0, ecdhMaxSize = 0;
+	unsigned long eddsaMinSize = 0, eddsaMaxSize = 0;
 #endif
 
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
@@ -1108,9 +1113,11 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 			pInfo->ulMaxKeySize = ecdsaMaxSize;
 			pInfo->flags = CKF_SIGN | CKF_VERIFY | CKF_EC_COMMOM;
 			break;
+#endif
+#if defined(WITH_ECC) || defined(WITH_EDDSA)
 		case CKM_ECDH1_DERIVE:
-			pInfo->ulMinKeySize = ecdhMinSize;
-			pInfo->ulMaxKeySize = ecdhMaxSize;
+			pInfo->ulMinKeySize = ecdhMinSize ? ecdhMinSize : eddsaMinSize;
+			pInfo->ulMaxKeySize = ecdhMaxSize ? ecdhMaxSize : eddsaMaxSize;
 			pInfo->flags = CKF_DERIVE;
 			break;
 #endif
@@ -1147,7 +1154,7 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 			break;
 #endif
 #ifdef WITH_EDDSA
-		case CKM_EDDSA_KEY_PAIR_GEN:
+		case CKM_EC_EDWARDS_KEY_PAIR_GEN:
 			pInfo->ulMinKeySize = eddsaMinSize;
 			pInfo->ulMaxKeySize = eddsaMaxSize;
 			pInfo->flags = CKF_GENERATE_KEY_PAIR;
@@ -1156,11 +1163,6 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 			pInfo->ulMinKeySize = eddsaMinSize;
 			pInfo->ulMaxKeySize = eddsaMaxSize;
 			pInfo->flags = CKF_SIGN | CKF_VERIFY;
-			break;
-		case CKM_EDDSA_DERIVE:
-			pInfo->ulMinKeySize = eddsaMinSize;
-			pInfo->ulMaxKeySize = eddsaMaxSize;
-			pInfo->flags = CKF_DERIVE;
 			break;
 #endif
 		default:
@@ -3891,8 +3893,12 @@ CK_RV SoftHSM::AsymSignInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechan
 	bool bAllowMultiPartOp;
 	bool isRSA = false;
 	bool isDSA = false;
+#ifdef WITH_ECC
 	bool isECDSA = false;
+#endif
+#ifdef WITH_EDDSA
 	bool isEDDSA = false;
+#endif
 	switch(pMechanism->mechanism) {
 		case CKM_RSA_PKCS:
 			mechanism = AsymMech::RSA_PKCS;
@@ -4865,8 +4871,12 @@ CK_RV SoftHSM::AsymVerifyInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 	bool bAllowMultiPartOp;
 	bool isRSA = false;
 	bool isDSA = false;
+#ifdef WITH_ECC
 	bool isECDSA = false;
+#endif
+#ifdef WITH_EDDSA
 	bool isEDDSA = false;
+#endif
 	switch(pMechanism->mechanism) {
 		case CKM_RSA_PKCS:
 			mechanism = AsymMech::RSA_PKCS;
@@ -5782,8 +5792,8 @@ CK_RV SoftHSM::C_GenerateKeyPair
 			break;
 #endif
 #ifdef WITH_EDDSA
-		case CKM_EDDSA_KEY_PAIR_GEN:
-			keyType = CKK_EDDSA;
+		case CKM_EC_EDWARDS_KEY_PAIR_GEN:
+			keyType = CKK_EC_EDWARDS;
 			break;
 #endif
 		default:
@@ -5811,7 +5821,7 @@ CK_RV SoftHSM::C_GenerateKeyPair
 		return CKR_TEMPLATE_INCONSISTENT;
 	if (pMechanism->mechanism == CKM_GOSTR3410_KEY_PAIR_GEN && keyType != CKK_GOSTR3410)
 		return CKR_TEMPLATE_INCONSISTENT;
-	if (pMechanism->mechanism == CKM_EDDSA_KEY_PAIR_GEN && keyType != CKK_EDDSA)
+	if (pMechanism->mechanism == CKM_EC_EDWARDS_KEY_PAIR_GEN && keyType != CKK_EC_EDWARDS)
 		return CKR_TEMPLATE_INCONSISTENT;
 
 	// Extract information from the private key template that is needed to create the object.
@@ -5834,7 +5844,7 @@ CK_RV SoftHSM::C_GenerateKeyPair
 		return CKR_TEMPLATE_INCONSISTENT;
 	if (pMechanism->mechanism == CKM_GOSTR3410_KEY_PAIR_GEN && keyType != CKK_GOSTR3410)
 		return CKR_TEMPLATE_INCONSISTENT;
-	if (pMechanism->mechanism == CKM_EDDSA_KEY_PAIR_GEN && keyType != CKK_EDDSA)
+	if (pMechanism->mechanism == CKM_EC_EDWARDS_KEY_PAIR_GEN && keyType != CKK_EC_EDWARDS)
 		return CKR_TEMPLATE_INCONSISTENT;
 
 	// Check user credentials
@@ -5900,7 +5910,7 @@ CK_RV SoftHSM::C_GenerateKeyPair
 	}
 
 	// Generate EDDSA keys
-	if (pMechanism->mechanism == CKM_EDDSA_KEY_PAIR_GEN)
+	if (pMechanism->mechanism == CKM_EC_EDWARDS_KEY_PAIR_GEN)
 	{
 			return this->generateED(hSession,
 									 pPublicKeyTemplate, ulPublicKeyAttributeCount,
@@ -6773,7 +6783,7 @@ CK_RV SoftHSM::C_DeriveKey
 	switch (pMechanism->mechanism)
 	{
 		case CKM_DH_PKCS_DERIVE:
-#ifdef WITH_ECC
+#if defined(WITH_ECC) || defined(WITH_EDDSA)
 		case CKM_ECDH1_DERIVE:
 #endif
 #ifndef WITH_FIPS
@@ -6784,9 +6794,6 @@ CK_RV SoftHSM::C_DeriveKey
 		case CKM_DES3_CBC_ENCRYPT_DATA:
 		case CKM_AES_ECB_ENCRYPT_DATA:
 		case CKM_AES_CBC_ENCRYPT_DATA:
-#ifdef WITH_EDDSA
-		case CKM_EDDSA_DERIVE:
-#endif
 			break;
 
 		default:
@@ -6871,31 +6878,23 @@ CK_RV SoftHSM::C_DeriveKey
 		return this->deriveDH(hSession, pMechanism, hBaseKey, pTemplate, ulCount, phKey, keyType, isOnToken, isPrivate);
 	}
 
-#ifdef WITH_ECC
+#if defined(WITH_ECC) || defined(WITH_EDDSA)
 	// Derive ECDH secret
 	if (pMechanism->mechanism == CKM_ECDH1_DERIVE)
 	{
 		// Check key class and type
 		if (key->getUnsignedLongValue(CKA_CLASS, CKO_VENDOR_DEFINED) != CKO_PRIVATE_KEY)
 			return CKR_KEY_TYPE_INCONSISTENT;
-		if (key->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED) != CKK_EC)
-			return CKR_KEY_TYPE_INCONSISTENT;
-
-		return this->deriveECDH(hSession, pMechanism, hBaseKey, pTemplate, ulCount, phKey, keyType, isOnToken, isPrivate);
-	}
+#ifdef WITH_ECC
+		else if (key->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED) == CKK_EC)
+			return this->deriveECDH(hSession, pMechanism, hBaseKey, pTemplate, ulCount, phKey, keyType, isOnToken, isPrivate);
 #endif
-
 #ifdef WITH_EDDSA
-	// Derive ECDH secret using Montgomery curves
-	if (pMechanism->mechanism == CKM_EDDSA_DERIVE)
-	{
-		// Check key class and type
-		if (key->getUnsignedLongValue(CKA_CLASS, CKO_VENDOR_DEFINED) != CKO_PRIVATE_KEY)
+		else if (key->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED) == CKK_EC_EDWARDS)
+			return this->deriveEDDSA(hSession, pMechanism, hBaseKey, pTemplate, ulCount, phKey, keyType, isOnToken, isPrivate);
+#endif
+		else
 			return CKR_KEY_TYPE_INCONSISTENT;
-		if (key->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED) != CKK_EDDSA)
-			return CKR_KEY_TYPE_INCONSISTENT;
-
-		return this->deriveEDDSA(hSession, pMechanism, hBaseKey, pTemplate, ulCount, phKey, keyType, isOnToken, isPrivate);
 	}
 #endif
 
@@ -8750,7 +8749,7 @@ CK_RV SoftHSM::generateED
 	{
 		const CK_ULONG maxAttribs = 32;
 		CK_OBJECT_CLASS publicKeyClass = CKO_PUBLIC_KEY;
-		CK_KEY_TYPE publicKeyType = CKK_EDDSA;
+		CK_KEY_TYPE publicKeyType = CKK_EC_EDWARDS;
 		CK_ATTRIBUTE publicKeyAttribs[maxAttribs] = {
 			{ CKA_CLASS, &publicKeyClass, sizeof(publicKeyClass) },
 			{ CKA_TOKEN, &isPublicKeyOnToken, sizeof(isPublicKeyOnToken) },
@@ -8790,7 +8789,7 @@ CK_RV SoftHSM::generateED
 
 				// Common Key Attributes
 				bOK = bOK && osobject->setAttribute(CKA_LOCAL,true);
-				CK_ULONG ulKeyGenMechanism = (CK_ULONG)CKM_EDDSA_KEY_PAIR_GEN;
+				CK_ULONG ulKeyGenMechanism = (CK_ULONG)CKM_EC_EDWARDS_KEY_PAIR_GEN;
 				bOK = bOK && osobject->setAttribute(CKA_KEY_GEN_MECHANISM,ulKeyGenMechanism);
 
 				// EDDSA Public Key Attributes
@@ -8803,7 +8802,7 @@ CK_RV SoftHSM::generateED
 				{
 					value = pub->getA();
 				}
-				bOK = bOK && osobject->setAttribute(CKA_VALUE, value);
+				bOK = bOK && osobject->setAttribute(CKA_EC_POINT, value);
 
 				if (bOK)
 					bOK = osobject->commitTransaction();
@@ -8822,7 +8821,7 @@ CK_RV SoftHSM::generateED
 	{
 		const CK_ULONG maxAttribs = 32;
 		CK_OBJECT_CLASS privateKeyClass = CKO_PRIVATE_KEY;
-		CK_KEY_TYPE privateKeyType = CKK_EDDSA;
+		CK_KEY_TYPE privateKeyType = CKK_EC_EDWARDS;
 		CK_ATTRIBUTE privateKeyAttribs[maxAttribs] = {
 			{ CKA_CLASS, &privateKeyClass, sizeof(privateKeyClass) },
 			{ CKA_TOKEN, &isPrivateKeyOnToken, sizeof(isPrivateKeyOnToken) },
@@ -8860,7 +8859,7 @@ CK_RV SoftHSM::generateED
 
 				// Common Key Attributes
 				bOK = bOK && osobject->setAttribute(CKA_LOCAL,true);
-				CK_ULONG ulKeyGenMechanism = (CK_ULONG)CKM_EDDSA_KEY_PAIR_GEN;
+				CK_ULONG ulKeyGenMechanism = (CK_ULONG)CKM_EC_EDWARDS_KEY_PAIR_GEN;
 				bOK = bOK && osobject->setAttribute(CKA_KEY_GEN_MECHANISM,ulKeyGenMechanism);
 
 				// Common Private Key Attributes
@@ -9930,6 +9929,7 @@ CK_RV SoftHSM::deriveDH
 }
 
 // Derive an ECDH secret
+#ifdef WITH_ECC
 CK_RV SoftHSM::deriveECDH
 (CK_SESSION_HANDLE hSession,
 	CK_MECHANISM_PTR pMechanism,
@@ -9941,7 +9941,6 @@ CK_RV SoftHSM::deriveECDH
 	CK_BBOOL isOnToken,
 	CK_BBOOL isPrivate)
 {
-#ifdef WITH_ECC
 	*phKey = CK_INVALID_HANDLE;
 
 	if ((pMechanism->pParameter == NULL_PTR) ||
@@ -10280,12 +10279,11 @@ CK_RV SoftHSM::deriveECDH
 	}
 
 	return rv;
-#else
-	return CKR_MECHANISM_INVALID;
-#endif
 }
+#endif
 
 // Derive an ECDH secret using Montgomery curves
+#ifdef WITH_EDDSA
 CK_RV SoftHSM::deriveEDDSA
 (CK_SESSION_HANDLE hSession,
 	CK_MECHANISM_PTR pMechanism,
@@ -10297,7 +10295,6 @@ CK_RV SoftHSM::deriveEDDSA
 	CK_BBOOL isOnToken,
 	CK_BBOOL isPrivate)
 {
-#ifdef WITH_EDDSA
 	*phKey = CK_INVALID_HANDLE;
 
 	if ((pMechanism->pParameter == NULL_PTR) ||
@@ -10636,10 +10633,8 @@ CK_RV SoftHSM::deriveEDDSA
 	}
 
 	return rv;
-#else
-	return CKR_MECHANISM_INVALID;
-#endif
 }
+#endif
 
 // Derive an symmetric secret
 CK_RV SoftHSM::deriveSymmetric
@@ -11508,14 +11503,14 @@ CK_RV SoftHSM::getEDPublicKey(EDPublicKey* publicKey, Token* token, OSObject* ke
 	{
 		bool bOK = true;
 		bOK = bOK && token->decrypt(key->getByteStringValue(CKA_EC_PARAMS), group);
-		bOK = bOK && token->decrypt(key->getByteStringValue(CKA_VALUE), value);
+		bOK = bOK && token->decrypt(key->getByteStringValue(CKA_EC_POINT), value);
 		if (!bOK)
 			return CKR_GENERAL_ERROR;
 	}
 	else
 	{
 		group = key->getByteStringValue(CKA_EC_PARAMS);
-		value = key->getByteStringValue(CKA_VALUE);
+		value = key->getByteStringValue(CKA_EC_POINT);
 	}
 
 	publicKey->setEC(group);
@@ -11599,7 +11594,8 @@ CK_RV SoftHSM::getEDDHPublicKey(EDPublicKey* publicKey, EDPrivateKey* privateKey
 	publicKey->setEC(privateKey->getEC());
 
 	// Set value
-	publicKey->setA(pubData);
+	ByteString data = getECDHPubData(pubData);
+	publicKey->setA(data);
 
 	return CKR_OK;
 }
@@ -11610,9 +11606,11 @@ ByteString SoftHSM::getECDHPubData(ByteString& pubData)
 {
 	size_t len = pubData.size();
 	size_t controlOctets = 2;
-	if (len == 65 || len == 97 || len == 133)
+	if (len == 32 || len == 65 || len == 97 || len == 133)
 	{
-		// Raw: Length matches the public key size of P-256, P-384, or P-521
+		// Raw: Length matches the public key size of:
+		// EDDSA: X25519
+		// ECDSA: P-256, P-384, or P-521
 		controlOctets = 0;
 	}
 	else if (len < controlOctets || pubData[0] != 0x04)
@@ -11650,36 +11648,7 @@ ByteString SoftHSM::getECDHPubData(ByteString& pubData)
 	// DER format
 	if (controlOctets != 0) return pubData;
 
-	// RAW format
-	ByteString header;
-	if (len < 0x80)
-	{
-		header.resize(2);
-		header[0] = (unsigned char)0x04;
-		header[1] = (unsigned char)(len & 0x7F);
-	}
-	else
-	{
-		// Count significate bytes
-		size_t bytes = sizeof(size_t);
-		for(; bytes > 0; bytes--)
-		{
-			size_t value = len >> ((bytes - 1) * 8);
-			if (value & 0xFF) break;
-		}
-
-		// Set header data
-		header.resize(2 + bytes);
-		header[0] = (unsigned char)0x04;
-		header[1] = (unsigned char)(0x80 | bytes);
-		for (size_t i = 1; i <= bytes; i++)
-		{
-			header[2+bytes-i] = (unsigned char) (len & 0xFF);
-			len >>= 8;
-		}
-	}
-
-	return header + pubData;
+	return DERUTIL::raw2Octet(pubData);
 }
 
 CK_RV SoftHSM::getGOSTPrivateKey(GOSTPrivateKey* privateKey, Token* token, OSObject* key)

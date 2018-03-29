@@ -355,6 +355,7 @@ private:
 		CK_BBOOL isOnToken,
 		CK_BBOOL isPrivate
 	);
+#ifdef WITH_ECC
 	CK_RV deriveECDH
 	(
 		CK_SESSION_HANDLE hSession,
@@ -367,6 +368,8 @@ private:
 		CK_BBOOL isOnToken,
 		CK_BBOOL isPrivate
 	);
+#endif
+#ifdef WITH_EDDSA
 	CK_RV deriveEDDSA
 	(
 		CK_SESSION_HANDLE hSession,
@@ -379,6 +382,7 @@ private:
 		CK_BBOOL isOnToken,
 		CK_BBOOL isPrivate
 	);
+#endif
 	CK_RV deriveSymmetric
 	(
 		CK_SESSION_HANDLE hSession,

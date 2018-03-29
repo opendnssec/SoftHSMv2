@@ -33,6 +33,7 @@
 #include "config.h"
 #ifdef WITH_EDDSA
 #include "log.h"
+#include "DerUtil.h"
 #include "OSSLEDPublicKey.h"
 #include "OSSLUtil.h"
 #include <openssl/x509.h>
@@ -121,26 +122,32 @@ void OSSLEDPublicKey::setFromOSSL(const EVP_PKEY* inPKEY)
 	der.resize(len);
 	unsigned char *p = &der[0];
 	i2d_PUBKEY(key, &p);
-	ByteString inA;
+	ByteString raw;
 	switch (nid) {
 	case NID_X25519:
 	case NID_ED25519:
 		if (len != (X25519_KEYLEN + PREFIXLEN))
+		{
+			ERROR_MSG("Invalid size. Expected: %lu, Actual: %lu", X25519_KEYLEN + PREFIXLEN, len);
 			return;
-		inA.resize(X25519_KEYLEN);
-		memcpy(&inA[0], &der[PREFIXLEN], X25519_KEYLEN);
+		}
+		raw.resize(X25519_KEYLEN);
+		memcpy(&raw[0], &der[PREFIXLEN], X25519_KEYLEN);
 		break;
 	case NID_X448:
 	case NID_ED448:
 		if (len != (X448_KEYLEN + PREFIXLEN))
+		{
+			ERROR_MSG("Invalid size. Expected: %lu, Actual: %lu", X448_KEYLEN + PREFIXLEN, len);
 			return;
-		inA.resize(X448_KEYLEN);
-		memcpy(&inA[0], &der[PREFIXLEN], X448_KEYLEN);
+		}
+		raw.resize(X448_KEYLEN);
+		memcpy(&raw[0], &der[PREFIXLEN], X448_KEYLEN);
 		break;
 	default:
 		return;
 	}
-	setA(inA);
+	setA(DERUTIL::raw2Octet(raw));
 }
 
 // Check if the key is of the given type
@@ -187,34 +194,50 @@ void OSSLEDPublicKey::createOSSLKey()
 	if (pkey != NULL) return;
 
 	ByteString der;
+	ByteString raw = DERUTIL::octet2Raw(a);
+	size_t len = raw.size();
+	if (len == 0) return;
+
 	switch (nid) {
 	case NID_X25519:
-		if (a.size() != X25519_KEYLEN)
+		if (len != X25519_KEYLEN)
+		{
+			ERROR_MSG("Invalid size. Expected: %lu, Actual: %lu", X25519_KEYLEN, len);
 			return;
+		}
 		der.resize(PREFIXLEN + X25519_KEYLEN);
 		memcpy(&der[0], x25519_prefix, PREFIXLEN);
-		memcpy(&der[PREFIXLEN], a.const_byte_str(), X25519_KEYLEN);
+		memcpy(&der[PREFIXLEN], raw.const_byte_str(), X25519_KEYLEN);
 		break;
 	case NID_ED25519:
-		if (a.size() != X25519_KEYLEN)
+		if (len != X25519_KEYLEN)
+		{
+			ERROR_MSG("Invalid size. Expected: %lu, Actual: %lu", X25519_KEYLEN, len);
 			return;
+		}
 		der.resize(PREFIXLEN + X25519_KEYLEN);
 		memcpy(&der[0], ed25519_prefix, PREFIXLEN);
-		memcpy(&der[PREFIXLEN], a.const_byte_str(), X25519_KEYLEN);
+		memcpy(&der[PREFIXLEN], raw.const_byte_str(), X25519_KEYLEN);
 		break;
 	case NID_X448:
-		if (a.size() != X448_KEYLEN)
+		if (len != X448_KEYLEN)
+		{
+			ERROR_MSG("Invalid size. Expected: %lu, Actual: %lu", X448_KEYLEN, len);
 			return;
+		}
 		der.resize(PREFIXLEN + X448_KEYLEN);
 		memcpy(&der[0], x448_prefix, PREFIXLEN);
-		memcpy(&der[PREFIXLEN], a.const_byte_str(), X448_KEYLEN);
+		memcpy(&der[PREFIXLEN], raw.const_byte_str(), X448_KEYLEN);
 		break;
 	case NID_ED448:
-		if (a.size() != X448_KEYLEN)
+		if (len != X448_KEYLEN)
+		{
+			ERROR_MSG("Invalid size. Expected: %lu, Actual: %lu", X448_KEYLEN, len);
 			return;
+		}
 		der.resize(PREFIXLEN + X448_KEYLEN);
 		memcpy(&der[0], ed448_prefix, PREFIXLEN);
-		memcpy(&der[PREFIXLEN], a.const_byte_str(), X448_KEYLEN);
+		memcpy(&der[PREFIXLEN], raw.const_byte_str(), X448_KEYLEN);
 		break;
 	default:
 		return;

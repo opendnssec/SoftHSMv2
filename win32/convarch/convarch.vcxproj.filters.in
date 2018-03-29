@@ -238,6 +238,9 @@
     <ClInclude Include="..\..\src\lib\crypto\CryptoFactory.h">
       <Filter>Crypto Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\lib\crypto\DerUtil.h">
+      <Filter>Crypto Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\src\lib\crypto\DESKey.h">
       <Filter>Crypto Header Files</Filter>
     </ClInclude>
@@ -668,6 +671,9 @@
     </ClCompile>
 @END BOTAN
     <ClCompile Include="..\..\src\lib\crypto\CryptoFactory.cpp">
+      <Filter>Crypto Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lib\crypto\DerUtil.cpp">
       <Filter>Crypto Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\lib\crypto\DESKey.cpp">

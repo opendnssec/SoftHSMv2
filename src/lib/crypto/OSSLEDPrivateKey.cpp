@@ -125,14 +125,20 @@ void OSSLEDPrivateKey::setFromOSSL(const EVP_PKEY* inPKEY)
 	case NID_X25519:
 	case NID_ED25519:
 		if (len != (X25519_KEYLEN + PREFIXLEN))
+		{
+			ERROR_MSG("Invalid size. Expected: %lu, Actual: %lu", X25519_KEYLEN + PREFIXLEN, len);
 			return;
+		}
 		inK.resize(X25519_KEYLEN);
 		memcpy(&inK[0], &der[PREFIXLEN], X25519_KEYLEN);
 		break;
 	case NID_X448:
 	case NID_ED448:
 		if (len != (X448_KEYLEN + PREFIXLEN))
+		{
+			ERROR_MSG("Invalid size. Expected: %lu, Actual: %lu", X448_KEYLEN + PREFIXLEN, len);
 			return;
+		}
 		inK.resize(X448_KEYLEN);
 		memcpy(&inK[0], &der[PREFIXLEN], X448_KEYLEN);
 		break;
@@ -228,28 +234,40 @@ void OSSLEDPrivateKey::createOSSLKey()
 	switch (nid) {
 	case NID_X25519:
 		if (k.size() != X25519_KEYLEN)
+		{
+			ERROR_MSG("Invalid size. Expected: %lu, Actual: %lu", X25519_KEYLEN, k.size());
 			return;
+		}
 		der.resize(PREFIXLEN + X25519_KEYLEN);
 		memcpy(&der[0], x25519_prefix, PREFIXLEN);
 		memcpy(&der[PREFIXLEN], k.const_byte_str(), X25519_KEYLEN);
 		break;
 	case NID_ED25519:
 		if (k.size() != X25519_KEYLEN)
+		{
+			ERROR_MSG("Invalid size. Expected: %lu, Actual: %lu", X25519_KEYLEN, k.size());
 			return;
+		}
 		der.resize(PREFIXLEN + X25519_KEYLEN);
 		memcpy(&der[0], ed25519_prefix, PREFIXLEN);
 		memcpy(&der[PREFIXLEN], k.const_byte_str(), X25519_KEYLEN);
 		break;
 	case NID_X448:
 		if (k.size() != X448_KEYLEN)
+		{
+			ERROR_MSG("Invalid size. Expected: %lu, Actual: %lu", X448_KEYLEN, k.size());
 			return;
+		}
 		der.resize(PREFIXLEN + X448_KEYLEN);
 		memcpy(&der[0], x448_prefix, PREFIXLEN);
 		memcpy(&der[PREFIXLEN], k.const_byte_str(), X448_KEYLEN);
 		break;
 	case NID_ED448:
 		if (k.size() != X448_KEYLEN)
+		{
+			ERROR_MSG("Invalid size. Expected: %lu, Actual: %lu", X448_KEYLEN, k.size());
 			return;
+		}
 		der.resize(PREFIXLEN + X448_KEYLEN);
 		memcpy(&der[0], ed448_prefix, PREFIXLEN);
 		memcpy(&der[PREFIXLEN], k.const_byte_str(), X448_KEYLEN);

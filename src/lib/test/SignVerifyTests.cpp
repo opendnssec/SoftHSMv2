@@ -168,8 +168,8 @@ CK_RV SignVerifyTests::generateEC(const char* curve, CK_SESSION_HANDLE hSession,
 #ifdef WITH_EDDSA
 CK_RV SignVerifyTests::generateED(const char* curve, CK_SESSION_HANDLE hSession, CK_BBOOL bTokenPuk, CK_BBOOL bPrivatePuk, CK_BBOOL bTokenPrk, CK_BBOOL bPrivatePrk, CK_OBJECT_HANDLE &hPuk, CK_OBJECT_HANDLE &hPrk)
 {
-	CK_MECHANISM mechanism = { CKM_EDDSA_KEY_PAIR_GEN, NULL_PTR, 0 };
-	CK_KEY_TYPE keyType = CKK_EDDSA;
+	CK_MECHANISM mechanism = { CKM_EC_EDWARDS_KEY_PAIR_GEN, NULL_PTR, 0 };
+	CK_KEY_TYPE keyType = CKK_EC_EDWARDS;
 	CK_BYTE oidEd25519[] = { 0x06, 0x03, 0x2B, 0x65, 0x70 };
 	CK_BYTE label[] = { 0x12, 0x34 }; // dummy
 	CK_BYTE id[] = { 123 } ; // dummy

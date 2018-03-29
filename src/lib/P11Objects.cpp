@@ -897,8 +897,8 @@ bool P11EDPublicKeyObj::init(OSObject *inobject)
 	if (initialized) return true;
 	if (inobject == NULL) return false;
 
-	if (!inobject->attributeExists(CKA_KEY_TYPE) || inobject->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED) != CKK_EDDSA) {
-		OSAttribute setKeyType((unsigned long)CKK_EDDSA);
+	if (!inobject->attributeExists(CKA_KEY_TYPE) || inobject->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED) != CKK_EC_EDWARDS) {
+		OSAttribute setKeyType((unsigned long)CKK_EC_EDWARDS);
 		inobject->setAttribute(CKA_KEY_TYPE, setKeyType);
 	}
 
@@ -907,24 +907,24 @@ bool P11EDPublicKeyObj::init(OSObject *inobject)
 
 	// Create attributes
 	P11Attribute* attrEcParams = new P11AttrEcParams(osobject,P11Attribute::ck3);
-	P11Attribute* attrValue = new P11AttrValue(osobject,P11Attribute::ck1|P11Attribute::ck4);
+	P11Attribute* attrEcPoint = new P11AttrEcPoint(osobject);
 
 	// Initialize the attributes
 	if
 	(
 		!attrEcParams->init() ||
-		!attrValue->init()
+		!attrEcPoint->init()
 	)
 	{
 		ERROR_MSG("Could not initialize the attribute");
 		delete attrEcParams;
-		delete attrValue;
+		delete attrEcPoint;
 		return false;
 	}
 
 	// Add them to the map
 	attributes[attrEcParams->getType()] = attrEcParams;
-	attributes[attrValue->getType()] = attrValue;
+	attributes[attrEcPoint->getType()] = attrEcPoint;
 
 	initialized = true;
 	return true;
@@ -1302,8 +1302,8 @@ bool P11EDPrivateKeyObj::init(OSObject *inobject)
 	if (initialized) return true;
 	if (inobject == NULL) return false;
 
-	if (!inobject->attributeExists(CKA_KEY_TYPE) || inobject->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED) != CKK_EDDSA) {
-		OSAttribute setKeyType((unsigned long)CKK_EDDSA);
+	if (!inobject->attributeExists(CKA_KEY_TYPE) || inobject->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED) != CKK_EC_EDWARDS) {
+		OSAttribute setKeyType((unsigned long)CKK_EC_EDWARDS);
 		inobject->setAttribute(CKA_KEY_TYPE, setKeyType);
 	}
 

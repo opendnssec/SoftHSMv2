@@ -11,6 +11,7 @@ libsofthsm_crypto_la_SOURCES =	AESKey.cpp \
 				AsymmetricAlgorithm.cpp \
 				AsymmetricKeyPair.cpp \
 				CryptoFactory.cpp \
+				DerUtil.cpp \
 				DESKey.cpp \
 				DHParameters.cpp \
 				DHPublicKey.cpp \
