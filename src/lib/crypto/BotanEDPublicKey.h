@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010 SURFnet bv
+ * Copyright (c) 2010 .SE (The Internet Infrastructure Foundation)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,54 +25,53 @@
  */
 
 /*****************************************************************************
- OSSLUtil.h
+ BotanEDPublicKey.h
 
- OpenSSL convenience functions
+ Botan EDDSA public key class
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_OSSLUTIL_H
-#define _SOFTHSM_V2_OSSLUTIL_H
+#ifndef _SOFTHSM_V2_BOTANEDPUBLICKEY_H
+#define _SOFTHSM_V2_BOTANEDPUBLICKEY_H
 
 #include "config.h"
-#include "ByteString.h"
-#include <openssl/bn.h>
-#ifdef WITH_ECC
-#include <openssl/ec.h>
-#endif
-#ifdef WITH_EDDSA
-#include <openssl/objects.h>
-#endif
+#include "EDPublicKey.h"
+#include <botan/pk_keys.h>
 
-namespace OSSL
+class BotanEDPublicKey : public EDPublicKey
 {
-	// Convert an OpenSSL BIGNUM to a ByteString
-	ByteString bn2ByteString(const BIGNUM* bn);
+public:
+	// Constructors
+	BotanEDPublicKey();
 
-	// Convert a ByteString to an OpenSSL BIGNUM
-	BIGNUM* byteString2bn(const ByteString& byteString);
+	BotanEDPublicKey(const Botan::Public_Key* inEDKEY);
 
-#ifdef WITH_ECC
-	// Convert an OpenSSL EC GROUP to a ByteString
-	ByteString grp2ByteString(const EC_GROUP* grp);
+	// Destructor
+	virtual ~BotanEDPublicKey();
 
-	// Convert a ByteString to an OpenSSL EC GROUP
-	EC_GROUP* byteString2grp(const ByteString& byteString);
+	// The type
+	static const char* type;
 
-	// Convert an OpenSSL EC POINT in the given EC GROUP to a ByteString
-	ByteString pt2ByteString(const EC_POINT* pt, const EC_GROUP* grp);
+	// Check if the key is of the given type
+	virtual bool isOfType(const char* inType);
 
-	// Convert a ByteString to an OpenSSL EC POINT in the given EC GROUP
-	EC_POINT* byteString2pt(const ByteString& byteString, const EC_GROUP* grp);
-#endif
+	// Get the base point order length
+	virtual unsigned long getOrderLength() const;
 
-#ifdef WITH_EDDSA
-	// Convert an OpenSSL NID to a ByteString
-	ByteString oid2ByteString(int nid);
+	// Setters for the ED public key components
+	virtual void setEC(const ByteString& inEC);
+	virtual void setA(const ByteString& inA);
 
-	// Convert a ByteString to an OpenSSL NID
-	int byteString2oid(const ByteString& byteString);
-#endif
-}
+	// Set from Botan representation
+	virtual void setFromBotan(const Botan::Public_Key* inEDKEY);
 
-#endif // !_SOFTHSM_V2_OSSLUTIL_H
+	// Retrieve the Botan representation of the key
+	Botan::Public_Key* getBotanKey();
 
+private:
+	// The internal Botan representation
+	Botan::Public_Key* edkey;
+
+	// Create the Botan representation of the key
+	void createBotanKey();
+};
+#endif // !_SOFTHSM_V2_BOTANEDPUBLICKEY_H

@@ -144,3 +144,22 @@ Botan::PointGFp BotanUtil::byteString2ECPoint(const ByteString& byteString, cons
 	return Botan::OS2ECP(&repr[0], repr.size(), ecGroup.get_curve());
 }
 #endif
+
+#ifdef WITH_EDDSA
+// Convert a Botan OID to a ByteString
+ByteString BotanUtil::oid2ByteString(const Botan::OID& oid)
+{
+	const Botan::secure_vector<Botan::byte>& der = Botan::DER_Encoder().encode(oid).get_contents();
+	return ByteString(&der[0], der.size());
+}
+
+// Convert a ByteString to a Botan OID
+Botan::OID BotanUtil::byteString2Oid(const ByteString& byteString)
+{
+	Botan::OID oid;
+	Botan::BER_Decoder(byteString.const_byte_str(), byteString.size())
+		.decode(oid)
+		.verify_end();
+	return oid;
+}
+#endif

@@ -25,54 +25,45 @@
  */
 
 /*****************************************************************************
- OSSLUtil.h
+ EDDSATests.h
 
- OpenSSL convenience functions
+ Contains test cases to test the EDDSA class
  *****************************************************************************/
 
-#ifndef _SOFTHSM_V2_OSSLUTIL_H
-#define _SOFTHSM_V2_OSSLUTIL_H
+#ifndef _SOFTHSM_V2_EDDSATESTS_H
+#define _SOFTHSM_V2_EDDSATESTS_H
 
-#include "config.h"
-#include "ByteString.h"
-#include <openssl/bn.h>
-#ifdef WITH_ECC
-#include <openssl/ec.h>
-#endif
-#ifdef WITH_EDDSA
-#include <openssl/objects.h>
-#endif
+#include <cppunit/extensions/HelperMacros.h>
+#include "AsymmetricAlgorithm.h"
 
-namespace OSSL
+class EDDSATests : public CppUnit::TestFixture
 {
-	// Convert an OpenSSL BIGNUM to a ByteString
-	ByteString bn2ByteString(const BIGNUM* bn);
+	CPPUNIT_TEST_SUITE(EDDSATests);
+	CPPUNIT_TEST(testKeyGeneration);
+	CPPUNIT_TEST(testSerialisation);
+	CPPUNIT_TEST(testPKCS8);
+	CPPUNIT_TEST(testSigningVerifying);
+	CPPUNIT_TEST(testSignVerifyKnownVector);
+	CPPUNIT_TEST(testDerivation);
+	CPPUNIT_TEST(testDeriveKnownVector);
+	CPPUNIT_TEST_SUITE_END();
 
-	// Convert a ByteString to an OpenSSL BIGNUM
-	BIGNUM* byteString2bn(const ByteString& byteString);
+public:
+	void testKeyGeneration();
+	void testSerialisation();
+	void testPKCS8();
+	void testSigningVerifying();
+	void testSignVerifyKnownVector();
+	void testDerivation();
+	void testDeriveKnownVector();
 
-#ifdef WITH_ECC
-	// Convert an OpenSSL EC GROUP to a ByteString
-	ByteString grp2ByteString(const EC_GROUP* grp);
+	void setUp();
+	void tearDown();
 
-	// Convert a ByteString to an OpenSSL EC GROUP
-	EC_GROUP* byteString2grp(const ByteString& byteString);
+private:
+	// EDDSA instance
+	AsymmetricAlgorithm* eddsa;
+};
 
-	// Convert an OpenSSL EC POINT in the given EC GROUP to a ByteString
-	ByteString pt2ByteString(const EC_POINT* pt, const EC_GROUP* grp);
-
-	// Convert a ByteString to an OpenSSL EC POINT in the given EC GROUP
-	EC_POINT* byteString2pt(const ByteString& byteString, const EC_GROUP* grp);
-#endif
-
-#ifdef WITH_EDDSA
-	// Convert an OpenSSL NID to a ByteString
-	ByteString oid2ByteString(int nid);
-
-	// Convert a ByteString to an OpenSSL NID
-	int byteString2oid(const ByteString& byteString);
-#endif
-}
-
-#endif // !_SOFTHSM_V2_OSSLUTIL_H
+#endif // !_SOFTHSM_V2_EDDSATESTS_H
 

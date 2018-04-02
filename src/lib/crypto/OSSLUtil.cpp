@@ -32,6 +32,7 @@
 
 #include "config.h"
 #include "log.h"
+#include "DerUtil.h"
 #include "OSSLUtil.h"
 #include <openssl/asn1.h>
 #include <openssl/err.h>
@@ -86,114 +87,56 @@ EC_GROUP* OSSL::byteString2grp(const ByteString& byteString)
 // Convert an OpenSSL EC POINT in the given EC GROUP to a ByteString
 ByteString OSSL::pt2ByteString(const EC_POINT* pt, const EC_GROUP* grp)
 {
-	ByteString rv;
+	ByteString raw;
 
-	if (pt != NULL && grp != NULL)
-	{
-		size_t len = EC_POINT_point2oct(grp, pt, POINT_CONVERSION_UNCOMPRESSED, NULL, 0, NULL);
-		// Definite, short
-		if (len <= 0x7f)
-		{
-			rv.resize(2 + len);
-			rv[0] = V_ASN1_OCTET_STRING;
-			rv[1] = len & 0x7f;
-			EC_POINT_point2oct(grp, pt, POINT_CONVERSION_UNCOMPRESSED, &rv[2], len, NULL);
-		}
-		// Definite, long
-		else
-		{
-			// Get the number of length octets
-			ByteString length(len);
-			unsigned int counter = 0;
-			while (length[counter] == 0 && counter < (length.size()-1)) counter++;
-			ByteString lengthOctets(&length[counter], length.size() - counter);
+	if (pt == NULL || grp == NULL)
+		return raw;
 
-			rv.resize(len + 2 + lengthOctets.size());
-			rv[0] = V_ASN1_OCTET_STRING;
-			rv[1] = 0x80 | lengthOctets.size();
-			memcpy(&rv[2], &lengthOctets[0], lengthOctets.size());
-			EC_POINT_point2oct(grp, pt, POINT_CONVERSION_UNCOMPRESSED, &rv[2 + lengthOctets.size()], len, NULL);
-		}
-	}
+	size_t len = EC_POINT_point2oct(grp, pt, POINT_CONVERSION_UNCOMPRESSED, NULL, 0, NULL);
+	raw.resize(len);
+	EC_POINT_point2oct(grp, pt, POINT_CONVERSION_UNCOMPRESSED, &raw[0], len, NULL);
 
-	return rv;
+	return DERUTIL::raw2Octet(raw);
 }
 
 // Convert a ByteString to an OpenSSL EC POINT in the given EC GROUP
 EC_POINT* OSSL::byteString2pt(const ByteString& byteString, const EC_GROUP* grp)
 {
-	size_t len = byteString.size();
-	size_t controlOctets = 2;
-	if (len < controlOctets)
-	{
-		ERROR_MSG("Undersized EC point");
-
-		return NULL;
-	}
-
-	ByteString repr = byteString;
-
-	if (repr[0] != V_ASN1_OCTET_STRING)
-	{
-		ERROR_MSG("EC point tag is not OCTET STRING");
-
-		return NULL;
-	}
-
-	// Definite, short
-	if (repr[1] < 0x80)
-	{
-		if (repr[1] != (len - controlOctets))
-		{
-			if (repr[1] < (len - controlOctets))
-			{
-				ERROR_MSG("Underrun EC point");
-			}
-			else
-			{
-				ERROR_MSG("Overrun EC point");
-			}
-
-			return NULL;
-		}
-	}
-	// Definite, long
-	else
-	{
-		size_t lengthOctets = repr[1] & 0x7f;
-		controlOctets += lengthOctets;
-
-		if (controlOctets >= repr.size())
-		{
-			ERROR_MSG("Undersized EC point");
-
-			return NULL;
-		}
-
-		ByteString length(&repr[2], lengthOctets);
-
-		if (length.long_val() != (len - controlOctets))
-		{
-			if (length.long_val() < (len - controlOctets))
-			{
-				ERROR_MSG("Underrun EC point");
-			}
-			else
-			{
-				ERROR_MSG("Overrun EC point");
-			}
-
-			return NULL;
-		}
-	}
+	ByteString raw = DERUTIL::octet2Raw(byteString);
+	size_t len = raw.size();
+	if (len == 0) return NULL;
 
 	EC_POINT* pt = EC_POINT_new(grp);
-	if (!EC_POINT_oct2point(grp, pt, &repr[controlOctets], len - controlOctets, NULL))
+	if (!EC_POINT_oct2point(grp, pt, &raw[0], len, NULL))
 	{
 		ERROR_MSG("EC_POINT_oct2point failed: %s", ERR_error_string(ERR_get_error(), NULL));
 		EC_POINT_free(pt);
 		return NULL;
 	}
 	return pt;
+}
+#endif
+
+#ifdef WITH_EDDSA
+// Convert an OpenSSL NID to a ByteString
+ByteString OSSL::oid2ByteString(int nid)
+{
+	ByteString rv;
+
+	if (nid != NID_undef)
+	{
+		rv.resize(i2d_ASN1_OBJECT(OBJ_nid2obj(nid), NULL));
+		unsigned char *p = &rv[0];
+		i2d_ASN1_OBJECT(OBJ_nid2obj(nid), &p);
+	}
+
+	return rv;
+}
+
+// Convert a ByteString to an OpenSSL NID
+int OSSL::byteString2oid(const ByteString& byteString)
+{
+	const unsigned char *p = byteString.const_byte_str();
+	return OBJ_obj2nid(d2i_ASN1_OBJECT(NULL, &p, byteString.size()));
 }
 #endif

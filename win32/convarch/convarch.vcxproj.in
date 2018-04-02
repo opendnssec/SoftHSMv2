@@ -68,6 +68,7 @@
     <ClInclude Include="..\..\src\lib\crypto\Botan_rounding.h" />
 @END BOTAN
     <ClInclude Include="..\..\src\lib\crypto\CryptoFactory.h" />
+    <ClInclude Include="..\..\src\lib\crypto\DerUtil.h" />
     <ClInclude Include="..\..\src\lib\crypto\DESKey.h" />
     <ClInclude Include="..\..\src\lib\crypto\DHParameters.h" />
     <ClInclude Include="..\..\src\lib\crypto\DHPrivateKey.h" />
@@ -217,6 +218,7 @@
     <ClCompile Include="..\..\src\lib\crypto\Botan_ecb.cpp" />
 @END BOTAN
     <ClCompile Include="..\..\src\lib\crypto\CryptoFactory.cpp" />
+    <ClCompile Include="..\..\src\lib\crypto\DerUtil.cpp" />
     <ClCompile Include="..\..\src\lib\crypto\DESKey.cpp" />
     <ClCompile Include="..\..\src\lib\crypto\DHParameters.cpp" />
     <ClCompile Include="..\..\src\lib\crypto\DHPrivateKey.cpp" />

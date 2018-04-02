@@ -110,6 +110,13 @@
 #undef WITH_ECC
 @END ECC
 
+/* Compile with EDDSA support */
+@IF EDDSA
+#define WITH_EDDSA 1
+@ELSE EDDSA
+#undef WITH_EDDSA
+@END EDDSA
+
 /* Compile with GOST support */
 @IF GOST
 #define WITH_GOST 1

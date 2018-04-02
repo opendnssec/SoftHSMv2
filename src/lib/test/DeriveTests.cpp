@@ -145,6 +145,53 @@ CK_RV DeriveTests::generateEcKeyPair(const char* curve, CK_SESSION_HANDLE hSessi
 }
 #endif
 
+#ifdef WITH_EDDSA
+CK_RV DeriveTests::generateEdKeyPair(const char* curve, CK_SESSION_HANDLE hSession, CK_BBOOL bTokenPuk, CK_BBOOL bPrivatePuk, CK_BBOOL bTokenPrk, CK_BBOOL bPrivatePrk, CK_OBJECT_HANDLE &hPuk, CK_OBJECT_HANDLE &hPrk)
+{
+	CK_MECHANISM mechanism = { CKM_EC_EDWARDS_KEY_PAIR_GEN, NULL_PTR, 0 };
+	CK_KEY_TYPE keyType = CKK_EC_EDWARDS;
+	CK_BYTE oidX25519[] = { 0x06, 0x03, 0x2B, 0x65, 0x6E };
+	CK_BYTE oidX448[] = { 0x06, 0x03, 0x2B, 0x65, 0x6F };
+	CK_BBOOL bTrue = CK_TRUE;
+	CK_ATTRIBUTE pukAttribs[] = {
+		{ CKA_EC_PARAMS, NULL, 0 },
+		{ CKA_KEY_TYPE, &keyType, sizeof(keyType) },
+		{ CKA_TOKEN, &bTokenPuk, sizeof(bTokenPuk) },
+		{ CKA_PRIVATE, &bPrivatePuk, sizeof(bPrivatePuk) }
+	};
+	CK_ATTRIBUTE prkAttribs[] = {
+		{ CKA_KEY_TYPE, &keyType, sizeof(keyType) },
+		{ CKA_TOKEN, &bTokenPrk, sizeof(bTokenPrk) },
+		{ CKA_PRIVATE, &bPrivatePrk, sizeof(bPrivatePrk) },
+		{ CKA_SENSITIVE, &bTrue, sizeof(bTrue) },
+		{ CKA_DERIVE, &bTrue, sizeof(bTrue) }
+	};
+
+	/* Select the curve */
+	if (strcmp(curve, "X25519") == 0)
+	{
+		pukAttribs[0].pValue = oidX25519;
+		pukAttribs[0].ulValueLen = sizeof(oidX25519);
+	}
+	else if (strcmp(curve, "X448") == 0)
+	{
+		pukAttribs[0].pValue = oidX448;
+		pukAttribs[0].ulValueLen = sizeof(oidX448);
+	}
+	else
+	{
+		return CKR_GENERAL_ERROR;
+	}
+
+	hPuk = CK_INVALID_HANDLE;
+	hPrk = CK_INVALID_HANDLE;
+	return CRYPTOKI_F_PTR( C_GenerateKeyPair(hSession, &mechanism,
+			pukAttribs, sizeof(pukAttribs)/sizeof(CK_ATTRIBUTE),
+			prkAttribs, sizeof(prkAttribs)/sizeof(CK_ATTRIBUTE),
+			&hPuk, &hPrk) );
+}
+#endif
+
 CK_RV DeriveTests::generateAesKey(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_OBJECT_HANDLE &hKey)
 {
 	CK_MECHANISM mechanism = { CKM_AES_KEY_GEN, NULL_PTR, 0 };
@@ -254,7 +301,7 @@ void DeriveTests::dhDerive(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hPublicK
 	CPPUNIT_ASSERT(rv == CKR_OK);
 }
 
-#ifdef WITH_ECC
+#if defined(WITH_ECC) || defined(WITH_EDDSA)
 void DeriveTests::ecdhDerive(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hPublicKey, CK_OBJECT_HANDLE hPrivateKey, CK_OBJECT_HANDLE &hKey, bool useRaw)
 {
 	CK_ATTRIBUTE valAttrib = { CKA_EC_POINT, NULL_PTR, 0 };
@@ -423,7 +470,7 @@ void DeriveTests::testDhDerive()
 }
 
 #ifdef WITH_ECC
-void DeriveTests::testEcdhDerive()
+void DeriveTests::testEcdsaDerive()
 {
 	CK_RV rv;
 	CK_SESSION_HANDLE hSessionRO;
@@ -490,6 +537,81 @@ void DeriveTests::testEcdhDerive()
 	rv = generateEcKeyPair("P-256",hSessionRW,ON_TOKEN,IS_PRIVATE,ON_TOKEN,IS_PRIVATE,hPuk1,hPrk1);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 	rv = generateEcKeyPair("P-256",hSessionRW,ON_TOKEN,IS_PRIVATE,ON_TOKEN,IS_PRIVATE,hPuk2,hPrk2);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	ecdhDerive(hSessionRW,hPuk1,hPrk2,hKey1,true);
+	ecdhDerive(hSessionRW,hPuk2,hPrk1,hKey2,false);
+	CPPUNIT_ASSERT(compareSecret(hSessionRW,hKey1,hKey2));
+}
+#endif
+
+#ifdef WITH_EDDSA
+void DeriveTests::testEddsaDerive()
+{
+	CK_RV rv;
+	CK_SESSION_HANDLE hSessionRO;
+	CK_SESSION_HANDLE hSessionRW;
+
+	// Just make sure that we finalize any previous tests
+	CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
+
+	// Open read-only session on when the token is not initialized should fail
+	rv = CRYPTOKI_F_PTR( C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSessionRO) );
+	CPPUNIT_ASSERT(rv == CKR_CRYPTOKI_NOT_INITIALIZED);
+
+	// Initialize the library and start the test.
+	rv = CRYPTOKI_F_PTR( C_Initialize(NULL_PTR) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Open read-only session
+	rv = CRYPTOKI_F_PTR( C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSessionRO) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Open read-write session
+	rv = CRYPTOKI_F_PTR( C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSessionRW) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Login USER into the sessions so we can create a private objects
+	rv = CRYPTOKI_F_PTR( C_Login(hSessionRO,CKU_USER,m_userPin1,m_userPin1Length) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Public Session keys
+	CK_OBJECT_HANDLE hPuk1 = CK_INVALID_HANDLE;
+	CK_OBJECT_HANDLE hPrk1 = CK_INVALID_HANDLE;
+	CK_OBJECT_HANDLE hPuk2 = CK_INVALID_HANDLE;
+	CK_OBJECT_HANDLE hPrk2 = CK_INVALID_HANDLE;
+
+	rv = generateEdKeyPair("X25519",hSessionRW,IN_SESSION,IS_PUBLIC,IN_SESSION,IS_PUBLIC,hPuk1,hPrk1);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	rv = generateEdKeyPair("X25519",hSessionRW,IN_SESSION,IS_PUBLIC,IN_SESSION,IS_PUBLIC,hPuk2,hPrk2);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	CK_OBJECT_HANDLE hKey1 = CK_INVALID_HANDLE;
+	ecdhDerive(hSessionRW,hPuk1,hPrk2,hKey1,true);
+	CK_OBJECT_HANDLE hKey2 = CK_INVALID_HANDLE;
+	ecdhDerive(hSessionRW,hPuk2,hPrk1,hKey2,false);
+	CPPUNIT_ASSERT(compareSecret(hSessionRW,hKey1,hKey2));
+
+	// Private Session Keys
+	rv = generateEdKeyPair("X25519",hSessionRW,IN_SESSION,IS_PRIVATE,IN_SESSION,IS_PRIVATE,hPuk1,hPrk1);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	rv = generateEdKeyPair("X25519",hSessionRW,IN_SESSION,IS_PRIVATE,IN_SESSION,IS_PRIVATE,hPuk2,hPrk2);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	ecdhDerive(hSessionRW,hPuk1,hPrk2,hKey1,true);
+	ecdhDerive(hSessionRW,hPuk2,hPrk1,hKey2,false);
+	CPPUNIT_ASSERT(compareSecret(hSessionRW,hKey1,hKey2));
+
+	// Public Token Keys
+	rv = generateEdKeyPair("X25519",hSessionRW,ON_TOKEN,IS_PUBLIC,ON_TOKEN,IS_PUBLIC,hPuk1,hPrk1);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	rv = generateEdKeyPair("X25519",hSessionRW,ON_TOKEN,IS_PUBLIC,ON_TOKEN,IS_PUBLIC,hPuk2,hPrk2);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	ecdhDerive(hSessionRW,hPuk1,hPrk2,hKey1,true);
+	ecdhDerive(hSessionRW,hPuk2,hPrk1,hKey2,false);
+	CPPUNIT_ASSERT(compareSecret(hSessionRW,hKey1,hKey2));
+
+	// Private Token Keys
+	rv = generateEdKeyPair("X25519",hSessionRW,ON_TOKEN,IS_PRIVATE,ON_TOKEN,IS_PRIVATE,hPuk1,hPrk1);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	rv = generateEdKeyPair("X25519",hSessionRW,ON_TOKEN,IS_PRIVATE,ON_TOKEN,IS_PRIVATE,hPuk2,hPrk2);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 	ecdhDerive(hSessionRW,hPuk1,hPrk2,hKey1,true);
 	ecdhDerive(hSessionRW,hPuk2,hPrk1,hKey2,false);
