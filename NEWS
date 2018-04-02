@@ -2,6 +2,10 @@ NEWS for SoftHSM -- History of user visible changes
 
 SoftHSM develop
 
+* Issue #323: Support for EDDSA with vendor defined mechanisms.
+  (Patch from Francis Dupont)
+* Issue #368: Support migrating 32-bit SoftHSMv1 DB on 64-bit system (LP64).
+
 Bugfixes:
 * Issue #377: Duplicate symbol error with custom p11test.
 
