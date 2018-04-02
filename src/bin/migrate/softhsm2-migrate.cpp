@@ -503,9 +503,18 @@ CK_KEY_TYPE getKeyType(CK_OBJECT_HANDLE objectRef)
 		CK_VOID_PTR pValue = (CK_VOID_PTR)sqlite3_column_blob(select_an_attribute_sql, 0);
 		CK_ULONG length = sqlite3_column_int(select_an_attribute_sql, 1);
 
-		if (pValue != NULL_PTR && length == sizeof(CK_KEY_TYPE))
+		if (pValue != NULL_PTR)
 		{
-			retVal = *(CK_KEY_TYPE*)pValue;
+			// 32/64-bit DB on 32/64-bit system
+			if (length == sizeof(CK_KEY_TYPE))
+			{
+				retVal = *(CK_KEY_TYPE*)pValue;
+			}
+			// 32-bit DB on 64-bit system (LP64)
+			else if (length == sizeof(unsigned int))
+			{
+				retVal = *(unsigned int*)pValue;
+			}
 		}
 	}
 
@@ -535,9 +544,18 @@ CK_OBJECT_CLASS getObjectClass(CK_OBJECT_HANDLE objectRef)
 		CK_VOID_PTR pValue = (CK_VOID_PTR)sqlite3_column_blob(select_an_attribute_sql, 0);
 		CK_ULONG length = sqlite3_column_int(select_an_attribute_sql, 1);
 
-		if (pValue != NULL_PTR && length == sizeof(CK_OBJECT_CLASS))
+		if (pValue != NULL_PTR)
 		{
-			retVal = *(CK_OBJECT_CLASS*)pValue;
+			// 32/64-bit DB on 32/64-bit system
+			if (length == sizeof(CK_OBJECT_CLASS))
+			{
+				retVal = *(CK_OBJECT_CLASS*)pValue;
+			}
+			// 32-bit DB on 64-bit system (LP64)
+			else if (length == sizeof(unsigned int))
+			{
+				retVal = *(unsigned int*)pValue;
+			}
 		}
 	}
 
@@ -617,10 +635,15 @@ int dbRSAPub2session(sqlite3* /*db*/, CK_OBJECT_HANDLE objectID, CK_SESSION_HAND
 	int i;
 	CK_OBJECT_HANDLE hKey;
 	CK_RV rv;
+	CK_OBJECT_CLASS ckClass = CKO_PUBLIC_KEY;
+	CK_KEY_TYPE ckType = CKK_RSA;
 
+	// All required CK_ULONG attributes have known/fixed values.
+	// So no need read them from the DB and no need to handle
+	// convertion from 32-bit to 64-bit.
 	CK_ATTRIBUTE pubTemplate[] = {
-		{ CKA_CLASS,		NULL,	0 },
-		{ CKA_KEY_TYPE,		NULL,	0 },
+		{ CKA_CLASS,		&ckClass, sizeof(ckClass) },
+		{ CKA_KEY_TYPE,		&ckType, sizeof(ckType) },
 		{ CKA_TOKEN,		NULL,	0 },
 		{ CKA_PRIVATE,		NULL,	0 },
 		{ CKA_MODIFIABLE,	NULL,	0 },
@@ -638,12 +661,12 @@ int dbRSAPub2session(sqlite3* /*db*/, CK_OBJECT_HANDLE objectID, CK_SESSION_HAND
 		{ CKA_PUBLIC_EXPONENT,	NULL,	0 }
 	};
 
-	for (i = 0; i < 17; i++)
+	for (i = 2; i < 17; i++)
 	{
 		result = getAttribute(objectID, &pubTemplate[i]);
 		if (result)
 		{
-			freeTemplate(pubTemplate, 17);
+			freeTemplate(pubTemplate, 2, 17);
 			return 1;
 		}
 	}
@@ -660,7 +683,7 @@ int dbRSAPub2session(sqlite3* /*db*/, CK_OBJECT_HANDLE objectID, CK_SESSION_HAND
 		printf("Object %lu has been migrated\n", objectID);
 	}
 
-	freeTemplate(pubTemplate, 17);
+	freeTemplate(pubTemplate, 2, 17);
 
 	return result;
 }
@@ -672,9 +695,13 @@ int dbRSAPriv2session(sqlite3* /*db*/, CK_OBJECT_HANDLE objectID, CK_SESSION_HAN
 	int i;
 	CK_OBJECT_HANDLE hKey;
 	CK_RV rv;
+	CK_OBJECT_CLASS ckClass = CKO_PRIVATE_KEY;
 
+	// All required CK_ULONG attributes have known/fixed values.
+	// So no need read them from the DB and no need to handle
+	// convertion from 32-bit to 64-bit.
 	CK_ATTRIBUTE privTemplate[] = {
-		{ CKA_CLASS,			NULL,	0 },
+		{ CKA_CLASS,			&ckClass, sizeof(ckClass) },
 		{ CKA_TOKEN,			NULL,	0 },
 		{ CKA_PRIVATE,			NULL,	0 },
 		{ CKA_MODIFIABLE,		NULL,	0 },
@@ -703,12 +730,12 @@ int dbRSAPriv2session(sqlite3* /*db*/, CK_OBJECT_HANDLE objectID, CK_SESSION_HAN
 //		{ CKA_COEFFICIENT,		NULL,	0 }
 	};
 
-	for (i = 0; i < 23; i++)
+	for (i = 1; i < 23; i++)
 	{
 		result = getAttribute(objectID, &privTemplate[i]);
 		if (result)
 		{
-			freeTemplate(privTemplate, 23);
+			freeTemplate(privTemplate, 1, 23);
 			return 1;
 		}
 	}
@@ -725,7 +752,7 @@ int dbRSAPriv2session(sqlite3* /*db*/, CK_OBJECT_HANDLE objectID, CK_SESSION_HAN
 		printf("Object %lu has been migrated\n", objectID);
 	}
 
-	freeTemplate(privTemplate, 23);
+	freeTemplate(privTemplate, 1, 23);
 
 	return result;
 }
@@ -782,13 +809,13 @@ int getAttribute(CK_OBJECT_HANDLE objectRef, CK_ATTRIBUTE* attTemplate)
 }
 
 // Free allocated memory in the template
-void freeTemplate(CK_ATTRIBUTE* attTemplate, int size)
+void freeTemplate(CK_ATTRIBUTE* attTemplate, int startIndex, int size)
 {
 	int i;
 
 	if (!attTemplate) return;
 
-	for (i = 0; i < size; i++)
+	for (i = startIndex; i < size; i++)
 	{
 		if(attTemplate[i].pValue)
 		{
