@@ -176,6 +176,8 @@ def dodetectplatform(visualstudio):
         toolset="v120"
     elif "Microsoft Visual Studio 14.0" in visualstudio:
         toolset="v140"
+    elif "Microsoft Visual Studio\\2017" in visualstudio:
+        toolset="v141"
     else:
         print("PlatformToolset for \""+visualstudio+"\" not supported")
         toolset=""
