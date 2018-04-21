@@ -46,10 +46,10 @@ AC_DEFUN([ACX_CRYPTO_BACKEND],[
 
 	AC_ARG_ENABLE(eddsa,
 		AC_HELP_STRING([--enable-eddsa],
-			[Enable support for EDDSA (default enabled)]
+			[Enable support for EDDSA (default disabled)]
 		),
 		[enable_eddsa="${enableval}"],
-		[enable_eddsa="yes"]
+		[enable_eddsa="no"]
 	)
 	AC_MSG_CHECKING(for EDDSA support)
 	if test "x${enable_eddsa}" = "xyes"; then
