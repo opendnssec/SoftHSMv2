@@ -348,7 +348,7 @@ void test_a_db_with_a_connection_with_tables::can_update_integer_attribute_bound
 
 	// insert integer attribute
 	statement = connection->prepare(
-				"insert into attribute_integer (value,type,object_id) values (%lld,%d,%lld)",
+				"insert into attribute_integer (value,type,object_id) values (%d,%d,%lld)",
 				1111,
 				1235,
 				object_id);
