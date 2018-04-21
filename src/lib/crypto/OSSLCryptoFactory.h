@@ -105,6 +105,8 @@ private:
 
 	// The one-and-only RNG instance
 	RNG* rng;
+	// And RDRAND engine to use with it
+	ENGINE *rdrand_engine;
 
 #ifdef WITH_GOST
 	// The GOST engine
