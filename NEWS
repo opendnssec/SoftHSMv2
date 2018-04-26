@@ -5,9 +5,15 @@ SoftHSM develop
 * Issue #323: Support for EDDSA with vendor defined mechanisms.
   (Patch from Francis Dupont)
 * Issue #368: Support migrating 32-bit SoftHSMv1 DB on 64-bit system (LP64).
+* Issue #385: Default is not to build EDDSA since it has not been released in
+  OpenSSL.
+* Issue #387: Windows: Add VS2017 detection to Configure.py.
+  (Patch from Jaroslav Imrich)
 
 Bugfixes:
 * Issue #377: Duplicate symbol error with custom p11test.
+* Issue #388: Update DBTests.cpp to fix x86 test failure.
+  (Patch from tcely)
 
 
 SoftHSM 2.4.0 - 2017-02-27
