@@ -43,8 +43,8 @@
 #include <memory>
 #ifdef WITH_GOST
 #include <openssl/conf.h>
-#include <openssl/engine.h>
 #endif
+#include <openssl/engine.h>
 
 class OSSLCryptoFactory : public CryptoFactory
 {
