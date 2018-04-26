@@ -27,12 +27,10 @@ target_link_libraries(${PROJECT_NAME} softhsm2-static ${CRYPTO_LIBS} ${CPPUNIT_L
 set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS -pthread)
 
 add_test(NAME ${PROJECT_NAME} COMMAND ${PROJECT_NAME}
-         WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+         WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
          )
 
-file(COPY softhsm2.conf
-          softhsm2-alt.conf
-     DESTINATION ${PROJECT_BINARY_DIR}
-     )
-
-file(MAKE_DIRECTORY ${PROJECT_BINARY_DIR}/tokens)
+set(builddir ${PROJECT_BINARY_DIR})
+configure_file(softhsm2.conf.in softhsm2.conf)
+configure_file(softhsm2-alt.conf.in softhsm2-alt.conf)
+configure_file(tokens/dummy.in tokens/dummy)

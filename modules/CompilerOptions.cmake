@@ -112,7 +112,7 @@ else(DISABLE_NON_PAGED_MEMORY)
     *               -               memlock         unlimited
 
     Alternatively, you can elect to disable this feature of SoftHSM by
-    re-running configure with the option \"--disable-non-paged-memory\".
+    re-running cmake with the option \"-DDISABLE_NON_PAGED_MEMORY=ON\".
     Please be advised that this may seriously degrade the security of
     SoftHSM.
     ======================================================================")
@@ -235,7 +235,7 @@ if(WITH_OPENSSL)
             if(ENABLE_FIPS)
                 message(FATAL_ERROR ${error_msg})
             else(ENABLE_FIPS)
-                message(WARNING ${error_msg})
+                message(STATUS ${error_msg})
             endif(ENABLE_FIPS)
         endif()
 
