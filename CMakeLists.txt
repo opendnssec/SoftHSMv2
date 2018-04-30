@@ -19,20 +19,25 @@ option(ENABLE_STATIC "Build static libraries" ON)
 option(WITH_OBJECTSTORE_BACKEND_DB "Build with object store backend database (SQLite3)" OFF)
 option(WITH_MIGRATE "Build migration tool. Requires SQLite3." OFF)
 option(WITH_P11_KIT "Build with p11-kit module" OFF)
-option(WITH_SQLITE3 "Compiles with support of SQLite3" OFF)
 set(WITH_CRYPTO_BACKEND "openssl"
     CACHE STRING "Select crypto backend (openssl|botan)")
 
 if(WITH_OBJECTSTORE_BACKEND_DB)
     set(HAVE_OBJECTSTORE_BACKEND_DB 1)
     set(WITH_MIGRATE ON)
-    set(WITH SQLITE3 ON)
+    set(WITH_SQLITE3 ON)
+    message(STATUS "Building with support for object store backend database")
+else(WITH_OBJECTSTORE_BACKEND_DB)
+    message(STATUS "Building with no support for object store backend database")
 endif(WITH_OBJECTSTORE_BACKEND_DB)
 
 if(WITH_MIGRATE)
     set(BUILD_MIGRATE ON)
+    set(WITH_SQLITE3 ON)
+    message(STATUS "Building with migration tool")
+else(WITH_MIGRATE)
+    message(STATUS "Building with no migration tool")
 endif(WITH_MIGRATE)
-
 
 if(NOT DEFINED CMAKE_INSTALL_SYSCONFDIR)
     set(CMAKE_INSTALL_SYSCONFDIR "/etc")
