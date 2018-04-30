@@ -20,7 +20,7 @@ endfunction()
 
 # Configures C++11
 set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_STANDARD_REQUIRED 1)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(HAVE_CXX11 1)
 
 if(ENABLE_PEDANTIC)
@@ -152,9 +152,136 @@ if(WITH_CRYPTO_BACKEND STREQUAL "botan")
         message(FATAL_ERROR "Failed to find Botan!")
     endif()
 
-    message(STATUS "Found Botan")
     set(CRYPTO_INCLUDES ${BOTAN_INCLUDE_DIRS})
     set(CRYPTO_LIBS ${BOTAN_LIBRARIES})
+    message(STATUS "Botan: Includes: ${CRYPTO_INCLUDES}")
+    message(STATUS "Botan: Libs: ${CRYPTO_LIBS}")
+
+    # CXX11 flag is not added to try_run, so set it locally.
+    CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
+    CHECK_CXX_COMPILER_FLAG("-std=c++0x" COMPILER_SUPPORTS_CXX0X)
+    set(TMP_CXX_FLAGS ${CMAKE_CXX_FLAGS})
+    if(COMPILER_SUPPORTS_CXX11)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+    elseif(COMPILER_SUPPORTS_CXX0X)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
+    endif()
+
+    # acx_botan_ecc.m4
+    if(ENABLE_ECC)
+        set(testfile ${CMAKE_SOURCE_DIR}/modules/tests/test_botan_ecc.cpp)
+        try_run(RUN_ECC COMPILE_RESULT
+                "${CMAKE_BINARY_DIR}/prebuild_santity_tests" ${testfile}
+                LINK_LIBRARIES ${CRYPTO_LIBS}
+                CMAKE_FLAGS
+                    "-DINCLUDE_DIRECTORIES=${CRYPTO_INCLUDES}"
+                )
+        if(COMPILE_RESULT AND RUN_ECC EQUAL 0)
+            set(WITH_ECC 1)
+            message(STATUS "Botan: Found P-256")
+        else()
+            set(error_msg "Botan: Cannot find P-256! Botan library has no ECC support!")
+            message(FATAL_ERROR ${error_msg})
+        endif()
+    else(ENABLE_ECC)
+        message(STATUS "Botan: Support for ECC is disabled")
+    endif(ENABLE_ECC)
+
+    # acx_botan_eddsa.m4
+    if(ENABLE_EDDSA)
+        # ED25519
+        set(testfile ${CMAKE_SOURCE_DIR}/modules/tests/test_botan_ed25519.cpp)
+        try_run(RUN_ED25519 COMPILE_RESULT
+                "${CMAKE_BINARY_DIR}/prebuild_santity_tests" ${testfile}
+                LINK_LIBRARIES ${CRYPTO_LIBS}
+                CMAKE_FLAGS
+                    "-DINCLUDE_DIRECTORIES=${CRYPTO_INCLUDES}"
+                )
+        if(COMPILE_RESULT AND RUN_ED25519 EQUAL 0)
+            set(WITH_EDDSA 1)
+            message(STATUS "Botan: Found ED25519")
+        else()
+            set(error_msg "Botan: Cannot find ED25519! Botan library has no EDDSA support!")
+            message(FATAL_ERROR ${error_msg})
+        endif()
+    else(ENABLE_EDDSA)
+        message(STATUS "Botan: Support for EDDSA is disabled")
+    endif(ENABLE_EDDSA)
+
+    # acx_botan_gost.m4
+    if(ENABLE_GOST)
+        set(testfile ${CMAKE_SOURCE_DIR}/modules/tests/test_botan_gost.cpp)
+        try_run(RUN_GOST COMPILE_RESULT
+                "${CMAKE_BINARY_DIR}/prebuild_santity_tests" ${testfile}
+                LINK_LIBRARIES ${CRYPTO_LIBS}
+                CMAKE_FLAGS
+                    "-DINCLUDE_DIRECTORIES=${CRYPTO_INCLUDES}"
+                )
+        if(COMPILE_RESULT AND RUN_GOST EQUAL 0)
+            set(WITH_GOST 1)
+            message(STATUS "Botan: Found GOST")
+        else()
+            set(error_msg "Botan: Cannot find GOST! Botan library has no GOST support!")
+            message(FATAL_ERROR ${error_msg})
+        endif()
+    else(ENABLE_GOST)
+        message(STATUS "Botan: Support for GOST is disabled")
+    endif(ENABLE_GOST)
+
+    if(ENABLE_FIPS)
+        message(FATAL_ERROR "Botan does not support FIPS 140-2 mode")
+    endif(ENABLE_FIPS)
+
+    # Compile with AES KEY WRAP
+    set(HAVE_AES_KEY_WRAP 1)
+
+    # acx_botan_rfc5649.m4
+    set(testfile ${CMAKE_SOURCE_DIR}/modules/tests/test_botan_rfc5649.cpp)
+    try_run(RUN_AES_KEY_WRAP_PAD COMPILE_RESULT
+            "${CMAKE_BINARY_DIR}/prebuild_santity_tests" ${testfile}
+            LINK_LIBRARIES ${CRYPTO_LIBS}
+            CMAKE_FLAGS
+                "-DINCLUDE_DIRECTORIES=${CRYPTO_INCLUDES}"
+            )
+    if(COMPILE_RESULT AND RUN_AES_KEY_WRAP_PAD EQUAL 0)
+        set(HAVE_AES_KEY_WRAP_PAD 1)
+        message(STATUS "Botan: RFC 5649 is supported")
+    else()
+        message(STATUS "Botan: RFC 5649 is not supported")
+    endif()
+
+    # acx_botan_rawpss.m4
+    set(testfile ${CMAKE_SOURCE_DIR}/modules/tests/test_botan_rawpss.cpp)
+    try_run(RUN_RAWPSS COMPILE_RESULT
+            "${CMAKE_BINARY_DIR}/prebuild_santity_tests" ${testfile}
+            LINK_LIBRARIES ${CRYPTO_LIBS}
+            CMAKE_FLAGS
+                "-DINCLUDE_DIRECTORIES=${CRYPTO_INCLUDES}"
+            )
+    if(COMPILE_RESULT AND RUN_RAWPSS EQUAL 0)
+        set(WITH_RAW_PSS 1)
+        message(STATUS "Botan: Found raw PSS")
+    else()
+        message(STATUS "Botan: Cannot find raw PSS support, upgrade to Botan >= v2.3.0")
+    endif()
+
+    # acx_botan_aes_gcm.m4
+    set(testfile ${CMAKE_SOURCE_DIR}/modules/tests/test_botan_aes_gcm.cpp)
+    try_run(RUN_AESGCM COMPILE_RESULT
+            "${CMAKE_BINARY_DIR}/prebuild_santity_tests" ${testfile}
+            LINK_LIBRARIES ${CRYPTO_LIBS}
+            CMAKE_FLAGS
+                "-DINCLUDE_DIRECTORIES=${CRYPTO_INCLUDES}"
+            )
+    if(COMPILE_RESULT AND RUN_AESGCM EQUAL 0)
+        set(WITH_AES_GCM 1)
+        message(STATUS "Botan: Found AES GCM")
+    else()
+        message(STATUS "Botan: Cannot find AES GCM support, upgrade to Botan >= v2.0.0")
+    endif()
+
+    # Restore flags
+    set(CMAKE_CXX_FLAGS ${TMP_CXX_FLAGS})
 
 # Find OpenSSL Crypto Backend
 elseif(WITH_CRYPTO_BACKEND STREQUAL "openssl")
@@ -171,13 +298,7 @@ elseif(WITH_CRYPTO_BACKEND STREQUAL "openssl")
     message(STATUS "OpenSSL: Includes: ${CRYPTO_INCLUDES}")
     message(STATUS "OpenSSL: Libs: ${CRYPTO_LIBS}")
 
-    # Compile with RAW PKCS PSS
-    set(WITH_RAW_PSS 1)
-    # Compile with AES_GCM
-    set(WITH_AES_GCM 1)
-
     check_include_files(openssl/ssl.h HAVE_OPENSSL_SSL_H)
-
     get_filename_component(CRYPTO_LIB_DIR "${OPENSSL_CRYPTO_LIBRARY}" DIRECTORY)
     check_library_exists(crypto "BN_new" "${CRYPTO_LIB_DIR}" HAVE_LIBCRYPTO)
 
@@ -305,6 +426,12 @@ elseif(WITH_CRYPTO_BACKEND STREQUAL "openssl")
     else()
         message(STATUS "OpenSSL: RFC 5649 is not supported")
     endif()
+
+    # Compile with RAW PKCS PSS
+    set(WITH_RAW_PSS 1)
+    # Compile with AES_GCM
+    set(WITH_AES_GCM 1)
+
 else()
     message(FATAL_ERROR "Crypto backend '${WITH_CRYPTO_BACKEND}' not supported. Use openssl or botan.")
 endif()

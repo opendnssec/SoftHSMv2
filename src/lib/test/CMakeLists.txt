@@ -1,5 +1,12 @@
 project(p11test)
 
+set(INCLUDE_DIRS ${PROJECT_SOURCE_DIR}
+                 ${PROJECT_SOURCE_DIR}/..
+                 ${PROJECT_SOURCE_DIR}/../common
+                 ${PROJECT_SOURCE_DIR}/../pkcs11
+                 ${CPPUNIT_INCLUDES}
+                 )
+
 set(SOURCES p11test.cpp
             SymmetricAlgorithmTests.cpp
             DigestTests.cpp
@@ -20,7 +27,7 @@ set(SOURCES p11test.cpp
             ../common/osmutex.cpp
             )
 
-include_directories(${PROJECT_SOURCE_DIR})
+include_directories(${INCLUDE_DIRS})
 
 add_executable(${PROJECT_NAME} ${SOURCES})
 target_link_libraries(${PROJECT_NAME} softhsm2-static ${CRYPTO_LIBS} ${CPPUNIT_LIBS} ${SQLITE3_LIBS})
