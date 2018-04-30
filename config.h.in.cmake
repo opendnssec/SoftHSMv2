@@ -137,22 +137,25 @@
 #cmakedefine VERSION_MINOR @VERSION_MINOR@
 
 /* Compile with AES GCM */
-#cmakedefine01 WITH_AES_GCM
+#cmakedefine WITH_AES_GCM @WITH_AES_GCM@
 
 /* Compile with Botan support */
 #cmakedefine01 WITH_BOTAN
 
 /* Compile with ECC support */
-#cmakedefine01 WITH_ECC
+#cmakedefine WITH_ECC @WITH_ECC@
+
+/* Compile with EDDSA support */
+#cmakedefine WITH_EDDSA @WITH_EDDSA@
 
 /* Compile with FIPS 140-2 mode */
 #cmakedefine WITH_FIPS @WITH_FIPS@
 
 /* Compile with GOST support */
-#cmakedefine01 WITH_GOST
+#cmakedefine WITH_GOST @WITH_GOST@
 
 /* Compile with OpenSSL support */
 #cmakedefine01 WITH_OPENSSL
 
 /* Compile with raw RSA PKCS PSS */
-#cmakedefine01 WITH_RAW_PSS
+#cmakedefine WITH_RAW_PSS @WITH_RAW_PSS@

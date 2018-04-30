@@ -2,6 +2,6 @@
 int main()
 {
         EVP_aes_128_wrap();
-        return 1;
+        return 0;
 }
 

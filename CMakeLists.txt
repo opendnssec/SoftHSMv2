@@ -6,6 +6,7 @@ option(DISABLE_NON_PAGED_MEMORY "Disable non-paged memory for secure storage" OF
 option(DISABLE_VISIBILITY "Disables and unsets -fvisibility=hidden" OFF)
 option(ENABLE_64bit "Enable 64-bit compiling" OFF)
 option(ENABLE_ECC "Enable support for ECC" ON)
+option(ENABLE_EDDSA "Enable support for EDDSA" OFF)
 option(ENABLE_GOST "Enable support for GOST" ON)
 option(ENABLE_FIPS "Enable support for FIPS 140-2 mode" OFF)
 option(ENABLE_P11_KIT "Enable p11-kit integration" ON)

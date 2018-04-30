@@ -2,5 +2,5 @@
 int main()
 {
         EVP_aes_128_wrap_pad();
-        return 1;
+        return 0;
 }

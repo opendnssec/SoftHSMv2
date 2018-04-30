@@ -11,6 +11,7 @@ set(SOURCES AESKey.cpp
             AsymmetricAlgorithm.cpp
             AsymmetricKeyPair.cpp
             CryptoFactory.cpp
+            DerUtil.cpp
             DESKey.cpp
             DHParameters.cpp
             DHPrivateKey.cpp
@@ -21,6 +22,8 @@ set(SOURCES AESKey.cpp
             ECParameters.cpp
             ECPrivateKey.cpp
             ECPublicKey.cpp
+            EDPrivateKey.cpp
+            EDPublicKey.cpp
             GOSTPrivateKey.cpp
             GOSTPublicKey.cpp
             HashAlgorithm.cpp
@@ -51,6 +54,10 @@ if(WITH_OPENSSL)
                         OSSLECKeyPair.cpp
                         OSSLECPrivateKey.cpp
                         OSSLECPublicKey.cpp
+                        OSSLEDDSA.cpp
+                        OSSLEDKeyPair.cpp
+                        OSSLEDPrivateKey.cpp
+                        OSSLEDPublicKey.cpp
                         OSSLEVPCMacAlgorithm.cpp
                         OSSLEVPHashAlgorithm.cpp
                         OSSLEVPMacAlgorithm.cpp
@@ -75,7 +82,7 @@ if(WITH_OPENSSL)
                         OSSLUtil.cpp
                         )
 endif(WITH_OPENSSL)
-     
+
 if(WITH_BOTAN)
     list(APPEND SOURCES BotanAES.cpp
                         BotanCryptoFactory.cpp
@@ -97,6 +104,10 @@ if(WITH_BOTAN)
                         BotanECDSAKeyPair.cpp
                         BotanECDSAPrivateKey.cpp
                         BotanECDSAPublicKey.cpp
+                        BotanEDDSA.cpp
+                        BotanEDKeyPair.cpp
+                        BotanEDPrivateKey.cpp
+                        BotanEDPublicKey.cpp
                         BotanGOST.cpp
                         BotanGOSTKeyPair.cpp
                         BotanGOSTPrivateKey.cpp
