@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.5)
 
+project(softhsm2 C CXX)
+
 # Build Options
 option(BUILD_TESTS "Compile tests along with libraries" OFF)
 option(DISABLE_NON_PAGED_MEMORY "Disable non-paged memory for secure storage" OFF)
@@ -31,17 +33,24 @@ if(WITH_MIGRATE)
     set(BUILD_MIGRATE ON)
 endif(WITH_MIGRATE)
 
+
+if(NOT DEFINED CMAKE_INSTALL_SYSCONFDIR)
+    set(CMAKE_INSTALL_SYSCONFDIR "/etc")
+endif()
+if(NOT DEFINED CMAKE_INSTALL_LOCALSTATEDIR)
+    set(CMAKE_INSTALL_LOCALSTATEDIR "/var")
+endif()
 include(GNUInstallDirs)
 
 set(DEFAULT_LOG_LEVEL "INFO"
     CACHE STRING "The default log level")
 set(DEFAULT_OBJECTSTORE_BACKEND "file"
     CACHE STRING "Default storage backend for token objects")
-set(DEFAULT_PKCS11_LIB "${CMAKE_INSTALL_LIBDIR}/softhsm/libsofthsm2.so"
+set(DEFAULT_PKCS11_LIB "${CMAKE_INSTALL_FULL_LIBDIR}/softhsm/libsofthsm2.so"
     CACHE STRING "The default PKCS#11 library")
-set(DEFAULT_SOFTHSM2_CONF "${CMAKE_INSTALL_SYSCONFDIR}/softhsm2.conf"
+set(DEFAULT_SOFTHSM2_CONF "${CMAKE_INSTALL_FULL_SYSCONFDIR}/softhsm2.conf"
     CACHE STRING "The default location of softhsm.conf")
-set(DEFAULT_TOKENDIR "${CMAKE_INSTALL_LOCALSTATEDIR}/lib/softhsm/tokens/"
+set(DEFAULT_TOKENDIR "${CMAKE_INSTALL_FULL_LOCALSTATEDIR}/lib/softhsm/tokens/"
     CACHE STRING "The default location of the token directory")
 
 set(MAX_PIN_LEN 255 CACHE STRING "Maximum PIN length")
@@ -65,8 +74,6 @@ if(NOT CMAKE_BUILD_TYPE)
 endif(NOT CMAKE_BUILD_TYPE)
 
 message(STATUS "Build Configuration: ${CMAKE_BUILD_TYPE}")
-
-project(softhsm2)
 
 # Build Modules Path
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}
