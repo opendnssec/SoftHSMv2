@@ -140,7 +140,7 @@
 #cmakedefine WITH_AES_GCM @WITH_AES_GCM@
 
 /* Compile with Botan support */
-#cmakedefine01 WITH_BOTAN
+#cmakedefine WITH_BOTAN @WITH_BOTAN@
 
 /* Compile with ECC support */
 #cmakedefine WITH_ECC @WITH_ECC@
@@ -155,7 +155,7 @@
 #cmakedefine WITH_GOST @WITH_GOST@
 
 /* Compile with OpenSSL support */
-#cmakedefine01 WITH_OPENSSL
+#cmakedefine WITH_OPENSSL @WITH_OPENSSL@
 
 /* Compile with raw RSA PKCS PSS */
 #cmakedefine WITH_RAW_PSS @WITH_RAW_PSS@
