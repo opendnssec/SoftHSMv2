@@ -81,5 +81,3 @@ endif(BUILD_TESTS)
 install(TARGETS ${PROJECT_NAME} ${PROJECT_NAME}-static
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/softhsm
         )
-
-install(DIRECTORY DESTINATION ${CMAKE_INSTALL_LOCALSTATEDIR}/lib/softhsm/tokens)

@@ -25,11 +25,23 @@ configure_file(softhsm2.conf.in ${PROJECT_BINARY_DIR}/etc/softhsm2.conf)
 configure_file(softhsm2.conf.in ${PROJECT_BINARY_DIR}/etc/softhsm2.conf.sample)
 configure_file(softhsm2.conf.5.in ${PROJECT_BINARY_DIR}/man5/softhsm2.conf.5)
 
-install(FILES ${PROJECT_BINARY_DIR}/etc/softhsm2.conf
-              ${PROJECT_BINARY_DIR}/etc/softhsm2.conf.sample
+install(CODE "
+        if(NOT EXISTS ${CMAKE_INSTALL_SYSCONFDIR}/softhsm2.conf)
+            file(INSTALL ${PROJECT_BINARY_DIR}/etc/softhsm2.conf
+                 DESTINATION ${CMAKE_INSTALL_SYSCONFDIR})
+        endif()
+        ")
+
+install(FILES ${PROJECT_BINARY_DIR}/etc/softhsm2.conf.sample
         DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}
         )
 
 install(FILES ${PROJECT_BINARY_DIR}/man5/softhsm2.conf.5
         DESTINATION ${CMAKE_INSTALL_MANDIR}/man5
         )
+
+install(DIRECTORY DESTINATION ${CMAKE_INSTALL_LOCALSTATEDIR}/lib/softhsm/tokens)
+
+install(CODE
+        "execute_process(
+        COMMAND chmod 1777 ${CMAKE_INSTALL_LOCALSTATEDIR}/lib/softhsm/tokens)")
