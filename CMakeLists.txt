@@ -18,9 +18,10 @@ option(ENABLE_SHARED "Build shared libraries" ON)
 option(ENABLE_STATIC "Build static libraries" ON)
 option(WITH_OBJECTSTORE_BACKEND_DB "Build with object store backend database (SQLite3)" OFF)
 option(WITH_MIGRATE "Build migration tool. Requires SQLite3." OFF)
-option(WITH_P11_KIT "Build with p11-kit module" OFF)
 set(WITH_CRYPTO_BACKEND "openssl"
     CACHE STRING "Select crypto backend (openssl|botan)")
+set(WITH_P11_KIT ""
+    CACHE STRING "Specify install path of the p11-kit module, will override path given by pkg-config")
 
 if(WITH_OBJECTSTORE_BACKEND_DB)
     set(HAVE_OBJECTSTORE_BACKEND_DB 1)
@@ -96,6 +97,15 @@ enable_testing()
 include_directories(${CMAKE_BINARY_DIR})
 
 add_subdirectory(src)
+
+# p11-kit
+set(default_softhsm2_lib ${DEFAULT_PKCS11_LIB})
+configure_file(softhsm2.module.in softhsm2.module)
+if(ENABLE_P11_KIT)
+    install(FILES ${PROJECT_BINARY_DIR}/softhsm2.module
+            DESTINATION ${P11KIT_PATH}
+            )
+endif(ENABLE_P11_KIT)
 
 # Packaging
 set(CPACK_PACKAGE_NAME ${PACKAGE_NAME})
