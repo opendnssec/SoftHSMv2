@@ -19,6 +19,7 @@ endif
 EXTRA_DIST =	$(srcdir)/aes_wrap_key_with_pad/botan-diff \
 		$(srcdir)/aes_wrap_key_with_pad/README \
 		$(srcdir)/CMakeLists.txt \
+		$(srcdir)/CMAKE-NOTES.md \
 		$(srcdir)/config.h.in.cmake \
 		$(srcdir)/FIPS-NOTES.md \
 		$(srcdir)/LICENSE \
