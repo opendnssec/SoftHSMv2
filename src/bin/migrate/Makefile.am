@@ -17,4 +17,5 @@ softhsm2_migrate_SOURCES =	softhsm2-migrate.cpp \
 softhsm2_migrate_LDADD =	@SQLITE3_LIBS@ \
 				@YIELD_LIB@
 
-EXTRA_DIST =		$(srcdir)/*.h
+EXTRA_DIST =		$(srcdir)/CMakeLists.txt \
+			$(srcdir)/*.h

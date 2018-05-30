@@ -37,7 +37,9 @@ libsofthsm_crypto_la_LIBADD =	@CRYPTO_LIBS@
 
 SUBDIRS =			test
 
-EXTRA_DIST =			$(srcdir)/*.h $(srcdir)/*.cpp
+EXTRA_DIST =			$(srcdir)/CMakeLists.txt \
+				$(srcdir)/*.h \
+				$(srcdir)/*.cpp
 
 # Compile with support of OpenSSL
 if WITH_OPENSSL

@@ -20,5 +20,6 @@ softhsm2_dump_db_SOURCES = softhsm2-dump-db.cpp
 
 softhsm2_dump_db_LDADD	= @SQLITE3_LIBS@ @YIELD_LIB@
 
-EXTRA_DIST =		$(srcdir)/*.h \
+EXTRA_DIST =		$(srcdir)/CMakeLists.txt \
+			$(srcdir)/*.h \
 			softhsm2-dump-db.1

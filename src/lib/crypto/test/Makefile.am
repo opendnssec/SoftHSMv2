@@ -37,4 +37,5 @@ cryptotest_LDFLAGS = 		@CRYPTO_LIBS@ @CPPUNIT_LIBS@ -no-install
 
 TESTS = 			cryptotest
 
-EXTRA_DIST =			$(srcdir)/*.h
+EXTRA_DIST =			$(srcdir)/CMakeLists.txt \
+				$(srcdir)/*.h

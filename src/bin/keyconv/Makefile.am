@@ -22,5 +22,6 @@ if WITH_BOTAN
 softhsm2_keyconv_SOURCES +=	softhsm2-keyconv-botan.cpp
 endif
 
-EXTRA_DIST =			$(srcdir)/*.h \
+EXTRA_DIST =			$(srcdir)/CMakeLists.txt \
+				$(srcdir)/*.h \
 				$(srcdir)/*.cpp

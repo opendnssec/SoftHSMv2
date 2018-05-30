@@ -14,4 +14,5 @@ libsofthsm_datamgr_la_SOURCES =	ByteString.cpp \
 
 SUBDIRS =			test
 
-EXTRA_DIST =			$(srcdir)/*.h
+EXTRA_DIST =			$(srcdir)/CMakeLists.txt \
+				$(srcdir)/*.h
