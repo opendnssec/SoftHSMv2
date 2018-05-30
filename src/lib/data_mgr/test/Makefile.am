@@ -18,10 +18,11 @@ datamgrtest_SOURCES =		datamgrtest.cpp \
 				RFC4880Tests.cpp \
 				SecureDataMgrTests.cpp
 
-datamgrtest_LDADD =		../../libsofthsm_convarch.la 
+datamgrtest_LDADD =		../../libsofthsm_convarch.la
 
 datamgrtest_LDFLAGS = 		@CRYPTO_LIBS@ @CPPUNIT_LIBS@ -no-install
 
 TESTS = 			datamgrtest
 
-EXTRA_DIST =			$(srcdir)/*.h
+EXTRA_DIST =			$(srcdir)/CMakeLists.txt \
+				$(srcdir)/*.h

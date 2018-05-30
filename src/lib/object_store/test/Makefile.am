@@ -30,10 +30,11 @@ objstoretest_SOURCES +=		DBTests.cpp \
 				DBObjectStoreTests.cpp
 endif
 
-objstoretest_LDADD =		../../libsofthsm_convarch.la 
+objstoretest_LDADD =		../../libsofthsm_convarch.la
 
 objstoretest_LDFLAGS = 		@CRYPTO_LIBS@ @CPPUNIT_LIBS@ -no-install -pthread
 
 TESTS = 			objstoretest
 
-EXTRA_DIST =			$(srcdir)/*.h
+EXTRA_DIST =			$(srcdir)/CMakeLists.txt \
+				$(srcdir)/*.h

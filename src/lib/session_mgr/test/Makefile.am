@@ -17,10 +17,11 @@ check_PROGRAMS =		sessionmgrtest
 sessionmgrtest_SOURCES =	sessionmgrtest.cpp \
 				SessionManagerTests.cpp
 
-sessionmgrtest_LDADD =		../../libsofthsm_convarch.la 
+sessionmgrtest_LDADD =		../../libsofthsm_convarch.la
 
 sessionmgrtest_LDFLAGS =	@CRYPTO_LIBS@ @CPPUNIT_LIBS@ -no-install -pthread
 
 TESTS = 			sessionmgrtest
 
-EXTRA_DIST =			$(srcdir)/*.h
+EXTRA_DIST =			$(srcdir)/CMakeLists.txt \
+				$(srcdir)/*.h

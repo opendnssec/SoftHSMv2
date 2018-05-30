@@ -15,7 +15,8 @@ libsofthsm_common_la_SOURCES =	Configuration.cpp \
 
 man_MANS =			softhsm2.conf.5
 
-EXTRA_DIST =			$(srcdir)/*.h \
+EXTRA_DIST =			$(srcdir)/CMakeLists.txt \
+				$(srcdir)/*.h \
 				$(srcdir)/softhsm2.conf.5.in
 
 install-data-hook:

@@ -14,4 +14,5 @@ libsofthsm_sessionmgr_la_SOURCES =	SessionManager.cpp \
 
 SUBDIRS =				test
 
-EXTRA_DIST =				$(srcdir)/*.h
+EXTRA_DIST =				$(srcdir)/CMakeLists.txt \
+					$(srcdir)/*.h

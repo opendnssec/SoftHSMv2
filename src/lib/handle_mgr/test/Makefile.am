@@ -16,11 +16,12 @@ check_PROGRAMS =		handlemgrtest
 handlemgrtest_SOURCES =		handlemgrtest.cpp \
 				HandleManagerTests.cpp
 
-handlemgrtest_LDADD =		../../libsofthsm_convarch.la 
+handlemgrtest_LDADD =		../../libsofthsm_convarch.la
 
 handlemgrtest_LDFLAGS = 	@CRYPTO_LIBS@ @CPPUNIT_LIBS@ -no-install
 
 TESTS = 			handlemgrtest
 
-EXTRA_DIST =			$(srcdir)/*.h
+EXTRA_DIST =			$(srcdir)/CMakeLists.txt \
+				$(srcdir)/*.h
 

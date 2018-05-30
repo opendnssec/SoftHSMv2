@@ -45,7 +45,8 @@ SUBDIRS = 			common \
 				handle_mgr \
 				test
 
-EXTRA_DIST =			$(srcdir)/*.h \
+EXTRA_DIST =			$(srcdir)/CMakeLists.txt \
+				$(srcdir)/*.h \
 				$(srcdir)/pkcs11/*.h \
 				$(srcdir)/win32/*.cc \
 				$(srcdir)/win32/*.cpp \

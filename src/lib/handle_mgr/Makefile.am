@@ -14,4 +14,5 @@ libsofthsm_handlemgr_la_SOURCES =	HandleManager.cpp \
 
 SUBDIRS =				test
 
-EXTRA_DIST =				$(srcdir)/*.h
+EXTRA_DIST =				$(srcdir)/CMakeLists.txt \
+					$(srcdir)/*.h

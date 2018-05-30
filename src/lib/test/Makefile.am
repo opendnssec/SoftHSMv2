@@ -28,13 +28,14 @@ p11test_SOURCES =		p11test.cpp \
 				../common/log.cpp \
 				../common/osmutex.cpp
 
-p11test_LDADD =			../libsofthsm2.la 
+p11test_LDADD =			../libsofthsm2.la
 
 p11test_LDFLAGS = 		@CRYPTO_LIBS@ @CPPUNIT_LIBS@ -no-install -pthread -static
 
 TESTS = 			p11test
 
-EXTRA_DIST =			$(srcdir)/*.h \
+EXTRA_DIST =			$(srcdir)/CMakeLists.txt \
+				$(srcdir)/*.h \
 				$(srcdir)/softhsm2-alt.conf.win32 \
 				$(srcdir)/softhsm2.conf.win32 \
 				$(srcdir)/tokens/dummy.in
