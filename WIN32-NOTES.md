@@ -216,7 +216,7 @@ Copy the results into `C:\build\bin\cppunit-1.13.2-x64` directory:
 Download the latest version of [SoftHSMv2](https://dist.opendnssec.org/source/) with its signature into `C:\build\src\` directory and verify signature of the downloaded archive:
 
     cd C:\build\src\
-    gpg --keyserver pgp.mit.edu --recv-keys 4EE17CD2
+    gpg --keyserver pgp.surfnet.nl --recv-keys 4FCB0B94
     gpg --verify softhsm-2.x.y.tar.gz.sig softhsm-2.x.y.tar.gz
     "C:\Program Files\7-Zip\7z" x softhsm-2.x.y.tar.gz
     "C:\Program Files\7-Zip\7z" x softhsm-2.x.y.tar
