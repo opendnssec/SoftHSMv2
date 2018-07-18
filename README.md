@@ -96,7 +96,7 @@ Install the library using the follow command:
 
 ### Configure
 
-The default location of the config file is /etc/softhsm2.conf. This location
+The default location of the config file is /etc/softhsm/softhsm2.conf. This location
 can be change by setting the environment variable.
 
 	export SOFTHSM2_CONF=/home/user/config.file
