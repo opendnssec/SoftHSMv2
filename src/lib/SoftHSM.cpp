@@ -321,6 +321,15 @@ static CK_ATTRIBUTE bsAttribute(CK_ATTRIBUTE_TYPE type, const ByteString &value)
 /*****************************************************************************
  Implementation of SoftHSM class specific functions
  *****************************************************************************/
+static void resetMutexFactoryCallbacks()
+{
+	// Reset MutexFactory callbacks to our versions
+	MutexFactory::i()->setCreateMutex(OSCreateMutex);
+	MutexFactory::i()->setDestroyMutex(OSDestroyMutex);
+	MutexFactory::i()->setLockMutex(OSLockMutex);
+	MutexFactory::i()->setUnlockMutex(OSUnlockMutex);
+}
+
 
 // Return the one-and-only instance
 SoftHSM* SoftHSM::i()
@@ -349,6 +358,7 @@ SoftHSM::SoftHSM()
 	slotManager = NULL;
 	sessionManager = NULL;
 	handleManager = NULL;
+	resetMutexFactoryCallbacks();
 }
 
 // Destructor
@@ -359,6 +369,7 @@ SoftHSM::~SoftHSM()
 	if (slotManager != NULL) delete slotManager;
 	if (objectStore != NULL) delete objectStore;
 	if (sessionObjectStore != NULL) delete sessionObjectStore;
+	resetMutexFactoryCallbacks();
 }
 
 /*****************************************************************************
@@ -409,10 +420,7 @@ CK_RV SoftHSM::C_Initialize(CK_VOID_PTR pInitArgs)
 			if (args->flags & CKF_OS_LOCKING_OK)
 			{
 				// Use our own mutex functions.
-				MutexFactory::i()->setCreateMutex(OSCreateMutex);
-				MutexFactory::i()->setDestroyMutex(OSDestroyMutex);
-				MutexFactory::i()->setLockMutex(OSLockMutex);
-				MutexFactory::i()->setUnlockMutex(OSUnlockMutex);
+				resetMutexFactoryCallbacks();
 				MutexFactory::i()->enable();
 			}
 			else
