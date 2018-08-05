@@ -21,22 +21,27 @@ AC_DEFUN([ACX_BOTAN],[
 			],[
 				PKG_CHECK_MODULES([BOTAN], [botan-1.10 >= $1.$2.$3], [
 					BOTAN_VERSION_MAJOR=1
-					BOTAN_VERSION_MINOR=10])
+					BOTAN_VERSION_MINOR=10
+				],[
+					AC_MSG_ERROR([Cannot find Botan])
+				])
 			])
 		])
 	else
 		BOTAN_VERSION_MAJOR=2
 		BOTAN_VERSION_MINOR=0
-		AC_CHECK_FILE($BOTAN_PATH/include/botan-2/botan/version.h,
+		if test -f "$BOTAN_PATH/include/botan-2/botan/version.h"; then
 			BOTAN_VERSION_MAJOR=2
-			BOTAN_VERSION_MINOR=0,
-			AC_CHECK_FILE($BOTAN_PATH/include/botan-1.11/botan/version.h,
-				BOTAN_VERSION_MAJOR=1
-				BOTAN_VERSION_MINOR=11,
-				AC_CHECK_FILE($BOTAN_PATH/include/botan-1.10/botan/version.h,
-					BOTAN_VERSION_MAJOR=1
-					BOTAN_VERSION_MINOR=10,
-					AC_MSG_ERROR([Cannot find Botan includes]))))
+			BOTAN_VERSION_MINOR=0
+		elif test -f "$BOTAN_PATH/include/botan-1.11/botan/version.h"; then
+			BOTAN_VERSION_MAJOR=1
+			BOTAN_VERSION_MINOR=11
+		elif test -f "$BOTAN_PATH/include/botan-1.10/botan/version.h"; then
+			BOTAN_VERSION_MAJOR=1
+			BOTAN_VERSION_MINOR=10
+		else
+			AC_MSG_ERROR([Cannot find Botan includes])
+		fi
 
 		if test "x${BOTAN_VERSION_MAJOR}" = "x2"; then
 			BOTAN_CFLAGS="-I$BOTAN_PATH/include/botan-2"

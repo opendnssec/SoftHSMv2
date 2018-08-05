@@ -4,6 +4,8 @@ SoftHSM develop
 
 * Issue #323: Support for EDDSA with vendor defined mechanisms.
   (Patch from Francis Dupont)
+* Issue #362: CMake Build System Support for SoftHSM.
+  (Patch from Constantine Grantcharov)
 * Issue #368: Support migrating 32-bit SoftHSMv1 DB on 64-bit system (LP64).
 * Issue #385: Default is not to build EDDSA since it has not been released in
   OpenSSL.
@@ -11,12 +13,21 @@ SoftHSM develop
   (Patch from Jaroslav Imrich)
 
 Bugfixes:
+* Issue #366: Support cross-compilation.
+  (Patch from Michael Weiser)
 * Issue #377: Duplicate symbol error with custom p11test.
+* Issue #386: Use RDRAND in OpenSSL if that engine is available.
 * Issue #388: Update DBTests.cpp to fix x86 test failure.
   (Patch from tcely)
+* Issue #393: Not setting CKA_PUBLIC_KEY_INFO correctly.
+  (Patch from pkalapat)
+* Issue #401: Wrong key and keyserver mentioned in installation documentation.
+  (Patch from Berry A.W. van Halderen)
+* Issue #408: Remove mutex callbacks after C_Finalize().
+  (Patch from Alexander Bokovoy)
 
 
-SoftHSM 2.4.0 - 2017-02-27
+SoftHSM 2.4.0 - 2018-02-27
 
 * Issue #135: Support PKCS#8 for GOST.
 * Issue #140: Support for CKA_ALLOWED_MECHANISMS.
