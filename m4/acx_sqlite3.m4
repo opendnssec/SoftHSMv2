@@ -2,11 +2,13 @@ AC_DEFUN([ACX_SQLITE3],[
 	AC_ARG_WITH(sqlite3,
         	AC_HELP_STRING([--with-sqlite3=PATH],[Specify prefix of path of SQLite3]),
 		[
-			SQLITE3_PATH="$withval"
+			SQLITE3_INCLUDES="-I$withval/include"
+			SQLITE3_LIBDIRS="-L$withval/lib"
 			AC_PATH_PROGS(SQLITE3, sqlite3, sqlite3, $withval/bin)
 			
 		],[
-			SQLITE3_PATH="/usr/local"
+			SQLITE3_INCLUDES=""
+			SQLITE3_LIBDIRS=""
 			AC_PATH_PROGS(SQLITE3, sqlite3, sqlite3, $PATH)
 		])
 
@@ -16,11 +18,10 @@ AC_DEFUN([ACX_SQLITE3],[
 	fi
 	
 	AC_MSG_CHECKING(what are the SQLite3 includes)
-	SQLITE3_INCLUDES="-I$SQLITE3_PATH/include"
 	AC_MSG_RESULT($SQLITE3_INCLUDES)
 
 	AC_MSG_CHECKING(what are the SQLite3 libs)
-	SQLITE3_LIBS="-L$SQLITE3_PATH/lib -lsqlite3"
+	SQLITE3_LIBS="$SQLITE3_LIBDIRS -lsqlite3"
 	AC_MSG_RESULT($SQLITE3_LIBS)
 
 	tmp_CPPFLAGS=$CPPFLAGS

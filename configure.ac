@@ -44,6 +44,7 @@ AC_SUBST(VERSION_INFO)
 # Checks for compilers
 AC_PROG_CC
 AC_PROG_CXX
+PKG_PROG_PKG_CONFIG
 
 # Compiler flags
 ACX_PEDANTIC

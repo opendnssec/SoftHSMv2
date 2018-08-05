@@ -17,9 +17,8 @@ AC_DEFUN([ACX_P11KIT],[
 	if test "x${enable_p11kit}" = "xyes"; then
 		AC_MSG_RESULT(yes)
 		if test "x${P11KIT_PATH}" = "x"; then
-			AC_PATH_PROG(PKGCONFIG, [pkg-config])
-			if test "x${PKGCONFIG}" != "x" && ${PKGCONFIG} --exists p11-kit-1; then
-				P11KIT_PATH=`${PKGCONFIG} --variable=p11_module_configs p11-kit-1`
+			if test "x${PKG_CONFIG}" != "x" && ${PKG_CONFIG} --exists p11-kit-1; then
+				P11KIT_PATH=`${PKG_CONFIG} --variable=p11_module_configs p11-kit-1`
 			fi
 		fi
 		AC_MSG_CHECKING(where to install the p11-kit module)
