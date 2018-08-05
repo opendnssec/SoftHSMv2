@@ -62,6 +62,7 @@ AC_DEFUN([ACX_OPENSSL_GOST],[
 			AC_MSG_ERROR([OpenSSL library has no GOST support])
 		],[
 			AC_MSG_WARN([Cannot test, assuming GOST engine])
+			acx_cv_lib_openssl_gost_support=yes
 		])
 	])
 	AC_LANG_POP([C])

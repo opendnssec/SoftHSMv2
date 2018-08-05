@@ -27,7 +27,10 @@ AC_DEFUN([ACX_OPENSSL_FIPS],[
 		],[
 			AC_MSG_RESULT([FIPS_mode_set(1) failed])
 			AC_MSG_ERROR([OpenSSL library is not FIPS capable])
-		],[])
+		],[
+			AC_MSG_WARN([Cannot test, assuming FIPS])
+			acx_cv_lib_openssl_fips=yes
+		])
 	])
 	AC_LANG_POP([C])
 

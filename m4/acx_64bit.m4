@@ -40,9 +40,9 @@ AC_DEFUN([ACX_64BIT],[
 			CXXFLAGS="-m64 $CXXFLAGS"
 			LDFLAGS="-m64 $LDFLAGS"
 			CFLAGS="-m64 $tmp_CFLAGS"
+		else
+			CFLAGS=$tmp_CFLAGS
 		fi
-
-	        CFLAGS=$tmp_CFLAGS
 	fi
 
 ])

@@ -48,6 +48,7 @@ Alternatively disable ECC support in SoftHSM with --disable-ecc
 ])
 		],[
 			AC_MSG_WARN([Cannot test, assuming P256])
+			acx_cv_lib_botan_ecc_support=yes
 		])
 	])
 	AC_LANG_POP([C++])
