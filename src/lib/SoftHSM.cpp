@@ -8301,10 +8301,10 @@ CK_RV SoftHSM::generateDSAParameters
 				}
 				bitLen = *(CK_ULONG*)pTemplate[i].pValue;
 				break;
-			case CKA_SUBPRIME_BITS:
+			case CKA_SUB_PRIME_BITS:
 				if (pTemplate[i].ulValueLen != sizeof(CK_ULONG))
 				{
-					INFO_MSG("CKA_SUBPRIME_BITS does not have the size of CK_ULONG");
+					INFO_MSG("CKA_SUB_PRIME_BITS does not have the size of CK_ULONG");
 					return CKR_ATTRIBUTE_VALUE_INVALID;
 				}
 				qLen = *(CK_ULONG*)pTemplate[i].pValue;
@@ -8321,11 +8321,11 @@ CK_RV SoftHSM::generateDSAParameters
 		return CKR_TEMPLATE_INCOMPLETE;
 	}
 
-	// No real choice for CKA_SUBPRIME_BITS
+	// No real choice for CKA_SUB_PRIME_BITS
 	if ((qLen != 0) &&
 	    (((bitLen >= 2048) && (qLen != 256)) ||
 	     ((bitLen < 2048) && (qLen != 160))))
-		INFO_MSG("CKA_SUBPRIME_BITS is ignored");
+		INFO_MSG("CKA_SUB_PRIME_BITS is ignored");
 
 
 	// Generate domain parameters

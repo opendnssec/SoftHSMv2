@@ -2350,7 +2350,7 @@ CK_RV P11AttrWrapTemplate::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_V
 	case CKA_KEY_GEN_MECHANISM:
 	case CKA_MODULUS_BITS:
 	case CKA_PRIME_BITS:
-	case CKA_SUBPRIME_BITS:
+	case CKA_SUB_PRIME_BITS:
 	case CKA_VALUE_BITS:
 	case CKA_VALUE_LEN:
 	case CKA_AUTH_PIN_FLAGS:
@@ -2449,7 +2449,7 @@ CK_RV P11AttrUnwrapTemplate::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK
 	case CKA_KEY_GEN_MECHANISM:
 	case CKA_MODULUS_BITS:
 	case CKA_PRIME_BITS:
-	case CKA_SUBPRIME_BITS:
+	case CKA_SUB_PRIME_BITS:
 	case CKA_VALUE_BITS:
 	case CKA_VALUE_LEN:
 	case CKA_AUTH_PIN_FLAGS:

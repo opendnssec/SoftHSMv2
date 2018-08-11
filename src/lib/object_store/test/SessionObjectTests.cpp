@@ -125,7 +125,7 @@ void SessionObjectTests::testULongAttr()
 	CPPUNIT_ASSERT(testObject.setAttribute(CKA_MODULUS_BITS, attr1));
 	CPPUNIT_ASSERT(testObject.setAttribute(CKA_PRIME_BITS, attr2));
 	CPPUNIT_ASSERT(testObject.setAttribute(CKA_AUTH_PIN_FLAGS, attr3));
-	CPPUNIT_ASSERT(testObject.setAttribute(CKA_SUBPRIME_BITS, attr4));
+	CPPUNIT_ASSERT(testObject.setAttribute(CKA_SUB_PRIME_BITS, attr4));
 	CPPUNIT_ASSERT(testObject.setAttribute(CKA_KEY_TYPE, attr5));
 
 	CPPUNIT_ASSERT(testObject.isValid());
@@ -133,20 +133,20 @@ void SessionObjectTests::testULongAttr()
 	CPPUNIT_ASSERT(testObject.attributeExists(CKA_MODULUS_BITS));
 	CPPUNIT_ASSERT(testObject.attributeExists(CKA_PRIME_BITS));
 	CPPUNIT_ASSERT(testObject.attributeExists(CKA_AUTH_PIN_FLAGS));
-	CPPUNIT_ASSERT(testObject.attributeExists(CKA_SUBPRIME_BITS));
+	CPPUNIT_ASSERT(testObject.attributeExists(CKA_SUB_PRIME_BITS));
 	CPPUNIT_ASSERT(testObject.attributeExists(CKA_KEY_TYPE));
 	CPPUNIT_ASSERT(!testObject.attributeExists(CKA_ID));
 
 	CPPUNIT_ASSERT(testObject.getAttribute(CKA_MODULUS_BITS).isUnsignedLongAttribute());
 	CPPUNIT_ASSERT(testObject.getAttribute(CKA_PRIME_BITS).isUnsignedLongAttribute());
 	CPPUNIT_ASSERT(testObject.getAttribute(CKA_AUTH_PIN_FLAGS).isUnsignedLongAttribute());
-	CPPUNIT_ASSERT(testObject.getAttribute(CKA_SUBPRIME_BITS).isUnsignedLongAttribute());
+	CPPUNIT_ASSERT(testObject.getAttribute(CKA_SUB_PRIME_BITS).isUnsignedLongAttribute());
 	CPPUNIT_ASSERT(testObject.getAttribute(CKA_KEY_TYPE).isUnsignedLongAttribute());
 
 	CPPUNIT_ASSERT(testObject.getAttribute(CKA_MODULUS_BITS).getUnsignedLongValue() == 0x12345678);
 	CPPUNIT_ASSERT(testObject.getAttribute(CKA_PRIME_BITS).getUnsignedLongValue() == 0x87654321);
 	CPPUNIT_ASSERT(testObject.getAttribute(CKA_AUTH_PIN_FLAGS).getUnsignedLongValue() == 0x01010101);
-	CPPUNIT_ASSERT(testObject.getAttribute(CKA_SUBPRIME_BITS).getUnsignedLongValue() == 0x10101010);
+	CPPUNIT_ASSERT(testObject.getAttribute(CKA_SUB_PRIME_BITS).getUnsignedLongValue() == 0x10101010);
 	CPPUNIT_ASSERT(testObject.getAttribute(CKA_KEY_TYPE).getUnsignedLongValue() == 0xABCDEF);
 
 	unsigned long value6 = 0x90909090;
