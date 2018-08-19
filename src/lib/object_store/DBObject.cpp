@@ -452,7 +452,7 @@ static AttributeKind attributeKind(CK_ATTRIBUTE_TYPE type)
 	case CKA_SUBPRIME: return akBinary;
 	case CKA_BASE: return akBinary;
 	case CKA_PRIME_BITS: return akInteger;
-	case CKA_SUBPRIME_BITS: return akInteger;
+	case CKA_SUB_PRIME_BITS: return akInteger;
 	case CKA_VALUE_BITS: return akInteger;
 	case CKA_VALUE_LEN: return akInteger;
 	case CKA_EXTRACTABLE: return akBoolean;
