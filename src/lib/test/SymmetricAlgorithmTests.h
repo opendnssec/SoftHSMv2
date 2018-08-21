@@ -48,6 +48,7 @@ class SymmetricAlgorithmTests : public TestsBase
 	CPPUNIT_TEST(testNonModifiableDesKeyGeneration);
 	CPPUNIT_TEST(testCheckValue);
 	CPPUNIT_TEST(testAesCtrOverflow);
+	CPPUNIT_TEST(testGenericKey);
 	CPPUNIT_TEST_SUITE_END();
 
 public:
@@ -58,8 +59,10 @@ public:
 	void testNonModifiableDesKeyGeneration();
 	void testCheckValue();
 	void testAesCtrOverflow();
+	void testGenericKey();
 
 protected:
+	CK_RV generateGenericKey(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_OBJECT_HANDLE &hKey);
 	CK_RV generateAesKey(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_OBJECT_HANDLE &hKey);
 #ifndef WITH_FIPS
 	CK_RV generateDesKey(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_OBJECT_HANDLE &hKey);

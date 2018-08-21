@@ -642,7 +642,7 @@ CK_RV SoftHSM::C_GetTokenInfo(CK_SLOT_ID slotID, CK_TOKEN_INFO_PTR pInfo)
 CK_RV SoftHSM::C_GetMechanismList(CK_SLOT_ID slotID, CK_MECHANISM_TYPE_PTR pMechanismList, CK_ULONG_PTR pulCount)
 {
 	// A list with the supported mechanisms
-	CK_ULONG nrSupportedMechanisms = 61;
+	CK_ULONG nrSupportedMechanisms = 62;
 #ifdef WITH_ECC
 	nrSupportedMechanisms += 2;
 #endif
@@ -706,6 +706,7 @@ CK_RV SoftHSM::C_GetMechanismList(CK_SLOT_ID slotID, CK_MECHANISM_TYPE_PTR pMech
 		CKM_SHA256_RSA_PKCS_PSS,
 		CKM_SHA384_RSA_PKCS_PSS,
 		CKM_SHA512_RSA_PKCS_PSS,
+		CKM_GENERIC_SECRET_KEY_GEN,
 #ifndef WITH_FIPS
 		CKM_DES_KEY_GEN,
 #endif
@@ -998,6 +999,11 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 			pInfo->ulMinKeySize = rsaMinSize;
 			pInfo->ulMaxKeySize = rsaMaxSize;
 			pInfo->flags = CKF_ENCRYPT | CKF_DECRYPT | CKF_WRAP | CKF_UNWRAP;
+			break;
+		case CKM_GENERIC_SECRET_KEY_GEN:
+			pInfo->ulMinKeySize = 1;
+			pInfo->ulMaxKeySize = 0x80000000;
+			pInfo->flags = CKF_GENERATE;
 			break;
 #ifndef WITH_FIPS
 		case CKM_DES_KEY_GEN:
@@ -5669,6 +5675,10 @@ CK_RV SoftHSM::C_GenerateKey(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMecha
 			objClass = CKO_SECRET_KEY;
 			keyType = CKK_AES;
 			break;
+		case CKM_GENERIC_SECRET_KEY_GEN:
+			objClass = CKO_SECRET_KEY;
+			keyType = CKK_GENERIC_SECRET;
+			break;
 		default:
 			return CKR_MECHANISM_INVALID;
 	}
@@ -5700,6 +5710,9 @@ CK_RV SoftHSM::C_GenerateKey(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMecha
 		return CKR_TEMPLATE_INCONSISTENT;
 	if (pMechanism->mechanism == CKM_AES_KEY_GEN &&
 	    (objClass != CKO_SECRET_KEY || keyType != CKK_AES))
+		return CKR_TEMPLATE_INCONSISTENT;
+	if (pMechanism->mechanism == CKM_GENERIC_SECRET_KEY_GEN &&
+	    (objClass != CKO_SECRET_KEY || keyType != CKK_GENERIC_SECRET))
 		return CKR_TEMPLATE_INCONSISTENT;
 
 	// Check authorization
@@ -5748,6 +5761,12 @@ CK_RV SoftHSM::C_GenerateKey(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMecha
 	if (pMechanism->mechanism == CKM_AES_KEY_GEN)
 	{
 		return this->generateAES(hSession, pTemplate, ulCount, phKey, isOnToken, isPrivate);
+	}
+
+	// Generate generic secret key
+	if (pMechanism->mechanism == CKM_GENERIC_SECRET_KEY_GEN)
+	{
+		return this->generateGeneric(hSession, pTemplate, ulCount, phKey, isOnToken, isPrivate);
 	}
 
 	return CKR_GENERAL_ERROR;
@@ -7021,6 +7040,177 @@ CK_RV SoftHSM::C_CancelFunction(CK_SESSION_HANDLE hSession)
 CK_RV SoftHSM::C_WaitForSlotEvent(CK_FLAGS /*flags*/, CK_SLOT_ID_PTR /*pSlot*/, CK_VOID_PTR /*pReserved*/)
 {
 	return CKR_FUNCTION_NOT_SUPPORTED;
+}
+
+CK_RV SoftHSM::generateGeneric
+(CK_SESSION_HANDLE hSession,
+	CK_ATTRIBUTE_PTR pTemplate,
+	CK_ULONG ulCount,
+	CK_OBJECT_HANDLE_PTR phKey,
+	CK_BBOOL isOnToken,
+	CK_BBOOL isPrivate)
+{
+	*phKey = CK_INVALID_HANDLE;
+
+	// Get the session
+	Session* session = (Session*)handleManager->getSession(hSession);
+	if (session == NULL)
+		return CKR_SESSION_HANDLE_INVALID;
+
+	// Get the token
+	Token* token = session->getToken();
+	if (token == NULL)
+		return CKR_GENERAL_ERROR;
+
+	// Extract desired parameter information
+	size_t keyLen = 0;
+	bool checkValue = true;
+	for (CK_ULONG i = 0; i < ulCount; i++)
+	{
+		switch (pTemplate[i].type)
+		{
+			case CKA_VALUE_LEN:
+				if (pTemplate[i].ulValueLen != sizeof(CK_ULONG))
+				{
+					INFO_MSG("CKA_VALUE_LEN does not have the size of CK_ULONG");
+					return CKR_ATTRIBUTE_VALUE_INVALID;
+				}
+				keyLen = *(CK_ULONG*)pTemplate[i].pValue;
+				break;
+			case CKA_CHECK_VALUE:
+				if (pTemplate[i].ulValueLen > 0)
+				{
+					INFO_MSG("CKA_CHECK_VALUE must be a no-value (0 length) entry");
+					return CKR_ATTRIBUTE_VALUE_INVALID;
+				}
+				checkValue = false;
+				break;
+			default:
+				break;
+		}
+	}
+
+	// CKA_VALUE_LEN must be specified
+	if (keyLen == 0)
+	{
+		INFO_MSG("Missing CKA_VALUE_LEN in pTemplate");
+		return CKR_TEMPLATE_INCOMPLETE;
+	}
+
+	// Check keyLen
+	if (keyLen < 1 || keyLen > 0x8000000)
+	{
+		INFO_MSG("bad generic key length");
+		return CKR_ATTRIBUTE_VALUE_INVALID;
+	}
+
+	// Generate the secret key
+	RNG* rng = CryptoFactory::i()->getRNG();
+	if (rng == NULL) return CKR_GENERAL_ERROR;
+	ByteString key;
+	if (!rng->generateRandom(key, keyLen)) return CKR_GENERAL_ERROR;
+
+        CK_RV rv = CKR_OK;
+
+	// Create the secret key object using C_CreateObject
+	const CK_ULONG maxAttribs = 32;
+	CK_OBJECT_CLASS objClass = CKO_SECRET_KEY;
+	CK_KEY_TYPE keyType = CKK_GENERIC_SECRET;
+	CK_ATTRIBUTE keyAttribs[maxAttribs] = {
+		{ CKA_CLASS, &objClass, sizeof(objClass) },
+		{ CKA_TOKEN, &isOnToken, sizeof(isOnToken) },
+		{ CKA_PRIVATE, &isPrivate, sizeof(isPrivate) },
+		{ CKA_KEY_TYPE, &keyType, sizeof(keyType) },
+	};
+	CK_ULONG keyAttribsCount = 4;
+
+	// Add the additional
+	if (ulCount > (maxAttribs - keyAttribsCount))
+		rv = CKR_TEMPLATE_INCONSISTENT;
+	for (CK_ULONG i=0; i < ulCount && rv == CKR_OK; ++i)
+	{
+		switch (pTemplate[i].type)
+		{
+			case CKA_CLASS:
+			case CKA_TOKEN:
+			case CKA_PRIVATE:
+			case CKA_KEY_TYPE:
+			case CKA_CHECK_VALUE:
+				continue;
+			default:
+				keyAttribs[keyAttribsCount++] = pTemplate[i];
+				break;
+		}
+	}
+
+	if (rv == CKR_OK)
+		rv = CreateObject(hSession, keyAttribs, keyAttribsCount, phKey, OBJECT_OP_GENERATE);
+
+	// Store the attributes that are being supplied
+	if (rv == CKR_OK)
+	{
+		OSObject* osobject = (OSObject*)handleManager->getObject(*phKey);
+		if (osobject == NULL_PTR || !osobject->isValid()) {
+			rv = CKR_FUNCTION_FAILED;
+		} else if (osobject->startTransaction()) {
+			bool bOK = true;
+
+			// Common Attributes
+			bOK = bOK && osobject->setAttribute(CKA_LOCAL,true);
+			CK_ULONG ulKeyGenMechanism = (CK_ULONG)CKM_GENERIC_SECRET_KEY_GEN;
+			bOK = bOK && osobject->setAttribute(CKA_KEY_GEN_MECHANISM,ulKeyGenMechanism);
+
+			// Common Secret Key Attributes
+			bool bAlwaysSensitive = osobject->getBooleanValue(CKA_SENSITIVE, false);
+			bOK = bOK && osobject->setAttribute(CKA_ALWAYS_SENSITIVE,bAlwaysSensitive);
+			bool bNeverExtractable = osobject->getBooleanValue(CKA_EXTRACTABLE, false) == false;
+			bOK = bOK && osobject->setAttribute(CKA_NEVER_EXTRACTABLE, bNeverExtractable);
+
+			// Generic Secret Key Attributes
+			ByteString value;
+			ByteString kcv;
+			SymmetricKey symKey;
+			symKey.setKeyBits(key);
+			symKey.setBitLen(keyLen);
+			if (isPrivate)
+			{
+				token->encrypt(symKey.getKeyBits(), value);
+				token->encrypt(symKey.getKeyCheckValue(), kcv);
+			}
+			else
+			{
+				value = symKey.getKeyBits();
+				kcv = symKey.getKeyCheckValue();
+			}
+			bOK = bOK && osobject->setAttribute(CKA_VALUE, value);
+			if (checkValue)
+				bOK = bOK && osobject->setAttribute(CKA_CHECK_VALUE, kcv);
+
+			if (bOK)
+				bOK = osobject->commitTransaction();
+			else
+				osobject->abortTransaction();
+
+			if (!bOK)
+				rv = CKR_FUNCTION_FAILED;
+		} else
+			rv = CKR_FUNCTION_FAILED;
+	}
+
+	// Clean up
+	// Remove the key that may have been created already when the function fails.
+	if (rv != CKR_OK)
+	{
+		if (*phKey != CK_INVALID_HANDLE)
+		{
+			OSObject* oskey = (OSObject*)handleManager->getObject(*phKey);
+			handleManager->destroyObject(*phKey);
+			if (oskey) oskey->destroyObject();
+			*phKey = CK_INVALID_HANDLE;
+		}
+	}
+
+	return rv;
 }
 
 // Generate an AES secret key
