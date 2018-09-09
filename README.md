@@ -41,11 +41,21 @@ Minimum required versions:
 If you are using Botan, make sure that it has support for GNU MP (--with-gnump).
 This will improve the performance when doing public key operations.
 
-The GNU Autotools are also required for building the software.
+The GNU Autotools (Autoconf, Automake, Libtool) are also required for building
+the software. It is also recommended to install pkg-config so that the
+configure script can find the installed software.
 
 There is a migration tool for converting token databases from SoftHSMv1 into
-the new type of tokens. If this tool is built, then SQLite3 is required (>=
-3.4.2).
+the new type of tokens. If this tool is built (--with-migrate), then SQLite3
+is required (>= 3.4.2).
+
+SQLite3 is also required if building with the database object store
+(--with-objectstore-backend-db).
+
+To install SoftHSM as a PKCS#11 module on the system, please install
+libp11-kit-dev.
+
+The unit tests requires CppUnit.
 
 ## Installation
 
@@ -87,6 +97,12 @@ For more options:
 Compile the source code using the following command:
 
 	make
+
+### Unit tests
+
+Running the unit tests requires CppUnit.
+
+	make check
 
 ### Install Library
 
@@ -145,6 +161,6 @@ the source file name and line number.
 If the code is downloaded directly from the code repository, you have to
 prepare the configuration scripts before continuing with the real README.
 
-1. You need to install automake, autoconf, libtool, etc.
+1. You need to install automake, autoconf, libtool, pkg-config.
 2. Run the command 'sh autogen.sh'
 3. Continue reading this README.
