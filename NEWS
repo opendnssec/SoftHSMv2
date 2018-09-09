@@ -1,6 +1,6 @@
 NEWS for SoftHSM -- History of user visible changes
 
-SoftHSM develop
+SoftHSM 2.5.0
 
 * Issue #323: Support for EDDSA with vendor defined mechanisms.
   (Patch from Francis Dupont)
@@ -11,6 +11,8 @@ SoftHSM develop
   OpenSSL.
 * Issue #387: Windows: Add VS2017 detection to Configure.py.
   (Patch from Jaroslav Imrich)
+* Issue #412: Replace PKCS11 headers with a version from p11-kit.
+  (Patch from Alexander Bokovoy)
 
 Bugfixes:
 * Issue #366: Support cross-compilation.

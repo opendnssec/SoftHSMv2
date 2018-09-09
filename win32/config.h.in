@@ -66,7 +66,7 @@
 #define PACKAGE_NAME "SoftHSM"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "SoftHSM 2.4.0"
+#define PACKAGE_STRING "SoftHSM 2.5.0"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "softhsm"
@@ -75,7 +75,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION  "2.4.0"
+#define PACKAGE_VERSION  "2.5.0"
 
 /* Non-paged memory for secure storage */
 @IF NONPAGE
@@ -88,13 +88,13 @@
 #undef STDC_HEADERS
 
 /* Version number of package */
-#define VERSION  "2.4.0"
+#define VERSION  "2.5.0"
 
 /* SoftHSM major version number via PKCS#11 */
 #define VERSION_MAJOR 2
 
 /* SoftHSM minor version number via PKCS#11 */
-#define VERSION_MINOR 4
+#define VERSION_MINOR 5
 
 /* Compile with Botan support */
 @IF BOTAN
