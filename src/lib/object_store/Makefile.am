@@ -31,4 +31,5 @@ libsofthsm_objectstore_la_LDFLAGS =	@SQLITE3_LIBS@
 
 SUBDIRS = 				test
 
-EXTRA_DIST =				$(srcdir)/*.h
+EXTRA_DIST =				$(srcdir)/CMakeLists.txt \
+					$(srcdir)/*.h

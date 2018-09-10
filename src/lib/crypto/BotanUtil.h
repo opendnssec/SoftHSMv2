@@ -62,6 +62,13 @@ namespace BotanUtil
 	// Convert a ByteString to a Botan EC point in the given EC group
 	Botan::PointGFp byteString2ECPoint(const ByteString& byteString, const Botan::EC_Group& ecGroup);
 #endif
+#ifdef WITH_EDDSA
+	// Convert a Botan OID to a ByteString
+	ByteString oid2ByteString(const Botan::OID& oid);
+
+	// Convert a ByteString to a Botan OID
+	Botan::OID byteString2Oid(const ByteString& byteString);
+#endif
 }
 
 #endif // !_SOFTHSM_V2_BOTANUTIL_H

@@ -16,10 +16,11 @@ check_PROGRAMS =		slotmgrtest
 slotmgrtest_SOURCES =		slotmgrtest.cpp \
 				SlotManagerTests.cpp
 
-slotmgrtest_LDADD =		../../libsofthsm_convarch.la 
+slotmgrtest_LDADD =		../../libsofthsm_convarch.la
 
 slotmgrtest_LDFLAGS = 		@CRYPTO_LIBS@ @CPPUNIT_LIBS@ -no-install -pthread
 
 TESTS = 			slotmgrtest
 
-EXTRA_DIST =			$(srcdir)/*.h
+EXTRA_DIST =			$(srcdir)/CMakeLists.txt \
+				$(srcdir)/*.h

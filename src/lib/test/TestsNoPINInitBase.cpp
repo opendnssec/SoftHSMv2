@@ -151,10 +151,6 @@ TestsNoPINInitBase::~TestsNoPINInitBase() {
 #endif // _WIN32
 }
 
-void softHSMLog(const int, const char*, const char*, const int, const char*, ...)
-{
-
-}
 #else
 TestsNoPINInitBase::~TestsNoPINInitBase() {}
 #endif // P11M

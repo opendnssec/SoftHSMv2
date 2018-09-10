@@ -53,6 +53,9 @@
 #include "BotanGOSTR3411.h"
 #endif
 #include "BotanMAC.h"
+#ifdef WITH_EDDSA
+#include "BotanEDDSA.h"
+#endif
 
 #include <botan/init.h>
 
@@ -175,6 +178,10 @@ AsymmetricAlgorithm* BotanCryptoFactory::getAsymmetricAlgorithm(AsymAlgo::Type a
 #ifdef WITH_GOST
 		case AsymAlgo::GOST:
 			return new BotanGOST();
+#endif
+#ifdef WITH_EDDSA
+		case AsymAlgo::EDDSA:
+			return new BotanEDDSA();
 #endif
 		default:
 			// No algorithm implementation is available

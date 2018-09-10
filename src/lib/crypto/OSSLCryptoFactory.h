@@ -41,10 +41,8 @@
 #include "MacAlgorithm.h"
 #include "RNG.h"
 #include <memory>
-#ifdef WITH_GOST
 #include <openssl/conf.h>
 #include <openssl/engine.h>
-#endif
 
 class OSSLCryptoFactory : public CryptoFactory
 {
@@ -105,6 +103,8 @@ private:
 
 	// The one-and-only RNG instance
 	RNG* rng;
+	// And RDRAND engine to use with it
+	ENGINE *rdrand_engine;
 
 #ifdef WITH_GOST
 	// The GOST engine

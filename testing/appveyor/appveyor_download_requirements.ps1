@@ -44,6 +44,8 @@ Write-Host "Preparing directories - OK"
 
 Write-Host "Downloading needed tools and dependencies"
 
+[Net.ServicePointManager]::SecurityProtocol = "tls12, tls11, tls"
+
 $exists = Test-Path "$env:CRYPTO_PACKAGE_NAME"
 if ($exists -eq $false) {
     $source = "https://github.com/disig/SoftHSM2-AppVeyor/raw/master/$env:PACKAGE_VERSION_NAME/$env:CRYPTO_PACKAGE"

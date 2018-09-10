@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 source `dirname "$0"`/lib.sh && init || exit 1
 
-BOTAN="Botan-2.4.0"
+BOTAN="Botan-2.5.0"
 BOTAN_URL="https://botan.randombit.net/releases/$BOTAN.tgz"
 BOTAN_FILENAME="$BOTAN.tgz"
 BOTAN_HASH_TYPE="sha1"
-BOTAN_HASH="212587ae2458d51052c496fbcc79dc4162d33349"
+BOTAN_HASH="f422ba87f99c070fdcc3347943cb1a63add2e028"
 
 check_if_built botan && exit 0
 start_build botan

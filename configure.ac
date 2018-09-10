@@ -7,9 +7,9 @@
 # Program version
 
 define([SOFTHSM_VERSION_MAJOR], [2])
-define([SOFTHSM_VERSION_MINOR], [4])
+define([SOFTHSM_VERSION_MINOR], [5])
 define([SOFTHSM_VERSION_FIX], [0])
-define([PACKAGE_SUFFIX], [])
+define([PACKAGE_SUFFIX], [rc1])
 
 # Library version
 
@@ -20,7 +20,7 @@ define([PACKAGE_SUFFIX], [])
 
 define([SOFTHSM_VERSION_CURRENT], [2])
 define([SOFTHSM_VERSION_AGE], [1])
-define([SOFTHSM_VERSION_REVISION], [4])
+define([SOFTHSM_VERSION_REVISION], [5])
 
 ##################
 #                #
@@ -44,6 +44,7 @@ AC_SUBST(VERSION_INFO)
 # Checks for compilers
 AC_PROG_CC
 AC_PROG_CXX
+PKG_PROG_PKG_CONFIG
 
 # Compiler flags
 ACX_PEDANTIC

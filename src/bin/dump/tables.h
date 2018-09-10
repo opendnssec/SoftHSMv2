@@ -88,7 +88,7 @@ void fill_CKA_table(std::map<unsigned long, std::string> &t)
 	t[CKA_SUBPRIME] = "CKA_SUBPRIME";
 	t[CKA_BASE] = "CKA_BASE";
 	t[CKA_PRIME_BITS] = "CKA_PRIME_BITS";
-	t[CKA_SUBPRIME_BITS] = "CKA_SUBPRIME_BITS";
+	t[CKA_SUB_PRIME_BITS] = "CKA_SUB_PRIME_BITS";
 	t[CKA_VALUE_BITS] = "CKA_VALUE_BITS";
 	t[CKA_VALUE_LEN] = "CKA_VALUE_LEN";
 	t[CKA_EXTRACTABLE] = "CKA_EXTRACTABLE";
@@ -476,6 +476,8 @@ void fill_CKM_table(std::map<unsigned long, std::string> &t)
 	t[CKM_AES_KEY_WRAP_PAD] = "CKM_AES_KEY_WRAP_PAD";
 	t[CKM_RSA_PKCS_TPM_1_1] = "CKM_RSA_PKCS_TPM_1_1";
 	t[CKM_RSA_PKCS_OAEP_TPM_1_1] = "CKM_RSA_PKCS_OAEP_TPM_1_1";
+	t[CKM_EC_EDWARDS_KEY_PAIR_GEN] = "CKM_EC_EDWARDS_KEY_PAIR_GEN";
+	t[CKM_EDDSA] = "CKM_EDDSA";
 }
 
 void fill_CKO_table(std::map<unsigned long, std::string> &t)
@@ -541,6 +543,7 @@ void fill_CKK_table(std::map<unsigned long, std::string> &t)
 	t[CKK_GOSTR3410] = "CKK_GOSTR3410";
 	t[CKK_GOSTR3411] = "CKK_GOSTR3411";
 	t[CKK_GOST28147] = "CKK_GOST28147";
+	t[CKK_EC_EDWARDS] = "CKK_EC_EDWARDS";
 }
 
 void fill_CKC_table(std::map<unsigned long, std::string> &t)

@@ -42,6 +42,28 @@ AC_DEFUN([ACX_CRYPTO_BACKEND],[
 	fi
 	AM_CONDITIONAL([WITH_GOST], [test "x${enable_gost}" = "xyes"])
 
+	# Add Eddsa check
+
+	AC_ARG_ENABLE(eddsa,
+		AC_HELP_STRING([--enable-eddsa],
+			[Enable support for EDDSA (default disabled)]
+		),
+		[enable_eddsa="${enableval}"],
+		[enable_eddsa="no"]
+	)
+	AC_MSG_CHECKING(for EDDSA support)
+	if test "x${enable_eddsa}" = "xyes"; then
+		AC_MSG_RESULT(yes)
+		AC_DEFINE_UNQUOTED(
+			[WITH_EDDSA],
+			[],
+			[Compile with EDDSA support]
+		)
+	else
+		AC_MSG_RESULT(no)
+	fi
+	AM_CONDITIONAL([WITH_EDDSA], [test "x${enable_eddsa}" = "xyes"])
+
 	# Second check for the FIPS 140-2 mode
 
 	AC_ARG_ENABLE(fips,
@@ -92,6 +114,10 @@ AC_DEFUN([ACX_CRYPTO_BACKEND],[
 			ACX_OPENSSL_ECC
 		fi
 
+		if test "x${enable_eddsa}" = "xyes"; then
+			ACX_OPENSSL_EDDSA
+		fi
+
 		if test "x${enable_gost}" = "xyes"; then
 			if test "x${enable_fips}" = "xyes"; then
 				AC_MSG_ERROR([GOST is not FIPS approved])
@@ -126,11 +152,15 @@ AC_DEFUN([ACX_CRYPTO_BACKEND],[
 
 		ACX_BOTAN(1,10,0)
 
-		CRYPTO_INCLUDES=$BOTAN_INCLUDES
+		CRYPTO_INCLUDES=$BOTAN_CFLAGS
 		CRYPTO_LIBS=$BOTAN_LIBS
 
 		if test "x${enable_ecc}" = "xyes"; then
 			ACX_BOTAN_ECC
+		fi
+
+		if test "x${enable_eddsa}" = "xyes"; then
+			ACX_BOTAN_EDDSA
 		fi
 
 		if test	"x${enable_fips}" = "xyes"; then

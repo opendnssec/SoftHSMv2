@@ -55,6 +55,9 @@
 #include "OSSLGOSTR3411.h"
 #include "OSSLGOST.h"
 #endif
+#ifdef WITH_EDDSA
+#include "OSSLEDDSA.h"
+#endif
 
 #include <algorithm>
 #include <string.h>
@@ -138,6 +141,25 @@ OSSLCryptoFactory::OSSLCryptoFactory()
 	// Initialise OpenSSL
 	OpenSSL_add_all_algorithms();
 
+	// Make sure RDRAND is loaded first
+	ENGINE_load_rdrand();
+	// Locate the engine
+	rdrand_engine = ENGINE_by_id("rdrand");
+	// Use RDRAND if available
+	if (rdrand_engine != NULL)
+	{
+		// Initialize RDRAND engine
+		if (!ENGINE_init(rdrand_engine))
+		{
+			WARNING_MSG("ENGINE_init returned %lu\n", ERR_get_error());
+		}
+		// Set RDRAND engine as the default for RAND_ methods
+		else if (!ENGINE_set_default(rdrand_engine, ENGINE_METHOD_RAND))
+		{
+			WARNING_MSG("ENGINE_set_default returned %lu\n", ERR_get_error());
+		}
+	}
+
 	// Initialise the one-and-only RNG
 	rng = new OSSLRNG();
 
@@ -147,6 +169,10 @@ OSSLCryptoFactory::OSSLCryptoFactory()
 	ENGINE_load_builtin_engines();
 #else
 	OPENSSL_init_crypto(OPENSSL_INIT_ENGINE_ALL_BUILTIN |
+			    OPENSSL_INIT_ENGINE_RDRAND |
+			    OPENSSL_INIT_LOAD_CRYPTO_STRINGS |
+			    OPENSSL_INIT_ADD_ALL_CIPHERS |
+			    OPENSSL_INIT_ADD_ALL_DIGESTS |
 			    OPENSSL_INIT_LOAD_CONFIG, NULL);
 #endif
 
@@ -290,6 +316,10 @@ AsymmetricAlgorithm* OSSLCryptoFactory::getAsymmetricAlgorithm(AsymAlgo::Type al
 #ifdef WITH_GOST
 		case AsymAlgo::GOST:
 			return new OSSLGOST();
+#endif
+#ifdef WITH_EDDSA
+		case AsymAlgo::EDDSA:
+			return new OSSLEDDSA();
 #endif
 		default:
 			// No algorithm implementation is available

@@ -11,20 +11,27 @@ AC_DEFUN([ACX_OPENSSL_FIPS],[
 	# "reference the OpenSSL FIPS object module"
 
 	AC_LANG_PUSH([C])
-	AC_RUN_IFELSE([
-		AC_LANG_SOURCE([[
-			#include <openssl/crypto.h>
-			int main()
-			{
-				return !FIPS_mode_set(1);
-			}
-		]])
-	],[
-		AC_MSG_RESULT([Found working FIPS_mode_set()])
-	],[
-		AC_MSG_RESULT([FIPS_mode_set(1) failed])
-		AC_MSG_ERROR([OpenSSL library is not FIPS capable])
-	],[])
+	AC_CACHE_VAL([acx_cv_lib_openssl_fips],[
+		acx_cv_lib_openssl_fips=no
+		AC_RUN_IFELSE([
+			AC_LANG_SOURCE([[
+				#include <openssl/crypto.h>
+				int main()
+				{
+					return !FIPS_mode_set(1);
+				}
+			]])
+		],[
+			AC_MSG_RESULT([Found working FIPS_mode_set()])
+			acx_cv_lib_openssl_fips=yes
+		],[
+			AC_MSG_RESULT([FIPS_mode_set(1) failed])
+			AC_MSG_ERROR([OpenSSL library is not FIPS capable])
+		],[
+			AC_MSG_WARN([Cannot test, assuming FIPS])
+			acx_cv_lib_openssl_fips=yes
+		])
+	])
 	AC_LANG_POP([C])
 
 	# build missing fips_premain_dso tool
