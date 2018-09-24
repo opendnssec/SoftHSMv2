@@ -1,6 +1,6 @@
 NEWS for SoftHSM -- History of user visible changes
 
-SoftHSM 2.5.0
+SoftHSM 2.5.0 - 2018-09-24
 
 * Issue #323: Support for EDDSA with vendor defined mechanisms.
   (Patch from Francis Dupont)
