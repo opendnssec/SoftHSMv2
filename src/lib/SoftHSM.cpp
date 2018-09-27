@@ -365,10 +365,16 @@ SoftHSM::SoftHSM()
 SoftHSM::~SoftHSM()
 {
 	if (handleManager != NULL) delete handleManager;
+	handleManager = NULL;
 	if (sessionManager != NULL) delete sessionManager;
+	sessionManager = NULL;
 	if (slotManager != NULL) delete slotManager;
+	slotManager = NULL;
 	if (objectStore != NULL) delete objectStore;
+	objectStore = NULL;
 	if (sessionObjectStore != NULL) delete sessionObjectStore;
+	sessionObjectStore = NULL;
+
 	resetMutexFactoryCallbacks();
 }
 
