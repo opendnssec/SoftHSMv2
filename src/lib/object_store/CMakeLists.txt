@@ -32,8 +32,7 @@ endif(WITH_OBJECTSTORE_BACKEND_DB)
 
 include_directories(${INCLUDE_DIRS})
 
-add_library(${PROJECT_NAME}-obj OBJECT ${SOURCES})
-add_library(${PROJECT_NAME} STATIC $<TARGET_OBJECTS:${PROJECT_NAME}-obj>)
+add_library(${PROJECT_NAME} OBJECT ${SOURCES})
 target_link_libraries(${PROJECT_NAME} ${SQLITE3_LIBS})
 
 if(BUILD_TESTS)
