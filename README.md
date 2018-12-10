@@ -161,6 +161,6 @@ the source file name and line number.
 If the code is downloaded directly from the code repository, you have to
 prepare the configuration scripts before continuing with the real README.
 
-1. You need to install automake, autoconf, libtool, libtool-ltdl-devel, pkg-config.
+1. You need to install automake, autoconf, libtool, libtool-ltdl-devel (RHEL/CentOS), pkg-config.
 2. Run the command 'sh autogen.sh'
 3. Continue reading this README.
