@@ -69,6 +69,11 @@ endif(BUILD_TESTS)
 ###############################################################################
 # Install
 ###############################################################################
-install(TARGETS ${PROJECT_NAME} ${PROJECT_NAME}-static
+install(TARGETS ${PROJECT_NAME}
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/softhsm
         )
+if(ENABLE_STATIC)
+        install(TARGETS ${PROJECT_NAME}-static
+                DESTINATION ${CMAKE_INSTALL_LIBDIR}/softhsm
+                )
+endif()
