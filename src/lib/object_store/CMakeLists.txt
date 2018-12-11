@@ -33,7 +33,11 @@ endif(WITH_OBJECTSTORE_BACKEND_DB)
 include_directories(${INCLUDE_DIRS})
 
 add_library(${PROJECT_NAME} OBJECT ${SOURCES})
-target_link_libraries(${PROJECT_NAME} ${SQLITE3_LIBS})
+# Versions before CMake 3.12 cannot use target_link_libraries on object
+# libraries, a workaround exists in src/lib/CMakeLists.txt.
+if(NOT CMAKE_VERSION VERSION_LESS "3.12")
+        target_link_libraries(${PROJECT_NAME} ${SQLITE3_LIBS})
+endif()
 
 if(BUILD_TESTS)
     add_subdirectory(test)

@@ -41,6 +41,19 @@ set(STATIC_FILES softhsm_common
                  softhsm_slotmgr
                  )
 
+if(CMAKE_VERSION VERSION_LESS "3.12")
+        # Older CMake versions cannot link object libraries to a target, so pass
+        # the associated object files as source. Similarly, softhsm_crypto and
+        # softhsm_objectstore object library dependencies cannot be propagated
+        # so as a workaround explicitly specify it here.
+        foreach(libname IN LISTS STATIC_FILES)
+                list(APPEND SOURCES $<TARGET_OBJECTS:${libname}>)
+        endforeach()
+        # Older CMake versions forbid library dependencies on object libraries,
+        # therefore repeat softhsm_crypto and softhsm_objectstore dependencies.
+        set(STATIC_FILES ${CRYPTO_LIBS} ${SQLITE3_LIBS})
+endif()
+
 
 ###############################################################################
 # Static Library Config
