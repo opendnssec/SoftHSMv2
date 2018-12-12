@@ -34,6 +34,7 @@
 #define _SOFTHSM_V2_BOTANEDPRIVATEKEY_H
 
 #include "config.h"
+#ifdef WITH_EDDSA
 #include "EDPrivateKey.h"
 #include <botan/pk_keys.h>
 
@@ -82,4 +83,5 @@ private:
 	// Create the Botan representation of the key
 	void createBotanKey();
 };
+#endif
 #endif // !_SOFTHSM_V2_BOTANEDPRIVATEKEY_H

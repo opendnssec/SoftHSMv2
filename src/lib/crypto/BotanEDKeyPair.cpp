@@ -31,6 +31,7 @@
  *****************************************************************************/
 
 #include "config.h"
+#ifdef WITH_EDDSA
 #include "log.h"
 #include "BotanEDKeyPair.h"
 
@@ -67,3 +68,4 @@ const PrivateKey* BotanEDKeyPair::getConstPrivateKey() const
 {
 	return &privKey;
 }
+#endif

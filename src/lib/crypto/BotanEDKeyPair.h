@@ -34,6 +34,7 @@
 #define _SOFTHSM_V2_BOTANEDKEYPAIR_H
 
 #include "config.h"
+#ifdef WITH_EDDSA
 #include "AsymmetricKeyPair.h"
 #include "BotanEDPublicKey.h"
 #include "BotanEDPrivateKey.h"
@@ -62,5 +63,6 @@ private:
 	// The private key
 	BotanEDPrivateKey privKey;
 };
+#endif
 #endif // !_SOFTHSM_V2_BOTANEDKEYPAIR_H
 
