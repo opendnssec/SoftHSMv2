@@ -32,30 +32,34 @@ set(SOURCES access.cpp
             SoftHSM.cpp
             )
 
-set(DEPENDENCIES softhsm_common-obj
-                 softhsm_crypto-obj
-                 softhsm_datamgr-obj
-                 softhsm_handlemgr-obj
-                 softhsm_objectstore-obj
-                 softhsm_sessionmgr-obj
-                 softhsm_slotmgr-obj
+set(STATIC_FILES softhsm_common
+                 softhsm_crypto
+                 softhsm_datamgr
+                 softhsm_handlemgr
+                 softhsm_objectstore
+                 softhsm_sessionmgr
+                 softhsm_slotmgr
                  )
 
-set(OBJECT_FILES $<TARGET_OBJECTS:softhsm_common-obj>
-                 $<TARGET_OBJECTS:softhsm_crypto-obj>
-                 $<TARGET_OBJECTS:softhsm_datamgr-obj>
-                 $<TARGET_OBJECTS:softhsm_handlemgr-obj>
-                 $<TARGET_OBJECTS:softhsm_objectstore-obj>
-                 $<TARGET_OBJECTS:softhsm_sessionmgr-obj>
-                 $<TARGET_OBJECTS:softhsm_slotmgr-obj>
-                 )
+if(CMAKE_VERSION VERSION_LESS "3.12")
+        # Older CMake versions cannot link object libraries to a target, so pass
+        # the associated object files as source. Similarly, softhsm_crypto and
+        # softhsm_objectstore object library dependencies cannot be propagated
+        # so as a workaround explicitly specify it here.
+        foreach(libname IN LISTS STATIC_FILES)
+                list(APPEND SOURCES $<TARGET_OBJECTS:${libname}>)
+        endforeach()
+        # Older CMake versions forbid library dependencies on object libraries,
+        # therefore repeat softhsm_crypto and softhsm_objectstore dependencies.
+        set(STATIC_FILES ${CRYPTO_LIBS} ${SQLITE3_LIBS})
+endif()
 
 
 ###############################################################################
 # Static Library Config
 ###############################################################################
-add_library(${PROJECT_NAME}-static STATIC ${SOURCES} ${OBJECT_FILES})
-add_dependencies(${PROJECT_NAME}-static ${DEPENDENCIES})
+add_library(${PROJECT_NAME}-static STATIC ${SOURCES})
+target_link_libraries(${PROJECT_NAME}-static ${STATIC_FILES})
 set_target_properties(${PROJECT_NAME}-static
                       PROPERTIES OUTPUT_NAME ${PROJECT_NAME}
                       )
@@ -64,8 +68,8 @@ generate_export_header(${PROJECT_NAME}-static)
 ###############################################################################
 # Shared Library Config
 ###############################################################################
-add_library(${PROJECT_NAME} SHARED ${SOURCES} ${OBJECT_FILES})
-add_dependencies(${PROJECT_NAME} ${DEPENDENCIES})
+add_library(${PROJECT_NAME} SHARED ${SOURCES})
+target_link_libraries(${PROJECT_NAME} ${STATIC_FILES})
 generate_export_header(${PROJECT_NAME})
 
 ###############################################################################
@@ -78,6 +82,11 @@ endif(BUILD_TESTS)
 ###############################################################################
 # Install
 ###############################################################################
-install(TARGETS ${PROJECT_NAME} ${PROJECT_NAME}-static
+install(TARGETS ${PROJECT_NAME}
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/softhsm
         )
+if(ENABLE_STATIC)
+        install(TARGETS ${PROJECT_NAME}-static
+                DESTINATION ${CMAKE_INSTALL_LIBDIR}/softhsm
+                )
+endif()

@@ -16,8 +16,7 @@ set(SOURCES Configuration.cpp
 
 include_directories(${INCLUDE_DIRS})
 
-add_library(${PROJECT_NAME}-obj OBJECT ${SOURCES})
-add_library(${PROJECT_NAME} STATIC $<TARGET_OBJECTS:${PROJECT_NAME}-obj>)
+add_library(${PROJECT_NAME} OBJECT ${SOURCES})
 
 set(softhsmtokendir ${DEFAULT_TOKENDIR})
 set(default_softhsm2_conf ${CMAKE_INSTALL_FULL_SYSCONFDIR}/softhsm2.conf)
