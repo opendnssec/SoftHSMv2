@@ -41,11 +41,7 @@ AC_DEFUN([ACX_BOTAN_ECC],[
 			acx_cv_lib_botan_ecc_support=yes
 		],[
 			AC_MSG_RESULT([Cannot find P256])
-			AC_MSG_ERROR([
-Botan library has no valid ECC support. Please upgrade to a later version
-of Botan, above or including version 1.10.6 or 1.11.5.
-Alternatively disable ECC support in SoftHSM with --disable-ecc
-])
+			acx_cv_lib_botan_ecc_support=no
 		],[
 			AC_MSG_WARN([Cannot test, assuming P256])
 			acx_cv_lib_botan_ecc_support=yes
@@ -55,4 +51,5 @@ Alternatively disable ECC support in SoftHSM with --disable-ecc
 
 	CPPFLAGS=$tmp_CPPFLAGS
 	LIBS=$tmp_LIBS
+	have_lib_botan_ecc_support="${acx_cv_lib_botan_ecc_support}"
 ])

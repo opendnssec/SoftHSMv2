@@ -31,7 +31,7 @@ AC_DEFUN([ACX_OPENSSL_ECC],[
 			acx_cv_lib_openssl_ecc_support=yes
 		],[
 			AC_MSG_RESULT([Cannot find P256, P384, or P521])
-			AC_MSG_ERROR([OpenSSL library has no ECC support])
+			acx_cv_lib_openssl_ecc_support=no
 		],[
 			AC_MSG_WARN([Cannot test, assuming P256, P384, and P521])
 			acx_cv_lib_openssl_ecc_support=yes
@@ -41,4 +41,5 @@ AC_DEFUN([ACX_OPENSSL_ECC],[
 
 	CPPFLAGS=$tmp_CPPFLAGS
 	LIBS=$tmp_LIBS
+	have_lib_openssl_ecc_support="${acx_cv_lib_openssl_ecc_support}"
 ])

@@ -32,11 +32,7 @@ AC_DEFUN([ACX_BOTAN_EDDSA],[
 			acx_cv_lib_botan_eddsa_support=yes
 		],[
 			AC_MSG_RESULT([Cannot find Ed25519])
-			AC_MSG_ERROR([
-Botan library has no valid EDDSA support. Please upgrade to a later version
-of Botan with EDDSA support.
-Alternatively disable EDDSA support in SoftHSM with --disable-eddsa
-])
+			acx_cv_lib_botan_eddsa_support=no
 		],[
 			AC_MSG_WARN([Cannot test, assuming EDDSA])
 			acx_cv_lib_botan_eddsa_support=yes
@@ -46,4 +42,5 @@ Alternatively disable EDDSA support in SoftHSM with --disable-eddsa
 
 	CPPFLAGS=$tmp_CPPFLAGS
 	LIBS=$tmp_LIBS
+	have_lib_botan_eddsa_support="${acx_cv_lib_botan_eddsa_support}"
 ])
