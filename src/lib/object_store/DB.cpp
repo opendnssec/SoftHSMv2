@@ -848,7 +848,7 @@ bool DB::Connection::connect(const char *
 		return false;
 	}
 
-	rv = sqlite3_busy_timeout(_db, 15000); // 15 seconds
+	rv = sqlite3_busy_timeout(_db, 180000); // 3 minutes
 	if (rv != SQLITE_OK) {
 		reportErrorDB(_db);
 		return false;
