@@ -42,11 +42,8 @@
 OSSLEVPSymmetricAlgorithm::OSSLEVPSymmetricAlgorithm()
 {
 	pCurCTX = NULL;
-	maximumBytes = BN_new();
-	BN_one(maximumBytes);
-	BN_set_negative(maximumBytes, 1);
-	counterBytes = BN_new();
-	BN_zero(counterBytes);
+	maximumBytes = NULL;
+	counterBytes = NULL;
 }
 
 // Destructor
@@ -55,6 +52,52 @@ OSSLEVPSymmetricAlgorithm::~OSSLEVPSymmetricAlgorithm()
 	EVP_CIPHER_CTX_free(pCurCTX);
 	BN_free(maximumBytes);
 	BN_free(counterBytes);
+}
+
+void OSSLEVPSymmetricAlgorithm::counterBitsInit(const ByteString& iv, size_t counterBits)
+{
+	BN_free(maximumBytes);
+	maximumBytes = NULL;
+	BN_free(counterBytes);
+	counterBytes = NULL;
+
+	// Check the counter bits
+	if (counterBits > 0)
+	{
+		BIGNUM* counter = OSSL::byteString2bn(iv);
+		BN_mask_bits(counter, counterBits);
+
+		// Reverse the bits
+		while (counterBits > 0)
+		{
+			counterBits--;
+			if (BN_is_bit_set(counter, counterBits))
+			{
+				BN_clear_bit(counter, counterBits);
+			}
+			else
+			{
+				BN_set_bit(counter, counterBits);
+			}
+		}
+
+		// Set the maximum bytes
+		BN_add_word(counter, 1);
+		BN_mul_word(counter, getBlockSize());
+		maximumBytes = counter;
+		counterBytes = BN_new();
+		BN_zero(counterBytes);
+	}
+}
+
+void OSSLEVPSymmetricAlgorithm::clean()
+{
+		EVP_CIPHER_CTX_free(pCurCTX);
+		pCurCTX = NULL;
+		BN_free(maximumBytes);
+		maximumBytes = NULL;
+		BN_free(counterBytes);
+		counterBytes = NULL;
 }
 
 // Encryption functions
@@ -88,38 +131,7 @@ bool OSSLEVPSymmetricAlgorithm::encryptInit(const SymmetricKey* key, const SymMo
 		iv.wipe(getBlockSize());
 	}
 
-	// Check the counter bits
-	if (counterBits > 0)
-	{
-		BIGNUM* counter = OSSL::byteString2bn(iv);
-		BN_mask_bits(counter, counterBits);
-
-		// Reverse the bits
-		while (counterBits > 0)
-		{
-			counterBits--;
-			if (BN_is_bit_set(counter, counterBits))
-			{
-				BN_clear_bit(counter, counterBits);
-			}
-			else
-			{
-				BN_set_bit(counter, counterBits);
-			}
-		}
-
-		// Set the maximum bytes
-		BN_add_word(counter, 1);
-		BN_mul_word(counter, getBlockSize());
-		BN_copy(maximumBytes, counter);
-		BN_free(counter);
-		BN_zero(counterBytes);
-	}
-	else
-	{
-		BN_one(maximumBytes);
-		BN_set_negative(maximumBytes, 1);
-	}
+	counterBitsInit(iv, counterBits);
 
 	// Determine the cipher class
 	const EVP_CIPHER* cipher = getCipher();
@@ -167,8 +179,7 @@ bool OSSLEVPSymmetricAlgorithm::encryptInit(const SymmetricKey* key, const SymMo
 	{
 		ERROR_MSG("Failed to initialise EVP encrypt operation: %s", ERR_error_string(ERR_get_error(), NULL));
 
-		EVP_CIPHER_CTX_free(pCurCTX);
-		pCurCTX = NULL;
+		clean();
 
 		ByteString dummy;
 		SymmetricAlgorithm::encryptFinal(dummy);
@@ -185,8 +196,7 @@ bool OSSLEVPSymmetricAlgorithm::encryptInit(const SymmetricKey* key, const SymMo
 		{
 			ERROR_MSG("Failed to update with AAD: %s", ERR_error_string(ERR_get_error(), NULL));
 
-			EVP_CIPHER_CTX_free(pCurCTX);
-			pCurCTX = NULL;
+			clean();
 
 			ByteString dummy;
 			SymmetricAlgorithm::encryptFinal(dummy);
@@ -202,9 +212,7 @@ bool OSSLEVPSymmetricAlgorithm::encryptUpdate(const ByteString& data, ByteString
 {
 	if (!SymmetricAlgorithm::encryptUpdate(data, encryptedData))
 	{
-		EVP_CIPHER_CTX_free(pCurCTX);
-		pCurCTX = NULL;
-
+		clean();
 		return false;
 	}
 
@@ -216,7 +224,7 @@ bool OSSLEVPSymmetricAlgorithm::encryptUpdate(const ByteString& data, ByteString
 	}
 
 	// Count number of bytes written
-	if (!BN_is_negative(maximumBytes))
+	if (maximumBytes)
 	{
 		BN_add_word(counterBytes, data.size());
 	}
@@ -229,8 +237,7 @@ bool OSSLEVPSymmetricAlgorithm::encryptUpdate(const ByteString& data, ByteString
 	{
 		ERROR_MSG("EVP_EncryptUpdate failed: %s", ERR_error_string(ERR_get_error(), NULL));
 
-		EVP_CIPHER_CTX_free(pCurCTX);
-		pCurCTX = NULL;
+		clean();
 
 		ByteString dummy;
 		SymmetricAlgorithm::encryptFinal(dummy);
@@ -252,9 +259,7 @@ bool OSSLEVPSymmetricAlgorithm::encryptFinal(ByteString& encryptedData)
 
 	if (!SymmetricAlgorithm::encryptFinal(encryptedData))
 	{
-		EVP_CIPHER_CTX_free(pCurCTX);
-		pCurCTX = NULL;
-
+		clean();
 		return false;
 	}
 
@@ -267,8 +272,7 @@ bool OSSLEVPSymmetricAlgorithm::encryptFinal(ByteString& encryptedData)
 	{
 		ERROR_MSG("EVP_EncryptFinal failed: %s", ERR_error_string(ERR_get_error(), NULL));
 
-		EVP_CIPHER_CTX_free(pCurCTX);
-		pCurCTX = NULL;
+		clean();
 
 		return false;
 	}
@@ -284,8 +288,7 @@ bool OSSLEVPSymmetricAlgorithm::encryptFinal(ByteString& encryptedData)
 		encryptedData += tag;
 	}
 
-	EVP_CIPHER_CTX_free(pCurCTX);
-	pCurCTX = NULL;
+	clean();
 
 	return true;
 }
@@ -321,38 +324,7 @@ bool OSSLEVPSymmetricAlgorithm::decryptInit(const SymmetricKey* key, const SymMo
 		iv.wipe(getBlockSize());
 	}
 
-	// Check the counter bits
-	if (counterBits > 0)
-	{
-		BIGNUM* counter = OSSL::byteString2bn(iv);
-		BN_mask_bits(counter, counterBits);
-
-		// Reverse the bits
-		while (counterBits > 0)
-		{
-			counterBits--;
-			if (BN_is_bit_set(counter, counterBits))
-			{
-				BN_clear_bit(counter, counterBits);
-			}
-			else
-			{
-				BN_set_bit(counter, counterBits);
-			}
-		}
-
-		// Set the maximum bytes
-		BN_add_word(counter, 1);
-		BN_mul_word(counter, getBlockSize());
-		BN_copy(maximumBytes, counter);
-		BN_free(counter);
-		BN_zero(counterBytes);
-	}
-	else
-	{
-		BN_one(maximumBytes);
-		BN_set_negative(maximumBytes, 1);
-	}
+	counterBitsInit(iv, counterBits);
 
 	// Determine the cipher class
 	const EVP_CIPHER* cipher = getCipher();
@@ -400,8 +372,7 @@ bool OSSLEVPSymmetricAlgorithm::decryptInit(const SymmetricKey* key, const SymMo
 	{
 		ERROR_MSG("Failed to initialise EVP decrypt operation: %s", ERR_error_string(ERR_get_error(), NULL));
 
-		EVP_CIPHER_CTX_free(pCurCTX);
-		pCurCTX = NULL;
+		clean();
 
 		ByteString dummy;
 		SymmetricAlgorithm::decryptFinal(dummy);
@@ -418,8 +389,7 @@ bool OSSLEVPSymmetricAlgorithm::decryptInit(const SymmetricKey* key, const SymMo
 		{
 			ERROR_MSG("Failed to update with AAD: %s", ERR_error_string(ERR_get_error(), NULL));
 
-			EVP_CIPHER_CTX_free(pCurCTX);
-			pCurCTX = NULL;
+			clean();
 
 			ByteString dummy;
 			SymmetricAlgorithm::decryptFinal(dummy);
@@ -435,9 +405,7 @@ bool OSSLEVPSymmetricAlgorithm::decryptUpdate(const ByteString& encryptedData, B
 {
 	if (!SymmetricAlgorithm::decryptUpdate(encryptedData, data))
 	{
-		EVP_CIPHER_CTX_free(pCurCTX);
-		pCurCTX = NULL;
-
+		clean();
 		return false;
 	}
 
@@ -449,7 +417,7 @@ bool OSSLEVPSymmetricAlgorithm::decryptUpdate(const ByteString& encryptedData, B
 	}
 
 	// Count number of bytes written
-	if (!BN_is_negative(maximumBytes))
+	if (maximumBytes)
 	{
 		BN_add_word(counterBytes, encryptedData.size());
 	}
@@ -465,8 +433,7 @@ bool OSSLEVPSymmetricAlgorithm::decryptUpdate(const ByteString& encryptedData, B
 	{
 		ERROR_MSG("EVP_DecryptUpdate failed: %s", ERR_error_string(ERR_get_error(), NULL));
 
-		EVP_CIPHER_CTX_free(pCurCTX);
-		pCurCTX = NULL;
+		clean();
 
 		ByteString dummy;
 		SymmetricAlgorithm::decryptFinal(dummy);
@@ -491,9 +458,7 @@ bool OSSLEVPSymmetricAlgorithm::decryptFinal(ByteString& data)
 
 	if (!SymmetricAlgorithm::decryptFinal(data))
 	{
-		EVP_CIPHER_CTX_free(pCurCTX);
-		pCurCTX = NULL;
-
+		clean();
 		return false;
 	}
 
@@ -505,8 +470,7 @@ bool OSSLEVPSymmetricAlgorithm::decryptFinal(ByteString& data)
 		{
 			ERROR_MSG("Tag bytes (%d) does not fit in AEAD buffer (%d)", tagBytes, aeadBuffer.size());
 
-			EVP_CIPHER_CTX_free(pCurCTX);
-			pCurCTX = NULL;
+			clean();
 
 			return false;
 		}
@@ -522,8 +486,7 @@ bool OSSLEVPSymmetricAlgorithm::decryptFinal(ByteString& data)
 		{
 			ERROR_MSG("EVP_DecryptUpdate failed: %s", ERR_error_string(ERR_get_error(), NULL));
 
-			EVP_CIPHER_CTX_free(pCurCTX);
-			pCurCTX = NULL;
+			clean();
 
 			return false;
 		}
@@ -542,8 +505,7 @@ bool OSSLEVPSymmetricAlgorithm::decryptFinal(ByteString& data)
 	{
 		ERROR_MSG("EVP_DecryptFinal failed (0x%08X): %s", rv, ERR_error_string(ERR_get_error(), NULL));
 
-		EVP_CIPHER_CTX_free(pCurCTX);
-		pCurCTX = NULL;
+		clean();
 
 		return false;
 	}
@@ -551,8 +513,7 @@ bool OSSLEVPSymmetricAlgorithm::decryptFinal(ByteString& data)
 	// Resize the output block
 	data.resize(initialSize + outLen);
 
-	EVP_CIPHER_CTX_free(pCurCTX);
-	pCurCTX = NULL;
+	clean();
 
 	return true;
 }
@@ -560,7 +521,7 @@ bool OSSLEVPSymmetricAlgorithm::decryptFinal(ByteString& data)
 // Check if more bytes of data can be encrypted
 bool OSSLEVPSymmetricAlgorithm::checkMaximumBytes(unsigned long bytes)
 {
-	if (BN_is_negative(maximumBytes)) return true;
+	if (maximumBytes) return true;
 
 	BIGNUM* bigNum = BN_new();
 	BN_copy(bigNum, counterBytes);

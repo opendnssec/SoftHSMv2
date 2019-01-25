@@ -69,6 +69,9 @@ protected:
 	virtual const EVP_CIPHER* getCipher() const = 0;
 
 private:
+	void counterBitsInit(const ByteString& IV, size_t counterBits);
+	void clean();
+
 	// The current EVP context
 	EVP_CIPHER_CTX* pCurCTX;
 
