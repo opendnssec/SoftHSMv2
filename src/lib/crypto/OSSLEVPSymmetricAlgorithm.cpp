@@ -49,9 +49,15 @@ OSSLEVPSymmetricAlgorithm::OSSLEVPSymmetricAlgorithm()
 // Destructor
 OSSLEVPSymmetricAlgorithm::~OSSLEVPSymmetricAlgorithm()
 {
-	EVP_CIPHER_CTX_free(pCurCTX);
-	BN_free(maximumBytes);
-	BN_free(counterBytes);
+	/* In case of custom allocator from BIND, even NULL pointer might crash
+	 * the library if freed after deinitialization. Do not rely on null handling
+	 * as a workaround. */
+	if (pCurCTX)
+		EVP_CIPHER_CTX_free(pCurCTX);
+	if (maximumBytes)
+		BN_free(maximumBytes);
+	if (counterBytes)
+		BN_free(counterBytes);
 }
 
 void OSSLEVPSymmetricAlgorithm::counterBitsInit(const ByteString& iv, size_t counterBits)
