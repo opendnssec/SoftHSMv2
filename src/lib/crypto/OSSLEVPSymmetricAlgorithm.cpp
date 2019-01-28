@@ -527,7 +527,7 @@ bool OSSLEVPSymmetricAlgorithm::decryptFinal(ByteString& data)
 // Check if more bytes of data can be encrypted
 bool OSSLEVPSymmetricAlgorithm::checkMaximumBytes(unsigned long bytes)
 {
-	if (maximumBytes) return true;
+	if (maximumBytes == NULL) return true;
 
 	BIGNUM* bigNum = BN_new();
 	BN_copy(bigNum, counterBytes);
