@@ -1,6 +1,6 @@
 NEWS for SoftHSM -- History of user visible changes
 
-SoftHSM 2.6.0
+SoftHSM develop
 
 * Issue #438: Detect crypto algorithms by default.
   (Patch from Alon Bar-Lev)
