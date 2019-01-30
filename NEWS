@@ -1,5 +1,25 @@
 NEWS for SoftHSM -- History of user visible changes
 
+SoftHSM develop
+
+* Issue #438: Detect crypto algorithms by default.
+  (Patch from Alon Bar-Lev)
+
+Bugfixes:
+* Issue #418: Set fields to NULL to avoid double free.
+  (Patch from Brian J Murray)
+* Issue #423: ENGINE_load_rdrand is not supported with older openssl.
+  (Patch from Alon Bar-Lev)
+* Issue #429: Updated prerequisite to build from repository.
+  (Patch from Dharmesh Khandelwal)
+* Issue #434: Fix build issues with CMake.
+  (Patch from Peter Wu)
+* Issue #435: Fix botan build without EDDSA.
+  (Patch from Peter Wu)
+* Issue #442: Release resources from OSSLEVPSymmetricAlgorithm.
+  (Patch from Petr Menšík)
+
+
 SoftHSM 2.5.0 - 2018-09-24
 
 * Issue #323: Support for EDDSA with vendor defined mechanisms.
