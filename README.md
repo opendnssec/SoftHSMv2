@@ -71,9 +71,9 @@ Options:
 	--disable-non-paged-memory
 				Disable non-paged memory for secure storage
 				(default enabled)
-	--disable-ecc		Disable support for ECC (default enabled)
-	--disable-eddsa		Disable support for EDDSA (default enabled)
-	--disable-gost		Disable support for GOST (default enabled)
+	--enable-ecc		Enable support for ECC (default detect)
+	--enable-gost		Enable support for GOST (default detect)
+	--enable-eddsa		Enable support for EDDSA (default detect)
 	--disable-visibility	Disable hidden visibilty link mode [enabled]
 	--with-crypto-backend	Select crypto backend (openssl|botan)
 	--with-openssl=PATH	Specify prefix of path of OpenSSL

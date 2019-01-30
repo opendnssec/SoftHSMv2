@@ -86,7 +86,7 @@ AC_DEFUN([ACX_CRYPTO_BACKEND],[
 		esac
 		case "${enable_eddsa}-${have_lib_openssl_ed25519_support}-${have_lib_openssl_ed448_support}" in
 			yes*-no*) AC_MSG_ERROR([OpenSSL library has no EDDSA support]);;
-			detect-yes-yes) enable_ecc="yes";;
+			detect-yes-yes) enable_eddsa="yes";;
 			detect*-no*) enable_eddsa="no";;
 		esac
 
