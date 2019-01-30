@@ -59,11 +59,18 @@ The unit tests requires CppUnit.
 
 ## Installation
 
+### Building from the repository
+
+If the code is downloaded directly from the code repository, you have to
+prepare the configuration scripts before continuing.
+
+1. You need to install automake, autoconf, libtool, libtool-ltdl-devel (RHEL/CentOS), pkg-config.
+2. Run the command 'sh autogen.sh'
+
 ### Configure
 
 Configure the installation/compilation scripts:
 
-	sh ./autogen.sh
 	./configure
 
 Options:
@@ -154,13 +161,3 @@ softhsm2.conf. Backup can thus be done as a regular file copy.
 Log information is sent to syslog or the Windows event log and the log
 level is set in the configuration file. Each log event is prepended with
 the source file name and line number.
-
-
-## Building from the repository
-
-If the code is downloaded directly from the code repository, you have to
-prepare the configuration scripts before continuing with the real README.
-
-1. You need to install automake, autoconf, libtool, libtool-ltdl-devel (RHEL/CentOS), pkg-config.
-2. Run the command 'sh autogen.sh'
-3. Continue reading this README.
