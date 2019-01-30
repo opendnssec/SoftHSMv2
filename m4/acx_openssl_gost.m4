@@ -59,7 +59,7 @@ AC_DEFUN([ACX_OPENSSL_GOST],[
 			acx_cv_lib_openssl_gost_support=yes
 		],[
 			AC_MSG_RESULT([Cannot find GOST engine])
-			AC_MSG_ERROR([OpenSSL library has no GOST support])
+			acx_cv_lib_openssl_gost_support=no
 		],[
 			AC_MSG_WARN([Cannot test, assuming GOST engine])
 			acx_cv_lib_openssl_gost_support=yes
@@ -69,4 +69,5 @@ AC_DEFUN([ACX_OPENSSL_GOST],[
 
 	CPPFLAGS=$tmp_CPPFLAGS
 	LIBS=$tmp_LIBS
+	have_lib_openssl_gost_support="${acx_cv_lib_openssl_gost_support}"
 ])

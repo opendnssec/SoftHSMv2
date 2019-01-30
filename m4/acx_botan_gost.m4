@@ -42,11 +42,7 @@ AC_DEFUN([ACX_BOTAN_GOST],[
 			acx_cv_lib_botan_gost_support=yes
 		],[
 			AC_MSG_RESULT([Cannot find GOST])
-			AC_MSG_ERROR([
-Botan library has no valid GOST support. Please upgrade to a later version
-of Botan, above or including version 1.10.6 or 1.11.5.
-Alternatively disable GOST support in SoftHSM with --disable-gost
-])
+			acx_cv_lib_botan_gost_support=no
 		],[
 			AC_MSG_WARN([Cannot test, assuming GOST])
 			acx_cv_lib_botan_gost_support=yes
@@ -56,4 +52,5 @@ Alternatively disable GOST support in SoftHSM with --disable-gost
 
 	CPPFLAGS=$tmp_CPPFLAGS
 	LIBS=$tmp_LIBS
+	have_lib_botan_gost_support="${acx_cv_lib_botan_gost_support}"
 ])

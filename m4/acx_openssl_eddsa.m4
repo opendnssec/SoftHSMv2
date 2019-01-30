@@ -1,5 +1,5 @@
 AC_DEFUN([ACX_OPENSSL_EDDSA],[
-	AC_MSG_CHECKING(for OpenSSL EDDSA support)
+	AC_MSG_CHECKING(for OpenSSL EDDSA ED25519 support)
 
 	tmp_CPPFLAGS=$CPPFLAGS
 	tmp_LIBS=$LIBS
@@ -29,12 +29,14 @@ AC_DEFUN([ACX_OPENSSL_EDDSA],[
 			acx_cv_lib_openssl_ed25519_support=yes
 		],[
 			AC_MSG_RESULT([Cannot find ED25519])
-			AC_MSG_ERROR([OpenSSL library has no EDDSA support])
+			acx_cv_lib_openssl_ed25519_support=no
 		],[
 			AC_MSG_WARN([Cannot test, ED25519])
 			acx_cv_lib_openssl_ed25519_support=yes
 		])
 	])
+
+	AC_MSG_CHECKING(for OpenSSL EDDSA ED448 support)
 	AC_CACHE_VAL([acx_cv_lib_openssl_ed448_support],[
 		acx_cv_lib_openssl_ed448_support=no
 		AC_RUN_IFELSE([
@@ -56,6 +58,7 @@ AC_DEFUN([ACX_OPENSSL_EDDSA],[
 			acx_cv_lib_openssl_ed448_support=yes
 		],[
 			AC_MSG_RESULT([Cannot find ED448])
+			acx_cv_lib_openssl_ed448_support=no
 		],[
 			AC_MSG_WARN([Cannot test, ED448])
 			acx_cv_lib_openssl_ed448_support=yes
@@ -65,4 +68,6 @@ AC_DEFUN([ACX_OPENSSL_EDDSA],[
 
 	CPPFLAGS=$tmp_CPPFLAGS
 	LIBS=$tmp_LIBS
+	have_lib_openssl_ed25519_support="${acx_cv_lib_openssl_ed25519_support}"
+	have_lib_openssl_ed448_support="${acx_cv_lib_openssl_ed448_support}"
 ])
