@@ -340,8 +340,10 @@ CK_RV P11Attribute::retrieve(Token *token, bool isPrivate, CK_VOID_PTR pValue, C
 					ERROR_MSG("Internal error: failed to decrypt private attribute value");
 					return CKR_GENERAL_ERROR;
 				}
-				const unsigned char* attrPtr = value.const_byte_str();
-				memcpy(pValue,attrPtr,attrSize);
+				if (value.size() !=  0) {
+					const unsigned char* attrPtr = value.const_byte_str();
+					memcpy(pValue,attrPtr,attrSize);
+				}
 			}
 			else if (attr.getByteStringValue().size() != 0)
 			{
