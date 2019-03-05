@@ -648,33 +648,7 @@ CK_RV SoftHSM::C_GetTokenInfo(CK_SLOT_ID slotID, CK_TOKEN_INFO_PTR pInfo)
 CK_RV SoftHSM::C_GetMechanismList(CK_SLOT_ID slotID, CK_MECHANISM_TYPE_PTR pMechanismList, CK_ULONG_PTR pulCount)
 {
 	// A list with the supported mechanisms
-	CK_ULONG nrSupportedMechanisms = 62;
-#ifdef WITH_ECC
-	nrSupportedMechanisms += 2;
-#endif
-#if defined(WITH_ECC) || defined(WITH_EDDSA)
-	nrSupportedMechanisms += 1;
-#endif
-#ifdef WITH_FIPS
-	nrSupportedMechanisms -= 9;
-#endif
-#ifdef WITH_GOST
-	nrSupportedMechanisms += 5;
-#endif
-#ifdef HAVE_AES_KEY_WRAP_PAD
-	nrSupportedMechanisms += 1;
-#endif
-#ifdef WITH_RAW_PSS
-	nrSupportedMechanisms += 1; // CKM_RSA_PKCS_PSS
-#endif
-#ifdef WITH_AES_GCM
-	nrSupportedMechanisms += 1;
-#endif
-#ifdef WITH_EDDSA
-	nrSupportedMechanisms += 2;
-#endif
-
-	CK_MECHANISM_TYPE supportedMechanisms[] =
+	std::list<CK_MECHANISM_TYPE> supportedMechanisms =
 	{
 #ifndef WITH_FIPS
 		CKM_MD5,
@@ -776,6 +750,8 @@ CK_RV SoftHSM::C_GetMechanismList(CK_SLOT_ID slotID, CK_MECHANISM_TYPE_PTR pMech
 		CKM_EDDSA,
 #endif
 	};
+	CK_ULONG nrSupportedMechanisms = supportedMechanisms.size();
+
 
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
 	if (pulCount == NULL_PTR) return CKR_ARGUMENTS_BAD;
@@ -802,9 +778,11 @@ CK_RV SoftHSM::C_GetMechanismList(CK_SLOT_ID slotID, CK_MECHANISM_TYPE_PTR pMech
 
 	*pulCount = nrSupportedMechanisms;
 
-	for (CK_ULONG i = 0; i < nrSupportedMechanisms; i ++)
+	int i = 0;
+	auto it = supportedMechanisms.cbegin();
+	for (; it != supportedMechanisms.cend(); it++, i++)
 	{
-		pMechanismList[i] = supportedMechanisms[i];
+		pMechanismList[i] = *it;
 	}
 
 	return CKR_OK;
