@@ -37,6 +37,14 @@
 #include "log.h"
 #include "ByteString.h"
 
+/**
+ * Backward compatible fix: byte_str()/const_byte_str() to
+ * return a non-NULL pointer, even if size() == 0, and yet
+ * be compatible with -Wp,-D_GLIBCXX_ASSERTIONS stricter
+ * bounds checking
+ */
+static unsigned char sentinel[1];
+
 // Constructors
 ByteString::ByteString()
 {
@@ -187,13 +195,21 @@ unsigned char& ByteString::operator[](size_t pos)
 // Return the byte string data
 unsigned char* ByteString::byte_str()
 {
-	return &byteString[0];
+	if (byteString.size() != 0) {
+		return &byteString[0];
+	} else {
+		return (unsigned char*) sentinel;
+	}
 }
 
 // Return the const byte string
 const unsigned char* ByteString::const_byte_str() const
 {
-	return (const unsigned char*) &byteString[0];
+	if (byteString.size() != 0) {
+		return (const unsigned char*) &byteString[0];
+	} else {
+		return (const unsigned char*) sentinel;
+	}
 }
 
 // Return a hexadecimal character representation of the string
