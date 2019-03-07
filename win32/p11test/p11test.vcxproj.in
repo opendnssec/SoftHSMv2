@@ -65,6 +65,7 @@
       <Command>
 copy ..\..\src\lib\test\softhsm2.conf.win32 "$(TargetDir)\softhsm2.conf"
 copy ..\..\src\lib\test\softhsm2-alt.conf.win32 "$(TargetDir)\softhsm2-alt.conf"
+copy ..\..\src\lib\test\softhsm2-mech.conf.win32 "$(TargetDir)\softhsm2-mech.conf"
 mkdir "$(TargetDir)\tokens" 2&gt; nul
 copy ..\..\src\lib\test\tokens\dummy.in "$(TargetDir)\tokens\dummy"
       </Command>
@@ -95,6 +96,7 @@ copy ..\..\src\lib\test\tokens\dummy.in "$(TargetDir)\tokens\dummy"
       <Command>
 copy ..\..\src\lib\test\softhsm2.conf.win32 "$(TargetDir)\softhsm2.conf"
 copy ..\..\src\lib\test\softhsm2-alt.conf.win32 "$(TargetDir)\softhsm2-alt.conf"
+copy ..\..\src\lib\test\softhsm2-mech.conf.win32 "$(TargetDir)\softhsm2-mech.conf"
 mkdir "$(TargetDir)\tokens" 2&gt; nul
 copy ..\..\src\lib\test\tokens\dummy.in "$(TargetDir)\tokens\dummy"
       </Command>

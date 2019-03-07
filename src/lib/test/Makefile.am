@@ -37,5 +37,6 @@ TESTS = 			p11test
 EXTRA_DIST =			$(srcdir)/CMakeLists.txt \
 				$(srcdir)/*.h \
 				$(srcdir)/softhsm2-alt.conf.win32 \
+				$(srcdir)/softhsm2-mech.conf.win32 \
 				$(srcdir)/softhsm2.conf.win32 \
 				$(srcdir)/tokens/dummy.in

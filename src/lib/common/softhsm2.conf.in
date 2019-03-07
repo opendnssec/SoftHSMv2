@@ -8,3 +8,6 @@ log.level = ERROR
 
 # If CKF_REMOVABLE_DEVICE flag should be set
 slots.removable = false
+
+# Enable and disable PKCS#11 mechanisms using token.mechanisms.
+token.mechanisms = ALL
