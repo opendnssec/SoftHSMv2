@@ -689,6 +689,10 @@ void ObjectTests::testCreateObject()
 	CK_KEY_TYPE genKeyType = CKK_GENERIC_SECRET;
 	CK_BYTE keyPtr[128];
 	CK_ULONG keyLen = 128;
+	CK_MECHANISM_TYPE allowedMechs[] = {
+		CKM_RSA_PKCS_PSS,
+		CKM_SHA256_RSA_PKCS_PSS
+	};
 	CK_ATTRIBUTE attribs[] = {
 		{ CKA_EXTRACTABLE, &bFalse, sizeof(bFalse) },
 		{ CKA_CLASS, &secretClass, sizeof(secretClass) },
@@ -696,16 +700,19 @@ void ObjectTests::testCreateObject()
 		{ CKA_TOKEN, &bFalse, sizeof(bFalse) },
 		{ CKA_PRIVATE, &bTrue, sizeof(bTrue) },
 		{ CKA_SENSITIVE, &bTrue, sizeof(bTrue) },
-		{ CKA_VALUE, keyPtr, keyLen }
+		{ CKA_VALUE, keyPtr, keyLen },
+		{ CKA_ALLOWED_MECHANISMS, &allowedMechs, sizeof(allowedMechs) }
 	};
 
 	CK_BBOOL local;
 	CK_BBOOL always;
 	CK_BBOOL never;
+	CK_MECHANISM_TYPE mechs[2] = {};
 	CK_ATTRIBUTE getTemplate[] = {
 		{ CKA_LOCAL, &local, sizeof(local) },
 		{ CKA_ALWAYS_SENSITIVE, &always, sizeof(always) },
-		{ CKA_NEVER_EXTRACTABLE, &never, sizeof(never) }
+		{ CKA_NEVER_EXTRACTABLE, &never, sizeof(never) },
+		{ CKA_ALLOWED_MECHANISMS, &mechs, sizeof(mechs) }
 	};
 
 	// Just make sure that we finalize any previous tests
@@ -894,11 +901,13 @@ void ObjectTests::testCreateObject()
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// Check value
-	rv = CRYPTOKI_F_PTR( C_GetAttributeValue(hSession, hObject, getTemplate, 3) );
+	rv = CRYPTOKI_F_PTR( C_GetAttributeValue(hSession, hObject, getTemplate, 4) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 	CPPUNIT_ASSERT(local == CK_FALSE);
 	CPPUNIT_ASSERT(always == CK_FALSE);
 	CPPUNIT_ASSERT(never == CK_FALSE);
+	CPPUNIT_ASSERT(sizeof(allowedMechs) == getTemplate[3].ulValueLen);
+	CPPUNIT_ASSERT(memcmp(&allowedMechs, &mechs, sizeof(allowedMechs)) == 0);
 
 	// Destroy the secret object
 	rv = CRYPTOKI_F_PTR( C_DestroyObject(hSession,hObject) );
