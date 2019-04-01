@@ -407,9 +407,10 @@ bool DBToken::setUserPIN(ByteString userPINBlob)
 		return false;
 	}
 
-	// Retrieve flags from the database and reset flags related to tries and expiration of the SOPIN.
-	CK_ULONG flags = tokenObject.getAttribute(CKA_OS_TOKENFLAGS).getUnsignedLongValue()
-					| (CKF_USER_PIN_INITIALIZED & ~(CKF_USER_PIN_COUNT_LOW | CKF_USER_PIN_FINAL_TRY | CKF_USER_PIN_LOCKED | CKF_USER_PIN_TO_BE_CHANGED));
+	// Retrieve flags from the database and reset flags related to tries and expiration of the user PIN.
+	CK_ULONG flags = tokenObject.getAttribute(CKA_OS_TOKENFLAGS).getUnsignedLongValue();
+	flags |= CKF_USER_PIN_INITIALIZED;
+	flags &= ~(CKF_USER_PIN_COUNT_LOW | CKF_USER_PIN_FINAL_TRY | CKF_USER_PIN_LOCKED | CKF_USER_PIN_TO_BE_CHANGED);
 
 	OSAttribute changedTokenFlags(flags);
 	if (!tokenObject.setAttribute(CKA_OS_TOKENFLAGS, changedTokenFlags))
@@ -841,7 +842,7 @@ bool DBToken::resetToken(const ByteString& label)
 		return false;
 	}
 
-	// Retrieve flags from the database and reset flags related to tries and expiration of the SOPIN.
+	// Retrieve flags from the database and reset flags related to tries and expiration of the user PIN.
 	CK_ULONG flags = tokenObject.getAttribute(CKA_OS_TOKENFLAGS).getUnsignedLongValue()
 					& ~(CKF_USER_PIN_INITIALIZED | CKF_USER_PIN_COUNT_LOW | CKF_USER_PIN_FINAL_TRY | CKF_USER_PIN_LOCKED | CKF_USER_PIN_TO_BE_CHANGED);
 
