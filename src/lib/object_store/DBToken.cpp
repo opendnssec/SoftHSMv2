@@ -408,8 +408,9 @@ bool DBToken::setUserPIN(ByteString userPINBlob)
 	}
 
 	// Retrieve flags from the database and reset flags related to tries and expiration of the user PIN.
-	CK_ULONG flags = (tokenObject.getAttribute(CKA_OS_TOKENFLAGS).getUnsignedLongValue() | CKF_USER_PIN_INITIALIZED)
-					& ~(CKF_USER_PIN_COUNT_LOW | CKF_USER_PIN_FINAL_TRY | CKF_USER_PIN_LOCKED | CKF_USER_PIN_TO_BE_CHANGED);
+	CK_ULONG flags = tokenObject.getAttribute(CKA_OS_TOKENFLAGS).getUnsignedLongValue();
+	flags |= CKF_USER_PIN_INITIALIZED;
+	flags &= ~(CKF_USER_PIN_COUNT_LOW | CKF_USER_PIN_FINAL_TRY | CKF_USER_PIN_LOCKED | CKF_USER_PIN_TO_BE_CHANGED);
 
 	OSAttribute changedTokenFlags(flags);
 	if (!tokenObject.setAttribute(CKA_OS_TOKENFLAGS, changedTokenFlags))
