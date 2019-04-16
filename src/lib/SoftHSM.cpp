@@ -2694,6 +2694,9 @@ CK_RV SoftHSM::C_EncryptFinal(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pEncrypted
 {
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
 
+	// Github issue #469, check NULL_PTR on pulEncryptedDataLen
+	if (pulEncryptedDataLen == NULL) return CKR_ARGUMENTS_BAD;
+
 	// Get the session
 	Session* session = (Session*)handleManager->getSession(hSession);
 	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
@@ -3395,6 +3398,9 @@ static CK_RV SymDecryptFinal(Session* session, CK_BYTE_PTR pDecryptedData, CK_UL
 CK_RV SoftHSM::C_DecryptFinal(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pData, CK_ULONG_PTR pDataLen)
 {
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
+
+	// Github issue #469, check NULL_PTR on pDataLen
+	if (pDataLen == NULL) return CKR_ARGUMENTS_BAD;
 
 	// Get the session
 	Session* session = (Session*)handleManager->getSession(hSession);
