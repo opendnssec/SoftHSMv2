@@ -64,6 +64,24 @@ slots.removable = true
 .fi
 .RE
 .LP
+.SH TOKEN.MECHANISMS
+Allows to enable and disable any of the PKCS#11 mechanisms reported in the
+C_GetMechanismList().
+The option accepts string argument containing the comma separated list of all
+algorithms that should be enabled (do not forget about the keygen mechanisms).
+The list can be prefixed with minus sign "-" to list only the disabled
+mechanisms.
+Additionally, special keyword ALL can be used to enable all the known
+mechanisms (default). Unknown mechanisms are ignored.
+This option has higher priority than the CKA_ALLOWED_MECHANISMS attribute
+on the key objects.
+.LP
+.RS
+.nf
+token.mechanisms = ALL
+.fi
+.RE
+.LP
 .SH ENVIRONMENT
 .TP
 SOFTHSM2_CONF

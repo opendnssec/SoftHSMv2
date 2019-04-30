@@ -260,6 +260,7 @@ void InfoTests::testGetMechanismList()
 	// Get the size of the buffer
 	rv = CRYPTOKI_F_PTR( C_GetMechanismList(m_initializedTokenSlotID, NULL_PTR, &ulMechCount) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
+	CPPUNIT_ASSERT(ulMechCount > 2);
 	pMechanismList = (CK_MECHANISM_TYPE_PTR)malloc(ulMechCount * sizeof(CK_MECHANISM_TYPE_PTR));
 
 	// Check if we have a too small buffer
@@ -317,4 +318,47 @@ void InfoTests::testGetMechanismInfo()
 	free(pMechanismList);
 
 	CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
+}
+
+
+void InfoTests::testGetMechanismListConfig()
+{
+	CK_RV rv;
+	CK_ULONG ulMechCount = 0;
+	CK_MECHANISM_TYPE_PTR pMechanismList;
+
+#ifndef _WIN32
+    setenv("SOFTHSM2_CONF", "./softhsm2-mech.conf", 1);
+#else
+    setenv("SOFTHSM2_CONF", ".\\softhsm2-mech.conf", 1);
+#endif
+
+	// Just make sure that we finalize any previous failed tests
+	CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
+
+	rv = CRYPTOKI_F_PTR( C_GetMechanismList(m_initializedTokenSlotID, NULL_PTR, &ulMechCount) );
+	CPPUNIT_ASSERT(rv == CKR_CRYPTOKI_NOT_INITIALIZED);
+
+	rv = CRYPTOKI_F_PTR( C_Initialize(NULL_PTR) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Get the size of the buffer
+	rv = CRYPTOKI_F_PTR( C_GetMechanismList(m_initializedTokenSlotID, NULL_PTR, &ulMechCount) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	CPPUNIT_ASSERT_EQUAL((CK_ULONG)2, ulMechCount);
+	pMechanismList = (CK_MECHANISM_TYPE_PTR)malloc(ulMechCount * sizeof(CK_MECHANISM_TYPE_PTR));
+
+	// Get the mechanism list
+	rv = CRYPTOKI_F_PTR( C_GetMechanismList(m_initializedTokenSlotID, pMechanismList, &ulMechCount) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	CPPUNIT_ASSERT(pMechanismList[0] == CKM_RSA_X_509);
+	CPPUNIT_ASSERT(pMechanismList[1] == CKM_RSA_PKCS);
+	free(pMechanismList);
+
+	CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
+#ifndef _WIN32
+	setenv("SOFTHSM2_CONF", "./softhsm2.conf", 1);
+#else
+	setenv("SOFTHSM2_CONF", ".\\softhsm2.conf", 1);
+#endif
 }

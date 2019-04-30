@@ -1,0 +1,8 @@
+# SoftHSM v2 configuration file
+
+directories.tokendir = @builddir@/tokens
+objectstore.backend = file
+log.level = INFO
+slots.removable = false
+token.mechanisms = CKM_RSA_X_509,CKM_RSA_PKCS
+

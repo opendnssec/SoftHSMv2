@@ -77,6 +77,7 @@
 #endif
 
 #include <stdlib.h>
+#include <algorithm>
 
 // Initialise the one-and-only instance
 
@@ -378,6 +379,11 @@ SoftHSM::~SoftHSM()
 	resetMutexFactoryCallbacks();
 }
 
+// A list with the supported mechanisms
+std::map<std::string, CK_MECHANISM_TYPE> mechanisms_table;
+std::list<CK_MECHANISM_TYPE> supportedMechanisms;
+CK_ULONG nrSupportedMechanisms;
+
 /*****************************************************************************
  Implementation of PKCS #11 functions
  *****************************************************************************/
@@ -525,6 +531,9 @@ CK_RV SoftHSM::C_Initialize(CK_VOID_PTR pInitArgs)
 		return CKR_GENERAL_ERROR;
 	}
 
+	// Load the enabled list of algorithms
+	prepareSupportedMecahnisms(mechanisms_table);
+
 	isRemovable = Configuration::i()->getBool("slots.removable", false);
 
 	// Load the slot manager
@@ -644,139 +653,154 @@ CK_RV SoftHSM::C_GetTokenInfo(CK_SLOT_ID slotID, CK_TOKEN_INFO_PTR pInfo)
 	return token->getTokenInfo(pInfo);
 }
 
+void SoftHSM::prepareSupportedMecahnisms(std::map<std::string, CK_MECHANISM_TYPE> &t)
+{
+#ifndef WITH_FIPS
+	t["CKM_MD5"]			= CKM_MD5;
+#endif
+	t["CKM_SHA_1"]			= CKM_SHA_1;
+	t["CKM_SHA224"]			= CKM_SHA224;
+	t["CKM_SHA256"]			= CKM_SHA256;
+	t["CKM_SHA384"]			= CKM_SHA384;
+	t["CKM_SHA512"]			= CKM_SHA512;
+#ifndef WITH_FIPS
+	t["CKM_MD5_HMAC"]		= CKM_MD5_HMAC;
+#endif
+	t["CKM_SHA_1_HMAC"]		= CKM_SHA_1_HMAC;
+	t["CKM_SHA224_HMAC"]		= CKM_SHA224_HMAC;
+	t["CKM_SHA256_HMAC"]		= CKM_SHA256_HMAC;
+	t["CKM_SHA384_HMAC"]		= CKM_SHA384_HMAC;
+	t["CKM_SHA512_HMAC"]		= CKM_SHA512_HMAC;
+	t["CKM_RSA_PKCS_KEY_PAIR_GEN"]	= CKM_RSA_PKCS_KEY_PAIR_GEN;
+	t["CKM_RSA_PKCS"]		= CKM_RSA_PKCS;
+	t["CKM_RSA_X_509"]		= CKM_RSA_X_509;
+#ifndef WITH_FIPS
+	t["CKM_MD5_RSA_PKCS"]		= CKM_MD5_RSA_PKCS;
+#endif
+	t["CKM_SHA1_RSA_PKCS"]		= CKM_SHA1_RSA_PKCS;
+	t["CKM_RSA_PKCS_OAEP"]		= CKM_RSA_PKCS_OAEP;
+	t["CKM_SHA224_RSA_PKCS"]	= CKM_SHA224_RSA_PKCS;
+	t["CKM_SHA256_RSA_PKCS"]	= CKM_SHA256_RSA_PKCS;
+	t["CKM_SHA384_RSA_PKCS"]	= CKM_SHA384_RSA_PKCS;
+	t["CKM_SHA512_RSA_PKCS"]	= CKM_SHA512_RSA_PKCS;
+#ifdef WITH_RAW_PSS
+	t["CKM_RSA_PKCS_PSS"]		= CKM_RSA_PKCS_PSS;
+#endif
+	t["CKM_SHA1_RSA_PKCS_PSS"]	= CKM_SHA1_RSA_PKCS_PSS;
+	t["CKM_SHA224_RSA_PKCS_PSS"]	= CKM_SHA224_RSA_PKCS_PSS;
+	t["CKM_SHA256_RSA_PKCS_PSS"]	= CKM_SHA256_RSA_PKCS_PSS;
+	t["CKM_SHA384_RSA_PKCS_PSS"]	= CKM_SHA384_RSA_PKCS_PSS;
+	t["CKM_SHA512_RSA_PKCS_PSS"]	= CKM_SHA512_RSA_PKCS_PSS;
+	t["CKM_GENERIC_SECRET_KEY_GEN"]	= CKM_GENERIC_SECRET_KEY_GEN;
+#ifndef WITH_FIPS
+	t["CKM_DES_KEY_GEN"]		= CKM_DES_KEY_GEN;
+#endif
+	t["CKM_DES2_KEY_GEN"]		= CKM_DES2_KEY_GEN;
+	t["CKM_DES3_KEY_GEN"]		= CKM_DES3_KEY_GEN;
+#ifndef WITH_FIPS
+	t["CKM_DES_ECB"]		= CKM_DES_ECB;
+	t["CKM_DES_CBC"]		= CKM_DES_CBC;
+	t["CKM_DES_CBC_PAD"]		= CKM_DES_CBC_PAD;
+	t["CKM_DES_ECB_ENCRYPT_DATA"]	= CKM_DES_ECB_ENCRYPT_DATA;
+	t["CKM_DES_CBC_ENCRYPT_DATA"]	= CKM_DES_CBC_ENCRYPT_DATA;
+#endif
+	t["CKM_DES3_ECB"]		= CKM_DES3_ECB;
+	t["CKM_DES3_CBC"]		= CKM_DES3_CBC;
+	t["CKM_DES3_CBC_PAD"]		= CKM_DES3_CBC_PAD;
+	t["CKM_DES3_ECB_ENCRYPT_DATA"]	= CKM_DES3_ECB_ENCRYPT_DATA;
+	t["CKM_DES3_CBC_ENCRYPT_DATA"]	= CKM_DES3_CBC_ENCRYPT_DATA;
+	t["CKM_DES3_CMAC"]		= CKM_DES3_CMAC;
+	t["CKM_AES_KEY_GEN"]		= CKM_AES_KEY_GEN;
+	t["CKM_AES_ECB"]		= CKM_AES_ECB;
+	t["CKM_AES_CBC"]		= CKM_AES_CBC;
+	t["CKM_AES_CBC_PAD"]		= CKM_AES_CBC_PAD;
+	t["CKM_AES_CTR"]		= CKM_AES_CTR;
+#ifdef WITH_AES_GCM
+	t["CKM_AES_GCM"]		= CKM_AES_GCM;
+#endif
+	t["CKM_AES_KEY_WRAP"]		= CKM_AES_KEY_WRAP;
+#ifdef HAVE_AES_KEY_WRAP_PAD
+	t["CKM_AES_KEY_WRAP_PAD"]	= CKM_AES_KEY_WRAP_PAD;
+#endif
+	t["CKM_AES_ECB_ENCRYPT_DATA"]	= CKM_AES_ECB_ENCRYPT_DATA;
+	t["CKM_AES_CBC_ENCRYPT_DATA"]	= CKM_AES_CBC_ENCRYPT_DATA;
+	t["CKM_AES_CMAC"]		= CKM_AES_CMAC;
+	t["CKM_DSA_PARAMETER_GEN"]	= CKM_DSA_PARAMETER_GEN;
+	t["CKM_DSA_KEY_PAIR_GEN"]	= CKM_DSA_KEY_PAIR_GEN;
+	t["CKM_DSA"]			= CKM_DSA;
+	t["CKM_DSA_SHA1"]		= CKM_DSA_SHA1;
+	t["CKM_DSA_SHA224"]		= CKM_DSA_SHA224;
+	t["CKM_DSA_SHA256"]		= CKM_DSA_SHA256;
+	t["CKM_DSA_SHA384"]		= CKM_DSA_SHA384;
+	t["CKM_DSA_SHA512"]		= CKM_DSA_SHA512;
+	t["CKM_DH_PKCS_KEY_PAIR_GEN"]	= CKM_DH_PKCS_KEY_PAIR_GEN;
+	t["CKM_DH_PKCS_PARAMETER_GEN"]	= CKM_DH_PKCS_PARAMETER_GEN;
+	t["CKM_DH_PKCS_DERIVE"]		= CKM_DH_PKCS_DERIVE;
+#ifdef WITH_ECC
+	t["CKM_EC_KEY_PAIR_GEN"]	= CKM_EC_KEY_PAIR_GEN;
+	t["CKM_ECDSA"]			= CKM_ECDSA;
+#endif
+#if defined(WITH_ECC) || defined(WITH_EDDSA)
+	t["CKM_ECDH1_DERIVE"]		= CKM_ECDH1_DERIVE;
+#endif
+#ifdef WITH_GOST
+	t["CKM_GOSTR3411"]		= CKM_GOSTR3411;
+	t["CKM_GOSTR3411_HMAC"]		= CKM_GOSTR3411_HMAC;
+	t["CKM_GOSTR3410_KEY_PAIR_GEN"]	= CKM_GOSTR3410_KEY_PAIR_GEN;
+	t["CKM_GOSTR3410"]		= CKM_GOSTR3410;
+	t["CKM_GOSTR3410_WITH_GOSTR3411"] = CKM_GOSTR3410_WITH_GOSTR3411;
+#endif
+#ifdef WITH_EDDSA
+	t["CKM_EC_EDWARDS_KEY_PAIR_GEN"] = CKM_EC_EDWARDS_KEY_PAIR_GEN;
+	t["CKM_EDDSA"]			= CKM_EDDSA;
+#endif
+
+	for (auto it = t.begin(); it != t.end(); ++it)
+	{
+		supportedMechanisms.push_back(it->second);
+	}
+
+	/* Check configuration for supported algorithms */
+	std::string mechs = Configuration::i()->getString("token.mechanisms", "ALL");
+	if (mechs != "ALL")
+	{
+		bool negative = (mechs[0] == '-');
+		if (!negative)
+		{
+			/* For positive list, we remove everything */
+			supportedMechanisms.clear();
+		}
+		size_t pos = 0, prev = 0;
+		std::string token;
+		do
+		{
+			pos = mechs.find(",", prev);
+			if (pos == std::string::npos) pos = mechs.length();
+			token = mechs.substr(prev, pos - prev);
+			CK_MECHANISM_TYPE mechanism;
+			try
+			{
+				mechanism = t.at(token);
+				if (!negative)
+					supportedMechanisms.push_back(mechanism);
+				else
+					supportedMechanisms.remove(mechanism);
+			}
+			catch (const std::out_of_range& e)
+			{
+				WARNING_MSG("Unknown mechanism provided: %s", token.c_str());
+			}
+			prev = pos + 1;
+		}
+		while (pos < mechs.length() && prev < mechs.length());
+	}
+
+	nrSupportedMechanisms = supportedMechanisms.size();
+}
+
 // Return the list of supported mechanisms for a given slot
 CK_RV SoftHSM::C_GetMechanismList(CK_SLOT_ID slotID, CK_MECHANISM_TYPE_PTR pMechanismList, CK_ULONG_PTR pulCount)
 {
-	// A list with the supported mechanisms
-	CK_ULONG nrSupportedMechanisms = 62;
-#ifdef WITH_ECC
-	nrSupportedMechanisms += 2;
-#endif
-#if defined(WITH_ECC) || defined(WITH_EDDSA)
-	nrSupportedMechanisms += 1;
-#endif
-#ifdef WITH_FIPS
-	nrSupportedMechanisms -= 9;
-#endif
-#ifdef WITH_GOST
-	nrSupportedMechanisms += 5;
-#endif
-#ifdef HAVE_AES_KEY_WRAP_PAD
-	nrSupportedMechanisms += 1;
-#endif
-#ifdef WITH_RAW_PSS
-	nrSupportedMechanisms += 1; // CKM_RSA_PKCS_PSS
-#endif
-#ifdef WITH_AES_GCM
-	nrSupportedMechanisms += 1;
-#endif
-#ifdef WITH_EDDSA
-	nrSupportedMechanisms += 2;
-#endif
-
-	CK_MECHANISM_TYPE supportedMechanisms[] =
-	{
-#ifndef WITH_FIPS
-		CKM_MD5,
-#endif
-		CKM_SHA_1,
-		CKM_SHA224,
-		CKM_SHA256,
-		CKM_SHA384,
-		CKM_SHA512,
-#ifndef WITH_FIPS
-		CKM_MD5_HMAC,
-#endif
-		CKM_SHA_1_HMAC,
-		CKM_SHA224_HMAC,
-		CKM_SHA256_HMAC,
-		CKM_SHA384_HMAC,
-		CKM_SHA512_HMAC,
-		CKM_RSA_PKCS_KEY_PAIR_GEN,
-		CKM_RSA_PKCS,
-		CKM_RSA_X_509,
-#ifndef WITH_FIPS
-		CKM_MD5_RSA_PKCS,
-#endif
-		CKM_SHA1_RSA_PKCS,
-		CKM_RSA_PKCS_OAEP,
-		CKM_SHA224_RSA_PKCS,
-		CKM_SHA256_RSA_PKCS,
-		CKM_SHA384_RSA_PKCS,
-		CKM_SHA512_RSA_PKCS,
-#ifdef WITH_RAW_PSS
-		CKM_RSA_PKCS_PSS,
-#endif
-		CKM_SHA1_RSA_PKCS_PSS,
-		CKM_SHA224_RSA_PKCS_PSS,
-		CKM_SHA256_RSA_PKCS_PSS,
-		CKM_SHA384_RSA_PKCS_PSS,
-		CKM_SHA512_RSA_PKCS_PSS,
-		CKM_GENERIC_SECRET_KEY_GEN,
-#ifndef WITH_FIPS
-		CKM_DES_KEY_GEN,
-#endif
-		CKM_DES2_KEY_GEN,
-		CKM_DES3_KEY_GEN,
-#ifndef WITH_FIPS
-		CKM_DES_ECB,
-		CKM_DES_CBC,
-		CKM_DES_CBC_PAD,
-		CKM_DES_ECB_ENCRYPT_DATA,
-		CKM_DES_CBC_ENCRYPT_DATA,
-#endif
-		CKM_DES3_ECB,
-		CKM_DES3_CBC,
-		CKM_DES3_CBC_PAD,
-		CKM_DES3_ECB_ENCRYPT_DATA,
-		CKM_DES3_CBC_ENCRYPT_DATA,
-		CKM_DES3_CMAC,
-		CKM_AES_KEY_GEN,
-		CKM_AES_ECB,
-		CKM_AES_CBC,
-		CKM_AES_CBC_PAD,
-		CKM_AES_CTR,
-#ifdef WITH_AES_GCM
-		CKM_AES_GCM,
-#endif
-		CKM_AES_KEY_WRAP,
-#ifdef HAVE_AES_KEY_WRAP_PAD
-		CKM_AES_KEY_WRAP_PAD,
-#endif
-		CKM_AES_ECB_ENCRYPT_DATA,
-		CKM_AES_CBC_ENCRYPT_DATA,
-		CKM_AES_CMAC,
-		CKM_DSA_PARAMETER_GEN,
-		CKM_DSA_KEY_PAIR_GEN,
-		CKM_DSA,
-		CKM_DSA_SHA1,
-		CKM_DSA_SHA224,
-		CKM_DSA_SHA256,
-		CKM_DSA_SHA384,
-		CKM_DSA_SHA512,
-		CKM_DH_PKCS_KEY_PAIR_GEN,
-		CKM_DH_PKCS_PARAMETER_GEN,
-		CKM_DH_PKCS_DERIVE,
-#ifdef WITH_ECC
-		CKM_EC_KEY_PAIR_GEN,
-		CKM_ECDSA,
-#endif
-#if defined(WITH_ECC) || defined(WITH_EDDSA)
-		CKM_ECDH1_DERIVE,
-#endif
-#ifdef WITH_GOST
-		CKM_GOSTR3411,
-		CKM_GOSTR3411_HMAC,
-		CKM_GOSTR3410_KEY_PAIR_GEN,
-		CKM_GOSTR3410,
-		CKM_GOSTR3410_WITH_GOSTR3411,
-#endif
-#ifdef WITH_EDDSA
-		CKM_EC_EDWARDS_KEY_PAIR_GEN,
-		CKM_EDDSA,
-#endif
-	};
-
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
 	if (pulCount == NULL_PTR) return CKR_ARGUMENTS_BAD;
 
@@ -802,9 +826,11 @@ CK_RV SoftHSM::C_GetMechanismList(CK_SLOT_ID slotID, CK_MECHANISM_TYPE_PTR pMech
 
 	*pulCount = nrSupportedMechanisms;
 
-	for (CK_ULONG i = 0; i < nrSupportedMechanisms; i ++)
+	int i = 0;
+	auto it = supportedMechanisms.cbegin();
+	for (; it != supportedMechanisms.cend(); it++, i++)
 	{
-		pMechanismList[i] = supportedMechanisms[i];
+		pMechanismList[i] = *it;
 	}
 
 	return CKR_OK;
@@ -12224,9 +12250,17 @@ CK_RV SoftHSM::MechParamCheckRSAPKCSOAEP(CK_MECHANISM_PTR pMechanism)
 	return CKR_OK;
 }
 
-bool SoftHSM::isMechanismPermitted(OSObject* key, CK_MECHANISM_PTR pMechanism) {
+bool SoftHSM::isMechanismPermitted(OSObject* key, CK_MECHANISM_PTR pMechanism)
+{
+	std::list<CK_MECHANISM_TYPE> mechs = supportedMechanisms;
+	/* First check if the algorithm is enabled in the global configuration */
+	auto it = std::find(mechs.begin(), mechs.end(), pMechanism->mechanism);
+	if (it == mechs.end())
+		return false;
+
 	OSAttribute attribute = key->getAttribute(CKA_ALLOWED_MECHANISMS);
 	std::set<CK_MECHANISM_TYPE> allowed = attribute.getMechanismTypeSetValue();
+
 	if (allowed.empty()) {
 		return true;
 	}

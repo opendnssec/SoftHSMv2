@@ -75,6 +75,7 @@ src/lib/session_mgr/test/sessionmgrtest
 src/lib/slot_mgr/test/slotmgrtest
 src/lib/test/p11test
 src/lib/test/softhsm2-alt.conf
+src/lib/test/softhsm2-mech.conf
 src/lib/test/softhsm2.conf
 src/lib/test/tokens/64d6c3fe-1575-1736-1d26-5ccb28440ea7/
 src/lib/test/tokens/dummy
