@@ -2694,12 +2694,16 @@ CK_RV SoftHSM::C_EncryptFinal(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pEncrypted
 {
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
 
-	// Github issue #469, check NULL_PTR on pulEncryptedDataLen
-	if (pulEncryptedDataLen == NULL) return CKR_ARGUMENTS_BAD;
-
 	// Get the session
 	Session* session = (Session*)handleManager->getSession(hSession);
 	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
+
+	// Github issue #469, check NULL_PTR on pulEncryptedDataLen
+	if (pulEncryptedDataLen == NULL)
+	{
+		session->resetOp();
+		return CKR_ARGUMENTS_BAD;
+	}
 
 	// Check if we are doing the correct operation
 	if (session->getOpType() != SESSION_OP_ENCRYPT) return CKR_OPERATION_NOT_INITIALIZED;
@@ -3399,12 +3403,16 @@ CK_RV SoftHSM::C_DecryptFinal(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pData, CK_
 {
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
 
-	// Github issue #469, check NULL_PTR on pDataLen
-	if (pDataLen == NULL) return CKR_ARGUMENTS_BAD;
-
 	// Get the session
 	Session* session = (Session*)handleManager->getSession(hSession);
 	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
+
+	// Github issue #469, check NULL_PTR on pDataLen
+	if (pDataLen == NULL)
+	{
+		session->resetOp();
+		return CKR_ARGUMENTS_BAD;
+	}
 
 	// Check if we are doing the correct operation
 	if (session->getOpType() != SESSION_OP_DECRYPT) return CKR_OPERATION_NOT_INITIALIZED;
