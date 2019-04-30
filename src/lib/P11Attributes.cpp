@@ -358,7 +358,7 @@ CK_RV P11Attribute::retrieve(Token *token, bool isPrivate, CK_VOID_PTR pValue, C
 
 			std::set<CK_MECHANISM_TYPE> set = attr.getMechanismTypeSetValue();
 			for (std::set<CK_MECHANISM_TYPE>::const_iterator it = set.begin(); it != set.end(); ++it)
-				pTemplate[++i] = *it;
+				pTemplate[i++] = *it;
 		}
 		else
 		{
