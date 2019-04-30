@@ -4,5 +4,5 @@ directories.tokendir = @builddir@/tokens
 objectstore.backend = file
 log.level = INFO
 slots.removable = false
-token.mechanisms = CKM_RSA_X_509,CKM_RSA_PKCS
+slots.mechanisms = CKM_RSA_X_509,CKM_RSA_PKCS
 
