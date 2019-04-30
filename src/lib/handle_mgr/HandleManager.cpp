@@ -161,48 +161,46 @@ void HandleManager::destroyObject(const CK_OBJECT_HANDLE hObject)
 void HandleManager::sessionClosed(const CK_SESSION_HANDLE hSession)
 {
 	CK_SLOT_ID slotID;
-	{
-		MutexLocker lock(handlesMutex);
+	MutexLocker lock(handlesMutex);
 
-		std::map< CK_ULONG, Handle>::iterator it = handles.find(hSession);
-		if (it == handles.end() || CKH_SESSION != it->second.kind)
-			return; // Unable to find the specified session.
+	std::map< CK_ULONG, Handle>::iterator it = handles.find(hSession);
+	if (it == handles.end() || CKH_SESSION != it->second.kind)
+		return; // Unable to find the specified session.
 
-		slotID = it->second.slotID;
+	slotID = it->second.slotID;
 
-		// session closed, so we can erase information about it.
-		handles.erase(it);
+	// session closed, so we can erase information about it.
+	handles.erase(it);
 
-		// Erase all session object handles associated with the given session handle.
-		CK_ULONG openSessionCount = 0;
-		for (it = handles.begin(); it != handles.end(); ) {
-			Handle &h = it->second;
-			if (CKH_SESSION == h.kind && slotID == h.slotID) {
-				++openSessionCount; // another session is open for this slotID.
-			} else {
-				if (CKH_OBJECT == h.kind && hSession == h.hSession) {
-					// A session object is present for the given session, so erase it.
-					objects.erase(it->second.object);
-					// Iterator post-incrementing (it++) will return a copy of the original it (which points to handle to be deleted).
-					handles.erase(it++);
-					continue;
-				}
+	// Erase all session object handles associated with the given session handle.
+	CK_ULONG openSessionCount = 0;
+	for (it = handles.begin(); it != handles.end(); ) {
+		Handle &h = it->second;
+		if (CKH_SESSION == h.kind && slotID == h.slotID) {
+			++openSessionCount; // another session is open for this slotID.
+		} else {
+			if (CKH_OBJECT == h.kind && hSession == h.hSession) {
+				// A session object is present for the given session, so erase it.
+				objects.erase(it->second.object);
+				// Iterator post-incrementing (it++) will return a copy of the original it (which points to handle to be deleted).
+				handles.erase(it++);
+				continue;
 			}
-			++it;
 		}
-
-		 // We are done when there are still sessions open.
-		if (openSessionCount)
-			return;
+		++it;
 	}
 
+	 // We are done when there are still sessions open.
+	if (openSessionCount)
+		return;
+
 	// No more sessions open for this token, so remove all object handles that are still valid for the given slotID.
-	allSessionsClosed(slotID);
+	allSessionsClosed(slotID, true);
 }
 
-void HandleManager::allSessionsClosed(const CK_SLOT_ID slotID)
+void HandleManager::allSessionsClosed(const CK_SLOT_ID slotID, bool isLocked)
 {
-	MutexLocker lock(handlesMutex);
+	MutexLocker lock(isLocked ? NULL : handlesMutex);
 
 	// Erase all "session", "session object" and "token object" handles for a given slot id.
 	std::map< CK_ULONG, Handle>::iterator it;

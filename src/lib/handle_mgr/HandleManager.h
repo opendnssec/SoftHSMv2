@@ -77,7 +77,7 @@ public:
 
     // Remove all session and object handles for the given slotID.
     // All handles for the given slotID will become invalid.
-    void allSessionsClosed(const CK_SLOT_ID slotID);
+    void allSessionsClosed(const CK_SLOT_ID slotID, bool isLocked = false);
 
     // Remove all handles to private objects for the given slotID.
     // All handles to public objects for the given slotID remain valid.
