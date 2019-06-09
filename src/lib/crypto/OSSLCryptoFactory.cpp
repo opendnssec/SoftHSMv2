@@ -234,6 +234,15 @@ OSSLCryptoFactory::~OSSLCryptoFactory()
 	}
 #endif
 
+	// free RDRAND engine
+	if (rdrand_engine != NULL)
+	{
+		ENGINE_finish(rdrand_engine);
+		ENGINE_free(rdrand_engine);
+	}
+
+	ENGINE_cleanup();
+
 	// Destroy the one-and-only RNG
 	delete rng;
 
