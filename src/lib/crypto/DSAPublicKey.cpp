@@ -53,7 +53,7 @@ unsigned long DSAPublicKey::getBitLength() const
 // Get the output length
 unsigned long DSAPublicKey::getOutputLength() const
 {
-	return getQ().size() * 2;
+	return (getQ().bits() + 7) / 8 * 2;
 }
 
 // Setters for the DSA public key components
