@@ -761,7 +761,7 @@ void SoftHSM::prepareSupportedMecahnisms(std::map<std::string, CK_MECHANISM_TYPE
 	}
 
 	/* Check configuration for supported algorithms */
-	std::string mechs = Configuration::i()->getString("token.mechanisms", "ALL");
+	std::string mechs = Configuration::i()->getString("slots.mechanisms", "ALL");
 	if (mechs != "ALL")
 	{
 		bool negative = (mechs[0] == '-');

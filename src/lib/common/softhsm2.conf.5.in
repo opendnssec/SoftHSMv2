@@ -78,7 +78,7 @@ on the key objects.
 .LP
 .RS
 .nf
-token.mechanisms = ALL
+slots.mechanisms = ALL
 .fi
 .RE
 .LP
