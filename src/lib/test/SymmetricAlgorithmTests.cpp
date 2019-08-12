@@ -904,6 +904,9 @@ void SymmetricAlgorithmTests::testNullTemplate()
 	rv = CRYPTOKI_F_PTR( C_GenerateKey(hSession, &mechanism1, NULL_PTR, 0, &hKey) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
+	rv = CRYPTOKI_F_PTR( C_GenerateKey(hSession, &mechanism1, NULL_PTR, 1, &hKey) );
+	CPPUNIT_ASSERT(rv == CKR_ARGUMENTS_BAD);
+
 	rv = CRYPTOKI_F_PTR( C_DestroyObject(hSession, hKey) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
