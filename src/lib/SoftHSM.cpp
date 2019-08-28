@@ -7069,9 +7069,17 @@ CK_RV SoftHSM::C_CancelFunction(CK_SESSION_HANDLE hSession)
 }
 
 // Wait or poll for a slot event on the specified slot
-CK_RV SoftHSM::C_WaitForSlotEvent(CK_FLAGS /*flags*/, CK_SLOT_ID_PTR /*pSlot*/, CK_VOID_PTR /*pReserved*/)
+CK_RV SoftHSM::C_WaitForSlotEvent(CK_FLAGS flags, CK_SLOT_ID_PTR /*pSlot*/, CK_VOID_PTR /*pReserved*/)
 {
-	return CKR_FUNCTION_NOT_SUPPORTED;
+	if (!(flags & CKF_DONT_BLOCK)) return CKR_FUNCTION_NOT_SUPPORTED;
+
+	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
+
+	// SoftHSM slots don't change after it's initialised. With the
+	// exception of when a slot is initialised and then getSlotList() is
+	// called. However, at this point the caller has been updated with the
+	// new slot list already so no event needs to be triggered.
+	return CKR_NO_EVENT;
 }
 
 CK_RV SoftHSM::generateGeneric

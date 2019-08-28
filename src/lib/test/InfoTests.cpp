@@ -362,3 +362,27 @@ void InfoTests::testGetMechanismListConfig()
 	setenv("SOFTHSM2_CONF", ".\\softhsm2.conf", 1);
 #endif
 }
+
+void InfoTests::testWaitForSlotEvent()
+{
+	CK_RV rv;
+
+	// Just make sure that we finalize any previous failed tests
+	CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
+
+	rv = CRYPTOKI_F_PTR( C_WaitForSlotEvent(CKF_DONT_BLOCK, NULL_PTR, NULL_PTR) );
+	CPPUNIT_ASSERT(rv == CKR_CRYPTOKI_NOT_INITIALIZED);
+
+	rv = CRYPTOKI_F_PTR( C_Initialize(NULL_PTR) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Blocking version should fail
+	rv = CRYPTOKI_F_PTR( C_WaitForSlotEvent(0, NULL_PTR, NULL_PTR) );
+	CPPUNIT_ASSERT(rv == CKR_FUNCTION_NOT_SUPPORTED);
+
+	// Should always return CKR_NO_EVENT
+	rv = CRYPTOKI_F_PTR( C_WaitForSlotEvent(CKF_DONT_BLOCK, NULL_PTR, NULL_PTR) );
+	CPPUNIT_ASSERT(rv == CKR_NO_EVENT);
+
+	CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
+}
