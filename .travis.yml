@@ -1,10 +1,12 @@
 language: cpp
+dist: bionic
 compiler:
   - gcc
   - clang
 before_install:
+  - sudo add-apt-repository -y ppa:ubuntu-backports-testers/ppa
   - sudo apt-get update -qq
-  - sudo apt-get install build-essential autoconf automake libtool libcppunit-dev libsqlite3-dev sqlite3 libbotan1.10-dev libssl-dev p11-kit
+  - sudo apt-get install build-essential autoconf automake libtool libcppunit-dev libsqlite3-dev sqlite3 libbotan-2-dev libssl-dev p11-kit
 script: sh testing/travis/travis.sh
 env:
   - CRYPTO=openssl OBJSTORE=file
