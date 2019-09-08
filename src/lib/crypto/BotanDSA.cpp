@@ -42,7 +42,6 @@
 #include <algorithm>
 #include <botan/dl_group.h>
 #include <botan/dsa.h>
-#include <botan/version.h>
 #include <iostream>
 
 // Constructor
@@ -96,13 +95,8 @@ bool BotanDSA::sign(PrivateKey* privateKey, const ByteString& dataToSign,
 
 	try
 	{
-#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,33)
 		BotanRNG* rng = (BotanRNG*)BotanCryptoFactory::i()->getRNG();
 		signer = new Botan::PK_Signer(*botanKey, *rng->getRNG(), emsa);
-#else
-		signer = new Botan::PK_Signer(*botanKey, emsa);
-#endif
-		// Should we add DISABLE_FAULT_PROTECTION? Makes this operation faster.
 	}
 	catch (...)
 	{
@@ -112,11 +106,7 @@ bool BotanDSA::sign(PrivateKey* privateKey, const ByteString& dataToSign,
 	}
 
 	// Perform the signature operation
-#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,0)
-	std::vector<Botan::byte> signResult;
-#else
-	Botan::SecureVector<Botan::byte> signResult;
-#endif
+	std::vector<uint8_t> signResult;
 	try
 	{
 		BotanRNG* rng = (BotanRNG*)BotanCryptoFactory::i()->getRNG();
@@ -134,11 +124,7 @@ bool BotanDSA::sign(PrivateKey* privateKey, const ByteString& dataToSign,
 
 	// Return the result
 	signature.resize(signResult.size());
-#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,0)
 	memcpy(&signature[0], signResult.data(), signResult.size());
-#else
-	memcpy(&signature[0], signResult.begin(), signResult.size());
-#endif
 
 	delete signer;
 	signer = NULL;
@@ -208,13 +194,8 @@ bool BotanDSA::signInit(PrivateKey* privateKey, const AsymMech::Type mechanism,
 
 	try
 	{
-#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,33)
 		BotanRNG* rng = (BotanRNG*)BotanCryptoFactory::i()->getRNG();
 		signer = new Botan::PK_Signer(*botanKey, *rng->getRNG(), emsa);
-#else
-		signer = new Botan::PK_Signer(*botanKey, emsa);
-#endif
-		// Should we add DISABLE_FAULT_PROTECTION? Makes this operation faster.
 	}
 	catch (...)
 	{
@@ -268,11 +249,7 @@ bool BotanDSA::signFinal(ByteString& signature)
 	}
 
 	// Perform the signature operation
-#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,0)
-	std::vector<Botan::byte> signResult;
-#else
-	Botan::SecureVector<Botan::byte> signResult;
-#endif
+	std::vector<uint8_t> signResult;
 	try
 	{
 		BotanRNG* rng = (BotanRNG*)BotanCryptoFactory::i()->getRNG();
@@ -290,11 +267,7 @@ bool BotanDSA::signFinal(ByteString& signature)
 
 	// Return the result
 	signature.resize(signResult.size());
-#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,0)
 	memcpy(&signature[0], signResult.data(), signResult.size());
-#else
-	memcpy(&signature[0], signResult.begin(), signResult.size());
-#endif
 
 	delete signer;
 	signer = NULL;

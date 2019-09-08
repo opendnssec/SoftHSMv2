@@ -715,9 +715,7 @@ void SoftHSM::prepareSupportedMecahnisms(std::map<std::string, CK_MECHANISM_TYPE
 	t["CKM_AES_CBC"]		= CKM_AES_CBC;
 	t["CKM_AES_CBC_PAD"]		= CKM_AES_CBC_PAD;
 	t["CKM_AES_CTR"]		= CKM_AES_CTR;
-#ifdef WITH_AES_GCM
 	t["CKM_AES_GCM"]		= CKM_AES_GCM;
-#endif
 	t["CKM_AES_KEY_WRAP"]		= CKM_AES_KEY_WRAP;
 #ifdef HAVE_AES_KEY_WRAP_PAD
 	t["CKM_AES_KEY_WRAP_PAD"]	= CKM_AES_KEY_WRAP_PAD;
@@ -1075,9 +1073,7 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 		case CKM_AES_CBC:
 		case CKM_AES_CBC_PAD:
 		case CKM_AES_CTR:
-#ifdef WITH_AES_GCM
 		case CKM_AES_GCM:
-#endif
 			pInfo->ulMinKeySize = 16;
 			pInfo->ulMaxKeySize = 32;
 			pInfo->flags = CKF_ENCRYPT | CKF_DECRYPT;
@@ -2220,7 +2216,6 @@ CK_RV SoftHSM::SymEncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 			iv.resize(16);
 			memcpy(&iv[0], CK_AES_CTR_PARAMS_PTR(pMechanism->pParameter)->cb, 16);
 			break;
-#ifdef WITH_AES_GCM
 		case CKM_AES_GCM:
 			algo = SymAlgo::AES;
 			mode = SymMode::GCM;
@@ -2242,7 +2237,6 @@ CK_RV SoftHSM::SymEncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 			}
 			tagBytes = tagBytes / 8;
 			break;
-#endif
 		default:
 			return CKR_MECHANISM_INVALID;
 	}
@@ -2901,7 +2895,6 @@ CK_RV SoftHSM::SymDecryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 			iv.resize(16);
 			memcpy(&iv[0], CK_AES_CTR_PARAMS_PTR(pMechanism->pParameter)->cb, 16);
 			break;
-#ifdef WITH_AES_GCM
 		case CKM_AES_GCM:
 			algo = SymAlgo::AES;
 			mode = SymMode::GCM;
@@ -2923,7 +2916,6 @@ CK_RV SoftHSM::SymDecryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 			}
 			tagBytes = tagBytes / 8;
 			break;
-#endif
 		default:
 			return CKR_MECHANISM_INVALID;
 	}

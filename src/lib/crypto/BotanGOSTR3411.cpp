@@ -33,15 +33,14 @@
 #include "config.h"
 #ifdef WITH_GOST
 #include "BotanGOSTR3411.h"
-#include <botan/gost_3411.h>
 
 int BotanGOSTR3411::getHashSize()
 {
 	return 32;
 }
 
-Botan::HashFunction* BotanGOSTR3411::getHash() const
+const char* BotanGOSTR3411::getHashName() const
 {
-	return new Botan::GOST_34_11();
+	return "GOST-34.11";
 }
 #endif

@@ -1,7 +1,0 @@
-Here are the patches to add advanced AES key wrap *with pad*, aka RFC 5649,
-to Botan (1.10, not 1.11 even it should be easy).
-PS: standardized (and approved) under the KWP name in NIST SP 800-38F.
-
-OpenSSL added support for RFC 5649 in commit
-d31fed73e25391cd71a0de488d88724db78f6f8a and it is waiting for nearest release.
-Some distributions backported the interface, e.g. Fedora and RHEL.

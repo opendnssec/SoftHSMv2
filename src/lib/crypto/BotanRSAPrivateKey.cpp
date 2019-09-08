@@ -190,11 +190,7 @@ ByteString BotanRSAPrivateKey::PKCS8Encode()
 	ByteString der;
 	createBotanKey();
 	if (rsa == NULL) return der;
-#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,0)
-	const Botan::secure_vector<Botan::byte> ber = Botan::PKCS8::BER_encode(*rsa);
-#else
-	const Botan::SecureVector<Botan::byte> ber = Botan::PKCS8::BER_encode(*rsa);
-#endif
+	const auto ber = Botan::PKCS8::BER_encode(*rsa);
 	der.resize(ber.size());
 	memcpy(&der[0], &ber[0], ber.size());
 	return der;
@@ -205,11 +201,7 @@ bool BotanRSAPrivateKey::PKCS8Decode(const ByteString& ber)
 {
 	Botan::DataSource_Memory source(ber.const_byte_str(), ber.size());
 	if (source.end_of_data()) return false;
-#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,0)
-	Botan::secure_vector<Botan::byte> keydata;
-#else
-	Botan::SecureVector<Botan::byte> keydata;
-#endif
+	Botan::secure_vector<uint8_t> keydata;
 	Botan::AlgorithmIdentifier alg_id;
 	Botan::RSA_PrivateKey* key = NULL;
 	try
@@ -230,12 +222,7 @@ bool BotanRSAPrivateKey::PKCS8Decode(const ByteString& ber)
 
 			return false;
 		}
-#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,34)
 		key = new Botan::RSA_PrivateKey(alg_id, keydata);
-#else
-		BotanRNG* rng = (BotanRNG*)BotanCryptoFactory::i()->getRNG();
-		key = new Botan::RSA_PrivateKey(alg_id, keydata, *rng->getRNG());
-#endif
 		if (key == NULL) return false;
 
 		setFromBotan(key);
@@ -279,22 +266,12 @@ void BotanRSAPrivateKey::createBotanKey()
 
 		try
 		{
-#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,34)
 			rsa = new Botan::RSA_PrivateKey(
 						BotanUtil::byteString2bigInt(p),
 						BotanUtil::byteString2bigInt(q),
 						BotanUtil::byteString2bigInt(e),
 						BotanUtil::byteString2bigInt(d),
 						BotanUtil::byteString2bigInt(n));
-#else
-			BotanRNG* rng = (BotanRNG*)BotanCryptoFactory::i()->getRNG();
-			rsa = new Botan::RSA_PrivateKey(*rng->getRNG(),
-						BotanUtil::byteString2bigInt(p),
-						BotanUtil::byteString2bigInt(q),
-						BotanUtil::byteString2bigInt(e),
-						BotanUtil::byteString2bigInt(d),
-						BotanUtil::byteString2bigInt(n));
-#endif
 		}
 		catch (...)
 		{
