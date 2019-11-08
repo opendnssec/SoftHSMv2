@@ -5,7 +5,7 @@ AC_DEFUN([ACX_OPENSSL_FIPS],[
 	tmp_LIBS=$LIBS
 
 	CPPFLAGS="$CPPFLAGS $CRYPTO_INCLUDES"
-	LIBS="$CRYPTO_LIBS $LIBS"
+	LIBS="$OPENSSL_CONFTEST_LIBS $LIBS"
 
 	# check whether we can build an application which can
 	# "reference the OpenSSL FIPS object module"
