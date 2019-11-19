@@ -23,6 +23,7 @@ set(SOURCES p11test.cpp
             AsymWrapUnwrapTests.cpp
             TestsBase.cpp
             TestsNoPINInitBase.cpp
+            ForkTests.cpp
             ../common/log.cpp
             ../common/osmutex.cpp
             )
@@ -40,5 +41,6 @@ add_test(NAME ${PROJECT_NAME} COMMAND ${PROJECT_NAME}
 set(builddir ${PROJECT_BINARY_DIR})
 configure_file(softhsm2.conf.in softhsm2.conf)
 configure_file(softhsm2-alt.conf.in softhsm2-alt.conf)
+configure_file(softhsm2-reset-on-fork.conf.in softhsm2-reset-on-fork.conf)
 configure_file(softhsm2-mech.conf.in softhsm2-mech.conf)
 configure_file(tokens/dummy.in tokens/dummy)

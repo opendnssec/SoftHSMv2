@@ -82,6 +82,16 @@ slots.mechanisms = ALL
 .fi
 .RE
 .LP
+.SH LIBRARY.RESET_ON_FORK
+If set to true, the library will reset the state on fork.
+Default is false.
+.LP
+.RS
+.nf
+library.reset_on_fork = true
+.fi
+.RE
+.LP
 .SH ENVIRONMENT
 .TP
 SOFTHSM2_CONF
