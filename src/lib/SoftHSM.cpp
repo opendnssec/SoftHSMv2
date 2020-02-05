@@ -79,6 +79,12 @@
 #include <stdlib.h>
 #include <algorithm>
 
+#ifdef _WIN32
+#include <process.h>
+#else
+#include <unistd.h>
+#endif
+
 // Initialise the one-and-only instance
 
 #ifdef HAVE_CXX11
@@ -338,6 +344,12 @@ SoftHSM* SoftHSM::i()
 	if (!instance.get())
 	{
 		instance.reset(new SoftHSM());
+	} else if(instance->detectFork())
+	{
+		if (Configuration::i()->getBool("library.reset_on_fork", false))
+		{
+			instance.reset(new SoftHSM());
+		}
 	}
 
 	return instance.get();
@@ -360,6 +372,11 @@ SoftHSM::SoftHSM()
 	sessionManager = NULL;
 	handleManager = NULL;
 	resetMutexFactoryCallbacks();
+#ifdef _WIN32
+	forkID = _getpid();
+#else
+	forkID = getpid();
+#endif
 }
 
 // Destructor
@@ -12278,4 +12295,12 @@ bool SoftHSM::isMechanismPermitted(OSObject* key, CK_MECHANISM_PTR pMechanism)
 	}
 
 	return allowed.find(pMechanism->mechanism) != allowed.end();
+}
+
+bool SoftHSM::detectFork(void) {
+#ifdef _WIN32
+	return forkID != _getpid();
+#else
+	return forkID != getpid();
+#endif
 }

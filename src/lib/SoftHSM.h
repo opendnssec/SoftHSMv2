@@ -193,6 +193,8 @@ private:
 	SessionManager* sessionManager;
 	HandleManager* handleManager;
 
+	int forkID;
+
 	// Encrypt/Decrypt variants
 	CK_RV SymEncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechanism, CK_OBJECT_HANDLE hKey);
 	CK_RV AsymEncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechanism, CK_OBJECT_HANDLE hKey);
@@ -478,5 +480,7 @@ private:
 
 	static bool isMechanismPermitted(OSObject* key, CK_MECHANISM_PTR pMechanism);
 	static void prepareSupportedMecahnisms(std::map<std::string, CK_MECHANISM_TYPE> &t);
+
+	bool detectFork(void);
 };
 

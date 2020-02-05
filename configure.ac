@@ -215,6 +215,7 @@ AC_CONFIG_FILES([
 	src/lib/test/Makefile
 	src/lib/test/softhsm2.conf
 	src/lib/test/softhsm2-alt.conf
+	src/lib/test/softhsm2-reset-on-fork.conf
 	src/lib/test/softhsm2-mech.conf
 	src/lib/test/tokens/dummy
 	src/bin/Makefile
