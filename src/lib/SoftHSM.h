@@ -193,6 +193,11 @@ private:
 	SessionManager* sessionManager;
 	HandleManager* handleManager;
 
+	// A list with the supported mechanisms
+	std::map<std::string, CK_MECHANISM_TYPE> mechanisms_table;
+	std::list<CK_MECHANISM_TYPE> supportedMechanisms;
+	CK_ULONG nrSupportedMechanisms;
+
 	int forkID;
 
 	// Encrypt/Decrypt variants
@@ -478,9 +483,8 @@ private:
 
 	CK_RV MechParamCheckRSAPKCSOAEP(CK_MECHANISM_PTR pMechanism);
 
-	static bool isMechanismPermitted(OSObject* key, CK_MECHANISM_PTR pMechanism);
-	static void prepareSupportedMecahnisms(std::map<std::string, CK_MECHANISM_TYPE> &t);
-
+	bool isMechanismPermitted(OSObject* key, CK_MECHANISM_PTR pMechanism);
+	void prepareSupportedMecahnisms(std::map<std::string, CK_MECHANISM_TYPE> &t);
 	bool detectFork(void);
 };
 

@@ -344,10 +344,17 @@ SoftHSM* SoftHSM::i()
 	if (!instance.get())
 	{
 		instance.reset(new SoftHSM());
-	} else if(instance->detectFork())
+	}
+	else if(instance->detectFork())
 	{
 		if (Configuration::i()->getBool("library.reset_on_fork", false))
 		{
+			/* It is important to first clear the singleton
+			 * instance, and then fill it again, so make sure
+			 * the old instance is first destroyed as some
+			 * static structures are erased in the destructor.
+			 */
+			instance.reset(NULL);
 			instance.reset(new SoftHSM());
 		}
 	}
@@ -393,13 +400,11 @@ SoftHSM::~SoftHSM()
 	if (sessionObjectStore != NULL) delete sessionObjectStore;
 	sessionObjectStore = NULL;
 
+	mechanisms_table.clear();
+	supportedMechanisms.clear();
+
 	resetMutexFactoryCallbacks();
 }
-
-// A list with the supported mechanisms
-std::map<std::string, CK_MECHANISM_TYPE> mechanisms_table;
-std::list<CK_MECHANISM_TYPE> supportedMechanisms;
-CK_ULONG nrSupportedMechanisms;
 
 /*****************************************************************************
  Implementation of PKCS #11 functions
