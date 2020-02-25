@@ -908,14 +908,13 @@ eddsa_key_material_t* crypto_malloc_eddsa(EVP_PKEY* pkey)
 		return NULL;
 	}
 
-	eddsa_key_material_t* keyMat = (eddsa_key_material_t*)malloc(sizeof(eddsa_key_material_t));
+	eddsa_key_material_t* keyMat = (eddsa_key_material_t*)calloc(1, sizeof(eddsa_key_material_t));
 	if (keyMat == NULL)
 	{
 		return NULL;
 	}
 
 	int nid = EVP_PKEY_id(pkey);
-	memset(keyMat, 0, sizeof(*keyMat));
 	keyMat->sizeOID = i2d_ASN1_OBJECT(OBJ_nid2obj(nid), NULL);
 	keyMat->derOID = (CK_VOID_PTR)malloc(keyMat->sizeOID);
 
