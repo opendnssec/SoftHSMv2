@@ -94,7 +94,6 @@ void ForkTests::testFork()
 void ForkTests::testResetOnFork()
 {
 	CK_RV rv;
-	CK_SLOT_INFO slotInfo;
 	pid_t pid;
 
 	// Just make sure that we finalize any previous failed tests
