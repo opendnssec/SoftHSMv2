@@ -403,6 +403,8 @@ SoftHSM::~SoftHSM()
 	mechanisms_table.clear();
 	supportedMechanisms.clear();
 
+	isInitialised = false;
+
 	resetMutexFactoryCallbacks();
 }
 
