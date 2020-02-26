@@ -52,9 +52,6 @@ public:
 	// Constructor
 	SessionObjectStore();
 
-	// Retrieve objects
-	std::set<SessionObject*> getObjects();
-
 	// Insert the session objects for the given slotID into the given OSObject set
 	void getObjects(CK_SLOT_ID slotID, std::set<OSObject*> &inObjects);
 
