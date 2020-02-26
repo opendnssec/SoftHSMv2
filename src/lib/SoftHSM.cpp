@@ -596,6 +596,8 @@ CK_RV SoftHSM::C_Finalize(CK_VOID_PTR pReserved)
 
 	isInitialised = false;
 
+	supportedMechanisms.clear();
+
 	SoftHSM::reset();
 	return CKR_OK;
 }
@@ -777,6 +779,7 @@ void SoftHSM::prepareSupportedMecahnisms(std::map<std::string, CK_MECHANISM_TYPE
 	t["CKM_EDDSA"]			= CKM_EDDSA;
 #endif
 
+	supportedMechanisms.clear();
 	for (auto it = t.begin(); it != t.end(); ++it)
 	{
 		supportedMechanisms.push_back(it->second);
