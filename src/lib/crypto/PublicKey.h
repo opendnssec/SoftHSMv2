@@ -59,6 +59,9 @@ public:
 
 	// Serialisation
 	virtual ByteString serialise() const = 0;
+
+	// Assignment
+	constexpr PublicKey& operator=(const PublicKey&) { return *this; }
 };
 
 #endif // !_SOFTHSM_V2_PUBLICKEY_H

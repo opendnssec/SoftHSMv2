@@ -42,10 +42,6 @@
  * IF IBM IS APPRISED OF THE POSSIBILITY OF SUCH DAMAGES.
  */
 
-#if !defined(LINT) && !defined(CODECENTER)
-static const char rcsid[] = "$ISC: base64.c,v 8.6 1999/01/08 19:25:18 vixie Exp $";
-#endif /* not lint */
-
 #include <sys/types.h>
 #ifndef _WIN32
 #include <sys/param.h>

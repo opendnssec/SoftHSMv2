@@ -63,6 +63,9 @@ public:
 	// Destructor
 	virtual ~ByteString() { }
 
+	// Assignment
+	ByteString& operator=(const ByteString& in);
+
 	// Append data
 	ByteString& operator+=(const ByteString& append);
 	ByteString& operator+=(const unsigned char byte);
