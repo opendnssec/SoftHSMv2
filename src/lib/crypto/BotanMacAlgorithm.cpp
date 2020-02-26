@@ -38,7 +38,6 @@
 
 #include <botan/symkey.h>
 #include <botan/mac.h>
-#include <botan/botan.h>
 #include <botan/version.h>
 #if BOTAN_VERSION_CODE < BOTAN_VERSION_CODE_FOR(1,11,26)
 #include <botan/lookup.h>

@@ -39,7 +39,7 @@
 #include <iostream>
 
 #include <botan/symkey.h>
-#include <botan/botan.h>
+#include <botan/parsing.h>
 #include <botan/version.h>
 
 #if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,14)

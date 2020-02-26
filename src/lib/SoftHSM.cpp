@@ -78,6 +78,7 @@
 
 #include <stdlib.h>
 #include <algorithm>
+#include <stdexcept>
 
 #ifdef _WIN32
 #include <process.h>
