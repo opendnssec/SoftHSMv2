@@ -35,6 +35,7 @@
 #include "DerUtil.h"
 #include "OSSLUtil.h"
 #include <openssl/asn1.h>
+#include <openssl/evp.h>
 #include <openssl/err.h>
 
 // Convert an OpenSSL BIGNUM to a ByteString
@@ -122,21 +123,71 @@ EC_POINT* OSSL::byteString2pt(const ByteString& byteString, const EC_GROUP* grp)
 ByteString OSSL::oid2ByteString(int nid)
 {
 	ByteString rv;
+	std::string name;
 
-	if (nid != NID_undef)
+	switch (nid)
 	{
-		rv.resize(i2d_ASN1_OBJECT(OBJ_nid2obj(nid), NULL));
-		unsigned char *p = &rv[0];
-		i2d_ASN1_OBJECT(OBJ_nid2obj(nid), &p);
+		case EVP_PKEY_ED25519:
+			name = "edwards25519";
+			break;
+
+		case EVP_PKEY_X25519:
+			name = "curve25519";
+			break;
+
+		default:
+			return rv;
 	}
+
+	ASN1_PRINTABLESTRING *str = ASN1_PRINTABLESTRING_new();
+	ASN1_STRING_set(str, name.c_str(), name.length());
+	rv.resize(i2d_ASN1_PRINTABLESTRING(str, NULL));
+	unsigned char *p = &rv[0];
+	i2d_ASN1_PRINTABLESTRING(str, &p);
+	ASN1_PRINTABLESTRING_free(str);
 
 	return rv;
 }
 
-// Convert a ByteString to an OpenSSL NID
+// Convert a ByteString to an OpenSSL EVP_PKEY id
 int OSSL::byteString2oid(const ByteString& byteString)
 {
+	ASN1_OBJECT *oid = NULL;
+	ASN1_PRINTABLESTRING *curve_name = NULL;
 	const unsigned char *p = byteString.const_byte_str();
-	return OBJ_obj2nid(d2i_ASN1_OBJECT(NULL, &p, byteString.size()));
+	const unsigned char *pp = p;
+	long length;
+	int tag, pclass;
+
+	ASN1_get_object(&pp, &length, &tag, &pclass, byteString.size());
+	if (pclass == V_ASN1_UNIVERSAL && tag == V_ASN1_OBJECT)
+	{
+		/* The initial release of SoftHSM was expecting just OID value */
+		oid = d2i_ASN1_OBJECT(NULL, &p, byteString.size());
+
+		if (oid == NULL)
+		{
+			return NID_undef;
+		}
+
+		return OBJ_obj2nid(oid);
+	}
+	else if (pclass == V_ASN1_UNIVERSAL && tag == V_ASN1_PRINTABLESTRING)
+	{
+		/* The final PKCS#11 3.0 expects curve name encoded as PrintableString */
+		curve_name = d2i_ASN1_PRINTABLESTRING(NULL, &p, byteString.size());
+
+		if (strcmp((char *)curve_name->data, "edwards25519") == 0)
+		{
+			return EVP_PKEY_ED25519;
+		}
+
+		if (strcmp((char *)curve_name->data, "curve25519") == 0)
+		{
+			return EVP_PKEY_X25519;
+		}
+	}
+
+	return NID_undef;
 }
 #endif

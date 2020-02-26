@@ -72,12 +72,20 @@ void EDDSATests::testKeyGeneration()
 
 	// Curves to test
 	std::vector<ByteString> curves;
-	// Add x25519
-	curves.push_back(ByteString("06032b656e"));
-	// Add ed25519
-	curves.push_back(ByteString("06032b6570"));
+	// Add x25519 [RFC 8032] per PKCS#11 3.0
+	curves.push_back(ByteString("130a63757276653235353139"));
+	// Add ed25519 [RFC 8032] per PKCS#11 3.0
+	curves.push_back(ByteString("130c656477617264733235353139"));
 
-	for (std::vector<ByteString>::iterator c = curves.begin(); c != curves.end(); c++)
+	std::vector<ByteString> compat_curves;
+	// Add x25519 [RFC 8420] -- non-standard !
+	compat_curves.push_back(ByteString("06032b656e"));
+	// Add ed25519 [RFC 8420] -- non-standard !
+	compat_curves.push_back(ByteString("06032b6570"));
+
+	for (std::vector<ByteString>::iterator c = curves.begin(), cc = compat_curves.begin();
+		c != curves.end() && cc != compat_curves.end();
+		c++, cc++)
 	{
 		// Set domain parameters
 		ECParameters* p = new ECParameters;
@@ -89,6 +97,20 @@ void EDDSATests::testKeyGeneration()
 		EDPublicKey* pub = (EDPublicKey*) kp->getPublicKey();
 		EDPrivateKey* priv = (EDPrivateKey*) kp->getPrivateKey();
 
+		CPPUNIT_ASSERT(pub->getEC() == *c);
+		CPPUNIT_ASSERT(priv->getEC() == *c);
+
+		eddsa->recycleKeyPair(kp);
+
+		/* Retry with compat curves: we should accept them on input */
+		p->setEC(*cc);
+
+		CPPUNIT_ASSERT(eddsa->generateKeyPair(&kp, p));
+
+		pub = (EDPublicKey*) kp->getPublicKey();
+		priv = (EDPrivateKey*) kp->getPrivateKey();
+
+		/* But on output, we should get correctly encoded curve names */
 		CPPUNIT_ASSERT(pub->getEC() == *c);
 		CPPUNIT_ASSERT(priv->getEC() == *c);
 
