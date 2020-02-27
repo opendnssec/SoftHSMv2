@@ -110,6 +110,9 @@ public:
 	// XORing
 	ByteString& operator^=(const ByteString& rhs);
 
+        // Assignment
+        ByteString& operator=(const ByteString& in);
+
 	// Serialisation/deserialisation
 	virtual ByteString serialise() const;
 

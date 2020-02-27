@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2010 .SE (The Internet Infrastructure Foundation)
- * All rights reserved.
+n * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,14 +32,13 @@
 
 #include "config.h"
 #include "BotanSHA256.h"
-#include <botan/sha2_32.h>
 
 int BotanSHA256::getHashSize()
 {
 	return 32;
 }
 
-Botan::HashFunction* BotanSHA256::getHash() const
+const char* BotanSHA256::getHashName() const
 {
-	return new Botan::SHA_256();
+	return "SHA-256";
 }

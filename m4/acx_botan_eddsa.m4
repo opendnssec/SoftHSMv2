@@ -12,7 +12,6 @@ AC_DEFUN([ACX_BOTAN_EDDSA],[
 		acx_cv_lib_botan_eddsa_support=no
 		AC_RUN_IFELSE([
 			AC_LANG_SOURCE([[
-				#include <botan/init.h>
 				#include <botan/ed25519.h>
 				#include <botan/version.h>
 				int main()

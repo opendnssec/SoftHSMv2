@@ -769,7 +769,6 @@ void AESTests::testCTR()
 	}
 }
 
-#ifdef WITH_AES_GCM
 void AESTests::testGCM()
 {
 	// Test vectors from NIST via Botan
@@ -1094,7 +1093,6 @@ void AESTests::testGCM()
 		CPPUNIT_ASSERT(shsmPlainText == plainText);
 	}
 }
-#endif
 
 void AESTests::testWrap(const char testKeK[][128], const char testKey[][128], const char testCt[][128], const int testCnt, SymWrap::Type mode)
 {

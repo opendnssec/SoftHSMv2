@@ -32,14 +32,13 @@
 
 #include "config.h"
 #include "BotanSHA384.h"
-#include <botan/sha2_64.h>
 
 int BotanSHA384::getHashSize()
 {
 	return 48;
 }
 
-Botan::HashFunction* BotanSHA384::getHash() const
+const char* BotanSHA384::getHashName() const
 {
-	return new Botan::SHA_384();
+	return "SHA-384";
 }

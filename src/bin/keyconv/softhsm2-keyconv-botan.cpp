@@ -40,7 +40,6 @@
 #include <iostream>
 #include <fstream>
 
-#include <botan/init.h>
 #include <botan/auto_rng.h>
 #include <botan/pkcs8.h>
 #include <botan/rsa.h>
@@ -51,13 +50,11 @@
 // Init Botan
 void crypto_init()
 {
-	Botan::LibraryInitializer::initialize();
 }
 
 // Final Botan
 void crypto_final()
 {
-	Botan::LibraryInitializer::deinitialize();
 }
 
 // Save the RSA key as a PKCS#8 file
@@ -92,11 +89,7 @@ int save_rsa_pkcs8(char* out_path, char* file_pin, key_material_t* pkey)
 
 	try
 	{
-#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,34)
 		priv_key = new Botan::RSA_PrivateKey(bigP, bigQ, bigE, bigD, bigN);
-#else
-		priv_key = new Botan::RSA_PrivateKey(*rng, bigP, bigQ, bigE, bigD, bigN);
-#endif
 	}
 	catch(std::exception& e)
 	{
@@ -123,11 +116,7 @@ int save_rsa_pkcs8(char* out_path, char* file_pin, key_material_t* pkey)
 		}
 		else
 		{
-#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,0)
 			priv_file << Botan::PKCS8::PEM_encode(*priv_key, *rng, file_pin, std::chrono::milliseconds(300), "PBE-PKCS5v15(MD5,DES/CBC)");
-#else
-			priv_file << Botan::PKCS8::PEM_encode(*priv_key, *rng, file_pin, "PBE-PKCS5v15(MD5,DES/CBC)");
-#endif
 		}
 
 		printf("The key has been written to %s\n", out_path);
@@ -203,11 +192,7 @@ int save_dsa_pkcs8(char* out_path, char* file_pin, key_material_t* pkey)
 		}
 		else
 		{
-#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,0)
 			priv_file << Botan::PKCS8::PEM_encode(*priv_key, *rng, file_pin, std::chrono::milliseconds(300), "PBE-PKCS5v15(MD5,DES/CBC)");
-#else
-			priv_file << Botan::PKCS8::PEM_encode(*priv_key, *rng, file_pin, "PBE-PKCS5v15(MD5,DES/CBC)");
-#endif
 		}
 
 		printf("The key has been written to %s\n", out_path);
