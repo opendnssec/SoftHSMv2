@@ -41,7 +41,7 @@ class BotanGOSTR3411 : public BotanHashAlgorithm
 {
 	virtual int getHashSize();
 protected:
-	virtual Botan::HashFunction* getHash() const;
+	virtual const char* getHashName() const;
 };
 
 #endif // !_SOFTHSM_V2_BOTANGOSTR3411_H

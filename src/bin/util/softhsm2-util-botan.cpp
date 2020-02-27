@@ -41,50 +41,21 @@
 #include <iostream>
 #include <fstream>
 
-#include <botan/init.h>
+#include <botan/version.h>
 #include <botan/auto_rng.h>
 #include <botan/pkcs8.h>
 #include <botan/bigint.h>
-#include <botan/version.h>
 #include <botan/der_enc.h>
 #include <botan/oids.h>
-
-#if BOTAN_VERSION_CODE < BOTAN_VERSION_CODE_FOR(1,11,14)
-#include <botan/libstate.h>
-bool wasInitialized = false;
-#endif
 
 // Init Botan
 void crypto_init()
 {
-#if BOTAN_VERSION_CODE < BOTAN_VERSION_CODE_FOR(1,11,14)
-	// The PKCS#11 library might be using Botan
-	// Check if it has already initialized Botan
-	if (Botan::Global_State_Management::global_state_exists())
-	{
-		wasInitialized = true;
-	}
-
-	if (!wasInitialized)
-	{
-		Botan::LibraryInitializer::initialize("thread_safe=true");
-	}
-#else
-	Botan::LibraryInitializer::initialize("thread_safe=true");
-#endif
 }
 
 // Final Botan
 void crypto_final()
 {
-#if BOTAN_VERSION_CODE < BOTAN_VERSION_CODE_FOR(1,11,14)
-	if (!wasInitialized)
-	{
-		Botan::LibraryInitializer::deinitialize();
-	}
-#else
-	Botan::LibraryInitializer::deinitialize();
-#endif
 }
 
 // Import a aes secret key from given path
@@ -249,7 +220,6 @@ Botan::Private_Key* crypto_read_file(char* filePath, char* filePIN)
 
 	try
 	{
-#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,0)
 		if (filePIN == NULL)
 		{
 			pkey = Botan::PKCS8::load_key(std::string(filePath), *rng);
@@ -258,16 +228,6 @@ Botan::Private_Key* crypto_read_file(char* filePath, char* filePIN)
 		{
 			pkey = Botan::PKCS8::load_key(std::string(filePath), *rng, std::string(filePIN));
 		}
-#else
-		if (filePIN == NULL)
-		{
-			pkey = Botan::PKCS8::load_key(filePath, *rng);
-		}
-		else
-		{
-			pkey = Botan::PKCS8::load_key(filePath, *rng, filePIN);
-		}
-#endif
 	}
 	catch (std::exception& e)
 	{
@@ -669,21 +629,15 @@ ecdsa_key_material_t* crypto_malloc_ecdsa(Botan::ECDSA_PrivateKey* ecdsa)
 		return NULL;
 	}
 
-#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,0)
 	std::vector<Botan::byte> derEC = ecdsa->domain().DER_encode(Botan::EC_DOMPAR_ENC_OID);
 	Botan::secure_vector<Botan::byte> derPoint;
-#else
-	Botan::SecureVector<Botan::byte> derEC = ecdsa->domain().DER_encode(Botan::EC_DOMPAR_ENC_OID);
-	Botan::SecureVector<Botan::byte> derPoint;
-#endif
 
 	try
 	{
-#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,0)
-		Botan::secure_vector<Botan::byte> repr = Botan::EC2OSP(ecdsa->public_point(),
-			Botan::PointGFp::UNCOMPRESSED);
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(2,5,0)
+		std::vector<uint8_t> repr = ecdsa->public_point().encode(Botan::PointGFp::UNCOMPRESSED);
 #else
-		Botan::SecureVector<Botan::byte> repr = Botan::EC2OSP(ecdsa->public_point(),
+		Botan::secure_vector<Botan::byte> repr = Botan::EC2OSP(ecdsa->public_point(),
 			Botan::PointGFp::UNCOMPRESSED);
 #endif
 

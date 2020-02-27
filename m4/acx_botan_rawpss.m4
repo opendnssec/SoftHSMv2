@@ -12,7 +12,6 @@ AC_DEFUN([ACX_BOTAN_RAWPSS],[
 		acx_cv_lib_botan_raw_pss_support=no
 		AC_COMPILE_IFELSE([
 			AC_LANG_SOURCE([[
-				#include <botan/botan.h>
 				#include <botan/version.h>
 				int main()
 				{

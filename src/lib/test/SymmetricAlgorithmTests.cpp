@@ -747,11 +747,9 @@ void SymmetricAlgorithmTests::testAesEncryptDecrypt()
 	encryptDecrypt(CKM_AES_CTR,blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST-1);
 	encryptDecrypt(CKM_AES_CTR,blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST+1);
 	encryptDecrypt(CKM_AES_CTR,blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST);
-#ifdef WITH_AES_GCM
 	encryptDecrypt(CKM_AES_GCM,blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST-1);
 	encryptDecrypt(CKM_AES_GCM,blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST+1);
 	encryptDecrypt(CKM_AES_GCM,blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST);
-#endif
 }
 
 void SymmetricAlgorithmTests::testAesWrapUnwrap()

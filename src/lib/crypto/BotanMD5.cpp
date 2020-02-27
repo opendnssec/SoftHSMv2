@@ -32,14 +32,13 @@
 
 #include "config.h"
 #include "BotanMD5.h"
-#include <botan/md5.h>
 
 int BotanMD5::getHashSize()
 {
 	return 16;
 }
 
-Botan::HashFunction* BotanMD5::getHash() const
+const char* BotanMD5::getHashName() const
 {
-	return new Botan::MD5();
+	return "MD5";
 }

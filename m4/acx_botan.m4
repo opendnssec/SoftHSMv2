@@ -15,17 +15,7 @@ AC_DEFUN([ACX_BOTAN],[
 			BOTAN_VERSION_MAJOR=2
 			BOTAN_VERSION_MINOR=0
 		],[
-			PKG_CHECK_MODULES([BOTAN], [botan-1.11 >= $1.$2.$3], [
-				BOTAN_VERSION_MAJOR=1
-				BOTAN_VERSION_MINOR=11
-			],[
-				PKG_CHECK_MODULES([BOTAN], [botan-1.10 >= $1.$2.$3], [
-					BOTAN_VERSION_MAJOR=1
-					BOTAN_VERSION_MINOR=10
-				],[
-					AC_MSG_ERROR([Cannot find Botan])
-				])
-			])
+			AC_MSG_ERROR([Cannot find Botan])
 		])
 	else
 		BOTAN_VERSION_MAJOR=2
@@ -33,12 +23,6 @@ AC_DEFUN([ACX_BOTAN],[
 		if test -f "$BOTAN_PATH/include/botan-2/botan/version.h"; then
 			BOTAN_VERSION_MAJOR=2
 			BOTAN_VERSION_MINOR=0
-		elif test -f "$BOTAN_PATH/include/botan-1.11/botan/version.h"; then
-			BOTAN_VERSION_MAJOR=1
-			BOTAN_VERSION_MINOR=11
-		elif test -f "$BOTAN_PATH/include/botan-1.10/botan/version.h"; then
-			BOTAN_VERSION_MAJOR=1
-			BOTAN_VERSION_MINOR=10
 		else
 			AC_MSG_ERROR([Cannot find Botan includes])
 		fi
@@ -74,11 +58,8 @@ AC_DEFUN([ACX_BOTAN],[
 	AC_LANG_PUSH([C++])
 	AC_LINK_IFELSE(
 		[AC_LANG_PROGRAM(
-			[#include <botan/init.h>
-			#include <botan/version.h>],
-			[using namespace Botan;
-			LibraryInitializer::initialize();
-			#if BOTAN_VERSION_CODE < BOTAN_VERSION_CODE_FOR($1,$2,$3)
+			[#include <botan/version.h>],
+			[#if BOTAN_VERSION_CODE < BOTAN_VERSION_CODE_FOR($1,$2,$3)
 			#error "Botan version too old";
 			#endif])],
 		[AC_MSG_RESULT([checking for Botan >= v$1.$2.$3 ... yes])],
