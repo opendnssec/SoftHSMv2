@@ -43,20 +43,14 @@ init:
     $env:CONFIGURE_OPTIONS = "$env:CONFIGURE_OPTIONS with-crypto-backend=$env:CRYPTO_BACKEND with-$env:CRYPTO_BACKEND=$env:CRYPTO_PACKAGE_PATH\ with-cppunit=$env:CPPUNIT_PATH\"
 environment:
   matrix:
-  - CRYPTO_BACKEND: openssl
-    PACKAGE_VERSION_NAME: OpenSSL-1.0.2j
-    CRYPTO_PACKAGE_NAME: openssl-1.0.2j
-    ADDITIONAL_CONFIGURE_OPTIONS: disable-eddsa
   - CRYPTO_BACKEND: botan
-    PACKAGE_VERSION_NAME: Botan-1.10.13
-    CRYPTO_PACKAGE_NAME: botan-1.10.13
-    ADDITIONAL_CONFIGURE_OPTIONS: disable-eddsa
+    ADDITIONAL_CONFIGURE_OPTIONS: disable-eddsa disable-gost with-crypto-backend=botan
   - CRYPTO_BACKEND: openssl
-    PACKAGE_VERSION_NAME: OpenSSL-1.1.0b
-    CRYPTO_PACKAGE_NAME: openssl-1.1.0b
-    ADDITIONAL_CONFIGURE_OPTIONS: disable-eddsa disable-gost
+    ADDITIONAL_CONFIGURE_OPTIONS: disable-eddsa disable-gost with-crypto-backend=openssl
 install:
-- cmd: powershell -File testing/appveyor/appveyor_download_requirements.ps1
+- cmd: vcpkg install sqlite3:x86-windows
+- cmd: vcpkg install openssl-windows:x64-windows
+- cmd: vcpkg install botan:x86-windows
 build_script:
 - cmd: testing/appveyor/appveyor_build.bat
 test: off
