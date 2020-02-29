@@ -54,7 +54,11 @@ install:
 build_script:
 - cmd: cat C:/Tools/vcpkg/scripts/buildsystems/vcpkg.cmake
 - cmd: vcpkg integrate install
-- cmd: testing/appveyor/appveyor_build.bat
+- cmd: cmake -DCMAKE_TOOLCHAIN_FILE=C:/Tools/vcpkg/scripts/buildsystems/vcpkg.cmake -DWITH_CRYPTO_BACKEND=openssl -DBUILD_TESTS=ON -DDISABLE_NON_PAGED_MEMORY=ON -DENABLE_GOST=OFF
+- cmd: dir
+- cmd: make all
+- cmd: make test
+- cmd: ls win32
 test: off
 artifacts:
 - path: build/SoftHSMv2-$(Platform)
