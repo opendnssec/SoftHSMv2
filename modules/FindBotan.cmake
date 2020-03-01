@@ -17,11 +17,17 @@ IF (NOT WIN32)
    # in the FIND_PATH() and FIND_LIBRARY() calls
    # also fills in BOTAN_DEFINITIONS, although that isn't normally useful
    FIND_PACKAGE(PkgConfig)
-   PKG_SEARCH_MODULE(PC_BOTAN botan-2)
+   PKG_SEARCH_MODULE(PC_BOTAN botan-2 botan-1.10 botan-1.9 botan-1.8 botan))
    SET(BOTAN_DEFINITIONS ${PC_BOTAN_CFLAGS})
 ENDIF (NOT WIN32)
 
 FIND_PATH(BOTAN_INCLUDE_DIR botan/version.h
+   HINTS
+   ${PC_BOTAN_INCLUDEDIR}
+   ${PC_BOTAN_INCLUDE_DIRS}
+   )
+
+FIND_PATH(BOTAN_INCLUDE_DIR botan/botan.h
    HINTS
    ${PC_BOTAN_INCLUDEDIR}
    ${PC_BOTAN_INCLUDE_DIRS}
