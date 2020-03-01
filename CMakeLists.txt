@@ -63,7 +63,7 @@ set(MIN_PIN_LEN 4 CACHE STRING "Minimum PIN length")
 
 set(VERSION "2.5.0")
 set(VERSION_MAJOR 2)
-set(VERSION_MINOR 5)
+set(VERSION_MINOR 6)
 set(VERSION_PATCH 0)
 
 set(PACKAGE "softhsm")
@@ -73,6 +73,10 @@ set(PACKAGE_VERSION "${VERSION}")
 set(PACKAGE_STRING "${PACKAGE_NAME} ${PACKAGE_VERSION}")
 set(PACKAGE_TARNAME "${PACKAGE}")
 set(PACKAGE_URL)
+
+IF (MSVC)
+include_directories(BEFORE "src/lib/win32")
+ENDIF ()
 
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING "Default build type for SoftHSMv2 project" FORCE)
