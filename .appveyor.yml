@@ -50,8 +50,9 @@ environment:
 install:
 - cmd: vcpkg install sqlite3:x86-windows
 - cmd: vcpkg install openssl-windows:x64-windows
-- cmd: vcpkg install botan:x86-windows
+- cmd: vcpkg install botan-2:x86-windows
 - cmd: vcpkg install cppunit:x86-windows
+- cmd: vcpkg install getopt:x86-windows
 build_script:
 - cmd: cat C:/Tools/vcpkg/scripts/buildsystems/vcpkg.cmake
 - cmd: vcpkg integrate install
