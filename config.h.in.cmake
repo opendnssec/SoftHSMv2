@@ -187,22 +187,6 @@
 #undef DEFAULT_TOKENDIR
 #define DEFAULT_TOKENDIR "tokens"
 
-/* Define if advanced AES key wrap without pad is supported */
-@IF RFC3394
-#undef HAVE_AES_KEY_WRAP
-#define HAVE_AES_KEY_WRAP 1
-@ELSE RFC3394
-#undef HAVE_AES_KEY_WRAP
-@END RFC3394
-
-/* Define if advanced AES key wrap with pad is supported */
-@IF RFC5649
-#undef HAVE_AES_KEY_WRAP_PAD
-#define HAVE_AES_KEY_WRAP_PAD 1
-@ELSE RFC5649
-#undef HAVE_AES_KEY_WRAP_PAD
-@END RFC5649
-
 /* Whether LoadLibrary is available */
 #undef HAVE_LOADLIBRARY
 #define HAVE_LOADLIBRARY 1
@@ -235,65 +219,6 @@
 #undef MIN_PIN_LEN
 #define MIN_PIN_LEN 4
 
-/* Non-paged memory for secure storage */
-@IF NONPAGE
-#undef SENSITIVE_NON_PAGE
-#define SENSITIVE_NON_PAGE 1
-@ELSE NONPAGE
-#undef SENSITIVE_NON_PAGE
-@END NONPAGE
-
-/* Compile with Botan support */
-@IF BOTAN
-#undef WITH_BOTAN
-#define WITH_BOTAN 1
-@ELSE BOTAN
-#undef WITH_BOTAN
-@END BOTAN
-
-/* Compile with ECC support */
-@IF ECC
-#undef WITH_ECC
-#define WITH_ECC 1
-@ELSE ECC
-#undef WITH_ECC
-@END ECC
-
-/* Compile with EDDSA support */
-@IF EDDSA
-#define WITH_EDDSA 1
-@ELSE EDDSA
-#undef WITH_EDDSA
-@END EDDSA
-
-/* Compile with GOST support */
-@IF GOST
-#define WITH_GOST 1
-@ELSE GOST
-#undef WITH_GOST
-@END GOST
-
-/* Compile with OpenSSL support */
-@IF OPENSSL
-#define WITH_OPENSSL 1
-@ELSE OPENSSL
-#undef WITH_OPENSSL
-@END OPENSSL
-
-/* Compile with raw PSS support */
-@IF RAWPSS
-#define WITH_RAW_PSS 1
-@ELSE RAWPSS
-#undef WITH_RAW_PSS
-@END RAWPSS
-
-/* Compile with AES GCM support */
-@IF AESGCM
-#define WITH_AES_GCM 1
-@ELSE AESGCM
-#undef WITH_AES_GCM
-@END AESGCM
-
 /* Define to 1 if you have getpassphrase(). */
 #define HAVE_GETPASSPHRASE
 
@@ -324,12 +249,6 @@ int setenv(const char *name, const char *value, int overwrite);
 
 #undef min
 #undef max
-
-@IF BOTAN
-/* For Botan */
-
-#pragma warning(disable: 4275 4267)
-@END BOTAN
 
 /* Temporary for debug */
 

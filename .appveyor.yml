@@ -56,7 +56,7 @@ install:
 build_script:
 - cmd: cat C:/Tools/vcpkg/scripts/buildsystems/vcpkg.cmake
 - cmd: vcpkg integrate install
-- cmd: cmake -DCMAKE_TOOLCHAIN_FILE=C:/Tools/vcpkg/scripts/buildsystems/vcpkg.cmake -DWITH_CRYPTO_BACKEND=%CRYPTO_BACKEND% -DBUILD_TESTS=OFF -DDISABLE_NON_PAGED_MEMORY=ON -DENABLE_GOST=OFF
+- cmd: cmake -DCMAKE_TOOLCHAIN_FILE=C:/Tools/vcpkg/scripts/buildsystems/vcpkg.cmake -DWITH_CRYPTO_BACKEND=%CRYPTO_BACKEND% -DBUILD_TESTS=OFF -DDISABLE_NON_PAGED_MEMORY=ON -DENABLE_GOST=OFF .
 - cmd: dir
 - cmd: dir win32
 - cmd: msbuild softhsm2.sln /p:Configuration="Release" /p:Platform="Win32" /p:PlatformToolset=v140 /target:Build
