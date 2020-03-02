@@ -159,3 +159,185 @@
 
 /* Compile with raw RSA PKCS PSS */
 #cmakedefine WITH_RAW_PSS @WITH_RAW_PSS@
+
+/*
+ * Remainder is specific for Windows build to
+ * set some default that aren't configured from
+ * cmake yet, and provide compatibility functions.
+ */
+#ifdef _WIN32
+
+/* The default log level */
+#undef DEFAULT_LOG_LEVEL
+#define DEFAULT_LOG_LEVEL "INFO"
+
+/* Default storage backend for token objects */
+#undef DEFAULT_OBJECTSTORE_BACKEND
+#define DEFAULT_OBJECTSTORE_BACKEND "file"
+
+/* The default PKCS#11 library */
+#undef DEFAULT_PKCS11_LIB
+#define DEFAULT_PKCS11_LIB "softhsm2.dll"
+
+/* The default location of softhsm2.conf */
+#undef DEFAULT_SOFTHSM2_CONF
+#define DEFAULT_SOFTHSM2_CONF "softhsm2.conf"
+
+/* The default location of the token directory */
+#undef DEFAULT_TOKENDIR
+#define DEFAULT_TOKENDIR "tokens"
+
+/* Define if advanced AES key wrap without pad is supported */
+@IF RFC3394
+#undef HAVE_AES_KEY_WRAP
+#define HAVE_AES_KEY_WRAP 1
+@ELSE RFC3394
+#undef HAVE_AES_KEY_WRAP
+@END RFC3394
+
+/* Define if advanced AES key wrap with pad is supported */
+@IF RFC5649
+#undef HAVE_AES_KEY_WRAP_PAD
+#define HAVE_AES_KEY_WRAP_PAD 1
+@ELSE RFC5649
+#undef HAVE_AES_KEY_WRAP_PAD
+@END RFC5649
+
+/* Whether LoadLibrary is available */
+#undef HAVE_LOADLIBRARY
+#define HAVE_LOADLIBRARY 1
+
+
+/* Define to 1 if you have the <stdlib.h> header file. */
+#undef HAVE_STDLIB_H
+#define HAVE_STDLIB_H 1
+
+/* Define to 1 if you have the <strings.h> header file. */
+#undef HAVE_STRINGS_H
+
+/* Define to 1 if you have the <string.h> header file. */
+#undef HAVE_STRING_H
+#define HAVE_STRING_H 1
+
+/* Define to 1 if you have the <sys/stat.h> header file. */
+#undef HAVE_SYS_STAT_H
+#define HAVE_SYS_STAT_H 1
+
+/* Define to 1 if you have the <sys/types.h> header file. */
+#undef HAVE_SYS_TYPES_H
+#define HAVE_SYS_TYPES_H 1
+
+/* Maximum PIN length */
+#undef MAX_PIN_LEN
+#define MAX_PIN_LEN 255
+
+/* Minimum PIN length */
+#undef MIN_PIN_LEN
+#define MIN_PIN_LEN 4
+
+/* Non-paged memory for secure storage */
+@IF NONPAGE
+#undef SENSITIVE_NON_PAGE
+#define SENSITIVE_NON_PAGE 1
+@ELSE NONPAGE
+#undef SENSITIVE_NON_PAGE
+@END NONPAGE
+
+/* Compile with Botan support */
+@IF BOTAN
+#undef WITH_BOTAN
+#define WITH_BOTAN 1
+@ELSE BOTAN
+#undef WITH_BOTAN
+@END BOTAN
+
+/* Compile with ECC support */
+@IF ECC
+#undef WITH_ECC
+#define WITH_ECC 1
+@ELSE ECC
+#undef WITH_ECC
+@END ECC
+
+/* Compile with EDDSA support */
+@IF EDDSA
+#define WITH_EDDSA 1
+@ELSE EDDSA
+#undef WITH_EDDSA
+@END EDDSA
+
+/* Compile with GOST support */
+@IF GOST
+#define WITH_GOST 1
+@ELSE GOST
+#undef WITH_GOST
+@END GOST
+
+/* Compile with OpenSSL support */
+@IF OPENSSL
+#define WITH_OPENSSL 1
+@ELSE OPENSSL
+#undef WITH_OPENSSL
+@END OPENSSL
+
+/* Compile with raw PSS support */
+@IF RAWPSS
+#define WITH_RAW_PSS 1
+@ELSE RAWPSS
+#undef WITH_RAW_PSS
+@END RAWPSS
+
+/* Compile with AES GCM support */
+@IF AESGCM
+#define WITH_AES_GCM 1
+@ELSE AESGCM
+#undef WITH_AES_GCM
+@END AESGCM
+
+/* Define to 1 if you have getpassphrase(). */
+#define HAVE_GETPASSPHRASE
+
+/* Addition things */
+
+char *getpassphrase(const char *prompt);
+int setenv(const char *name, const char *value, int overwrite);
+
+/* At least Vista */
+
+#ifndef _WIN32_WINNT
+#define _WIN32_WINNT 0x0600
+#endif
+
+#if _MSC_VER < 1900
+#define snprintf _snprintf
+#endif
+#define strcasecmp _stricmp
+#define strncasecmp _strnicmp
+
+/* Prevent inclusion of winsock.h in windows.h */
+
+#define WIN32_LEAN_AND_MEAN 1
+
+#include <windows.h>
+
+/* avoid collision from min and max macros */
+
+#undef min
+#undef max
+
+@IF BOTAN
+/* For Botan */
+
+#pragma warning(disable: 4275 4267)
+@END BOTAN
+
+/* Temporary for debug */
+
+#undef DEBUG_LOG_STDERR
+// #define DEBUG_LOG_STDERR 1
+
+/* To avoid unsafe warnings (off) */
+
+// #pragma warning(disable: 4996)
+
+#endif
