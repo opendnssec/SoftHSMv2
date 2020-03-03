@@ -16,6 +16,7 @@ SoftHSM 2.6.0 - 2020-??-??
   (Thanks to Anderson Toshiyuki Sasaki)
 * Issue #500: C_WaitForSlotEvent implementation.
   (Patch from massey101)
+* Issue #445: Add wrap support with CKM_AES_CBC.
 
 Bugfixes:
 * Issue #418: Set fields to NULL to avoid double free.
