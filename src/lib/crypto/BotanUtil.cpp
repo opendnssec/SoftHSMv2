@@ -35,6 +35,7 @@
 #include <botan/der_enc.h>
 #include <botan/ber_dec.h>
 #include <botan/asn1_obj.h>
+#include <botan/asn1_str.h>
 #include <botan/version.h>
 
 // Convert a Botan BigInt to a ByteString
@@ -139,6 +140,22 @@ Botan::PointGFp BotanUtil::byteString2ECPoint(const ByteString& byteString, cons
 // Convert a Botan OID to a ByteString
 ByteString BotanUtil::oid2ByteString(const Botan::OID& oid)
 {
+	std::string name;
+
+	if (oid == BotanUtil::x25519_oid)
+	{
+		name = "curve25519";
+	}
+	else if (oid == BotanUtil::ed25519_oid)
+	{
+		name = "edwards25519";
+	}
+	else
+	{
+		return ByteString();
+	}
+
+	Botan::ASN1_String str = Botan::ASN1_String(name, Botan::PRINTABLE_STRING);
 	const Botan::secure_vector<uint8_t> der = Botan::DER_Encoder().encode(oid).get_contents();
 	return ByteString(&der[0], der.size());
 }
@@ -146,10 +163,36 @@ ByteString BotanUtil::oid2ByteString(const Botan::OID& oid)
 // Convert a ByteString to a Botan OID
 Botan::OID BotanUtil::byteString2Oid(const ByteString& byteString)
 {
-	Botan::OID oid;
-	Botan::BER_Decoder(byteString.const_byte_str(), byteString.size())
-		.decode(oid)
+	Botan::BER_Object object;
+
+	Botan::BER_Decoder dec = Botan::BER_Decoder(byteString.const_byte_str(), byteString.size())
+		.get_next(object)
 		.verify_end();
-	return oid;
+
+	if (object.is_a(Botan::PRINTABLE_STRING, Botan::ASN1_Tag(0)))
+	{
+		Botan::ASN1_String str;
+
+		dec.push_back(std::move(object));
+		str.decode_from(dec);
+		if (str.value() == "edwards25519") {
+			return BotanUtil::ed25519_oid;
+		} else if (str.value() == "curve25519") {
+			return BotanUtil::x25519_oid;
+		}
+
+		/* fall through */
+	}
+	else if (object.is_a(Botan::OBJECT_ID, Botan::ASN1_Tag(0)))
+	{
+		Botan::OID oid;
+
+		dec.push_back(std::move(object));
+		oid.decode_from(dec);
+
+		return oid;
+	}
+
+	return Botan::OID();
 }
 #endif
