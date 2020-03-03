@@ -48,9 +48,6 @@
     <ClInclude Include="..\config.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\bin\win32\getopt.h">
-      <Filter>Win32 Header Files</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\bin\keyconv\softhsm2-keyconv.cpp">
@@ -77,9 +74,6 @@
     </ClCompile>
     <ClCompile Include="..\..\src\bin\keyconv\base64.c">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\bin\win32\getopt.cpp">
-      <Filter>Win32 Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\bin\win32\getpassphase.cpp">
       <Filter>Win32 Source Files</Filter>
