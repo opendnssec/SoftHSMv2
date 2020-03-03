@@ -263,20 +263,7 @@ if(WITH_CRYPTO_BACKEND STREQUAL "botan")
         message(STATUS "Botan: Cannot find raw PSS support, upgrade to Botan >= v2.3.0")
     endif()
 
-    # acx_botan_aes_gcm.m4
-    set(testfile ${CMAKE_SOURCE_DIR}/modules/tests/test_botan_aes_gcm.cpp)
-    try_run(RUN_AESGCM COMPILE_RESULT
-            "${CMAKE_BINARY_DIR}/prebuild_santity_tests" ${testfile}
-            LINK_LIBRARIES ${CRYPTO_LIBS}
-            CMAKE_FLAGS
-                "-DINCLUDE_DIRECTORIES=${CRYPTO_INCLUDES}"
-            )
-    if(COMPILE_RESULT AND RUN_AESGCM EQUAL 0)
-        set(WITH_AES_GCM 1)
-        message(STATUS "Botan: Found AES GCM")
-    else()
-        message(STATUS "Botan: Cannot find AES GCM support, upgrade to Botan >= v2.0.0")
-    endif()
+    set(WITH_AES_GCM 1)
 
     # Restore flags
     set(CMAKE_CXX_FLAGS ${TMP_CXX_FLAGS})

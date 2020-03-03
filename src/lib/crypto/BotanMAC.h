@@ -35,7 +35,6 @@
 
 #include "config.h"
 #include "BotanMacAlgorithm.h"
-#include <botan/hmac.h>
 #include <botan/hash.h>
 
 class BotanHMACMD5 : public BotanMacAlgorithm

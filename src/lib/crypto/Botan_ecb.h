@@ -6,18 +6,16 @@
 * Botan is released under the Simplified BSD License (see license.txt)
 */
 
-#ifndef BOTAN_MODE_ECB_H__
-#define BOTAN_MODE_ECB_H__
+#ifndef SOFTHSM_BOTAN_MODE_ECB_H_
+#define SOFTHSM_BOTAN_MODE_ECB_H_
 
 #include <botan/version.h>
-#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(2,0,0)
 // ECB cipher mode was dropped in Botan 2.0.0
 // so including this code in SoftHSM for continued support
 // for e.g. CKA_VALUE_CHECK
 
 #include <botan/cipher_mode.h>
 #include <botan/block_cipher.h>
-#include <botan/mode_pad.h>
 
 namespace Botan {
 
@@ -42,18 +40,18 @@ class BOTAN_DLL ECB_Mode : public Cipher_Mode
       void reset() override;
 
    protected:
-      ECB_Mode(BlockCipher* cipher, BlockCipherModePaddingMethod* padding);
+      ECB_Mode(BlockCipher* cipher, bool with_pkcs7_padding);
 
       const BlockCipher& cipher() const { return *m_cipher; }
 
-      const BlockCipherModePaddingMethod& padding() const { return *m_padding; }
+      bool with_pkcs7_padding() const { return m_with_pkcs7_padding; }
 
    private:
       void start_msg(const byte nonce[], size_t nonce_len) override;
       void key_schedule(const byte key[], size_t length) override;
 
       std::unique_ptr<BlockCipher> m_cipher;
-      std::unique_ptr<BlockCipherModePaddingMethod> m_padding;
+      bool m_with_pkcs7_padding;
    };
 
 /**
@@ -64,10 +62,9 @@ class BOTAN_DLL ECB_Encryption final : public ECB_Mode
    public:
       /**
       * @param cipher block cipher to use
-      * @param padding padding method to use
       */
-      ECB_Encryption(BlockCipher* cipher, BlockCipherModePaddingMethod* padding) :
-         ECB_Mode(cipher, padding) {}
+      ECB_Encryption(BlockCipher* cipher, bool with_pkcs7_padding) :
+         ECB_Mode(cipher, with_pkcs7_padding) {}
 
       size_t process(uint8_t buf[], size_t size) override;
 
@@ -88,8 +85,8 @@ class BOTAN_DLL ECB_Decryption final : public ECB_Mode
       * @param cipher block cipher to use
       * @param padding padding method to use
       */
-      ECB_Decryption(BlockCipher* cipher, BlockCipherModePaddingMethod* padding) :
-         ECB_Mode(cipher, padding) {}
+      ECB_Decryption(BlockCipher* cipher, bool with_pkcs7_padding) :
+         ECB_Mode(cipher, with_pkcs7_padding) {}
 
       size_t process(uint8_t buf[], size_t size) override;
 
@@ -101,7 +98,5 @@ class BOTAN_DLL ECB_Decryption final : public ECB_Mode
    };
 
 }
-
-#endif
 
 #endif

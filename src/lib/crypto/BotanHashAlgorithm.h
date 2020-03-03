@@ -53,7 +53,7 @@ public:
 
 	virtual int getHashSize() = 0;
 protected:
-	virtual Botan::HashFunction* getHash() const = 0;
+	virtual const char* getHashName() const = 0;
 
 private:
 	// Current hashing context

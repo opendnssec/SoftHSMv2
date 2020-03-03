@@ -38,11 +38,7 @@
 
 #include <botan/symkey.h>
 #include <botan/mac.h>
-#include <botan/botan.h>
 #include <botan/version.h>
-#if BOTAN_VERSION_CODE < BOTAN_VERSION_CODE_FOR(1,11,26)
-#include <botan/lookup.h>
-#endif
 
 // Constructor
 BotanMacAlgorithm::BotanMacAlgorithm()
@@ -82,11 +78,7 @@ bool BotanMacAlgorithm::signInit(const SymmetricKey* key)
 	// Allocate the context
 	try
 	{
-#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,26)
-		mac = Botan::MessageAuthenticationCode::create(macName).release();
-#else
-		mac = Botan::get_mac(macName);
-#endif
+		mac = Botan::MessageAuthenticationCode::create_or_throw(macName).release();
 		mac->set_key(key->getKeyBits().const_byte_str(), key->getKeyBits().size());
 	}
 	catch (std::exception &e)
@@ -147,11 +139,7 @@ bool BotanMacAlgorithm::signFinal(ByteString& signature)
 	}
 
 	// Perform the signature operation
-#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,0)
-	Botan::secure_vector<Botan::byte> signResult;
-#else
-	Botan::SecureVector<Botan::byte> signResult;
-#endif
+	Botan::secure_vector<uint8_t> signResult;
 	try
 	{
 		signResult = mac->final();
@@ -168,11 +156,7 @@ bool BotanMacAlgorithm::signFinal(ByteString& signature)
 
 	// Return the result
 	signature.resize(signResult.size());
-#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,0)
 	memcpy(&signature[0], signResult.data(), signResult.size());
-#else
-	memcpy(&signature[0], signResult.begin(), signResult.size());
-#endif
 
 	delete mac;
 	mac = NULL;
@@ -205,11 +189,7 @@ bool BotanMacAlgorithm::verifyInit(const SymmetricKey* key)
 	// Allocate the context
 	try
 	{
-#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,26)
-		mac = Botan::MessageAuthenticationCode::create(macName).release();
-#else
-		mac = Botan::get_mac(macName);
-#endif
+		mac = Botan::MessageAuthenticationCode::create_or_throw(macName).release();
 		mac->set_key(key->getKeyBits().const_byte_str(), key->getKeyBits().size());
 	}
 	catch (std::exception &e)
@@ -270,11 +250,7 @@ bool BotanMacAlgorithm::verifyFinal(ByteString& signature)
 	}
 
 	// Perform the verify operation
-#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,0)
-	Botan::secure_vector<Botan::byte> macResult;
-#else
-	Botan::SecureVector<Botan::byte> macResult;
-#endif
+	Botan::secure_vector<uint8_t> macResult;
 	try
 	{
 		macResult = mac->final();
@@ -302,9 +278,5 @@ bool BotanMacAlgorithm::verifyFinal(ByteString& signature)
 	delete mac;
 	mac = NULL;
 
-#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,0)
-	return memcmp(&signature[0], macResult.data(), macResult.size()) == 0;
-#else
-	return memcmp(&signature[0], macResult.begin(), macResult.size()) == 0;
-#endif
+        return Botan::same_mem(&signature[0], macResult.data(), macResult.size());
 }

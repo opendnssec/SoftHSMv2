@@ -12,24 +12,17 @@ AC_DEFUN([ACX_BOTAN_ECC],[
 		acx_cv_lib_botan_ecc_support=no
 		AC_RUN_IFELSE([
 			AC_LANG_SOURCE([[
-				#include <botan/init.h>
 				#include <botan/ec_group.h>
 				#include <botan/oids.h>
 				#include <botan/version.h>
 				int main()
 				{
-					Botan::LibraryInitializer::initialize();
 					const std::string name("secp256r1");
 					const Botan::OID oid(Botan::OIDS::lookup(name));
 					const Botan::EC_Group ecg(oid);
 					try {
-#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,0)
 						const std::vector<Botan::byte> der =
 						ecg.DER_encode(Botan::EC_DOMPAR_ENC_OID);
-#else
-						const Botan::SecureVector<Botan::byte> der =
-						ecg.DER_encode(Botan::EC_DOMPAR_ENC_OID);
-#endif
 					} catch(...) {
 						return 1;
 					}
