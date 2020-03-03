@@ -59,7 +59,7 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>..\@PLATFORMDIR@$(Configuration);@CULIBPATH@;@DEBUGLIBPATH@;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>convarch.lib;cppunitd.lib;@LIBNAME@;@EXTRALIBS@%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>convarch.lib;cppunitd.lib;@BOTAN_LIBRARY@;@EXTRALIBS@%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>
@@ -91,7 +91,7 @@ copy ..\..\src\lib\test\tokens\dummy.in "$(TargetDir)\tokens\dummy"
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalLibraryDirectories>..\@PLATFORMDIR@$(Configuration);@CULIBPATH@;@LIBPATH@;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>convarch.lib;cppunit.lib;@LIBNAME@;@EXTRALIBS@%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>convarch.lib;cppunit.lib;@BOTAN_LIBRARY@;@EXTRALIBS@%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>

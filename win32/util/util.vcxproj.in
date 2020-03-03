@@ -61,7 +61,7 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>..\@PLATFORMDIR@$(Configuration);@DEBUGLIBPATH@;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>convarch.lib;@LIBNAME@;@EXTRALIBS@%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>convarch.lib;@BOTAN_LIBRARY@;@EXTRALIBS@%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>if exist @DEBUGDLLPATH@ copy @DEBUGDLLPATH@ ..\@PLATFORMDIR@$(Configuration)</Command>
@@ -85,7 +85,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalLibraryDirectories>..\@PLATFORMDIR@$(Configuration);@LIBPATH@;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>convarch.lib;@LIBNAME@;@EXTRALIBS@%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>convarch.lib;@BOTAN_LIBRARY@;@EXTRALIBS@%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>if exist @DLLPATH@ copy @DLLPATH@ ..\@PLATFORMDIR@$(Configuration)</Command>
@@ -103,7 +103,6 @@
     <ClInclude Include="..\..\src\lib\crypto\OSSLComp.h" />
 @END OPENSSL
     <ClInclude Include="..\..\src\bin\util\softhsm2-util.h" />
-    <ClInclude Include="..\..\src\bin\win32\getopt.h" />
     <ClInclude Include="..\..\src\lib\pkcs11\cryptoki.h" />
     <ClInclude Include="..\..\src\lib\pkcs11\pkcs11.h" />
     <ClInclude Include="..\..\src\lib\pkcs11\pkcs11f.h" />
@@ -121,7 +120,6 @@
     <ClCompile Include="..\..\src\lib\crypto\OSSLComp.cpp" />
 @END OPENSSL
     <ClCompile Include="..\..\src\bin\util\softhsm2-util.cpp" />
-    <ClCompile Include="..\..\src\bin\win32\getopt.cpp" />
     <ClCompile Include="..\..\src\bin\win32\getpassphase.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
