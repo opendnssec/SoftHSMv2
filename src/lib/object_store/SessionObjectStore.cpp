@@ -70,14 +70,21 @@ SessionObjectStore::~SessionObjectStore()
 	MutexFactory::i()->recycleMutex(storeMutex);
 }
 
-// Retrieve objects
-std::set<SessionObject*> SessionObjectStore::getObjects()
+int SessionObjectStore::getObjectCount()
 {
-	// Make sure that no other thread is in the process of changing
-	// the object list when we return it
-	MutexLocker lock(storeMutex);
+    return objects.size();
+}
 
-	return objects;
+void SessionObjectStore::getObjects(std::set<OSObject*> &inObjects)
+{
+    // Make sure that no other thread is in the process of changing
+    // the object list when we return it
+    MutexLocker lock(storeMutex);
+
+    std::set<SessionObject*>::iterator it;
+    for (it=objects.begin(); it!=objects.end(); ++it) {
+        inObjects.insert(*it);
+    }
 }
 
 void SessionObjectStore::getObjects(CK_SLOT_ID slotID, std::set<OSObject*> &inObjects)
