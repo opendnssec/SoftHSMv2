@@ -61,9 +61,9 @@ set(DEFAULT_TOKENDIR "${CMAKE_INSTALL_FULL_LOCALSTATEDIR}/lib/softhsm/tokens/"
 set(MAX_PIN_LEN 255 CACHE STRING "Maximum PIN length")
 set(MIN_PIN_LEN 4 CACHE STRING "Minimum PIN length")
 
-set(VERSION "2.5.0")
+set(VERSION "2.6.0")
 set(VERSION_MAJOR 2)
-set(VERSION_MINOR 5)
+set(VERSION_MINOR 6)
 set(VERSION_PATCH 0)
 
 set(PACKAGE "softhsm")

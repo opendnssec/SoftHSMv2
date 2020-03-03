@@ -2,6 +2,8 @@ NEWS for SoftHSM -- History of user visible changes
 
 SoftHSM 2.6.0 - 2020-??-??
 
+* Issue #493: Upgrade to Botan 2.
+* Issue #530: Update appveyor build.
 * Issue #438: Detect crypto algorithms by default.
   (Patch from Alon Bar-Lev)
 * Issue #455: Provide a new configuration option to allow enabling and
