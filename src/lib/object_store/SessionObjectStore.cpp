@@ -122,14 +122,14 @@ SessionObject* SessionObjectStore::createObject(CK_SLOT_ID slotID, CK_SESSION_HA
 // Delete an object
 bool SessionObjectStore::deleteObject(SessionObject* object)
 {
+	MutexLocker lock(storeMutex);
+
 	if (objects.find(object) == objects.end())
 	{
 		ERROR_MSG("Cannot delete non-existent object 0x%08X", object);
 
 		return false;
 	}
-
-	MutexLocker lock(storeMutex);
 
 	// Invalidate the object instance
 	object->invalidate();
