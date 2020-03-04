@@ -35,6 +35,7 @@
 #include <botan/der_enc.h>
 #include <botan/ber_dec.h>
 #include <botan/asn1_obj.h>
+#include <botan/asn1_str.h>
 #include <botan/version.h>
 
 // Convert a Botan BigInt to a ByteString
@@ -81,24 +82,16 @@ Botan::BigInt BotanUtil::byteString2bigInt(const ByteString& byteString)
 // Convert a Botan EC group to a ByteString
 ByteString BotanUtil::ecGroup2ByteString(const Botan::EC_Group& ecGroup)
 {
-#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,0)
-	std::vector<Botan::byte> der = ecGroup.DER_encode(Botan::EC_DOMPAR_ENC_OID);
-#else
-	Botan::SecureVector<Botan::byte> der = ecGroup.DER_encode(Botan::EC_DOMPAR_ENC_OID);
-#endif
+	std::vector<uint8_t> der = ecGroup.DER_encode(Botan::EC_DOMPAR_ENC_OID);
 	return ByteString(&der[0], der.size());
 }
 
 // Convert a ByteString to a Botan EC group
 Botan::EC_Group BotanUtil::byteString2ECGroup(const ByteString& byteString)
 {
-#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,0)
-	std::vector<Botan::byte> der(byteString.size());
+	std::vector<uint8_t> der(byteString.size());
 	memcpy(&der[0], byteString.const_byte_str(), byteString.size());
 	return Botan::EC_Group(der);
-#else
-	return Botan::EC_Group(Botan::MemoryVector<Botan::byte>(byteString.const_byte_str(), byteString.size()));
-#endif
 }
 
 // Convert a Botan EC point to a ByteString
@@ -108,14 +101,12 @@ ByteString BotanUtil::ecPoint2ByteString(const Botan::PointGFp& ecPoint)
 
 	try
 	{
-#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,0)
-		Botan::secure_vector<Botan::byte> repr = Botan::EC2OSP(ecPoint, Botan::PointGFp::UNCOMPRESSED);
-		Botan::secure_vector<Botan::byte> der;
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(2,5,0)
+		const std::vector<uint8_t> repr = ecPoint.encode(Botan::PointGFp::UNCOMPRESSED);
 #else
-		Botan::SecureVector<Botan::byte> repr = Botan::EC2OSP(ecPoint, Botan::PointGFp::UNCOMPRESSED);
-		Botan::SecureVector<Botan::byte> der;
+		const Botan::secure_vector<uint8_t> repr = Botan::EC2OSP(ecPoint, Botan::PointGFp::UNCOMPRESSED);
 #endif
-
+		Botan::secure_vector<uint8_t> der;
 
 		der = Botan::DER_Encoder()
 			.encode(repr, Botan::OCTET_STRING)
@@ -133,15 +124,15 @@ ByteString BotanUtil::ecPoint2ByteString(const Botan::PointGFp& ecPoint)
 // Convert a ByteString to a Botan EC point
 Botan::PointGFp BotanUtil::byteString2ECPoint(const ByteString& byteString, const Botan::EC_Group& ecGroup)
 {
-#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,0)
-	std::vector<Botan::byte> repr;
-#else
-	Botan::SecureVector<Botan::byte> repr;
-#endif
+	std::vector<uint8_t> repr;
 	Botan::BER_Decoder(byteString.const_byte_str(), byteString.size())
 		.decode(repr, Botan::OCTET_STRING)
 		.verify_end();
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(2,5,0)
+	return ecGroup.OS2ECP(&repr[0], repr.size());
+#else
 	return Botan::OS2ECP(&repr[0], repr.size(), ecGroup.get_curve());
+#endif
 }
 #endif
 
@@ -149,17 +140,59 @@ Botan::PointGFp BotanUtil::byteString2ECPoint(const ByteString& byteString, cons
 // Convert a Botan OID to a ByteString
 ByteString BotanUtil::oid2ByteString(const Botan::OID& oid)
 {
-	const Botan::secure_vector<Botan::byte>& der = Botan::DER_Encoder().encode(oid).get_contents();
+	std::string name;
+
+	if (oid == BotanUtil::x25519_oid)
+	{
+		name = "curve25519";
+	}
+	else if (oid == BotanUtil::ed25519_oid)
+	{
+		name = "edwards25519";
+	}
+	else
+	{
+		return ByteString();
+	}
+
+	Botan::ASN1_String str = Botan::ASN1_String(name, Botan::PRINTABLE_STRING);
+	const Botan::secure_vector<uint8_t> der = Botan::DER_Encoder().encode(str).get_contents();
 	return ByteString(&der[0], der.size());
 }
 
 // Convert a ByteString to a Botan OID
 Botan::OID BotanUtil::byteString2Oid(const ByteString& byteString)
 {
-	Botan::OID oid;
-	Botan::BER_Decoder(byteString.const_byte_str(), byteString.size())
-		.decode(oid)
+	Botan::BER_Object object;
+
+	Botan::BER_Decoder dec = Botan::BER_Decoder(byteString.const_byte_str(), byteString.size())
+		.get_next(object)
 		.verify_end();
-	return oid;
+
+	if (object.is_a(Botan::PRINTABLE_STRING, Botan::ASN1_Tag(0)))
+	{
+		Botan::ASN1_String str;
+
+		dec.push_back(std::move(object));
+		str.decode_from(dec);
+		if (str.value() == "edwards25519") {
+			return BotanUtil::ed25519_oid;
+		} else if (str.value() == "curve25519") {
+			return BotanUtil::x25519_oid;
+		}
+
+		/* fall through */
+	}
+	else if (object.is_a(Botan::OBJECT_ID, Botan::ASN1_Tag(0)))
+	{
+		Botan::OID oid;
+
+		dec.push_back(std::move(object));
+		oid.decode_from(dec);
+
+		return oid;
+	}
+
+	return Botan::OID();
 }
 #endif

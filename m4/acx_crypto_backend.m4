@@ -111,11 +111,6 @@ AC_DEFUN([ACX_CRYPTO_BACKEND],[
 			[Compile with raw RSA PKCS PSS]
 		)
 		AC_DEFINE_UNQUOTED(
-			[WITH_AES_GCM],
-			[1],
-			[Compile with AES_GCM]
-		)
-		AC_DEFINE_UNQUOTED(
 			[WITH_OPENSSL],
 			[],
 			[Compile with OpenSSL support]
@@ -124,7 +119,7 @@ AC_DEFUN([ACX_CRYPTO_BACKEND],[
 	elif test "x${crypto_backend}" = "xbotan"; then
 		AC_MSG_RESULT(Botan)
 
-		ACX_BOTAN(1,10,0)
+		ACX_BOTAN(2,0,0)
 
 		CRYPTO_INCLUDES=$BOTAN_CFLAGS
 		CRYPTO_LIBS=$BOTAN_LIBS
@@ -157,13 +152,8 @@ AC_DEFUN([ACX_CRYPTO_BACKEND],[
 			AC_MSG_ERROR([Botan does not support FIPS 140-2 mode])
 		fi
 
-		if test "x${BOTAN_VERSION_MAJOR}" = "x1" -a "x${BOTAN_VERSION_MINOR}" = "x10"; then
-			ACX_BOTAN_GNUMP
-		fi
-
 		ACX_BOTAN_RFC5649
 		ACX_BOTAN_RAWPSS
-		ACX_BOTAN_AES_GCM
 
 		AC_DEFINE_UNQUOTED(
 			[WITH_BOTAN],

@@ -161,10 +161,9 @@ ByteString BotanGOSTPrivateKey::PKCS8Encode()
 	if (eckey == NULL) return der;
 	// Force EC_DOMPAR_ENC_OID
 	const size_t PKCS8_VERSION = 0;
-#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(2,0,0)
-	const std::vector<Botan::byte> parameters = eckey->domain().DER_encode(Botan::EC_DOMPAR_ENC_OID);
-	const Botan::AlgorithmIdentifier alg_id(eckey->get_oid(), parameters);
-	const Botan::secure_vector<Botan::byte> ber =
+	const std::vector<uint8_t> parameters = eckey->domain().DER_encode(Botan::EC_DOMPAR_ENC_OID);
+	const Botan::AlgorithmIdentifier alg_id(Botan::OIDS::lookup("GOST-34.10"), parameters);
+	const Botan::secure_vector<uint8_t> ber =
 		Botan::DER_Encoder()
 		.start_cons(Botan::SEQUENCE)
 		    .encode(PKCS8_VERSION)
@@ -172,29 +171,6 @@ ByteString BotanGOSTPrivateKey::PKCS8Encode()
 		    .encode(eckey->private_key_bits(), Botan::OCTET_STRING)
 		.end_cons()
 	    .get_contents();
-#elif BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,0)
-	const std::vector<Botan::byte> parameters = eckey->domain().DER_encode(Botan::EC_DOMPAR_ENC_OID);
-	const Botan::AlgorithmIdentifier alg_id(eckey->get_oid(), parameters);
-	const Botan::secure_vector<Botan::byte> ber =
-		Botan::DER_Encoder()
-		.start_cons(Botan::SEQUENCE)
-		    .encode(PKCS8_VERSION)
-		    .encode(alg_id)
-		    .encode(eckey->pkcs8_private_key(), Botan::OCTET_STRING)
-		.end_cons()
-	    .get_contents();
-#else
-	const Botan::MemoryVector<Botan::byte> parameters = eckey->domain().DER_encode(Botan::EC_DOMPAR_ENC_OID);
-	const Botan::AlgorithmIdentifier alg_id(eckey->get_oid(), parameters);
-	const Botan::SecureVector<Botan::byte> ber =
-		Botan::DER_Encoder()
-		.start_cons(Botan::SEQUENCE)
-		.encode(PKCS8_VERSION)
-		    .encode(alg_id)
-		    .encode(eckey->pkcs8_private_key(), Botan::OCTET_STRING)
-		.end_cons()
-	    .get_contents();
-#endif
 	der.resize(ber.size());
 	memcpy(&der[0], &ber[0], ber.size());
         return der;
@@ -205,11 +181,7 @@ bool BotanGOSTPrivateKey::PKCS8Decode(const ByteString& ber)
 {
 	Botan::DataSource_Memory source(ber.const_byte_str(), ber.size());
 	if (source.end_of_data()) return false;
-#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,0)
-	Botan::secure_vector<Botan::byte> keydata;
-#else
-	Botan::SecureVector<Botan::byte> keydata;
-#endif
+	Botan::secure_vector<uint8_t> keydata;
 	Botan::AlgorithmIdentifier alg_id;
 	Botan::GOST_3410_PrivateKey* key = NULL;
 	try

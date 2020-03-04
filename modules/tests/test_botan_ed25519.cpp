@@ -1,4 +1,3 @@
-#include <botan/init.h>
 #include <botan/ed25519.h>
 #include <botan/version.h>
 int main()

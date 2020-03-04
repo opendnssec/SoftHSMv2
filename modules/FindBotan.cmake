@@ -1,46 +1,44 @@
-# - Try to find the Botan library
+# - Find botan
+# Find the botan cryptographic library
 #
-# Once done this will define
+# This module defines the following variables:
+#   BOTAN_FOUND  -  True if library and include directory are found
+# If set to TRUE, the following are also defined:
+#   BOTAN_INCLUDE_DIRS  -  The directory where to find the header file
+#   BOTAN_LIBRARIES  -  Where to find the library file
 #
-#  BOTAN_FOUND - System has Botan
-#  BOTAN_INCLUDE_DIR - The Botan include directory
-#  BOTAN_LIBRARIES - The libraries needed to use Botan
-#  BOTAN_DEFINITIONS - Compiler switches required for using Botan
+# For conveniance, these variables are also set. They have the same values
+# than the variables above.  The user can thus choose his/her prefered way
+# to write them.
+#   BOTAN_LIBRARY
+#   BOTAN_INCLUDE_DIR
+#
+# This file is in the public domain
 
-IF (BOTAN_INCLUDE_DIR AND BOTAN_LIBRARY)
-   # in cache already
-   SET(Botan_FIND_QUIETLY TRUE)
-ENDIF (BOTAN_INCLUDE_DIR AND BOTAN_LIBRARY)
+include(FindPkgConfig)
 
-IF (NOT WIN32)
-   # try using pkg-config to get the directories and then use these values
-   # in the FIND_PATH() and FIND_LIBRARY() calls
-   # also fills in BOTAN_DEFINITIONS, although that isn't normally useful
-   FIND_PACKAGE(PkgConfig)
-   PKG_SEARCH_MODULE(PC_BOTAN botan-2 botan-1.11 botan-1.10)
-   SET(BOTAN_DEFINITIONS ${PC_BOTAN_CFLAGS})
-ENDIF (NOT WIN32)
+if(NOT BOTAN_FOUND)
+  pkg_check_modules(BOTAN botan-2)
+endif()
 
-FIND_PATH(BOTAN_INCLUDE_DIR botan/botan.h
-   HINTS
-   ${PC_BOTAN_INCLUDEDIR}
-   ${PC_BOTAN_INCLUDE_DIRS}
-   )
+if(NOT BOTAN_FOUND)
+  find_path(BOTAN_INCLUDE_DIRS NAMES botan/botan.h
+      PATH_SUFFIXES botan-2
+      DOC "The botan include directory")
 
-FIND_LIBRARY(BOTAN_LIBRARY NAMES ${PC_BOTAN_LIBRARIES}
-   HINTS
-   ${PC_BOTAN_LIBDIR}
-   ${PC_BOTAN_LIBRARY_DIRS}
-   )
+  find_library(BOTAN_LIBRARIES NAMES botan botan-2
+      DOC "The botan library")
 
-MARK_AS_ADVANCED(BOTAN_INCLUDE_DIR BOTAN_LIBRARY)
+  # Use some standard module to handle the QUIETLY and REQUIRED arguments, and
+  # set BOTAN_FOUND to TRUE if these two variables are set.
+  include(FindPackageHandleStandardArgs)
+  find_package_handle_standard_args(BOTAN REQUIRED_VARS BOTAN_LIBRARIES BOTAN_INCLUDE_DIRS)
 
-# handle the QUIETLY and REQUIRED arguments and set BOTAN_FOUND to TRUE if 
-# all listed variables are TRUE
-INCLUDE(FindPackageHandleStandardArgs)
-FIND_PACKAGE_HANDLE_STANDARD_ARGS(Botan DEFAULT_MSG BOTAN_LIBRARY BOTAN_INCLUDE_DIR)
+  if(BOTAN_FOUND)
+    set(BOTAN_LIBRARY ${BOTAN_LIBRARIES} CACHE INTERNAL "")
+    set(BOTAN_INCLUDE_DIR ${BOTAN_INCLUDE_DIRS} CACHE INTERNAL "")
+    set(BOTAN_FOUND ${BOTAN_FOUND} CACHE INTERNAL "")
+  endif()
+endif()
 
-IF(BOTAN_FOUND)
-    SET(BOTAN_LIBRARIES    ${BOTAN_LIBRARY})
-    SET(BOTAN_INCLUDE_DIRS ${BOTAN_INCLUDE_DIR})
-ENDIF(BOTAN_FOUND)
+mark_as_advanced(BOTAN_INCLUDE_DIRS BOTAN_LIBRARIES)

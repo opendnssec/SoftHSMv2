@@ -55,6 +55,8 @@ test-results.xml
 build
 Botan-*
 ROOT
+*.cmake
+CMakeFiles
 
 # Specifics
 softhsm2.module

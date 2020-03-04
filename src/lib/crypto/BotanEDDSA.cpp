@@ -48,11 +48,6 @@
 #include <botan/version.h>
 #include <iostream>
 
-const Botan::OID x25519_oid("1.3.101.110");
-// const Botan::OID x448_oid("1.3.101.111");
-const Botan::OID ed25519_oid("1.3.101.112");
-// const Botan::OID ed448_oid("1.3.101.113");
-
 // Constructor
 BotanEDDSA::BotanEDDSA()
 {
@@ -106,7 +101,6 @@ bool BotanEDDSA::sign(PrivateKey* privateKey, const ByteString& dataToSign,
 	{
 		BotanRNG* rng = (BotanRNG*)BotanCryptoFactory::i()->getRNG();
 		signer = new Botan::PK_Signer(*botanKey, *rng->getRNG(), emsa);
-		// Should we add DISABLE_FAULT_PROTECTION? Makes this operation faster.
 	}
 	catch (...)
 	{
@@ -116,7 +110,7 @@ bool BotanEDDSA::sign(PrivateKey* privateKey, const ByteString& dataToSign,
 	}
 
 	// Perform the signature operation
-	std::vector<Botan::byte> signResult;
+	std::vector<uint8_t> signResult;
 	try
 	{
 		BotanRNG* rng = (BotanRNG*)BotanCryptoFactory::i()->getRNG();
@@ -303,11 +297,11 @@ bool BotanEDDSA::generateKeyPair(AsymmetricKeyPair** ppKeyPair, AsymmetricParame
 	try
 	{
 		BotanRNG* rng = (BotanRNG*)BotanCryptoFactory::i()->getRNG();
-		if (oid == x25519_oid)
+		if (oid == BotanUtil::x25519_oid)
 		{
 			eckp = new Botan::Curve25519_PrivateKey(*rng->getRNG());
 		}
-		else if (oid == ed25519_oid)
+		else if (oid == BotanUtil::ed25519_oid)
 		{
 			eckp = new Botan::Ed25519_PrivateKey(*rng->getRNG());
 		}

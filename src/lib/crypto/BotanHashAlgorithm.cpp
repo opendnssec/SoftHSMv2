@@ -32,7 +32,7 @@
 
 #include "config.h"
 #include "BotanHashAlgorithm.h"
-#include <botan/filters.h>
+#include <botan/hash.h>
 
 // Base constructor 
 BotanHashAlgorithm::BotanHashAlgorithm()
@@ -59,7 +59,7 @@ bool BotanHashAlgorithm::hashInit()
 	{
 		if (hash == NULL)
 		{
-			hash = getHash();
+			hash = Botan::HashFunction::create_or_throw(getHashName()).release();
 		}
 		else
 		{

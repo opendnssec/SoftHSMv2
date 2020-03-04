@@ -59,7 +59,7 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>..\@PLATFORMDIR@$(Configuration);@DEBUGLIBPATH@;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>convarch.lib;@LIBNAME@;@EXTRALIBS@%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>convarch.lib;@BOTAN_LIBRARY@;@EXTRALIBS@%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|@PLATFORM@'">
@@ -80,7 +80,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalLibraryDirectories>..\@PLATFORMDIR@$(Configuration);@LIBPATH@;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>convarch.lib;@LIBNAME@;@EXTRALIBS@%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>convarch.lib;@BOTAN_LIBRARY@;@EXTRALIBS@%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>

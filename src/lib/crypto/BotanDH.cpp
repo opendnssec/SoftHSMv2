@@ -191,12 +191,8 @@ bool BotanDH::deriveKey(SymmetricKey **ppSymmetricKey, PublicKey* publicKey, Pri
 	Botan::SymmetricKey sk;
 	try
 	{
-#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,33)
 		BotanRNG* rng = (BotanRNG*)BotanCryptoFactory::i()->getRNG();
 		Botan::PK_Key_Agreement ka(*priv->impl, *rng->getRNG(), "Raw");
-#else
-		Botan::PK_Key_Agreement ka(*priv->impl, "Raw");
-#endif
 		sk = ka.derive_key(0, pub->public_value());
 	}
 	catch (std::exception& e)

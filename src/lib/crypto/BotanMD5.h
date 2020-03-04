@@ -41,7 +41,7 @@ class BotanMD5 : public BotanHashAlgorithm
 {
 	virtual int getHashSize();
 protected:
-	virtual Botan::HashFunction* getHash() const;
+	virtual const char* getHashName() const;
 };
 
 #endif // !_SOFTHSM_V2_BOTANMD5_H

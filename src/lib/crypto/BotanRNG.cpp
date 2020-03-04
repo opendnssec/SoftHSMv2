@@ -32,31 +32,18 @@
 
 #include "config.h"
 #include "BotanRNG.h"
-
-#include <botan/version.h>
-
-#if BOTAN_VERSION_CODE < BOTAN_VERSION_CODE_FOR(1,11,14)
-#include <botan/libstate.h>
-#else
 #include <botan/auto_rng.h>
-#endif
 
 // Base constructor
 BotanRNG::BotanRNG()
 {
-#if BOTAN_VERSION_CODE < BOTAN_VERSION_CODE_FOR(1,11,14)
-	rng = &Botan::global_state().global_rng();
-#else
 	rng = new Botan::AutoSeeded_RNG();
-#endif
 }
 
 // Destructor
 BotanRNG::~BotanRNG()
 {
-#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,14)
 	delete rng;
-#endif
 }
 
 // Generate random data
@@ -74,10 +61,6 @@ bool BotanRNG::generateRandom(ByteString& data, const size_t len)
 void BotanRNG::seed(ByteString& seedData)
 {
 	rng->add_entropy(seedData.byte_str(), seedData.size());
-	// add_entropy will make sure the RNG is reseed so we do not need to call it.
-	// Made this change bacuase of API changes in Botan 1.11.31,
-	// but the statement above is also true for Botan 1.10.
-	// rng->reseed(seedData.size());
 }
 
 // Get the RNG
