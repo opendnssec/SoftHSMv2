@@ -39,6 +39,7 @@
 #include <iostream>
 
 #include <botan/symkey.h>
+#include <botan/parsing.h>
 #include <botan/version.h>
 #include <botan/filters.h>
 #include <botan/aead.h>

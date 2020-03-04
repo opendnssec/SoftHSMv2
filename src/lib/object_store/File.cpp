@@ -458,7 +458,7 @@ bool File::writeString(const std::string& value)
 {
 	if (!valid) return false;
 
-	ByteString toWrite((const unsigned long) value.size());
+	ByteString toWrite((unsigned long) value.size());
 
 	// Write the value to the file
 	if ((fwrite(toWrite.const_byte_str(), 1, toWrite.size(), stream) != toWrite.size()) ||
