@@ -1,9 +1,22 @@
 NEWS for SoftHSM -- History of user visible changes
 
-SoftHSM develop
+SoftHSM 2.6.0 - 2020-??-??
 
+* Issue #493: Upgrade to Botan 2.
+* Issue #530: Update appveyor build.
 * Issue #438: Detect crypto algorithms by default.
   (Patch from Alon Bar-Lev)
+* Issue #455: Provide a new configuration option to allow enabling and
+  disabling various mechanisms (slots.mechanisms in the softhsm2.conf).
+  (Thanks to Jakub Jelen)
+* Issue #479: Increase SQLite busy timeout from 15 seconds to 3 minutes.
+  (Patch from Jan Luebbe)
+* Issue #513: Add configuration option to reset state on fork closing all
+  sessions rather than keeping all sessions open in duplicate process.
+  (Thanks to Anderson Toshiyuki Sasaki)
+* Issue #500: C_WaitForSlotEvent implementation.
+  (Patch from massey101)
+* Issue #445: Add wrap support with CKM_AES_CBC.
 
 Bugfixes:
 * Issue #418: Set fields to NULL to avoid double free.
@@ -18,6 +31,27 @@ Bugfixes:
   (Patch from Peter Wu)
 * Issue #442: Release resources from OSSLEVPSymmetricAlgorithm.
   (Patch from Petr Menšík)
+* Issue #449/#502: Do not copy zero sized buffer avoid null pointer reference.
+  (Patch from space88man)
+* Issue #464: Race condition with multiple threads closing last session and
+  opening a newer sessions.
+  (Patch from Takarth)
+* Issue #452: Fixes to automake build fir undefined macros.
+* Issue #462: User PIN count wrongly calculated.
+  (Patch from Ondřej Hlavatý)
+* Issue #516: Fix memory leak in OSSLCryptoFactory.
+  (Patch from Anderson Sasaki)
+* Issue #494: Allow null pointers as arguments when count is zero.
+  (Patch from Yunjong Jeong)
+* Issue #518: Sporadic problem in closing sessions because of lookup of
+  object without prior locking.
+* Issue #506: Check key type for C_EncryptInit and C_DecryptInit.
+  (Patch from Yunjong Jeong)
+* Issue #526: Adjust EDDSA code to return valid EC_PARAMS.
+  (Patch from Jakub Jelen)
+* Issue #452: Autogen failure on undefined macro AC_MSG_ERROR.
+* Issue #527: Fixed some build errors for GCC 10.
+* Issue #470: Null pointer arguments validation for C_EncryptFinal, etc.
 
 
 SoftHSM 2.5.0 - 2018-09-24

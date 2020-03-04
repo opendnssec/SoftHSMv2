@@ -216,4 +216,3 @@ void SessionObjectStore::clearStore()
 		delete *i;
 	}
 }
-
