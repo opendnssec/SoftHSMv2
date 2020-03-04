@@ -2119,6 +2119,9 @@ CK_RV SoftHSM::SymEncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 	if (!isMechanismPermitted(key, pMechanism))
 		return CKR_MECHANISM_INVALID;
 
+	// Get key info
+	CK_KEY_TYPE keyType = key->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED);
+
 	// Get the symmetric algorithm matching the mechanism
 	SymAlgo::Type algo = SymAlgo::Unknown;
 	SymMode::Type mode = SymMode::Unknown;
@@ -2131,11 +2134,15 @@ CK_RV SoftHSM::SymEncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 	switch(pMechanism->mechanism) {
 #ifndef WITH_FIPS
 		case CKM_DES_ECB:
+			if (keyType != CKK_DES)
+				return CKR_KEY_TYPE_INCONSISTENT;
 			algo = SymAlgo::DES;
 			mode = SymMode::ECB;
 			bb = 7;
 			break;
 		case CKM_DES_CBC:
+			if (keyType != CKK_DES)
+				return CKR_KEY_TYPE_INCONSISTENT;
 			algo = SymAlgo::DES;
 			mode = SymMode::CBC;
 			if (pMechanism->pParameter == NULL_PTR ||
@@ -2149,6 +2156,8 @@ CK_RV SoftHSM::SymEncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 			bb = 7;
 			break;
 		case CKM_DES_CBC_PAD:
+			if (keyType != CKK_DES)
+				return CKR_KEY_TYPE_INCONSISTENT;
 			algo = SymAlgo::DES;
 			mode = SymMode::CBC;
 			padding = true;
@@ -2164,11 +2173,15 @@ CK_RV SoftHSM::SymEncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 			break;
 #endif
 		case CKM_DES3_ECB:
+			if (keyType != CKK_DES2 && keyType != CKK_DES3)
+				return CKR_KEY_TYPE_INCONSISTENT;
 			algo = SymAlgo::DES3;
 			mode = SymMode::ECB;
 			bb = 7;
 			break;
 		case CKM_DES3_CBC:
+			if (keyType != CKK_DES2 && keyType != CKK_DES3)
+				return CKR_KEY_TYPE_INCONSISTENT;
 			algo = SymAlgo::DES3;
 			mode = SymMode::CBC;
 			if (pMechanism->pParameter == NULL_PTR ||
@@ -2182,6 +2195,8 @@ CK_RV SoftHSM::SymEncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 			bb = 7;
 			break;
 		case CKM_DES3_CBC_PAD:
+			if (keyType != CKK_DES2 && keyType != CKK_DES3)
+				return CKR_KEY_TYPE_INCONSISTENT;
 			algo = SymAlgo::DES3;
 			mode = SymMode::CBC;
 			padding = true;
@@ -2196,10 +2211,14 @@ CK_RV SoftHSM::SymEncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 			bb = 7;
 			break;
 		case CKM_AES_ECB:
+			if (keyType != CKK_AES)
+				return CKR_KEY_TYPE_INCONSISTENT;
 			algo = SymAlgo::AES;
 			mode = SymMode::ECB;
 			break;
 		case CKM_AES_CBC:
+			if (keyType != CKK_AES)
+				return CKR_KEY_TYPE_INCONSISTENT;
 			algo = SymAlgo::AES;
 			mode = SymMode::CBC;
 			if (pMechanism->pParameter == NULL_PTR ||
@@ -2212,6 +2231,8 @@ CK_RV SoftHSM::SymEncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 			memcpy(&iv[0], pMechanism->pParameter, pMechanism->ulParameterLen);
 			break;
 		case CKM_AES_CBC_PAD:
+			if (keyType != CKK_AES)
+				return CKR_KEY_TYPE_INCONSISTENT;
 			algo = SymAlgo::AES;
 			mode = SymMode::CBC;
 			padding = true;
@@ -2225,6 +2246,8 @@ CK_RV SoftHSM::SymEncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 			memcpy(&iv[0], pMechanism->pParameter, pMechanism->ulParameterLen);
 			break;
 		case CKM_AES_CTR:
+			if (keyType != CKK_AES)
+				return CKR_KEY_TYPE_INCONSISTENT;
 			algo = SymAlgo::AES;
 			mode = SymMode::CTR;
 			if (pMechanism->pParameter == NULL_PTR ||
@@ -2243,6 +2266,8 @@ CK_RV SoftHSM::SymEncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 			memcpy(&iv[0], CK_AES_CTR_PARAMS_PTR(pMechanism->pParameter)->cb, 16);
 			break;
 		case CKM_AES_GCM:
+			if (keyType != CKK_AES)
+				return CKR_KEY_TYPE_INCONSISTENT;
 			algo = SymAlgo::AES;
 			mode = SymMode::GCM;
 			if (pMechanism->pParameter == NULL_PTR ||
@@ -2337,19 +2362,28 @@ CK_RV SoftHSM::AsymEncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMec
 	if (!key->getBooleanValue(CKA_ENCRYPT, false))
 		return CKR_KEY_FUNCTION_NOT_PERMITTED;
 
+	// Get key info
+	CK_KEY_TYPE keyType = key->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED);
+
 	// Get the asymmetric algorithm matching the mechanism
 	AsymMech::Type mechanism;
 	bool isRSA = false;
 	switch(pMechanism->mechanism) {
 		case CKM_RSA_PKCS:
+			if (keyType != CKK_RSA)
+				return CKR_KEY_TYPE_INCONSISTENT;
 			mechanism = AsymMech::RSA_PKCS;
 			isRSA = true;
 			break;
 		case CKM_RSA_X_509:
+			if (keyType != CKK_RSA)
+				return CKR_KEY_TYPE_INCONSISTENT;
 			mechanism = AsymMech::RSA;
 			isRSA = true;
 			break;
 		case CKM_RSA_PKCS_OAEP:
+			if (keyType != CKK_RSA)
+				return CKR_KEY_TYPE_INCONSISTENT;
 			rv = MechParamCheckRSAPKCSOAEP(pMechanism);
 			if (rv != CKR_OK)
 				return rv;
@@ -2798,6 +2832,9 @@ CK_RV SoftHSM::SymDecryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 	if (!isMechanismPermitted(key, pMechanism))
 		return CKR_MECHANISM_INVALID;
 
+	// Get key info
+	CK_KEY_TYPE keyType = key->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED);
+
 	// Get the symmetric algorithm matching the mechanism
 	SymAlgo::Type algo = SymAlgo::Unknown;
 	SymMode::Type mode = SymMode::Unknown;
@@ -2810,11 +2847,15 @@ CK_RV SoftHSM::SymDecryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 	switch(pMechanism->mechanism) {
 #ifndef WITH_FIPS
 		case CKM_DES_ECB:
+			if (keyType != CKK_DES)
+				return CKR_KEY_TYPE_INCONSISTENT;
 			algo = SymAlgo::DES;
 			mode = SymMode::ECB;
 			bb = 7;
 			break;
 		case CKM_DES_CBC:
+			if (keyType != CKK_DES)
+				return CKR_KEY_TYPE_INCONSISTENT;
 			algo = SymAlgo::DES;
 			mode = SymMode::CBC;
 			if (pMechanism->pParameter == NULL_PTR ||
@@ -2828,6 +2869,8 @@ CK_RV SoftHSM::SymDecryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 			bb = 7;
 			break;
 		case CKM_DES_CBC_PAD:
+			if (keyType != CKK_DES)
+				return CKR_KEY_TYPE_INCONSISTENT;
 			algo = SymAlgo::DES;
 			mode = SymMode::CBC;
 			padding = true;
@@ -2843,11 +2886,15 @@ CK_RV SoftHSM::SymDecryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 			break;
 #endif
 		case CKM_DES3_ECB:
+			if (keyType != CKK_DES2 && keyType != CKK_DES3)
+				return CKR_KEY_TYPE_INCONSISTENT;
 			algo = SymAlgo::DES3;
 			mode = SymMode::ECB;
 			bb = 7;
 			break;
 		case CKM_DES3_CBC:
+			if (keyType != CKK_DES2 && keyType != CKK_DES3)
+				return CKR_KEY_TYPE_INCONSISTENT;
 			algo = SymAlgo::DES3;
 			mode = SymMode::CBC;
 			if (pMechanism->pParameter == NULL_PTR ||
@@ -2861,6 +2908,8 @@ CK_RV SoftHSM::SymDecryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 			bb = 7;
 			break;
 		case CKM_DES3_CBC_PAD:
+			if (keyType != CKK_DES2 && keyType != CKK_DES3)
+				return CKR_KEY_TYPE_INCONSISTENT;
 			algo = SymAlgo::DES3;
 			mode = SymMode::CBC;
 			padding = true;
@@ -2875,10 +2924,14 @@ CK_RV SoftHSM::SymDecryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 			bb = 7;
 			break;
 		case CKM_AES_ECB:
+			if (keyType != CKK_AES)
+				return CKR_KEY_TYPE_INCONSISTENT;
 			algo = SymAlgo::AES;
 			mode = SymMode::ECB;
 			break;
 		case CKM_AES_CBC:
+			if (keyType != CKK_AES)
+				return CKR_KEY_TYPE_INCONSISTENT;
 			algo = SymAlgo::AES;
 			mode = SymMode::CBC;
 			if (pMechanism->pParameter == NULL_PTR ||
@@ -2891,6 +2944,8 @@ CK_RV SoftHSM::SymDecryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 			memcpy(&iv[0], pMechanism->pParameter, pMechanism->ulParameterLen);
 			break;
 		case CKM_AES_CBC_PAD:
+			if (keyType != CKK_AES)
+				return CKR_KEY_TYPE_INCONSISTENT;
 			algo = SymAlgo::AES;
 			mode = SymMode::CBC;
 			padding = true;
@@ -2904,6 +2959,8 @@ CK_RV SoftHSM::SymDecryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 			memcpy(&iv[0], pMechanism->pParameter, pMechanism->ulParameterLen);
 			break;
 		case CKM_AES_CTR:
+			if (keyType != CKK_AES)
+				return CKR_KEY_TYPE_INCONSISTENT;
 			algo = SymAlgo::AES;
 			mode = SymMode::CTR;
 			if (pMechanism->pParameter == NULL_PTR ||
@@ -2922,6 +2979,8 @@ CK_RV SoftHSM::SymDecryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 			memcpy(&iv[0], CK_AES_CTR_PARAMS_PTR(pMechanism->pParameter)->cb, 16);
 			break;
 		case CKM_AES_GCM:
+			if (keyType != CKK_AES)
+				return CKR_KEY_TYPE_INCONSISTENT;
 			algo = SymAlgo::AES;
 			mode = SymMode::GCM;
 			if (pMechanism->pParameter == NULL_PTR ||
@@ -3020,19 +3079,28 @@ CK_RV SoftHSM::AsymDecryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMec
 	if (!isMechanismPermitted(key, pMechanism))
 		return CKR_MECHANISM_INVALID;
 
+	// Get key info
+	CK_KEY_TYPE keyType = key->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED);
+
 	// Get the asymmetric algorithm matching the mechanism
 	AsymMech::Type mechanism = AsymMech::Unknown;
 	bool isRSA = false;
 	switch(pMechanism->mechanism) {
 		case CKM_RSA_PKCS:
+			if (keyType != CKK_RSA)
+				return CKR_KEY_TYPE_INCONSISTENT;
 			mechanism = AsymMech::RSA_PKCS;
 			isRSA = true;
 			break;
 		case CKM_RSA_X_509:
+			if (keyType != CKK_RSA)
+				return CKR_KEY_TYPE_INCONSISTENT;
 			mechanism = AsymMech::RSA;
 			isRSA = true;
 			break;
 		case CKM_RSA_PKCS_OAEP:
+			if (keyType != CKK_RSA)
+				return CKR_KEY_TYPE_INCONSISTENT;
 			if (pMechanism->pParameter == NULL_PTR ||
 			    pMechanism->ulParameterLen != sizeof(CK_RSA_PKCS_OAEP_PARAMS))
 			{
