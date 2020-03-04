@@ -50,6 +50,8 @@ Bugfixes:
 * Issue #526: Adjust EDDSA code to return valid EC_PARAMS.
   (Patch from Jakub Jelen)
 * Issue #452: Autogen failure on undefined macro AC_MSG_ERROR.
+* Issue #527: Fixed some build errors for GCC 10.
+* Issue #470: Null pointer arguments validation for C_EncryptFinal, etc.
 
 
 SoftHSM 2.5.0 - 2018-09-24
