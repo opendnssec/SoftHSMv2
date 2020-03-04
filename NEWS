@@ -45,6 +45,10 @@ Bugfixes:
   (Patch from Yunjong Jeong)
 * Issue #518: Sporadic problem in closing sessions because of lookup of
   object without prior locking.
+* Issue #506: Check key type for C_EncryptInit and C_DecryptInit.
+  (Patch from Yunjong Jeong)
+* Issue #526: Adjust EDDSA code to return valid EC_PARAMS.
+  (Patch from Jakub Jelen)
 
 
 SoftHSM 2.5.0 - 2018-09-24
