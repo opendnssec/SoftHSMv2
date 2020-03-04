@@ -111,10 +111,11 @@ ByteString::ByteString(const ByteString& in)
 	this->byteString = in.byteString;
 }
 
+// Assignment
 ByteString& ByteString::operator=(const ByteString& in)
 {
         this->byteString = in.byteString;
-        return (*this);
+	return *this;
 }
 
 // Append data
