@@ -3,7 +3,6 @@ ACLOCAL_AMFLAGS = -I m4
 MAINTAINERCLEANFILES = \
         config.log config.status softhsm2.module \
         $(srcdir)/Makefile.in \
-        $(srcdir)/config.h.in $(srcdir)/config.h.in~ \
         $(srcdir)/configure \
         $(srcdir)/install-sh $(srcdir)/ltmain.sh $(srcdir)/missing \
         $(srcdir)/depcomp $(srcdir)/aclocal.m4 $(srcdir)/compile \
@@ -16,9 +15,7 @@ p11moddir = @P11KIT_PATH@
 p11mod_DATA = softhsm2.module
 endif
 
-EXTRA_DIST =	$(srcdir)/aes_wrap_key_with_pad/botan-diff \
-		$(srcdir)/aes_wrap_key_with_pad/README \
-		$(srcdir)/CMakeLists.txt \
+EXTRA_DIST =	$(srcdir)/CMakeLists.txt \
 		$(srcdir)/CMAKE-NOTES.md \
 		$(srcdir)/config.h.in.cmake \
 		$(srcdir)/FIPS-NOTES.md \
@@ -29,8 +26,6 @@ EXTRA_DIST =	$(srcdir)/aes_wrap_key_with_pad/botan-diff \
 		$(srcdir)/modules/tests/*.cpp \
 		$(srcdir)/OSX-NOTES.md \
 		$(srcdir)/README.md \
-		$(srcdir)/win32/config.h.in \
-		$(srcdir)/win32/Configure.py \
 		$(srcdir)/win32/convarch/convarch.vcxproj.in \
 		$(srcdir)/win32/convarch/convarch.vcxproj.filters.in \
 		$(srcdir)/win32/convarch/convarch.vcxproj.user \
