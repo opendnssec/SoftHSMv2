@@ -49,6 +49,7 @@ Bugfixes:
   (Patch from Yunjong Jeong)
 * Issue #526: Adjust EDDSA code to return valid EC_PARAMS.
   (Patch from Jakub Jelen)
+* Issue #452: Autogen failure on undefined macro AC_MSG_ERROR.
 
 
 SoftHSM 2.5.0 - 2018-09-24
