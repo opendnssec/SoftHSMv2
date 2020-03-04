@@ -1271,10 +1271,7 @@ void SymmetricAlgorithmTests::testEncDecFinalNULLValidation()
 	CPPUNIT_ASSERT_EQUAL( (CK_RV)CKR_ARGUMENTS_BAD, rv );
 	ulEncryptedPartLen = 0;
 	rv = CRYPTOKI_F_PTR( C_EncryptFinal(hSession, NULL_PTR, &ulEncryptedPartLen) );
-	CPPUNIT_ASSERT_EQUAL( (CK_RV)CKR_OK, rv );
-	vEncryptedDataParted.resize(ulEncryptedPartLen);
-	rv = CRYPTOKI_F_PTR( C_EncryptFinal(hSession, &vEncryptedDataParted.front(), &ulEncryptedPartLen) );
-	CPPUNIT_ASSERT_EQUAL( (CK_RV)CKR_OK, rv );
+	CPPUNIT_ASSERT_EQUAL( (CK_RV)CKR_OPERATION_NOT_INITIALIZED, rv );
 
 	// Multi-part decryption
 	rv = CRYPTOKI_F_PTR( C_DecryptInit(hSession,&mechanism,hKey) );
@@ -1290,10 +1287,7 @@ void SymmetricAlgorithmTests::testEncDecFinalNULLValidation()
 	CPPUNIT_ASSERT_EQUAL( (CK_RV)CKR_ARGUMENTS_BAD, rv );
 	ulDecryptedPartLen = 0;
 	rv = CRYPTOKI_F_PTR( C_DecryptFinal(hSession, NULL_PTR, &ulDecryptedPartLen) );
-	CPPUNIT_ASSERT_EQUAL( (CK_RV)CKR_OK, rv );
-	vDecryptedDataParted.resize(ulDecryptedPartLen);
-	rv = CRYPTOKI_F_PTR( C_DecryptFinal(hSession, &vDecryptedDataParted.front(), &ulDecryptedPartLen) );
-	CPPUNIT_ASSERT_EQUAL( (CK_RV)CKR_OK, rv );
+	CPPUNIT_ASSERT_EQUAL( (CK_RV)CKR_OPERATION_NOT_INITIALIZED, rv );
 
 	CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
 }
