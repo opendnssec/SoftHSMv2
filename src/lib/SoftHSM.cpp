@@ -1078,13 +1078,14 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 		case CKM_DES_CBC:
 		case CKM_DES_CBC_PAD:
 #endif
-		case CKM_DES3_ECB:
 		case CKM_DES3_CBC:
+			pInfo->flags = CKF_WRAP;
+		case CKM_DES3_ECB:
 		case CKM_DES3_CBC_PAD:
 			// Key size is not in use
 			pInfo->ulMinKeySize = 0;
 			pInfo->ulMaxKeySize = 0;
-			pInfo->flags = CKF_ENCRYPT | CKF_DECRYPT;
+			pInfo->flags |= CKF_ENCRYPT | CKF_DECRYPT;
 			break;
 		case CKM_DES3_CMAC:
 			// Key size is not in use
@@ -1097,14 +1098,15 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 			pInfo->ulMaxKeySize = 32;
 			pInfo->flags = CKF_GENERATE;
 			break;
-		case CKM_AES_ECB:
 		case CKM_AES_CBC:
+			pInfo->flags = CKF_WRAP;
+		case CKM_AES_ECB:
 		case CKM_AES_CBC_PAD:
 		case CKM_AES_CTR:
 		case CKM_AES_GCM:
 			pInfo->ulMinKeySize = 16;
 			pInfo->ulMaxKeySize = 32;
-			pInfo->flags = CKF_ENCRYPT | CKF_DECRYPT;
+			pInfo->flags |= CKF_ENCRYPT | CKF_DECRYPT;
 			break;
 		case CKM_AES_KEY_WRAP:
 			pInfo->ulMinKeySize = 16;
@@ -2781,6 +2783,13 @@ CK_RV SoftHSM::C_EncryptFinal(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pEncrypted
 	Session* session = (Session*)handleManager->getSession(hSession);
 	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
 
+	// Github issue #469, check NULL_PTR on pulEncryptedDataLen
+	if (pulEncryptedDataLen == NULL)
+	{
+		session->resetOp();
+		return CKR_ARGUMENTS_BAD;
+	}
+
 	// Check if we are doing the correct operation
 	if (session->getOpType() != SESSION_OP_ENCRYPT) return CKR_OPERATION_NOT_INITIALIZED;
 
@@ -3514,6 +3523,13 @@ CK_RV SoftHSM::C_DecryptFinal(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pData, CK_
 	// Get the session
 	Session* session = (Session*)handleManager->getSession(hSession);
 	if (session == NULL) return CKR_SESSION_HANDLE_INVALID;
+
+	// Github issue #469, check NULL_PTR on pDataLen
+	if (pDataLen == NULL)
+	{
+		session->resetOp();
+		return CKR_ARGUMENTS_BAD;
+	}
 
 	// Check if we are doing the correct operation
 	if (session->getOpType() != SESSION_OP_DECRYPT) return CKR_OPERATION_NOT_INITIALIZED;
@@ -6116,6 +6132,12 @@ CK_RV SoftHSM::WrapKeySym
 			mode = SymWrap::AES_KEYWRAP_PAD;
 			break;
 #endif
+		case CKM_AES_CBC:
+			algo = SymAlgo::AES;
+			break;
+		case CKM_DES3_CBC:
+			algo = SymAlgo::DES3;
+			break;
 		default:
 			return CKR_MECHANISM_INVALID;
 	}
@@ -6134,12 +6156,49 @@ CK_RV SoftHSM::WrapKeySym
 	// adjust key bit length
 	wrappingkey->setBitLen(wrappingkey->getKeyBits().size() * bb);
 
-	// Wrap the key
-	if (!cipher->wrapKey(wrappingkey, mode, keydata, wrapped))
-	{
-		cipher->recycleKey(wrappingkey);
-		CryptoFactory::i()->recycleSymmetricAlgorithm(cipher);
-		return CKR_GENERAL_ERROR;
+	ByteString iv;
+	ByteString encryptedFinal;
+
+	if (pMechanism->mechanism == CKM_AES_CBC) {
+		iv.resize(16);
+		memcpy(&iv[0], pMechanism->pParameter, 16);
+	} else if (pMechanism->mechanism == CKM_DES3_CBC){
+		iv.resize(8);
+		memcpy(&iv[0], pMechanism->pParameter, 8);
+	}
+	switch(pMechanism->mechanism) {
+
+		case CKM_AES_CBC:
+		case CKM_DES3_CBC:
+			if (!cipher->encryptInit(wrappingkey, SymMode::CBC, iv, false))
+			{
+				cipher->recycleKey(wrappingkey);
+				CryptoFactory::i()->recycleSymmetricAlgorithm(cipher);
+				return CKR_MECHANISM_INVALID;
+			}
+			if (!cipher->encryptUpdate(keydata, wrapped))
+			{
+				cipher->recycleKey(wrappingkey);
+				CryptoFactory::i()->recycleSymmetricAlgorithm(cipher);
+				return CKR_GENERAL_ERROR;
+			}
+			// Finalize encryption
+			if (!cipher->encryptFinal(encryptedFinal))
+			{
+				cipher->recycleKey(wrappingkey);
+				CryptoFactory::i()->recycleSymmetricAlgorithm(cipher);
+				return CKR_GENERAL_ERROR;
+			}
+			wrapped += encryptedFinal;
+			break;
+		default:
+			// Wrap the key
+			if (!cipher->wrapKey(wrappingkey, mode, keydata, wrapped))
+			{
+				cipher->recycleKey(wrappingkey);
+				CryptoFactory::i()->recycleSymmetricAlgorithm(cipher);
+				return CKR_GENERAL_ERROR;
+			}
 	}
 
 	cipher->recycleKey(wrappingkey);
@@ -6277,7 +6336,11 @@ CK_RV SoftHSM::C_WrapKey
 			if (rv != CKR_OK)
 				return rv;
 			break;
-
+		case CKM_AES_CBC:
+			if (pMechanism->pParameter == NULL_PTR ||
+                            pMechanism->ulParameterLen != 16)
+                                return CKR_ARGUMENTS_BAD;
+                        break;
 		default:
 			return CKR_MECHANISM_INVALID;
 	}
@@ -6314,13 +6377,18 @@ CK_RV SoftHSM::C_WrapKey
 		return CKR_WRAPPING_KEY_TYPE_INCONSISTENT;
 	if ((pMechanism->mechanism == CKM_RSA_PKCS || pMechanism->mechanism == CKM_RSA_PKCS_OAEP) && wrapKey->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED) != CKK_RSA)
 		return CKR_WRAPPING_KEY_TYPE_INCONSISTENT;
+	if (pMechanism->mechanism == CKM_AES_CBC && wrapKey->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED) != CKK_AES)
+		return CKR_WRAPPING_KEY_TYPE_INCONSISTENT;
+	if (pMechanism->mechanism == CKM_DES3_CBC && (wrapKey->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED) != CKK_DES2 ||
+		wrapKey->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED) != CKK_DES3))
+		return CKR_WRAPPING_KEY_TYPE_INCONSISTENT;
 
 	// Check if the wrapping key can be used for wrapping
 	if (wrapKey->getBooleanValue(CKA_WRAP, false) == false)
 		return CKR_KEY_FUNCTION_NOT_PERMITTED;
 
-    // Check if the specified mechanism is allowed for the wrapping key
-    if (!isMechanismPermitted(wrapKey, pMechanism))
+	// Check if the specified mechanism is allowed for the wrapping key
+	if (!isMechanismPermitted(wrapKey, pMechanism))
 		return CKR_MECHANISM_INVALID;
 
 	// Check the to be wrapped key handle.
