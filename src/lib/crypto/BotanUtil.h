@@ -37,6 +37,7 @@
 #include "ByteString.h"
 #include <botan/bigint.h>
 #include <botan/asn1_obj.h>
+#include <botan/oids.h>
 #if defined(WITH_ECC) || defined(WITH_GOST)
 #include <botan/ec_group.h>
 #endif
