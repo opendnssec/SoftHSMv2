@@ -2,6 +2,8 @@ NEWS for SoftHSM -- History of user visible changes
 
 SoftHSM 2.6.0 - 2020-??-??
 
+* Issue #493: Upgrade to Botan 2.
+* Issue #530: Update appveyor build.
 * Issue #438: Detect crypto algorithms by default.
   (Patch from Alon Bar-Lev)
 * Issue #455: Provide a new configuration option to allow enabling and
@@ -14,6 +16,7 @@ SoftHSM 2.6.0 - 2020-??-??
   (Thanks to Anderson Toshiyuki Sasaki)
 * Issue #500: C_WaitForSlotEvent implementation.
   (Patch from massey101)
+* Issue #445: Add wrap support with CKM_AES_CBC.
 
 Bugfixes:
 * Issue #418: Set fields to NULL to avoid double free.
@@ -42,6 +45,10 @@ Bugfixes:
   (Patch from Yunjong Jeong)
 * Issue #518: Sporadic problem in closing sessions because of lookup of
   object without prior locking.
+* Issue #506: Check key type for C_EncryptInit and C_DecryptInit.
+  (Patch from Yunjong Jeong)
+* Issue #526: Adjust EDDSA code to return valid EC_PARAMS.
+  (Patch from Jakub Jelen)
 
 
 SoftHSM 2.5.0 - 2018-09-24
