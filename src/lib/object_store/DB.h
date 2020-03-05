@@ -37,6 +37,7 @@
 
 #include <string>
 #include <sqlite3.h>
+#include <time.h>
 
 namespace DB {
 
