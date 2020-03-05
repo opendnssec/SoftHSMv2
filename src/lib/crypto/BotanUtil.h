@@ -36,12 +36,19 @@
 #include "config.h"
 #include "ByteString.h"
 #include <botan/bigint.h>
+#include <botan/asn1_obj.h>
+#include <botan/oids.h>
 #if defined(WITH_ECC) || defined(WITH_GOST)
 #include <botan/ec_group.h>
 #endif
 
 namespace BotanUtil
 {
+        const Botan::OID x25519_oid("1.3.101.110");
+        // const Botan::OID x448_oid("1.3.101.111");
+        const Botan::OID ed25519_oid("1.3.101.112");
+        // const Botan::OID ed448_oid("1.3.101.113");
+
 	// Convert a Botan BigInt to a ByteString
 	ByteString bigInt2ByteString(const Botan::BigInt& bigInt);
 	ByteString bigInt2ByteStringPrefix(const Botan::BigInt& bigInt, size_t size);

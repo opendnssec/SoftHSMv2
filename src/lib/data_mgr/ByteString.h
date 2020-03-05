@@ -63,6 +63,9 @@ public:
 	// Destructor
 	virtual ~ByteString() { }
 
+	// Assignment
+	ByteString& operator=(const ByteString& in);
+
 	// Append data
 	ByteString& operator+=(const ByteString& append);
 	ByteString& operator+=(const unsigned char byte);
@@ -109,9 +112,6 @@ public:
 
 	// XORing
 	ByteString& operator^=(const ByteString& rhs);
-
-        // Assignment
-        ByteString& operator=(const ByteString& in);
 
 	// Serialisation/deserialisation
 	virtual ByteString serialise() const;

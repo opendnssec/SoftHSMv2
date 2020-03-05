@@ -66,6 +66,9 @@ public:
 
 	// Decode from PKCS#8 BER
 	virtual bool PKCS8Decode(const ByteString& ber) = 0;
+
+	// Assignment
+	constexpr PrivateKey& operator=(const PrivateKey&) { return *this; }
 };
 
 #endif // !_SOFTHSM_V2_PRIVATEKEY_H
