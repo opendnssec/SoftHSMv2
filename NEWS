@@ -1,6 +1,6 @@
 NEWS for SoftHSM -- History of user visible changes
 
-SoftHSM 2.6.0 - 2020-??-??
+SoftHSM 2.6.0 - 2020-03-17
 
 * Issue #493: Upgrade to Botan 2.
 * Issue #530: Update appveyor build.

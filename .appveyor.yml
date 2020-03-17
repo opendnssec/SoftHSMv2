@@ -56,7 +56,15 @@ install:
 build_script:
 - cmd: vcpkg integrate install
 - cmd: cmake -DCMAKE_TOOLCHAIN_FILE=C:/Tools/vcpkg/scripts/buildsystems/vcpkg.cmake -DWITH_CRYPTO_BACKEND=%CRYPTO_BACKEND% -DBUILD_TESTS=OFF -DDISABLE_NON_PAGED_MEMORY=ON -DENABLE_GOST=OFF .
-- cmd: msbuild softhsm2.sln /p:Configuration="Release" /p:Platform="Win32" /p:PlatformToolset=v140 /target:Build & exit 0
+- cmd: msbuild softhsm2.sln /p:Configuration="Release" /p:Platform="Win32" /p:PlatformToolset=v140 /target:Build
+- cmd: IF "%ENV_PLATFORM%"=="x86" ( CD win32\Release ) ELSE ( CD win32\x64\Release)
+- cmd: cryptotest.exe
+- cmd: datamgrtest.exe
+- cmd: handlemgrtest.exe
+- cmd: objstoretest.exe
+- cmd: p11test.exe
+- cmd: sessionmgrtest.exe
+- cmd: slotmgrtest.exe
 test: off
 artifacts:
 - path: build/SoftHSMv2-$(Platform)
