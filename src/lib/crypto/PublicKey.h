@@ -61,7 +61,7 @@ public:
 	virtual ByteString serialise() const = 0;
 
 	// Assignment
-	constexpr PublicKey& operator=(const PublicKey&) { return *this; }
+	constexpr const PublicKey& operator=(const PublicKey&) const { return *this; }
 };
 
 #endif // !_SOFTHSM_V2_PUBLICKEY_H
