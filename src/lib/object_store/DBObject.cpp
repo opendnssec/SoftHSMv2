@@ -1119,7 +1119,7 @@ ByteString DBObject::getByteStringValue(CK_ATTRIBUTE_TYPE type)
 	}
 }
 
-CK_ATTRIBUTE_TYPE DBObject::nextAttributeType(CK_ATTRIBUTE_TYPE)
+CK_ATTRIBUTE_TYPE DBObject::nextAttributeType(CK_ATTRIBUTE_TYPE last)
 {
 	MutexLocker lock(_mutex);
 
@@ -1134,8 +1134,21 @@ CK_ATTRIBUTE_TYPE DBObject::nextAttributeType(CK_ATTRIBUTE_TYPE)
 		return false;
 	}
 
-	// FIXME: implement for C_CopyObject
-	return CKA_CLASS;
+	DB::Statement stmt = _connection->prepare("select MIN(type) from attributes where object_id=%lld and type>%ld", _objectId, last);
+
+	if (!stmt.isValid())
+	{
+		WARNING_MSG("Failed to prepare next attribute query");
+		return CKA_CLASS;
+	}
+
+	DB::Result result = _connection->perform(stmt);
+	if (!result.isValid())
+	{
+		return CKA_CLASS;
+	}
+
+	return result.getULongLong(1);
 }
 
 // Set the specified attribute
