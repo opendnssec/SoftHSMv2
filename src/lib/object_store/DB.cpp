@@ -487,7 +487,7 @@ time_t DB::Result::getDatetime(unsigned int fieldidx)
 	switch (valuelen) {
 		case 19:	// 2011-12-31 23:59:59
 			bdateonly = false;
-			// falls through to next case
+			// falls through
 		case 10:	// 2011-12-31
 			years = strtoul(p,&pnext,10);
 			gm_tm.tm_year = ((int)years)-1900; /* years since 1900 */
@@ -500,7 +500,7 @@ time_t DB::Result::getDatetime(unsigned int fieldidx)
 			p = pnext+1;
 			if (bdateonly)
 				break;
-			// falls through to next case
+			// falls through
 		case 8:		// 23:59:59
 			hours = strtoul(p,&pnext,10);
 			gm_tm.tm_hour = (int)hours; /* hours since midnight [0-23] */
