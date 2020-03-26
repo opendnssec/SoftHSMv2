@@ -200,6 +200,37 @@ bool DBObject::createTables()
 	return true;
 }
 
+// update schema to support new features with dbs from previous versions.
+bool DBObject::migrateTables()
+{
+	MutexLocker lock(_mutex);
+
+	if (_connection == NULL)
+	{
+		ERROR_MSG("Object is not connected to the database.");
+		return false;
+	}
+
+	// attributes
+	DB::Statement cr_attrs = _connection->prepare(
+		"create view if not exists attributes as "
+		"select object_id, type from attribute_array "
+		"union all select object_id, type from attribute_binary "
+		"union all select object_id, type from attribute_boolean "
+		"union all select object_id, type from attribute_datetime "
+		"union all select object_id, type from attribute_integer "
+		"union all select object_id, type from attribute_real "
+		"union all select object_id, type from attribute_text"
+		);
+	if (!_connection->execute(cr_attrs))
+	{
+		ERROR_MSG("Failed to create \"attributes\" view");
+		return false;
+	}
+
+	return true;
+}
+
 bool DBObject::dropTables()
 {
 	MutexLocker lock(_mutex);
@@ -207,6 +238,14 @@ bool DBObject::dropTables()
 	if (_connection == NULL)
 	{
 		ERROR_MSG("Object is not connected to the database.");
+		return false;
+	}
+
+	// attributes
+	DB::Statement dr_attrs = _connection->prepare("drop view attributes");
+	if (!_connection->execute(dr_attrs))
+	{
+		ERROR_MSG("Failed to drop \"attributes\" view");
 		return false;
 	}
 

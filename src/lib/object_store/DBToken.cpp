@@ -114,7 +114,7 @@ DBToken::DBToken(const std::string &baseDir, const std::string &tokenName, const
 
 	// First create the tables that support storage of object attributes and then insert the object containing
 	// the token info into the database.
-	if (!tokenObject.createTables() || !tokenObject.insert() || tokenObject.objectId()!=DBTOKEN_OBJECT_TOKENINFO)
+	if (!tokenObject.createTables() || !tokenObject.migrateTables() || !tokenObject.insert() || tokenObject.objectId()!=DBTOKEN_OBJECT_TOKENINFO)
 	{
 		tokenObject.dropConnection();
 
@@ -203,7 +203,7 @@ DBToken::DBToken(const std::string &baseDir, const std::string &tokenName)
 	DBObject tokenObject(_connection);
 
 	// First find the token obect that indicates the token is properly initialized.
-	if (!tokenObject.find(DBTOKEN_OBJECT_TOKENINFO))
+	if (!tokenObject.find(DBTOKEN_OBJECT_TOKENINFO) || !tokenObject.migrateTables())
 	{
 		tokenObject.dropConnection();
 
