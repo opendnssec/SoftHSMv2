@@ -487,6 +487,7 @@ static AttributeKind attributeKind(CK_ATTRIBUTE_TYPE type)
 	case CKA_EXPONENT_1: return akBinary;
 	case CKA_EXPONENT_2: return akBinary;
 	case CKA_COEFFICIENT: return akBinary;
+	case CKA_PUBLIC_KEY_INFO: return akBinary;
 	case CKA_PRIME: return akBinary;
 	case CKA_SUBPRIME: return akBinary;
 	case CKA_BASE: return akBinary;
@@ -501,6 +502,7 @@ static AttributeKind attributeKind(CK_ATTRIBUTE_TYPE type)
 	case CKA_KEY_GEN_MECHANISM: return akInteger;
 	case CKA_MODIFIABLE: return akBoolean;
 	case CKA_COPYABLE: return akBoolean;
+	case CKA_DESTROYABLE: return akBoolean;
 	case CKA_ECDSA_PARAMS: return akBinary;
 	case CKA_EC_POINT: return akBinary;
 	case CKA_SECONDARY_AUTH: return akBoolean;
