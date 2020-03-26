@@ -1618,6 +1618,7 @@ CK_RV SoftHSM::C_CopyObject(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject
 	{
 		if (!object->attributeExists(attrType))
 		{
+			WARNING_MSG("Attribute 0x%lx does not exist even though it was reported as next.");
 			rv = CKR_FUNCTION_FAILED;
 			break;
 		}
