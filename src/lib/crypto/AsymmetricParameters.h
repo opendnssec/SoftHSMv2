@@ -40,19 +40,8 @@
 class AsymmetricParameters : public Serialisable
 {
 public:
-	// Base constructors
-	AsymmetricParameters() { }
-
-	AsymmetricParameters(const AsymmetricParameters& /*in*/) { }
-
-	// Destructor
-	virtual ~AsymmetricParameters() { }
-
 	// Check if it is of the given type
 	virtual bool areOfType(const char* type) = 0;
-
-	// Serialisation
-	virtual ByteString serialise() const = 0;
 };
 
 #endif // !_SOFTHSM_V2_ASYMMETRICPARAMETERS_H

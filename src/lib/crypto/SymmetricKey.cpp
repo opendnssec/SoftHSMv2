@@ -42,12 +42,6 @@ SymmetricKey::SymmetricKey(size_t inBitLen /* = 0 */)
 	bitLen = inBitLen;
 }
 
-SymmetricKey::SymmetricKey(const SymmetricKey& in)
-{
-	keyData = in.keyData;
-	bitLen = in.bitLen;
-}
-
 // Set the key
 bool SymmetricKey::setKeyBits(const ByteString& keybits)
 {

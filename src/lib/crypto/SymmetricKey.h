@@ -40,13 +40,8 @@
 class SymmetricKey : public Serialisable
 {
 public:
-	// Base constructors
-	SymmetricKey(size_t inBitLen = 0);
-
-	SymmetricKey(const SymmetricKey& in);
-
-	// Destructor
-	virtual ~SymmetricKey() { }
+	// Constructor
+	explicit SymmetricKey(size_t inBitLen = 0);
 
 	// Set the key
 	virtual bool setKeyBits(const ByteString& keybits);
