@@ -892,7 +892,8 @@ int crypto_save_eddsa
 // Convert the OpenSSL key to binary
 
 #define X25519_KEYLEN	32
-#define X448_KEYLEN	57
+#define X448_KEYLEN	56
+#define ED448_KEYLEN	57
 
 #define PUBPREFIXLEN	12
 #define PRIVPREFIXLEN	16
@@ -925,9 +926,12 @@ eddsa_key_material_t* crypto_malloc_eddsa(EVP_PKEY* pkey)
 		keyMat->sizeA = X25519_KEYLEN;
 		break;
 	case NID_X448:
-	case NID_ED448:
 		keyMat->sizeK = X448_KEYLEN;
 		keyMat->sizeA = X448_KEYLEN;
+		break;
+	case NID_ED448:
+		keyMat->sizeK = ED448_KEYLEN;
+		keyMat->sizeA = ED448_KEYLEN;
 		break;
 	default:
 		crypto_free_eddsa(keyMat);

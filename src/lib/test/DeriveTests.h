@@ -44,7 +44,7 @@ class DeriveTests : public TestsBase
 	CPPUNIT_TEST(testEcdsaDerive);
 #endif
 #ifdef WITH_EDDSA
-	CPPUNIT_TEST(testEddsaDerive);
+	CPPUNIT_TEST_PARAMETERIZED(testEddsaDerive, {"X25519", "X448"});
 #endif
 	CPPUNIT_TEST(testSymDerive);
 	CPPUNIT_TEST_SUITE_END();
@@ -55,7 +55,7 @@ public:
 	void testEcdsaDerive();
 #endif
 #ifdef WITH_EDDSA
-	void testEddsaDerive();
+	void testEddsaDerive(const char* alg);
 #endif
 	void testSymDerive();
 
@@ -75,7 +75,7 @@ protected:
 	void ecdhDerive(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hPublicKey, CK_OBJECT_HANDLE hPrivateKey, CK_OBJECT_HANDLE &hKey, bool useRaw);
 #endif
 #ifdef WITH_EDDSA
-	CK_RV generateEdKeyPair(const char* curve, CK_SESSION_HANDLE hSession, CK_BBOOL bTokenPuk, CK_BBOOL bPrivatePuk, CK_BBOOL bTokenPrk, CK_BBOOL bPrivatePrk, CK_OBJECT_HANDLE &hPuk, CK_OBJECT_HANDLE &hPrk);
+	CK_RV generateEdKeyPair(const char* alg, CK_SESSION_HANDLE hSession, CK_BBOOL bTokenPuk, CK_BBOOL bPrivatePuk, CK_BBOOL bTokenPrk, CK_BBOOL bPrivatePrk, CK_OBJECT_HANDLE &hPuk, CK_OBJECT_HANDLE &hPrk);
 #endif
 	bool compareSecret(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hKey1, CK_OBJECT_HANDLE hKey2);
 	void symDerive(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hKey, CK_OBJECT_HANDLE &hDerive, CK_MECHANISM_TYPE mechType, CK_KEY_TYPE keyType);

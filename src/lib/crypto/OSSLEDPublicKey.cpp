@@ -40,7 +40,8 @@
 #include <string.h>
 
 #define X25519_KEYLEN	32
-#define X448_KEYLEN	57
+#define X448_KEYLEN	56
+#define ED448_KEYLEN	57
 
 #define PREFIXLEN	12
 
@@ -51,8 +52,8 @@ const unsigned char x25519_prefix[] = {
 };
 
 const unsigned char x448_prefix[] = {
-	0x30, 0x2a, 0x30, 0x05, 0x06, 0x03, 0x2b, 0x65,
-	0x6f, 0x03, 0x21, 0x00
+	0x30, 0x42, 0x30, 0x05, 0x06, 0x03, 0x2b, 0x65,
+	0x6f, 0x03, 0x39, 0x00
 };
 
 const unsigned char ed25519_prefix[] = {
@@ -61,8 +62,8 @@ const unsigned char ed25519_prefix[] = {
 };
 
 const unsigned char ed448_prefix[] = {
-	0x30, 0x2a, 0x30, 0x05, 0x06, 0x03, 0x2b, 0x65,
-	0x71, 0x03, 0x21, 0x00
+	0x30, 0x43, 0x30, 0x05, 0x06, 0x03, 0x2b, 0x65,
+	0x71, 0x03, 0x3a, 0x00
 };
 
 // Constructors
@@ -95,7 +96,7 @@ unsigned long OSSLEDPublicKey::getOrderLength() const
 	if (nid == NID_ED25519)
 		return X25519_KEYLEN;
 	if (nid == NID_ED448)
-		return X448_KEYLEN;
+		return ED448_KEYLEN;
 	return 0;
 }
 
@@ -135,7 +136,6 @@ void OSSLEDPublicKey::setFromOSSL(const EVP_PKEY* inPKEY)
 		memcpy(&raw[0], &der[PREFIXLEN], X25519_KEYLEN);
 		break;
 	case NID_X448:
-	case NID_ED448:
 		if (len != (X448_KEYLEN + PREFIXLEN))
 		{
 			ERROR_MSG("Invalid size. Expected: %lu, Actual: %lu", X448_KEYLEN + PREFIXLEN, len);
@@ -143,6 +143,16 @@ void OSSLEDPublicKey::setFromOSSL(const EVP_PKEY* inPKEY)
 		}
 		raw.resize(X448_KEYLEN);
 		memcpy(&raw[0], &der[PREFIXLEN], X448_KEYLEN);
+		break;
+	case NID_ED448:
+		if (len != (ED448_KEYLEN + PREFIXLEN))
+		{
+			ERROR_MSG("Invalid size. Expected: %lu, Actual: %lu",
+				  ED448_KEYLEN + PREFIXLEN, len);
+			return;
+		}
+		raw.resize(ED448_KEYLEN);
+		memcpy(&raw[0], &der[PREFIXLEN], ED448_KEYLEN);
 		break;
 	default:
 		return;
@@ -230,14 +240,14 @@ void OSSLEDPublicKey::createOSSLKey()
 		memcpy(&der[PREFIXLEN], raw.const_byte_str(), X448_KEYLEN);
 		break;
 	case NID_ED448:
-		if (len != X448_KEYLEN)
+		if (len != ED448_KEYLEN)
 		{
-			ERROR_MSG("Invalid size. Expected: %lu, Actual: %lu", X448_KEYLEN, len);
+			ERROR_MSG("Invalid size. Expected: %lu, Actual: %lu", ED448_KEYLEN, len);
 			return;
 		}
-		der.resize(PREFIXLEN + X448_KEYLEN);
+		der.resize(PREFIXLEN + ED448_KEYLEN);
 		memcpy(&der[0], ed448_prefix, PREFIXLEN);
-		memcpy(&der[PREFIXLEN], raw.const_byte_str(), X448_KEYLEN);
+		memcpy(&der[PREFIXLEN], raw.const_byte_str(), ED448_KEYLEN);
 		break;
 	default:
 		return;

@@ -46,6 +46,55 @@
 
 CPPUNIT_TEST_SUITE_REGISTRATION(EDDSATests);
 
+static const std::vector<ByteString> montCurves = {
+	// x25519 [RFC 7748] per PKCS#11 3.0
+	ByteString("130a63757276653235353139"),
+#ifndef WITH_BOTAN
+	// x448 [RFC 7748] per PKCS#11 3.0
+	ByteString("13086375727665343438"),
+#endif
+};
+
+static const std::vector<ByteString> montCompatCurves = {
+	// x25519 [RFC 8410] -- non-standard !
+	ByteString("06032b656e"),
+#ifndef WITH_BOTAN
+	// x448 [RFC 8410] -- non-standard !
+	ByteString("06032b656f"),
+#endif
+};
+
+static const std::vector<ByteString> edCurves = {
+	// ed25519 [RFC 8032] per PKCS#11 3.0
+	ByteString("130c656477617264733235353139"),
+#ifndef WITH_BOTAN
+	// ed448 [RFC 8032] per PKCS#11 3.0
+	ByteString("130a65647761726473343438"),
+#endif
+};
+
+static const std::vector<ByteString> edCompatCurves = {
+	// ed25519 [RFC 8410] -- non-standard !
+	ByteString("06032b6570"),
+#ifndef WITH_BOTAN
+	// ed448 [RFC 8410] -- non-standard !
+	ByteString("06032b6571"),
+#endif
+};
+
+static const std::vector<ByteString> allCurves = []{
+	auto v = montCurves;
+	v.insert(v.end(), edCurves.begin(), edCurves.end());
+	return v;
+}();
+
+static const std::vector<ByteString> allCompatCurves = []{
+	auto v = montCompatCurves;
+	v.insert(v.end(), edCompatCurves.begin(), edCompatCurves.end());
+	return v;
+}();
+
+
 void EDDSATests::setUp()
 {
 	eddsa = NULL;
@@ -68,23 +117,8 @@ void EDDSATests::tearDown()
 
 void EDDSATests::testKeyGeneration()
 {
-	AsymmetricKeyPair* kp;
-
-	// Curves to test
-	std::vector<ByteString> curves;
-	// Add x25519 [RFC 8032] per PKCS#11 3.0
-	curves.push_back(ByteString("130a63757276653235353139"));
-	// Add ed25519 [RFC 8032] per PKCS#11 3.0
-	curves.push_back(ByteString("130c656477617264733235353139"));
-
-	std::vector<ByteString> compat_curves;
-	// Add x25519 [RFC 8420] -- non-standard !
-	compat_curves.push_back(ByteString("06032b656e"));
-	// Add ed25519 [RFC 8420] -- non-standard !
-	compat_curves.push_back(ByteString("06032b6570"));
-
-	for (std::vector<ByteString>::iterator c = curves.begin(), cc = compat_curves.begin();
-		c != curves.end() && cc != compat_curves.end();
+	for (auto c = allCurves.begin(), cc = allCompatCurves.begin();
+		c != allCurves.end() && cc != allCompatCurves.end();
 		c++, cc++)
 	{
 		// Set domain parameters
@@ -92,6 +126,7 @@ void EDDSATests::testKeyGeneration()
 		p->setEC(*c);
 
 		// Generate key-pair
+		AsymmetricKeyPair* kp;
 		CPPUNIT_ASSERT(eddsa->generateKeyPair(&kp, p));
 
 		EDPublicKey* pub = (EDPublicKey*) kp->getPublicKey();
@@ -121,106 +156,105 @@ void EDDSATests::testKeyGeneration()
 
 void EDDSATests::testSerialisation()
 {
-	// Get ed25519 domain parameters
-	ECParameters* p = new ECParameters;
-	p->setEC(ByteString("06032b6570"));
+	for (const ByteString& c : allCurves)
+	{
+		// Get domain parameters
+		ECParameters* p = new ECParameters;
+		p->setEC(c);
 
-	// Serialise the parameters
-	ByteString serialisedParams = p->serialise();
+		// Serialise the parameters
+		ByteString serialisedParams = p->serialise();
 
-	// Deserialise the parameters
-	AsymmetricParameters* dEC;
+		// Deserialise the parameters
+		AsymmetricParameters* dEC;
 
-	CPPUNIT_ASSERT(eddsa->reconstructParameters(&dEC, serialisedParams));
+		CPPUNIT_ASSERT(eddsa->reconstructParameters(&dEC, serialisedParams));
 
-	CPPUNIT_ASSERT(dEC->areOfType(ECParameters::type));
+		CPPUNIT_ASSERT(dEC->areOfType(ECParameters::type));
 
-	ECParameters* ddEC = (ECParameters*) dEC;
+		ECParameters* ddEC = (ECParameters*) dEC;
 
-	CPPUNIT_ASSERT(p->getEC() == ddEC->getEC());
+		CPPUNIT_ASSERT(p->getEC() == ddEC->getEC());
 
-	// Generate a key-pair
-	AsymmetricKeyPair* kp;
+		// Generate a key-pair
+		AsymmetricKeyPair* kp;
 
-	CPPUNIT_ASSERT(eddsa->generateKeyPair(&kp, dEC));
+		CPPUNIT_ASSERT(eddsa->generateKeyPair(&kp, dEC));
 
-	// Serialise the key-pair
-	ByteString serialisedKP = kp->serialise();
+		// Serialise the key-pair
+		ByteString serialisedKP = kp->serialise();
 
-	// Deserialise the key-pair
-	AsymmetricKeyPair* dKP;
+		// Deserialise the key-pair
+		AsymmetricKeyPair* dKP;
 
-	CPPUNIT_ASSERT(eddsa->reconstructKeyPair(&dKP, serialisedKP));
+		CPPUNIT_ASSERT(eddsa->reconstructKeyPair(&dKP, serialisedKP));
 
-	// Check the deserialised key-pair
-	EDPrivateKey* privKey = (EDPrivateKey*) kp->getPrivateKey();
-	EDPublicKey* pubKey = (EDPublicKey*) kp->getPublicKey();
+		// Check the deserialised key-pair
+		EDPrivateKey* privKey = (EDPrivateKey*) kp->getPrivateKey();
+		EDPublicKey* pubKey = (EDPublicKey*) kp->getPublicKey();
 
-	EDPrivateKey* dPrivKey = (EDPrivateKey*) dKP->getPrivateKey();
-	EDPublicKey* dPubKey = (EDPublicKey*) dKP->getPublicKey();
+		EDPrivateKey* dPrivKey = (EDPrivateKey*) dKP->getPrivateKey();
+		EDPublicKey* dPubKey = (EDPublicKey*) dKP->getPublicKey();
 
-	CPPUNIT_ASSERT(privKey->getEC() == dPrivKey->getEC());
-	CPPUNIT_ASSERT(privKey->getK() == dPrivKey->getK());
+		CPPUNIT_ASSERT(privKey->getEC() == dPrivKey->getEC());
+		CPPUNIT_ASSERT(privKey->getK() == dPrivKey->getK());
 
-	CPPUNIT_ASSERT(pubKey->getEC() == dPubKey->getEC());
-	CPPUNIT_ASSERT(pubKey->getA() == dPubKey->getA());
+		CPPUNIT_ASSERT(pubKey->getEC() == dPubKey->getEC());
+		CPPUNIT_ASSERT(pubKey->getA() == dPubKey->getA());
 
-	eddsa->recycleParameters(p);
-	eddsa->recycleParameters(dEC);
-	eddsa->recycleKeyPair(kp);
-	eddsa->recycleKeyPair(dKP);
+		eddsa->recycleParameters(p);
+		eddsa->recycleParameters(dEC);
+		eddsa->recycleKeyPair(kp);
+		eddsa->recycleKeyPair(dKP);
+	}
 }
 
 void EDDSATests::testPKCS8()
 {
-	// Get ed25519 domain parameters
-	ECParameters* p = new ECParameters;
-	p->setEC(ByteString("06032b6570"));
+	for (const ByteString& c : allCurves)
+	{
+		// Get domain parameters
+		ECParameters* p = new ECParameters;
+		p->setEC(c);
 
-	// Generate a key-pair
-	AsymmetricKeyPair* kp;
+		// Generate a key-pair
+		AsymmetricKeyPair* kp;
 
-	CPPUNIT_ASSERT(eddsa->generateKeyPair(&kp, p));
-	CPPUNIT_ASSERT(kp != NULL);
+		CPPUNIT_ASSERT(eddsa->generateKeyPair(&kp, p));
+		CPPUNIT_ASSERT(kp != NULL);
 
-	EDPrivateKey* priv = (EDPrivateKey*) kp->getPrivateKey();
-	CPPUNIT_ASSERT(priv != NULL);
+		EDPrivateKey* priv = (EDPrivateKey*) kp->getPrivateKey();
+		CPPUNIT_ASSERT(priv != NULL);
 
-	// Encode and decode the private key
-	ByteString pkcs8 = priv->PKCS8Encode();
-	CPPUNIT_ASSERT(pkcs8.size() != 0);
+		// Encode and decode the private key
+		ByteString pkcs8 = priv->PKCS8Encode();
+		CPPUNIT_ASSERT(pkcs8.size() != 0);
 
-	EDPrivateKey* dPriv = (EDPrivateKey*) eddsa->newPrivateKey();
-	CPPUNIT_ASSERT(dPriv != NULL);
+		EDPrivateKey* dPriv = (EDPrivateKey*) eddsa->newPrivateKey();
+		CPPUNIT_ASSERT(dPriv != NULL);
 
-	CPPUNIT_ASSERT(dPriv->PKCS8Decode(pkcs8));
+		CPPUNIT_ASSERT(dPriv->PKCS8Decode(pkcs8));
 
-	CPPUNIT_ASSERT(priv->getEC() == dPriv->getEC());
-	CPPUNIT_ASSERT(priv->getK() == dPriv->getK());
+		CPPUNIT_ASSERT(priv->getEC() == dPriv->getEC());
+		CPPUNIT_ASSERT(priv->getK() == dPriv->getK());
 
-	eddsa->recycleParameters(p);
-	eddsa->recycleKeyPair(kp);
-	eddsa->recyclePrivateKey(dPriv);
+		eddsa->recycleParameters(p);
+		eddsa->recycleKeyPair(kp);
+		eddsa->recyclePrivateKey(dPriv);
+	}
 }
 
 void EDDSATests::testSigningVerifying()
 {
-	AsymmetricKeyPair* kp;
-	ECParameters *p;
-
-	// Curves to test
-	std::vector<ByteString> curves;
-	// Add ed25519
-	curves.push_back(ByteString("06032b6570"));
-
-	for (std::vector<ByteString>::iterator c = curves.begin(); c != curves.end(); c++)
+	for (const ByteString& c : edCurves)
 	{
 		// Get parameters
-		p = new ECParameters;
+		ECParameters* p = new ECParameters;
 		CPPUNIT_ASSERT(p != NULL);
-		p->setEC(*c);
+		p->setEC(c);
 
 		// Generate key-pair
+		AsymmetricKeyPair* kp;
 		CPPUNIT_ASSERT(eddsa->generateKeyPair(&kp, p));
 
 		// Generate some data to sign
@@ -243,7 +277,7 @@ void EDDSATests::testSigningVerifying()
 	}
 }
 
-void EDDSATests::testSignVerifyKnownVector()
+void EDDSATests::testSignVerifyKnownVectorEd25519()
 {
 	EDPublicKey* pubKey1 = (EDPublicKey*) eddsa->newPublicKey();
 	EDPublicKey* pubKey2 = (EDPublicKey*) eddsa->newPublicKey();
@@ -291,26 +325,94 @@ void EDDSATests::testSignVerifyKnownVector()
 	eddsa->recyclePrivateKey(privKey2);
 }
 
+void EDDSATests::testSignVerifyKnownVectorEd448()
+{
+#ifndef WITH_BOTAN
+	// Test vectors from RFC 8032
+
+	EDPublicKey* pubKey1 = (EDPublicKey*) eddsa->newPublicKey();
+	EDPublicKey* pubKey2 = (EDPublicKey*) eddsa->newPublicKey();
+	EDPrivateKey* privKey1 = (EDPrivateKey*) eddsa->newPrivateKey();
+	EDPrivateKey* privKey2 = (EDPrivateKey*) eddsa->newPrivateKey();
+
+	// Reconstruct public and private key #1
+	ByteString ec = "130a65647761726473343438"; // ed448
+	ByteString k1 =
+		"6c82a562cb808d10d632be89c8513ebf6c929f34ddfa8c9f63c9960ef6"
+		"e348a3528c8a3fcc2f044e39a3fc5b94492f8f032e7549a20098f95b";
+	ByteString a1 = "0439"
+		"5fd7449b59b461fd2ce787ec616ad46a1da1342485a70e1f8a0ea75d80"
+		"e96778edf124769b46c7061bd6783df1e50f6cd1fa1abeafe8256180";
+
+	pubKey1->setEC(ec);
+	pubKey1->setA(a1);
+	privKey1->setEC(ec);
+	privKey1->setK(k1);
+
+	// Test with key #1
+	ByteString data1; // ""
+	ByteString goodSignature1 =
+		"533a37f6bbe457251f023c0d88f976ae2dfb504a843e34d2074fd823d4"
+		"1a591f2b233f034f628281f2fd7a22ddd47d7828c59bd0a21bfd3980"
+		"ff0d2028d4b18a9df63e006c5d1c2d345b925d8dc00b4104852db99ac5"
+		"c7cdda8530a113a0f4dbb61149f05a7363268c71d95808ff2e652600";
+	ByteString badSignature1 =
+		"533a37f6bbe457251f023c0d88f976ae2dfb504a843e34d2074fd823d4"
+		"1a591f2b233f034f628281f2fd7a22ddd47d7828c59bd0a21bfd3980"
+		"ff0d2028d4b18a9df63e006c5d1c2d345b925d8dc00b4104852db99ac5"
+		"c7cdda8530a113a0f4dbb61149f05a7363268c72d95808ff2e652600";
+
+	// Reconstruct public and private key #2
+	ByteString k2 =
+		"cd23d24f714274e744343237b93290f511f6425f98e64459ff203e8985"
+		"083ffdf60500553abc0e05cd02184bdb89c4ccd67e187951267eb328";
+	ByteString a2 = "0439"
+		"dcea9e78f35a1bf3499a831b10b86c90aac01cd84b67a0109b55a36e93"
+		"28b1e365fce161d71ce7131a543ea4cb5f7e9f1d8b00696447001400";
+
+	pubKey2->setEC(ec);
+	pubKey2->setA(a2);
+	privKey2->setEC(ec);
+	privKey2->setK(k2);
+
+	// Test with key #2
+	ByteString data2 = "0c3e544074ec63b0265e0c";
+	ByteString goodSignature2 =
+		"1f0a8888ce25e8d458a21130879b840a9089d999aaba039eaf3e3afa09"
+		"0a09d389dba82c4ff2ae8ac5cdfb7c55e94d5d961a29fe0109941e00"
+		"b8dbdeea6d3b051068df7254c0cdc129cbe62db2dc957dbb47b51fd3f2"
+		"13fb8698f064774250a5028961c9bf8ffd973fe5d5c206492b140e00";
+	ByteString badSignature2 =
+		"1f0a8888cf25e8d458a21130879b840a9089d999aaba039eaf3e3afa09"
+		"0a09d389dba82c4ff2ae8ac5cdfb7c55e94d5d961a29fe0109941e00"
+		"b8dbdeea6d3b051068df7254c0cdc129cbe62db2dc957dbb47b51fd3f2"
+		"13fb8698f064774250a5028961c9bf8ffd973fe5d5c206492b140e00";
+
+	CPPUNIT_ASSERT(eddsa->verify(pubKey1, data1, goodSignature1, AsymMech::EDDSA));
+	CPPUNIT_ASSERT(!eddsa->verify(pubKey1, data1, badSignature1, AsymMech::EDDSA));
+	CPPUNIT_ASSERT(eddsa->verify(pubKey2, data2, goodSignature2, AsymMech::EDDSA));
+	CPPUNIT_ASSERT(!eddsa->verify(pubKey2, data2, badSignature2, AsymMech::EDDSA));
+
+	eddsa->recyclePublicKey(pubKey1);
+	eddsa->recyclePublicKey(pubKey2);
+	eddsa->recyclePrivateKey(privKey1);
+	eddsa->recyclePrivateKey(privKey2);
+#endif
+}
+
 void EDDSATests::testDerivation()
 {
-	AsymmetricKeyPair* kpa;
-	AsymmetricKeyPair* kpb;
-	ECParameters* p;
-
-	// Curves to test
-	std::vector<ByteString> curves;
-	// Add x25519
-	curves.push_back(ByteString("06032b656e"));
-
-	for (std::vector<ByteString>::iterator c = curves.begin(); c != curves.end(); c++)
+	for (const ByteString& c : montCurves)
 	{
 		// Get parameters
-		p = new ECParameters;
+		ECParameters* p = new ECParameters;
 		CPPUNIT_ASSERT(p != NULL);
-		p->setEC(*c);
+		p->setEC(c);
 
 		// Generate key-pairs
+		AsymmetricKeyPair* kpa;
 		CPPUNIT_ASSERT(eddsa->generateKeyPair(&kpa, p));
+		AsymmetricKeyPair* kpb;
 		CPPUNIT_ASSERT(eddsa->generateKeyPair(&kpb, p));
 
 		// Derive secrets
@@ -331,7 +433,7 @@ void EDDSATests::testDerivation()
 	}
 }
 
-void EDDSATests::testDeriveKnownVector()
+void EDDSATests::testDeriveKnownVectorX25519()
 {
 	EDPublicKey* pubKeya = (EDPublicKey*) eddsa->newPublicKey();
 	EDPublicKey* pubKeyb = (EDPublicKey*) eddsa->newPublicKey();
@@ -372,5 +474,62 @@ void EDDSATests::testDeriveKnownVector()
 	eddsa->recyclePrivateKey(privKeyb);
 	eddsa->recycleSymmetricKey(sa);
 	eddsa->recycleSymmetricKey(sb);
+}
+
+void EDDSATests::testDeriveKnownVectorX448()
+{
+#ifndef WITH_BOTAN
+	// Test vectors from RFC 7748
+
+	EDPublicKey* pubKeya = (EDPublicKey*) eddsa->newPublicKey();
+	EDPublicKey* pubKeyb = (EDPublicKey*) eddsa->newPublicKey();
+	EDPrivateKey* privKeya = (EDPrivateKey*) eddsa->newPrivateKey();
+	EDPrivateKey* privKeyb = (EDPrivateKey*) eddsa->newPrivateKey();
+
+	// Reconstruct public and private key for Alice
+	ByteString ec = "13086375727665343438"; // x448
+	ByteString ka =
+		"9a8f4925d1519f5775cf46b04b5800d4ee9ee8bae8bc5565d498c28d"
+		"d9c9baf574a9419744897391006382a6f127ab1d9ac2d8c0a598726b";
+	ByteString aa = "0438"
+		"9b08f7cc31b7e3e67d22d5aea121074a273bd2b83de09c63faa73d2c"
+		"22c5d9bbc836647241d953d40c5b12da88120d53177f80e532c41fa0";
+
+	pubKeya->setEC(ec);
+	pubKeya->setA(aa);
+	privKeya->setEC(ec);
+	privKeya->setK(ka);
+
+	// Reconstruct public and private key for Bob
+	ByteString kb =
+		"1c306a7ac2a0e2e0990b294470cba339e6453772b075811d8fad0d1d"
+		"6927c120bb5ee8972b0d3e21374c9c921b09d1b0366f10b65173992d";
+	ByteString ab = "0438"
+		"3eb7a829b0cd20f5bcfc0b599b6feccf6da4627107bdb0d4f345b430"
+		"27d8b972fc3e34fb4232a13ca706dcb57aec3dae07bdc1c67bf33609";
+
+	pubKeyb->setEC(ec);
+	pubKeyb->setA(ab);
+	privKeyb->setEC(ec);
+	privKeyb->setK(kb);
+
+	// Test
+	ByteString expected =
+		"07fff4181ac6cc95ec1c16a94a0f74d12da232ce40a77552281d282b"
+		"b60c0b56fd2464c335543936521c24403085d59a449a5037514a879d";
+	SymmetricKey* sa;
+	CPPUNIT_ASSERT(eddsa->deriveKey(&sa, pubKeya, privKeyb));
+	CPPUNIT_ASSERT(sa->getKeyBits() == expected);
+	SymmetricKey* sb;
+	CPPUNIT_ASSERT(eddsa->deriveKey(&sb, pubKeyb, privKeya));
+	CPPUNIT_ASSERT(sb->getKeyBits() == expected);
+
+	eddsa->recyclePublicKey(pubKeya);
+	eddsa->recyclePublicKey(pubKeyb);
+	eddsa->recyclePrivateKey(privKeya);
+	eddsa->recyclePrivateKey(privKeyb);
+	eddsa->recycleSymmetricKey(sa);
+	eddsa->recycleSymmetricKey(sb);
+#endif
 }
 #endif

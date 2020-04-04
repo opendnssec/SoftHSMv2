@@ -170,7 +170,10 @@ CK_RV SignVerifyTests::generateED(const char* curve, CK_SESSION_HANDLE hSession,
 {
 	CK_MECHANISM mechanism = { CKM_EC_EDWARDS_KEY_PAIR_GEN, NULL_PTR, 0 };
 	CK_KEY_TYPE keyType = CKK_EC_EDWARDS;
-	CK_BYTE oidEd25519[] = { 0x06, 0x03, 0x2B, 0x65, 0x70 };
+	CK_BYTE curveNameEd25519[] = { 0x13, 0x0c, 0x65, 0x64, 0x77, 0x61, 0x72,
+				       0x64, 0x73, 0x32, 0x35, 0x35, 0x31, 0x39 };
+	CK_BYTE curveNameEd448[] = { 0x13, 0x0a, 0x65, 0x64, 0x77, 0x61,
+				     0x72, 0x64, 0x73, 0x34, 0x34, 0x38 };
 	CK_BYTE label[] = { 0x12, 0x34 }; // dummy
 	CK_BYTE id[] = { 123 } ; // dummy
 	CK_BBOOL bFalse = CK_FALSE;
@@ -203,8 +206,13 @@ CK_RV SignVerifyTests::generateED(const char* curve, CK_SESSION_HANDLE hSession,
 	/* Select the curve */
 	if (strcmp(curve, "Ed25519") == 0)
 	{
-		pukAttribs[0].pValue = oidEd25519;
-		pukAttribs[0].ulValueLen = sizeof(oidEd25519);
+		pukAttribs[0].pValue = curveNameEd25519;
+		pukAttribs[0].ulValueLen = sizeof(curveNameEd25519);
+	}
+	else if (strcmp(curve, "Ed448") == 0)
+	{
+		pukAttribs[0].pValue = curveNameEd448;
+		pukAttribs[0].ulValueLen = sizeof(curveNameEd448);
 	}
 	else
 	{
@@ -536,8 +544,13 @@ void SignVerifyTests::testEcSignVerify()
 #endif
 
 #ifdef WITH_EDDSA
-void SignVerifyTests::testEdSignVerify()
+void SignVerifyTests::testEdSignVerify(const char* curve)
 {
+#ifdef WITH_BOTAN
+	if (strcmp(curve, "Ed448") == 0)
+		return;
+#endif
+
 	CK_RV rv;
 	CK_SESSION_HANDLE hSessionRO;
 	CK_SESSION_HANDLE hSessionRW;
@@ -569,22 +582,22 @@ void SignVerifyTests::testEdSignVerify()
 	CK_OBJECT_HANDLE hPrk = CK_INVALID_HANDLE;
 
 	// Public Session keys
-	rv = generateED("Ed25519", hSessionRW,IN_SESSION,IS_PUBLIC,IN_SESSION,IS_PUBLIC,hPuk,hPrk);
+	rv = generateED(curve, hSessionRW,IN_SESSION,IS_PUBLIC,IN_SESSION,IS_PUBLIC,hPuk,hPrk);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 	signVerifySingle(CKM_EDDSA, hSessionRO, hPuk,hPrk);
 
 	// Private Session Keys
-	rv = generateED("Ed25519", hSessionRW,IN_SESSION,IS_PRIVATE,IN_SESSION,IS_PRIVATE,hPuk,hPrk);
+	rv = generateED(curve, hSessionRW,IN_SESSION,IS_PRIVATE,IN_SESSION,IS_PRIVATE,hPuk,hPrk);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 	signVerifySingle(CKM_EDDSA, hSessionRO, hPuk,hPrk);
 
 	// Public Token Keys
-	rv = generateED("Ed25519", hSessionRW,ON_TOKEN,IS_PUBLIC,ON_TOKEN,IS_PUBLIC,hPuk,hPrk);
+	rv = generateED(curve, hSessionRW,ON_TOKEN,IS_PUBLIC,ON_TOKEN,IS_PUBLIC,hPuk,hPrk);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 	signVerifySingle(CKM_EDDSA, hSessionRO, hPuk,hPrk);
 
 	// Private Token Keys
-	rv = generateED("Ed25519", hSessionRW,ON_TOKEN,IS_PRIVATE,ON_TOKEN,IS_PRIVATE,hPuk,hPrk);
+	rv = generateED(curve, hSessionRW,ON_TOKEN,IS_PRIVATE,ON_TOKEN,IS_PRIVATE,hPuk,hPrk);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 	signVerifySingle(CKM_EDDSA, hSessionRO, hPuk,hPrk);
 }
