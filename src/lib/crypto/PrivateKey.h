@@ -41,14 +41,6 @@
 class PrivateKey : public Serialisable
 {
 public:
-	// Base constructors
-	PrivateKey() { }
-
-	PrivateKey(const PrivateKey& in);
-
-	// Destructor
-	virtual ~PrivateKey() { }
-
 	// Check if the private key is of the given type
 	virtual bool isOfType(const char* inType) = 0;
 
@@ -58,17 +50,11 @@ public:
 	// Get the output length
 	virtual unsigned long getOutputLength() const = 0;
 
-	// Serialisation
-	virtual ByteString serialise() const = 0;
-
 	// Encode into PKCS#8 DER
 	virtual ByteString PKCS8Encode() = 0;
 
 	// Decode from PKCS#8 BER
 	virtual bool PKCS8Decode(const ByteString& ber) = 0;
-
-	// Assignment
-	constexpr const PrivateKey& operator=(const PrivateKey&) const { return *this; }
 };
 
 #endif // !_SOFTHSM_V2_PRIVATEKEY_H

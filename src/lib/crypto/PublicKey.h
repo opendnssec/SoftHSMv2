@@ -40,11 +40,6 @@
 class PublicKey : public Serialisable
 {
 public:
-	// Base constructors
-	PublicKey() { }
-
-	PublicKey(const PublicKey& /*in*/) { }
-
 	// Destructor
 	virtual ~PublicKey() { }
 
@@ -56,12 +51,6 @@ public:
 
 	// Get the output length
 	virtual unsigned long getOutputLength() const = 0;
-
-	// Serialisation
-	virtual ByteString serialise() const = 0;
-
-	// Assignment
-	constexpr const PublicKey& operator=(const PublicKey&) const { return *this; }
 };
 
 #endif // !_SOFTHSM_V2_PUBLICKEY_H

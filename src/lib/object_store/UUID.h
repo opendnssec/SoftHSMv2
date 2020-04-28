@@ -42,7 +42,7 @@ namespace UUID
 {
 	// Generate a new UUID string
 	std::string newUUID();
-};
+}
 
 #endif // !_SOFTHSM_V2_UUID_H
 
