@@ -1,5 +1,11 @@
 NEWS for SoftHSM -- History of user visible changes
 
+SoftHSM 2.6.1 - 2020-04-29
+
+* Issue #542: Support Ed448/X448 for OpenSSL
+* Issue #538: Improved warning and compilation issues for GCC10
+* Issue #527: Fixed compilation issues for MacOS 10.15.4/Xcode 11.4
+
 SoftHSM 2.6.0 - 2020-03-17
 
 * Issue #493: Upgrade to Botan 2.
