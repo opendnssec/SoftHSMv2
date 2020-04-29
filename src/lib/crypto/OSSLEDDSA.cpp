@@ -368,7 +368,7 @@ unsigned long OSSLEDDSA::getMinKeySize()
 
 unsigned long OSSLEDDSA::getMaxKeySize()
 {
-	// Ed448 will be supported
+	// Ed448 is supported
 	return 57*8;
 }
 

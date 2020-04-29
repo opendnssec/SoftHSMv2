@@ -146,12 +146,14 @@ CK_RV DeriveTests::generateEcKeyPair(const char* curve, CK_SESSION_HANDLE hSessi
 #endif
 
 #ifdef WITH_EDDSA
-CK_RV DeriveTests::generateEdKeyPair(const char* curve, CK_SESSION_HANDLE hSession, CK_BBOOL bTokenPuk, CK_BBOOL bPrivatePuk, CK_BBOOL bTokenPrk, CK_BBOOL bPrivatePrk, CK_OBJECT_HANDLE &hPuk, CK_OBJECT_HANDLE &hPrk)
+CK_RV DeriveTests::generateEdKeyPair(const char* alg, CK_SESSION_HANDLE hSession, CK_BBOOL bTokenPuk, CK_BBOOL bPrivatePuk, CK_BBOOL bTokenPrk, CK_BBOOL bPrivatePrk, CK_OBJECT_HANDLE &hPuk, CK_OBJECT_HANDLE &hPrk)
 {
 	CK_MECHANISM mechanism = { CKM_EC_EDWARDS_KEY_PAIR_GEN, NULL_PTR, 0 };
 	CK_KEY_TYPE keyType = CKK_EC_EDWARDS;
-	CK_BYTE oidX25519[] = { 0x06, 0x03, 0x2B, 0x65, 0x6E };
-	CK_BYTE oidX448[] = { 0x06, 0x03, 0x2B, 0x65, 0x6F };
+	CK_BYTE curveNameX25519[] = { 0x13, 0x0a, 0x63, 0x75, 0x72, 0x76,
+				      0x65, 0x32, 0x35, 0x35, 0x31, 0x39 };
+	CK_BYTE curveNameX448[] = { 0x13, 0x08, 0x63, 0x75, 0x72,
+				    0x76, 0x65, 0x34, 0x34, 0x38 };
 	CK_BBOOL bTrue = CK_TRUE;
 	CK_ATTRIBUTE pukAttribs[] = {
 		{ CKA_EC_PARAMS, NULL, 0 },
@@ -168,15 +170,15 @@ CK_RV DeriveTests::generateEdKeyPair(const char* curve, CK_SESSION_HANDLE hSessi
 	};
 
 	/* Select the curve */
-	if (strcmp(curve, "X25519") == 0)
+	if (strcmp(alg, "X25519") == 0)
 	{
-		pukAttribs[0].pValue = oidX25519;
-		pukAttribs[0].ulValueLen = sizeof(oidX25519);
+		pukAttribs[0].pValue = curveNameX25519;
+		pukAttribs[0].ulValueLen = sizeof(curveNameX25519);
 	}
-	else if (strcmp(curve, "X448") == 0)
+	else if (strcmp(alg, "X448") == 0)
 	{
-		pukAttribs[0].pValue = oidX448;
-		pukAttribs[0].ulValueLen = sizeof(oidX448);
+		pukAttribs[0].pValue = curveNameX448;
+		pukAttribs[0].ulValueLen = sizeof(curveNameX448);
 	}
 	else
 	{
@@ -545,8 +547,13 @@ void DeriveTests::testEcdsaDerive()
 #endif
 
 #ifdef WITH_EDDSA
-void DeriveTests::testEddsaDerive()
+void DeriveTests::testEddsaDerive(const char* alg)
 {
+#ifdef WITH_BOTAN
+	if (strcmp(alg, "X448") == 0)
+		return;
+#endif
+	
 	CK_RV rv;
 	CK_SESSION_HANDLE hSessionRO;
 	CK_SESSION_HANDLE hSessionRW;
@@ -580,9 +587,9 @@ void DeriveTests::testEddsaDerive()
 	CK_OBJECT_HANDLE hPuk2 = CK_INVALID_HANDLE;
 	CK_OBJECT_HANDLE hPrk2 = CK_INVALID_HANDLE;
 
-	rv = generateEdKeyPair("X25519",hSessionRW,IN_SESSION,IS_PUBLIC,IN_SESSION,IS_PUBLIC,hPuk1,hPrk1);
+	rv = generateEdKeyPair(alg,hSessionRW,IN_SESSION,IS_PUBLIC,IN_SESSION,IS_PUBLIC,hPuk1,hPrk1);
 	CPPUNIT_ASSERT(rv == CKR_OK);
-	rv = generateEdKeyPair("X25519",hSessionRW,IN_SESSION,IS_PUBLIC,IN_SESSION,IS_PUBLIC,hPuk2,hPrk2);
+	rv = generateEdKeyPair(alg,hSessionRW,IN_SESSION,IS_PUBLIC,IN_SESSION,IS_PUBLIC,hPuk2,hPrk2);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 	CK_OBJECT_HANDLE hKey1 = CK_INVALID_HANDLE;
 	ecdhDerive(hSessionRW,hPuk1,hPrk2,hKey1,true);
@@ -591,27 +598,27 @@ void DeriveTests::testEddsaDerive()
 	CPPUNIT_ASSERT(compareSecret(hSessionRW,hKey1,hKey2));
 
 	// Private Session Keys
-	rv = generateEdKeyPair("X25519",hSessionRW,IN_SESSION,IS_PRIVATE,IN_SESSION,IS_PRIVATE,hPuk1,hPrk1);
+	rv = generateEdKeyPair(alg,hSessionRW,IN_SESSION,IS_PRIVATE,IN_SESSION,IS_PRIVATE,hPuk1,hPrk1);
 	CPPUNIT_ASSERT(rv == CKR_OK);
-	rv = generateEdKeyPair("X25519",hSessionRW,IN_SESSION,IS_PRIVATE,IN_SESSION,IS_PRIVATE,hPuk2,hPrk2);
+	rv = generateEdKeyPair(alg,hSessionRW,IN_SESSION,IS_PRIVATE,IN_SESSION,IS_PRIVATE,hPuk2,hPrk2);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 	ecdhDerive(hSessionRW,hPuk1,hPrk2,hKey1,true);
 	ecdhDerive(hSessionRW,hPuk2,hPrk1,hKey2,false);
 	CPPUNIT_ASSERT(compareSecret(hSessionRW,hKey1,hKey2));
 
 	// Public Token Keys
-	rv = generateEdKeyPair("X25519",hSessionRW,ON_TOKEN,IS_PUBLIC,ON_TOKEN,IS_PUBLIC,hPuk1,hPrk1);
+	rv = generateEdKeyPair(alg,hSessionRW,ON_TOKEN,IS_PUBLIC,ON_TOKEN,IS_PUBLIC,hPuk1,hPrk1);
 	CPPUNIT_ASSERT(rv == CKR_OK);
-	rv = generateEdKeyPair("X25519",hSessionRW,ON_TOKEN,IS_PUBLIC,ON_TOKEN,IS_PUBLIC,hPuk2,hPrk2);
+	rv = generateEdKeyPair(alg,hSessionRW,ON_TOKEN,IS_PUBLIC,ON_TOKEN,IS_PUBLIC,hPuk2,hPrk2);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 	ecdhDerive(hSessionRW,hPuk1,hPrk2,hKey1,true);
 	ecdhDerive(hSessionRW,hPuk2,hPrk1,hKey2,false);
 	CPPUNIT_ASSERT(compareSecret(hSessionRW,hKey1,hKey2));
 
 	// Private Token Keys
-	rv = generateEdKeyPair("X25519",hSessionRW,ON_TOKEN,IS_PRIVATE,ON_TOKEN,IS_PRIVATE,hPuk1,hPrk1);
+	rv = generateEdKeyPair(alg,hSessionRW,ON_TOKEN,IS_PRIVATE,ON_TOKEN,IS_PRIVATE,hPuk1,hPrk1);
 	CPPUNIT_ASSERT(rv == CKR_OK);
-	rv = generateEdKeyPair("X25519",hSessionRW,ON_TOKEN,IS_PRIVATE,ON_TOKEN,IS_PRIVATE,hPuk2,hPrk2);
+	rv = generateEdKeyPair(alg,hSessionRW,ON_TOKEN,IS_PRIVATE,ON_TOKEN,IS_PRIVATE,hPuk2,hPrk2);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 	ecdhDerive(hSessionRW,hPuk1,hPrk2,hKey1,true);
 	ecdhDerive(hSessionRW,hPuk2,hPrk1,hKey2,false);

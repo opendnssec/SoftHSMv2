@@ -46,7 +46,7 @@ class SignVerifyTests : public TestsBase
 	CPPUNIT_TEST(testEcSignVerify);
 #endif
 #ifdef WITH_EDDSA
-	CPPUNIT_TEST(testEdSignVerify);
+	CPPUNIT_TEST_PARAMETERIZED(testEdSignVerify, {"Ed25519", "Ed448"});
 #endif
 	CPPUNIT_TEST(testMacSignVerify);
 	CPPUNIT_TEST_SUITE_END();
@@ -57,7 +57,7 @@ public:
 	void testEcSignVerify();
 #endif
 #ifdef WITH_EDDSA
-	void testEdSignVerify();
+	void testEdSignVerify(const char* curve);
 #endif
 	void testMacSignVerify();
 

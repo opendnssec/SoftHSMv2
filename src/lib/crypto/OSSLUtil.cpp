@@ -135,6 +135,14 @@ ByteString OSSL::oid2ByteString(int nid)
 			name = "curve25519";
 			break;
 
+		case EVP_PKEY_ED448:
+			name = "edwards448";
+			break;
+
+		case EVP_PKEY_X448:
+			name = "curve448";
+			break;
+
 		default:
 			return rv;
 	}
@@ -185,6 +193,16 @@ int OSSL::byteString2oid(const ByteString& byteString)
 		if (strcmp((char *)curve_name->data, "curve25519") == 0)
 		{
 			return EVP_PKEY_X25519;
+		}
+
+		if (strcmp((char *)curve_name->data, "edwards448") == 0)
+		{
+			return EVP_PKEY_ED448;
+		}
+
+		if (strcmp((char *)curve_name->data, "curve448") == 0)
+		{
+			return EVP_PKEY_X448;
 		}
 	}
 

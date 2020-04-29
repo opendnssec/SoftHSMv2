@@ -12006,10 +12006,10 @@ ByteString SoftHSM::getECDHPubData(ByteString& pubData)
 {
 	size_t len = pubData.size();
 	size_t controlOctets = 2;
-	if (len == 32 || len == 65 || len == 97 || len == 133)
+	if (len == 32 || len == 56 || len == 65 || len == 97 || len == 133)
 	{
 		// Raw: Length matches the public key size of:
-		// EDDSA: X25519
+		// EDDSA: X25519, X448
 		// ECDSA: P-256, P-384, or P-521
 		controlOctets = 0;
 	}
