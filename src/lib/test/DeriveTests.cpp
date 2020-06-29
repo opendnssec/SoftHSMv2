@@ -214,6 +214,30 @@ CK_RV DeriveTests::generateAesKey(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, C
 			     &hKey) );
 }
 
+CK_RV DeriveTests::createAesKey(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_OBJECT_HANDLE &hKey)
+{
+	CK_BYTE aesKey[] = {
+			0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a,
+			0x01, 0x02, 0x03, 0x04, 0x05, 0x06
+	};
+
+	CK_OBJECT_CLASS secretClass = CKO_SECRET_KEY;
+	CK_KEY_TYPE keyType = CKK_AES;
+	CK_BBOOL bTrue = CK_TRUE;
+	CK_ATTRIBUTE keyAttribs[] = {
+		{ CKA_CLASS, &secretClass, sizeof(secretClass) },
+		{ CKA_KEY_TYPE, &keyType, sizeof(keyType) },
+		{ CKA_TOKEN, &bToken, sizeof(bToken) },
+		{ CKA_PRIVATE, &bPrivate, sizeof(bPrivate) },
+		{ CKA_SENSITIVE, &bTrue, sizeof(bTrue) },
+		{ CKA_DERIVE, &bTrue, sizeof(bTrue) },
+		{ CKA_VALUE, &aesKey, sizeof(aesKey) }
+	};
+
+	hKey = CK_INVALID_HANDLE;
+	return CRYPTOKI_F_PTR(C_CreateObject(hSession, keyAttribs, sizeof(keyAttribs) / sizeof(CK_ATTRIBUTE), &hKey));
+}
+
 #ifndef WITH_FIPS
 CK_RV DeriveTests::generateDesKey(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_OBJECT_HANDLE &hKey)
 {
@@ -862,5 +886,94 @@ void DeriveTests::testSymDerive()
 	symDerive(hSessionRW,hKeyAes,hDerive,CKM_AES_CBC_ENCRYPT_DATA,CKK_DES2);
 	symDerive(hSessionRW,hKeyAes,hDerive,CKM_AES_CBC_ENCRYPT_DATA,CKK_DES3);
 	symDerive(hSessionRW,hKeyAes,hDerive,CKM_AES_CBC_ENCRYPT_DATA,CKK_AES);
+}
+
+void DeriveTests::testMiscDerivations() {
+    CK_RV rv;
+    CK_SESSION_HANDLE hSessionRO;
+    CK_SESSION_HANDLE hSessionRW;
+
+    // Just make sure that we finalize any previous tests
+    CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
+
+    // Open read-only session on when the token is not initialized should fail
+    rv = CRYPTOKI_F_PTR( C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSessionRO) );
+    CPPUNIT_ASSERT(rv == CKR_CRYPTOKI_NOT_INITIALIZED);
+
+    // Initialize the library and start the test.
+    rv = CRYPTOKI_F_PTR( C_Initialize(NULL_PTR) );
+    CPPUNIT_ASSERT(rv == CKR_OK);
+
+    // Open read-only session
+    rv = CRYPTOKI_F_PTR( C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSessionRO) );
+    CPPUNIT_ASSERT(rv == CKR_OK);
+
+    // Open read-write session
+    rv = CRYPTOKI_F_PTR( C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSessionRW) );
+    CPPUNIT_ASSERT(rv == CKR_OK);
+
+    // Login USER into the sessions so we can create private objects
+    rv = CRYPTOKI_F_PTR( C_Login(hSessionRO,CKU_USER,m_userPin1,m_userPin1Length) );
+    CPPUNIT_ASSERT(rv == CKR_OK);
+
+    CK_OBJECT_HANDLE hKeyAes = CK_INVALID_HANDLE;
+
+    rv = createAesKey(hSessionRW, IN_SESSION, IS_PUBLIC,hKeyAes);
+    CPPUNIT_ASSERT(rv == CKR_OK);
+
+    // Prepare derivation parameters
+    CK_OBJECT_HANDLE hDerive = CK_INVALID_HANDLE;
+
+    CK_BYTE data[] = { 0x01, 0x23, 0x45, 0x67 };
+    CK_KEY_DERIVATION_STRING_DATA param = { &data[0], sizeof(data) };
+    CK_MECHANISM mechanism = { CKM_CONCATENATE_DATA_AND_BASE, &param, sizeof(param)};
+
+    CK_ULONG bytes = 16;
+    CK_BBOOL bTrue = CK_TRUE;
+    CK_ATTRIBUTE keyAttribs[] = {
+            { CKA_EXTRACTABLE, &bTrue, sizeof(bTrue) },
+            { CKA_VALUE_LEN, &bytes, sizeof(bytes) },
+    };
+
+    // Expected value
+    CK_BYTE prepended[] = {
+            0x01, 0x23, 0x45, 0x67,
+            0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06
+    };
+
+    // Derive without CKA_VALUE_LEN
+    rv = CRYPTOKI_F_PTR( C_DeriveKey(hSessionRW, &mechanism, hKeyAes,
+            keyAttribs, 1, &hDerive) );
+    CPPUNIT_ASSERT(rv == CKR_OK);
+
+    // Check if a derived key contains an expected value
+    CK_BYTE checkValue[3];
+    CK_BYTE value[20];
+    memset(value, 0, 20);
+    CK_KEY_TYPE keyType = 0;
+    CK_ATTRIBUTE checkAttribs[] = {
+            { CKA_CHECK_VALUE, checkValue, sizeof(checkValue) },
+            { CKA_VALUE, value, sizeof(value) },
+            { CKA_KEY_TYPE, &keyType, sizeof(keyType) }
+    };
+    rv = CRYPTOKI_F_PTR( C_GetAttributeValue(hSessionRW, hDerive, checkAttribs, sizeof(checkAttribs)/sizeof(CK_ATTRIBUTE)) );
+    CPPUNIT_ASSERT(rv == CKR_OK);
+    CPPUNIT_ASSERT(checkAttribs[0].ulValueLen == 3);
+    CPPUNIT_ASSERT(checkAttribs[1].ulValueLen == 20);
+    CPPUNIT_ASSERT(memcmp(value, prepended, 20) == 0);
+    CPPUNIT_ASSERT(keyType == CKK_GENERIC_SECRET);
+
+    // Derive with CKA_VALUE_LEN = 16
+    rv = CRYPTOKI_F_PTR( C_DeriveKey(hSessionRW, &mechanism, hKeyAes, keyAttribs, 2, &hDerive) );
+    CPPUNIT_ASSERT(rv == CKR_OK);
+
+    // Check if a derived key contains an expected value
+    memset(value, 0, 20);
+    checkAttribs[1].ulValueLen = 16;
+    rv = CRYPTOKI_F_PTR( C_GetAttributeValue(hSessionRW, hDerive, checkAttribs, sizeof(checkAttribs)/sizeof(CK_ATTRIBUTE)) );
+    CPPUNIT_ASSERT(rv == CKR_OK);
+    CPPUNIT_ASSERT(checkAttribs[0].ulValueLen == 3);
+    CPPUNIT_ASSERT(memcmp(value, prepended, 16) == 0);
+    CPPUNIT_ASSERT(keyType == CKK_GENERIC_SECRET);
 }
 
