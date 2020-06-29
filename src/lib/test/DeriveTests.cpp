@@ -975,5 +975,41 @@ void DeriveTests::testMiscDerivations() {
     CPPUNIT_ASSERT(checkAttribs[0].ulValueLen == 3);
     CPPUNIT_ASSERT(memcmp(value, prepended, 16) == 0);
     CPPUNIT_ASSERT(keyType == CKK_GENERIC_SECRET);
+
+	// Expected value
+	CK_BYTE appended[] = {
+			0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06,
+			0x01, 0x23, 0x45, 0x67
+	};
+
+    // Derive without CKA_VALUE_LEN
+    mechanism.mechanism = CKM_CONCATENATE_BASE_AND_DATA;
+    rv = CRYPTOKI_F_PTR( C_DeriveKey(hSessionRW, &mechanism, hKeyAes,
+            keyAttribs, 1, &hDerive) );
+    CPPUNIT_ASSERT(rv == CKR_OK);
+
+    // Check if a derived key contains an expected value
+    memset(value, 0, 20);
+	checkAttribs[1].ulValueLen = 20;
+    keyType = 0;
+    rv = CRYPTOKI_F_PTR( C_GetAttributeValue(hSessionRW, hDerive, checkAttribs, sizeof(checkAttribs)/sizeof(CK_ATTRIBUTE)) );
+    CPPUNIT_ASSERT(rv == CKR_OK);
+    CPPUNIT_ASSERT(checkAttribs[0].ulValueLen == 3);
+    CPPUNIT_ASSERT(checkAttribs[1].ulValueLen == 20);
+    CPPUNIT_ASSERT(memcmp(value, appended, 20) == 0);
+    CPPUNIT_ASSERT(keyType == CKK_GENERIC_SECRET);
+
+    // Derive with CKA_VALUE_LEN = 16
+    rv = CRYPTOKI_F_PTR( C_DeriveKey(hSessionRW, &mechanism, hKeyAes, keyAttribs, 2, &hDerive) );
+    CPPUNIT_ASSERT(rv == CKR_OK);
+
+    // Check if a derived key contains an expected value
+    memset(value, 0, 20);
+	checkAttribs[1].ulValueLen = 20;
+    rv = CRYPTOKI_F_PTR( C_GetAttributeValue(hSessionRW, hDerive, checkAttribs, sizeof(checkAttribs)/sizeof(CK_ATTRIBUTE)) );
+    CPPUNIT_ASSERT(rv == CKR_OK);
+    CPPUNIT_ASSERT(checkAttribs[0].ulValueLen == 3);
+    CPPUNIT_ASSERT(memcmp(value, appended, 16) == 0);
+    CPPUNIT_ASSERT(keyType == CKK_GENERIC_SECRET);
 }
 

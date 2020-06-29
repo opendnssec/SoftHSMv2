@@ -818,6 +818,7 @@ void SoftHSM::prepareSupportedMecahnisms(std::map<std::string, CK_MECHANISM_TYPE
 	t["CKM_EDDSA"]			= CKM_EDDSA;
 #endif
 	t["CKM_CONCATENATE_DATA_AND_BASE"] = CKM_CONCATENATE_DATA_AND_BASE;
+	t["CKM_CONCATENATE_BASE_AND_DATA"] = CKM_CONCATENATE_BASE_AND_DATA;
 
 	supportedMechanisms.clear();
 	for (auto it = t.begin(); it != t.end(); ++it)
@@ -1279,6 +1280,7 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 			break;
 #endif
 	    case CKM_CONCATENATE_DATA_AND_BASE:
+	    case CKM_CONCATENATE_BASE_AND_DATA:
 	        pInfo->ulMinKeySize = 1;
 	        pInfo->ulMaxKeySize = 512;
 	        pInfo->flags = CKF_DERIVE;
@@ -7060,6 +7062,7 @@ CK_RV SoftHSM::C_DeriveKey
 		case CKM_AES_ECB_ENCRYPT_DATA:
 		case CKM_AES_CBC_ENCRYPT_DATA:
 		case CKM_CONCATENATE_DATA_AND_BASE:
+		case CKM_CONCATENATE_BASE_AND_DATA:
 			break;
 
 		default:
@@ -7102,8 +7105,9 @@ CK_RV SoftHSM::C_DeriveKey
 	CK_BBOOL isOnToken = CK_FALSE;
 	CK_BBOOL isPrivate = CK_TRUE;
 	CK_CERTIFICATE_TYPE dummy;
-    bool isImplicit = pMechanism->mechanism == CKM_CONCATENATE_DATA_AND_BASE;
-    if (pMechanism->mechanism == CKM_CONCATENATE_DATA_AND_BASE) {
+    bool isImplicit = pMechanism->mechanism == CKM_CONCATENATE_DATA_AND_BASE ||
+			pMechanism->mechanism == CKM_CONCATENATE_BASE_AND_DATA;
+    if (isImplicit) {
         // PKCS#11 2.40 section 2.31.5: if no key type is provided then the key produced by this mechanism will
         // be a generic secret key
         objClass = CKO_SECRET_KEY;
@@ -7176,7 +7180,8 @@ CK_RV SoftHSM::C_DeriveKey
 	    pMechanism->mechanism == CKM_DES3_CBC_ENCRYPT_DATA ||
 	    pMechanism->mechanism == CKM_AES_ECB_ENCRYPT_DATA ||
 	    pMechanism->mechanism == CKM_AES_CBC_ENCRYPT_DATA ||
-	    pMechanism->mechanism == CKM_CONCATENATE_DATA_AND_BASE)
+	    pMechanism->mechanism == CKM_CONCATENATE_DATA_AND_BASE ||
+	    pMechanism->mechanism == CKM_CONCATENATE_BASE_AND_DATA)
 	{
 		// Check key class and type
 		CK_KEY_TYPE baseKeyType = key->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED);
@@ -11191,7 +11196,8 @@ CK_RV SoftHSM::deriveSymmetric
 		       pData,
 		       length);
 	}
-	else if ((pMechanism->mechanism == CKM_CONCATENATE_DATA_AND_BASE) &&
+	else if ((pMechanism->mechanism == CKM_CONCATENATE_DATA_AND_BASE ||
+			pMechanism->mechanism == CKM_CONCATENATE_BASE_AND_DATA) &&
 		 pMechanism->ulParameterLen == sizeof(CK_KEY_DERIVATION_STRING_DATA))
 	{
 		CK_BYTE_PTR pData = CK_KEY_DERIVATION_STRING_DATA_PTR(pMechanism->pParameter)->pData;
@@ -11254,7 +11260,8 @@ CK_RV SoftHSM::deriveSymmetric
 	}
 
 	// Check the length if it specified or a mechanism is not one of misc mechanisms
-	if (byteLen > 0 || pMechanism->mechanism != CKM_CONCATENATE_DATA_AND_BASE) {
+	if (byteLen > 0 || (pMechanism->mechanism != CKM_CONCATENATE_DATA_AND_BASE &&
+			pMechanism->mechanism != CKM_CONCATENATE_BASE_AND_DATA)) {
 		switch (keyType) {
 			case CKK_GENERIC_SECRET:
 				if (byteLen == 0) {
@@ -11346,6 +11353,7 @@ CK_RV SoftHSM::deriveSymmetric
 			       16);
 			break;
 	    case CKM_CONCATENATE_DATA_AND_BASE:
+	    case CKM_CONCATENATE_BASE_AND_DATA:
 	        break;
 		default:
 			return CKR_MECHANISM_INVALID;
@@ -11358,7 +11366,8 @@ CK_RV SoftHSM::deriveSymmetric
     // Get the data
     ByteString secretValue;
 
-    if (pMechanism->mechanism == CKM_CONCATENATE_DATA_AND_BASE) {
+    if (pMechanism->mechanism == CKM_CONCATENATE_DATA_AND_BASE ||
+			pMechanism->mechanism == CKM_CONCATENATE_BASE_AND_DATA) {
         // Get the key data
         ByteString keydata;
 
@@ -11374,8 +11383,16 @@ CK_RV SoftHSM::deriveSymmetric
             keydata = baseKey->getByteStringValue(CKA_VALUE);
         }
 
-        secretValue += data;
-        secretValue += keydata;
+        if (pMechanism->mechanism == CKM_CONCATENATE_DATA_AND_BASE) {
+			secretValue += data;
+			secretValue += keydata;
+		} else if (pMechanism->mechanism == CKM_CONCATENATE_BASE_AND_DATA) {
+			secretValue += keydata;
+			secretValue += data;
+        } else {
+        	return CKR_MECHANISM_INVALID;
+        }
+
         // If the CKA_VALUE_LEN attribute is not present use computed size
         if (byteLen == 0) {
             byteLen = data.size() + keydata.size();
