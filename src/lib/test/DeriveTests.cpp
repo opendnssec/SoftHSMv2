@@ -224,12 +224,14 @@ CK_RV DeriveTests::createAesKey(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, CK_
 	CK_OBJECT_CLASS secretClass = CKO_SECRET_KEY;
 	CK_KEY_TYPE keyType = CKK_AES;
 	CK_BBOOL bTrue = CK_TRUE;
+	CK_BBOOL bFalse = CK_FALSE;
 	CK_ATTRIBUTE keyAttribs[] = {
 		{ CKA_CLASS, &secretClass, sizeof(secretClass) },
 		{ CKA_KEY_TYPE, &keyType, sizeof(keyType) },
 		{ CKA_TOKEN, &bToken, sizeof(bToken) },
 		{ CKA_PRIVATE, &bPrivate, sizeof(bPrivate) },
-		{ CKA_SENSITIVE, &bTrue, sizeof(bTrue) },
+		{ CKA_SENSITIVE, &bFalse, sizeof(bFalse) },
+		{ CKA_EXTRACTABLE, &bTrue, sizeof(bTrue) },
 		{ CKA_DERIVE, &bTrue, sizeof(bTrue) },
 		{ CKA_VALUE, &aesKey, sizeof(aesKey) }
 	};
@@ -948,12 +950,12 @@ void DeriveTests::testMiscDerivations() {
 
     // Check if a derived key contains an expected value
     CK_BYTE checkValue[3];
-    CK_BYTE value[20];
+    CK_BYTE value[32];
     memset(value, 0, 20);
     CK_KEY_TYPE keyType = 0;
     CK_ATTRIBUTE checkAttribs[] = {
             { CKA_CHECK_VALUE, checkValue, sizeof(checkValue) },
-            { CKA_VALUE, value, sizeof(value) },
+            { CKA_VALUE, value, 20 },
             { CKA_KEY_TYPE, &keyType, sizeof(keyType) }
     };
     rv = CRYPTOKI_F_PTR( C_GetAttributeValue(hSessionRW, hDerive, checkAttribs, sizeof(checkAttribs)/sizeof(CK_ATTRIBUTE)) );
@@ -1011,5 +1013,30 @@ void DeriveTests::testMiscDerivations() {
     CPPUNIT_ASSERT(checkAttribs[0].ulValueLen == 3);
     CPPUNIT_ASSERT(memcmp(value, appended, 16) == 0);
     CPPUNIT_ASSERT(keyType == CKK_GENERIC_SECRET);
+
+	// Derive base and key
+	CK_OBJECT_HANDLE hAnotherKey = hDerive;
+	mechanism.mechanism = CKM_CONCATENATE_BASE_AND_KEY;
+	mechanism.pParameter = &hAnotherKey;
+	mechanism.ulParameterLen = sizeof(hAnotherKey);
+	rv = CRYPTOKI_F_PTR( C_DeriveKey(hSessionRW, &mechanism, hKeyAes,
+									 keyAttribs, 1, &hDerive) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Check if a derived key contains an expected value
+	// Expected value
+	CK_BYTE concatenated[] = {
+			0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06,
+			0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06
+	};
+	memset(value, 0, 32);
+	checkAttribs[1].ulValueLen = 32;
+	keyType = 0;
+	rv = CRYPTOKI_F_PTR( C_GetAttributeValue(hSessionRW, hDerive, checkAttribs, sizeof(checkAttribs)/sizeof(CK_ATTRIBUTE)) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	CPPUNIT_ASSERT(checkAttribs[0].ulValueLen == 3);
+	CPPUNIT_ASSERT(checkAttribs[1].ulValueLen == 32);
+	CPPUNIT_ASSERT(memcmp(value, concatenated, 32) == 0);
+	CPPUNIT_ASSERT(keyType == CKK_GENERIC_SECRET);
 }
 
