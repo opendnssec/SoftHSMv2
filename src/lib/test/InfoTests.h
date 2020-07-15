@@ -49,6 +49,7 @@ class InfoTests : public TestsNoPINInitBase
 	CPPUNIT_TEST(testGetMechanismInfo);
 	CPPUNIT_TEST(testGetSlotInfoAlt);
 	CPPUNIT_TEST(testGetMechanismListConfig);
+	CPPUNIT_TEST(testGetMechanismNegativeListConfig);
 	CPPUNIT_TEST(testWaitForSlotEvent);
 	CPPUNIT_TEST_SUITE_END();
 
@@ -62,6 +63,7 @@ public:
 	void testGetMechanismInfo();
 	void testGetSlotInfoAlt();
 	void testGetMechanismListConfig();
+	void testGetMechanismNegativeListConfig();
 	void testWaitForSlotEvent();
 };
 
