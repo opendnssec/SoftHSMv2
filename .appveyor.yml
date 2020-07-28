@@ -52,7 +52,7 @@ install:
 - cmd: vcpkg install openssl-windows:x64-windows
 - cmd: vcpkg install botan:x86-windows
 - cmd: vcpkg install cppunit:x86-windows
-- cmd: vcpkg install getopt-win32:x86-windows
+- cmd: vcpkg install getopt getopt-win32:x86-windows
 build_script:
 - cmd: vcpkg integrate install
 - cmd: cmake -DCMAKE_TOOLCHAIN_FILE=C:/Tools/vcpkg/scripts/buildsystems/vcpkg.cmake -DWITH_CRYPTO_BACKEND=%CRYPTO_BACKEND% -DBUILD_TESTS=OFF -DDISABLE_NON_PAGED_MEMORY=ON -DENABLE_GOST=OFF .
