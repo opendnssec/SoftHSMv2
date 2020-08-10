@@ -42,8 +42,8 @@
 #include "DBToken.h"
 #endif
 
-typedef ObjectStoreToken* (*CreateToken)(const std::string , const std::string , const ByteString& , const ByteString& );
-typedef ObjectStoreToken* (*AccessToken)(const std::string &, const std::string &);
+typedef ObjectStoreToken* (*CreateToken)(const std::string , const std::string , int , const ByteString& , const ByteString& );
+typedef ObjectStoreToken* (*AccessToken)(const std::string &, const std::string &, int);
 
 static CreateToken static_createToken = reinterpret_cast<CreateToken>(OSToken::createToken);
 static AccessToken static_accessToken = reinterpret_cast<AccessToken>(OSToken::accessToken);
@@ -72,13 +72,13 @@ static AccessToken static_accessToken = reinterpret_cast<AccessToken>(OSToken::a
 	return true;
 }
 
-ObjectStoreToken* ObjectStoreToken::createToken(const std::string basePath, const std::string tokenDir, const ByteString& label, const ByteString& serial)
+ObjectStoreToken* ObjectStoreToken::createToken(const std::string basePath, const std::string tokenDir, int umask, const ByteString& label, const ByteString& serial)
 {
-	return static_createToken(basePath,tokenDir,label,serial);
+	return static_createToken(basePath, tokenDir, umask, label, serial);
 }
 
 // Access an existing token
-/*static*/ ObjectStoreToken *ObjectStoreToken::accessToken(const std::string &basePath, const std::string &tokenDir)
+/*static*/ ObjectStoreToken *ObjectStoreToken::accessToken(const std::string &basePath, const std::string &tokenDir, int umask)
 {
-	return static_accessToken(basePath, tokenDir);
+	return static_accessToken(basePath, tokenDir, umask);
 }

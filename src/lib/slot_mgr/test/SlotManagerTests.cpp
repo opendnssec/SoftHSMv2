@@ -65,9 +65,9 @@ void SlotManagerTests::testNoExistingTokens()
 {
 	// Create an empty object store
 #ifndef _WIN32
-	ObjectStore store("./testdir");
+	ObjectStore store("./testdir", DEFAULT_UMASK);
 #else
-	ObjectStore store(".\\testdir");
+	ObjectStore store(".\\testdir", DEFAULT_UMASK);
 #endif
 
 	// Create the slot manager
@@ -108,9 +108,9 @@ void SlotManagerTests::testExistingTokens()
 {
 	// Create an empty object store
 #ifndef _WIN32
-	ObjectStore store("./testdir");
+	ObjectStore store("./testdir", DEFAULT_UMASK);
 #else
-	ObjectStore store(".\\testdir");
+	ObjectStore store(".\\testdir", DEFAULT_UMASK);
 #endif
 
 	// Create two tokens
@@ -187,9 +187,9 @@ void SlotManagerTests::testInitialiseTokenInLastSlot()
 	{
 		// Create an empty object store
 #ifndef _WIN32
-		ObjectStore store("./testdir");
+		ObjectStore store("./testdir", DEFAULT_UMASK);
 #else
-		ObjectStore store(".\\testdir");
+		ObjectStore store(".\\testdir", DEFAULT_UMASK);
 #endif
 
 		// Create the slot manager
@@ -246,9 +246,9 @@ void SlotManagerTests::testInitialiseTokenInLastSlot()
 
 	// Attach a fresh slot manager
 #ifndef _WIN32
-	ObjectStore store("./testdir");
+	ObjectStore store("./testdir", DEFAULT_UMASK);
 #else
-	ObjectStore store(".\\testdir");
+	ObjectStore store(".\\testdir", DEFAULT_UMASK);
 #endif
 	SlotManager slotManager(&store);
 
@@ -302,9 +302,9 @@ void SlotManagerTests::testReinitialiseExistingToken()
 {
 	// Create an empty object store
 #ifndef _WIN32
-	ObjectStore store("./testdir");
+	ObjectStore store("./testdir", DEFAULT_UMASK);
 #else
-	ObjectStore store(".\\testdir");
+	ObjectStore store(".\\testdir", DEFAULT_UMASK);
 #endif
 
 	// Create two tokens
@@ -398,9 +398,9 @@ void SlotManagerTests::testUninitialisedToken()
 {
 	// Create an empty object store
 #ifndef _WIN32
-	ObjectStore store("./testdir");
+	ObjectStore store("./testdir", DEFAULT_UMASK);
 #else
-	ObjectStore store(".\\testdir");
+	ObjectStore store(".\\testdir", DEFAULT_UMASK);
 #endif
 
 	// Now attach the slot manager

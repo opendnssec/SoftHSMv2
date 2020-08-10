@@ -47,7 +47,7 @@ class ObjectStore
 {
 public:
 	// Constructor
-	ObjectStore(std::string inStorePath);
+	ObjectStore(std::string inStorePath, int umask);
 
 	// Destructor
 	virtual ~ObjectStore();
@@ -76,6 +76,9 @@ private:
 
 	// The object store root directory
 	std::string storePath;
+
+	// File mode creation mask
+	int umask;
 
 	// The status
 	bool valid;

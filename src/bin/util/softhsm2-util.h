@@ -43,7 +43,7 @@ void usage();
 bool checkSetup();
 int initToken(CK_SLOT_ID slotID, char* label, char* soPIN, char* userPIN);
 bool deleteToken(char* serial, char* token);
-bool findTokenDirectory(std::string basedir, std::string& tokendir, char* serial, char* label);
+bool findTokenDirectory(std::string basedir, std::string& tokendir, int umask, char* serial, char* label);
 bool rmdir(std::string path);
 bool rm(std::string path);
 int showSlots();

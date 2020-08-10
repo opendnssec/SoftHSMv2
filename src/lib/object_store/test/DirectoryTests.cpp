@@ -32,6 +32,11 @@
 
 #include <stdlib.h>
 #include <string.h>
+#ifndef _WIN32
+# include <sys/types.h>
+# include <sys/stat.h>
+# include <unistd.h>
+#endif
 #include <cppunit/extensions/HelperMacros.h>
 #include "DirectoryTests.h"
 #include "Directory.h"
@@ -138,7 +143,7 @@ void DirectoryTests::testDirectory()
 	CPPUNIT_ASSERT(dirSeen[0] && dirSeen[1] && dirSeen[2]);
 
 	// Create a directory
-	CPPUNIT_ASSERT(testdir.mkdir("newDir"));
+	CPPUNIT_ASSERT(testdir.mkdir("newDir", DEFAULT_UMASK));
 
 	subDirs = testdir.getSubDirs();
 
@@ -223,5 +228,22 @@ void DirectoryTests::testDirectory()
 	}
 
 	CPPUNIT_ASSERT(fileSeen2[0] && fileSeen2[1]);
+
+#ifndef _WIN32
+	// Create directories with different umasks
+	const mode_t saved_umask = umask(0); // Override current process umask
+	CPPUNIT_ASSERT(testdir.mkdir("newDirUserUmask", 0077));
+	CPPUNIT_ASSERT(testdir.mkdir("newDirZeroUmask", 0));
+	CPPUNIT_ASSERT(testdir.mkdir("newDirGroupReadUmask", 0027));
+	umask(saved_umask);
+
+	struct stat st = {};
+	CPPUNIT_ASSERT(!lstat("testdir/newDirUserUmask", &st));
+	CPPUNIT_ASSERT_EQUAL(0700, (int)(st.st_mode & 0777));
+	CPPUNIT_ASSERT(!lstat("testdir/newDirZeroUmask", &st));
+	CPPUNIT_ASSERT_EQUAL(0777, (int)(st.st_mode & 0777));
+	CPPUNIT_ASSERT(!lstat("testdir/newDirGroupReadUmask", &st));
+	CPPUNIT_ASSERT_EQUAL(0750, (int)(st.st_mode & 0777));
+#endif
 }
 

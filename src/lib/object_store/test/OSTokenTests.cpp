@@ -67,9 +67,9 @@ void OSTokenTests::testNewToken()
 	ByteString serial = "0102030405060708";
 
 #ifndef _WIN32
-	OSToken* newToken = OSToken::createToken("./testdir", "newToken", label, serial);
+	OSToken* newToken = OSToken::createToken("./testdir", "newToken", DEFAULT_UMASK, label, serial);
 #else
-	OSToken* newToken = OSToken::createToken(".\\testdir", "newToken", label, serial);
+	OSToken* newToken = OSToken::createToken(".\\testdir", "newToken", DEFAULT_UMASK, label, serial);
 #endif
 
 	CPPUNIT_ASSERT(newToken != NULL);
@@ -96,9 +96,9 @@ void OSTokenTests::testNewToken()
 
 	// Now reopen the newly created token
 #ifndef _WIN32
-	OSToken reopenedToken("./testdir/newToken");
+	OSToken reopenedToken("./testdir/newToken", DEFAULT_UMASK);
 #else
-	OSToken reopenedToken(".\\testdir\\newToken");
+	OSToken reopenedToken(".\\testdir\\newToken", DEFAULT_UMASK);
 #endif
 
 	CPPUNIT_ASSERT(reopenedToken.isValid());
@@ -135,9 +135,9 @@ void OSTokenTests::testExistingToken()
 
 		// Create the token object
 #ifndef _WIN32
-		ObjectFile tokenObject(NULL, "./testdir/existingToken/token.object", "./testdir/existingToken/token.lock", true);
+		ObjectFile tokenObject(NULL, "./testdir/existingToken/token.object", DEFAULT_UMASK, "./testdir/existingToken/token.lock", true);
 #else
-		ObjectFile tokenObject(NULL, ".\\testdir\\existingToken\\token.object", ".\\testdir\\existingToken\\token.lock", true);
+		ObjectFile tokenObject(NULL, ".\\testdir\\existingToken\\token.object", DEFAULT_UMASK, ".\\testdir\\existingToken\\token.lock", true);
 #endif
 
 		OSAttribute labelAtt(label);
@@ -154,13 +154,13 @@ void OSTokenTests::testExistingToken()
 
 		// Create 3 objects
 #ifndef _WIN32
-		ObjectFile obj1(NULL, "./testdir/existingToken/1.object", "./testdir/existingToken/1.lock", true);
-		ObjectFile obj2(NULL, "./testdir/existingToken/2.object", "./testdir/existingToken/2.lock", true);
-		ObjectFile obj3(NULL, "./testdir/existingToken/3.object", "./testdir/existingToken/3.lock", true);
+		ObjectFile obj1(NULL, "./testdir/existingToken/1.object", DEFAULT_UMASK, "./testdir/existingToken/1.lock", true);
+		ObjectFile obj2(NULL, "./testdir/existingToken/2.object", DEFAULT_UMASK, "./testdir/existingToken/2.lock", true);
+		ObjectFile obj3(NULL, "./testdir/existingToken/3.object", DEFAULT_UMASK, "./testdir/existingToken/3.lock", true);
 #else
-		ObjectFile obj1(NULL, ".\\testdir\\existingToken\\1.object", ".\\testdir\\existingToken\\1.lock", true);
-		ObjectFile obj2(NULL, ".\\testdir\\existingToken\\2.object", ".\\testdir\\existingToken\\2.lock", true);
-		ObjectFile obj3(NULL, ".\\testdir\\existingToken\\3.object", ".\\testdir\\existingToken\\3.lock", true);
+		ObjectFile obj1(NULL, ".\\testdir\\existingToken\\1.object", DEFAULT_UMASK, ".\\testdir\\existingToken\\1.lock", true);
+		ObjectFile obj2(NULL, ".\\testdir\\existingToken\\2.object", DEFAULT_UMASK, ".\\testdir\\existingToken\\2.lock", true);
+		ObjectFile obj3(NULL, ".\\testdir\\existingToken\\3.object", DEFAULT_UMASK, ".\\testdir\\existingToken\\3.lock", true);
 #endif
 
 		OSAttribute id1Att(id1);
@@ -174,9 +174,9 @@ void OSTokenTests::testExistingToken()
 
 	// Now open the token
 #ifndef _WIN32
-	OSToken existingToken("./testdir/existingToken");
+	OSToken existingToken("./testdir/existingToken", DEFAULT_UMASK);
 #else
-	OSToken existingToken(".\\testdir\\existingToken");
+	OSToken existingToken(".\\testdir\\existingToken", DEFAULT_UMASK);
 #endif
 
 
@@ -236,9 +236,9 @@ void OSTokenTests::testExistingToken()
 void OSTokenTests::testNonExistentToken()
 {
 #ifndef _WIN32
-	OSToken doesntExist("./testdir/doesntExist");
+	OSToken doesntExist("./testdir/doesntExist", DEFAULT_UMASK);
 #else
-	OSToken doesntExist(".\\testdir\\doesntExist");
+	OSToken doesntExist(".\\testdir\\doesntExist", DEFAULT_UMASK);
 #endif
 
 	CPPUNIT_ASSERT(!doesntExist.isValid());
@@ -254,9 +254,9 @@ void OSTokenTests::testCreateDeleteObjects()
 
 	// Instantiate a new token
 #ifndef _WIN32
-	OSToken* testToken = OSToken::createToken("./testdir", "testToken", label, serial);
+	OSToken* testToken = OSToken::createToken("./testdir", "testToken", DEFAULT_UMASK, label, serial);
 #else
-	OSToken* testToken = OSToken::createToken(".\\testdir", "testToken", label, serial);
+	OSToken* testToken = OSToken::createToken(".\\testdir", "testToken", DEFAULT_UMASK, label, serial);
 #endif
 
 	CPPUNIT_ASSERT(testToken != NULL);
@@ -264,9 +264,9 @@ void OSTokenTests::testCreateDeleteObjects()
 
 	// Open the same token
 #ifndef _WIN32
-	OSToken sameToken("./testdir/testToken");
+	OSToken sameToken("./testdir/testToken", DEFAULT_UMASK);
 #else
-	OSToken sameToken(".\\testdir\\testToken");
+	OSToken sameToken(".\\testdir\\testToken", DEFAULT_UMASK);
 #endif
 
 	CPPUNIT_ASSERT(sameToken.isValid());
@@ -432,9 +432,9 @@ void OSTokenTests::testClearToken()
 	ByteString serial = "0102030405060708";
 
 #ifndef _WIN32
-	OSToken* newToken = OSToken::createToken("./testdir", "newToken", label, serial);
+	OSToken* newToken = OSToken::createToken("./testdir", "newToken", DEFAULT_UMASK, label, serial);
 #else
-	OSToken* newToken = OSToken::createToken(".\\testdir", "newToken", label, serial);
+	OSToken* newToken = OSToken::createToken(".\\testdir", "newToken", DEFAULT_UMASK, label, serial);
 #endif
 
 	CPPUNIT_ASSERT(newToken != NULL);
@@ -461,9 +461,9 @@ void OSTokenTests::testClearToken()
 
 	// Now reopen the newly created token
 #ifndef _WIN32
-	OSToken reopenedToken("./testdir/newToken");
+	OSToken reopenedToken("./testdir/newToken", DEFAULT_UMASK);
 #else
-	OSToken reopenedToken(".\\testdir\\newToken");
+	OSToken reopenedToken(".\\testdir\\newToken", DEFAULT_UMASK);
 #endif
 
 	CPPUNIT_ASSERT(reopenedToken.isValid());
@@ -494,9 +494,9 @@ void OSTokenTests::testClearToken()
 
 	// Try to open it once more
 #ifndef _WIN32
-	OSToken clearedToken("./testdir/newToken");
+	OSToken clearedToken("./testdir/newToken", DEFAULT_UMASK);
 #else
-	OSToken clearedToken(".\\testdir\\newToken");
+	OSToken clearedToken(".\\testdir\\newToken", DEFAULT_UMASK);
 #endif
 
 	CPPUNIT_ASSERT(!clearedToken.isValid());

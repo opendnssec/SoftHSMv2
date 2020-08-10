@@ -46,6 +46,16 @@ objectstore.backend = file
 .fi
 .RE
 .LP
+.SH OBJECTSTORE.UMASK
+The file mode creation mask used by SoftHSM when creating files or directories. This value is in octal.
+This is applied in addition to the process umask and cannot override it.
+.LP
+.RS
+.nf
+objectstore.umask = 0077
+.fi
+.RE
+.LP
 .SH LOG.LEVEL
 The log level which can be set to ERROR, WARNING, INFO or DEBUG.
 .LP

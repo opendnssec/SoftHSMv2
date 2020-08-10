@@ -31,6 +31,11 @@
  *****************************************************************************/
 #include <stdlib.h>
 #include <string.h>
+#ifndef _WIN32
+# include <sys/types.h>
+# include <sys/stat.h>
+# include <unistd.h>
+#endif
 #include <cppunit/extensions/HelperMacros.h>
 #include "DBTokenTests.h"
 #include "DBToken.h"
@@ -68,7 +73,7 @@ void test_a_dbtoken::should_be_creatable()
 	ByteString label = "40414243"; // ABCD
 	ByteString serial = "0102030405060708";
 
-	ObjectStoreToken* newToken = new DBToken("testdir", "newToken", label, serial);
+	ObjectStoreToken* newToken = new DBToken("testdir", "newToken", DEFAULT_UMASK, label, serial);
 
 	CPPUNIT_ASSERT(newToken != NULL);
 
@@ -77,13 +82,56 @@ void test_a_dbtoken::should_be_creatable()
 	delete newToken;
 }
 
+void test_a_dbtoken::should_create_with_umask()
+{
+	ByteString label = "40414243"; // ABCD
+	ByteString serial = "0102030405060708";
+
+	mode_t saved_umask = umask(0); // Override current process umask
+	ObjectStoreToken* newToken = new DBToken("testdir", "userUmaskToken", 0077, label, serial);
+	umask(saved_umask);
+	CPPUNIT_ASSERT(newToken != NULL);
+	CPPUNIT_ASSERT(newToken->isValid());
+	delete newToken;
+
+	saved_umask = umask(0); // Override current process umask
+	newToken = new DBToken("testdir", "zeroUmaskToken", 0, label, serial);
+	umask(saved_umask);
+	CPPUNIT_ASSERT(newToken != NULL);
+	CPPUNIT_ASSERT(newToken->isValid());
+	delete newToken;
+
+	saved_umask = umask(0); // Override current process umask
+	newToken = new DBToken("testdir", "groupReadUmaskToken", 0027, label, serial);
+	umask(saved_umask);
+	CPPUNIT_ASSERT(newToken != NULL);
+	CPPUNIT_ASSERT(newToken->isValid());
+	delete newToken;
+
+	struct stat st = {};
+	CPPUNIT_ASSERT(!lstat("testdir/userUmaskToken", &st));
+	CPPUNIT_ASSERT_EQUAL(0700, (int)(st.st_mode & 0777));
+	CPPUNIT_ASSERT(!lstat("testdir/userUmaskToken/sqlite3.db", &st));
+	CPPUNIT_ASSERT_EQUAL(0600, (int)(st.st_mode & 0777));
+
+	CPPUNIT_ASSERT(!lstat("testdir/zeroUmaskToken", &st));
+	CPPUNIT_ASSERT_EQUAL(0777, (int)(st.st_mode & 0777));
+	CPPUNIT_ASSERT(!lstat("testdir/zeroUmaskToken/sqlite3.db", &st));
+	CPPUNIT_ASSERT_EQUAL(0666, (int)(st.st_mode & 0777));
+
+	CPPUNIT_ASSERT(!lstat("testdir/groupReadUmaskToken", &st));
+	CPPUNIT_ASSERT_EQUAL(0750, (int)(st.st_mode & 0777));
+	CPPUNIT_ASSERT(!lstat("testdir/groupReadUmaskToken/sqlite3.db", &st));
+	CPPUNIT_ASSERT_EQUAL(0640, (int)(st.st_mode & 0777));
+}
+
 void test_a_dbtoken::should_support_pin_setting_getting()
 {
 	// Create a new token
 	ByteString label = "40414243"; // ABCD
 	ByteString serial = "0102030405060708";
 
-	ObjectStoreToken* newToken = new DBToken("testdir", "newToken", label, serial);
+	ObjectStoreToken* newToken = new DBToken("testdir", "newToken", DEFAULT_UMASK, label, serial);
 
 	CPPUNIT_ASSERT(newToken != NULL);
 
@@ -110,7 +158,7 @@ void test_a_dbtoken::should_support_pin_setting_getting()
 	delete newToken;
 
 	// Now reopen the newly created token
-	DBToken reopenedToken("testdir","newToken");
+	DBToken reopenedToken("testdir", "newToken", DEFAULT_UMASK);
 
 	CPPUNIT_ASSERT(reopenedToken.isValid());
 
@@ -136,7 +184,7 @@ void test_a_dbtoken::should_allow_object_enumeration()
 
 	{
 		// Instantiate a new token
-		ObjectStoreToken* newToken = new DBToken("testdir", "existingToken", label, serial);
+		ObjectStoreToken* newToken = new DBToken("testdir", "existingToken", DEFAULT_UMASK, label, serial);
 		CPPUNIT_ASSERT(newToken != NULL);
 		CPPUNIT_ASSERT(newToken->isValid());
 		CPPUNIT_ASSERT(newToken->setSOPIN(soPIN));
@@ -170,7 +218,7 @@ void test_a_dbtoken::should_allow_object_enumeration()
 	}
 
 	// Now open the token
-	DBToken existingToken("testdir","existingToken");
+	DBToken existingToken("testdir", "existingToken", DEFAULT_UMASK);
 
 	CPPUNIT_ASSERT(existingToken.isValid());
 
@@ -227,7 +275,7 @@ void test_a_dbtoken::should_allow_object_enumeration()
 
 void test_a_dbtoken::should_fail_to_open_nonexistant_tokens()
 {
-	DBToken doesntExist("testdir","doesntExist");
+	DBToken doesntExist("testdir", "doesntExist", DEFAULT_UMASK);
 
 	CPPUNIT_ASSERT(!doesntExist.isValid());
 }
@@ -241,12 +289,12 @@ void test_a_dbtoken::support_create_delete_objects()
 	ByteString serial = "1234567890";
 
 	// Instantiate a new token
-	ObjectStoreToken* testToken = new DBToken("testdir", "testToken", label, serial);
+	ObjectStoreToken* testToken = new DBToken("testdir", "testToken", DEFAULT_UMASK, label, serial);
 	CPPUNIT_ASSERT(testToken != NULL);
 	CPPUNIT_ASSERT(testToken->isValid());
 
 	// Open the same token
-	DBToken sameToken("testdir","testToken");
+	DBToken sameToken("testdir", "testToken", DEFAULT_UMASK);
 	CPPUNIT_ASSERT(sameToken.isValid());
 
 	// Create 3 objects on the token
@@ -409,7 +457,7 @@ void test_a_dbtoken::support_clearing_a_token()
 	ByteString label = "40414243"; // ABCD
 	ByteString serial = "0102030405060708";
 
-	ObjectStoreToken* newToken = new DBToken("testdir", "newToken", label, serial);
+	ObjectStoreToken* newToken = new DBToken("testdir", "newToken", DEFAULT_UMASK, label, serial);
 
 	CPPUNIT_ASSERT(newToken != NULL);
 	CPPUNIT_ASSERT(newToken->isValid());
@@ -438,11 +486,11 @@ void test_a_dbtoken::support_clearing_a_token()
 
 #if 1
 	// Reopen the newly created token and keep a reference around.
-	DBToken referencingToken("testdir", "newToken");
+	DBToken referencingToken("testdir", "newToken", DEFAULT_UMASK);
 	CPPUNIT_ASSERT(referencingToken.isValid());
 #endif
 	// Now reopen the newly created token
-	DBToken reopenedToken("testdir","newToken");
+	DBToken reopenedToken("testdir", "newToken", DEFAULT_UMASK);
 
 	CPPUNIT_ASSERT(reopenedToken.isValid());
 
@@ -473,7 +521,7 @@ void test_a_dbtoken::support_clearing_a_token()
 	DB::LogErrorHandler eh = DB::setLogErrorHandler(dummy_print);
 
 	// Try to open it once more and make sure it has been deleted.
-	DBToken clearedToken("testdir","newToken");
+	DBToken clearedToken("testdir", "newToken", DEFAULT_UMASK);
 	CPPUNIT_ASSERT(!clearedToken.isValid());
 
 #if 1

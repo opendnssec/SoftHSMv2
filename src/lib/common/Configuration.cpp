@@ -46,6 +46,7 @@ std::auto_ptr<Configuration> Configuration::instance(NULL);
 const struct config Configuration::valid_config[] = {
 	{ "directories.tokendir",	CONFIG_TYPE_STRING },
 	{ "objectstore.backend",	CONFIG_TYPE_STRING },
+	{ "objectstore.umask",		CONFIG_TYPE_INT_OCTAL },
 	{ "log.level",			CONFIG_TYPE_STRING },
 	{ "slots.removable",		CONFIG_TYPE_BOOL },
 	{ "slots.mechanisms",		CONFIG_TYPE_STRING },
@@ -107,7 +108,14 @@ int Configuration::getInt(std::string key, int ifEmpty /* = 0 */)
 	}
 	else
 	{
-		WARNING_MSG("Missing %s in configuration. Using default value: %i", key.c_str(), ifEmpty);
+		if (getType(key) == CONFIG_TYPE_INT_OCTAL)
+		{
+			WARNING_MSG("Missing %s in configuration. Using default value: 0%o", key.c_str(), ifEmpty);
+		}
+		else
+		{
+			WARNING_MSG("Missing %s in configuration. Using default value: %i", key.c_str(), ifEmpty);
+		}
 		return ifEmpty;
 	}
 }
