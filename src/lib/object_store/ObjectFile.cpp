@@ -321,8 +321,8 @@ void ObjectFile::refresh(bool isFirstTime /* = false */)
 	if (objectFile.isEmpty())
 	{
 		DEBUG_MSG("Object %s is empty", path.c_str());
-
-        objectFile.unlock();
+		
+		objectFile.unlock();
 
 		return;
 	}
@@ -707,7 +707,7 @@ void ObjectFile::store(bool isCommit /* = false */)
 		}
 	}
 
-    objectFile.flush();
+	objectFile.flush();
 
 	valid = true;
 }
