@@ -709,6 +709,8 @@ bool File::lock(bool block /* = true */)
 // Unlock the file
 bool File::unlock()
 {
+	flush();
+
 #ifndef _WIN32
 	struct flock fl;
 	fl.l_type = F_UNLCK;
@@ -757,7 +759,7 @@ bool File::unlock()
 	return valid;
 }
 
-// Flush the buffered stream to background storage
+// Flush the buffered stream to background storage and discard unread fetched data
 bool File::flush()
 {
 	return valid && !fflush(stream);
