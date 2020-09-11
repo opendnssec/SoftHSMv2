@@ -421,7 +421,7 @@ CK_RV SoftHSM::C_Initialize(CK_VOID_PTR pInitArgs)
 	// Check if PKCS#11 is already initialized
 	if (isInitialised)
 	{
-		ERROR_MSG("SoftHSM is already initialized");
+		WARNING_MSG("SoftHSM is already initialized");
 		return CKR_CRYPTOKI_ALREADY_INITIALIZED;
 	}
 
