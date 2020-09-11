@@ -322,7 +322,7 @@ void ObjectFile::refresh(bool isFirstTime /* = false */)
 	{
 		DEBUG_MSG("Object %s is empty", path.c_str());
 
-		valid = false;
+        objectFile.unlock();
 
 		return;
 	}
@@ -706,6 +706,8 @@ void ObjectFile::store(bool isCommit /* = false */)
 			return;
 		}
 	}
+
+    objectFile.flush();
 
 	valid = true;
 }
