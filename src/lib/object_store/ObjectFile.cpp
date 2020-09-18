@@ -707,8 +707,6 @@ void ObjectFile::store(bool isCommit /* = false */)
 		}
 	}
 
-	objectFile.flush();
-
 	valid = true;
 }
 
