@@ -214,7 +214,7 @@ CK_RV DeriveTests::generateAesKey(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, C
 			     &hKey) );
 }
 
-CK_RV DeriveTests::createAesKey(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_OBJECT_HANDLE &hKey)
+CK_RV DeriveTests::createAesKey(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_BBOOL bSensitive, CK_BBOOL bExtractable, CK_BBOOL bDerive, CK_OBJECT_HANDLE &hKey)
 {
 	CK_BYTE aesKey[] = {
 			0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a,
@@ -223,16 +223,14 @@ CK_RV DeriveTests::createAesKey(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, CK_
 
 	CK_OBJECT_CLASS secretClass = CKO_SECRET_KEY;
 	CK_KEY_TYPE keyType = CKK_AES;
-	CK_BBOOL bTrue = CK_TRUE;
-	CK_BBOOL bFalse = CK_FALSE;
 	CK_ATTRIBUTE keyAttribs[] = {
 		{ CKA_CLASS, &secretClass, sizeof(secretClass) },
 		{ CKA_KEY_TYPE, &keyType, sizeof(keyType) },
 		{ CKA_TOKEN, &bToken, sizeof(bToken) },
 		{ CKA_PRIVATE, &bPrivate, sizeof(bPrivate) },
-		{ CKA_SENSITIVE, &bFalse, sizeof(bFalse) },
-		{ CKA_EXTRACTABLE, &bTrue, sizeof(bTrue) },
-		{ CKA_DERIVE, &bTrue, sizeof(bTrue) },
+		{ CKA_SENSITIVE, &bSensitive, sizeof(bSensitive) },
+		{ CKA_EXTRACTABLE, &bExtractable, sizeof(bExtractable) },
+		{ CKA_DERIVE, &bDerive, sizeof(bDerive) },
 		{ CKA_VALUE, &aesKey, sizeof(aesKey) }
 	};
 
@@ -891,9 +889,40 @@ void DeriveTests::testSymDerive()
 }
 
 void DeriveTests::testMiscDerivations() {
-    CK_RV rv;
+#define ASSERT_KEY_IS_NOT_EXTRACTABLE(message, hKey) { \
+        CK_BBOOL bCheck;           \
+      	CK_ATTRIBUTE checkAttribs[] = { { CKA_EXTRACTABLE, &bCheck, sizeof(bCheck) } }; \
+		rv = CRYPTOKI_F_PTR( C_GetAttributeValue(hSessionRW, hKey, checkAttribs, sizeof(checkAttribs)/sizeof(CK_ATTRIBUTE)) ); \
+		CPPUNIT_ASSERT(rv == CKR_OK); \
+		CPPUNIT_ASSERT_MESSAGE(message, *(CK_BBOOL*)checkAttribs[0].pValue == CK_FALSE); \
+    }
+#define ASSERT_KEY_IS_EXTRACTABLE(message, hKey) { \
+        CK_BBOOL bCheck;           \
+      	CK_ATTRIBUTE checkAttribs[] = { { CKA_EXTRACTABLE, &bCheck, sizeof(bCheck) } }; \
+		rv = CRYPTOKI_F_PTR( C_GetAttributeValue(hSessionRW, hKey, checkAttribs, sizeof(checkAttribs)/sizeof(CK_ATTRIBUTE)) ); \
+		CPPUNIT_ASSERT(rv == CKR_OK); \
+		CPPUNIT_ASSERT_MESSAGE(message, *(CK_BBOOL*)checkAttribs[0].pValue == CK_TRUE); \
+    }
+#define ASSERT_KEY_IS_NOT_SENSITIVE(message, hKey) { \
+        CK_BBOOL bCheck;           \
+      	CK_ATTRIBUTE checkAttribs[] = { { CKA_SENSITIVE, &bCheck, sizeof(bCheck) } }; \
+		rv = CRYPTOKI_F_PTR( C_GetAttributeValue(hSessionRW, hKey, checkAttribs, sizeof(checkAttribs)/sizeof(CK_ATTRIBUTE)) ); \
+		CPPUNIT_ASSERT(rv == CKR_OK); \
+		CPPUNIT_ASSERT_MESSAGE(message, *(CK_BBOOL*)checkAttribs[0].pValue == CK_FALSE); \
+    }
+#define ASSERT_KEY_IS_SENSITIVE(message, hKey) { \
+        CK_BBOOL bCheck;           \
+      	CK_ATTRIBUTE checkAttribs[] = { { CKA_SENSITIVE, &bCheck, sizeof(bCheck) } }; \
+		rv = CRYPTOKI_F_PTR( C_GetAttributeValue(hSessionRW, hKey, checkAttribs, sizeof(checkAttribs)/sizeof(CK_ATTRIBUTE)) ); \
+		CPPUNIT_ASSERT(rv == CKR_OK); \
+		CPPUNIT_ASSERT_MESSAGE(message, *(CK_BBOOL*)checkAttribs[0].pValue == CK_TRUE); \
+    }
+
+	CK_RV rv;
     CK_SESSION_HANDLE hSessionRO;
     CK_SESSION_HANDLE hSessionRW;
+	CK_BBOOL bTrue = CK_TRUE;
+	CK_BBOOL bFalse = CK_FALSE;
 
     // Just make sure that we finalize any previous tests
     CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
@@ -919,8 +948,7 @@ void DeriveTests::testMiscDerivations() {
     CPPUNIT_ASSERT(rv == CKR_OK);
 
     CK_OBJECT_HANDLE hKeyAes = CK_INVALID_HANDLE;
-
-    rv = createAesKey(hSessionRW, IN_SESSION, IS_PUBLIC,hKeyAes);
+    rv = createAesKey(hSessionRW, IN_SESSION, IS_PUBLIC, bFalse, bTrue, bTrue, hKeyAes);
     CPPUNIT_ASSERT(rv == CKR_OK);
 
     // Prepare derivation parameters
@@ -931,7 +959,6 @@ void DeriveTests::testMiscDerivations() {
     CK_MECHANISM mechanism = { CKM_CONCATENATE_DATA_AND_BASE, &param, sizeof(param)};
 
     CK_ULONG bytes = 16;
-    CK_BBOOL bTrue = CK_TRUE;
     CK_ATTRIBUTE keyAttribs[] = {
             { CKA_EXTRACTABLE, &bTrue, sizeof(bTrue) },
             { CKA_VALUE_LEN, &bytes, sizeof(bytes) },
@@ -942,6 +969,20 @@ void DeriveTests::testMiscDerivations() {
             0x01, 0x23, 0x45, 0x67,
             0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06
     };
+
+    // Create unextractable and sensitive key
+	CK_OBJECT_HANDLE hUnExtractableKeyAes = CK_INVALID_HANDLE;
+	rv = createAesKey(hSessionRW, IN_SESSION, IS_PUBLIC, bTrue, bFalse, bTrue, hUnExtractableKeyAes);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	ASSERT_KEY_IS_NOT_EXTRACTABLE("Key was created as unextractable but it's not", hUnExtractableKeyAes);
+	ASSERT_KEY_IS_SENSITIVE("Key was created as sensitive but it's not", hUnExtractableKeyAes);
+
+    // Derive un extractable key
+	rv = CRYPTOKI_F_PTR( C_DeriveKey(hSessionRW, &mechanism, hUnExtractableKeyAes,
+									 keyAttribs, 1, &hDerive) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	ASSERT_KEY_IS_NOT_EXTRACTABLE("Derived key should be unextractable", hDerive);
+	ASSERT_KEY_IS_SENSITIVE("Derived key should be sensitive", hDerive);
 
     // Derive without CKA_VALUE_LEN
     rv = CRYPTOKI_F_PTR( C_DeriveKey(hSessionRW, &mechanism, hKeyAes,
@@ -964,6 +1005,10 @@ void DeriveTests::testMiscDerivations() {
     CPPUNIT_ASSERT(checkAttribs[1].ulValueLen == 20);
     CPPUNIT_ASSERT(memcmp(value, prepended, 20) == 0);
     CPPUNIT_ASSERT(keyType == CKK_GENERIC_SECRET);
+	ASSERT_KEY_IS_EXTRACTABLE("The key was created as extractable but it's not", hKeyAes);
+	ASSERT_KEY_IS_NOT_SENSITIVE("The key was created as not sensitive but it is", hKeyAes);
+	ASSERT_KEY_IS_EXTRACTABLE("Derived key should be extractable if base key is extractable", hDerive);
+	ASSERT_KEY_IS_NOT_SENSITIVE("Derived key should not be sensitive", hDerive);
 
     // Derive with CKA_VALUE_LEN = 16
     rv = CRYPTOKI_F_PTR( C_DeriveKey(hSessionRW, &mechanism, hKeyAes, keyAttribs, 2, &hDerive) );
@@ -1038,5 +1083,26 @@ void DeriveTests::testMiscDerivations() {
 	CPPUNIT_ASSERT(checkAttribs[1].ulValueLen == 32);
 	CPPUNIT_ASSERT(memcmp(value, concatenated, 32) == 0);
 	CPPUNIT_ASSERT(keyType == CKK_GENERIC_SECRET);
+	ASSERT_KEY_IS_EXTRACTABLE("The key was created as extractable but it's not", hAnotherKey);
+	ASSERT_KEY_IS_EXTRACTABLE("Derived key should be extractable if base key is extractable", hDerive);
+	ASSERT_KEY_IS_NOT_SENSITIVE("Derived key should not be sensitive if the base key is not", hDerive);
+
+	// Derive unextractable key and extractable should produce unextractable key
+	rv = CRYPTOKI_F_PTR( C_DeriveKey(hSessionRW, &mechanism, hUnExtractableKeyAes,
+									 keyAttribs, 1, &hDerive) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	ASSERT_KEY_IS_NOT_EXTRACTABLE("Derived key should be extractable if base key is extractable", hDerive);
+	ASSERT_KEY_IS_SENSITIVE("Derived key should be sensitive if one of the keys is sensitive", hDerive);
+
+	// Derive extractable key and unextractable should produce unextractable key
+	mechanism.pParameter = &hUnExtractableKeyAes;
+	rv = CRYPTOKI_F_PTR( C_DeriveKey(hSessionRW, &mechanism, hKeyAes,
+									 keyAttribs, 1, &hDerive) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	ASSERT_KEY_IS_NOT_EXTRACTABLE("Derived key should be extractable if base key is extractable", hDerive);
+	ASSERT_KEY_IS_SENSITIVE("Derived key should be sensitive if one of the keys is sensitive", hDerive);
+
+#undef ASSERT_KEY_IS_NOT_EXTRACTABLE
+#undef ASSERT_KEY_IS_EXTRACTABLE
 }
 

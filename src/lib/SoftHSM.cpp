@@ -11539,8 +11539,8 @@ CK_RV SoftHSM::deriveSymmetric
 				// set to CK_FALSE, so does the derived key.  If not, then the derived
 				// key’s CKA_EXTRACTABLE attribute is set either from the supplied template
 				// or from a default value.
-				bool bExtractable = baseKey->getBooleanValue(CKA_EXTRACTABLE, false) ||
-									otherKey->getBooleanValue(CKA_EXTRACTABLE, false);
+				bool bExtractable = baseKey->getBooleanValue(CKA_EXTRACTABLE, true) &&
+									otherKey->getBooleanValue(CKA_EXTRACTABLE, true);
 				if (!bExtractable) {
 					bOK = bOK && osobject->setAttribute(CKA_EXTRACTABLE, false);
 				}
