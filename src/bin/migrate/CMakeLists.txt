@@ -5,6 +5,10 @@ if(BUILD_MIGRATE)
                      ${PROJECT_SOURCE_DIR}/../common
                      ${SQLITE3_INCLUDES}
                      )
+    if (WIN32)
+        set(INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/../win32)
+    endif (WIN32)
+
 
     set(SOURCES softhsm2-migrate.cpp
                 ${PROJECT_SOURCE_DIR}/../common/findslot.cpp

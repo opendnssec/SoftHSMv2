@@ -22,6 +22,9 @@ set(INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/common
                  ${CMAKE_CURRENT_SOURCE_DIR}/slot_mgr
                  ${CRYPTO_INCLUDES}
                  )
+if (WIN32)
+    set(INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/win32)
+endif (WIN32)
 
 include_directories(${INCLUDE_DIRS})
 

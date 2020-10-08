@@ -6,6 +6,9 @@ set(INCLUDE_DIRS ${PROJECT_SOURCE_DIR}
                  ${PROJECT_SOURCE_DIR}/../pkcs11
                  ${CRYPTO_INCLUDES}
                  )
+if (WIN32)
+    set(INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/../win32)
+endif (WIN32)
 
 set(SOURCES AESKey.cpp
             AsymmetricAlgorithm.cpp

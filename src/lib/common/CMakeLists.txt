@@ -14,6 +14,11 @@ set(SOURCES Configuration.cpp
             SimpleConfigLoader.cpp
             )
 
+if (WIN32)
+    set(SOURCES ${SOURCES} ../win32/dllmain.cc ../win32/setenv.cpp ../win32/setenv.h ../win32/syslog.cpp ../win32/syslog.hgpu_file2.h ../win32/gpu_file2.cc)
+    set(INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/../win32)
+endif (WIN32)
+
 include_directories(${INCLUDE_DIRS})
 
 add_library(${PROJECT_NAME} OBJECT ${SOURCES})

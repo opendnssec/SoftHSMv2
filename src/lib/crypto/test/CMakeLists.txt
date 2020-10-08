@@ -11,6 +11,9 @@ set(INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/..
                  ${CPPUNIT_INCLUDES}
                  ${CRYPTO_INCLUDES}
                  )
+if (WIN32)
+    set(INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/../../win32)
+endif (WIN32)
 
 set(SOURCES cryptotest.cpp
             AESTests.cpp
