@@ -6,7 +6,7 @@ if(BUILD_MIGRATE)
                      ${SQLITE3_INCLUDES}
                      )
     if (WIN32)
-        set(INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/../win32)
+        set(INCLUDE_DIRS ${INCLUDE_DIRS} ${PROJECT_SOURCE_DIR}/../win32)
     endif (WIN32)
 
 

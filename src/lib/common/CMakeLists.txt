@@ -16,7 +16,7 @@ set(SOURCES Configuration.cpp
 
 if (WIN32)
     set(SOURCES ${SOURCES} ../win32/dllmain.cc ../win32/setenv.cpp ../win32/setenv.h ../win32/syslog.cpp)
-    set(INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/../win32)
+    set(INCLUDE_DIRS ${INCLUDE_DIRS} ${PROJECT_SOURCE_DIR}/../win32)
 endif (WIN32)
 
 include_directories(${INCLUDE_DIRS})

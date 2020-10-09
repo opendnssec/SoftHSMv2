@@ -9,7 +9,7 @@ set(INCLUDE_DIRS ${PROJECT_SOURCE_DIR}
                  ${PROJECT_SOURCE_DIR}/../slot_mgr
                  )
 if (WIN32)
-    set(INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/../win32)
+    set(INCLUDE_DIRS ${INCLUDE_DIRS} ${PROJECT_SOURCE_DIR}/../win32)
 endif (WIN32)
 
 set(SOURCES SessionManager.cpp
