@@ -43,8 +43,6 @@ init:
     $env:CONFIGURE_OPTIONS = "$env:CONFIGURE_OPTIONS with-crypto-backend=$env:CRYPTO_BACKEND with-$env:CRYPTO_BACKEND=$env:CRYPTO_PACKAGE_PATH\ with-cppunit=$env:CPPUNIT_PATH\"
 environment:
   matrix:
-  - CRYPTO_BACKEND: botan
-    ADDITIONAL_CONFIGURE_OPTIONS: disable-eddsa disable-gost with-crypto-backend=botan
   - CRYPTO_BACKEND: openssl
     ADDITIONAL_CONFIGURE_OPTIONS: disable-eddsa disable-gost with-crypto-backend=openssl
 install:
