@@ -321,8 +321,8 @@ void ObjectFile::refresh(bool isFirstTime /* = false */)
 	if (objectFile.isEmpty())
 	{
 		DEBUG_MSG("Object %s is empty", path.c_str());
-
-		valid = false;
+		
+		objectFile.unlock();
 
 		return;
 	}
