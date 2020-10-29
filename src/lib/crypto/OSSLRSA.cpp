@@ -1219,60 +1219,88 @@ bool OSSLRSA::encrypt(PublicKey* publicKey, const ByteString& data,
 	// Retrieve the OpenSSL key object
 	RSA* rsa = ((OSSLRSAPublicKey*) publicKey)->getOSSLKey();
 
-	// Check the data and padding algorithm
-	int osslPadding = 0;
+	EVP_PKEY *pkey = EVP_PKEY_new();
+	EVP_PKEY_set1_RSA(pkey, rsa);
+	EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new(pkey, NULL);
+	EVP_PKEY_encrypt_init(ctx);
 
-	if (padding == AsymMech::RSA_PKCS)
+	size_t maxPad = 0;
+
+	switch (padding)
 	{
-		// The size of the input data cannot be more than the modulus
-		// length of the key - 11
-		if (data.size() > (size_t) (RSA_size(rsa) - 11))
-		{
-			ERROR_MSG("Too much data supplied for RSA PKCS #1 encryption");
+		case AsymMech::RSA_PKCS:
+			EVP_PKEY_CTX_set_rsa_padding(ctx, RSA_PKCS1_PADDING);
+			maxPad = 10 + 1;
+			break;
+		case AsymMech::RSA_PKCS_OAEP_SHA1:
+			EVP_PKEY_CTX_set_rsa_padding(ctx, RSA_PKCS1_OAEP_PADDING);
+			EVP_PKEY_CTX_set_rsa_oaep_md(ctx, EVP_sha1());
+			EVP_PKEY_CTX_set_rsa_mgf1_md(ctx, EVP_sha1());
+			maxPad = 2 * 160/8 + 1;
+			break;
+		case AsymMech::RSA_PKCS_OAEP_SHA224:
+			EVP_PKEY_CTX_set_rsa_padding(ctx, RSA_PKCS1_OAEP_PADDING);
+			EVP_PKEY_CTX_set_rsa_oaep_md(ctx, EVP_sha224());
+			EVP_PKEY_CTX_set_rsa_mgf1_md(ctx, EVP_sha224());
+			maxPad = 2 * 224/8 + 1;
+			break;
+		case AsymMech::RSA_PKCS_OAEP_SHA256:
+			EVP_PKEY_CTX_set_rsa_padding(ctx, RSA_PKCS1_OAEP_PADDING);
+			EVP_PKEY_CTX_set_rsa_oaep_md(ctx, EVP_sha256());
+			EVP_PKEY_CTX_set_rsa_mgf1_md(ctx, EVP_sha256());
+			maxPad = 2 * 256/8 + 1;
+			break;
+		case AsymMech::RSA_PKCS_OAEP_SHA384:
+			EVP_PKEY_CTX_set_rsa_padding(ctx, RSA_PKCS1_OAEP_PADDING);
+			EVP_PKEY_CTX_set_rsa_oaep_md(ctx, EVP_sha384());
+			EVP_PKEY_CTX_set_rsa_mgf1_md(ctx, EVP_sha384());
+			maxPad = 2 * 384/8 + 1;
+			break;
+		case AsymMech::RSA_PKCS_OAEP_SHA512:
+			EVP_PKEY_CTX_set_rsa_padding(ctx, RSA_PKCS1_OAEP_PADDING);
+			EVP_PKEY_CTX_set_rsa_oaep_md(ctx, EVP_sha512());
+			EVP_PKEY_CTX_set_rsa_mgf1_md(ctx, EVP_sha512());
+			maxPad = 2 * 512/8 + 1;
+			break;
+		case AsymMech::RSA:
+			EVP_PKEY_CTX_set_rsa_padding(ctx, RSA_NO_PADDING);
+			break;
+		default:
+			ERROR_MSG("Invalid padding mechanism supplied (%i)", padding);
+			EVP_PKEY_CTX_free(ctx);
+			EVP_PKEY_free(pkey);
 
 			return false;
-		}
-
-		osslPadding = RSA_PKCS1_PADDING;
 	}
-	else if (padding == AsymMech::RSA_PKCS_OAEP_SHA1)
+
+	// The size of the input data cannot be more than the modulus
+	// length of the key - 11
+	if (data.size() > (size_t) (RSA_size(rsa) - maxPad))
 	{
-		// The size of the input data cannot be more than the modulus
-		// length of the key - 41
-		if (data.size() > (size_t) (RSA_size(rsa) - 41))
-		{
-			ERROR_MSG("Too much data supplied for RSA OAEP encryption");
+		ERROR_MSG("Too much data supplied for encryption");
+		EVP_PKEY_CTX_free(ctx);
+		EVP_PKEY_free(pkey);
 
-			return false;
-		}
-
-		osslPadding = RSA_PKCS1_OAEP_PADDING;
+		return false;
 	}
-	else if (padding == AsymMech::RSA)
-	{
-		// The size of the input data should be exactly equal to the modulus length
-		if (data.size() != (size_t) RSA_size(rsa))
-		{
-			ERROR_MSG("Incorrect amount of input data supplied for raw RSA encryption");
 
-			return false;
-		}
-
-		osslPadding = RSA_NO_PADDING;
-	}
-	else
-	{
-		ERROR_MSG("Invalid padding mechanism supplied (%i)", padding);
+	size_t outSize = 0;
+	int ret = EVP_PKEY_encrypt(ctx, NULL, &outSize, data.const_byte_str(), data.size());
+	if (ret <= 0) {
+		ERROR_MSG("RSA public key encryption failed (0x%08X)", ret);
+		EVP_PKEY_CTX_free(ctx);
+		EVP_PKEY_free(pkey);
 
 		return false;
 	}
 
 	// Perform the RSA operation
-	encryptedData.resize(RSA_size(rsa));
-
-	if (RSA_public_encrypt(data.size(), (unsigned char*) data.const_byte_str(), &encryptedData[0], rsa, osslPadding) == -1)
-	{
-		ERROR_MSG("RSA public key encryption failed (0x%08X)", ERR_get_error());
+	encryptedData.resize(outSize);
+	ret = EVP_PKEY_encrypt(ctx, &encryptedData[0], &outSize, data.const_byte_str(), data.size());
+	if (ret <= 0) {
+		ERROR_MSG("RSA private key encryption failed (0x%08X)", ret);
+		EVP_PKEY_CTX_free(ctx);
+		EVP_PKEY_free(pkey);
 
 		return false;
 	}
@@ -1303,38 +1331,78 @@ bool OSSLRSA::decrypt(PrivateKey* privateKey, const ByteString& encryptedData,
 		return false;
 	}
 
-	// Determine the OpenSSL padding algorithm
-	int osslPadding = 0;
+	EVP_PKEY *pkey = EVP_PKEY_new();
+	EVP_PKEY_set1_RSA(pkey, rsa);
+	EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new(pkey, NULL);
+	EVP_PKEY_decrypt_init(ctx);
 
 	switch (padding)
 	{
 		case AsymMech::RSA_PKCS:
-			osslPadding = RSA_PKCS1_PADDING;
+			EVP_PKEY_CTX_set_rsa_padding(ctx, RSA_PKCS1_PADDING);
 			break;
 		case AsymMech::RSA_PKCS_OAEP_SHA1:
-			osslPadding = RSA_PKCS1_OAEP_PADDING;
+			EVP_PKEY_CTX_set_rsa_padding(ctx, RSA_PKCS1_OAEP_PADDING);
+			EVP_PKEY_CTX_set_rsa_oaep_md(ctx, EVP_sha1());
+			EVP_PKEY_CTX_set_rsa_mgf1_md(ctx, EVP_sha1());
+			break;
+		case AsymMech::RSA_PKCS_OAEP_SHA224:
+			EVP_PKEY_CTX_set_rsa_padding(ctx, RSA_PKCS1_OAEP_PADDING);
+			EVP_PKEY_CTX_set_rsa_oaep_md(ctx, EVP_sha224());
+			EVP_PKEY_CTX_set_rsa_mgf1_md(ctx, EVP_sha224());
+			break;
+		case AsymMech::RSA_PKCS_OAEP_SHA256:
+			EVP_PKEY_CTX_set_rsa_padding(ctx, RSA_PKCS1_OAEP_PADDING);
+			EVP_PKEY_CTX_set_rsa_oaep_md(ctx, EVP_sha256());
+			EVP_PKEY_CTX_set_rsa_mgf1_md(ctx, EVP_sha256());
+			break;
+		case AsymMech::RSA_PKCS_OAEP_SHA384:
+			EVP_PKEY_CTX_set_rsa_padding(ctx, RSA_PKCS1_OAEP_PADDING);
+			EVP_PKEY_CTX_set_rsa_oaep_md(ctx, EVP_sha384());
+			EVP_PKEY_CTX_set_rsa_mgf1_md(ctx, EVP_sha384());
+			break;
+		case AsymMech::RSA_PKCS_OAEP_SHA512:
+			EVP_PKEY_CTX_set_rsa_padding(ctx, RSA_PKCS1_OAEP_PADDING);
+			EVP_PKEY_CTX_set_rsa_oaep_md(ctx, EVP_sha512());
+			EVP_PKEY_CTX_set_rsa_mgf1_md(ctx, EVP_sha512());
 			break;
 		case AsymMech::RSA:
-			osslPadding = RSA_NO_PADDING;
+			EVP_PKEY_CTX_set_rsa_padding(ctx, RSA_NO_PADDING);
 			break;
 		default:
 			ERROR_MSG("Invalid padding mechanism supplied (%i)", padding);
+			EVP_PKEY_CTX_free(ctx);
+			EVP_PKEY_free(pkey);
+
 			return false;
 	}
 
-	// Perform the RSA operation
-	data.resize(RSA_size(rsa));
-
-	int decSize = RSA_private_decrypt(encryptedData.size(), (unsigned char*) encryptedData.const_byte_str(), &data[0], rsa, osslPadding);
-
-	if (decSize == -1)
-	{
-		ERROR_MSG("RSA private key decryption failed (0x%08X)", ERR_get_error());
+	size_t outSize = 0;
+	int ret = EVP_PKEY_decrypt(ctx, NULL, &outSize, encryptedData.const_byte_str(), encryptedData.size());
+	if (ret <= 0) {
+		ERROR_MSG("RSA private key decryption failed (0x%08X)", ret);
+		EVP_PKEY_CTX_free(ctx);
+		EVP_PKEY_free(pkey);
 
 		return false;
 	}
 
-	data.resize(decSize);
+	// Perform the RSA operation
+	data.resize(outSize);
+	ret = EVP_PKEY_decrypt(ctx, &data[0], &outSize, encryptedData.const_byte_str(), encryptedData.size());
+	if (ret <= 0) {
+		ERROR_MSG("RSA private key decryption failed (0x%08X)", ret);
+		EVP_PKEY_CTX_free(ctx);
+		EVP_PKEY_free(pkey);
+
+		return false;
+	}
+
+	// Resize result
+	data.resize(outSize);
+
+	EVP_PKEY_CTX_free(ctx);
+	EVP_PKEY_free(pkey);
 
 	return true;
 }
