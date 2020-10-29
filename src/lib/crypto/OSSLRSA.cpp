@@ -1235,7 +1235,7 @@ bool OSSLRSA::encrypt(PublicKey* publicKey, const ByteString& data,
 
 		osslPadding = RSA_PKCS1_PADDING;
 	}
-	else if (padding == AsymMech::RSA_PKCS_OAEP)
+	else if (padding == AsymMech::RSA_PKCS_OAEP_SHA1)
 	{
 		// The size of the input data cannot be more than the modulus
 		// length of the key - 41
@@ -1311,7 +1311,7 @@ bool OSSLRSA::decrypt(PrivateKey* privateKey, const ByteString& encryptedData,
 		case AsymMech::RSA_PKCS:
 			osslPadding = RSA_PKCS1_PADDING;
 			break;
-		case AsymMech::RSA_PKCS_OAEP:
+		case AsymMech::RSA_PKCS_OAEP_SHA1:
 			osslPadding = RSA_PKCS1_OAEP_PADDING;
 			break;
 		case AsymMech::RSA:

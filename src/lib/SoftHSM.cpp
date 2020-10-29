@@ -2394,7 +2394,27 @@ CK_RV SoftHSM::AsymEncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMec
 			if (rv != CKR_OK)
 				return rv;
 
-			mechanism = AsymMech::RSA_PKCS_OAEP;
+			switch(CK_RSA_PKCS_OAEP_PARAMS_PTR(pMechanism->pParameter)->hashAlg) {
+				case CKM_SHA_1:
+					mechanism = AsymMech::RSA_PKCS_OAEP_SHA1;
+					break;
+				case CKM_SHA224:
+					mechanism = AsymMech::RSA_PKCS_OAEP_SHA224;
+					break;
+				case CKM_SHA256:
+					mechanism = AsymMech::RSA_PKCS_OAEP_SHA256;
+					break;
+				case CKM_SHA384:
+					mechanism = AsymMech::RSA_PKCS_OAEP_SHA384;
+					break;
+				case CKM_SHA512:
+					mechanism = AsymMech::RSA_PKCS_OAEP_SHA512;
+					break;
+				default:
+					DEBUG_MSG("hashAlg must be one of: CKM_SHA_1, CKM_SHA224, CKM_SHA256, CKM_SHA384, CKM_SHA512");
+					return CKR_ARGUMENTS_BAD;
+			}
+
 			isRSA = true;
 			break;
 		default:
@@ -3120,18 +3140,38 @@ CK_RV SoftHSM::AsymDecryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMec
 				DEBUG_MSG("pParameter must be of type CK_RSA_PKCS_OAEP_PARAMS");
 				return CKR_ARGUMENTS_BAD;
 			}
-			if (CK_RSA_PKCS_OAEP_PARAMS_PTR(pMechanism->pParameter)->hashAlg != CKM_SHA_1)
-			{
-				DEBUG_MSG("hashAlg must be CKM_SHA_1");
-				return CKR_ARGUMENTS_BAD;
+
+			switch(CK_RSA_PKCS_OAEP_PARAMS_PTR(pMechanism->pParameter)->hashAlg) {
+				case CKM_SHA_1:
+					mechanism = AsymMech::RSA_PKCS_OAEP_SHA1;
+					break;
+				case CKM_SHA224:
+					mechanism = AsymMech::RSA_PKCS_OAEP_SHA224;
+					break;
+				case CKM_SHA256:
+					mechanism = AsymMech::RSA_PKCS_OAEP_SHA256;
+					break;
+				case CKM_SHA384:
+					mechanism = AsymMech::RSA_PKCS_OAEP_SHA384;
+					break;
+				case CKM_SHA512:
+					mechanism = AsymMech::RSA_PKCS_OAEP_SHA512;
+					break;
+				default:
+					DEBUG_MSG("hashAlg must be one of: CKM_SHA_1, CKM_SHA224, CKM_SHA256, CKM_SHA384, CKM_SHA512");
+					return CKR_ARGUMENTS_BAD;
 			}
-			if (CK_RSA_PKCS_OAEP_PARAMS_PTR(pMechanism->pParameter)->mgf != CKG_MGF1_SHA1)
+
+			if (CK_RSA_PKCS_OAEP_PARAMS_PTR(pMechanism->pParameter)->mgf != CKG_MGF1_SHA1 &&
+			    CK_RSA_PKCS_OAEP_PARAMS_PTR(pMechanism->pParameter)->mgf != CKG_MGF1_SHA224 &&
+			    CK_RSA_PKCS_OAEP_PARAMS_PTR(pMechanism->pParameter)->mgf != CKG_MGF1_SHA256 &&
+			    CK_RSA_PKCS_OAEP_PARAMS_PTR(pMechanism->pParameter)->mgf != CKG_MGF1_SHA384 &&
+			    CK_RSA_PKCS_OAEP_PARAMS_PTR(pMechanism->pParameter)->mgf != CKG_MGF1_SHA512)
 			{
-				DEBUG_MSG("mgf must be CKG_MGF1_SHA1");
+				DEBUG_MSG("mgf must be one of: CKG_MGF1_SHA1, CKG_MGF1_SHA224, CKG_MGF1_SHA256, CKG_MGF1_SHA384, CKG_MGF1_SHA512");
 				return CKR_ARGUMENTS_BAD;
 			}
 
-			mechanism = AsymMech::RSA_PKCS_OAEP;
 			isRSA = true;
 			break;
 		default:
@@ -6247,11 +6287,40 @@ CK_RV SoftHSM::WrapKeyAsym
 			break;
 
 		case CKM_RSA_PKCS_OAEP:
-			mech = AsymMech::RSA_PKCS_OAEP;
-			// SHA-1 is the only supported option
-			// PKCS#11 2.40 draft 2 section 2.1.8: input length <= k-2-2hashLen
-			if (keydata.size() > modulus_length - 2 - 2 * 160 / 8)
-				return CKR_KEY_SIZE_RANGE;
+			switch(CK_RSA_PKCS_OAEP_PARAMS_PTR(pMechanism->pParameter)->hashAlg) {
+				case CKM_SHA_1:
+					mech = AsymMech::RSA_PKCS_OAEP_SHA1;
+					// PKCS#11 2.40 draft 2 section 2.1.8: input length <= k-2-2hashLen
+					if (keydata.size() > modulus_length - 2 - 2 * 160 / 8)
+						return CKR_KEY_SIZE_RANGE;
+					break;
+				case CKM_SHA224:
+					mech = AsymMech::RSA_PKCS_OAEP_SHA224;
+					// PKCS#11 2.40 draft 2 section 2.1.8: input length <= k-2-2hashLen
+					if (keydata.size() > modulus_length - 2 - 2 * 224 / 8)
+						return CKR_KEY_SIZE_RANGE;
+					break;
+				case CKM_SHA256:
+					mech = AsymMech::RSA_PKCS_OAEP_SHA256;
+					// PKCS#11 2.40 draft 2 section 2.1.8: input length <= k-2-2hashLen
+					if (keydata.size() > modulus_length - 2 - 2 * 256 / 8)
+						return CKR_KEY_SIZE_RANGE;
+					break;
+				case CKM_SHA384:
+					mech = AsymMech::RSA_PKCS_OAEP_SHA384;
+					// PKCS#11 2.40 draft 2 section 2.1.8: input length <= k-2-2hashLen
+					if (keydata.size() > modulus_length - 2 - 2 * 384 / 8)
+						return CKR_KEY_SIZE_RANGE;
+					break;
+				case CKM_SHA512:
+					mech = AsymMech::RSA_PKCS_OAEP_SHA512;
+					// PKCS#11 2.40 draft 2 section 2.1.8: input length <= k-2-2hashLen
+					if (keydata.size() > modulus_length - 2 - 2 * 512 / 8)
+						return CKR_KEY_SIZE_RANGE;
+					break;
+				default:
+					return CKR_MECHANISM_INVALID;
+			}
 			break;
 
 		default:
@@ -6637,7 +6706,25 @@ CK_RV SoftHSM::UnwrapKeyAsym
 
 		case CKM_RSA_PKCS_OAEP:
 			algo = AsymAlgo::RSA;
-			mode = AsymMech::RSA_PKCS_OAEP;
+			switch(CK_RSA_PKCS_OAEP_PARAMS_PTR(pMechanism->pParameter)->hashAlg) {
+				case CKM_SHA_1:
+					mode = AsymMech::RSA_PKCS_OAEP_SHA1;
+					break;
+				case CKM_SHA224:
+					mode = AsymMech::RSA_PKCS_OAEP_SHA224;
+					break;
+				case CKM_SHA256:
+					mode = AsymMech::RSA_PKCS_OAEP_SHA256;
+					break;
+				case CKM_SHA384:
+					mode = AsymMech::RSA_PKCS_OAEP_SHA384;
+					break;
+				case CKM_SHA512:
+					mode = AsymMech::RSA_PKCS_OAEP_SHA512;
+					break;
+				default:
+					return CKR_MECHANISM_INVALID;
+			}
 			break;
 
 		default:
@@ -12392,14 +12479,22 @@ CK_RV SoftHSM::MechParamCheckRSAPKCSOAEP(CK_MECHANISM_PTR pMechanism)
 	}
 
 	CK_RSA_PKCS_OAEP_PARAMS_PTR params = (CK_RSA_PKCS_OAEP_PARAMS_PTR)pMechanism->pParameter;
-	if (params->hashAlg != CKM_SHA_1)
+	if (params->hashAlg != CKM_SHA_1 &&
+	    params->hashAlg != CKM_SHA224 &&
+	    params->hashAlg != CKM_SHA256 &&
+	    params->hashAlg != CKM_SHA384 &&
+	    params->hashAlg != CKM_SHA512)
 	{
-		ERROR_MSG("hashAlg must be CKM_SHA_1");
+		ERROR_MSG("hashAlg must be one of: CKM_SHA_1, CKM_SHA224, CKM_SHA256, CKM_SHA384, CKM_SHA512");
 		return CKR_ARGUMENTS_BAD;
 	}
-	if (params->mgf != CKG_MGF1_SHA1)
+	if (params->mgf != CKG_MGF1_SHA1 &&
+	    params->mgf != CKG_MGF1_SHA224 &&
+	    params->mgf != CKG_MGF1_SHA256 &&
+	    params->mgf != CKG_MGF1_SHA384 &&
+	    params->mgf != CKG_MGF1_SHA512)
 	{
-		ERROR_MSG("mgf must be CKG_MGF1_SHA1");
+		ERROR_MSG("mgf must be onf of: CKG_MGF1_SHA1, CKM_MGF1_SHA224, CKM_MGF1_SHA256, CKM_MGF1_SHA384, CKM_MGF1_SHA512");
 		return CKR_ARGUMENTS_BAD;
 	}
 	if (params->source != CKZ_DATA_SPECIFIED)
