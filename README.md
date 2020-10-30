@@ -36,7 +36,7 @@ SoftHSM depends on a cryptographic library, Botan or OpenSSL.
 Minimum required versions:
 
 - Botan 2.0.0
-- OpenSSL 1.0.0
+- OpenSSL 1.0.2
 
 If you are using Botan, use at least version 2.6.0. This will improve
 the performance when doing public key operations.

@@ -65,9 +65,9 @@ AC_DEFUN([ACX_CRYPTO_BACKEND],[
 		AC_MSG_RESULT(OpenSSL)
 
 		if test "x${enable_fips}" = "xyes"; then
-			ACX_OPENSSL(1,0,1)
+			ACX_OPENSSL(1,0,2)
 		else
-			ACX_OPENSSL(1,0,0)
+			ACX_OPENSSL(1,0,2)
 		fi
 
 		CRYPTO_INCLUDES=$OPENSSL_INCLUDES
