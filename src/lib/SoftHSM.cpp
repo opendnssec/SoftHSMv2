@@ -2373,6 +2373,7 @@ CK_RV SoftHSM::AsymEncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMec
 
 	// Get the asymmetric algorithm matching the mechanism
 	AsymMech::Type mechanism;
+	unsigned long expectedMgf;
 	bool isRSA = false;
 	switch(pMechanism->mechanism) {
 		case CKM_RSA_PKCS:
@@ -2397,22 +2398,32 @@ CK_RV SoftHSM::AsymEncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMec
 			switch(CK_RSA_PKCS_OAEP_PARAMS_PTR(pMechanism->pParameter)->hashAlg) {
 				case CKM_SHA_1:
 					mechanism = AsymMech::RSA_PKCS_OAEP_SHA1;
+					expectedMgf = CKG_MGF1_SHA1;
 					break;
 				case CKM_SHA224:
 					mechanism = AsymMech::RSA_PKCS_OAEP_SHA224;
+					expectedMgf = CKG_MGF1_SHA224;
 					break;
 				case CKM_SHA256:
 					mechanism = AsymMech::RSA_PKCS_OAEP_SHA256;
+					expectedMgf = CKG_MGF1_SHA256;
 					break;
 				case CKM_SHA384:
 					mechanism = AsymMech::RSA_PKCS_OAEP_SHA384;
+					expectedMgf = CKG_MGF1_SHA384;
 					break;
 				case CKM_SHA512:
 					mechanism = AsymMech::RSA_PKCS_OAEP_SHA512;
+					expectedMgf = CKG_MGF1_SHA512;
 					break;
 				default:
 					DEBUG_MSG("hashAlg must be one of: CKM_SHA_1, CKM_SHA224, CKM_SHA256, CKM_SHA384, CKM_SHA512");
 					return CKR_ARGUMENTS_BAD;
+			}
+
+			if(CK_RSA_PKCS_OAEP_PARAMS_PTR(pMechanism->pParameter)->mgf != expectedMgf) {
+				ERROR_MSG("Hash and MGF don't match");
+				return CKR_ARGUMENTS_BAD;
 			}
 
 			isRSA = true;
@@ -3117,6 +3128,7 @@ CK_RV SoftHSM::AsymDecryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMec
 
 	// Get the asymmetric algorithm matching the mechanism
 	AsymMech::Type mechanism = AsymMech::Unknown;
+	unsigned long expectedMgf;
 	bool isRSA = false;
 	switch(pMechanism->mechanism) {
 		case CKM_RSA_PKCS:
@@ -3144,31 +3156,31 @@ CK_RV SoftHSM::AsymDecryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMec
 			switch(CK_RSA_PKCS_OAEP_PARAMS_PTR(pMechanism->pParameter)->hashAlg) {
 				case CKM_SHA_1:
 					mechanism = AsymMech::RSA_PKCS_OAEP_SHA1;
+					expectedMgf = CKG_MGF1_SHA1;
 					break;
 				case CKM_SHA224:
 					mechanism = AsymMech::RSA_PKCS_OAEP_SHA224;
+					expectedMgf = CKG_MGF1_SHA224;
 					break;
 				case CKM_SHA256:
 					mechanism = AsymMech::RSA_PKCS_OAEP_SHA256;
+					expectedMgf = CKG_MGF1_SHA256;
 					break;
 				case CKM_SHA384:
 					mechanism = AsymMech::RSA_PKCS_OAEP_SHA384;
+					expectedMgf = CKG_MGF1_SHA384;
 					break;
 				case CKM_SHA512:
 					mechanism = AsymMech::RSA_PKCS_OAEP_SHA512;
+					expectedMgf = CKG_MGF1_SHA512;
 					break;
 				default:
 					DEBUG_MSG("hashAlg must be one of: CKM_SHA_1, CKM_SHA224, CKM_SHA256, CKM_SHA384, CKM_SHA512");
 					return CKR_ARGUMENTS_BAD;
 			}
 
-			if (CK_RSA_PKCS_OAEP_PARAMS_PTR(pMechanism->pParameter)->mgf != CKG_MGF1_SHA1 &&
-			    CK_RSA_PKCS_OAEP_PARAMS_PTR(pMechanism->pParameter)->mgf != CKG_MGF1_SHA224 &&
-			    CK_RSA_PKCS_OAEP_PARAMS_PTR(pMechanism->pParameter)->mgf != CKG_MGF1_SHA256 &&
-			    CK_RSA_PKCS_OAEP_PARAMS_PTR(pMechanism->pParameter)->mgf != CKG_MGF1_SHA384 &&
-			    CK_RSA_PKCS_OAEP_PARAMS_PTR(pMechanism->pParameter)->mgf != CKG_MGF1_SHA512)
-			{
-				DEBUG_MSG("mgf must be one of: CKG_MGF1_SHA1, CKG_MGF1_SHA224, CKG_MGF1_SHA256, CKG_MGF1_SHA384, CKG_MGF1_SHA512");
+			if (CK_RSA_PKCS_OAEP_PARAMS_PTR(pMechanism->pParameter)->mgf != expectedMgf) {
+				ERROR_MSG("Hash and MGF don't match");
 				return CKR_ARGUMENTS_BAD;
 			}
 
@@ -6261,6 +6273,7 @@ CK_RV SoftHSM::WrapKeyAsym
 	const size_t bb = 8;
 	AsymAlgo::Type algo = AsymAlgo::Unknown;
 	AsymMech::Type mech = AsymMech::Unknown;
+	unsigned long expectedMgf;
 
 	CK_ULONG modulus_length;
 	switch(pMechanism->mechanism) {
@@ -6290,30 +6303,35 @@ CK_RV SoftHSM::WrapKeyAsym
 			switch(CK_RSA_PKCS_OAEP_PARAMS_PTR(pMechanism->pParameter)->hashAlg) {
 				case CKM_SHA_1:
 					mech = AsymMech::RSA_PKCS_OAEP_SHA1;
+					expectedMgf = CKG_MGF1_SHA1;
 					// PKCS#11 2.40 draft 2 section 2.1.8: input length <= k-2-2hashLen
 					if (keydata.size() > modulus_length - 2 - 2 * 160 / 8)
 						return CKR_KEY_SIZE_RANGE;
 					break;
 				case CKM_SHA224:
 					mech = AsymMech::RSA_PKCS_OAEP_SHA224;
+					expectedMgf = CKG_MGF1_SHA1;
 					// PKCS#11 2.40 draft 2 section 2.1.8: input length <= k-2-2hashLen
 					if (keydata.size() > modulus_length - 2 - 2 * 224 / 8)
 						return CKR_KEY_SIZE_RANGE;
 					break;
 				case CKM_SHA256:
 					mech = AsymMech::RSA_PKCS_OAEP_SHA256;
+					expectedMgf = CKG_MGF1_SHA1;
 					// PKCS#11 2.40 draft 2 section 2.1.8: input length <= k-2-2hashLen
 					if (keydata.size() > modulus_length - 2 - 2 * 256 / 8)
 						return CKR_KEY_SIZE_RANGE;
 					break;
 				case CKM_SHA384:
 					mech = AsymMech::RSA_PKCS_OAEP_SHA384;
+					expectedMgf = CKG_MGF1_SHA1;
 					// PKCS#11 2.40 draft 2 section 2.1.8: input length <= k-2-2hashLen
 					if (keydata.size() > modulus_length - 2 - 2 * 384 / 8)
 						return CKR_KEY_SIZE_RANGE;
 					break;
 				case CKM_SHA512:
 					mech = AsymMech::RSA_PKCS_OAEP_SHA512;
+					expectedMgf = CKG_MGF1_SHA1;
 					// PKCS#11 2.40 draft 2 section 2.1.8: input length <= k-2-2hashLen
 					if (keydata.size() > modulus_length - 2 - 2 * 512 / 8)
 						return CKR_KEY_SIZE_RANGE;
@@ -6321,6 +6339,12 @@ CK_RV SoftHSM::WrapKeyAsym
 				default:
 					return CKR_MECHANISM_INVALID;
 			}
+
+			if(CK_RSA_PKCS_OAEP_PARAMS_PTR(pMechanism->pParameter)->mgf != expectedMgf) {
+				ERROR_MSG("Hash and MGF don't match");
+				return CKR_ARGUMENTS_BAD;
+			}
+
 			break;
 
 		default:
@@ -6698,6 +6722,7 @@ CK_RV SoftHSM::UnwrapKeyAsym
 	// Get the symmetric algorithm matching the mechanism
 	AsymAlgo::Type algo = AsymAlgo::Unknown;
 	AsymMech::Type mode = AsymMech::Unknown;
+	unsigned long expectedMgf;
 	switch(pMechanism->mechanism) {
 		case CKM_RSA_PKCS:
 			algo = AsymAlgo::RSA;
@@ -6709,21 +6734,31 @@ CK_RV SoftHSM::UnwrapKeyAsym
 			switch(CK_RSA_PKCS_OAEP_PARAMS_PTR(pMechanism->pParameter)->hashAlg) {
 				case CKM_SHA_1:
 					mode = AsymMech::RSA_PKCS_OAEP_SHA1;
+					expectedMgf = CKG_MGF1_SHA1;
 					break;
 				case CKM_SHA224:
 					mode = AsymMech::RSA_PKCS_OAEP_SHA224;
+					expectedMgf = CKG_MGF1_SHA224;
 					break;
 				case CKM_SHA256:
 					mode = AsymMech::RSA_PKCS_OAEP_SHA256;
+					expectedMgf = CKG_MGF1_SHA256;
 					break;
 				case CKM_SHA384:
 					mode = AsymMech::RSA_PKCS_OAEP_SHA384;
+					expectedMgf = CKG_MGF1_SHA384;
 					break;
 				case CKM_SHA512:
 					mode = AsymMech::RSA_PKCS_OAEP_SHA512;
+					expectedMgf = CKG_MGF1_SHA512;
 					break;
 				default:
 					return CKR_MECHANISM_INVALID;
+			}
+
+			if (CK_RSA_PKCS_PSS_PARAMS_PTR(pMechanism->pParameter)->mgf != expectedMgf) {
+				ERROR_MSG("Hash and MGF don't match");
+				return CKR_ARGUMENTS_BAD;
 			}
 			break;
 
