@@ -1236,31 +1236,31 @@ bool OSSLRSA::encrypt(PublicKey* publicKey, const ByteString& data,
 			EVP_PKEY_CTX_set_rsa_padding(ctx, RSA_PKCS1_OAEP_PADDING);
 			EVP_PKEY_CTX_set_rsa_oaep_md(ctx, EVP_sha1());
 			EVP_PKEY_CTX_set_rsa_mgf1_md(ctx, EVP_sha1());
-			maxPad = 2 * 160/8 + 1;
+			maxPad = 2 * 160/8 + 2;
 			break;
 		case AsymMech::RSA_PKCS_OAEP_SHA224:
 			EVP_PKEY_CTX_set_rsa_padding(ctx, RSA_PKCS1_OAEP_PADDING);
 			EVP_PKEY_CTX_set_rsa_oaep_md(ctx, EVP_sha224());
 			EVP_PKEY_CTX_set_rsa_mgf1_md(ctx, EVP_sha224());
-			maxPad = 2 * 224/8 + 1;
+			maxPad = 2 * 224/8 + 2;
 			break;
 		case AsymMech::RSA_PKCS_OAEP_SHA256:
 			EVP_PKEY_CTX_set_rsa_padding(ctx, RSA_PKCS1_OAEP_PADDING);
 			EVP_PKEY_CTX_set_rsa_oaep_md(ctx, EVP_sha256());
 			EVP_PKEY_CTX_set_rsa_mgf1_md(ctx, EVP_sha256());
-			maxPad = 2 * 256/8 + 1;
+			maxPad = 2 * 256/8 + 2;
 			break;
 		case AsymMech::RSA_PKCS_OAEP_SHA384:
 			EVP_PKEY_CTX_set_rsa_padding(ctx, RSA_PKCS1_OAEP_PADDING);
 			EVP_PKEY_CTX_set_rsa_oaep_md(ctx, EVP_sha384());
 			EVP_PKEY_CTX_set_rsa_mgf1_md(ctx, EVP_sha384());
-			maxPad = 2 * 384/8 + 1;
+			maxPad = 2 * 384/8 + 2;
 			break;
 		case AsymMech::RSA_PKCS_OAEP_SHA512:
 			EVP_PKEY_CTX_set_rsa_padding(ctx, RSA_PKCS1_OAEP_PADDING);
 			EVP_PKEY_CTX_set_rsa_oaep_md(ctx, EVP_sha512());
 			EVP_PKEY_CTX_set_rsa_mgf1_md(ctx, EVP_sha512());
-			maxPad = 2 * 512/8 + 1;
+			maxPad = 2 * 512/8 + 2;
 			break;
 		case AsymMech::RSA:
 			EVP_PKEY_CTX_set_rsa_padding(ctx, RSA_NO_PADDING);
@@ -1274,7 +1274,7 @@ bool OSSLRSA::encrypt(PublicKey* publicKey, const ByteString& data,
 	}
 
 	// The size of the input data cannot be more than the modulus
-	// length of the key - 11
+	// length of the key - maxPad
 	if (data.size() > (size_t) (RSA_size(rsa) - maxPad))
 	{
 		ERROR_MSG("Too much data supplied for encryption");

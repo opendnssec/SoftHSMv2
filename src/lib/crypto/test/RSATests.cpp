@@ -619,7 +619,11 @@ void RSATests::testEncryptDecrypt()
 	// Paddings to test
 	std::vector<AsymMech::Type> paddings;
 	paddings.push_back(AsymMech::RSA_PKCS);
-	paddings.push_back(AsymMech::RSA_PKCS_OAEP);
+	paddings.push_back(AsymMech::RSA_PKCS_OAEP_SHA1);
+	paddings.push_back(AsymMech::RSA_PKCS_OAEP_SHA224);
+	paddings.push_back(AsymMech::RSA_PKCS_OAEP_SHA256);
+	paddings.push_back(AsymMech::RSA_PKCS_OAEP_SHA384);
+	paddings.push_back(AsymMech::RSA_PKCS_OAEP_SHA512);
 	paddings.push_back(AsymMech::RSA);
 
 	for (std::vector<ByteString>::iterator e = exponents.begin(); e != exponents.end(); e++)
@@ -641,11 +645,28 @@ void RSATests::testEncryptDecrypt()
 
 				if (*pad == AsymMech::RSA_PKCS)
 				{
-					CPPUNIT_ASSERT(rng->generateRandom(testData, (*k >> 3) - 12));
+					CPPUNIT_ASSERT(rng->generateRandom(testData, (*k >> 3) - 11));
 				}
-				else if (*pad == AsymMech::RSA_PKCS_OAEP)
+				else if (*pad == AsymMech::RSA_PKCS_OAEP_SHA1)
 				{
-					CPPUNIT_ASSERT(rng->generateRandom(testData, (*k >> 3) - 42));
+					CPPUNIT_ASSERT(rng->generateRandom(testData, (*k >> 3) - (2*160/8+2)));
+				}
+				else if (*pad == AsymMech::RSA_PKCS_OAEP_SHA224)
+				{
+					CPPUNIT_ASSERT(rng->generateRandom(testData, (*k >> 3) - (2*224/8+2)));
+				}
+				else if (*pad == AsymMech::RSA_PKCS_OAEP_SHA256)
+				{
+					CPPUNIT_ASSERT(rng->generateRandom(testData, (*k >> 3) - (2*256/8+2)));
+				}
+				else if (*pad == AsymMech::RSA_PKCS_OAEP_SHA384)
+				{
+					CPPUNIT_ASSERT(rng->generateRandom(testData, (*k >> 3) - (2*384/8+2)));
+				}
+				else if (*pad == AsymMech::RSA_PKCS_OAEP_SHA512)
+				{
+					if (*k < 1280) continue;
+					CPPUNIT_ASSERT(rng->generateRandom(testData, (*k >> 3) - (2*512/8+2)));
 				}
 				else if (*pad == AsymMech::RSA)
 				{
