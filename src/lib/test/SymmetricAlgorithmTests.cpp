@@ -1291,3 +1291,136 @@ void SymmetricAlgorithmTests::testEncDecFinalNULLValidation()
 
 	CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
 }
+
+void SymmetricAlgorithmTests::testOpTermIssue585()
+{
+	CK_RV rv;
+	CK_SESSION_HANDLE hSessionRO;
+	CK_SESSION_HANDLE hSessionRW;
+
+	// Just make sure that we finalize any previous tests
+	CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
+
+	// Open read-only session on when the token is not initialized should fail
+	rv = CRYPTOKI_F_PTR( C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSessionRO) );
+	CPPUNIT_ASSERT(rv == CKR_CRYPTOKI_NOT_INITIALIZED);
+
+	// Initialize the library and start the test.
+	rv = CRYPTOKI_F_PTR( C_Initialize(NULL_PTR) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Open read-only session
+	rv = CRYPTOKI_F_PTR( C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSessionRO) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Open read-write session
+	rv = CRYPTOKI_F_PTR( C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSessionRW) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Login USER into the sessions so we can create a private objects
+	rv = CRYPTOKI_F_PTR( C_Login(hSessionRO,CKU_USER,m_userPin1,m_userPin1Length) );
+	CPPUNIT_ASSERT(rv==CKR_OK);
+
+	CK_OBJECT_HANDLE hKey = CK_INVALID_HANDLE;
+
+	// Generate test key
+	rv = generateAesKey(hSessionRW,IN_SESSION,IS_PUBLIC,hKey);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	CK_BYTE iv[16] = { 0 };
+	CK_MECHANISM mechanism = { CKM_AES_CBC, iv, 16 };
+
+	// Initialise encryption
+	rv = CRYPTOKI_F_PTR( C_EncryptInit(hSessionRW, &mechanism, hKey) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	CK_BYTE data[16] = { 0 };
+	CK_ULONG ulEncryptedDataLen = 0;
+
+	// Attempt call to C_Encrypt with NULL for pData
+	rv = CRYPTOKI_F_PTR( C_Encrypt(hSessionRW, NULL, 16, NULL, &ulEncryptedDataLen) );
+	CPPUNIT_ASSERT(rv == CKR_ARGUMENTS_BAD);
+
+	// Verify operation was terminated
+	rv = CRYPTOKI_F_PTR( C_Encrypt(hSessionRW, data, 16, NULL, &ulEncryptedDataLen) );
+	CPPUNIT_ASSERT(rv == CKR_OPERATION_NOT_INITIALIZED);
+
+	// Initialise encryption
+	rv = CRYPTOKI_F_PTR( C_EncryptInit(hSessionRW, &mechanism, hKey) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Attempt call to C_Encrypt with NULL for pulEncryptedDataLen
+	rv = CRYPTOKI_F_PTR( C_Encrypt(hSessionRW, data, 16, NULL, NULL) );
+	CPPUNIT_ASSERT(rv == CKR_ARGUMENTS_BAD);
+
+	// Verify operation was terminated
+	rv = CRYPTOKI_F_PTR( C_Encrypt(hSessionRW, data, 16, NULL, &ulEncryptedDataLen) );
+	CPPUNIT_ASSERT(rv == CKR_OPERATION_NOT_INITIALIZED);
+
+	// Attempt call to C_EncryptUpdate with NULL for pData
+	rv = CRYPTOKI_F_PTR( C_EncryptUpdate(hSessionRW, NULL, 16, NULL, &ulEncryptedDataLen) );
+	CPPUNIT_ASSERT(rv == CKR_ARGUMENTS_BAD);
+
+	// Verify operation was terminated
+	rv = CRYPTOKI_F_PTR( C_EncryptUpdate(hSessionRW, data, 16, NULL, &ulEncryptedDataLen) );
+	CPPUNIT_ASSERT(rv == CKR_OPERATION_NOT_INITIALIZED);
+
+	// Initialise encryption
+	rv = CRYPTOKI_F_PTR( C_EncryptInit(hSessionRW, &mechanism, hKey) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Attempt call to C_EncryptUpdate with NULL for pulEncryptedDataLen
+	rv = CRYPTOKI_F_PTR( C_EncryptUpdate(hSessionRW, data, 16, NULL, NULL) );
+	CPPUNIT_ASSERT(rv == CKR_ARGUMENTS_BAD);
+
+	// Verify operation was terminated
+	rv = CRYPTOKI_F_PTR( C_EncryptUpdate(hSessionRW, data, 16, NULL, &ulEncryptedDataLen) );
+	CPPUNIT_ASSERT(rv == CKR_OPERATION_NOT_INITIALIZED);
+
+	// Initialise decryption
+	rv = CRYPTOKI_F_PTR( C_DecryptInit(hSessionRW, &mechanism, hKey) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	CK_ULONG ulDecryptedDataLen = 0;
+
+	// Attempt call to C_Decrypt with NULL for pData
+	rv = CRYPTOKI_F_PTR( C_Decrypt(hSessionRW, NULL, 16, NULL, &ulDecryptedDataLen) );
+	CPPUNIT_ASSERT(rv == CKR_ARGUMENTS_BAD);
+
+	// Verify operation was terminated
+	rv = CRYPTOKI_F_PTR( C_Decrypt(hSessionRW, data, 16, NULL, &ulDecryptedDataLen) );
+	CPPUNIT_ASSERT(rv == CKR_OPERATION_NOT_INITIALIZED);
+
+	// Initialise decryption
+	rv = CRYPTOKI_F_PTR( C_DecryptInit(hSessionRW, &mechanism, hKey) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Attempt call to C_Decrypt with NULL for pulDecryptedDataLen
+	rv = CRYPTOKI_F_PTR( C_Decrypt(hSessionRW, data, 16, NULL, NULL) );
+	CPPUNIT_ASSERT(rv == CKR_ARGUMENTS_BAD);
+
+	// Verify operation was terminated
+	rv = CRYPTOKI_F_PTR( C_Decrypt(hSessionRW, data, 16, NULL, &ulDecryptedDataLen) );
+	CPPUNIT_ASSERT(rv == CKR_OPERATION_NOT_INITIALIZED);
+
+	// Attempt call to C_DecryptUpdate with NULL for pData
+	rv = CRYPTOKI_F_PTR( C_DecryptUpdate(hSessionRW, NULL, 16, NULL, &ulDecryptedDataLen) );
+	CPPUNIT_ASSERT(rv == CKR_ARGUMENTS_BAD);
+
+	// Verify operation was terminated
+	rv = CRYPTOKI_F_PTR( C_DecryptUpdate(hSessionRW, data, 16, NULL, &ulDecryptedDataLen) );
+	CPPUNIT_ASSERT(rv == CKR_OPERATION_NOT_INITIALIZED);
+
+	// Initialise decryption
+	rv = CRYPTOKI_F_PTR( C_DecryptInit(hSessionRW, &mechanism, hKey) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Attempt call to C_DecryptUpdate with NULL for pulDecryptedDataLen
+	rv = CRYPTOKI_F_PTR( C_DecryptUpdate(hSessionRW, data, 16, NULL, NULL) );
+	CPPUNIT_ASSERT(rv == CKR_ARGUMENTS_BAD);
+
+	// Verify operation was terminated
+	rv = CRYPTOKI_F_PTR( C_DecryptUpdate(hSessionRW, data, 16, NULL, &ulDecryptedDataLen) );
+	CPPUNIT_ASSERT(rv == CKR_OPERATION_NOT_INITIALIZED);
+}
+
