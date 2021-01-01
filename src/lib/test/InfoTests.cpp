@@ -152,6 +152,7 @@ void InfoTests::testGetSlotInfo()
 	CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
 }
 
+#ifndef P11M
 void InfoTests::testGetSlotInfoAlt()
 {
 	CK_RV rv;
@@ -201,6 +202,7 @@ void InfoTests::testGetSlotInfoAlt()
 	setenv("SOFTHSM2_CONF", ".\\softhsm2.conf", 1);
 #endif
 }
+#endif // P11M
 
 
 void InfoTests::testGetTokenInfo()
@@ -321,6 +323,7 @@ void InfoTests::testGetMechanismInfo()
 }
 
 
+#ifndef P11M
 void InfoTests::testGetMechanismListConfig()
 {
 	CK_RV rv;
@@ -362,6 +365,7 @@ void InfoTests::testGetMechanismListConfig()
 	setenv("SOFTHSM2_CONF", ".\\softhsm2.conf", 1);
 #endif
 }
+#endif // P11M
 
 void InfoTests::testWaitForSlotEvent()
 {
