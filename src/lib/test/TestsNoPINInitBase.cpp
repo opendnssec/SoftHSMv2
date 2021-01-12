@@ -36,7 +36,7 @@
 #include <vector>
 #include <sstream>
 
-#ifdef P11M
+#ifdef P11_SHARED_LIBRARY
 #ifdef _WIN32
 CK_FUNCTION_LIST_PTR FunctionList::getFunctionListPtr(const char*const libName,  HINSTANCE__* p11Library, const char*getFunctionList) {
 #else
@@ -66,7 +66,7 @@ static CK_FUNCTION_LIST_PTR getFunctionListPtr(const char*const libName, void *c
 	}
 	return ptr;
 }
-#endif //P11M
+#endif //P11_SHARED_LIBRARY
 void TestsNoPINInitBase::getSlotIDs() {
 	bool hasFoundFree(false);
 	bool hasFoundInitialized(false);
@@ -95,13 +95,13 @@ void TestsNoPINInitBase::getSlotIDs() {
 }
 
 TestsNoPINInitBase::TestsNoPINInitBase() :
-#ifdef P11M
+#ifdef P11_SHARED_LIBRARY
 #ifdef _WIN32
 		p11Library( LoadLibrary(libName.c_str()) ),
 #else
-		p11Library( dlopen(P11M, RTLD_LAZY) ),
+		p11Library( dlopen(P11_SHARED_LIBRARY, RTLD_LAZY) ),
 #endif
-		m_ptr(getFunctionListPtr(P11M, p11Library, "C_GetFunctionList")),
+		m_ptr(getFunctionListPtr(P11_SHARED_LIBRARY, p11Library, "C_GetFunctionList")),
 #endif
 		m_invalidSlotID(((CK_SLOT_ID)1<<31)),
 		m_initializedTokenSlotID(m_invalidSlotID),
@@ -139,7 +139,7 @@ void TestsNoPINInitBase::tearDown() {
 	CPPUNIT_ASSERT_MESSAGE(oss.str(), false);
 }
 
-#ifdef P11M
+#ifdef P11_SHARED_LIBRARY
 TestsNoPINInitBase::~TestsNoPINInitBase() {
 	if ( !p11Library ) {
 		return;
@@ -153,4 +153,4 @@ TestsNoPINInitBase::~TestsNoPINInitBase() {
 
 #else
 TestsNoPINInitBase::~TestsNoPINInitBase() {}
-#endif // P11M
+#endif // P11_SHARED_LIBRARY

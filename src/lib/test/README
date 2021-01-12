@@ -1,8 +1,16 @@
+Testing of SoftHSM or another PKCS#11 implementation
+====================================================
+
+To build for testing any PKCS#11 module provided as shared library there is a preprocessor macro
+that is specifying the name of the PKCS#11 shared library - P11_SHARED_LIBRARY. If defined then the
+shared library will be tested. If not defined then the test will be built with static linking
+to SoftHSM object files.
+
 To build for test of SoftHSM with static linking:
 make p11test
 
-To build for testing another p11 module provided as shared library:
-make p11test_DEPENDENCIES= p11test_LDADD= CPPFLAGS=-DP11M=\\\"./p11m.so\\\" p11test
+To build for testing of a PKCS#11 module implemented as a shared library:
+make p11test_DEPENDENCIES= p11test_LDADD= CPPFLAGS=-DP11_SHARED_LIBRARY=\\\"./p11m.so\\\" p11test
 Substitute ./p11m.so with the path to your shared library.
 Note that nothing else of SoftHSMv2 has to be built in order to build the test of an external p11.
 

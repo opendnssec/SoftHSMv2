@@ -43,7 +43,7 @@ void InitTests::setUp()
 {
 //    printf("\nInitTests\n");
 
-#ifndef P11M
+#ifndef P11_SHARED_LIBRARY
 #ifndef _WIN32
 	setenv("SOFTHSM2_CONF", "./softhsm2.conf", 1);
 #else

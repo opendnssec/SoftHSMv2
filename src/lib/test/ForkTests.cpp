@@ -90,7 +90,7 @@ void ForkTests::testFork()
 	rv = CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 }
-#ifndef P11M
+#ifndef P11_SHARED_LIBRARY
 void ForkTests::testResetOnFork()
 {
 	CK_RV rv;
@@ -135,4 +135,4 @@ void ForkTests::testResetOnFork()
 	setenv("SOFTHSM2_CONF", ".\\softhsm2.conf", 1);
 #endif
 }
-#endif // P11M
+#endif // P11_SHARED_LIBRARY
