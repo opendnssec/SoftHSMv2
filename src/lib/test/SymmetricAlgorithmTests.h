@@ -36,6 +36,8 @@
 #include "TestsBase.h"
 #include <cppunit/extensions/HelperMacros.h>
 
+class WrappedMaterial;
+
 class SymmetricAlgorithmTests : public TestsBase
 {
 	CPPUNIT_TEST_SUITE(SymmetricAlgorithmTests);
@@ -53,9 +55,12 @@ class SymmetricAlgorithmTests : public TestsBase
 	CPPUNIT_TEST_SUITE_END();
 
 public:
+	using Bytes = std::vector<CK_BYTE>;
+	
 	void testAesEncryptDecrypt();
 	void testDesEncryptDecrypt();
 	void testAesWrapUnwrap();
+	void testDesWrapUnwrap();
 	void testNullTemplate();
 	void testNonModifiableDesKeyGeneration();
 	void testCheckValue();
@@ -80,11 +85,72 @@ protected:
 			bool isSizeOK=true);
 	void aesWrapUnwrapGeneric(CK_MECHANISM_TYPE mechanismType, CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hKey);
 	void aesWrapUnwrapRsa(CK_MECHANISM_TYPE mechanismType, CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hKey);
+	void desWrapUnwrapRsa(CK_MECHANISM_TYPE mechanismType, CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hKey);
 	CK_RV generateRsaPrivateKey(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_OBJECT_HANDLE &hKey);
 #ifdef WITH_GOST
 	void aesWrapUnwrapGost(CK_MECHANISM_TYPE mechanismType, CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hKey);
 	CK_RV generateGostPrivateKey(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_OBJECT_HANDLE &hKey);
 #endif
+#ifndef WITH_FIPS
+	CK_RV importDesKey(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_OBJECT_HANDLE &hKey, const Bytes & vKeyValue );
+	CK_RV importDes2Key(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_OBJECT_HANDLE &hKey, const Bytes & vKeyValue );
+#endif
+	CK_RV importDes3Key(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_OBJECT_HANDLE &hKey, const Bytes & vKeyValue );
+	CK_RV importAesKey(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_OBJECT_HANDLE &hKey, const Bytes & vKeyValue );
+
+	void unwrapKnownKey(const CK_SESSION_HANDLE hSession, WrappedMaterial & sWrapped);
+private:
+	void wrapUnwrapRsa(CK_MECHANISM_TYPE mechanismType, CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hKey);
+	CK_RV importKey(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_OBJECT_HANDLE &hKey, const CK_KEY_TYPE keyType, const Bytes & vKeyValue );
+};
+
+
+class WrappedMaterial {
+
+	using Bytes = std::vector<CK_BYTE>;
+
+	std::string m_descr;
+	std::vector<Bytes> m_data;
+	CK_OBJECT_CLASS m_wrappedobjectclass;
+	CK_KEY_TYPE m_wrappedkeytype;
+	CK_KEY_TYPE m_wrappingkeytype;
+	CK_MECHANISM m_mechanism;
+
+public:
+
+	WrappedMaterial( std::string description,
+			 CK_KEY_TYPE wrappingKeyType,
+			 CK_MECHANISM_TYPE mechType,
+			 CK_OBJECT_CLASS wrappedObjectClass,
+			 CK_KEY_TYPE wrappedKeyType,
+			 std::initializer_list<Bytes> il ) :
+		m_descr ( description ),
+		m_wrappedobjectclass ( wrappedObjectClass ),
+		m_wrappedkeytype ( wrappedKeyType ),
+		m_wrappingkeytype ( wrappingKeyType )
+	{
+		for( auto &&i : il ) {
+			m_data.emplace_back( std::move(i) );
+		}
+		m_mechanism.mechanism = mechType;
+	}
+
+	std::string description() { return m_descr; }
+	Bytes &wrappingKeyBytes() { return m_data[0]; }
+	Bytes &cbcIv() { return m_data[1]; }
+	Bytes &wrappedKey() { return m_data[2]; };
+	CK_OBJECT_CLASS &wrappedObjectClass() { return m_wrappedobjectclass; };
+	CK_KEY_TYPE &wrappingKeyType() { return m_wrappingkeytype; };
+	CK_KEY_TYPE &wrappedKeyType() { return m_wrappedkeytype; };
+	CK_MECHANISM &mechanism() {
+		// adjust mechanism to point to data provided
+		// we do it here and not in the constructor,
+		// has data() can move around as we push to the vectors
+		m_mechanism.pParameter = m_data[1].data();
+		m_mechanism.ulParameterLen = m_data[1].size();
+		return m_mechanism;
+	};
+
 };
 
 #endif // !_SOFTHSM_V2_SYMENCRYPTDECRYPTTESTS_H

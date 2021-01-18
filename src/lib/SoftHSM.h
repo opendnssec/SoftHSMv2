@@ -454,6 +454,11 @@ private:
 		ByteString &wrapped
 	);
 
+	size_t RFC5652Pad(ByteString &keydata, size_t blocksize);
+	size_t RFC3394Pad(ByteString &keydata);
+	bool RFC5652Unpad(ByteString &keydata, size_t blocksize);
+	bool RFC3394Unpad(ByteString &keydata);
+	
 	CK_RV WrapKeySym
 	(
 		CK_MECHANISM_PTR pMechanism,
