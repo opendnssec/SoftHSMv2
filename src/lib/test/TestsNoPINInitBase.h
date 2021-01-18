@@ -37,7 +37,7 @@
 #include <cppunit/TestFixture.h>
 
 
-#ifdef P11M
+#ifdef P11_SHARED_LIBRARY
 #define CRYPTOKI_F_PTR(func) m_ptr->func
 #else
 #define CRYPTOKI_F_PTR(func) func
@@ -52,7 +52,7 @@ public:
 	virtual void tearDown();
 private:
 	void getSlotIDs();
-#ifdef P11M
+#ifdef P11_SHARED_LIBRARY
 #ifdef _WIN32
 	HINSTANCE__* p11Library;
 #else

@@ -152,6 +152,7 @@ void InfoTests::testGetSlotInfo()
 	CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
 }
 
+#ifndef P11_SHARED_LIBRARY
 void InfoTests::testGetSlotInfoAlt()
 {
 	CK_RV rv;
@@ -201,6 +202,7 @@ void InfoTests::testGetSlotInfoAlt()
 	setenv("SOFTHSM2_CONF", ".\\softhsm2.conf", 1);
 #endif
 }
+#endif // P11_SHARED_LIBRARY
 
 
 void InfoTests::testGetTokenInfo()
@@ -321,6 +323,7 @@ void InfoTests::testGetMechanismInfo()
 }
 
 
+#ifndef P11_SHARED_LIBRARY
 void InfoTests::testGetMechanismListConfig()
 {
 	CK_RV rv;
@@ -362,6 +365,7 @@ void InfoTests::testGetMechanismListConfig()
 	setenv("SOFTHSM2_CONF", ".\\softhsm2.conf", 1);
 #endif
 }
+#endif // P11_SHARED_LIBRARY
 
 void InfoTests::testWaitForSlotEvent()
 {
@@ -370,18 +374,19 @@ void InfoTests::testWaitForSlotEvent()
 	// Just make sure that we finalize any previous failed tests
 	CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
 
-	rv = CRYPTOKI_F_PTR( C_WaitForSlotEvent(CKF_DONT_BLOCK, NULL_PTR, NULL_PTR) );
+	CK_SLOT_ID slot;
+	rv = CRYPTOKI_F_PTR( C_WaitForSlotEvent(CKF_DONT_BLOCK, &slot, NULL_PTR) );
 	CPPUNIT_ASSERT(rv == CKR_CRYPTOKI_NOT_INITIALIZED);
 
 	rv = CRYPTOKI_F_PTR( C_Initialize(NULL_PTR) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// Blocking version should fail
-	rv = CRYPTOKI_F_PTR( C_WaitForSlotEvent(0, NULL_PTR, NULL_PTR) );
+	rv = CRYPTOKI_F_PTR( C_WaitForSlotEvent(0, &slot, NULL_PTR) );
 	CPPUNIT_ASSERT(rv == CKR_FUNCTION_NOT_SUPPORTED);
 
 	// Should always return CKR_NO_EVENT
-	rv = CRYPTOKI_F_PTR( C_WaitForSlotEvent(CKF_DONT_BLOCK, NULL_PTR, NULL_PTR) );
+	rv = CRYPTOKI_F_PTR( C_WaitForSlotEvent(CKF_DONT_BLOCK, &slot, NULL_PTR) );
 	CPPUNIT_ASSERT(rv == CKR_NO_EVENT);
 
 	CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
