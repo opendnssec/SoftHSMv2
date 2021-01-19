@@ -52,7 +52,7 @@ class ObjectFile : public OSObject
 {
 public:
 	// Constructor
-	ObjectFile(OSToken* parent, const std::string inPath, const std::string inLockpath, bool isNew = false);
+	ObjectFile(OSToken* parent, const std::string inPath, int inUmask, const std::string inLockpath, bool isNew = false);
 
 	// Destructor
 	virtual ~ObjectFile();
@@ -127,6 +127,9 @@ private:
 
 	// The path to the file
 	std::string path;
+
+	// File mode creation mask
+	int umask;
 
 	// The Generation object that is used to detect changes in the
         // object file from other SoftHSM instances

@@ -42,7 +42,7 @@ class File
 {
 public:
 	// Constructor
-	File(std::string inPath, bool forRead = true, bool forWrite = false, bool create = false, bool truncate = true);
+	File(std::string inPath, int umask, bool forRead = true, bool forWrite = false, bool create = false, bool truncate = true);
 
 	// Destructor
 	virtual ~File();

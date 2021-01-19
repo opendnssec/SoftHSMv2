@@ -43,9 +43,10 @@
 #include <stdio.h>
 
 // Constructor
-ObjectStore::ObjectStore(std::string inStorePath)
+ObjectStore::ObjectStore(std::string inStorePath, int inUmask)
 {
 	storePath = inStorePath;
+	umask = inUmask;
 	valid = false;
 	storeMutex = MutexFactory::i()->getMutex();
 
@@ -67,7 +68,7 @@ ObjectStore::ObjectStore(std::string inStorePath)
 	for (std::vector<std::string>::iterator i = dirs.begin(); i != dirs.end(); i++)
 	{
 		// Create a token instance
-		ObjectStoreToken* token = ObjectStoreToken::accessToken(storePath, *i);
+		ObjectStoreToken* token = ObjectStoreToken::accessToken(storePath, *i, umask);
 
 		if (!token->isValid())
 		{
@@ -144,7 +145,7 @@ ObjectStoreToken* ObjectStore::newToken(const ByteString& label)
 	ByteString serial((const unsigned char*) serialNumber.c_str(), serialNumber.size());
 
 	// Create the token
-	ObjectStoreToken* newToken = ObjectStoreToken::createToken(storePath, tokenUUID, label, serial);
+	ObjectStoreToken* newToken = ObjectStoreToken::createToken(storePath, tokenUUID, umask, label, serial);
 
 	if (newToken != NULL)
 	{

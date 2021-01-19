@@ -49,10 +49,11 @@
 #define MECHSET_ATTR			0x5
 
 // Constructor
-ObjectFile::ObjectFile(OSToken* parent, std::string inPath, std::string inLockpath, bool isNew /* = false */)
+ObjectFile::ObjectFile(OSToken* parent, std::string inPath, int inUmask, std::string inLockpath, bool isNew /* = false */)
 {
 	path = inPath;
-	gen = Generation::create(path);
+	umask = inUmask;
+	gen = Generation::create(path, umask);
 	objectMutex = MutexFactory::i()->getMutex();
 	valid = (gen != NULL) && (objectMutex != NULL);
 	token = parent;
@@ -305,7 +306,7 @@ void ObjectFile::refresh(bool isFirstTime /* = false */)
 		return;
 	}
 
-	File objectFile(path);
+	File objectFile(path, umask);
 
 	if (!objectFile.isValid())
 	{
@@ -673,7 +674,7 @@ void ObjectFile::store(bool isCommit /* = false */)
 		return;
 	}
 
-	File objectFile(path, true, true, true, false);
+	File objectFile(path, umask, true, true, true, false);
 
 	if (!objectFile.isValid())
 	{
@@ -688,7 +689,7 @@ void ObjectFile::store(bool isCommit /* = false */)
 
 	if (!isCommit) {
 		MutexLocker lock(objectMutex);
-		File lockFile(lockpath, false, true, true);
+		File lockFile(lockpath, umask, false, true, true);
 
 		if (!writeAttributes(objectFile))
 		{
@@ -773,7 +774,7 @@ bool ObjectFile::startTransaction(Access)
 		return false;
 	}
 
-	transactionLockFile = new File(lockpath, false, true, true);
+	transactionLockFile = new File(lockpath, umask, false, true, true);
 
 	if (!transactionLockFile->isValid() || !transactionLockFile->lock())
 	{

@@ -45,10 +45,10 @@ public:
 	static bool selectBackend(const std::string& backend);
 
 	// Create a new token
-	static ObjectStoreToken* createToken(const std::string basePath, const std::string tokenDir, const ByteString& label, const ByteString& serial);
+	static ObjectStoreToken* createToken(const std::string basePath, const std::string tokenDir, int umask, const ByteString& label, const ByteString& serial);
 
 	// Access an existing token
-	static ObjectStoreToken* accessToken(const std::string &basePath, const std::string &tokenDir);
+	static ObjectStoreToken* accessToken(const std::string &basePath, const std::string &tokenDir, int umask);
 
 	// Set the SO PIN
 	virtual bool setSOPIN(const ByteString& soPINBlob) = 0;
