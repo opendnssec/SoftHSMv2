@@ -65,8 +65,10 @@ AC_DEFUN([ACX_CRYPTO_BACKEND],[
 		AC_MSG_RESULT(OpenSSL)
 
 		if test "x${enable_fips}" = "xyes"; then
+			# needed for FIPS compliance, so change only when FIPS requirements change
 			ACX_OPENSSL(1,0,2)
 		else
+			# increase this as features from newer versions needed
 			ACX_OPENSSL(1,0,2)
 		fi
 
