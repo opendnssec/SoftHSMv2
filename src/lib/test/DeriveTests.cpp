@@ -304,7 +304,7 @@ void DeriveTests::dhDerive(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hPublicK
 }
 
 #if defined(WITH_ECC) || defined(WITH_EDDSA)
-void DeriveTests::ecdhDerive(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hPublicKey, CK_OBJECT_HANDLE hPrivateKey, CK_OBJECT_HANDLE &hKey, bool useRaw)
+void DeriveTests::ecdhDerive(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hPublicKey, CK_OBJECT_HANDLE hPrivateKey, CK_OBJECT_HANDLE &hKey, bool useRaw, ck_ec_kdf_t kdf, bool useSharedData, CK_ULONG secLen = 32)
 {
 	CK_ATTRIBUTE valAttrib = { CKA_EC_POINT, NULL_PTR, 0 };
 	CK_RV rv = CRYPTOKI_F_PTR( C_GetAttributeValue(hSession, hPublicKey, &valAttrib, 1) );
@@ -313,7 +313,7 @@ void DeriveTests::ecdhDerive(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hPubli
 	rv = CRYPTOKI_F_PTR( C_GetAttributeValue(hSession, hPublicKey, &valAttrib, 1) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	CK_ECDH1_DERIVE_PARAMS parms = { CKD_NULL, 0, NULL_PTR, 0, NULL_PTR };
+	CK_ECDH1_DERIVE_PARAMS parms = { kdf, 0, NULL_PTR, 0, NULL_PTR };
 	// Use RAW or DER format
 	if (useRaw)
 	{
@@ -342,6 +342,12 @@ void DeriveTests::ecdhDerive(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hPubli
 		parms.ulPublicDataLen = valAttrib.ulValueLen;
 	}
 
+	if (useSharedData)
+	{
+		parms.pSharedData = (unsigned char *) "TEST";
+		parms.ulSharedDataLen = 4;
+	}
+
 	CK_MECHANISM mechanism = { CKM_ECDH1_DERIVE, NULL, 0 };
 	mechanism.pParameter = &parms;
 	mechanism.ulParameterLen = sizeof(parms);
@@ -349,7 +355,6 @@ void DeriveTests::ecdhDerive(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hPubli
 	CK_KEY_TYPE keyType = CKK_GENERIC_SECRET;
 	CK_BBOOL bFalse = CK_FALSE;
 	CK_BBOOL bTrue = CK_TRUE;
-	CK_ULONG secLen = 32;
 	CK_ATTRIBUTE keyAttribs[] = {
 		{ CKA_CLASS, &keyClass, sizeof(keyClass) },
 		{ CKA_KEY_TYPE, &keyType, sizeof(keyType) },
@@ -512,9 +517,9 @@ void DeriveTests::testEcdsaDerive()
 	rv = generateEcKeyPair("P-256",hSessionRW,IN_SESSION,IS_PUBLIC,IN_SESSION,IS_PUBLIC,hPuk2,hPrk2);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 	CK_OBJECT_HANDLE hKey1 = CK_INVALID_HANDLE;
-	ecdhDerive(hSessionRW,hPuk1,hPrk2,hKey1,true);
+	ecdhDerive(hSessionRW,hPuk1,hPrk2,hKey1,true,CKD_NULL,false);
 	CK_OBJECT_HANDLE hKey2 = CK_INVALID_HANDLE;
-	ecdhDerive(hSessionRW,hPuk2,hPrk1,hKey2,false);
+	ecdhDerive(hSessionRW,hPuk2,hPrk1,hKey2,false,CKD_NULL,false);
 	CPPUNIT_ASSERT(compareSecret(hSessionRW,hKey1,hKey2));
 
 	// Private Session Keys
@@ -522,8 +527,8 @@ void DeriveTests::testEcdsaDerive()
 	CPPUNIT_ASSERT(rv == CKR_OK);
 	rv = generateEcKeyPair("P-384",hSessionRW,IN_SESSION,IS_PRIVATE,IN_SESSION,IS_PRIVATE,hPuk2,hPrk2);
 	CPPUNIT_ASSERT(rv == CKR_OK);
-	ecdhDerive(hSessionRW,hPuk1,hPrk2,hKey1,true);
-	ecdhDerive(hSessionRW,hPuk2,hPrk1,hKey2,false);
+	ecdhDerive(hSessionRW,hPuk1,hPrk2,hKey1,true,CKD_NULL,false);
+	ecdhDerive(hSessionRW,hPuk2,hPrk1,hKey2,false,CKD_NULL,false);
 	CPPUNIT_ASSERT(compareSecret(hSessionRW,hKey1,hKey2));
 
 	// Public Token Keys
@@ -531,8 +536,8 @@ void DeriveTests::testEcdsaDerive()
 	CPPUNIT_ASSERT(rv == CKR_OK);
 	rv = generateEcKeyPair("P-521",hSessionRW,ON_TOKEN,IS_PUBLIC,ON_TOKEN,IS_PUBLIC,hPuk2,hPrk2);
 	CPPUNIT_ASSERT(rv == CKR_OK);
-	ecdhDerive(hSessionRW,hPuk1,hPrk2,hKey1,true);
-	ecdhDerive(hSessionRW,hPuk2,hPrk1,hKey2,false);
+	ecdhDerive(hSessionRW,hPuk1,hPrk2,hKey1,true,CKD_NULL,false);
+	ecdhDerive(hSessionRW,hPuk2,hPrk1,hKey2,false,CKD_NULL,false);
 	CPPUNIT_ASSERT(compareSecret(hSessionRW,hKey1,hKey2));
 
 	// Private Token Keys
@@ -540,9 +545,48 @@ void DeriveTests::testEcdsaDerive()
 	CPPUNIT_ASSERT(rv == CKR_OK);
 	rv = generateEcKeyPair("P-256",hSessionRW,ON_TOKEN,IS_PRIVATE,ON_TOKEN,IS_PRIVATE,hPuk2,hPrk2);
 	CPPUNIT_ASSERT(rv == CKR_OK);
-	ecdhDerive(hSessionRW,hPuk1,hPrk2,hKey1,true);
-	ecdhDerive(hSessionRW,hPuk2,hPrk1,hKey2,false);
+	ecdhDerive(hSessionRW,hPuk1,hPrk2,hKey1,true,CKD_NULL,false);
+	ecdhDerive(hSessionRW,hPuk2,hPrk1,hKey2,false,CKD_NULL,false);
 	CPPUNIT_ASSERT(compareSecret(hSessionRW,hKey1,hKey2));
+
+	CK_OBJECT_HANDLE hKey3 = CK_INVALID_HANDLE;
+	CK_OBJECT_HANDLE hKey4 = CK_INVALID_HANDLE;
+
+	CK_ATTRIBUTE keyAttribs[] = {
+		{ CKA_VALUE, NULL_PTR, 0 },
+	};
+	CK_BYTE val1[48];
+	CK_BYTE val2[48];
+
+	// KDF's
+	for (ck_ec_kdf_t kdf : { CKD_SHA1_KDF, CKD_SHA224_KDF, CKD_SHA256_KDF, CKD_SHA384_KDF, CKD_SHA512_KDF })
+	{
+		ecdhDerive(hSessionRW,hPuk1,hPrk2,hKey1,true,kdf,false);
+		ecdhDerive(hSessionRW,hPuk2,hPrk1,hKey2,false,kdf,false);
+		CPPUNIT_ASSERT(compareSecret(hSessionRW,hKey1,hKey2));
+
+		ecdhDerive(hSessionRW,hPuk1,hPrk2,hKey3,true,kdf,true);
+		ecdhDerive(hSessionRW,hPuk2,hPrk1,hKey4,false,kdf,true);
+		CPPUNIT_ASSERT(compareSecret(hSessionRW,hKey3,hKey4));
+
+		CPPUNIT_ASSERT(!compareSecret(hSessionRW,hKey1,hKey3));
+
+		// ANSI X9.63 KDF's derive arbitrarily long sequences of bytes, short are prefixes of longer
+
+		keyAttribs[0].pValue = val1;
+		keyAttribs[0].ulValueLen = sizeof(val1);
+		ecdhDerive(hSessionRW,hPuk1,hPrk2,hKey1,true,kdf,false,24);
+		CK_RV rv = CRYPTOKI_F_PTR( C_GetAttributeValue(hSessionRW, hKey1, keyAttribs, 1) );
+		CPPUNIT_ASSERT(rv == CKR_OK);
+
+		keyAttribs[0].pValue = val2;
+		keyAttribs[0].ulValueLen = sizeof(val2);
+		ecdhDerive(hSessionRW,hPuk2,hPrk1,hKey2,false,kdf,false,48);
+		rv = CRYPTOKI_F_PTR( C_GetAttributeValue(hSessionRW, hKey2, keyAttribs, 1) );
+		CPPUNIT_ASSERT(rv == CKR_OK);
+
+		CPPUNIT_ASSERT(memcmp(val1, val2, 24) == 0);
+	}
 }
 #endif
 
@@ -592,9 +636,9 @@ void DeriveTests::testEddsaDerive(const char* alg)
 	rv = generateEdKeyPair(alg,hSessionRW,IN_SESSION,IS_PUBLIC,IN_SESSION,IS_PUBLIC,hPuk2,hPrk2);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 	CK_OBJECT_HANDLE hKey1 = CK_INVALID_HANDLE;
-	ecdhDerive(hSessionRW,hPuk1,hPrk2,hKey1,true);
+	ecdhDerive(hSessionRW,hPuk1,hPrk2,hKey1,true,CKD_NULL,false);
 	CK_OBJECT_HANDLE hKey2 = CK_INVALID_HANDLE;
-	ecdhDerive(hSessionRW,hPuk2,hPrk1,hKey2,false);
+	ecdhDerive(hSessionRW,hPuk2,hPrk1,hKey2,false,CKD_NULL,false);
 	CPPUNIT_ASSERT(compareSecret(hSessionRW,hKey1,hKey2));
 
 	// Private Session Keys
@@ -602,8 +646,8 @@ void DeriveTests::testEddsaDerive(const char* alg)
 	CPPUNIT_ASSERT(rv == CKR_OK);
 	rv = generateEdKeyPair(alg,hSessionRW,IN_SESSION,IS_PRIVATE,IN_SESSION,IS_PRIVATE,hPuk2,hPrk2);
 	CPPUNIT_ASSERT(rv == CKR_OK);
-	ecdhDerive(hSessionRW,hPuk1,hPrk2,hKey1,true);
-	ecdhDerive(hSessionRW,hPuk2,hPrk1,hKey2,false);
+	ecdhDerive(hSessionRW,hPuk1,hPrk2,hKey1,true,CKD_NULL,false);
+	ecdhDerive(hSessionRW,hPuk2,hPrk1,hKey2,false,CKD_NULL,false);
 	CPPUNIT_ASSERT(compareSecret(hSessionRW,hKey1,hKey2));
 
 	// Public Token Keys
@@ -611,8 +655,8 @@ void DeriveTests::testEddsaDerive(const char* alg)
 	CPPUNIT_ASSERT(rv == CKR_OK);
 	rv = generateEdKeyPair(alg,hSessionRW,ON_TOKEN,IS_PUBLIC,ON_TOKEN,IS_PUBLIC,hPuk2,hPrk2);
 	CPPUNIT_ASSERT(rv == CKR_OK);
-	ecdhDerive(hSessionRW,hPuk1,hPrk2,hKey1,true);
-	ecdhDerive(hSessionRW,hPuk2,hPrk1,hKey2,false);
+	ecdhDerive(hSessionRW,hPuk1,hPrk2,hKey1,true,CKD_NULL,false);
+	ecdhDerive(hSessionRW,hPuk2,hPrk1,hKey2,false,CKD_NULL,false);
 	CPPUNIT_ASSERT(compareSecret(hSessionRW,hKey1,hKey2));
 
 	// Private Token Keys
@@ -620,9 +664,48 @@ void DeriveTests::testEddsaDerive(const char* alg)
 	CPPUNIT_ASSERT(rv == CKR_OK);
 	rv = generateEdKeyPair(alg,hSessionRW,ON_TOKEN,IS_PRIVATE,ON_TOKEN,IS_PRIVATE,hPuk2,hPrk2);
 	CPPUNIT_ASSERT(rv == CKR_OK);
-	ecdhDerive(hSessionRW,hPuk1,hPrk2,hKey1,true);
-	ecdhDerive(hSessionRW,hPuk2,hPrk1,hKey2,false);
+	ecdhDerive(hSessionRW,hPuk1,hPrk2,hKey1,true,CKD_NULL,false);
+	ecdhDerive(hSessionRW,hPuk2,hPrk1,hKey2,false,CKD_NULL,false);
 	CPPUNIT_ASSERT(compareSecret(hSessionRW,hKey1,hKey2));
+
+	CK_OBJECT_HANDLE hKey3 = CK_INVALID_HANDLE;
+	CK_OBJECT_HANDLE hKey4 = CK_INVALID_HANDLE;
+
+	CK_ATTRIBUTE keyAttribs[] = {
+		{ CKA_VALUE, NULL_PTR, 0 },
+	};
+	CK_BYTE val1[48];
+	CK_BYTE val2[48];
+
+	// KDF's
+	for (ck_ec_kdf_t kdf : { CKD_SHA1_KDF, CKD_SHA224_KDF, CKD_SHA256_KDF, CKD_SHA384_KDF, CKD_SHA512_KDF })
+	{
+		ecdhDerive(hSessionRW,hPuk1,hPrk2,hKey1,true,kdf,false);
+		ecdhDerive(hSessionRW,hPuk2,hPrk1,hKey2,false,kdf,false);
+		CPPUNIT_ASSERT(compareSecret(hSessionRW,hKey1,hKey2));
+
+		ecdhDerive(hSessionRW,hPuk1,hPrk2,hKey3,true,kdf,true);
+		ecdhDerive(hSessionRW,hPuk2,hPrk1,hKey4,false,kdf,true);
+		CPPUNIT_ASSERT(compareSecret(hSessionRW,hKey3,hKey4));
+
+		CPPUNIT_ASSERT(!compareSecret(hSessionRW,hKey1,hKey3));
+
+		// ANSI X9.63 KDF's derive arbitrarily long sequences of bytes, short are prefixes of longer
+
+		keyAttribs[0].pValue = val1;
+		keyAttribs[0].ulValueLen = sizeof(val1);
+		ecdhDerive(hSessionRW,hPuk1,hPrk2,hKey1,true,kdf,false,24);
+		CK_RV rv = CRYPTOKI_F_PTR( C_GetAttributeValue(hSessionRW, hKey1, keyAttribs, 1) );
+		CPPUNIT_ASSERT(rv == CKR_OK);
+
+		keyAttribs[0].pValue = val2;
+		keyAttribs[0].ulValueLen = sizeof(val2);
+		ecdhDerive(hSessionRW,hPuk2,hPrk1,hKey2,false,kdf,false,48);
+		rv = CRYPTOKI_F_PTR( C_GetAttributeValue(hSessionRW, hKey2, keyAttribs, 1) );
+		CPPUNIT_ASSERT(rv == CKR_OK);
+
+		CPPUNIT_ASSERT(memcmp(val1, val2, 24) == 0);
+	}
 }
 #endif
 
