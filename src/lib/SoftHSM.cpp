@@ -792,12 +792,17 @@ void SoftHSM::prepareSupportedMecahnisms(std::map<std::string, CK_MECHANISM_TYPE
 	if (mechs != "ALL")
 	{
 		bool negative = (mechs[0] == '-');
-		if (!negative)
+		size_t pos = 0, prev = 0;
+		if (negative)
+		{
+			/* Skip the minus sign */
+			prev = 1;
+		}
+		else
 		{
 			/* For positive list, we remove everything */
 			supportedMechanisms.clear();
 		}
-		size_t pos = 0, prev = 0;
 		std::string token;
 		do
 		{
