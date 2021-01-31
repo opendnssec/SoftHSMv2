@@ -60,9 +60,9 @@ void SessionManagerTests::testOpenClose()
 {
 	// Create an empty object store
 #ifndef _WIN32
-	ObjectStore store("./testdir");
+	ObjectStore store("./testdir", DEFAULT_UMASK);
 #else
-	ObjectStore store(".\\testdir");
+	ObjectStore store(".\\testdir", DEFAULT_UMASK);
 #endif
 
 	// Create the managers
@@ -160,9 +160,9 @@ void SessionManagerTests::testSessionInfo()
 {
 	// Create an empty object store
 #ifndef _WIN32
-	ObjectStore store("./testdir");
+	ObjectStore store("./testdir", DEFAULT_UMASK);
 #else
-	ObjectStore store(".\\testdir");
+	ObjectStore store(".\\testdir", DEFAULT_UMASK);
 #endif
 
 	// Create the managers

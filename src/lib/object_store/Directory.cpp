@@ -222,12 +222,12 @@ bool Directory::refresh()
 }
 
 // Create a new subdirectory
-bool Directory::mkdir(std::string name)
+bool Directory::mkdir(std::string name, int umask)
 {
 	std::string fullPath = path + OS_PATHSEP + name;
 
 #ifndef _WIN32
-	int rv = ::mkdir(fullPath.c_str(), S_IFDIR | S_IRWXU);
+	int rv = ::mkdir(fullPath.c_str(), S_IFDIR | ((S_IRWXU | S_IRWXG | S_IRWXO) & ~umask));
 #else
 	int rv = _mkdir(fullPath.c_str());
 #endif

@@ -704,7 +704,7 @@ bool DB::Result::nextRow()
  * Connection
  **************************/
 
-DB::Connection *DB::Connection::Create(const std::string &dbdir, const std::string &dbname)
+DB::Connection *DB::Connection::Create(const std::string &dbdir, const std::string &dbname, int umask)
 {
 	if (dbdir.length() == 0) {
 		DB::logError("Connection::Create: database directory parameter dbdir is empty");
@@ -716,13 +716,14 @@ DB::Connection *DB::Connection::Create(const std::string &dbdir, const std::stri
 		return NULL;
 	}
 
-	return new Connection(dbdir,dbname);
+	return new Connection(dbdir, dbname, umask);
 }
 
-DB::Connection::Connection(const std::string &dbdir, const std::string &dbname)
+DB::Connection::Connection(const std::string &dbdir, const std::string &dbname, int umask)
 	: _dbdir(dbdir)
 	, _dbpath(dbdir + OS_PATHSEP + dbname)
 	, _db(NULL)
+	, _umask(umask)
 {
 }
 
@@ -815,7 +816,7 @@ bool DB::Connection::connect(const char *
 							 )
 {
 	// Create and set file permissions if the DB does not exist.
-	int fd = open(_dbpath.c_str(), O_CREAT, S_IRUSR | S_IWUSR);
+	int fd = open(_dbpath.c_str(), O_CREAT, (S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH) & ~_umask);
 	if (fd == -1)
 	{
 		DB::logError("Could not open database: %s (errno %i)",

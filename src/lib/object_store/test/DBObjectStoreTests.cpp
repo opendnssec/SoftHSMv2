@@ -45,11 +45,16 @@ CPPUNIT_TEST_SUITE_REGISTRATION(test_a_newly_created_object_store);
 
 void test_a_newly_created_object_store::setUp()
 {
+#ifndef _WIN32
+	CPPUNIT_ASSERT(!system("rm -rf testdir"));
+#else
+	CPPUNIT_ASSERT(!system("rmdir /s /q testdir 2> nul"));
+#endif
 	CPPUNIT_ASSERT(!system("mkdir testdir"));
 
 	ObjectStoreToken::selectBackend("db");
 
-	store = new ObjectStore("testdir");
+	store = new ObjectStore("testdir", DEFAULT_UMASK);
 	nulltoken = NULL;
 }
 

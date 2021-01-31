@@ -43,13 +43,16 @@ class ForkTests : public TestsNoPINInitBase
 {
 	CPPUNIT_TEST_SUITE(ForkTests);
 	CPPUNIT_TEST(testFork);
+#ifndef P11_SHARED_LIBRARY
 	CPPUNIT_TEST(testResetOnFork);
+#endif
 	CPPUNIT_TEST_SUITE_END();
 
 public:
 	void testFork();
+#ifndef P11_SHARED_LIBRARY
 	void testResetOnFork();
-
+#endif
 	virtual void setUp();
 	virtual void tearDown();
 };

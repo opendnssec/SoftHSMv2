@@ -168,6 +168,11 @@ AC_DEFINE_UNQUOTED(
 	[The default location of the token directory]
 )
 AC_DEFINE_UNQUOTED(
+	[DEFAULT_UMASK],
+	[0077],
+	[The default file mode creation mask]
+)
+AC_DEFINE_UNQUOTED(
 	[DEFAULT_OBJECTSTORE_BACKEND],
 	["file"],
 	[Default storage backend for token objects]

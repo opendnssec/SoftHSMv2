@@ -53,16 +53,16 @@ class DBToken : public ObjectStoreToken
 {
 public:
 	// Constructor to create a new token
-	DBToken(const std::string &baseDir, const std::string &tokenName, const ByteString& label, const ByteString& serial);
+	DBToken(const std::string &baseDir, const std::string &tokenName, int umask, const ByteString& label, const ByteString& serial);
 
 	// Constructor to access an existing token
-	DBToken(const std::string &baseDir, const std::string &tokenName);
+	DBToken(const std::string &baseDir, const std::string &tokenName, int umask);
 
 	// Create a new token
-	static DBToken* createToken(const std::string basePath, const std::string tokenDir, const ByteString& label, const ByteString& serial);
+	static DBToken* createToken(const std::string basePath, const std::string tokenDir, int umask, const ByteString& label, const ByteString& serial);
 
 	// Access an existing token
-	static DBToken* accessToken(const std::string &basePath, const std::string &tokenDir);
+	static DBToken* accessToken(const std::string &basePath, const std::string &tokenDir, int umask);
 
 	// Destructor
 	virtual ~DBToken();

@@ -144,7 +144,7 @@ public:
 // Responsible for connection to the database and for managing prepared statements.
 class Connection {
 public:
-	static Connection *Create(const std::string &dbdir, const std::string &dbname);
+	static Connection *Create(const std::string &dbdir, const std::string &dbname, int umask);
 	virtual ~Connection();
 
 	// value that was passed into dbdir when this connection was created.
@@ -176,8 +176,9 @@ private:
 	std::string _dbdir;
 	std::string _dbpath;
 	sqlite3 *_db;
+	int _umask;
 
-	Connection(const std::string &dbdir, const std::string &dbname);
+	Connection(const std::string &dbdir, const std::string &dbname, int umask);
 
 	// disable evil constructors
 	Connection(const Connection &);

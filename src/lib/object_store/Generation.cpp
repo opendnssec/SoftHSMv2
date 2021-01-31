@@ -35,9 +35,9 @@
 #include "Generation.h"
 
 // Factory
-Generation* Generation::create(const std::string path, bool isToken /* = false */)
+Generation* Generation::create(const std::string path, int umask, bool isToken /* = false */)
 {
-	Generation* gen = new Generation(path, isToken);
+	Generation* gen = new Generation(path, umask, isToken);
 	if ((gen != NULL) && isToken && (gen->genMutex == NULL))
 	{
 		delete gen;
@@ -92,7 +92,7 @@ bool Generation::wasUpdated()
 	{
 		MutexLocker lock(genMutex);
 
-		File genFile(path);
+		File genFile(path, umask);
 
 		if (!genFile.isValid())
 		{
@@ -118,7 +118,7 @@ bool Generation::wasUpdated()
 	}
 	else
 	{
-		File objectFile(path);
+		File objectFile(path, umask);
 
 		if (!objectFile.isValid())
 		{
@@ -151,7 +151,7 @@ void Generation::commit()
 	{
 		MutexLocker lock(genMutex);
 
-		File genFile(path, true, true, true, false);
+		File genFile(path, umask, true, true, true, false);
 
 		if (!genFile.isValid())
 		{
@@ -241,9 +241,10 @@ void Generation::rollback()
 }
 
 // Constructor
-Generation::Generation(const std::string inPath, bool inIsToken)
+Generation::Generation(const std::string inPath, int inUmask, bool inIsToken)
 {
 	path = inPath;
+	umask = inUmask;
 	isToken = inIsToken;
 	pendingUpdate = false;
 	currentValue = 0;

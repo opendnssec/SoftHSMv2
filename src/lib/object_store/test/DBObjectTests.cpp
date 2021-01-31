@@ -47,7 +47,7 @@ CPPUNIT_TEST_SUITE_REGISTRATION(test_a_dbobject);
 void test_a_dbobject::setUp()
 {
 	CPPUNIT_ASSERT(!system("mkdir testdir"));
-	connection = DB::Connection::Create("testdir","TestToken");
+	connection = DB::Connection::Create("testdir", "TestToken", DEFAULT_UMASK);
 	CPPUNIT_ASSERT(connection != NULL);
 	CPPUNIT_ASSERT(connection->connect("<1>"));
 	connection->setBusyTimeout(10);
@@ -57,7 +57,7 @@ void test_a_dbobject::setUp()
 	CPPUNIT_ASSERT(testObject.createTables());
 	CPPUNIT_ASSERT(testObject.commitTransaction());
 
-	connection2 = DB::Connection::Create("testdir","TestToken");
+	connection2 = DB::Connection::Create("testdir", "TestToken", DEFAULT_UMASK);
 	CPPUNIT_ASSERT(connection2 != NULL);
 	CPPUNIT_ASSERT(connection2->connect("<2>"));
 	connection2->setBusyTimeout(10);

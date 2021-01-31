@@ -61,13 +61,13 @@ void test_a_db::checks_for_empty_connection_parameters()
 {
 	DB::LogErrorHandler eh = DB::setLogErrorHandler(dummy_print);
 
-	DB::Connection *connection = DB::Connection::Create("","TestToken");
+	DB::Connection *connection = DB::Connection::Create("", "TestToken", DEFAULT_UMASK);
 	CPPUNIT_ASSERT_EQUAL(connection, null);
 
-	connection = DB::Connection::Create("testdir","");
+	connection = DB::Connection::Create("testdir", "", DEFAULT_UMASK);
 	CPPUNIT_ASSERT_EQUAL(connection, null);
 
-	connection = DB::Connection::Create("","");
+	connection = DB::Connection::Create("", "", DEFAULT_UMASK);
 	CPPUNIT_ASSERT_EQUAL(connection, null);
 
 	DB::setLogErrorHandler(eh);
@@ -76,7 +76,7 @@ void test_a_db::checks_for_empty_connection_parameters()
 void test_a_db::can_be_connected_to_database()
 {
 
-	DB::Connection *connection = DB::Connection::Create("testdir","TestToken");
+	DB::Connection *connection = DB::Connection::Create("testdir", "TestToken", DEFAULT_UMASK);
 	CPPUNIT_ASSERT(connection != null);
 	bool isConnected = connection->connect();
 	delete connection;
@@ -93,7 +93,7 @@ CPPUNIT_TEST_SUITE_REGISTRATION(test_a_db_with_a_connection);
 void test_a_db_with_a_connection::setUp()
 {
 	test_a_db::setUp();
-	connection = DB::Connection::Create("testdir","TestToken");
+	connection = DB::Connection::Create("testdir", "TestToken", DEFAULT_UMASK);
 	CPPUNIT_ASSERT(connection != null);
 	CPPUNIT_ASSERT(connection->connect());
 }
@@ -594,7 +594,7 @@ CPPUNIT_TEST_SUITE_REGISTRATION(test_a_db_with_a_connection_with_tables_with_a_s
 void test_a_db_with_a_connection_with_tables_with_a_second_connection_open::setUp()
 {
 	test_a_db_with_a_connection_with_tables::setUp();
-	connection2 = DB::Connection::Create("testdir","TestToken");
+	connection2 = DB::Connection::Create("testdir", "TestToken", DEFAULT_UMASK);
 	CPPUNIT_ASSERT(connection2 != null);
 	CPPUNIT_ASSERT(connection2->connect());
 	connection2->setBusyTimeout(10);

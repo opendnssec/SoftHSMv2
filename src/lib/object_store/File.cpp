@@ -64,7 +64,7 @@ enum AttributeKind {
 //
 // N.B.: the create flag only has a function when a file is opened read/write
 // N.B.: the truncate flag only has a function when the create one is true
-File::File(std::string inPath, bool forRead /* = true */, bool forWrite /* = false */, bool create /* = false */, bool truncate /* = true */)
+File::File(std::string inPath, int umask, bool forRead /* = true */, bool forWrite /* = false */, bool create /* = false */, bool truncate /* = true */)
 {
 	stream = NULL;
 
@@ -88,7 +88,7 @@ File::File(std::string inPath, bool forRead /* = true */, bool forWrite /* = fal
 		if (forRead && forWrite && create) flags |= O_CREAT;
 		if (forRead && forWrite && create && truncate) flags |= O_TRUNC;
 		// Open the file
-		fd = open(path.c_str(), flags, 0600);
+		fd = open(path.c_str(), flags, (S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH) & ~umask);
 		if (fd == -1)
 		{
 			ERROR_MSG("Could not open the file (%s): %s", strerror(errno), path.c_str());

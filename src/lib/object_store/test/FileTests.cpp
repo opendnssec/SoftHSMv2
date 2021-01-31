@@ -32,6 +32,11 @@
 
 #include <stdlib.h>
 #include <string.h>
+#ifndef _WIN32
+# include <sys/types.h>
+# include <sys/stat.h>
+# include <unistd.h>
+#endif
 #include <cppunit/extensions/HelperMacros.h>
 #include "FileTests.h"
 #include "File.h"
@@ -71,9 +76,9 @@ void FileTests::testExistNotExist()
 
 	// Attempt to open a file known not to exist
 #ifndef _WIN32
-	File doesntExist("testdir/nonExistentFile");
+	File doesntExist("testdir/nonExistentFile", DEFAULT_UMASK);
 #else
-	File doesntExist("testdir\\nonExistentFile");
+	File doesntExist("testdir\\nonExistentFile", DEFAULT_UMASK);
 #endif
 
 	CPPUNIT_ASSERT(!doesntExist.isValid());
@@ -87,9 +92,9 @@ void FileTests::testExistNotExist()
 	CPPUNIT_ASSERT(exists("existingFile"));
 
 #ifndef _WIN32
-	File exists("testdir/existingFile");
+	File exists("testdir/existingFile", DEFAULT_UMASK);
 #else
-	File exists("testdir\\existingFile");
+	File exists("testdir\\existingFile", DEFAULT_UMASK);
 #endif
 
 	CPPUNIT_ASSERT(exists.isValid());
@@ -103,9 +108,9 @@ void FileTests::testCreateNotCreate()
 
 	// Attempt to open a file known not to exist
 #ifndef _WIN32
-	File doesntExist("testdir/nonExistentFile", true, true, false);
+	File doesntExist("testdir/nonExistentFile", DEFAULT_UMASK, true, true, false);
 #else
-	File doesntExist("testdir\\nonExistentFile", true, true, false);
+	File doesntExist("testdir\\nonExistentFile", DEFAULT_UMASK, true, true, false);
 #endif
 
 	CPPUNIT_ASSERT(!doesntExist.isValid());
@@ -113,14 +118,47 @@ void FileTests::testCreateNotCreate()
 
 	// Attempt to open a file known not to exist in create mode
 #ifndef _WIN32
-	File willBeCreated("testdir/nonExistentFile2", true, true, true);
+	File willBeCreated("testdir/nonExistentFile2", DEFAULT_UMASK, true, true, true);
 #else
-	File willBeCreated("testdir\\nonExistentFile2", true, true, true);
+	File willBeCreated("testdir\\nonExistentFile2", DEFAULT_UMASK, true, true, true);
 #endif
 
 	CPPUNIT_ASSERT(willBeCreated.isValid());
 	CPPUNIT_ASSERT(exists("nonExistentFile2"));
 }
+
+#ifndef _WIN32
+void FileTests::testCreateUmask()
+{
+	// Test pre-condition
+	CPPUNIT_ASSERT(!exists("newFileUserUmask"));
+	CPPUNIT_ASSERT(!exists("newFileZeroUmask"));
+	CPPUNIT_ASSERT(!exists("newFileGroupReadUmask"));
+
+	// Create files with different umasks
+	const mode_t saved_umask = umask(0); // Override current process umask
+	File userFile("testdir/newFileUserUmask", 0077, true, true, true);
+	File zeroFile("testdir/newFileZeroUmask", 0, true, true, true);
+	File groupFile("testdir/newFileGroupReadUmask", 0027, true, true, true);
+	umask(saved_umask);
+
+	CPPUNIT_ASSERT(userFile.isValid());
+	CPPUNIT_ASSERT(zeroFile.isValid());
+	CPPUNIT_ASSERT(groupFile.isValid());
+
+	CPPUNIT_ASSERT(exists("newFileUserUmask"));
+	CPPUNIT_ASSERT(exists("newFileZeroUmask"));
+	CPPUNIT_ASSERT(exists("newFileGroupReadUmask"));
+
+	struct stat st = {};
+	CPPUNIT_ASSERT(!lstat("testdir/newFileUserUmask", &st));
+	CPPUNIT_ASSERT_EQUAL(0600, (int)(st.st_mode & 0777));
+	CPPUNIT_ASSERT(!lstat("testdir/newFileZeroUmask", &st));
+	CPPUNIT_ASSERT_EQUAL(0666, (int)(st.st_mode & 0777));
+	CPPUNIT_ASSERT(!lstat("testdir/newFileGroupReadUmask", &st));
+	CPPUNIT_ASSERT_EQUAL(0640, (int)(st.st_mode & 0777));
+}
+#endif
 
 void FileTests::testLockUnlock()
 {
@@ -133,11 +171,11 @@ void FileTests::testLockUnlock()
 	CPPUNIT_ASSERT(exists("existingFile"));
 
 #ifndef _WIN32
-	File file1("testdir/existingFile");
-	File file2("testdir/existingFile");
+	File file1("testdir/existingFile", DEFAULT_UMASK);
+	File file2("testdir/existingFile", DEFAULT_UMASK);
 #else
-	File file1("testdir\\existingFile");
-	File file2("testdir\\existingFile");
+	File file1("testdir\\existingFile", DEFAULT_UMASK);
+	File file2("testdir\\existingFile", DEFAULT_UMASK);
 #endif
 
 	CPPUNIT_ASSERT(file1.lock(false));
@@ -169,9 +207,9 @@ void FileTests::testWriteRead()
 	// Create a file for writing
 	{
 #ifndef _WIN32
-		File newFile("testdir/newFile", false, true);
+		File newFile("testdir/newFile", DEFAULT_UMASK, false, true);
 #else
-		File newFile("testdir\\newFile", false, true);
+		File newFile("testdir\\newFile", DEFAULT_UMASK, false, true);
 #endif
 
 		CPPUNIT_ASSERT(newFile.isValid());
@@ -198,9 +236,9 @@ void FileTests::testWriteRead()
 	// Read the created file back
 	{
 #ifndef _WIN32
-		File newFile("testdir/newFile");
+		File newFile("testdir/newFile", DEFAULT_UMASK);
 #else
-		File newFile("testdir\\newFile");
+		File newFile("testdir\\newFile", DEFAULT_UMASK);
 #endif
 
 		CPPUNIT_ASSERT(newFile.isValid());
@@ -249,9 +287,9 @@ void FileTests::testSeek()
 	{
 		// Create the test file
 #ifndef _WIN32
-		File testFile("testdir/testFile", false, true, true);
+		File testFile("testdir/testFile", DEFAULT_UMASK, false, true, true);
 #else
-		File testFile("testdir\\testFile", false, true, true);
+		File testFile("testdir\\testFile", DEFAULT_UMASK, false, true, true);
 #endif
 
 		CPPUNIT_ASSERT(testFile.isValid());
@@ -262,9 +300,9 @@ void FileTests::testSeek()
 
 	// Open the test file for reading
 #ifndef _WIN32
-	File testFile("testdir/testFile");
+	File testFile("testdir/testFile", DEFAULT_UMASK);
 #else
-	File testFile("testdir\\testFile");
+	File testFile("testdir\\testFile", DEFAULT_UMASK);
 #endif
 
 	CPPUNIT_ASSERT(testFile.isValid());

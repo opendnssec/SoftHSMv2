@@ -60,7 +60,7 @@ public:
 	bool refresh();
 
 	// Create a new subdirectory
-	bool mkdir(std::string name);
+	bool mkdir(std::string name, int umask);
 
 	// Delete a subdirectory in the directory
 	bool rmdir(std::string name, bool doRefresh = false);
