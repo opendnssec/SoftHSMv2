@@ -301,6 +301,44 @@ static CK_RV extractObjectInformation(CK_ATTRIBUTE_PTR pTemplate,
 	return CKR_OK;
 }
 
+static CK_RV checkKeyLength(CK_KEY_TYPE keyType, size_t byteLen)
+{
+	switch (keyType) {
+		case CKK_GENERIC_SECRET:
+			break;
+#ifndef WITH_FIPS
+		case CKK_DES:
+			if (byteLen != 8) {
+				INFO_MSG("CKA_VALUE_LEN must be 8");
+				return CKR_TEMPLATE_INCOMPLETE;
+			}
+			break;
+#endif
+		case CKK_DES2:
+			if (byteLen != 16) {
+				INFO_MSG("CKA_VALUE_LEN must be 16");
+				return CKR_TEMPLATE_INCOMPLETE;
+			}
+			break;
+		case CKK_DES3:
+			if (byteLen != 24) {
+				INFO_MSG("CKA_VALUE_LEN must be 24");
+				return CKR_TEMPLATE_INCOMPLETE;
+			}
+			break;
+		case CKK_AES:
+			if (byteLen != 16 && byteLen != 24 && byteLen != 32)
+			{
+				INFO_MSG("CKA_VALUE_LEN must be 16, 24, or 32");
+				return CKR_ATTRIBUTE_VALUE_INVALID;
+			}
+			break;
+		default:
+			return CKR_ATTRIBUTE_VALUE_INVALID;
+	}
+	return CKR_OK;
+}
+
 static CK_RV newP11Object(OSObject *object, P11Object **p11object)
 {
 	CK_OBJECT_CLASS objClass = object->getUnsignedLongValue(CKA_CLASS, CKO_VENDOR_DEFINED);
@@ -780,6 +818,9 @@ void SoftHSM::prepareSupportedMecahnisms(std::map<std::string, CK_MECHANISM_TYPE
 	t["CKM_EC_EDWARDS_KEY_PAIR_GEN"] = CKM_EC_EDWARDS_KEY_PAIR_GEN;
 	t["CKM_EDDSA"]			= CKM_EDDSA;
 #endif
+	t["CKM_CONCATENATE_DATA_AND_BASE"] = CKM_CONCATENATE_DATA_AND_BASE;
+	t["CKM_CONCATENATE_BASE_AND_DATA"] = CKM_CONCATENATE_BASE_AND_DATA;
+	t["CKM_CONCATENATE_BASE_AND_KEY"] = CKM_CONCATENATE_BASE_AND_KEY;
 
 	supportedMechanisms.clear();
 	for (auto it = t.begin(); it != t.end(); ++it)
@@ -1245,6 +1286,13 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 			pInfo->flags = CKF_SIGN | CKF_VERIFY;
 			break;
 #endif
+	    case CKM_CONCATENATE_DATA_AND_BASE:
+	    case CKM_CONCATENATE_BASE_AND_DATA:
+	    case CKM_CONCATENATE_BASE_AND_KEY:
+	        pInfo->ulMinKeySize = 1;
+	        pInfo->ulMaxKeySize = 512;
+	        pInfo->flags = CKF_DERIVE;
+	        break;
 		default:
 			DEBUG_MSG("The selected mechanism is not supported");
 			return CKR_MECHANISM_INVALID;
@@ -7021,6 +7069,9 @@ CK_RV SoftHSM::C_DeriveKey
 		case CKM_DES3_CBC_ENCRYPT_DATA:
 		case CKM_AES_ECB_ENCRYPT_DATA:
 		case CKM_AES_CBC_ENCRYPT_DATA:
+		case CKM_CONCATENATE_DATA_AND_BASE:
+		case CKM_CONCATENATE_BASE_AND_DATA:
+		case CKM_CONCATENATE_BASE_AND_KEY:
 			break;
 
 		default:
@@ -7063,13 +7114,20 @@ CK_RV SoftHSM::C_DeriveKey
 	CK_BBOOL isOnToken = CK_FALSE;
 	CK_BBOOL isPrivate = CK_TRUE;
 	CK_CERTIFICATE_TYPE dummy;
-	bool isImplicit = false;
-	rv = extractObjectInformation(pTemplate, ulCount, objClass, keyType, dummy, isOnToken, isPrivate, isImplicit);
-	if (rv != CKR_OK)
-	{
-		ERROR_MSG("Mandatory attribute not present in template");
-		return rv;
-	}
+    bool isImplicit = pMechanism->mechanism == CKM_CONCATENATE_DATA_AND_BASE ||
+			pMechanism->mechanism == CKM_CONCATENATE_BASE_AND_DATA ||
+			pMechanism->mechanism == CKM_CONCATENATE_BASE_AND_KEY;
+    if (isImplicit) {
+        // PKCS#11 2.40 section 2.31.5: if no key type is provided then the key produced by this mechanism will
+        // be a generic secret key
+        objClass = CKO_SECRET_KEY;
+        keyType = CKK_GENERIC_SECRET;
+    }
+    rv = extractObjectInformation(pTemplate, ulCount, objClass, keyType, dummy, isOnToken, isPrivate, isImplicit);
+    if (rv != CKR_OK) {
+        ERROR_MSG("Mandatory attribute not present in template");
+        return rv;
+    }
 
 	// Report errors and/or unexpected usage.
 	if (objClass != CKO_SECRET_KEY)
@@ -7131,7 +7189,10 @@ CK_RV SoftHSM::C_DeriveKey
 	    pMechanism->mechanism == CKM_DES3_ECB_ENCRYPT_DATA ||
 	    pMechanism->mechanism == CKM_DES3_CBC_ENCRYPT_DATA ||
 	    pMechanism->mechanism == CKM_AES_ECB_ENCRYPT_DATA ||
-	    pMechanism->mechanism == CKM_AES_CBC_ENCRYPT_DATA)
+	    pMechanism->mechanism == CKM_AES_CBC_ENCRYPT_DATA ||
+	    pMechanism->mechanism == CKM_CONCATENATE_DATA_AND_BASE ||
+	    pMechanism->mechanism == CKM_CONCATENATE_BASE_AND_DATA ||
+	    pMechanism->mechanism == CKM_CONCATENATE_BASE_AND_KEY)
 	{
 		// Check key class and type
 		CK_KEY_TYPE baseKeyType = key->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED);
@@ -11055,6 +11116,8 @@ CK_RV SoftHSM::deriveSymmetric
 	CK_BBOOL isPrivate)
 {
 	*phKey = CK_INVALID_HANDLE;
+	CK_OBJECT_HANDLE_PTR phOtherKey = CK_INVALID_HANDLE;
+	OSObject *otherKey = NULL_PTR;
 
 	if (pMechanism->pParameter == NULL_PTR)
 	{
@@ -11146,6 +11209,33 @@ CK_RV SoftHSM::deriveSymmetric
 		       pData,
 		       length);
 	}
+	else if ((pMechanism->mechanism == CKM_CONCATENATE_DATA_AND_BASE ||
+			pMechanism->mechanism == CKM_CONCATENATE_BASE_AND_DATA) &&
+		 pMechanism->ulParameterLen == sizeof(CK_KEY_DERIVATION_STRING_DATA))
+	{
+		CK_BYTE_PTR pData = CK_KEY_DERIVATION_STRING_DATA_PTR(pMechanism->pParameter)->pData;
+		CK_ULONG length = CK_KEY_DERIVATION_STRING_DATA_PTR(pMechanism->pParameter)->ulLen;
+		if (length == 0 || pData == NULL_PTR)
+		{
+			DEBUG_MSG("There must be data in the parameter");
+			return CKR_MECHANISM_PARAM_INVALID;
+		}
+		data.resize(length);
+		memcpy(&data[0],
+		       pData,
+               length);
+	}
+	else if (pMechanism->mechanism == CKM_CONCATENATE_BASE_AND_KEY &&
+		 pMechanism->ulParameterLen == sizeof(CK_OBJECT_HANDLE))
+	{
+		phOtherKey = CK_OBJECT_HANDLE_PTR(pMechanism->pParameter);
+		if (phOtherKey == CK_INVALID_HANDLE)
+		{
+			DEBUG_MSG("There must be handle in the parameter");
+			return CKR_MECHANISM_PARAM_INVALID;
+		}
+		DEBUG_MSG("(0x%08X) Other key handle is (0x%08X)", phOtherKey, *phOtherKey);
+	}
 	else
 	{
 		DEBUG_MSG("pParameter is invalid");
@@ -11161,6 +11251,19 @@ CK_RV SoftHSM::deriveSymmetric
 	Token* token = session->getToken();
 	if (token == NULL)
 		return CKR_GENERAL_ERROR;
+
+	// Extract another key
+	if (pMechanism->mechanism == CKM_CONCATENATE_BASE_AND_KEY) {
+		// Check the key handle.
+		otherKey = (OSObject *)handleManager->getObject(*phOtherKey);
+		if (otherKey == NULL_PTR || !otherKey->isValid()) return CKR_OBJECT_HANDLE_INVALID;
+		if (otherKey->getBooleanValue(CKA_PRIVATE, true)) {
+			bool bOK = token->decrypt(otherKey->getByteStringValue(CKA_VALUE), data);
+			if (!bOK) return CKR_GENERAL_ERROR;
+		} else {
+			data = otherKey->getByteStringValue(CKA_VALUE);
+		}
+	}
 
 	// Extract desired parameter information
 	size_t byteLen = 0;
@@ -11193,51 +11296,49 @@ CK_RV SoftHSM::deriveSymmetric
 		}
 	}
 
-	// Check the length
-	switch (keyType)
-	{
-		case CKK_GENERIC_SECRET:
-			if (byteLen == 0)
-			{
-				INFO_MSG("CKA_VALUE_LEN must be set");
-				return CKR_TEMPLATE_INCOMPLETE;
-			}
-			break;
+	// Check the length if it specified or a mechanism is not one of misc mechanisms
+	if (byteLen > 0 || (pMechanism->mechanism != CKM_CONCATENATE_DATA_AND_BASE &&
+			pMechanism->mechanism != CKM_CONCATENATE_BASE_AND_DATA &&
+			pMechanism->mechanism != CKM_CONCATENATE_BASE_AND_KEY)) {
+		switch (keyType) {
+			case CKK_GENERIC_SECRET:
+				if (byteLen == 0) {
+					INFO_MSG("CKA_VALUE_LEN must be set");
+					return CKR_TEMPLATE_INCOMPLETE;
+				}
+				break;
 #ifndef WITH_FIPS
-		case CKK_DES:
-			if (byteLen != 0)
-			{
-				INFO_MSG("CKA_VALUE_LEN must not be set");
-				return CKR_ATTRIBUTE_READ_ONLY;
-			}
-			byteLen = 8;
-			break;
+			case CKK_DES:
+				if (byteLen != 0) {
+					INFO_MSG("CKA_VALUE_LEN must not be set");
+					return CKR_ATTRIBUTE_READ_ONLY;
+				}
+				byteLen = 8;
+				break;
 #endif
-		case CKK_DES2:
-			if (byteLen != 0)
-			{
-				INFO_MSG("CKA_VALUE_LEN must not be set");
-				return CKR_ATTRIBUTE_READ_ONLY;
-			}
-			byteLen = 16;
-			break;
-		case CKK_DES3:
-			if (byteLen != 0)
-			{
-				INFO_MSG("CKA_VALUE_LEN must not be set");
-				return CKR_ATTRIBUTE_READ_ONLY;
-			}
-			byteLen = 24;
-			break;
-		case CKK_AES:
-			if (byteLen != 16 && byteLen != 24 && byteLen != 32)
-			{
-				INFO_MSG("CKA_VALUE_LEN must be 16, 24, or 32");
+			case CKK_DES2:
+				if (byteLen != 0) {
+					INFO_MSG("CKA_VALUE_LEN must not be set");
+					return CKR_ATTRIBUTE_READ_ONLY;
+				}
+				byteLen = 16;
+				break;
+			case CKK_DES3:
+				if (byteLen != 0) {
+					INFO_MSG("CKA_VALUE_LEN must not be set");
+					return CKR_ATTRIBUTE_READ_ONLY;
+				}
+				byteLen = 24;
+				break;
+			case CKK_AES:
+				if (byteLen != 16 && byteLen != 24 && byteLen != 32) {
+					INFO_MSG("CKA_VALUE_LEN must be 16, 24, or 32");
+					return CKR_ATTRIBUTE_VALUE_INVALID;
+				}
+				break;
+			default:
 				return CKR_ATTRIBUTE_VALUE_INVALID;
-			}
-			break;
-		default:
-			return CKR_ATTRIBUTE_VALUE_INVALID;
+		}
 	}
 
 	// Get the symmetric algorithm matching the mechanism
@@ -11289,6 +11390,10 @@ CK_RV SoftHSM::deriveSymmetric
 			       &(CK_AES_CBC_ENCRYPT_DATA_PARAMS_PTR(pMechanism->pParameter)->iv[0]),
 			       16);
 			break;
+	    case CKM_CONCATENATE_DATA_AND_BASE:
+	    case CKM_CONCATENATE_BASE_AND_DATA:
+	    case CKM_CONCATENATE_BASE_AND_KEY:
+	        break;
 		default:
 			return CKR_MECHANISM_INVALID;
 	}
@@ -11297,51 +11402,87 @@ CK_RV SoftHSM::deriveSymmetric
 	OSObject *baseKey = (OSObject *)handleManager->getObject(hBaseKey);
 	if (baseKey == NULL_PTR || !baseKey->isValid()) return CKR_OBJECT_HANDLE_INVALID;
 
-	SymmetricAlgorithm* cipher = CryptoFactory::i()->getSymmetricAlgorithm(algo);
-	if (cipher == NULL) return CKR_MECHANISM_INVALID;
+    // Get the data
+    ByteString secretValue;
 
-	SymmetricKey* secretkey = new SymmetricKey();
+    if (pMechanism->mechanism == CKM_CONCATENATE_DATA_AND_BASE ||
+			pMechanism->mechanism == CKM_CONCATENATE_BASE_AND_DATA ||
+			pMechanism->mechanism == CKM_CONCATENATE_BASE_AND_KEY) {
+        // Get the key data
+        ByteString keydata;
 
-	if (getSymmetricKey(secretkey, token, baseKey) != CKR_OK)
-	{
-		cipher->recycleKey(secretkey);
-		CryptoFactory::i()->recycleSymmetricAlgorithm(cipher);
-		return CKR_GENERAL_ERROR;
-	}
+        // Get the CKA_PRIVATE attribute, when the attribute is not present use default false
+        bool isKeyPrivate = baseKey->getBooleanValue(CKA_PRIVATE, false);
+        if (isKeyPrivate)
+        {
+            bool bOK = token->decrypt(baseKey->getByteStringValue(CKA_VALUE), keydata);
+            if (!bOK) return CKR_GENERAL_ERROR;
+        }
+        else
+        {
+            keydata = baseKey->getByteStringValue(CKA_VALUE);
+        }
 
-	// adjust key bit length
-	secretkey->setBitLen(secretkey->getKeyBits().size() * bb);
+        if (pMechanism->mechanism == CKM_CONCATENATE_DATA_AND_BASE) {
+			secretValue += data;
+			secretValue += keydata;
+		} else if (pMechanism->mechanism == CKM_CONCATENATE_BASE_AND_DATA ||
+				pMechanism->mechanism == CKM_CONCATENATE_BASE_AND_KEY) {
+			secretValue += keydata;
+			secretValue += data;
+        } else {
+        	return CKR_MECHANISM_INVALID;
+        }
 
-	// Initialize encryption
-	if (!cipher->encryptInit(secretkey, mode, iv, padding))
-	{
-		cipher->recycleKey(secretkey);
-		CryptoFactory::i()->recycleSymmetricAlgorithm(cipher);
-		return CKR_MECHANISM_INVALID;
-	}
+        // If the CKA_VALUE_LEN attribute is not present use computed size
+        if (byteLen == 0) {
+            byteLen = data.size() + keydata.size();
+            CK_RV rv = checkKeyLength(keyType, byteLen);
+            if (rv != CKR_OK) {
+            	return rv;
+            }
+        }
+	} else {
+        SymmetricAlgorithm* cipher = CryptoFactory::i()->getSymmetricAlgorithm(algo);
+        if (cipher == NULL) return CKR_MECHANISM_INVALID;
 
-	// Get the data
-	ByteString secretValue;
+        SymmetricKey* secretkey = new SymmetricKey();
 
-	// Encrypt the data
-	if (!cipher->encryptUpdate(data, secretValue))
-	{
-		cipher->recycleKey(secretkey);
-		CryptoFactory::i()->recycleSymmetricAlgorithm(cipher);
-		return CKR_GENERAL_ERROR;
-	}
+        if (getSymmetricKey(secretkey, token, baseKey) != CKR_OK)
+        {
+            cipher->recycleKey(secretkey);
+            CryptoFactory::i()->recycleSymmetricAlgorithm(cipher);
+            return CKR_GENERAL_ERROR;
+        }
 
-	// Finalize encryption
-	ByteString encryptedFinal;
-	if (!cipher->encryptFinal(encryptedFinal))
-	{
-		cipher->recycleKey(secretkey);
-		CryptoFactory::i()->recycleSymmetricAlgorithm(cipher);
-		return CKR_GENERAL_ERROR;
-	}
-	cipher->recycleKey(secretkey);
-	CryptoFactory::i()->recycleSymmetricAlgorithm(cipher);
-	secretValue += encryptedFinal;
+        // adjust key bit length
+        secretkey->setBitLen(secretkey->getKeyBits().size() * bb);
+
+        // Initialize encryption
+        if (!cipher->encryptInit(secretkey, mode, iv, padding)) {
+            cipher->recycleKey(secretkey);
+            CryptoFactory::i()->recycleSymmetricAlgorithm(cipher);
+            return CKR_MECHANISM_INVALID;
+        }
+
+        // Encrypt the data
+        if (!cipher->encryptUpdate(data, secretValue)) {
+            cipher->recycleKey(secretkey);
+            CryptoFactory::i()->recycleSymmetricAlgorithm(cipher);
+            return CKR_GENERAL_ERROR;
+        }
+
+        // Finalize encryption
+        ByteString encryptedFinal;
+        if (!cipher->encryptFinal(encryptedFinal)) {
+            cipher->recycleKey(secretkey);
+            CryptoFactory::i()->recycleSymmetricAlgorithm(cipher);
+            return CKR_GENERAL_ERROR;
+        }
+        cipher->recycleKey(secretkey);
+        CryptoFactory::i()->recycleSymmetricAlgorithm(cipher);
+        secretValue += encryptedFinal;
+    }
 
 	// Create the secret object using C_CreateObject
 	const CK_ULONG maxAttribs = 32;
@@ -11389,23 +11530,76 @@ CK_RV SoftHSM::deriveSymmetric
 			bOK = bOK && osobject->setAttribute(CKA_LOCAL,false);
 
 			// Common Secret Key Attributes
-			if (baseKey->getBooleanValue(CKA_ALWAYS_SENSITIVE, false))
-			{
-				bool bAlwaysSensitive = osobject->getBooleanValue(CKA_SENSITIVE, false);
-				bOK = bOK && osobject->setAttribute(CKA_ALWAYS_SENSITIVE,bAlwaysSensitive);
+			if (pMechanism->mechanism == CKM_CONCATENATE_BASE_AND_KEY) {
+				// [PKCS#11 v2.40, 2.31.3]
+				// If either of the two original keys has its CKA_SENSITIVE attribute
+				// set to CK_TRUE, so does the derived key.  If not, then the derived
+				// key’s CKA_SENSITIVE attribute is set either from the supplied template
+				// or from a default value.
+				bool bSensitive = baseKey->getBooleanValue(CKA_SENSITIVE, true) ||
+								  otherKey->getBooleanValue(CKA_SENSITIVE, true);
+				if (bSensitive) {
+					bOK = bOK && osobject->setAttribute(CKA_SENSITIVE, true);
+				}
+				// If either of the two original keys has its CKA_EXTRACTABLE attribute
+				// set to CK_FALSE, so does the derived key.  If not, then the derived
+				// key’s CKA_EXTRACTABLE attribute is set either from the supplied template
+				// or from a default value.
+				bool bExtractable = baseKey->getBooleanValue(CKA_EXTRACTABLE, true) &&
+									otherKey->getBooleanValue(CKA_EXTRACTABLE, true);
+				if (!bExtractable) {
+					bOK = bOK && osobject->setAttribute(CKA_EXTRACTABLE, false);
+				}
+				// The derived key’s CKA_ALWAYS_SENSITIVE attribute is set to CK_TRUE
+				// if and only if both of the original keys have their CKA_ALWAYS_SENSITIVE
+				// attributes set to CK_TRUE.
+				bool bAlwaysSensitive = baseKey->getBooleanValue(CKA_ALWAYS_SENSITIVE, false) &&
+										otherKey->getBooleanValue(CKA_ALWAYS_SENSITIVE, false);
+				bOK = bOK && osobject->setAttribute(CKA_ALWAYS_SENSITIVE, bAlwaysSensitive);
+				// The derived key’s CKA_NEVER_EXTRACTABLE attribute is set to CK_TRUE
+				// if and only if both of the original keys have their CKA_NEVER_EXTRACTABLE
+				// attributes set to CK_TRUE
+				bool bNeverExtractable = baseKey->getBooleanValue(CKA_NEVER_EXTRACTABLE, false) &&
+										 otherKey->getBooleanValue(CKA_NEVER_EXTRACTABLE, false);
+				bOK = bOK && osobject->setAttribute(CKA_ALWAYS_SENSITIVE, bNeverExtractable);
 			}
-			else
+			else if (pMechanism->mechanism == CKM_CONCATENATE_BASE_AND_DATA ||
+				 pMechanism->mechanism == CKM_CONCATENATE_DATA_AND_BASE)
 			{
-				bOK = bOK && osobject->setAttribute(CKA_ALWAYS_SENSITIVE,false);
-			}
-			if (baseKey->getBooleanValue(CKA_NEVER_EXTRACTABLE, true))
-			{
-				bool bNeverExtractable = osobject->getBooleanValue(CKA_EXTRACTABLE, false) == false;
-				bOK = bOK && osobject->setAttribute(CKA_NEVER_EXTRACTABLE,bNeverExtractable);
-			}
-			else
-			{
-				bOK = bOK && osobject->setAttribute(CKA_NEVER_EXTRACTABLE,false);
+				// [PKCS#11 v2.40, 2.31.4-2.31.7]
+				// If the base key has its CKA_SENSITIVE attribute set to CK_TRUE, so does the derived key.
+				// If not, then the derived key’s CKA_SENSITIVE attribute is set either from the supplied
+				// template or from a default value.
+				if (baseKey->getBooleanValue(CKA_SENSITIVE, true)) {
+					bOK = bOK && osobject->setAttribute(CKA_SENSITIVE, true);
+				}
+				// If the base key has its CKA_EXTRACTABLE attribute set to CK_FALSE, so does the derived key.
+				// If not, then the derived key’s CKA_EXTRACTABLE attribute is set either from the supplied
+				// template or from a default value.
+				if (!baseKey->getBooleanValue(CKA_EXTRACTABLE, false)) {
+					bOK = bOK && osobject->setAttribute(CKA_EXTRACTABLE, false);
+				}
+				// The derived key’s CKA_ALWAYS_SENSITIVE attribute is set to CK_TRUE if and only
+				// if the base key has its CKA_ALWAYS_SENSITIVE attribute set to CK_TRUE.
+				bool bAlwaysSensitive = baseKey->getBooleanValue(CKA_ALWAYS_SENSITIVE, false);
+				bOK = bOK && osobject->setAttribute(CKA_ALWAYS_SENSITIVE, bAlwaysSensitive);
+				// The derived key’s CKA_NEVER_EXTRACTABLE attribute is set to CK_TRUE if and only
+				// if the base key has its CKA_NEVER_EXTRACTABLE attribute set to CK_TRUE.
+				bool bNeverExtractable = baseKey->getBooleanValue(CKA_NEVER_EXTRACTABLE, false);
+				bOK = bOK && osobject->setAttribute(CKA_NEVER_EXTRACTABLE, bNeverExtractable);
+			} else {
+				if (baseKey->getBooleanValue(CKA_ALWAYS_SENSITIVE, false)) {
+					bool bAlwaysSensitive = osobject->getBooleanValue(CKA_SENSITIVE, false);
+					bOK = bOK && osobject->setAttribute(CKA_ALWAYS_SENSITIVE, bAlwaysSensitive);
+				} else {
+					bOK = bOK && osobject->setAttribute(CKA_ALWAYS_SENSITIVE, false);
+				}
+				if (baseKey->getBooleanValue(CKA_NEVER_EXTRACTABLE, true)) {
+					bool bNeverExtractable = osobject->getBooleanValue(CKA_EXTRACTABLE, false) == false;
+					bOK = bOK && osobject->setAttribute(CKA_NEVER_EXTRACTABLE, bNeverExtractable);
+				} else {
+					bOK = bOK && osobject->setAttribute(CKA_NEVER_EXTRACTABLE, false);
+				}
 			}
 
 			ByteString value;
