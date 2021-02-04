@@ -6541,7 +6541,9 @@ CK_RV SoftHSM::C_WrapKey
 				break;
 #endif
 #ifdef WITH_EDDSA
-			// Not yet
+                        case CKK_EC_EDWARDS:
+			        alg = AsymAlgo::EDDSA;
+				break;
 #endif
 #ifdef WITH_GOST
 			case CKK_GOSTR3410:
@@ -6575,6 +6577,11 @@ CK_RV SoftHSM::C_WrapKey
 #ifdef WITH_ECC
 			case CKK_EC:
 				rv = getECPrivateKey((ECPrivateKey*)privateKey, token, key);
+				break;
+#endif
+#ifdef WITH_EDDSA
+                        case CKK_EC_EDWARDS:
+				rv = getEDPrivateKey((EDPrivateKey*)privateKey, token, key);
 				break;
 #endif
 #ifdef WITH_GOST
@@ -6994,6 +7001,12 @@ CK_RV SoftHSM::C_UnwrapKey
 			else if (keyType == CKK_EC)
 			{
 				bOK = bOK && setECPrivateKey(osobject, keydata, token, isPrivate != CK_FALSE);
+			}
+#endif
+#ifdef WITH_EDDSA
+			else if (keyType == CKK_EC_EDWARDS)
+			{
+				bOK = bOK && setEDPrivateKey(osobject, keydata, token, isPrivate != CK_FALSE);
 			}
 #endif
 #ifdef WITH_GOST
@@ -12525,6 +12538,46 @@ bool SoftHSM::setECPrivateKey(OSObject* key, const ByteString &ber, Token* token
 	{
 		group = ((ECPrivateKey*)priv)->getEC();
 		value = ((ECPrivateKey*)priv)->getD();
+	}
+	bool bOK = true;
+	bOK = bOK && key->setAttribute(CKA_EC_PARAMS, group);
+	bOK = bOK && key->setAttribute(CKA_VALUE, value);
+
+	ecc->recyclePrivateKey(priv);
+	CryptoFactory::i()->recycleAsymmetricAlgorithm(ecc);
+
+	return bOK;
+}
+
+bool SoftHSM::setEDPrivateKey(OSObject* key, const ByteString &ber, Token* token, bool isPrivate) const
+{
+	AsymmetricAlgorithm* ecc = CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::EDDSA);
+	if (ecc == NULL)
+		return false;
+	PrivateKey* priv = ecc->newPrivateKey();
+	if (priv == NULL)
+	{
+		CryptoFactory::i()->recycleAsymmetricAlgorithm(ecc);
+		return false;
+	}
+	if (!priv->PKCS8Decode(ber))
+	{
+		ecc->recyclePrivateKey(priv);
+		CryptoFactory::i()->recycleAsymmetricAlgorithm(ecc);
+		return false;
+	}
+	// EC Private Key Attributes
+	ByteString group;
+	ByteString value;
+	if (isPrivate)
+	{
+		token->encrypt(((EDPrivateKey*)priv)->getEC(), group);
+		token->encrypt(((EDPrivateKey*)priv)->getK(), value);
+	}
+	else
+	{
+		group = ((EDPrivateKey*)priv)->getEC();
+		value = ((EDPrivateKey*)priv)->getK();
 	}
 	bool bOK = true;
 	bOK = bOK && key->setAttribute(CKA_EC_PARAMS, group);
