@@ -365,7 +365,6 @@ void InfoTests::testGetMechanismListConfig()
 	setenv("SOFTHSM2_CONF", ".\\softhsm2.conf", 1);
 #endif
 }
-#endif // P11_SHARED_LIBRARY
 
 void InfoTests::testGetMechanismNegativeListConfig()
 {
@@ -432,6 +431,7 @@ void InfoTests::testGetMechanismNegativeListConfig()
 	setenv("SOFTHSM2_CONF", ".\\softhsm2.conf", 1);
 #endif
 }
+#endif // P11_SHARED_LIBRARY
 
 void InfoTests::testWaitForSlotEvent()
 {
