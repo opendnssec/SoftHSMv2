@@ -52,6 +52,9 @@ public:
 	// Get the key check value
 	virtual ByteString getKeyCheckValue() const;
 
+	// Get hash value of symmetric key
+	virtual const ByteString getKeyHash() const;
+
 	// Serialisation
 	virtual ByteString serialise() const;
 
@@ -70,4 +73,3 @@ protected:
 };
 
 #endif // !_SOFTHSM_V2_SYMMETRICKEY_H
-
