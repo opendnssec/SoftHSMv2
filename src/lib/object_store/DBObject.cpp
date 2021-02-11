@@ -200,6 +200,37 @@ bool DBObject::createTables()
 	return true;
 }
 
+// update schema to support new features with dbs from previous versions.
+bool DBObject::migrateTables()
+{
+	MutexLocker lock(_mutex);
+
+	if (_connection == NULL)
+	{
+		ERROR_MSG("Object is not connected to the database.");
+		return false;
+	}
+
+	// attributes
+	DB::Statement cr_attrs = _connection->prepare(
+		"create view if not exists attributes as "
+		"select object_id, type from attribute_array "
+		"union all select object_id, type from attribute_binary "
+		"union all select object_id, type from attribute_boolean "
+		"union all select object_id, type from attribute_datetime "
+		"union all select object_id, type from attribute_integer "
+		"union all select object_id, type from attribute_real "
+		"union all select object_id, type from attribute_text"
+		);
+	if (!_connection->execute(cr_attrs))
+	{
+		ERROR_MSG("Failed to create \"attributes\" view");
+		return false;
+	}
+
+	return true;
+}
+
 bool DBObject::dropTables()
 {
 	MutexLocker lock(_mutex);
@@ -207,6 +238,14 @@ bool DBObject::dropTables()
 	if (_connection == NULL)
 	{
 		ERROR_MSG("Object is not connected to the database.");
+		return false;
+	}
+
+	// attributes
+	DB::Statement dr_attrs = _connection->prepare("drop view attributes");
+	if (!_connection->execute(dr_attrs))
+	{
+		ERROR_MSG("Failed to drop \"attributes\" view");
 		return false;
 	}
 
@@ -448,6 +487,7 @@ static AttributeKind attributeKind(CK_ATTRIBUTE_TYPE type)
 	case CKA_EXPONENT_1: return akBinary;
 	case CKA_EXPONENT_2: return akBinary;
 	case CKA_COEFFICIENT: return akBinary;
+	case CKA_PUBLIC_KEY_INFO: return akBinary;
 	case CKA_PRIME: return akBinary;
 	case CKA_SUBPRIME: return akBinary;
 	case CKA_BASE: return akBinary;
@@ -462,6 +502,7 @@ static AttributeKind attributeKind(CK_ATTRIBUTE_TYPE type)
 	case CKA_KEY_GEN_MECHANISM: return akInteger;
 	case CKA_MODIFIABLE: return akBoolean;
 	case CKA_COPYABLE: return akBoolean;
+	case CKA_DESTROYABLE: return akBoolean;
 	case CKA_ECDSA_PARAMS: return akBinary;
 	case CKA_EC_POINT: return akBinary;
 	case CKA_SECONDARY_AUTH: return akBoolean;
@@ -1080,7 +1121,7 @@ ByteString DBObject::getByteStringValue(CK_ATTRIBUTE_TYPE type)
 	}
 }
 
-CK_ATTRIBUTE_TYPE DBObject::nextAttributeType(CK_ATTRIBUTE_TYPE)
+CK_ATTRIBUTE_TYPE DBObject::nextAttributeType(CK_ATTRIBUTE_TYPE last)
 {
 	MutexLocker lock(_mutex);
 
@@ -1095,8 +1136,21 @@ CK_ATTRIBUTE_TYPE DBObject::nextAttributeType(CK_ATTRIBUTE_TYPE)
 		return false;
 	}
 
-	// FIXME: implement for C_CopyObject
-	return CKA_CLASS;
+	DB::Statement stmt = _connection->prepare("select MIN(type) from attributes where object_id=%lld and type>%ld", _objectId, last);
+
+	if (!stmt.isValid())
+	{
+		WARNING_MSG("Failed to prepare next attribute query");
+		return CKA_CLASS;
+	}
+
+	DB::Result result = _connection->perform(stmt);
+	if (!result.isValid())
+	{
+		return CKA_CLASS;
+	}
+
+	return result.getULongLong(1);
 }
 
 // Set the specified attribute

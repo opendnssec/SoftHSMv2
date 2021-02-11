@@ -62,6 +62,9 @@ public:
 	// create tables to support storage of attributes for the object.
 	bool createTables();
 
+	// update schema to support new features with dbs from previous versions.
+	bool migrateTables();
+
 	// drop tables that support storage of attributes for the object.
 	bool dropTables();
 
