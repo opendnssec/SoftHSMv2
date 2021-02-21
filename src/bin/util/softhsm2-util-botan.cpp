@@ -47,6 +47,9 @@
 #include <botan/bigint.h>
 #include <botan/der_enc.h>
 #include <botan/oids.h>
+#include <botan/x509cert.h>
+#include <botan/x509_dn.h>
+#include <botan/der_enc.h>
 
 // Init Botan
 void crypto_init()
@@ -833,4 +836,53 @@ void crypto_free_eddsa(eddsa_key_material_t* keyMat)
 	if (keyMat->bigA) free(keyMat->bigA);
 	free(keyMat);
 }
+
+// Import a key pair from given path
+int crypto_import_certificate
+(
+	CK_SESSION_HANDLE hSession,
+	char* filePath,
+	char* label,
+	char* objID,
+	size_t objIDLen
+)
+{
+	Botan::X509_Certificate cert(filePath);
+	std::vector<uint8_t> blob = cert.BER_encode();
+	std::vector<uint8_t> name = cert.subject_dn().BER_encode();
+	std::vector<uint8_t> issuer = cert.issuer_dn().BER_encode();
+
+	std::vector<uint8_t> serial;
+	Botan::DER_Encoder der(serial);
+	der.encode(Botan::BigInt::decode(cert.serial_number()));
+
+	CK_OBJECT_CLASS certClass = CKO_CERTIFICATE;
+	CK_CERTIFICATE_TYPE certType = CKC_X_509;
+	CK_BBOOL ckTrue = CK_TRUE, ckFalse = CK_FALSE, ckToken = CK_TRUE;
+	CK_ATTRIBUTE certTemplate[] = {
+		{ CKA_CLASS,            &certClass,       sizeof(certClass) },
+		{ CKA_CERTIFICATE_TYPE, &certType,        sizeof(certType) },
+		{ CKA_LABEL,            label,            strlen(label) },
+		{ CKA_ID,               objID,            objIDLen },
+		{ CKA_TOKEN,            &ckToken,         sizeof(ckToken) },
+		{ CKA_PRIVATE,          &ckFalse,         sizeof(ckTrue) },
+		{ CKA_VALUE,            &*blob.begin(),   (CK_ULONG)blob.size() },
+		{ CKA_SUBJECT,          &*name.begin(),   (CK_ULONG)name.size() },
+		{ CKA_ISSUER,           &*issuer.begin(), (CK_ULONG)issuer.size() },
+		{ CKA_SERIAL_NUMBER,    &*serial.begin(), (CK_ULONG)serial.size() }
+	};
+
+	CK_OBJECT_HANDLE hCert;
+	CK_RV rv = p11->C_CreateObject(hSession, certTemplate, 10, &hCert);
+	if (rv != CKR_OK)
+	{
+		fprintf(stderr, "ERROR: Could not save the certificate in the token.\n");
+		return 1;
+	}
+
+	printf("The certificate has been imported.\n");
+
+	return 0;
+}
+
 #endif
