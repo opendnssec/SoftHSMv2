@@ -4,6 +4,9 @@ softhsm2-util \- support tool for libsofthsm2
 .SH SYNOPSIS
 .B softhsm2-util \-\-show-slots
 .PP
+.B softhsm2-util \-\-show-config
+.I var
+.PP
 .B softhsm2-util \-\-init-token
 .B \-\-free
 .B \-\-label
@@ -168,6 +171,13 @@ and
 .TP
 .B \-\-show-slots
 Display all the available slots and their current status.
+.TP
+.B \-\-show-config \fIvar\fR
+Show configuration info, \fIvar\fR may be one of:
+.RS
+.IP default-pkcs11-lib
+print the default PKCS#11 library.
+.RE
 .TP
 .B \-\-version\fR, \fB\-v\fR
 Show the version info.
