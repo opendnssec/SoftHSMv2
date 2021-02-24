@@ -42,7 +42,7 @@ class Generation
 {
 public:
 	// Factory
-	static Generation* create(const std::string inPath, bool inIsToken = false);
+	static Generation* create(const std::string inPath, int inUmask, bool inIsToken = false);
 
 	// Destructor
 	virtual ~Generation();
@@ -70,10 +70,13 @@ public:
 
 private:
 	// Constructor
-	Generation(const std::string path, bool isToken);
+	Generation(const std::string path, int umask, bool isToken);
 
 	// The file path
 	std::string path;
+
+	// File mode creation mask
+	int umask;
 
 	// isToken
 	bool isToken;

@@ -77,7 +77,6 @@ bool OSSLCryptoFactory::FipsSelfTestStatus = false;
 
 static unsigned nlocks;
 static Mutex** locks;
-static bool ossl_shutdown;
 
 // Mutex callback
 void lock_callback(int mode, int n, const char* file, int line)
@@ -102,26 +101,6 @@ void lock_callback(int mode, int n, const char* file, int line)
 	}
 }
 
-#if OPENSSL_VERSION_NUMBER >= 0x10100000L
-void ossl_factory_shutdown(void)
-{
-	/*
-	 * As of 1.1.0, OpenSSL registers its own atexit() handler
-	 * to call OPENSSL_cleanup(). If our own atexit() handler
-	 * subsequently tries to, for example, unreference an
-	 * ENGINE, then it'll crash or deadlock with a use-after-free.
-	 *
-	 * This hook into the OpenSSL_atexit() handlers will get called
-	 * when OPENSSL_cleanup() is called, and sets a flag which
-	 * prevents any further touching of OpenSSL objects — which
-	 * would otherwise happen fairly much immediately thereafter
-	 * when our own OSSLCryptoFactory destructor gets called by
-	 * the C++ runtime's own atexit() handler.
-	 */
-	ossl_shutdown = true;
-}
-#endif
-
 // Constructor
 OSSLCryptoFactory::OSSLCryptoFactory()
 {
@@ -140,9 +119,6 @@ OSSLCryptoFactory::OSSLCryptoFactory()
 		CRYPTO_set_locking_callback(lock_callback);
 		setLockingCallback = true;
 	}
-#else
-	// Mustn't dereference engines after OpenSSL itself has shut down
-	OPENSSL_atexit(ossl_factory_shutdown);
 #endif
 
 #ifdef WITH_FIPS
@@ -250,7 +226,21 @@ err:
 // Destructor
 OSSLCryptoFactory::~OSSLCryptoFactory()
 {
-	// Don't do this if OPENSSL_cleanup() has already happened
+	bool ossl_shutdown = false;
+
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L && !defined(LIBRESSL_VERSION_NUMBER)
+	// OpenSSL 1.1.0+ will register an atexit() handler to run
+	// OPENSSL_cleanup(). If that has already happened we must
+	// not attempt to free any ENGINEs because they'll already
+	// have been destroyed and the use-after-free would cause
+	// a deadlock or crash.
+	//
+	// Detect that situation because reinitialisation will fail
+	// after OPENSSL_cleanup() has run.
+	(void)ERR_set_mark();
+	ossl_shutdown = !OPENSSL_init_crypto(OPENSSL_INIT_ENGINE_RDRAND, NULL);
+	(void)ERR_pop_to_mark();
+#endif
 	if (!ossl_shutdown)
 	{
 #ifdef WITH_GOST

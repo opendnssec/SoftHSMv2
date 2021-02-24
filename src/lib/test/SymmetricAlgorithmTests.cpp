@@ -392,6 +392,48 @@ CK_RV SymmetricAlgorithmTests::generateRsaPrivateKey(CK_SESSION_HANDLE hSession,
 	return rv;
 }
 
+#ifdef WITH_EDDSA
+CK_RV SymmetricAlgorithmTests::generateEDPrivateKey(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_OBJECT_HANDLE &hKey, EDCurveParam &curveparam)
+{
+	CK_MECHANISM mechanism = { CKM_EC_EDWARDS_KEY_PAIR_GEN, NULL_PTR, 0 };
+	CK_BYTE subject[] = { 0x12, 0x34 }; // dummy
+	CK_BYTE id[] = { 123 } ; // dummy
+	CK_BBOOL bTrue = CK_TRUE;
+	CK_BBOOL bFalse = CK_FALSE;
+	CK_ATTRIBUTE pubAttribs[] = {
+		{ CKA_TOKEN, &bToken, sizeof(bToken) },
+		{ CKA_PRIVATE, &bPrivate, sizeof(bPrivate) },
+		{ CKA_SUBJECT, &subject[0], sizeof(subject) },
+		{ CKA_ID, &id[0], sizeof(id) },
+		{ CKA_VERIFY, &bTrue, sizeof(bTrue) },
+		{ CKA_EC_PARAMS, const_cast<CK_BYTE *>(curveparam.data()), curveparam.size() }
+	};
+	CK_ATTRIBUTE privAttribs[] = {
+		{ CKA_TOKEN, &bToken, sizeof(bToken) },
+		{ CKA_PRIVATE, &bPrivate, sizeof(bPrivate) },
+		{ CKA_SUBJECT, &subject[0], sizeof(subject) },
+		{ CKA_ID, &id[0], sizeof(id) },
+		{ CKA_SENSITIVE, &bFalse, sizeof(bFalse) },
+		{ CKA_EXTRACTABLE, &bTrue, sizeof(bTrue) },
+		{ CKA_SIGN, &bTrue, sizeof(bTrue) },
+	};
+
+	CK_OBJECT_HANDLE hPub = CK_INVALID_HANDLE;
+	hKey = CK_INVALID_HANDLE;
+	CK_RV rv;
+	rv = CRYPTOKI_F_PTR( C_GenerateKeyPair(hSession, &mechanism,
+			       pubAttribs, sizeof(pubAttribs)/sizeof(CK_ATTRIBUTE),
+			       privAttribs, sizeof(privAttribs)/sizeof(CK_ATTRIBUTE),
+			       &hPub, &hKey) );
+	if (hPub != CK_INVALID_HANDLE)
+	{
+		CRYPTOKI_F_PTR( C_DestroyObject(hSession, hPub) );
+	}
+	return rv;
+}
+
+#endif
+
 #ifdef WITH_GOST
 CK_RV SymmetricAlgorithmTests::generateGostPrivateKey(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_OBJECT_HANDLE &hKey)
 {
@@ -696,6 +738,102 @@ void SymmetricAlgorithmTests::aesWrapUnwrapGost(CK_MECHANISM_TYPE mechanismType,
 }
 #endif
 
+#ifdef WITH_EDDSA
+void SymmetricAlgorithmTests::aesWrapUnwrapED(CK_MECHANISM_TYPE mechanismType, CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hKey)
+{
+	CK_MECHANISM mechanism = { mechanismType, NULL_PTR, 0 };
+	CK_BBOOL bFalse = CK_FALSE;
+	CK_BBOOL bTrue = CK_TRUE;
+
+	std::map<std::string, EDCurveParam > curves {
+		{ "ED25519", {0x06, 0x03, 0x2b, 0x65, 0x70} },
+		{ "ED448", {0x06, 0x03, 0x2b, 0x65, 0x71} }
+	};
+
+	for(auto &curve : curves) {
+	        const auto curvename = "Curve name: " + curve.first;
+
+		CK_OBJECT_HANDLE hPrk = CK_INVALID_HANDLE;
+		CK_RV rv = generateEDPrivateKey(hSession, CK_TRUE, CK_TRUE, hPrk, curve.second);
+		CPPUNIT_ASSERT_MESSAGE(curvename, rv == CKR_OK);
+		CPPUNIT_ASSERT_MESSAGE(curvename, hPrk != CK_INVALID_HANDLE);
+
+		CK_OBJECT_CLASS privateClass = CKO_PRIVATE_KEY;
+		CK_KEY_TYPE keyType = CKK_EC_EDWARDS;
+		CK_BYTE_PTR prkAttrPtr = NULL_PTR;
+		CK_ULONG prkAttrLen = 0UL;
+		CK_ATTRIBUTE prkAttribs[] = {
+			{ CKA_CLASS, &privateClass, sizeof(privateClass) },
+			{ CKA_KEY_TYPE, &keyType, sizeof(keyType) },
+			{ CKA_VALUE, NULL_PTR, 0UL }
+		};
+
+		rv = CRYPTOKI_F_PTR( C_GetAttributeValue(hSession, hPrk, prkAttribs, sizeof(prkAttribs)/sizeof(CK_ATTRIBUTE)) );
+		CPPUNIT_ASSERT_MESSAGE(curvename, rv == CKR_OK);
+
+		CPPUNIT_ASSERT_MESSAGE(curvename, prkAttribs[0].ulValueLen == sizeof(CK_OBJECT_CLASS));
+		CPPUNIT_ASSERT_MESSAGE(curvename, *(CK_OBJECT_CLASS*)prkAttribs[0].pValue == CKO_PRIVATE_KEY);
+		CPPUNIT_ASSERT_MESSAGE(curvename, prkAttribs[1].ulValueLen == sizeof(CK_KEY_TYPE));
+		CPPUNIT_ASSERT_MESSAGE(curvename, *(CK_KEY_TYPE*)prkAttribs[1].pValue == CKK_EC_EDWARDS);
+
+		prkAttrLen = prkAttribs[2].ulValueLen;
+		prkAttrPtr = (CK_BYTE_PTR) malloc(2 * prkAttrLen);
+		CPPUNIT_ASSERT_MESSAGE(curvename, prkAttrPtr != NULL_PTR);
+		prkAttribs[2].pValue = prkAttrPtr;
+		prkAttribs[2].ulValueLen = prkAttrLen;
+
+		rv = CRYPTOKI_F_PTR( C_GetAttributeValue(hSession, hPrk, prkAttribs, sizeof(prkAttribs)/sizeof(CK_ATTRIBUTE)) );
+		CPPUNIT_ASSERT_MESSAGE(curvename, rv == CKR_OK);
+		CPPUNIT_ASSERT_MESSAGE(curvename, prkAttribs[2].ulValueLen == prkAttrLen);
+
+		CK_BYTE_PTR wrappedPtr = NULL_PTR;
+		CK_ULONG wrappedLen = 0UL;
+		rv = CRYPTOKI_F_PTR( C_WrapKey(hSession, &mechanism, hKey, hPrk, wrappedPtr, &wrappedLen) );
+		CPPUNIT_ASSERT_MESSAGE(curvename, rv == CKR_OK);
+		wrappedPtr = (CK_BYTE_PTR) malloc(wrappedLen);
+		CPPUNIT_ASSERT_MESSAGE(curvename, wrappedPtr != NULL_PTR);
+		rv = CRYPTOKI_F_PTR( C_WrapKey(hSession, &mechanism, hKey, hPrk, wrappedPtr, &wrappedLen) );
+		CPPUNIT_ASSERT_MESSAGE(curvename, rv == CKR_OK);
+
+		rv = CRYPTOKI_F_PTR( C_DestroyObject(hSession, hPrk) );
+		CPPUNIT_ASSERT_MESSAGE(curvename, rv == CKR_OK);
+
+		CK_ATTRIBUTE nPrkAttribs[] = {
+			{ CKA_CLASS, &privateClass, sizeof(privateClass) },
+			{ CKA_KEY_TYPE, &keyType, sizeof(keyType) },
+			{ CKA_TOKEN, &bFalse, sizeof(bFalse) },
+			{ CKA_PRIVATE, &bTrue, sizeof(bTrue) },
+			{ CKA_DECRYPT, &bTrue, sizeof(bTrue) },
+			{ CKA_SIGN, &bFalse,sizeof(bFalse) },
+			{ CKA_UNWRAP, &bTrue, sizeof(bTrue) },
+			{ CKA_SENSITIVE, &bFalse, sizeof(bFalse) },
+			{ CKA_EXTRACTABLE, &bTrue, sizeof(bTrue) }
+		};
+
+		hPrk = CK_INVALID_HANDLE;
+		rv = CRYPTOKI_F_PTR( C_UnwrapKey(hSession, &mechanism, hKey, wrappedPtr, wrappedLen, nPrkAttribs, sizeof(nPrkAttribs)/sizeof(CK_ATTRIBUTE), &hPrk) );
+		CPPUNIT_ASSERT_MESSAGE(curvename, rv == CKR_OK);
+		CPPUNIT_ASSERT_MESSAGE(curvename, hPrk != CK_INVALID_HANDLE);
+
+		prkAttribs[2].pValue = prkAttrPtr + prkAttrLen;
+		rv = CRYPTOKI_F_PTR( C_GetAttributeValue(hSession, hPrk, prkAttribs, sizeof(prkAttribs)/sizeof(CK_ATTRIBUTE)) );
+		CPPUNIT_ASSERT_MESSAGE(curvename, rv == CKR_OK);
+
+		CPPUNIT_ASSERT_MESSAGE(curvename, prkAttribs[0].ulValueLen == sizeof(CK_OBJECT_CLASS));
+		CPPUNIT_ASSERT_MESSAGE(curvename, *(CK_OBJECT_CLASS*)prkAttribs[0].pValue == CKO_PRIVATE_KEY);
+		CPPUNIT_ASSERT_MESSAGE(curvename, prkAttribs[1].ulValueLen == sizeof(CK_KEY_TYPE));
+		CPPUNIT_ASSERT_MESSAGE(curvename, *(CK_KEY_TYPE*)prkAttribs[1].pValue == CKK_EC_EDWARDS);
+		CPPUNIT_ASSERT_MESSAGE(curvename, prkAttribs[2].ulValueLen == prkAttrLen);
+		CPPUNIT_ASSERT_MESSAGE(curvename, memcmp(prkAttrPtr, prkAttrPtr + prkAttrLen, prkAttrLen) == 0);
+
+		free(wrappedPtr);
+		free(prkAttrPtr);
+		rv = CRYPTOKI_F_PTR( C_DestroyObject(hSession, hPrk) );
+		CPPUNIT_ASSERT_MESSAGE(curvename, rv == CKR_OK);
+	}
+}
+#endif
+
 void SymmetricAlgorithmTests::testAesEncryptDecrypt()
 {
 	CK_RV rv;
@@ -791,6 +929,9 @@ void SymmetricAlgorithmTests::testAesWrapUnwrap()
 	aesWrapUnwrapRsa(CKM_AES_KEY_WRAP_PAD, hSession, hKey);
 #ifdef WITH_GOST
 	aesWrapUnwrapGost(CKM_AES_KEY_WRAP_PAD, hSession, hKey);
+#endif
+#ifdef WITH_EDDSA
+	aesWrapUnwrapED(CKM_AES_KEY_WRAP_PAD, hSession, hKey);
 #endif
 #endif
 }

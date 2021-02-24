@@ -40,6 +40,9 @@ class FileTests : public CppUnit::TestFixture
 	CPPUNIT_TEST_SUITE(FileTests);
 	CPPUNIT_TEST(testExistNotExist);
 	CPPUNIT_TEST(testCreateNotCreate);
+#ifndef _WIN32
+	CPPUNIT_TEST(testCreateUmask);
+#endif
 	CPPUNIT_TEST(testLockUnlock);
 	CPPUNIT_TEST(testWriteRead);
 	CPPUNIT_TEST(testSeek);
@@ -48,6 +51,9 @@ class FileTests : public CppUnit::TestFixture
 public:
 	void testExistNotExist();
 	void testCreateNotCreate();
+#ifndef _WIN32
+	void testCreateUmask();
+#endif
 	void testLockUnlock();
 	void testWriteRead();
 	void testSeek();

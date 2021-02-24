@@ -63,9 +63,9 @@ void ObjectStoreTests::testEmptyStore()
 {
 	// Create the store for an empty dir
 #ifndef _WIN32
-	ObjectStore store("./testdir");
+	ObjectStore store("./testdir", DEFAULT_UMASK);
 #else
-	ObjectStore store(".\\testdir");
+	ObjectStore store(".\\testdir", DEFAULT_UMASK);
 #endif
 
 	CPPUNIT_ASSERT(store.getTokenCount() == 0);
@@ -79,9 +79,9 @@ void ObjectStoreTests::testNewTokens()
 	{
 		// Create an empty store
 #ifndef _WIN32
-		ObjectStore store("./testdir");
+		ObjectStore store("./testdir", DEFAULT_UMASK);
 #else
-		ObjectStore store(".\\testdir");
+		ObjectStore store(".\\testdir", DEFAULT_UMASK);
 #endif
 
 		CPPUNIT_ASSERT(store.getTokenCount() == 0);
@@ -103,9 +103,9 @@ void ObjectStoreTests::testNewTokens()
 
 	// Now reopen that same store
 #ifndef _WIN32
-	ObjectStore store("./testdir");
+	ObjectStore store("./testdir", DEFAULT_UMASK);
 #else
-	ObjectStore store(".\\testdir");
+	ObjectStore store(".\\testdir", DEFAULT_UMASK);
 #endif
 
 	CPPUNIT_ASSERT(store.getTokenCount() == 2);
@@ -139,11 +139,11 @@ void ObjectStoreTests::testExistingTokens()
 	ByteString serial2 = "2233223322332233";
 
 #ifndef _WIN32
-	ObjectStoreToken* token1 = ObjectStoreToken::createToken("./testdir", "token1", label1, serial1);
-	ObjectStoreToken* token2 = ObjectStoreToken::createToken("./testdir", "token2", label2, serial2);
+	ObjectStoreToken* token1 = ObjectStoreToken::createToken("./testdir", "token1", DEFAULT_UMASK, label1, serial1);
+	ObjectStoreToken* token2 = ObjectStoreToken::createToken("./testdir", "token2", DEFAULT_UMASK, label2, serial2);
 #else
-	ObjectStoreToken* token1 = ObjectStoreToken::createToken(".\\testdir", "token1", label1, serial1);
-	ObjectStoreToken* token2 = ObjectStoreToken::createToken(".\\testdir", "token2", label2, serial2);
+	ObjectStoreToken* token1 = ObjectStoreToken::createToken(".\\testdir", "token1", DEFAULT_UMASK, label1, serial1);
+	ObjectStoreToken* token2 = ObjectStoreToken::createToken(".\\testdir", "token2", DEFAULT_UMASK, label2, serial2);
 #endif
 
 	CPPUNIT_ASSERT((token1 != NULL) && (token2 != NULL));
@@ -153,9 +153,9 @@ void ObjectStoreTests::testExistingTokens()
 
 	// Now associate a store with the test directory
 #ifndef _WIN32
-	ObjectStore store("./testdir");
+	ObjectStore store("./testdir", DEFAULT_UMASK);
 #else
-	ObjectStore store(".\\testdir");
+	ObjectStore store(".\\testdir", DEFAULT_UMASK);
 #endif
 
 	CPPUNIT_ASSERT(store.getTokenCount() == 2);
@@ -191,11 +191,11 @@ void ObjectStoreTests::testDeleteToken()
 	ByteString serial2 = "2233223322332233";
 
 #ifndef _WIN32
-	ObjectStoreToken* token1 = ObjectStoreToken::createToken("./testdir", "token1", label1, serial1);
-	ObjectStoreToken* token2 = ObjectStoreToken::createToken("./testdir", "token2", label2, serial2);
+	ObjectStoreToken* token1 = ObjectStoreToken::createToken("./testdir", "token1", DEFAULT_UMASK, label1, serial1);
+	ObjectStoreToken* token2 = ObjectStoreToken::createToken("./testdir", "token2", DEFAULT_UMASK, label2, serial2);
 #else
-	ObjectStoreToken* token1 = ObjectStoreToken::createToken(".\\testdir", "token1", label1, serial1);
-	ObjectStoreToken* token2 = ObjectStoreToken::createToken(".\\testdir", "token2", label2, serial2);
+	ObjectStoreToken* token1 = ObjectStoreToken::createToken(".\\testdir", "token1", DEFAULT_UMASK, label1, serial1);
+	ObjectStoreToken* token2 = ObjectStoreToken::createToken(".\\testdir", "token2", DEFAULT_UMASK, label2, serial2);
 #endif
 
 	CPPUNIT_ASSERT((token1 != NULL) && (token2 != NULL));
@@ -205,9 +205,9 @@ void ObjectStoreTests::testDeleteToken()
 
 	// Now associate a store with the test directory
 #ifndef _WIN32
-	ObjectStore store("./testdir");
+	ObjectStore store("./testdir", DEFAULT_UMASK);
 #else
-	ObjectStore store(".\\testdir");
+	ObjectStore store(".\\testdir", DEFAULT_UMASK);
 #endif
 
 	CPPUNIT_ASSERT(store.getTokenCount() == 2);

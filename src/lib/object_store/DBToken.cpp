@@ -59,7 +59,7 @@ const char * const DBTOKEN_FILE = "sqlite3.db";
 const long long DBTOKEN_OBJECT_TOKENINFO = 1;
 
 // Constructor for creating a new token.
-DBToken::DBToken(const std::string &baseDir, const std::string &tokenName, const ByteString &label, const ByteString &serial)
+DBToken::DBToken(const std::string &baseDir, const std::string &tokenName, int umask, const ByteString &label, const ByteString &serial)
 	: _connection(NULL), _tokenMutex(NULL)
 {
 	std::string tokenDir = baseDir + OS_PATHSEP + tokenName;
@@ -75,7 +75,11 @@ DBToken::DBToken(const std::string &baseDir, const std::string &tokenName, const
 	}
 
 	// First create the directory for the token, we expect basePath to already exist
-	if (mkdir(tokenDir.c_str(), S_IFDIR | S_IRWXU))
+#ifndef _WIN32
+	if (::mkdir(tokenDir.c_str(), S_IFDIR | ((S_IRWXU | S_IRWXG | S_IRWXO) & ~umask)))
+#else
+	if (_mkdir(tokenDir.c_str()))
+#endif
 	{
 		// Allow the directory to exists already.
 		if (errno != EEXIST)
@@ -86,7 +90,7 @@ DBToken::DBToken(const std::string &baseDir, const std::string &tokenName, const
 	}
 
 	// Create
-	_connection = DB::Connection::Create(tokenDir, DBTOKEN_FILE);
+	_connection = DB::Connection::Create(tokenDir, DBTOKEN_FILE, umask);
 	if (_connection == NULL)
 	{
 		ERROR_MSG("Failed to create a database connection for \"%s\"", tokenPath.c_str());
@@ -166,7 +170,7 @@ DBToken::DBToken(const std::string &baseDir, const std::string &tokenName, const
 }
 
 // Constructor for accessing an existing token.
-DBToken::DBToken(const std::string &baseDir, const std::string &tokenName)
+DBToken::DBToken(const std::string &baseDir, const std::string &tokenName, int umask)
 	: _connection(NULL), _tokenMutex(NULL)
 {
 	std::string tokenDir = baseDir + OS_PATHSEP + tokenName;
@@ -182,7 +186,7 @@ DBToken::DBToken(const std::string &baseDir, const std::string &tokenName)
 	fclose(f);
 
 	// Create a database connection.
-	_connection = DB::Connection::Create(tokenDir, DBTOKEN_FILE);
+	_connection = DB::Connection::Create(tokenDir, DBTOKEN_FILE, umask);
 	if (_connection == NULL)
 	{
 		ERROR_MSG("Failed to create a database connection for \"%s\"", tokenPath.c_str());
@@ -220,7 +224,7 @@ DBToken::DBToken(const std::string &baseDir, const std::string &tokenName)
 	// Success!
 }
 
-DBToken *DBToken::createToken(const std::string basePath, const std::string tokenDir, const ByteString &label, const ByteString &serial)
+DBToken *DBToken::createToken(const std::string basePath, const std::string tokenDir, int umask, const ByteString &label, const ByteString &serial)
 {
 	Directory baseDir(basePath);
 
@@ -230,12 +234,12 @@ DBToken *DBToken::createToken(const std::string basePath, const std::string toke
 	}
 
 	// Create the token directory
-	if (!baseDir.mkdir(tokenDir))
+	if (!baseDir.mkdir(tokenDir, umask))
 	{
 		return NULL;
 	}
 
-	DBToken *token = new DBToken(basePath, tokenDir, label, serial);
+	DBToken *token = new DBToken(basePath, tokenDir, umask, label, serial);
 	if (!token->isValid())
 	{
 		baseDir.rmdir(tokenDir);
@@ -249,9 +253,9 @@ DBToken *DBToken::createToken(const std::string basePath, const std::string toke
 	return token;
 }
 
-DBToken *DBToken::accessToken(const std::string &basePath, const std::string &tokenDir)
+DBToken *DBToken::accessToken(const std::string &basePath, const std::string &tokenDir, int umask)
 {
-	return new DBToken(basePath, tokenDir);
+	return new DBToken(basePath, tokenDir, umask);
 }
 
 // Destructor

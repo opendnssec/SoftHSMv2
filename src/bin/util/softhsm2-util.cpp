@@ -548,8 +548,9 @@ bool deleteToken(char* serial, char* token)
 	bool rv = true;
 	std::string basedir = Configuration::i()->getString("directories.tokendir", DEFAULT_TOKENDIR);
 	std::string tokendir;
+	int umask = Configuration::i()->getInt("objectstore.umask", DEFAULT_UMASK);
 
-	rv = findTokenDirectory(basedir, tokendir, serial, token);
+	rv = findTokenDirectory(basedir, tokendir, umask, serial, token);
 
 	if (rv)
 	{
@@ -634,7 +635,7 @@ void finalizeSoftHSM()
 }
 
 // Find the token directory
-bool findTokenDirectory(std::string basedir, std::string& tokendir, char* serial, char* label)
+bool findTokenDirectory(std::string basedir, std::string& tokendir, int umask, char* serial, char* label)
 {
 	if (serial == NULL && label == NULL)
 	{
@@ -693,7 +694,7 @@ bool findTokenDirectory(std::string basedir, std::string& tokendir, char* serial
 		memset(paddedTokenLabel, ' ', sizeof(paddedTokenLabel));
 
 		// Create a token instance
-		ObjectStoreToken* token = ObjectStoreToken::accessToken(basedir, *i);
+		ObjectStoreToken* token = ObjectStoreToken::accessToken(basedir, *i, umask);
 
 		if (!token->isValid())
 		{

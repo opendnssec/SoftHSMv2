@@ -40,6 +40,9 @@ class test_a_dbtoken : public CppUnit::TestFixture
 {
 	CPPUNIT_TEST_SUITE(test_a_dbtoken);
 	CPPUNIT_TEST(should_be_creatable);
+#ifndef _WIN32
+	CPPUNIT_TEST(should_create_with_umask);
+#endif
 	CPPUNIT_TEST(should_support_pin_setting_getting);
 	CPPUNIT_TEST(should_allow_object_enumeration);
 	CPPUNIT_TEST(should_fail_to_open_nonexistant_tokens);
@@ -52,6 +55,9 @@ public:
 	void tearDown();
 
 	void should_be_creatable();
+#ifndef _WIN32
+	void should_create_with_umask();
+#endif
 	void should_support_pin_setting_getting();
 	void should_allow_object_enumeration();
 	void should_fail_to_open_nonexistant_tokens();

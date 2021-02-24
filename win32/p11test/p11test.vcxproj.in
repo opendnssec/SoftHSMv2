@@ -1,0 +1,165 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|@PLATFORM@">
+      <Configuration>Debug</Configuration>
+      <Platform>@PLATFORM@</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|@PLATFORM@">
+      <Configuration>Release</Configuration>
+      <Platform>@PLATFORM@</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{7C5EE7FC-B5FC-47BF-8164-A452FE689472}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>p11test</RootNamespace>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|@PLATFORM@'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <CharacterSet>Unicode</CharacterSet>
+	<PlatformToolset>@PLATFORMTOOLSET@</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|@PLATFORM@'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+	<PlatformToolset>@PLATFORMTOOLSET@</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|@PLATFORM@'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|@PLATFORM@'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|@PLATFORM@'">
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|@PLATFORM@'">
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|@PLATFORM@'">
+    <ClCompile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..;..\..\src\lib;..\..\src\lib\test;..\..\src\lib\pkcs11;..\..\src\lib\common;..\..\src\lib\crypto;..\..\src\lib\object_store;..\..\src\lib\data_mgr;..\..\src\lib\session_mgr;..\..\src\lib\slot_mgr;..\..\src\lib\handle_mgr;..\..\src\lib\win32;@CUINCPATH@;@INCLUDEPATH@;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <RuntimeLibrary>@RUNTIMELIBRARY@</RuntimeLibrary>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>..\@PLATFORMDIR@$(Configuration);@CULIBPATH@;@DEBUGLIBPATH@;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>convarch.lib;cppunitd.lib;@BOTAN_LIBRARY@;@EXTRALIBS@%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+    <PostBuildEvent>
+      <Command>
+copy ..\..\src\lib\test\softhsm2.conf.win32 "$(TargetDir)\softhsm2.conf"
+copy ..\..\src\lib\test\softhsm2-alt.conf.win32 "$(TargetDir)\softhsm2-alt.conf"
+copy ..\..\src\lib\test\softhsm2-reset-on-fork.conf.win32 "$(TargetDir)\softhsm2-reset-on-fork.conf"
+copy ..\..\src\lib\test\softhsm2-mech.conf.win32 "$(TargetDir)\softhsm2-mech.conf"
+copy ..\..\src\lib\test\softhsm2-negative-mech.conf.win32 "$(TargetDir)\softhsm2-negative-mech.conf"
+mkdir "$(TargetDir)\tokens" 2&gt; nul
+copy ..\..\src\lib\test\tokens\dummy.in "$(TargetDir)\tokens\dummy"
+      </Command>
+      <Message>Copying dummy test files to Debug folder</Message>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|@PLATFORM@'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..;..\..\src\lib;..\..\src\lib\test;..\..\src\lib\pkcs11;..\..\src\lib\common;..\..\src\lib\crypto;..\..\src\lib\object_store;..\..\src\lib\data_mgr;..\..\src\lib\session_mgr;..\..\src\lib\slot_mgr;..\..\src\lib\handle_mgr;..\..\src\lib\win32;@CUINCPATH@;@INCLUDEPATH@;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <RuntimeLibrary>@RUNTIMELIBRARY@</RuntimeLibrary>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalLibraryDirectories>..\@PLATFORMDIR@$(Configuration);@CULIBPATH@;@LIBPATH@;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>convarch.lib;cppunit.lib;@BOTAN_LIBRARY@;@EXTRALIBS@%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+    <PostBuildEvent>
+      <Command>
+copy ..\..\src\lib\test\softhsm2.conf.win32 "$(TargetDir)\softhsm2.conf"
+copy ..\..\src\lib\test\softhsm2-alt.conf.win32 "$(TargetDir)\softhsm2-alt.conf"
+copy ..\..\src\lib\test\softhsm2-reset-on-fork.conf.win32 "$(TargetDir)\softhsm2-reset-on-fork.conf"
+copy ..\..\src\lib\test\softhsm2-mech.conf.win32 "$(TargetDir)\softhsm2-mech.conf"
+copy ..\..\src\lib\test\softhsm2-negative-mech.conf.win32 "$(TargetDir)\softhsm2-negative-mech.conf"
+mkdir "$(TargetDir)\tokens" 2&gt; nul
+copy ..\..\src\lib\test\tokens\dummy.in "$(TargetDir)\tokens\dummy"
+      </Command>
+      <Message>Copying dummy test files to Release folder</Message>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\src\lib\access.h" />
+    <ClInclude Include="..\..\src\lib\common\osmutex.h" />
+    <ClInclude Include="..\..\src\lib\pkcs11\cryptoki.h" />
+    <ClInclude Include="..\..\src\lib\pkcs11\pkcs11.h" />
+    <ClInclude Include="..\..\src\lib\pkcs11\pkcs11f.h" />
+    <ClInclude Include="..\..\src\lib\pkcs11\pkcs11t.h" />
+    <ClInclude Include="..\..\src\lib\P11Attributes.h" />
+    <ClInclude Include="..\..\src\lib\P11Objects.h" />
+    <ClInclude Include="..\..\src\lib\SoftHSM.h" />
+    <ClInclude Include="..\..\src\lib\test\AsymEncryptDecryptTests.h" />
+    <ClInclude Include="..\..\src\lib\test\AsymWrapUnwrapTests.h" />
+    <ClInclude Include="..\..\src\lib\test\DeriveTests.h" />
+    <ClInclude Include="..\..\src\lib\test\DigestTests.h" />
+    <ClInclude Include="..\..\src\lib\test\InfoTests.h" />
+    <ClInclude Include="..\..\src\lib\test\InitTests.h" />
+    <ClInclude Include="..\..\src\lib\test\ObjectTests.h" />
+    <ClInclude Include="..\..\src\lib\test\RandomTests.h" />
+    <ClInclude Include="..\..\src\lib\test\SessionTests.h" />
+    <ClInclude Include="..\..\src\lib\test\SignVerifyTests.h" />
+    <ClInclude Include="..\..\src\lib\test\SymmetricAlgorithmTests.h" />
+    <ClInclude Include="..\..\src\lib\test\TestsBase.h" />
+    <ClInclude Include="..\..\src\lib\test\TestsNoPINInitBase.h" />
+    <ClInclude Include="..\..\src\lib\test\TokenTests.h" />
+    <ClInclude Include="..\..\src\lib\test\UserTests.h" />
+    <ClInclude Include="..\..\src\lib\win32\setenv.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\src\lib\access.cpp" />
+    <ClCompile Include="..\..\src\lib\common\osmutex.cpp" />
+    <ClCompile Include="..\..\src\lib\main.cpp" />
+    <ClCompile Include="..\..\src\lib\P11Attributes.cpp" />
+    <ClCompile Include="..\..\src\lib\P11Objects.cpp" />
+    <ClCompile Include="..\..\src\lib\SoftHSM.cpp" />
+    <ClCompile Include="..\..\src\lib\test\AsymEncryptDecryptTests.cpp" />
+    <ClCompile Include="..\..\src\lib\test\AsymWrapUnwrapTests.cpp" />
+    <ClCompile Include="..\..\src\lib\test\DeriveTests.cpp" />
+    <ClCompile Include="..\..\src\lib\test\DigestTests.cpp" />
+    <ClCompile Include="..\..\src\lib\test\InfoTests.cpp" />
+    <ClCompile Include="..\..\src\lib\test\InitTests.cpp" />
+    <ClCompile Include="..\..\src\lib\test\ObjectTests.cpp" />
+    <ClCompile Include="..\..\src\lib\test\p11test.cpp" />
+    <ClCompile Include="..\..\src\lib\test\RandomTests.cpp" />
+    <ClCompile Include="..\..\src\lib\test\SessionTests.cpp" />
+    <ClCompile Include="..\..\src\lib\test\SignVerifyTests.cpp" />
+    <ClCompile Include="..\..\src\lib\test\SymmetricAlgorithmTests.cpp" />
+    <ClCompile Include="..\..\src\lib\test\TestsBase.cpp" />
+    <ClCompile Include="..\..\src\lib\test\TestsNoPINInitBase.cpp" />
+    <ClCompile Include="..\..\src\lib\test\TokenTests.cpp" />
+    <ClCompile Include="..\..\src\lib\test\UserTests.cpp" />
+    <ClCompile Include="..\..\src\lib\win32\setenv.cpp" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

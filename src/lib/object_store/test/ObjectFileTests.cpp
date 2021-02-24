@@ -66,9 +66,9 @@ void ObjectFileTests::testBoolAttr()
 	// Create the test object
 	{
 #ifndef _WIN32
-		ObjectFile testObject(NULL, "testdir/test.object", "testdir/test.lock", true);
+		ObjectFile testObject(NULL, "testdir/test.object", DEFAULT_UMASK, "testdir/test.lock", true);
 #else
-		ObjectFile testObject(NULL, "testdir\\test.object", "testdir\\test.lock", true);
+		ObjectFile testObject(NULL, "testdir\\test.object", DEFAULT_UMASK, "testdir\\test.lock", true);
 #endif
 
 		CPPUNIT_ASSERT(testObject.isValid());
@@ -95,9 +95,9 @@ void ObjectFileTests::testBoolAttr()
 	// Now read back the object
 	{
 #ifndef _WIN32
-		ObjectFile testObject(NULL, "testdir/test.object", "testdir/test.lock");
+		ObjectFile testObject(NULL, "testdir/test.object", DEFAULT_UMASK, "testdir/test.lock");
 #else
-		ObjectFile testObject(NULL, "testdir\\test.object", "testdir\\test.lock");
+		ObjectFile testObject(NULL, "testdir\\test.object", DEFAULT_UMASK, "testdir\\test.lock");
 #endif
 
 		CPPUNIT_ASSERT(testObject.isValid());
@@ -136,9 +136,9 @@ void ObjectFileTests::testULongAttr()
 	// Create the test object
 	{
 #ifndef _WIN32
-		ObjectFile testObject(NULL, "testdir/test.object", "testdir/test.lock", true);
+		ObjectFile testObject(NULL, "testdir/test.object", DEFAULT_UMASK, "testdir/test.lock", true);
 #else
-		ObjectFile testObject(NULL, "testdir\\test.object", "testdir\\test.lock", true);
+		ObjectFile testObject(NULL, "testdir\\test.object", DEFAULT_UMASK, "testdir\\test.lock", true);
 #endif
 
 		CPPUNIT_ASSERT(testObject.isValid());
@@ -165,9 +165,9 @@ void ObjectFileTests::testULongAttr()
 	// Now read back the object
 	{
 #ifndef _WIN32
-		ObjectFile testObject(NULL, "testdir/test.object", "testdir/test.lock");
+		ObjectFile testObject(NULL, "testdir/test.object", DEFAULT_UMASK, "testdir/test.lock");
 #else
-		ObjectFile testObject(NULL, "testdir\\test.object", "testdir\\test.lock");
+		ObjectFile testObject(NULL, "testdir\\test.object", DEFAULT_UMASK, "testdir\\test.lock");
 #endif
 
 		CPPUNIT_ASSERT(testObject.isValid());
@@ -212,9 +212,9 @@ void ObjectFileTests::testByteStrAttr()
 	// Create the test object
 	{
 #ifndef _WIN32
-		ObjectFile testObject(NULL, "testdir/test.object", "testdir/test.lock", true);
+		ObjectFile testObject(NULL, "testdir/test.object", DEFAULT_UMASK, "testdir/test.lock", true);
 #else
-		ObjectFile testObject(NULL, "testdir\\test.object", "testdir\\test.lock", true);
+		ObjectFile testObject(NULL, "testdir\\test.object", DEFAULT_UMASK, "testdir\\test.lock", true);
 #endif
 
 		CPPUNIT_ASSERT(testObject.isValid());
@@ -235,9 +235,9 @@ void ObjectFileTests::testByteStrAttr()
 	// Now read back the object
 	{
 #ifndef _WIN32
-		ObjectFile testObject(NULL, "testdir/test.object", "testdir/test.lock");
+		ObjectFile testObject(NULL, "testdir/test.object", DEFAULT_UMASK, "testdir/test.lock");
 #else
-		ObjectFile testObject(NULL, "testdir\\test.object", "testdir\\test.lock");
+		ObjectFile testObject(NULL, "testdir\\test.object", DEFAULT_UMASK, "testdir\\test.lock");
 #endif
 
 		CPPUNIT_ASSERT(testObject.isValid());
@@ -275,9 +275,9 @@ void ObjectFileTests::testMechTypeSetAttr()
 	// Create the test object
 	{
 #ifndef _WIN32
-		ObjectFile testObject(NULL, "testdir/test.object", "testdir/test.lock", true);
+		ObjectFile testObject(NULL, "testdir/test.object", DEFAULT_UMASK, "testdir/test.lock", true);
 #else
-		ObjectFile testObject(NULL, "testdir\\test.object", "testdir\\test.lock", true);
+		ObjectFile testObject(NULL, "testdir\\test.object", DEFAULT_UMASK, "testdir\\test.lock", true);
 #endif
 
 		CPPUNIT_ASSERT(testObject.isValid());
@@ -293,9 +293,9 @@ void ObjectFileTests::testMechTypeSetAttr()
 	// Now read back the object
 	{
 #ifndef _WIN32
-		ObjectFile testObject(NULL, "testdir/test.object", "testdir/test.lock");
+		ObjectFile testObject(NULL, "testdir/test.object", DEFAULT_UMASK, "testdir/test.lock");
 #else
-		ObjectFile testObject(NULL, "testdir\\test.object", "testdir\\test.lock");
+		ObjectFile testObject(NULL, "testdir\\test.object", DEFAULT_UMASK, "testdir\\test.lock");
 #endif
 
 		CPPUNIT_ASSERT(testObject.isValid());
@@ -324,9 +324,9 @@ void ObjectFileTests::testAttrMapAttr()
 	// Create the test object
 	{
 #ifndef _WIN32
-		ObjectFile testObject(NULL, "testdir/test.object", "testdir/test.lock", true);
+		ObjectFile testObject(NULL, "testdir/test.object", DEFAULT_UMASK, "testdir/test.lock", true);
 #else
-		ObjectFile testObject(NULL, "testdir\\test.object", "testdir\\test.lock", true);
+		ObjectFile testObject(NULL, "testdir\\test.object", DEFAULT_UMASK, "testdir\\test.lock", true);
 #endif
 
 		CPPUNIT_ASSERT(testObject.isValid());
@@ -352,9 +352,9 @@ void ObjectFileTests::testAttrMapAttr()
 	// Now read back the object
 	{
 #ifndef _WIN32
-		ObjectFile testObject(NULL, "testdir/test.object", "testdir/test.lock");
+		ObjectFile testObject(NULL, "testdir/test.object", DEFAULT_UMASK, "testdir/test.lock");
 #else
-		ObjectFile testObject(NULL, "testdir\\test.object", "testdir\\test.lock");
+		ObjectFile testObject(NULL, "testdir\\test.object", DEFAULT_UMASK, "testdir\\test.lock");
 #endif
 
 		CPPUNIT_ASSERT(testObject.isValid());
@@ -390,9 +390,9 @@ void ObjectFileTests::testMixedAttr()
 	// Create the test object
 	{
 #ifndef _WIN32
-		ObjectFile testObject(NULL, "testdir/test.object", "testdir/test.lock", true);
+		ObjectFile testObject(NULL, "testdir/test.object", DEFAULT_UMASK, "testdir/test.lock", true);
 #else
-		ObjectFile testObject(NULL, "testdir\\test.object", "testdir\\test.lock", true);
+		ObjectFile testObject(NULL, "testdir\\test.object", DEFAULT_UMASK, "testdir\\test.lock", true);
 #endif
 
 		CPPUNIT_ASSERT(testObject.isValid());
@@ -414,9 +414,9 @@ void ObjectFileTests::testMixedAttr()
 	// Now read back the object
 	{
 #ifndef _WIN32
-		ObjectFile testObject(NULL, "testdir/test.object", "testdir/test.lock");
+		ObjectFile testObject(NULL, "testdir/test.object", DEFAULT_UMASK, "testdir/test.lock");
 #else
-		ObjectFile testObject(NULL, "testdir\\test.object", "testdir\\test.lock");
+		ObjectFile testObject(NULL, "testdir\\test.object", DEFAULT_UMASK, "testdir\\test.lock");
 #endif
 
 		CPPUNIT_ASSERT(testObject.isValid());
@@ -453,9 +453,9 @@ void ObjectFileTests::testDoubleAttr()
 	// Create the test object
 	{
 #ifndef _WIN32
-		ObjectFile testObject(NULL, "testdir/test.object", "testdir/test.lock", true);
+		ObjectFile testObject(NULL, "testdir/test.object", DEFAULT_UMASK, "testdir/test.lock", true);
 #else
-		ObjectFile testObject(NULL, "testdir\\test.object", "testdir\\test.lock", true);
+		ObjectFile testObject(NULL, "testdir\\test.object", DEFAULT_UMASK, "testdir\\test.lock", true);
 #endif
 
 		CPPUNIT_ASSERT(testObject.isValid());
@@ -477,9 +477,9 @@ void ObjectFileTests::testDoubleAttr()
 	// Now read back the object
 	{
 #ifndef _WIN32
-		ObjectFile testObject(NULL, "testdir/test.object", "testdir/test.lock");
+		ObjectFile testObject(NULL, "testdir/test.object", DEFAULT_UMASK, "testdir/test.lock");
 #else
-		ObjectFile testObject(NULL, "testdir\\test.object", "testdir\\test.lock");
+		ObjectFile testObject(NULL, "testdir\\test.object", DEFAULT_UMASK, "testdir\\test.lock");
 #endif
 
 		CPPUNIT_ASSERT(testObject.isValid());
@@ -531,9 +531,9 @@ void ObjectFileTests::testDoubleAttr()
 	// Now re-read back the object
 	{
 #ifndef _WIN32
-		ObjectFile testObject(NULL, "testdir/test.object", "testdir/test.lock");
+		ObjectFile testObject(NULL, "testdir/test.object", DEFAULT_UMASK, "testdir/test.lock");
 #else
-		ObjectFile testObject(NULL, "testdir\\test.object", "testdir\\test.lock");
+		ObjectFile testObject(NULL, "testdir\\test.object", DEFAULT_UMASK, "testdir\\test.lock");
 #endif
 
 		CPPUNIT_ASSERT(testObject.isValid());
@@ -573,9 +573,9 @@ void ObjectFileTests::testRefresh()
 	// Create the test object
 	{
 #ifndef _WIN32
-		ObjectFile testObject(NULL, "testdir/test.object", "testdir/test.lock", true);
+		ObjectFile testObject(NULL, "testdir/test.object", DEFAULT_UMASK, "testdir/test.lock", true);
 #else
-		ObjectFile testObject(NULL, "testdir\\test.object", "testdir\\test.lock", true);
+		ObjectFile testObject(NULL, "testdir\\test.object", DEFAULT_UMASK, "testdir\\test.lock", true);
 #endif
 
 		CPPUNIT_ASSERT(testObject.isValid());
@@ -597,9 +597,9 @@ void ObjectFileTests::testRefresh()
 	// Now read back the object
 	{
 #ifndef _WIN32
-		ObjectFile testObject(NULL, "testdir/test.object", "testdir/test.lock");
+		ObjectFile testObject(NULL, "testdir/test.object", DEFAULT_UMASK, "testdir/test.lock");
 #else
-		ObjectFile testObject(NULL, "testdir\\test.object", "testdir\\test.lock");
+		ObjectFile testObject(NULL, "testdir\\test.object", DEFAULT_UMASK, "testdir\\test.lock");
 #endif
 
 		CPPUNIT_ASSERT(testObject.isValid());
@@ -649,9 +649,9 @@ void ObjectFileTests::testRefresh()
 
 		// Open the object a second time
 #ifndef _WIN32
-		ObjectFile testObject2(NULL, "testdir/test.object", "testdir/test.lock");
+		ObjectFile testObject2(NULL, "testdir/test.object", DEFAULT_UMASK, "testdir/test.lock");
 #else
-		ObjectFile testObject2(NULL, "testdir\\test.object", "testdir\\test.lock");
+		ObjectFile testObject2(NULL, "testdir\\test.object", DEFAULT_UMASK, "testdir\\test.lock");
 #endif
 
 		CPPUNIT_ASSERT(testObject2.isValid());
@@ -719,9 +719,9 @@ void ObjectFileTests::testCorruptFile()
 	CPPUNIT_ASSERT(!fclose(stream));
 
 #ifndef _WIN32
-	ObjectFile testObject(NULL, "testdir/test.object", "testdir/test.lock");
+	ObjectFile testObject(NULL, "testdir/test.object", DEFAULT_UMASK, "testdir/test.lock");
 #else
-	ObjectFile testObject(NULL, "testdir\\test.object", "testdir\\test.lock");
+	ObjectFile testObject(NULL, "testdir\\test.object", DEFAULT_UMASK, "testdir\\test.lock");
 #endif
 
 	CPPUNIT_ASSERT(!testObject.isValid());
@@ -731,9 +731,9 @@ void ObjectFileTests::testTransactions()
 {
 	// Create test object instance
 #ifndef _WIN32
-	ObjectFile testObject(NULL, "testdir/test.object", "testdir/test.lock", true);
+	ObjectFile testObject(NULL, "testdir/test.object", DEFAULT_UMASK, "testdir/test.lock", true);
 #else
-	ObjectFile testObject(NULL, "testdir\\test.object", "testdir\\test.lock", true);
+	ObjectFile testObject(NULL, "testdir\\test.object", DEFAULT_UMASK, "testdir\\test.lock", true);
 #endif
 
 	CPPUNIT_ASSERT(testObject.isValid());
@@ -757,9 +757,9 @@ void ObjectFileTests::testTransactions()
 
 	// Create secondary instance for the same object
 #ifndef _WIN32
-	ObjectFile testObject2(NULL, "testdir/test.object", "testdir/test.lock");
+	ObjectFile testObject2(NULL, "testdir/test.object", DEFAULT_UMASK, "testdir/test.lock");
 #else
-	ObjectFile testObject2(NULL, "testdir\\test.object", "testdir\\test.lock");
+	ObjectFile testObject2(NULL, "testdir\\test.object", DEFAULT_UMASK, "testdir\\test.lock");
 #endif
 
 	CPPUNIT_ASSERT(testObject2.isValid());
@@ -897,9 +897,9 @@ void ObjectFileTests::testDestroyObjectFails()
 {
 	// Create test object instance
 #ifndef _WIN32
-	ObjectFile testObject(NULL, "testdir/test.object", "testdir/test.lock", true);
+	ObjectFile testObject(NULL, "testdir/test.object", DEFAULT_UMASK, "testdir/test.lock", true);
 #else
-	ObjectFile testObject(NULL, "testdir\\test.object", "testdir\\test.lock", true);
+	ObjectFile testObject(NULL, "testdir\\test.object", DEFAULT_UMASK, "testdir\\test.lock", true);
 #endif
 
 	CPPUNIT_ASSERT(testObject.isValid());

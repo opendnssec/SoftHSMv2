@@ -53,16 +53,16 @@ class OSToken : public ObjectStoreToken
 {
 public:
 	// Constructor
-	OSToken(const std::string inTokenPath);
+	OSToken(const std::string inTokenPath, int inUmask);
 
 	// Create a new token
-	static OSToken* createToken(const std::string basePath, const std::string tokenDir, const ByteString& label, const ByteString& serial);
+	static OSToken* createToken(const std::string basePath, const std::string tokenDir, int umask, const ByteString& label, const ByteString& serial);
 
 	// Access an existing token
-	static OSToken* accessToken(const std::string &basePath, const std::string &tokenDir);
+	static OSToken* accessToken(const std::string &basePath, const std::string &tokenDir, int umask);
 
 	// Constructor for new tokens
-	OSToken(const std::string tokenPath, const ByteString& label, const ByteString& serialNumber);
+	OSToken(const std::string tokenPath, const ByteString& label, int umask, const ByteString& serialNumber);
 
 	// Set the SO PIN
 	virtual bool setSOPIN(const ByteString& soPINBlob);
@@ -151,6 +151,9 @@ private:
 
 	// The directory object for this token
 	Directory* tokenDir;
+
+	// File mode creation mask
+	int umask;
 
 	// For thread safeness
 	Mutex* tokenMutex;

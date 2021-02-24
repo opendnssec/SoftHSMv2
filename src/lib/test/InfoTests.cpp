@@ -152,6 +152,7 @@ void InfoTests::testGetSlotInfo()
 	CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
 }
 
+#ifndef P11_SHARED_LIBRARY
 void InfoTests::testGetSlotInfoAlt()
 {
 	CK_RV rv;
@@ -201,6 +202,7 @@ void InfoTests::testGetSlotInfoAlt()
 	setenv("SOFTHSM2_CONF", ".\\softhsm2.conf", 1);
 #endif
 }
+#endif // P11_SHARED_LIBRARY
 
 
 void InfoTests::testGetTokenInfo()
@@ -321,6 +323,7 @@ void InfoTests::testGetMechanismInfo()
 }
 
 
+#ifndef P11_SHARED_LIBRARY
 void InfoTests::testGetMechanismListConfig()
 {
 	CK_RV rv;
@@ -328,9 +331,9 @@ void InfoTests::testGetMechanismListConfig()
 	CK_MECHANISM_TYPE_PTR pMechanismList;
 
 #ifndef _WIN32
-    setenv("SOFTHSM2_CONF", "./softhsm2-mech.conf", 1);
+	setenv("SOFTHSM2_CONF", "./softhsm2-mech.conf", 1);
 #else
-    setenv("SOFTHSM2_CONF", ".\\softhsm2-mech.conf", 1);
+	setenv("SOFTHSM2_CONF", ".\\softhsm2-mech.conf", 1);
 #endif
 
 	// Just make sure that we finalize any previous failed tests
@@ -363,6 +366,73 @@ void InfoTests::testGetMechanismListConfig()
 #endif
 }
 
+void InfoTests::testGetMechanismNegativeListConfig()
+{
+	CK_RV rv;
+	CK_ULONG ulMechCount = 0;
+	CK_MECHANISM_TYPE_PTR pMechanismList;
+	CK_ULONG allMechsCount = 0;
+
+	// Just make sure that we finalize any previous failed tests
+	CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
+
+	// First of all, try to get the default list
+	rv = CRYPTOKI_F_PTR( C_GetMechanismList(m_initializedTokenSlotID, NULL_PTR, &ulMechCount) );
+	CPPUNIT_ASSERT(rv == CKR_CRYPTOKI_NOT_INITIALIZED);
+
+	rv = CRYPTOKI_F_PTR( C_Initialize(NULL_PTR) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Get the size of the buffer
+	rv = CRYPTOKI_F_PTR( C_GetMechanismList(m_initializedTokenSlotID, NULL_PTR, &ulMechCount) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	pMechanismList = (CK_MECHANISM_TYPE_PTR)malloc(ulMechCount * sizeof(CK_MECHANISM_TYPE_PTR));
+	/* Remember how many mechanisms are supported */
+	allMechsCount = ulMechCount;
+
+	// Get the mechanism list
+	rv = CRYPTOKI_F_PTR( C_GetMechanismList(m_initializedTokenSlotID, pMechanismList, &ulMechCount) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	CPPUNIT_ASSERT_EQUAL(allMechsCount, ulMechCount);
+	free(pMechanismList);
+
+	CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
+	/* Now try with configuration having negative list */
+#ifndef _WIN32
+	setenv("SOFTHSM2_CONF", "./softhsm2-negative-mech.conf", 1);
+#else
+	setenv("SOFTHSM2_CONF", ".\\softhsm2-negative-mech.conf", 1);
+#endif
+
+	rv = CRYPTOKI_F_PTR( C_Initialize(NULL_PTR) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Get the size of the buffer
+	rv = CRYPTOKI_F_PTR( C_GetMechanismList(m_initializedTokenSlotID, NULL_PTR, &ulMechCount) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	/* We should get 2 shorter */
+	//CPPUNIT_ASSERT_EQUAL(allMechsCount - 2, ulMechCount);
+	pMechanismList = (CK_MECHANISM_TYPE_PTR)malloc(ulMechCount * sizeof(CK_MECHANISM_TYPE_PTR));
+
+	// Get the mechanism list
+	rv = CRYPTOKI_F_PTR( C_GetMechanismList(m_initializedTokenSlotID, pMechanismList, &ulMechCount) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	//CPPUNIT_ASSERT_EQUAL(allMechsCount - 2, ulMechCount);
+	for (unsigned long i = 0; i < ulMechCount; i++) {
+		CPPUNIT_ASSERT(pMechanismList[i] != CKM_RSA_X_509);
+		CPPUNIT_ASSERT(pMechanismList[i] != CKM_RSA_PKCS);
+	}
+	free(pMechanismList);
+
+	CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
+#ifndef _WIN32
+	setenv("SOFTHSM2_CONF", "./softhsm2.conf", 1);
+#else
+	setenv("SOFTHSM2_CONF", ".\\softhsm2.conf", 1);
+#endif
+}
+#endif // P11_SHARED_LIBRARY
+
 void InfoTests::testWaitForSlotEvent()
 {
 	CK_RV rv;
@@ -370,18 +440,19 @@ void InfoTests::testWaitForSlotEvent()
 	// Just make sure that we finalize any previous failed tests
 	CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
 
-	rv = CRYPTOKI_F_PTR( C_WaitForSlotEvent(CKF_DONT_BLOCK, NULL_PTR, NULL_PTR) );
+	CK_SLOT_ID slot;
+	rv = CRYPTOKI_F_PTR( C_WaitForSlotEvent(CKF_DONT_BLOCK, &slot, NULL_PTR) );
 	CPPUNIT_ASSERT(rv == CKR_CRYPTOKI_NOT_INITIALIZED);
 
 	rv = CRYPTOKI_F_PTR( C_Initialize(NULL_PTR) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
 	// Blocking version should fail
-	rv = CRYPTOKI_F_PTR( C_WaitForSlotEvent(0, NULL_PTR, NULL_PTR) );
+	rv = CRYPTOKI_F_PTR( C_WaitForSlotEvent(0, &slot, NULL_PTR) );
 	CPPUNIT_ASSERT(rv == CKR_FUNCTION_NOT_SUPPORTED);
 
 	// Should always return CKR_NO_EVENT
-	rv = CRYPTOKI_F_PTR( C_WaitForSlotEvent(CKF_DONT_BLOCK, NULL_PTR, NULL_PTR) );
+	rv = CRYPTOKI_F_PTR( C_WaitForSlotEvent(CKF_DONT_BLOCK, &slot, NULL_PTR) );
 	CPPUNIT_ASSERT(rv == CKR_NO_EVENT);
 
 	CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );

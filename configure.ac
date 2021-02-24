@@ -168,6 +168,11 @@ AC_DEFINE_UNQUOTED(
 	[The default location of the token directory]
 )
 AC_DEFINE_UNQUOTED(
+	[DEFAULT_UMASK],
+	[0077],
+	[The default file mode creation mask]
+)
+AC_DEFINE_UNQUOTED(
 	[DEFAULT_OBJECTSTORE_BACKEND],
 	["file"],
 	[Default storage backend for token objects]
@@ -217,6 +222,7 @@ AC_CONFIG_FILES([
 	src/lib/test/softhsm2-alt.conf
 	src/lib/test/softhsm2-reset-on-fork.conf
 	src/lib/test/softhsm2-mech.conf
+	src/lib/test/softhsm2-negative-mech.conf
 	src/lib/test/tokens/dummy
 	src/bin/Makefile
 	src/bin/common/Makefile

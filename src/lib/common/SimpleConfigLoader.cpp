@@ -155,6 +155,9 @@ bool SimpleConfigLoader::loadConfiguration()
 			case CONFIG_TYPE_INT:
 				Configuration::i()->setInt(stringName, atoi(stringValue.c_str()));
 				break;
+			case CONFIG_TYPE_INT_OCTAL:
+				Configuration::i()->setInt(stringName, strtol(stringValue.c_str(), NULL, 8));
+				break;
 			case CONFIG_TYPE_BOOL:
 				bool boolValue;
 				if (string2bool(stringValue, &boolValue))
