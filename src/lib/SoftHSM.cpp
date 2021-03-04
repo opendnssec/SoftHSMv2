@@ -609,6 +609,8 @@ CK_RV SoftHSM::C_Initialize(CK_VOID_PTR pInitArgs)
 	// Load the handle manager
 	handleManager = new HandleManager();
 
+	doRefresh = Configuration::i()->getBool("objectstore.readrefresh", true);
+
 	// Set the state to initialised
 	isInitialised = true;
 
@@ -1605,7 +1607,7 @@ CK_RV SoftHSM::C_CopyObject(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject
 
 	// Check the object handle.
 	OSObject *object = (OSObject *)handleManager->getObject(hObject);
-	if (object == NULL_PTR || !object->isValid()) return CKR_OBJECT_HANDLE_INVALID;
+	if (object == NULL_PTR || !object->isValid(doRefresh)) return CKR_OBJECT_HANDLE_INVALID;
 
 	CK_BBOOL wasOnToken = object->getBooleanValue(CKA_TOKEN, false);
 	CK_BBOOL wasPrivate = object->getBooleanValue(CKA_PRIVATE, true);
@@ -1774,7 +1776,7 @@ CK_RV SoftHSM::C_DestroyObject(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObj
 
 	// Check the object handle.
 	OSObject *object = (OSObject *)handleManager->getObject(hObject);
-	if (object == NULL_PTR || !object->isValid()) return CKR_OBJECT_HANDLE_INVALID;
+	if (object == NULL_PTR || !object->isValid(doRefresh)) return CKR_OBJECT_HANDLE_INVALID;
 
 	CK_BBOOL isOnToken = object->getBooleanValue(CKA_TOKEN, false);
 	CK_BBOOL isPrivate = object->getBooleanValue(CKA_PRIVATE, true);
@@ -1822,7 +1824,7 @@ CK_RV SoftHSM::C_GetObjectSize(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObj
 
 	// Check the object handle.
 	OSObject *object = (OSObject *)handleManager->getObject(hObject);
-	if (object == NULL_PTR || !object->isValid()) return CKR_OBJECT_HANDLE_INVALID;
+	if (object == NULL_PTR || !object->isValid(doRefresh)) return CKR_OBJECT_HANDLE_INVALID;
 
 	*pulSize = CK_UNAVAILABLE_INFORMATION;
 
@@ -1846,7 +1848,7 @@ CK_RV SoftHSM::C_GetAttributeValue(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE 
 
 	// Check the object handle.
 	OSObject *object = (OSObject *)handleManager->getObject(hObject);
-	if (object == NULL_PTR || !object->isValid()) return CKR_OBJECT_HANDLE_INVALID;
+	if (object == NULL_PTR || !object->isValid(doRefresh)) return CKR_OBJECT_HANDLE_INVALID;
 
 	CK_BBOOL isOnToken = object->getBooleanValue(CKA_TOKEN, false);
 	CK_BBOOL isPrivate = object->getBooleanValue(CKA_PRIVATE, true);
@@ -1893,7 +1895,7 @@ CK_RV SoftHSM::C_SetAttributeValue(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE 
 
 	// Check the object handle.
 	OSObject *object = (OSObject *)handleManager->getObject(hObject);
-	if (object == NULL_PTR || !object->isValid()) return CKR_OBJECT_HANDLE_INVALID;
+	if (object == NULL_PTR || !object->isValid(doRefresh)) return CKR_OBJECT_HANDLE_INVALID;
 
 	CK_BBOOL isOnToken = object->getBooleanValue(CKA_TOKEN, false);
 	CK_BBOOL isPrivate = object->getBooleanValue(CKA_PRIVATE, true);
@@ -2163,7 +2165,7 @@ CK_RV SoftHSM::SymEncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 
 	// Check the key handle.
 	OSObject *key = (OSObject *)handleManager->getObject(hKey);
-	if (key == NULL_PTR || !key->isValid()) return CKR_OBJECT_HANDLE_INVALID;
+	if (key == NULL_PTR || !key->isValid(doRefresh)) return CKR_OBJECT_HANDLE_INVALID;
 
 	CK_BBOOL isOnToken = key->getBooleanValue(CKA_TOKEN, false);
 	CK_BBOOL isPrivate = key->getBooleanValue(CKA_PRIVATE, true);
@@ -2411,7 +2413,7 @@ CK_RV SoftHSM::AsymEncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMec
 
 	// Check the key handle.
 	OSObject *key = (OSObject *)handleManager->getObject(hKey);
-	if (key == NULL_PTR || !key->isValid()) return CKR_OBJECT_HANDLE_INVALID;
+	if (key == NULL_PTR || !key->isValid(doRefresh)) return CKR_OBJECT_HANDLE_INVALID;
 
 	CK_BBOOL isOnToken = key->getBooleanValue(CKA_TOKEN, false);
 	CK_BBOOL isPrivate = key->getBooleanValue(CKA_PRIVATE, true);
@@ -2883,7 +2885,7 @@ CK_RV SoftHSM::SymDecryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 
 	// Check the key handle.
 	OSObject *key = (OSObject *)handleManager->getObject(hKey);
-	if (key == NULL_PTR || !key->isValid()) return CKR_OBJECT_HANDLE_INVALID;
+	if (key == NULL_PTR || !key->isValid(doRefresh)) return CKR_OBJECT_HANDLE_INVALID;
 
 	CK_BBOOL isOnToken = key->getBooleanValue(CKA_TOKEN, false);
 	CK_BBOOL isPrivate = key->getBooleanValue(CKA_PRIVATE, true);
@@ -3132,7 +3134,7 @@ CK_RV SoftHSM::AsymDecryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMec
 
 	// Check the key handle.
 	OSObject *key = (OSObject *)handleManager->getObject(hKey);
-	if (key == NULL_PTR || !key->isValid()) return CKR_OBJECT_HANDLE_INVALID;
+	if (key == NULL_PTR || !key->isValid(doRefresh)) return CKR_OBJECT_HANDLE_INVALID;
 
 	CK_BBOOL isOnToken = key->getBooleanValue(CKA_TOKEN, false);
 	CK_BBOOL isPrivate = key->getBooleanValue(CKA_PRIVATE, true);
@@ -3775,7 +3777,7 @@ CK_RV SoftHSM::C_DigestKey(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject)
 
 	// Check the key handle.
 	OSObject *key = (OSObject *)handleManager->getObject(hObject);
-	if (key == NULL_PTR || !key->isValid()) return CKR_KEY_HANDLE_INVALID;
+	if (key == NULL_PTR || !key->isValid(doRefresh)) return CKR_KEY_HANDLE_INVALID;
 
 	CK_BBOOL isOnToken = key->getBooleanValue(CKA_TOKEN, false);
 	CK_BBOOL isPrivate = key->getBooleanValue(CKA_PRIVATE, true);
@@ -3926,7 +3928,7 @@ CK_RV SoftHSM::MacSignInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechani
 
 	// Check the key handle.
 	OSObject *key = (OSObject *)handleManager->getObject(hKey);
-	if (key == NULL_PTR || !key->isValid()) return CKR_OBJECT_HANDLE_INVALID;
+	if (key == NULL_PTR || !key->isValid(doRefresh)) return CKR_OBJECT_HANDLE_INVALID;
 
 	CK_BBOOL isOnToken = key->getBooleanValue(CKA_TOKEN, false);
 	CK_BBOOL isPrivate = key->getBooleanValue(CKA_PRIVATE, true);
@@ -4078,7 +4080,7 @@ CK_RV SoftHSM::AsymSignInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechan
 
 	// Check the key handle.
 	OSObject *key = (OSObject *)handleManager->getObject(hKey);
-	if (key == NULL_PTR || !key->isValid()) return CKR_OBJECT_HANDLE_INVALID;
+	if (key == NULL_PTR || !key->isValid(doRefresh)) return CKR_OBJECT_HANDLE_INVALID;
 
 	CK_BBOOL isOnToken = key->getBooleanValue(CKA_TOKEN, false);
 	CK_BBOOL isPrivate = key->getBooleanValue(CKA_PRIVATE, true);
@@ -4904,7 +4906,7 @@ CK_RV SoftHSM::MacVerifyInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMecha
 
 	// Check the key handle.
 	OSObject *key = (OSObject *)handleManager->getObject(hKey);
-	if (key == NULL_PTR || !key->isValid()) return CKR_OBJECT_HANDLE_INVALID;
+	if (key == NULL_PTR || !key->isValid(doRefresh)) return CKR_OBJECT_HANDLE_INVALID;
 
 	CK_BBOOL isOnToken = key->getBooleanValue(CKA_TOKEN, false);
 	CK_BBOOL isPrivate = key->getBooleanValue(CKA_PRIVATE, true);
@@ -5056,7 +5058,7 @@ CK_RV SoftHSM::AsymVerifyInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 
 	// Check the key handle.
 	OSObject *key = (OSObject *)handleManager->getObject(hKey);
-	if (key == NULL_PTR || !key->isValid()) return CKR_OBJECT_HANDLE_INVALID;
+	if (key == NULL_PTR || !key->isValid(doRefresh)) return CKR_OBJECT_HANDLE_INVALID;
 
 	CK_BBOOL isOnToken = key->getBooleanValue(CKA_TOKEN, false);
 	CK_BBOOL isPrivate = key->getBooleanValue(CKA_PRIVATE, true);
@@ -6492,7 +6494,7 @@ CK_RV SoftHSM::C_WrapKey
 
 	// Check the wrapping key handle.
 	OSObject *wrapKey = (OSObject *)handleManager->getObject(hWrappingKey);
-	if (wrapKey == NULL_PTR || !wrapKey->isValid()) return CKR_WRAPPING_KEY_HANDLE_INVALID;
+	if (wrapKey == NULL_PTR || !wrapKey->isValid(doRefresh)) return CKR_WRAPPING_KEY_HANDLE_INVALID;
 
 	CK_BBOOL isWrapKeyOnToken = wrapKey->getBooleanValue(CKA_TOKEN, false);
 	CK_BBOOL isWrapKeyPrivate = wrapKey->getBooleanValue(CKA_PRIVATE, true);
@@ -6534,7 +6536,7 @@ CK_RV SoftHSM::C_WrapKey
 
 	// Check the to be wrapped key handle.
 	OSObject *key = (OSObject *)handleManager->getObject(hKey);
-	if (key == NULL_PTR || !key->isValid()) return CKR_KEY_HANDLE_INVALID;
+	if (key == NULL_PTR || !key->isValid(doRefresh)) return CKR_KEY_HANDLE_INVALID;
 
 	CK_BBOOL isKeyOnToken = key->getBooleanValue(CKA_TOKEN, false);
 	CK_BBOOL isKeyPrivate = key->getBooleanValue(CKA_PRIVATE, true);
@@ -6959,7 +6961,7 @@ CK_RV SoftHSM::C_UnwrapKey
 
 	// Check the unwrapping key handle.
 	OSObject *unwrapKey = (OSObject *)handleManager->getObject(hUnwrappingKey);
-	if (unwrapKey == NULL_PTR || !unwrapKey->isValid()) return CKR_UNWRAPPING_KEY_HANDLE_INVALID;
+	if (unwrapKey == NULL_PTR || !unwrapKey->isValid(doRefresh)) return CKR_UNWRAPPING_KEY_HANDLE_INVALID;
 
 	CK_BBOOL isUnwrapKeyOnToken = unwrapKey->getBooleanValue(CKA_TOKEN, false);
 	CK_BBOOL isUnwrapKeyPrivate = unwrapKey->getBooleanValue(CKA_PRIVATE, true);
@@ -7257,7 +7259,7 @@ CK_RV SoftHSM::C_DeriveKey
 
 	// Check the key handle.
 	OSObject *key = (OSObject *)handleManager->getObject(hBaseKey);
-	if (key == NULL_PTR || !key->isValid()) return CKR_OBJECT_HANDLE_INVALID;
+	if (key == NULL_PTR || !key->isValid(doRefresh)) return CKR_OBJECT_HANDLE_INVALID;
 
 	CK_BBOOL isKeyOnToken = key->getBooleanValue(CKA_TOKEN, false);
 	CK_BBOOL isKeyPrivate = key->getBooleanValue(CKA_PRIVATE, true);
@@ -10360,7 +10362,7 @@ CK_RV SoftHSM::deriveDH
 
 	// Get the base key handle
 	OSObject *baseKey = (OSObject *)handleManager->getObject(hBaseKey);
-	if (baseKey == NULL || !baseKey->isValid())
+	if (baseKey == NULL || !baseKey->isValid(doRefresh))
 		return CKR_KEY_HANDLE_INVALID;
 
 	// Get the DH algorithm handler
@@ -10692,7 +10694,7 @@ CK_RV SoftHSM::deriveECDH
 
 	// Get the base key handle
 	OSObject *baseKey = (OSObject *)handleManager->getObject(hBaseKey);
-	if (baseKey == NULL || !baseKey->isValid())
+	if (baseKey == NULL || !baseKey->isValid(doRefresh))
 		return CKR_KEY_HANDLE_INVALID;
 
 	// Get the ECDH algorithm handler
@@ -11046,7 +11048,7 @@ CK_RV SoftHSM::deriveEDDSA
 
 	// Get the base key handle
 	OSObject *baseKey = (OSObject *)handleManager->getObject(hBaseKey);
-	if (baseKey == NULL || !baseKey->isValid())
+	if (baseKey == NULL || !baseKey->isValid(doRefresh))
 		return CKR_KEY_HANDLE_INVALID;
 
 	// Get the EDDSA algorithm handler
@@ -11572,7 +11574,7 @@ CK_RV SoftHSM::deriveSymmetric
 
 	// Check the key handle
 	OSObject *baseKey = (OSObject *)handleManager->getObject(hBaseKey);
-	if (baseKey == NULL_PTR || !baseKey->isValid()) return CKR_OBJECT_HANDLE_INVALID;
+	if (baseKey == NULL_PTR || !baseKey->isValid(doRefresh)) return CKR_OBJECT_HANDLE_INVALID;
 
     // Get the data
     ByteString secretValue;

@@ -186,6 +186,8 @@ private:
 	// Is the SoftHSM PKCS #11 library initialised?
 	bool isInitialised;
 	bool isRemovable;
+	// Do refresh of all objects from storage before validating.
+	bool doRefresh;
 
 	SessionObjectStore* sessionObjectStore;
 	ObjectStore* objectStore;
