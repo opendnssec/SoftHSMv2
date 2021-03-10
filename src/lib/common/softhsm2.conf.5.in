@@ -103,12 +103,9 @@ library.reset_on_fork = true
 .RE
 .LP
 .SH OBJECTSTORE.READREFRESH
-If set to false, then this will affect the refreshing of the object store in
-the following way before an object is used but not changed:
-.IP * 2
-No files will be read if 'objectstore.backend = file'.
-.IP * 2
-No wait for mutex to unlock if 'objectstore.backend = db'.
+If set to false and if 'objectstore.backend = file', then this will affect
+the refreshing of the object store.
+Before using an object that is not changed, no files will be read.
 .LP
 Depending of what kind of HW that is used setting 'false' may improve the
 performance of the HSM.
@@ -119,7 +116,9 @@ unmodified or deleted object even if it is changed or deleted. Another
 process may have called C_DestroyObject or C_SetAttributeValue. But every
 time a process gets a new handle for an object the objectstore of this
 process is updated for all objects even if this property is false.
-.LP 
+.LP
+If 'objectstore.backend = db' then the value of this property is ignored.
+.LP
 Default is true.
 .LP
 .RS

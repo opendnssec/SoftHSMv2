@@ -1362,15 +1362,10 @@ bool DBObject::deleteAttribute(CK_ATTRIBUTE_TYPE type)
 }
 
 // The validity state of the object
-// If not 'doRefresh' we know that the object allready exists in the DB
-// and hence _objectId should have been initialized.
-bool DBObject::isValid(const bool doRefresh)
+bool DBObject::isValid(const bool doRefresh __attribute__((unused)))
 {
-	if (doRefresh)
-	{
-		// Wait for update of object.
-		MutexLocker lock(_mutex);
-	}
+	MutexLocker lock(_mutex);
+
 	return _objectId != 0 && _connection != NULL;
 }
 
