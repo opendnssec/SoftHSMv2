@@ -137,6 +137,8 @@ static CK_RV newP11Object(CK_OBJECT_CLASS objClass, CK_KEY_TYPE keyType, CK_CERT
 				*p11object = new P11DHPublicKeyObj();
 			else if (keyType == CKK_GOSTR3410)
 				*p11object = new P11GOSTPublicKeyObj();
+			else if (keyType == CKK_GOSTR3410_512)
+				*p11object = new P11GOSTPublicKeyObj();
 			else if (keyType == CKK_EC_EDWARDS)
 				*p11object = new P11EDPublicKeyObj();
 			else
@@ -811,8 +813,12 @@ void SoftHSM::prepareSupportedMecahnisms(std::map<std::string, CK_MECHANISM_TYPE
 	t["CKM_GOSTR3411"]		= CKM_GOSTR3411;
 	t["CKM_GOSTR3411_HMAC"]		= CKM_GOSTR3411_HMAC;
 	t["CKM_GOSTR3410_KEY_PAIR_GEN"]	= CKM_GOSTR3410_KEY_PAIR_GEN;
+	t["CKM_GOSTR3410_512_KEY_PAIR_GEN"]	=  CKM_GOSTR3410_512_KEY_PAIR_GEN;
 	t["CKM_GOSTR3410"]		= CKM_GOSTR3410;
+	t["CKM_GOSTR3410_512"]		= CKM_GOSTR3410_512;
 	t["CKM_GOSTR3410_WITH_GOSTR3411"] = CKM_GOSTR3410_WITH_GOSTR3411;
+	t["CKM_GOSTR3410_WITH_GOSTR3411_12_256"] = CKM_GOSTR3410_WITH_GOSTR3411_12_256;
+	t["CKM_GOSTR3410_WITH_GOSTR3411_12_512"] = CKM_GOSTR3410_WITH_GOSTR3411_12_512;
 #endif
 #ifdef WITH_EDDSA
 	t["CKM_EC_EDWARDS_KEY_PAIR_GEN"] = CKM_EC_EDWARDS_KEY_PAIR_GEN;
@@ -3637,6 +3643,12 @@ CK_RV SoftHSM::C_DigestInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechan
 		case CKM_GOSTR3411:
 			algo = HashAlgo::GOST;
 			break;
+		case CKM_GOSTR3411_12_256:
+			algo = HashAlgo::GOST2012_256;
+			break;
+		case CKM_GOSTR3411_12_512:
+			algo = HashAlgo::GOST2012_512;
+			break;
 #endif
 		default:
 			return CKR_MECHANISM_INVALID;
@@ -4436,7 +4448,25 @@ CK_RV SoftHSM::AsymSignInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechan
 	else
 	{
 #ifdef WITH_GOST
-		asymCrypto = CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::GOST);
+		// Get the CKA_PRIVATE attribute, when the attribute is not present use default false
+		bool isKeyPrivate = key->getBooleanValue(CKA_PRIVATE, false);
+		ByteString param;
+		if (isKeyPrivate)
+		{
+			if(!token->decrypt(key->getByteStringValue(CKA_GOSTR3411_PARAMS), param))
+				return CKR_PUBLIC_KEY_INVALID;
+		}
+		else
+		{
+			param = key->getByteStringValue(CKA_GOSTR3411_PARAMS);
+		}
+		AsymAlgo::Type type = CryptoFactory::i()->getGOSTType(param);
+		if(type == AsymAlgo::Unknown)
+		{
+			ERROR_MSG("Cannot parse GOST key type");
+			return CKR_PUBLIC_KEY_INVALID;
+		}
+		asymCrypto = CryptoFactory::i()->getAsymmetricAlgorithm(type);
 		if (asymCrypto == NULL) return CKR_MECHANISM_INVALID;
 
 		privateKey = asymCrypto->newPrivateKey();
@@ -6013,6 +6043,9 @@ CK_RV SoftHSM::C_GenerateKeyPair
 		case CKM_GOSTR3410_KEY_PAIR_GEN:
 			keyType = CKK_GOSTR3410;
 			break;
+		case CKM_GOSTR3410_512_KEY_PAIR_GEN:
+			keyType = CKK_GOSTR3410_512;
+			break;
 #endif
 #ifdef WITH_EDDSA
 		case CKM_EC_EDWARDS_KEY_PAIR_GEN:
@@ -6044,6 +6077,8 @@ CK_RV SoftHSM::C_GenerateKeyPair
 		return CKR_TEMPLATE_INCONSISTENT;
 	if (pMechanism->mechanism == CKM_GOSTR3410_KEY_PAIR_GEN && keyType != CKK_GOSTR3410)
 		return CKR_TEMPLATE_INCONSISTENT;
+	if (pMechanism->mechanism == CKM_GOSTR3410_512_KEY_PAIR_GEN && keyType != CKK_GOSTR3410_512)
+		return CKR_TEMPLATE_INCONSISTENT;
 	if (pMechanism->mechanism == CKM_EC_EDWARDS_KEY_PAIR_GEN && keyType != CKK_EC_EDWARDS)
 		return CKR_TEMPLATE_INCONSISTENT;
 
@@ -6066,6 +6101,8 @@ CK_RV SoftHSM::C_GenerateKeyPair
 	if (pMechanism->mechanism == CKM_DH_PKCS_KEY_PAIR_GEN && keyType != CKK_DH)
 		return CKR_TEMPLATE_INCONSISTENT;
 	if (pMechanism->mechanism == CKM_GOSTR3410_KEY_PAIR_GEN && keyType != CKK_GOSTR3410)
+		return CKR_TEMPLATE_INCONSISTENT;
+	if (pMechanism->mechanism == CKM_GOSTR3410_512_KEY_PAIR_GEN && keyType != CKK_GOSTR3410_512)
 		return CKR_TEMPLATE_INCONSISTENT;
 	if (pMechanism->mechanism == CKM_EC_EDWARDS_KEY_PAIR_GEN && keyType != CKK_EC_EDWARDS)
 		return CKR_TEMPLATE_INCONSISTENT;
@@ -6123,13 +6160,14 @@ CK_RV SoftHSM::C_GenerateKeyPair
 	}
 
 	// Generate GOST keys
-	if (pMechanism->mechanism == CKM_GOSTR3410_KEY_PAIR_GEN)
+	if (pMechanism->mechanism == CKM_GOSTR3410_KEY_PAIR_GEN || pMechanism->mechanism == CKM_GOSTR3410_512_KEY_PAIR_GEN)
 	{
 			return this->generateGOST(hSession,
 									 pPublicKeyTemplate, ulPublicKeyAttributeCount,
 									 pPrivateKeyTemplate, ulPrivateKeyAttributeCount,
 									 phPublicKey, phPrivateKey,
-									 ispublicKeyToken, ispublicKeyPrivate, isprivateKeyToken, isprivateKeyPrivate);
+									 ispublicKeyToken, ispublicKeyPrivate, isprivateKeyToken, isprivateKeyPrivate,
+									 keyType);
 	}
 
 	// Generate EDDSA keys
@@ -9844,7 +9882,8 @@ CK_RV SoftHSM::generateGOST
 	CK_BBOOL isPublicKeyOnToken,
 	CK_BBOOL isPublicKeyPrivate,
 	CK_BBOOL isPrivateKeyOnToken,
-	CK_BBOOL isPrivateKeyPrivate)
+	CK_BBOOL isPrivateKeyPrivate,
+	CK_KEY_TYPE keyType)
 {
 	*phPublicKey = CK_INVALID_HANDLE;
 	*phPrivateKey = CK_INVALID_HANDLE;
@@ -9881,10 +9920,25 @@ CK_RV SoftHSM::generateGOST
 		}
 	}
 
+	AsymAlgo::Type algo = AsymAlgo::GOST;
 	// The parameters must be specified to be able to generate a key pair.
-	if (param_3410.size() == 0 || param_3411.size() == 0) {
-		INFO_MSG("Missing parameter(s) in pPublicKeyTemplate");
-		return CKR_TEMPLATE_INCOMPLETE;
+	if (keyType != CKK_GOSTR3410_512)
+	{
+		if(param_3411.size() == 0)
+		{
+			param_3411 = ByteString("06082a85030701010202");
+			algo = AsymAlgo::GOST2012;
+		}
+		else if (param_3410.size() == 0)
+		{
+			INFO_MSG("Missing parameter(s) in pPublicKeyTemplate");
+			return CKR_TEMPLATE_INCOMPLETE;
+		}
+	}
+	else
+	{
+		param_3411 = ByteString("06082a85030701010203");
+		algo = AsymAlgo::GOST2012_512;
 	}
 
 	// Set the parameters
@@ -9893,7 +9947,7 @@ CK_RV SoftHSM::generateGOST
 
 	// Generate key pair
 	AsymmetricKeyPair* kp = NULL;
-	AsymmetricAlgorithm* gost = CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::GOST);
+	AsymmetricAlgorithm* gost = CryptoFactory::i()->getAsymmetricAlgorithm(algo);
 	if (gost == NULL) return CKR_GENERAL_ERROR;
 	if (!gost->generateKeyPair(&kp, &p))
 	{
@@ -9912,12 +9966,11 @@ CK_RV SoftHSM::generateGOST
 	{
 		const CK_ULONG maxAttribs = 32;
 		CK_OBJECT_CLASS publicKeyClass = CKO_PUBLIC_KEY;
-		CK_KEY_TYPE publicKeyType = CKK_GOSTR3410;
 		CK_ATTRIBUTE publicKeyAttribs[maxAttribs] = {
 			{ CKA_CLASS, &publicKeyClass, sizeof(publicKeyClass) },
 			{ CKA_TOKEN, &isPublicKeyOnToken, sizeof(isPublicKeyOnToken) },
 			{ CKA_PRIVATE, &isPublicKeyPrivate, sizeof(isPublicKeyPrivate) },
-			{ CKA_KEY_TYPE, &publicKeyType, sizeof(publicKeyType) },
+			{ CKA_KEY_TYPE, &keyType, sizeof(keyType) },
 		};
 		CK_ULONG publicKeyAttribsCount = 4;
 
@@ -9936,6 +9989,19 @@ CK_RV SoftHSM::generateGOST
 				default:
 					publicKeyAttribs[publicKeyAttribsCount++] = pPublicKeyTemplate[i];
 			}
+		}
+		if (param_3410.size() == 0)
+		{
+			const ByteString &str = p.getEC();
+			publicKeyAttribs[publicKeyAttribsCount].type = CKA_GOSTR3410_PARAMS;
+			publicKeyAttribs[publicKeyAttribsCount].pValue = const_cast<u_char*>(str.const_byte_str());
+			publicKeyAttribs[publicKeyAttribsCount++].ulValueLen = str.size();
+		}
+		if(algo == AsymAlgo::GOST2012 || algo == AsymAlgo::GOST2012_512)
+		{
+			publicKeyAttribs[publicKeyAttribsCount].type = CKA_GOSTR3411_PARAMS;
+			publicKeyAttribs[publicKeyAttribsCount].pValue = const_cast<u_char*>(param_3411.const_byte_str());
+			publicKeyAttribs[publicKeyAttribsCount++].ulValueLen = param_3411.size();
 		}
 
 		if (rv == CKR_OK)
@@ -9984,12 +10050,11 @@ CK_RV SoftHSM::generateGOST
 	{
 		const CK_ULONG maxAttribs = 32;
 		CK_OBJECT_CLASS privateKeyClass = CKO_PRIVATE_KEY;
-		CK_KEY_TYPE privateKeyType = CKK_GOSTR3410;
 		CK_ATTRIBUTE privateKeyAttribs[maxAttribs] = {
 			{ CKA_CLASS, &privateKeyClass, sizeof(privateKeyClass) },
 			{ CKA_TOKEN, &isPrivateKeyOnToken, sizeof(isPrivateKeyOnToken) },
 			{ CKA_PRIVATE, &isPrivateKeyPrivate, sizeof(isPrivateKeyPrivate) },
-			{ CKA_KEY_TYPE, &privateKeyType, sizeof(privateKeyType) },
+			{ CKA_KEY_TYPE, &keyType, sizeof(keyType) },
 		};
 		CK_ULONG privateKeyAttribsCount = 4;
 		if (ulPrivateKeyAttributeCount > (maxAttribs - privateKeyAttribsCount))

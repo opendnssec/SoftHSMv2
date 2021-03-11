@@ -53,6 +53,8 @@ struct AsymAlgo
 		ECDH,
 		ECDSA,
 		GOST,
+		GOST2012,
+		GOST2012_512,
 		EDDSA
         };
 };

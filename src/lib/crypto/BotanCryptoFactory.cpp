@@ -50,11 +50,20 @@
 #include "BotanSHA512.h"
 #ifdef WITH_GOST
 #include "BotanGOST.h"
+#include "BotanGOST2012.h"
+#include "BotanGOST2012_512.h"
 #include "BotanGOSTR3411.h"
+#include "BotanGOSTR3411_12_256.h"
+#include "BotanGOSTR3411_12_512.h"
+//#include "../object_store/OSObject.h"
+//#include "../slot_mgr/Token.h"
+#include <botan/ber_dec.h>
 #endif
 #include "BotanMAC.h"
 #ifdef WITH_EDDSA
 #include "BotanEDDSA.h"
+
+#include <botan/ber_dec.h>
 #endif
 
 // Constructor
@@ -144,6 +153,10 @@ AsymmetricAlgorithm* BotanCryptoFactory::getAsymmetricAlgorithm(AsymAlgo::Type a
 #ifdef WITH_GOST
 		case AsymAlgo::GOST:
 			return new BotanGOST();
+		case AsymAlgo::GOST2012:
+			return new BotanGOST2012();
+		case AsymAlgo::GOST2012_512:
+			return new BotanGOST2012_512();
 #endif
 #ifdef WITH_EDDSA
 		case AsymAlgo::EDDSA:
@@ -180,6 +193,10 @@ HashAlgorithm* BotanCryptoFactory::getHashAlgorithm(HashAlgo::Type algorithm)
 #ifdef WITH_GOST
 		case HashAlgo::GOST:
 			return new BotanGOSTR3411();
+		case HashAlgo::GOST2012_256:
+			return new BotanGOSTR3411_12_256();
+		case HashAlgo::GOST2012_512:
+			return new BotanGOSTR3411_12_512();
 #endif
 		default:
 			// No algorithm implementation is available
@@ -278,4 +295,38 @@ RNG* BotanCryptoFactory::getRNG(RNGImpl::Type name /* = RNGImpl::Default */)
 
 		return NULL;
 	}
+}
+
+AsymAlgo::Type BotanCryptoFactory::getGOSTType(const ByteString &param)
+{/*
+	// Get the CKA_PRIVATE attribute, when the attribute is not present use default false
+	bool isKeyPrivate = key->getBooleanValue(CKA_PRIVATE, false);
+	ByteString param;
+	if (isKeyPrivate)
+	{
+		if(!token->decrypt(key->getByteStringValue(CKA_GOSTR3411_PARAMS), param))
+			return AsymAlgo::Unknown;
+	}
+	else
+	{
+		param = key->getByteStringValue(CKA_GOSTR3411_PARAMS);
+	}*/
+	if(param.size() == 0)
+		return AsymAlgo::Unknown;
+	Botan::BER_Decoder dec(param.const_byte_str(), param.size());
+	Botan::OID oid;
+	Botan::OID gost_256({1,2,643,7,1,1,2,2}), gost_512({1,2,643,7,1,1,2,3});
+	try {
+		oid.decode_from(dec);
+
+	}  catch (Botan::Exception except) {
+		ERROR_MSG(except.what());
+		return AsymAlgo::Unknown;
+	}
+	if(oid == gost_256)
+		return AsymAlgo::GOST2012;
+	else if(oid == gost_512)
+		return AsymAlgo::GOST2012_512;
+	else
+		return AsymAlgo::GOST;
 }

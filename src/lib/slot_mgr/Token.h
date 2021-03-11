@@ -35,7 +35,7 @@
 
 #include "config.h"
 #include "ByteString.h"
-#include "ObjectStore.h"
+#include <ObjectStore.h>
 #include "ObjectStoreToken.h"
 #include "SecureDataManager.h"
 #include "cryptoki.h"
