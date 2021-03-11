@@ -74,8 +74,10 @@ public:
 	// Get the global RNG (may be an unique RNG per thread)
 	RNG* getRNG(RNGImpl::Type name = RNGImpl::Default);
 
+#ifdef WITH_GOST
 	// Parse GOST key type
 	AsymAlgo::Type getGOSTType(const ByteString& param);
+#endif
 
 	// Destructor
 	~BotanCryptoFactory();
