@@ -59,7 +59,7 @@ endif()
 # Static Library Config
 ###############################################################################
 add_library(${PROJECT_NAME}-static STATIC ${SOURCES})
-target_link_libraries(${PROJECT_NAME}-static ${STATIC_FILES})
+target_link_libraries(${PROJECT_NAME}-static ${STATIC_FILES} pthread)
 set_target_properties(${PROJECT_NAME}-static
                       PROPERTIES OUTPUT_NAME ${PROJECT_NAME}
                       )
