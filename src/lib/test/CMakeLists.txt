@@ -33,6 +33,7 @@ include_directories(${INCLUDE_DIRS})
 add_executable(${PROJECT_NAME} ${SOURCES})
 target_link_libraries(${PROJECT_NAME} softhsm2-static ${CRYPTO_LIBS} ${CPPUNIT_LIBS} ${SQLITE3_LIBS})
 set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS -pthread)
+target_compile_options(${PROJECT_NAME} PRIVATE ${COMPILE_OPTIONS})
 
 add_test(NAME ${PROJECT_NAME} COMMAND ${PROJECT_NAME}
          WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
