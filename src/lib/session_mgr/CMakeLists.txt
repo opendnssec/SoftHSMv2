@@ -16,6 +16,7 @@ set(SOURCES SessionManager.cpp
 include_directories(${INCLUDE_DIRS})
 
 add_library(${PROJECT_NAME} OBJECT ${SOURCES})
+target_compile_options(${PROJECT_NAME} PRIVATE ${COMPILE_OPTIONS})
 
 if(BUILD_TESTS)
     add_subdirectory(test)

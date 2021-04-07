@@ -80,6 +80,10 @@ endif(NOT CMAKE_BUILD_TYPE)
 
 message(STATUS "Build Configuration: ${CMAKE_BUILD_TYPE}")
 
+if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+	set(COMPILE_OPTIONS "/MP;/W4;/wd4996")
+endif()
+
 # Build Modules Path
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}
                       ${CMAKE_SOURCE_DIR}/modules

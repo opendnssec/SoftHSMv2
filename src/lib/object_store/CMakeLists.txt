@@ -33,6 +33,8 @@ endif(WITH_OBJECTSTORE_BACKEND_DB)
 include_directories(${INCLUDE_DIRS})
 
 add_library(${PROJECT_NAME} OBJECT ${SOURCES})
+target_compile_options(${PROJECT_NAME} PRIVATE ${COMPILE_OPTIONS})
+
 # Versions before CMake 3.12 cannot use target_link_libraries on object
 # libraries, a workaround exists in src/lib/CMakeLists.txt.
 if(NOT CMAKE_VERSION VERSION_LESS "3.12")
