@@ -12,7 +12,7 @@ set(INSTALL_MAN_FILES ${PROJECT_NAME}-file.1)
 include_directories(${INCLUDE_DIRS})
 
 add_executable(${PROJECT_NAME}-file softhsm2-dump-file.cpp)
-target_compile_options(${PROJECT_NAME} PRIVATE ${COMPILE_OPTIONS})
+target_compile_options(${PROJECT_NAME}-file PRIVATE ${COMPILE_OPTIONS})
 
 if(WITH_OBJECTSTORE_BACKEND_DB)
     add_executable(${PROJECT_NAME}-db softhsm2-dump-db.cpp)
