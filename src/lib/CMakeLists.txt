@@ -23,8 +23,6 @@ set(INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/common
                  ${CRYPTO_INCLUDES}
                  )
 
-include_directories(${INCLUDE_DIRS})
-
 set(SOURCES access.cpp
             main.cpp
             P11Attributes.cpp
@@ -54,6 +52,14 @@ if(CMAKE_VERSION VERSION_LESS "3.12")
         set(STATIC_FILES ${CRYPTO_LIBS} ${SQLITE3_LIBS})
 endif()
 
+
+if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+	list(APPEND INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/win32)
+	list(APPEND STATIC_FILES "Ws2_32.lib;Crypt32.lib")
+ENDIF()
+
+
+include_directories(${INCLUDE_DIRS})
 
 ###############################################################################
 # Static Library Config
