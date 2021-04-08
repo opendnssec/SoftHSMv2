@@ -95,7 +95,6 @@ if(WITH_BOTAN)
                         BotanDSAKeyPair.cpp
                         BotanDSAPrivateKey.cpp
                         BotanDSAPublicKey.cpp
-                        Botan_ecb.cpp
                         BotanECDH.cpp
                         BotanECDHKeyPair.cpp
                         BotanECDHPrivateKey.cpp
@@ -135,6 +134,12 @@ endif(WITH_BOTAN)
 if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
 	list(APPEND INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/../win32)
 ENDIF()
+
+if(WITH_BOTAN)
+	# mute botan specific warnings
+	# https://github.com/randombit/botan/issues/486
+	list(APPEND COMPILE_OPTIONS "/wd4250;/wd4251;/wd4275;/wd4127;/wd4273") 
+endif()
 
 include_directories(${INCLUDE_DIRS})
 add_library(${PROJECT_NAME} OBJECT ${SOURCES})
