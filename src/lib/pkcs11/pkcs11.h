@@ -81,7 +81,9 @@ extern "C" {
 /* There is a matching pop below.  */
 #pragma pack(push, cryptoki, 1)
 
-#ifdef CRYPTOKI_EXPORTS
+#ifdef CRYPTOKI_STATIC
+#define CK_SPEC
+#elif defined(CRYPTOKI_EXPORTS)
 #define CK_SPEC __declspec(dllexport)
 #else
 #define CK_SPEC __declspec(dllimport)

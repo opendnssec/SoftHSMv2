@@ -67,7 +67,7 @@ include_directories(${INCLUDE_DIRS})
 add_library(${PROJECT_NAME}-static STATIC ${SOURCES})
 target_link_libraries(${PROJECT_NAME}-static ${STATIC_FILES})
 set_target_properties(${PROJECT_NAME}-static
-                      PROPERTIES OUTPUT_NAME ${PROJECT_NAME}
+                      PROPERTIES OUTPUT_NAME ${PROJECT_NAME}-static
                       )
 generate_export_header(${PROJECT_NAME}-static)
 target_compile_options(${PROJECT_NAME}-static PRIVATE ${COMPILE_OPTIONS})

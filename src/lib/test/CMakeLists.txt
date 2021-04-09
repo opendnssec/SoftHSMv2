@@ -23,16 +23,24 @@ set(SOURCES p11test.cpp
             AsymWrapUnwrapTests.cpp
             TestsBase.cpp
             TestsNoPINInitBase.cpp
-            ForkTests.cpp
             ../common/log.cpp
             ../common/osmutex.cpp
             )
+
+if(NOT CMAKE_HOST_SYSTEM_NAME STREQUAL "Windows")
+	list(APPEND SOURCES "ForkTests.cpp")
+	set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS -pthread)
+else()
+	list(APPEND SOURCES ${PROJECT_SOURCE_DIR}/../win32/setenv.cpp
+		${PROJECT_SOURCE_DIR}/../win32/syslog.cpp
+	)
+	list(APPEND COMPILE_OPTIONS "/DCRYPTOKI_STATIC")
+endif()
 
 include_directories(${INCLUDE_DIRS})
 
 add_executable(${PROJECT_NAME} ${SOURCES})
 target_link_libraries(${PROJECT_NAME} softhsm2-static ${CRYPTO_LIBS} ${CPPUNIT_LIBS} ${SQLITE3_LIBS})
-set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS -pthread)
 target_compile_options(${PROJECT_NAME} PRIVATE ${COMPILE_OPTIONS})
 
 add_test(NAME ${PROJECT_NAME} COMMAND ${PROJECT_NAME}
