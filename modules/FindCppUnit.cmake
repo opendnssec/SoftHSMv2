@@ -9,6 +9,8 @@
 #  CPPUNIT_INCLUDE_DIR - The CppUnit include directory.
 #  CPPUNIT_LIBRARY     - The CppUnit library to link against.
 
+find_package(CppUnit CONFIG REQUIRED)
+if(NOT CppUnit_FOUND)
 FIND_PATH(CPPUNIT_INCLUDE_DIR cppunit/Test.h)
 FIND_LIBRARY(CPPUNIT_LIBRARY NAMES cppunit)
 
@@ -31,3 +33,4 @@ ELSE (CPPUNIT_FOUND)
 	ENDIF (CppUnit_FIND_REQUIRED)
 
 ENDIF (CPPUNIT_FOUND)
+ENDIF ()
