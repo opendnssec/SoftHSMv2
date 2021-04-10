@@ -170,30 +170,10 @@
  */
 #ifdef _WIN32
 
-/* The default log level */
-#undef DEFAULT_LOG_LEVEL
-#define DEFAULT_LOG_LEVEL "INFO"
-
-/* Default storage backend for token objects */
-#undef DEFAULT_OBJECTSTORE_BACKEND
-#define DEFAULT_OBJECTSTORE_BACKEND "file"
-
-/* The default PKCS#11 library */
-#undef DEFAULT_PKCS11_LIB
-#define DEFAULT_PKCS11_LIB "softhsm2.dll"
-
-/* The default location of softhsm2.conf */
-#undef DEFAULT_SOFTHSM2_CONF
-#define DEFAULT_SOFTHSM2_CONF "softhsm2.conf"
-
-/* The default location of the token directory */
-#undef DEFAULT_TOKENDIR
-#define DEFAULT_TOKENDIR "tokens"
 
 /* Whether LoadLibrary is available */
 #undef HAVE_LOADLIBRARY
 #define HAVE_LOADLIBRARY 1
-
 
 /* Define to 1 if you have the <stdlib.h> header file. */
 #undef HAVE_STDLIB_H
