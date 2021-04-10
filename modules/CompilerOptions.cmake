@@ -479,7 +479,7 @@ if(BUILD_TESTS)
     set(CppUnit_FIND_QUIETLY ON)
     include(FindCppUnit)
     if(NOT CPPUNIT_FOUND)
-        message(FATAL_ERROR "Failed to find CppUnit!")
+        message(FATAL_ERROR "Failed to find CppUnit, try to set the path to CppUnit root folder in the system variable CPPUNIT_INCLUDE_DIR and library path in CPPUNIT_LIBRARY!")
     endif(NOT CPPUNIT_FOUND)
 
     set(CPPUNIT_INCLUDES ${CPPUNIT_INCLUDE_DIR})
