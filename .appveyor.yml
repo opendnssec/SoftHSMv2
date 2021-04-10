@@ -43,6 +43,7 @@ init:
 cache: 
   - C:/Tools/vcpkg/installed/
 environment:
+  APPVEYOR_SAVE_CACHE_ON_ERROR: true
   matrix:
   - CRYPTO_BACKEND: openssl
     ADDITIONAL_CONFIGURE_OPTIONS: disable-eddsa disable-gost with-crypto-backend=openssl
