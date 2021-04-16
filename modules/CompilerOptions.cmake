@@ -117,6 +117,12 @@ else(DISABLE_NON_PAGED_MEMORY)
     endif(NOT "${MLOCK_SIZE}" STREQUAL "unlimited")
 endif(DISABLE_NON_PAGED_MEMORY)
 
+
+if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+	# disable C4996 warning for deprecated posix function name
+	set(COMPILE_OPTIONS "/MP;/W4;/wd4996")
+endif()
+
 # Check if -ldl exists (equivalent of acx_dlopen.m4)
 check_library_exists(dl dlopen "" HAVE_DLOPEN)
 check_function_exists(LoadLibrary HAVE_LOADLIBRARY)
@@ -150,8 +156,8 @@ if(WITH_CRYPTO_BACKEND STREQUAL "botan")
         message(FATAL_ERROR "Failed to find Botan!")
     endif()
 
-    set(CRYPTO_INCLUDES ${BOTAN_INCLUDE_DIRS})
-    set(CRYPTO_LIBS ${BOTAN_LIBRARIES})
+    set(CRYPTO_INCLUDES ${Botan_INCLUDE_DIR})
+    set(CRYPTO_LIBS ${Botan_LIBRARIES})
     message(STATUS "Botan: Includes: ${CRYPTO_INCLUDES}")
     message(STATUS "Botan: Libs: ${CRYPTO_LIBS}")
 
@@ -475,17 +481,16 @@ else(ENABLE_P11_KIT)
 endif(ENABLE_P11_KIT)
 
 if(BUILD_TESTS)
-    # Find CppUnit (equivalent of acx_cppunit.m4)
-    set(CppUnit_FIND_QUIETLY ON)
+    set(CppUnit_FIND_QUIETLY OFF)
+	
+	# Find CppUnit (equivalent of acx_cppunit.m4)
     include(FindCppUnit)
-    if(NOT CPPUNIT_FOUND)
-        message(FATAL_ERROR "Failed to find CppUnit, try to set the path to CppUnit root folder in the system variable CPPUNIT_INCLUDE_DIR and library path in CPPUNIT_LIBRARY!")
-    endif(NOT CPPUNIT_FOUND)
-
-    set(CPPUNIT_INCLUDES ${CPPUNIT_INCLUDE_DIR})
-    set(CPPUNIT_LIBS ${CPPUNIT_LIBRARY})
-    message(STATUS "CppUnit: Includes: ${CPPUNIT_INCLUDES}")
-    message(STATUS "CppUnit: Libs: ${CPPUNIT_LIBS}")
+    
+	if(NOT CppUnit_FOUND)
+		message(FATAL_ERROR "Failed to find CppUnit, try to set the path to CppUnit root folder in the system variable CPPUNIT_INCLUDE_DIR and library path in CPPUNIT_LIBRARY!")
+	else()
+		message(STATUS "CppUnit tests enabled.")
+	endif(NOT CppUnit_FOUND)
 else(BUILD_TESTS)
     message(STATUS "Not building tests")
 endif(BUILD_TESTS)

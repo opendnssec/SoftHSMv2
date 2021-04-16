@@ -19,7 +19,7 @@ set(SOURCES sessionmgrtest.cpp
 include_directories(${INCLUDE_DIRS})
 
 add_executable(${PROJECT_NAME} ${SOURCES})
-target_link_libraries(${PROJECT_NAME} softhsm2-static ${CRYPTO_LIBS} ${CPPUNIT_LIBS} ${SQLITE3_LIBS})
+target_link_libraries(${PROJECT_NAME} softhsm2-static ${CRYPTO_LIBS} CppUnit ${SQLITE3_LIBS})
 target_compile_options(${PROJECT_NAME} PRIVATE ${COMPILE_OPTIONS})
 
 add_test(${PROJECT_NAME} ${PROJECT_NAME})
