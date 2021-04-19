@@ -35,6 +35,9 @@
 #include <cppunit/TestResult.h>
 #include <cppunit/TestResultCollector.h>
 #include <cppunit/XmlOutputter.h>
+#include <cppunit/BriefTestProgressListener.h>
+#include <cppunit/TextTestProgressListener.h>
+#include <cppunit/TextOutputter.h>
 #include <fstream>
 
 #include "config.h"
@@ -69,6 +72,19 @@ std::auto_ptr<BotanCryptoFactory> BotanCryptoFactory::instance(NULL);
 #endif
 
 #endif
+class MyProgressListener : public CppUnit::TextTestProgressListener
+{
+	void startTest(CppUnit::Test *test) {
+		bool t = true;
+	}
+
+	void endTestRun(CppUnit::Test *test,
+		CppUnit::TestResult *eventManager) {
+		bool t = true;
+	}
+private:
+	std::string m_name;
+};
 
 int main(int /*argc*/, char** /*argv*/)
 {
@@ -77,6 +93,13 @@ int main(int /*argc*/, char** /*argv*/)
 	CppUnit::TextUi::TestRunner runner;
 	controller.addListener(&result);
 	CppUnit::TestFactoryRegistry &registry = CppUnit::TestFactoryRegistry::getRegistry();
+
+	CppUnit::BriefTestProgressListener progressListener;
+	controller.addListener(&progressListener);
+
+	MyProgressListener progress;
+	controller.addListener(&progress);
+
 
 	runner.addTest(registry.makeTest());
 	runner.run(controller);

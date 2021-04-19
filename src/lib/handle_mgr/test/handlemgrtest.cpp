@@ -31,11 +31,18 @@
  *****************************************************************************/
 
 #include <cppunit/extensions/TestFactoryRegistry.h>
+#include <cppunit/TextTestProgressListener.h>
+#include <cppunit/BriefTestProgressListener.h>
 #include <cppunit/ui/text/TestRunner.h>
 #include <cppunit/TestResult.h>
 #include <cppunit/TestResultCollector.h>
 #include <cppunit/XmlOutputter.h>
+#include <cppunit/CompilerOutputter.h>
+#include <cppunit/portability/Stream.h>
+
+
 #include <fstream>
+#include <time.h>
 
 #include "config.h"
 #include "MutexFactory.h"
@@ -46,6 +53,47 @@ std::unique_ptr<MutexFactory> MutexFactory::instance(nullptr);
 std::auto_ptr<MutexFactory> MutexFactory::instance(NULL);
 #endif
 
+class MyProgressListener : public CppUnit::TextTestProgressListener
+{
+public:
+	MyProgressListener(): duration(0) {
+		TextTestProgressListener();
+	}
+
+	void startTest(CppUnit::Test *test) {
+		start = clock();
+	}
+
+	void endTestRun(CppUnit::Test *test,
+		CppUnit::TestResult *eventManager) {
+		end = clock();
+		duration= double(end - start)/ CLOCKS_PER_SEC;
+		CppUnit::stdCOut() << "duration " << TimeFormat(duration);
+
+	}
+
+	void startSuite(CPPUNIT_NS::Test *suite) {
+		CppUnit::stdCOut() << suite->countTestCases();
+	}
+
+	void endTest(CPPUNIT_NS::Test *test) {
+	}
+
+	double durationTest() const {
+		return duration;
+	};
+private:
+	std::string TimeFormat(double time) {
+		char buffer[320];
+		::sprintf(buffer, "%6f", time);
+		return buffer;
+	}
+
+	std::string m_name;
+	long start, end;
+	double duration;
+};
+
 int main(int /*argc*/, char** /*argv*/)
 {
 	CppUnit::TestResult controller;
@@ -54,9 +102,15 @@ int main(int /*argc*/, char** /*argv*/)
 	controller.addListener(&result);
 	CppUnit::TestFactoryRegistry &registry = CppUnit::TestFactoryRegistry::getRegistry();
 
+	MyProgressListener progress;
+	controller.addListener(&progress);
+	
+	CppUnit::BriefTestProgressListener progressListener;
+	controller.addListener(&progressListener);
+
 	runner.addTest(registry.makeTest());
 	runner.run(controller);
-
+	
 	std::ofstream xmlFileOut("test-results.xml");
 	CppUnit::XmlOutputter xmlOut(&result, xmlFileOut);
 	xmlOut.write();
