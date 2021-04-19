@@ -119,7 +119,7 @@ AC_DEFUN([ACX_CRYPTO_BACKEND],[
 	elif test "x${crypto_backend}" = "xbotan"; then
 		AC_MSG_RESULT(Botan)
 
-		ACX_BOTAN(2,0,0)
+		ACX_BOTAN(2,5,0)
 
 		CRYPTO_INCLUDES=$BOTAN_CFLAGS
 		CRYPTO_LIBS=$BOTAN_LIBS
