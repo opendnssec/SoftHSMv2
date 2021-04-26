@@ -26,15 +26,15 @@ set(SOURCES p11test.cpp
             ../common/log.cpp
             ../common/osmutex.cpp
             )
-
-if(NOT CMAKE_HOST_SYSTEM_NAME STREQUAL "Windows")
-	list(APPEND SOURCES "ForkTests.cpp")
-	set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS -pthread)
-else()
+			
+if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
 	list(APPEND SOURCES ${PROJECT_SOURCE_DIR}/../win32/setenv.cpp
 		${PROJECT_SOURCE_DIR}/../win32/syslog.cpp
 	)
 	list(APPEND COMPILE_OPTIONS "/DCRYPTOKI_STATIC")
+else()
+	list(APPEND SOURCES "ForkTests.cpp")
+	set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS -pthread)
 endif()
 
 include_directories(${INCLUDE_DIRS})
