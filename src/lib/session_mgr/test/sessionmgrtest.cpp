@@ -39,6 +39,7 @@
 #include <cppunit/Message.h>
 #include <cppunit/Exception.h>
 #include <cppunit/XmlOutputter.h>
+#include <cppunit/TextOutputter.h>
 #include <fstream>
 #include <stdlib.h>
 #include <iostream>
@@ -104,6 +105,9 @@ int main(int /*argc*/, char** /*argv*/)
 	std::ofstream xmlFileOut("test-results.xml");
 	CppUnit::XmlOutputter xmlOut(&result, xmlFileOut);
 	xmlOut.write();
+
+	CppUnit::TextOutputter consoleOutputter(&result, std::cout);
+	consoleOutputter.write();
 
 	CryptoFactory::reset();
 

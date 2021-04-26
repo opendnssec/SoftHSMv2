@@ -108,6 +108,9 @@ int main(int /*argc*/, char** /*argv*/)
 	CppUnit::XmlOutputter xmlOut(&result, xmlFileOut);
 	xmlOut.write();
 
+	CppUnit::TextOutputter consoleOutputter(&result, std::cout);
+	consoleOutputter.write();
+
 	CryptoFactory::reset();
 
 	return result.wasSuccessful() ? 0 : 1;
