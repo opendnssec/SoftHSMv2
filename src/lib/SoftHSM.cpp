@@ -822,6 +822,8 @@ void SoftHSM::prepareSupportedMecahnisms(std::map<std::string, CK_MECHANISM_TYPE
 	t["CKM_CONCATENATE_BASE_AND_DATA"] = CKM_CONCATENATE_BASE_AND_DATA;
 	t["CKM_CONCATENATE_BASE_AND_KEY"] = CKM_CONCATENATE_BASE_AND_KEY;
 
+	t["CKM_PKCS5_PBKD2"] = CKM_PKCS5_PBKD2;
+
 	supportedMechanisms.clear();
 	for (auto it = t.begin(); it != t.end(); ++it)
 	{
@@ -5873,6 +5875,9 @@ CK_RV SoftHSM::C_GenerateKey(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMecha
 			objClass = CKO_SECRET_KEY;
 			keyType = CKK_GENERIC_SECRET;
 			break;
+		case CKM_PKCS5_PBKD2:
+			objClass = CKO_SECRET_KEY;
+			break;
 		default:
 			return CKR_MECHANISM_INVALID;
 	}
@@ -5907,6 +5912,9 @@ CK_RV SoftHSM::C_GenerateKey(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMecha
 		return CKR_TEMPLATE_INCONSISTENT;
 	if (pMechanism->mechanism == CKM_GENERIC_SECRET_KEY_GEN &&
 	    (objClass != CKO_SECRET_KEY || keyType != CKK_GENERIC_SECRET))
+		return CKR_TEMPLATE_INCONSISTENT;
+	if (pMechanism->mechanism == CKM_PKCS5_PBKD2 &&
+	    (objClass != CKO_SECRET_KEY))
 		return CKR_TEMPLATE_INCONSISTENT;
 
 	// Check authorization
@@ -5961,6 +5969,11 @@ CK_RV SoftHSM::C_GenerateKey(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMecha
 	if (pMechanism->mechanism == CKM_GENERIC_SECRET_KEY_GEN)
 	{
 		return this->generateGeneric(hSession, pTemplate, ulCount, phKey, isOnToken, isPrivate);
+	}
+
+	if (pMechanism->mechanism == CKM_PKCS5_PBKD2)
+	{
+		return this->generatePBKDF2(hSession, pMechanism, pTemplate, ulCount, phKey, keyType, isOnToken, isPrivate);
 	}
 
 	return CKR_GENERAL_ERROR;
@@ -8179,6 +8192,307 @@ CK_RV SoftHSM::generateDES3
 			OSObject* oskey = (OSObject*)handleManager->getObject(*phKey);
 			handleManager->destroyObject(*phKey);
 			if (oskey) oskey->destroyObject();
+			*phKey = CK_INVALID_HANDLE;
+		}
+	}
+
+	return rv;
+}
+
+CK_RV SoftHSM::generatePBKDF2
+(CK_SESSION_HANDLE hSession,
+	CK_MECHANISM_PTR pMechanism,
+	CK_ATTRIBUTE_PTR pTemplate,
+	CK_ULONG ulCount,
+	CK_OBJECT_HANDLE_PTR phKey,
+	CK_KEY_TYPE keyType,
+	CK_BBOOL isOnToken,
+	CK_BBOOL isPrivate)
+{
+	*phKey = CK_INVALID_HANDLE;
+
+	if ((pMechanism->pParameter == NULL_PTR) ||
+	    (pMechanism->ulParameterLen != sizeof(CK_PKCS5_PBKD2_PARAMS)))
+	{
+		DEBUG_MSG("pParameter must be of type CK_PKCS5_PBKD2_PARAMS");
+		return CKR_MECHANISM_PARAM_INVALID;
+	}
+	if ((CK_PKCS5_PBKD2_PARAMS_PTR(pMechanism->pParameter)->ulPasswordLen == 0) ||
+	    (CK_PKCS5_PBKD2_PARAMS_PTR(pMechanism->pParameter)->pPassword == NULL_PTR))
+	{
+		DEBUG_MSG("there must be a passwd data");
+		return CKR_MECHANISM_PARAM_INVALID;
+	}
+	if ((CK_PKCS5_PBKD2_PARAMS_PTR(pMechanism->pParameter)->ulSaltSourceDataLen == 0) ||
+	    (CK_PKCS5_PBKD2_PARAMS_PTR(pMechanism->pParameter)->pSaltSourceData == NULL_PTR))
+	{
+		DEBUG_MSG("there must be a salt data");
+		return CKR_MECHANISM_PARAM_INVALID;
+	}
+
+	// Get the session
+	Session* session = (Session*)handleManager->getSession(hSession);
+	if (session == NULL)
+		return CKR_SESSION_HANDLE_INVALID;
+
+	// Get the token
+	Token* token = session->getToken();
+	if (token == NULL)
+		return CKR_GENERAL_ERROR;
+
+	// Extract desired parameter information
+	size_t byteLen = 0;
+	bool checkValue = true;
+	for (CK_ULONG i = 0; i < ulCount; i++)
+	{
+		switch (pTemplate[i].type)
+		{
+			case CKA_VALUE:
+				INFO_MSG("CKA_VALUE must not be included");
+				return CKR_ATTRIBUTE_READ_ONLY;
+			case CKA_VALUE_LEN:
+				if (pTemplate[i].ulValueLen != sizeof(CK_ULONG))
+				{
+					INFO_MSG("CKA_VALUE_LEN does not have the size of CK_ULONG");
+					return CKR_ATTRIBUTE_VALUE_INVALID;
+				}
+				byteLen = *(CK_ULONG*)pTemplate[i].pValue;
+				break;
+			case CKA_CHECK_VALUE:
+				if (pTemplate[i].ulValueLen > 0)
+				{
+					INFO_MSG("CKA_CHECK_VALUE must be a no-value (0 length) entry");
+					return CKR_ATTRIBUTE_VALUE_INVALID;
+				}
+				checkValue = false;
+				break;
+			default:
+				break;
+		}
+	}
+
+	// Check the length
+	// byteLen == 0 impiles return max size the ECC can derive
+	switch (keyType)
+	{
+		case CKK_GENERIC_SECRET:
+			break;
+#ifndef WITH_FIPS
+		case CKK_DES:
+			if (byteLen != 0 && byteLen != 8)
+			{
+				INFO_MSG("CKA_VALUE_LEN must be 0 or 8");
+				return CKR_ATTRIBUTE_VALUE_INVALID;
+			}
+			byteLen = 8;
+			break;
+#endif
+		case CKK_DES2:
+			if (byteLen != 0 && byteLen != 16)
+			{
+				INFO_MSG("CKA_VALUE_LEN must be 0 or 16");
+				return CKR_ATTRIBUTE_VALUE_INVALID;
+			}
+			byteLen = 16;
+			break;
+		case CKK_DES3:
+			if (byteLen != 0 && byteLen != 24)
+			{
+				INFO_MSG("CKA_VALUE_LEN must be 0 or 24");
+				return CKR_ATTRIBUTE_VALUE_INVALID;
+			}
+			byteLen = 24;
+			break;
+		case CKK_AES:
+			if (byteLen != 0 && byteLen != 16 && byteLen != 24 && byteLen != 32)
+			{
+				INFO_MSG("CKA_VALUE_LEN must be 0, 16, 24, or 32");
+				return CKR_ATTRIBUTE_VALUE_INVALID;
+			}
+			break;
+		default:
+			return CKR_ATTRIBUTE_VALUE_INVALID;
+	}
+
+	// Get the pbkdf2 algorithm handler
+	PBKDF2Algorithm* pbkdf2 = CryptoFactory::i()->getPBKDF2Algorithm();
+	if (pbkdf2 == NULL)
+		return CKR_MECHANISM_INVALID;
+
+	// Set the passwd
+	ByteString passwdData;
+	passwdData.resize(CK_PKCS5_PBKD2_PARAMS_PTR(pMechanism->pParameter)->ulPasswordLen);
+	memcpy(&passwdData[0],
+	       CK_PKCS5_PBKD2_PARAMS_PTR(pMechanism->pParameter)->pPassword,
+	       CK_PKCS5_PBKD2_PARAMS_PTR(pMechanism->pParameter)->ulPasswordLen);
+
+	// Set the salt
+	ByteString saltData;
+	saltData.resize(CK_PKCS5_PBKD2_PARAMS_PTR(pMechanism->pParameter)->ulSaltSourceDataLen);
+	memcpy(&saltData[0],
+	       CK_PKCS5_PBKD2_PARAMS_PTR(pMechanism->pParameter)->pSaltSourceData,
+	       CK_PKCS5_PBKD2_PARAMS_PTR(pMechanism->pParameter)->ulSaltSourceDataLen);
+
+	CK_PKCS5_PBKD2_PSEUDO_RANDOM_FUNCTION_TYPE prf = CK_PKCS5_PBKD2_PARAMS_PTR(pMechanism->pParameter)->prf;
+	CK_ULONG iterations = CK_PKCS5_PBKD2_PARAMS_PTR(pMechanism->pParameter)->iterations;
+
+	// Derive the secret
+	SymmetricKey* secret = NULL;
+	CK_RV rv = CKR_OK;
+	if (!pbkdf2->generateKey(&secret, (PBKDF2Algo::Type)prf, passwdData, saltData, iterations, byteLen))
+		rv = CKR_GENERAL_ERROR;
+
+	// Create the secret object using C_CreateObject
+	const CK_ULONG maxAttribs = 32;
+	CK_OBJECT_CLASS objClass = CKO_SECRET_KEY;
+	CK_ATTRIBUTE secretAttribs[maxAttribs] = {
+		{ CKA_CLASS, &objClass, sizeof(objClass) },
+		{ CKA_TOKEN, &isOnToken, sizeof(isOnToken) },
+		{ CKA_PRIVATE, &isPrivate, sizeof(isPrivate) },
+		{ CKA_KEY_TYPE, &keyType, sizeof(keyType) },
+	};
+	CK_ULONG secretAttribsCount = 4;
+
+	// Add the additional
+	if (ulCount > (maxAttribs - secretAttribsCount))
+		rv = CKR_TEMPLATE_INCONSISTENT;
+	for (CK_ULONG i=0; i < ulCount && rv == CKR_OK; ++i)
+	{
+		switch (pTemplate[i].type)
+		{
+			case CKA_CLASS:
+			case CKA_TOKEN:
+			case CKA_PRIVATE:
+			case CKA_KEY_TYPE:
+			case CKA_CHECK_VALUE:
+				continue;
+		default:
+			secretAttribs[secretAttribsCount++] = pTemplate[i];
+		}
+	}
+
+	if (rv == CKR_OK)
+		rv = this->CreateObject(hSession, secretAttribs, secretAttribsCount, phKey, OBJECT_OP_DERIVE);
+
+	// Store the attributes that are being supplied
+	if (rv == CKR_OK)
+	{
+		OSObject* osobject = (OSObject*)handleManager->getObject(*phKey);
+		if (osobject == NULL_PTR || !osobject->isValid()) {
+			rv = CKR_FUNCTION_FAILED;
+		} else if (osobject->startTransaction()) {
+			bool bOK = true;
+
+			// Common Attributes
+			bOK = bOK && osobject->setAttribute(CKA_LOCAL,false);
+
+			// Secret Attributes
+			ByteString secretValue = secret->getKeyBits();
+			ByteString value;
+			ByteString plainKCV;
+			ByteString kcv;
+
+			// For generic and AES keys:
+			// default to return max size available.
+			if (byteLen == 0)
+			{
+				switch (keyType)
+				{
+					case CKK_GENERIC_SECRET:
+						byteLen = secretValue.size();
+						break;
+					case CKK_AES:
+						if (secretValue.size() >= 32)
+							byteLen = 32;
+						else if (secretValue.size() >= 24)
+							byteLen = 24;
+						else
+							byteLen = 16;
+				}
+			}
+
+			if (byteLen > secretValue.size())
+			{
+				INFO_MSG("The derived secret is too short");
+				bOK = false;
+			}
+			else
+			{
+				// Truncate value when requested, remove from the leading end
+				if (byteLen < secretValue.size())
+					secretValue.split(secretValue.size() - byteLen);
+
+				// Fix the odd parity for DES
+				if (keyType == CKK_DES ||
+				    keyType == CKK_DES2 ||
+				    keyType == CKK_DES3)
+				{
+					for (size_t i = 0; i < secretValue.size(); i++)
+					{
+						secretValue[i] = odd_parity[secretValue[i]];
+					}
+				}
+
+				// Get the KCV
+				switch (keyType)
+				{
+					case CKK_GENERIC_SECRET:
+						secret->setBitLen(byteLen * 8);
+						plainKCV = secret->getKeyCheckValue();
+						break;
+					case CKK_DES:
+					case CKK_DES2:
+					case CKK_DES3:
+						secret->setBitLen(byteLen * 7);
+						plainKCV = ((DESKey*)secret)->getKeyCheckValue();
+						break;
+					case CKK_AES:
+						secret->setBitLen(byteLen * 8);
+						plainKCV = ((AESKey*)secret)->getKeyCheckValue();
+						break;
+					default:
+						bOK = false;
+						break;
+				}
+
+				if (isPrivate)
+				{
+					token->encrypt(secretValue, value);
+					token->encrypt(plainKCV, kcv);
+				}
+				else
+				{
+					value = secretValue;
+					kcv = plainKCV;
+				}
+			}
+			bOK = bOK && osobject->setAttribute(CKA_VALUE, value);
+			if (checkValue)
+				bOK = bOK && osobject->setAttribute(CKA_CHECK_VALUE, kcv);
+
+			if (bOK)
+				bOK = osobject->commitTransaction();
+			else
+				osobject->abortTransaction();
+
+			if (!bOK)
+				rv = CKR_FUNCTION_FAILED;
+		} else
+			rv = CKR_FUNCTION_FAILED;
+	}
+
+	// Clean up
+	pbkdf2->recycleSymmetricKey(secret);
+	CryptoFactory::i()->recyclePBKDF2Algorithm(pbkdf2);
+
+	// Remove secret that may have been created already when the function fails.
+	if (rv != CKR_OK)
+	{
+		if (*phKey != CK_INVALID_HANDLE)
+		{
+			OSObject* ossecret = (OSObject*)handleManager->getObject(*phKey);
+			handleManager->destroyObject(*phKey);
+			if (ossecret) ossecret->destroyObject();
 			*phKey = CK_INVALID_HANDLE;
 		}
 	}

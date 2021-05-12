@@ -45,6 +45,7 @@
 #include "HashAlgorithm.h"
 #include "MacAlgorithm.h"
 #include "RNG.h"
+#include "PBKDF2Algorithm.h"
 #include "MutexFactory.h"
 #include <memory>
 #include <map>
@@ -73,6 +74,9 @@ public:
 
 	// Get the global RNG (may be an unique RNG per thread)
 	RNG* getRNG(RNGImpl::Type name = RNGImpl::Default);
+
+        // Create a concrete instance of an pbkdf2 algorithm
+        PBKDF2Algorithm* getPBKDF2Algorithm();
 
 	// Destructor
 	~BotanCryptoFactory();

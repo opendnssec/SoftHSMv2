@@ -58,6 +58,7 @@
 #ifdef WITH_EDDSA
 #include "OSSLEDDSA.h"
 #endif
+#include "OSSLPBKDF2.h"
 
 #include <algorithm>
 #include <string.h>
@@ -441,3 +442,9 @@ RNG* OSSLCryptoFactory::getRNG(RNGImpl::Type name /* = RNGImpl::Default */)
 	}
 }
 
+// Create a concrete instance of an pbkdf2 algorithm
+PBKDF2Algorithm* OSSLCryptoFactory::getPBKDF2Algorithm()
+{
+	// No algorithm implementation is available
+	return new OSSLPBKDF2();
+}

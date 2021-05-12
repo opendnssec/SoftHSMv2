@@ -40,6 +40,7 @@
 #include "HashAlgorithm.h"
 #include "MacAlgorithm.h"
 #include "RNG.h"
+#include "PBKDF2Algorithm.h"
 #include <memory>
 #include <openssl/conf.h>
 #include <openssl/engine.h>
@@ -72,6 +73,9 @@ public:
 
 	// Get the global RNG (may be an unique RNG per thread)
 	virtual RNG* getRNG(RNGImpl::Type name = RNGImpl::Default);
+
+	// Create a concrete instance of an pbkdf2 algorithm
+	virtual PBKDF2Algorithm* getPBKDF2Algorithm();
 
 	// Destructor
 	virtual ~OSSLCryptoFactory();

@@ -32,7 +32,8 @@ libsofthsm_crypto_la_SOURCES =	AESKey.cpp \
 				RSAPrivateKey.cpp \
 				RSAPublicKey.cpp \
 				SymmetricAlgorithm.cpp \
-				SymmetricKey.cpp
+				SymmetricKey.cpp \
+				PBKDF2Algorithm.cpp
 libsofthsm_crypto_la_LIBADD =	@CRYPTO_LIBS@
 
 SUBDIRS =			test
@@ -86,6 +87,7 @@ libsofthsm_crypto_la_SOURCES +=	OSSLAES.cpp \
 				OSSLSHA256.cpp \
 				OSSLSHA384.cpp \
 				OSSLSHA512.cpp \
+				OSSLPBKDF2.cpp \
 				OSSLUtil.cpp
 endif
 

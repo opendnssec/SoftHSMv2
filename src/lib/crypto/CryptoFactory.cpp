@@ -100,3 +100,10 @@ void CryptoFactory::recycleMacAlgorithm(MacAlgorithm* toRecycle)
 {
 	delete toRecycle;
 }
+
+// Recycle a pbkdf2 algorithm instance -- override this function in the derived
+// class if you need to perform specific clean-up
+void CryptoFactory::recyclePBKDF2Algorithm(PBKDF2Algorithm* toRecycle)
+{
+	delete toRecycle;
+}

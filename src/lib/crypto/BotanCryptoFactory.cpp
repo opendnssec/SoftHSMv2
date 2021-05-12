@@ -279,3 +279,10 @@ RNG* BotanCryptoFactory::getRNG(RNGImpl::Type name /* = RNGImpl::Default */)
 		return NULL;
 	}
 }
+
+// Create a concrete instance of an pbkdf2 algorithm
+PBKDF2Algorithm* BotanCryptoFactory::getPBKDF2Algorithm()
+{
+        // No algorithm implementation is available
+        return NULL;
+}

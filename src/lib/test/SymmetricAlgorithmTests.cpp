@@ -71,6 +71,48 @@ CK_RV SymmetricAlgorithmTests::generateGenericKey(CK_SESSION_HANDLE hSession, CK
 			     &hKey) );
 }
 
+CK_RV SymmetricAlgorithmTests::generatePBKDF2DerivedKey(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_OBJECT_HANDLE &hKey)
+{
+	CK_MECHANISM mechanism = { CKM_PKCS5_PBKD2, NULL_PTR, 0 };
+	CK_UTF8CHAR_PTR pPassword = (CK_UTF8CHAR_PTR)"test";
+	CK_ULONG ulPasswordLen = strlen((const char *)pPassword);
+	CK_UTF8CHAR_PTR pSaltSourceData = (CK_UTF8CHAR_PTR)"test";
+	CK_ULONG ulSaltSourceDataLen = strlen((const char *)pSaltSourceData);
+	CK_PKCS5_PBKD2_PARAMS parms;
+
+	parms.pPassword = pPassword;
+	parms.ulPasswordLen = ulPasswordLen;
+	parms.pSaltSourceData = (CK_VOID_PTR)pSaltSourceData;
+	parms.ulSaltSourceDataLen = ulSaltSourceDataLen;
+	parms.prf = CKP_PKCS5_PBKD2_HMAC_SHA512;
+	parms.iterations = 1000;
+
+	mechanism.pParameter = &parms;
+	mechanism.ulParameterLen = sizeof(parms);
+	CK_OBJECT_CLASS keyClass = CKO_SECRET_KEY;
+	CK_KEY_TYPE keyType = CKK_AES;
+
+	CK_ULONG bytes = 16;
+	// CK_BBOOL bFalse = CK_FALSE;
+	CK_BBOOL bTrue = CK_TRUE;
+	CK_ATTRIBUTE keyAttribs[] = {
+		{ CKA_TOKEN, &bToken, sizeof(bToken) },
+		{ CKA_CLASS, &keyClass, sizeof(keyClass) },
+		{ CKA_KEY_TYPE, &keyType, sizeof(keyType) },
+		{ CKA_PRIVATE, &bPrivate, sizeof(bPrivate) },
+		{ CKA_ENCRYPT, &bTrue, sizeof(bTrue) },
+		{ CKA_DECRYPT, &bTrue, sizeof(bTrue) },
+		{ CKA_WRAP, &bTrue, sizeof(bTrue) },
+		{ CKA_UNWRAP, &bTrue, sizeof(bTrue) },
+		{ CKA_VALUE_LEN, &bytes, sizeof(bytes) },
+	};
+
+	hKey = CK_INVALID_HANDLE;
+	return CRYPTOKI_F_PTR( C_GenerateKey(hSession, &mechanism,
+				keyAttribs, sizeof(keyAttribs)/sizeof(CK_ATTRIBUTE),
+				&hKey) );
+}
+
 CK_RV SymmetricAlgorithmTests::generateAesKey(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_OBJECT_HANDLE &hKey)
 {
 	CK_MECHANISM mechanism = { CKM_AES_KEY_GEN, NULL_PTR, 0 };
@@ -1334,6 +1376,33 @@ void SymmetricAlgorithmTests::testGenericKey()
 
 	// Generate a session key.
 	rv = generateGenericKey(hSession,IN_SESSION,IS_PUBLIC,hKey);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+}
+
+void SymmetricAlgorithmTests::testPBKDF2DerivedKey()
+{
+	CK_RV rv;
+	CK_SESSION_HANDLE hSession;
+
+	// Just make sure that we finalize any previous tests
+	CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
+
+	// Initialize the library and start the test.
+	rv = CRYPTOKI_F_PTR( C_Initialize(NULL_PTR) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Open read-write session
+	rv = CRYPTOKI_F_PTR( C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSession) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Login USER into the session so we can create a private objects
+	rv = CRYPTOKI_F_PTR( C_Login(hSession,CKU_USER,m_userPin1,m_userPin1Length) );
+	CPPUNIT_ASSERT(rv==CKR_OK);
+
+	CK_OBJECT_HANDLE hKey = CK_INVALID_HANDLE;
+
+	// Generate a session key.
+	rv = generatePBKDF2DerivedKey(hSession,IN_SESSION,IS_PUBLIC,hKey);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 }
 

@@ -41,6 +41,7 @@
 #include "HashAlgorithm.h"
 #include "MacAlgorithm.h"
 #include "RNG.h"
+#include "PBKDF2Algorithm.h"
 
 class CryptoFactory
 {
@@ -86,6 +87,13 @@ public:
 
 	// Get the global RNG (may be an unique RNG per thread)
 	virtual RNG* getRNG(RNGImpl::Type name = RNGImpl::Default) = 0;
+
+	// Create a concrete instance of an pbkdf2 algorithm
+	virtual PBKDF2Algorithm* getPBKDF2Algorithm() = 0;
+
+	// Recycle an pbkdf2 algorithm instance -- override this function in the derived
+	// class if you need to perform specific clean-up
+	virtual void recyclePBKDF2Algorithm(PBKDF2Algorithm* toRecycle);
 
 	// Destructor
 	virtual ~CryptoFactory() { }
