@@ -3177,12 +3177,12 @@ CK_RV SoftHSM::AsymDecryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMec
 			if (CK_RSA_PKCS_OAEP_PARAMS_PTR(pMechanism->pParameter)->hashAlg != CKM_SHA_1)
 			{
 				DEBUG_MSG("hashAlg must be CKM_SHA_1");
-				return CKR_ARGUMENTS_BAD;
+				return CKR_MECHANISM_PARAM_INVALID;
 			}
 			if (CK_RSA_PKCS_OAEP_PARAMS_PTR(pMechanism->pParameter)->mgf != CKG_MGF1_SHA1)
 			{
 				DEBUG_MSG("mgf must be CKG_MGF1_SHA1");
-				return CKR_ARGUMENTS_BAD;
+				return CKR_MECHANISM_PARAM_INVALID;
 			}
 
 			mechanism = AsymMech::RSA_PKCS_OAEP;
@@ -4193,7 +4193,7 @@ CK_RV SoftHSM::AsymSignInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechan
 
 			if (CK_RSA_PKCS_PSS_PARAMS_PTR(pMechanism->pParameter)->mgf != allowedMgf) {
 				ERROR_MSG("Hash and MGF don't match");
-				return CKR_ARGUMENTS_BAD;
+				return CKR_MECHANISM_PARAM_INVALID;
 			}
 
 			pssParam.sLen = CK_RSA_PKCS_PSS_PARAMS_PTR(pMechanism->pParameter)->sLen;
@@ -5169,7 +5169,7 @@ CK_RV SoftHSM::AsymVerifyInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 			}
 
 			if (CK_RSA_PKCS_PSS_PARAMS_PTR(pMechanism->pParameter)->mgf != expectedMgf) {
-				return CKR_ARGUMENTS_BAD;
+				return CKR_MECHANISM_PARAM_INVALID;
 			}
 
 			pssParam.sLen = CK_RSA_PKCS_PSS_PARAMS_PTR(pMechanism->pParameter)->sLen;
@@ -12648,12 +12648,12 @@ CK_RV SoftHSM::MechParamCheckRSAPKCSOAEP(CK_MECHANISM_PTR pMechanism)
 	if (params->hashAlg != CKM_SHA_1)
 	{
 		ERROR_MSG("hashAlg must be CKM_SHA_1");
-		return CKR_ARGUMENTS_BAD;
+		return CKR_MECHANISM_PARAM_INVALID;
 	}
 	if (params->mgf != CKG_MGF1_SHA1)
 	{
 		ERROR_MSG("mgf must be CKG_MGF1_SHA1");
-		return CKR_ARGUMENTS_BAD;
+		return CKR_MECHANISM_PARAM_INVALID;
 	}
 	if (params->source != CKZ_DATA_SPECIFIED)
 	{
@@ -12663,12 +12663,12 @@ CK_RV SoftHSM::MechParamCheckRSAPKCSOAEP(CK_MECHANISM_PTR pMechanism)
 	if (params->pSourceData != NULL)
 	{
 		ERROR_MSG("pSourceData must be NULL");
-		return CKR_ARGUMENTS_BAD;
+		return CKR_MECHANISM_PARAM_INVALID;
 	}
 	if (params->ulSourceDataLen != 0)
 	{
 		ERROR_MSG("ulSourceDataLen must be 0");
-		return CKR_ARGUMENTS_BAD;
+		return CKR_MECHANISM_PARAM_INVALID;
 	}
 	return CKR_OK;
 }
