@@ -15,11 +15,12 @@
 #
 # This file is in the public domain
 
-find_package(Botan CONFIG REQUIRED)
+find_package(Botan CONFIG)
 
 if(NOT BOTAN_FOUND)
-  pkg_check_modules(BOTAN botan-2)
+  pkg_check_modules(botan BOTAN_FOUND)
 endif()
+
 
 if(NOT BOTAN_FOUND)
   find_path(BOTAN_INCLUDE_DIRS NAMES botan/botan.h

@@ -1,3 +1,5 @@
+find_package(PkgConfig)
+
 include(CheckCXXCompilerFlag)
 include(CheckFunctionExists)
 include(CheckIncludeFiles)
