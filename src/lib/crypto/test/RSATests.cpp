@@ -78,7 +78,6 @@ void RSATests::testKeyGeneration()
 
 	// Key sizes to test
 	std::vector<size_t> keySizes;
-	keySizes.push_back(1024);
 #ifndef WITH_FIPS
 	keySizes.push_back(1025);
 #endif
@@ -111,12 +110,12 @@ void RSATests::testKeyGeneration()
 
 void RSATests::testSerialisation()
 {
-	// Generate a 1024-bit key-pair for testing
+	// Generate a 2048-bit key-pair for testing
 	AsymmetricKeyPair* kp;
 	RSAParameters p;
 
 	p.setE("010001");
-	p.setBitLength(1024);
+	p.setBitLength(2048);
 
 	CPPUNIT_ASSERT(rsa->generateKeyPair(&kp, &p));
 	CPPUNIT_ASSERT(kp != NULL);
@@ -204,12 +203,12 @@ void RSATests::testSerialisation()
 
 void RSATests::testPKCS8()
 {
-	// Generate a 1024-bit key-pair for testing
+	// Generate a 2048-bit key-pair for testing
 	AsymmetricKeyPair* kp;
 	RSAParameters p;
 
 	p.setE("010001");
-	p.setBitLength(1024);
+	p.setBitLength(2048);
 
 	CPPUNIT_ASSERT(rsa->generateKeyPair(&kp, &p));
 	CPPUNIT_ASSERT(kp != NULL);
@@ -253,7 +252,6 @@ void RSATests::testSigningVerifying()
 
 	// Key sizes to test
 	std::vector<size_t> keySizes;
-	keySizes.push_back(1024);
 	keySizes.push_back(1280);
 	keySizes.push_back(2048);
 	//keySizes.push_back(4096);
@@ -611,7 +609,6 @@ void RSATests::testEncryptDecrypt()
 
 	// Key sizes to test
 	std::vector<size_t> keySizes;
-	keySizes.push_back(1024);
 	keySizes.push_back(1280);
 	keySizes.push_back(2048);
 	//keySizes.push_back(4096);
