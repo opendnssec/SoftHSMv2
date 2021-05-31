@@ -18,6 +18,9 @@
 /* The default location of the token directory */
 #cmakedefine DEFAULT_TOKENDIR "@DEFAULT_TOKENDIR@"
 
+/* The default file mode creation mask */
+#cmakedefine DEFAULT_UMASK @DEFAULT_UMASK@
+
 /* Define if advanced AES key wrap without pad is supported */
 #cmakedefine HAVE_AES_KEY_WRAP @HAVE_AES_KEY_WRAP@
 
