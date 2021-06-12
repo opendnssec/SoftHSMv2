@@ -59,7 +59,9 @@ install:
 - cmd: vcpkg install openssl-windows:x86-windows
 - cmd: vcpkg install botan:x86-windows
 - cmd: vcpkg install cppunit:x86-windows
-- cmd: vcpkg install getopt-win32:x86-windows
+# static link is forbidden with components under GNU licence
+# switch to a source code under a more permissive NETBSD licence
+#- cmd: vcpkg install getopt-win32:x86-windows-static
 - cmd: vcpkg update
 - cmd: vcpkg upgrade --no-dry-run
 build_script:
