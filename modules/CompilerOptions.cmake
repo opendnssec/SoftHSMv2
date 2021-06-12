@@ -494,8 +494,6 @@ if(BUILD_TESTS)
 		message(STATUS "CppUnit tests enabled.")
 	endif(NOT CppUnit_FOUND)
     
-    # get parent folder
-    cmake_path(GET CppUnit_INCLUDE_DIR PARENT_PATH CppUnit_INCLUDE_DIR)
 else(BUILD_TESTS)
     message(STATUS "Not building tests")
 endif(BUILD_TESTS)
