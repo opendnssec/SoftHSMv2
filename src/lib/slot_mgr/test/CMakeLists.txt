@@ -8,7 +8,7 @@ set(INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/..
                  ${PROJECT_SOURCE_DIR}/../../object_store
                  ${PROJECT_SOURCE_DIR}/../../pkcs11
                  ${PROJECT_SOURCE_DIR}/../../session_mgr
-                 ${CPPUNIT_INCLUDES}
+                 ${CppUnit_INCLUDE_DIR}
                  ${CRYPTO_INCLUDES}
                  )
 
