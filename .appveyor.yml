@@ -65,7 +65,7 @@ install:
 build_script:
 - cmd: if exist "C:\projects\softhsmv2\build" rd /s /q C:\projects\softhsmv2\build
 - cmd: mkdir C:\projects\softhsmv2\build
-- cmd: C:\projects\softhsmv2\build
+- cmd: cd C:\projects\softhsmv2\build
 - cmd: vcpkg integrate install
 - cmd: cmake .. -DCMAKE_TOOLCHAIN_FILE=C:/Tools/vcpkg/scripts/buildsystems/vcpkg.cmake -DWITH_CRYPTO_BACKEND=%CRYPTO_BACKEND% -DBUILD_TESTS=ON -DDISABLE_NON_PAGED_MEMORY=ON -DENABLE_GOST=OFF 
 - cmd: cmake --build . --config RelWithDebInfo
