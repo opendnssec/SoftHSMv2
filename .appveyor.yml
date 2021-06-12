@@ -52,7 +52,8 @@ environment:
 install:
 # Update vcpkg
 - cd c:\tools\vcpkg
-- git pull  -v
+- git fetch
+- git git checkout 2021.05.12
 - bootstrap-vcpkg.bat
 - cmd: vcpkg install sqlite3:x86-windows
 - cmd: vcpkg install openssl-windows:x86-windows
