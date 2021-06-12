@@ -50,14 +50,19 @@ environment:
   - CRYPTO_BACKEND: botan
     ADDITIONAL_CONFIGURE_OPTIONS: disable-eddsa disable-gost with-crypto-backend=botan
 install:
+# Update vcpkg
+- cd c:\tools\vcpkg
+- git pull  -v
+- bootstrap-vcpkg.bat
 - cmd: vcpkg install sqlite3:x86-windows
 - cmd: vcpkg install openssl-windows:x86-windows
 - cmd: vcpkg install botan:x86-windows
 - cmd: vcpkg install cppunit:x86-windows
 - cmd: vcpkg install getopt-win32:x86-windows
+- cmd: vcpkg update --no-dry-run
 build_script:
 - cmd: vcpkg integrate install
-- cmd: cmake -A Win32 -DCMAKE_TOOLCHAIN_FILE=C:/Tools/vcpkg/scripts/buildsystems/vcpkg.cmake -DWITH_CRYPTO_BACKEND=%CRYPTO_BACKEND% -DBUILD_TESTS=ON  -DDISABLE_NON_PAGED_MEMORY=ON -DENABLE_GOST=OFF -DCPPUNIT_INCLUDE_DIR=C:\Tools\vcpkg\installed\x86-windows\include -DCPPUNIT_LIBRARY=C:\Tools\vcpkg\installed\x86-windows\lib\cppunit_dll.lib .
+- cmd: cmake -DCMAKE_TOOLCHAIN_FILE=C:/Tools/vcpkg/scripts/buildsystems/vcpkg.cmake -DWITH_CRYPTO_BACKEND=%CRYPTO_BACKEND% -DBUILD_TESTS=ON -DDISABLE_NON_PAGED_MEMORY=ON -DENABLE_GOST=OFF 
 - cmd: cmake --build . --config RelWithDebInfo
 - cmd: ctest -C RelWithDebInfo
 - cmd: cmake -DCMAKE_INSTALL_PREFIX=build/SoftHSMv2-$(Platform) -DCMAKE_INSTALL_CONFIG_NAME=RelWithDebInfo -P cmake_install.cmake
