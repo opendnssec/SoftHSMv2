@@ -31,6 +31,7 @@
  *****************************************************************************/
 
 #include <cppunit/extensions/TestFactoryRegistry.h>
+#include <cppunit/TextOutputter.h>
 #include <cppunit/TextTestProgressListener.h>
 #include <cppunit/BriefTestProgressListener.h>
 #include <cppunit/ui/text/TestRunner.h>
