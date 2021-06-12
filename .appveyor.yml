@@ -63,7 +63,7 @@ install:
 - cmd: vcpkg update
 - cmd: vcpkg upgrade --no-dry-run
 build_script:
-- cmd: rd /s /q C:\projects\softhsmv2\build
+- cmd: if exist "C:\projects\softhsmv2\build" rd /s /q C:\projects\softhsmv2\build
 - cmd: mkdir C:\projects\softhsmv2\build
 - cmd: C:\projects\softhsmv2\build
 - cmd: vcpkg integrate install
