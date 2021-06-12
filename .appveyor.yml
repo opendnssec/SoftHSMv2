@@ -52,15 +52,16 @@ environment:
 install:
 # Update vcpkg
 - cd c:\tools\vcpkg
-- git fetch
-- git git checkout 2021.05.12
-- bootstrap-vcpkg.bat
+- cmd: git fetch
+- cmd: git checkout 2021.05.12
+- cmd: bootstrap-vcpkg.bat
 - cmd: vcpkg install sqlite3:x86-windows
 - cmd: vcpkg install openssl-windows:x86-windows
 - cmd: vcpkg install botan:x86-windows
 - cmd: vcpkg install cppunit:x86-windows
 - cmd: vcpkg install getopt-win32:x86-windows
-- cmd: vcpkg update --no-dry-run
+- cmd: vcpkg update
+- cmd: vcpkg upgrade --no-dry-run
 build_script:
 - cmd: vcpkg integrate install
 - cmd: cmake -DCMAKE_TOOLCHAIN_FILE=C:/Tools/vcpkg/scripts/buildsystems/vcpkg.cmake -DWITH_CRYPTO_BACKEND=%CRYPTO_BACKEND% -DBUILD_TESTS=ON -DDISABLE_NON_PAGED_MEMORY=ON -DENABLE_GOST=OFF 
