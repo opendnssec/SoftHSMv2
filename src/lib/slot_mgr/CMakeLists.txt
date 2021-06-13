@@ -8,6 +8,9 @@ set(INCLUDE_DIRS ${PROJECT_SOURCE_DIR}
                  ${PROJECT_SOURCE_DIR}/../pkcs11
                  ${PROJECT_SOURCE_DIR}/../session_mgr
                  )
+if (WIN32)
+    set(INCLUDE_DIRS ${INCLUDE_DIRS} ${PROJECT_SOURCE_DIR}/../win32)
+endif (WIN32)
 
 set(SOURCES SlotManager.cpp
             Slot.cpp
