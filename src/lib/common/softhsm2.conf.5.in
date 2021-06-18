@@ -74,7 +74,7 @@ slots.removable = true
 .fi
 .RE
 .LP
-.SH TOKEN.MECHANISMS
+.SH SLOTS.MECHANISMS
 Allows to enable and disable any of the PKCS#11 mechanisms reported in the
 C_GetMechanismList().
 The option accepts string argument containing the comma separated list of all

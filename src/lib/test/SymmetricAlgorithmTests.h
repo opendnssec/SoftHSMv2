@@ -33,6 +33,7 @@
 #ifndef _SOFTHSM_V2_SYMENCRYPTDECRYPTTESTS_H
 #define _SOFTHSM_V2_SYMENCRYPTDECRYPTTESTS_H
 
+#include <array>
 #include "TestsBase.h"
 #include <cppunit/extensions/HelperMacros.h>
 
@@ -90,6 +91,15 @@ protected:
 #ifdef WITH_GOST
 	void aesWrapUnwrapGost(CK_MECHANISM_TYPE mechanismType, CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hKey);
 	CK_RV generateGostPrivateKey(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_OBJECT_HANDLE &hKey);
+#endif
+#ifdef WITH_EDDSA
+	using EDCurveParam = const std::array<CK_BYTE, 5>;
+        void aesWrapUnwrapED(CK_MECHANISM_TYPE mechanismType, CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hKey);
+        CK_RV generateEDPrivateKey(CK_SESSION_HANDLE hSession,
+				   CK_BBOOL bToken,
+				   CK_BBOOL bPrivate,
+				   CK_OBJECT_HANDLE &hKey,
+				   EDCurveParam &curveparam);
 #endif
 #ifndef WITH_FIPS
 	CK_RV importDesKey(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_OBJECT_HANDLE &hKey, const Bytes & vKeyValue );
@@ -150,7 +160,6 @@ public:
 		m_mechanism.ulParameterLen = m_data[1].size();
 		return m_mechanism;
 	};
-
 };
 
 #endif // !_SOFTHSM_V2_SYMENCRYPTDECRYPTTESTS_H

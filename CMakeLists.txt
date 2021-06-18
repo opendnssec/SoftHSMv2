@@ -57,6 +57,8 @@ set(DEFAULT_SOFTHSM2_CONF "${CMAKE_INSTALL_FULL_SYSCONFDIR}/softhsm2.conf"
     CACHE STRING "The default location of softhsm.conf")
 set(DEFAULT_TOKENDIR "${CMAKE_INSTALL_FULL_LOCALSTATEDIR}/lib/softhsm/tokens/"
     CACHE STRING "The default location of the token directory")
+set(DEFAULT_UMASK "0077"
+    CACHE STRING "The default file mode creation mask")
 
 set(MAX_PIN_LEN 255 CACHE STRING "Maximum PIN length")
 set(MIN_PIN_LEN 4 CACHE STRING "Minimum PIN length")
