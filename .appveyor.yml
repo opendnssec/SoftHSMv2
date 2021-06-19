@@ -45,8 +45,8 @@ cache:
 environment:
   APPVEYOR_SAVE_CACHE_ON_ERROR: true
   matrix:
-  - CRYPTO_BACKEND: openssl
-    ADDITIONAL_CONFIGURE_OPTIONS: disable-eddsa disable-gost with-crypto-backend=openssl
+#  - CRYPTO_BACKEND: openssl
+#    ADDITIONAL_CONFIGURE_OPTIONS: disable-eddsa disable-gost with-crypto-backend=openssl
   - CRYPTO_BACKEND: botan
     ADDITIONAL_CONFIGURE_OPTIONS: disable-eddsa disable-gost with-crypto-backend=botan
 install:

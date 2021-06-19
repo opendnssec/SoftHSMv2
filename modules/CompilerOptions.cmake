@@ -158,8 +158,8 @@ if(WITH_CRYPTO_BACKEND STREQUAL "botan")
         message(FATAL_ERROR "Failed to find Botan!")
     endif()
 
-    set(CRYPTO_INCLUDES ${Botan_INCLUDE_DIR})
-    set(CRYPTO_LIBS ${Botan_LIBRARIES})
+    set(CRYPTO_INCLUDES ${BOTAN_INCLUDE_DIR})
+    set(CRYPTO_LIBS ${BOTAN_LIBRARY})
     message(STATUS "Botan: Includes: ${CRYPTO_INCLUDES}")
     message(STATUS "Botan: Libs: ${CRYPTO_LIBS}")
 
