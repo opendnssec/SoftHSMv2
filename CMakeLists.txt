@@ -1,4 +1,4 @@
-
+cmake_minimum_required(VERSION 3.16)
 project(softhsm2 C CXX)
 
 # Build Options
@@ -106,10 +106,6 @@ set(CMAKE_BUILD_TYPE "${CMAKE_BUILD_TYPE}" CACHE STRING
 
 
 message(STATUS "Build Configuration: ${CMAKE_BUILD_TYPE}")
-
-if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-	set(CMAKE_CXX_FLAGS "/MP /W4 /wd4996 ${CMAKE_CXX_FLAGS}" CACHE STRING "" FORCE)
-endif()
 
 # Build Modules Path
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}

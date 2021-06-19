@@ -103,6 +103,7 @@ File::File(std::string inPath, int umask, bool forRead /* = true */, bool forWri
 		// Open the stream
 		valid = ((stream = fdopen(fd, fileMode.c_str())) != NULL);
 #else
+		umask;
 		flags = _O_BINARY;
 		if (forRead && !forWrite) flags |= _O_RDONLY;
 		if (!forRead && forWrite) flags |= _O_WRONLY | _O_CREAT | _O_TRUNC;

@@ -861,6 +861,7 @@ void SoftHSM::prepareSupportedMecahnisms(std::map<std::string, CK_MECHANISM_TYPE
 			}
 			catch (const std::out_of_range& e)
 			{
+				(e);
 				WARNING_MSG("Unknown mechanism provided: %s", token.c_str());
 			}
 			prev = pos + 1;
@@ -6806,7 +6807,7 @@ CK_RV SoftHSM::UnwrapKeySym
 		
 	default:
 		// Unwrap the key
-		CK_RV rv = CKR_OK;
+		rv = CKR_OK;
 		if (!cipher->unwrapKey(unwrappingkey, mode, wrapped, keydata))
 			rv = CKR_GENERAL_ERROR;
 		cipher->recycleKey(unwrappingkey);
