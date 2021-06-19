@@ -121,8 +121,10 @@ endif(DISABLE_NON_PAGED_MEMORY)
 
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-	# disable C4996 warning for deprecated posix function name
-	set(COMPILE_OPTIONS "/MP;/W4;/wd4996")
+	# disable 
+    # C4996 warning for deprecated posix function name
+    # C4456 declaration of 'identifier' hides previous local declaration
+	set(COMPILE_OPTIONS "/MP;/W4;/wd4996;/wd4456")
 endif()
 
 # Check if -ldl exists (equivalent of acx_dlopen.m4)

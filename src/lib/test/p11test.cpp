@@ -50,7 +50,7 @@
 #endif
 
 class MyListener : public CPPUNIT_NS::TestListener {
-	virtual void startTest( CPPUNIT_NS::Test*const pTest ) {
+	virtual void startTest( CPPUNIT_NS::Test* pTest ) {
 		std::cout << std::endl << pTest->getName() << ' ' << pTest->countTestCases() << std::endl << std::endl;
 	}
 	virtual void addFailure( const CPPUNIT_NS::TestFailure & failure ) {
@@ -61,21 +61,7 @@ class MyListener : public CPPUNIT_NS::TestListener {
 	}
 };
 
-class MyProgressListener : public CppUnit::TextTestProgressListener
-{
-	void startTest(CppUnit::Test *test) {
-		bool t = true;
-}
-
-	void endTestRun(CppUnit::Test *test,
-		CppUnit::TestResult *eventManager) {
-		bool t = true;
-	}
-private:
-	std::string m_name;
-};
-
-int main(int argc, char**const argv)
+int main(int /*argc*/, char**const /*argv*/)
 {
 #ifndef P11_SHARED_LIBRARY
 #ifndef _WIN32
@@ -104,9 +90,6 @@ if ( argc<2 ) {
 
 	CPPUNIT_NS::BriefTestProgressListener progressListener;
 	controller.addListener(&progressListener);
-
-	MyProgressListener progress;
-	controller.addListener(&progress);
 
 	runner.run(controller);
 
