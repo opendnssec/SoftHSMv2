@@ -35,9 +35,9 @@
 #include <cppunit/TestResult.h>
 #include <cppunit/TestResultCollector.h>
 #include <cppunit/XmlOutputter.h>
+#include <cppunit/TextOutputter.h>
 #include <cppunit/BriefTestProgressListener.h>
 #include <cppunit/TextTestProgressListener.h>
-#include <cppunit/TextOutputter.h>
 #include <fstream>
 
 #include "config.h"

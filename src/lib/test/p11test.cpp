@@ -40,6 +40,8 @@
 #include <cppunit/Exception.h>
 #include <cppunit/XmlOutputter.h>
 #include <cppunit/TextOutputter.h>
+#include <cppunit/BriefTestProgressListener.h>
+#include <cppunit/TextTestProgressListener.h>
 #include <fstream>
 #include <stdlib.h>
 #include <iostream>
@@ -58,6 +60,21 @@ class MyListener : public CPPUNIT_NS::TestListener {
 		std::cout << message.details() << std::endl << std::endl;
 	}
 };
+
+class MyProgressListener : public CppUnit::TextTestProgressListener
+{
+	void startTest(CppUnit::Test *test) {
+		bool t = true;
+}
+
+	void endTestRun(CppUnit::Test *test,
+		CppUnit::TestResult *eventManager) {
+		bool t = true;
+	}
+private:
+	std::string m_name;
+};
+
 int main(int argc, char**const argv)
 {
 #ifndef P11_SHARED_LIBRARY
@@ -72,18 +89,24 @@ int main(int argc, char**const argv)
 
 	CPPUNIT_NS::TextTestRunner runner;
 	runner.addTest(registry.makeTest());
-	if ( argc<2 ) {
+/*
+if ( argc<2 ) {
 		return runner.run() ? 0 : 1;
 	}
 	if ( std::string("direct").find(*(argv+1))==std::string::npos ) {
 		return runner.run(*(argv+1)) ? 0 : 1;
 	}
-	runner.addTest(registry.makeTest());
+*/
+
 	CPPUNIT_NS::TestResult controller;
 	CPPUNIT_NS::TestResultCollector result;
 	controller.addListener( &result );
-	MyListener progress;
-	controller.addListener( &progress );
+
+	CPPUNIT_NS::BriefTestProgressListener progressListener;
+	controller.addListener(&progressListener);
+
+	MyProgressListener progress;
+	controller.addListener(&progress);
 
 	runner.run(controller);
 
