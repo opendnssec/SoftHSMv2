@@ -45,8 +45,8 @@ cache:
 environment:
   APPVEYOR_SAVE_CACHE_ON_ERROR: true
   matrix:
-#  - CRYPTO_BACKEND: openssl
-#    ADDITIONAL_CONFIGURE_OPTIONS: disable-eddsa disable-gost with-crypto-backend=openssl
+  - CRYPTO_BACKEND: openssl
+    ADDITIONAL_CONFIGURE_OPTIONS: disable-eddsa disable-gost with-crypto-backend=openssl
   - CRYPTO_BACKEND: botan
     ADDITIONAL_CONFIGURE_OPTIONS: disable-eddsa disable-gost with-crypto-backend=botan
 install:
@@ -73,9 +73,9 @@ build_script:
 - cmd: cmake --build . --config RelWithDebInfo
 - cmd: ctest -C RelWithDebInfo --progress --verbose
 - cmd: cmake -DCMAKE_INSTALL_PREFIX=build/SoftHSMv2-$(Platform) -DCMAKE_INSTALL_CONFIG_NAME=RelWithDebInfo -P cmake_install.cmake
-on_finish:
-  - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
-test: off
+#on_finish:
+#  - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+#test: off
 artifacts:
 - path: build/SoftHSMv2-$(Platform)
   name: SoftHSMv2-$(PACKAGE_VERSION_NAME)-$(Platform)
