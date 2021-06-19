@@ -1018,6 +1018,7 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 	}
 	CryptoFactory::i()->recycleAsymmetricAlgorithm(eddsa);
 #endif
+	pInfo->flags = 0;	// initialize flags
 	switch (type)
 	{
 #ifndef WITH_FIPS
@@ -1121,15 +1122,19 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 			pInfo->flags = CKF_GENERATE;
 			break;
 #ifndef WITH_FIPS
-		case CKM_DES_ECB:
-		case CKM_DES_CBC:
 		case CKM_DES_CBC_PAD:
 #endif
+		case CKM_DES3_CBC_PAD:
+			pInfo->flags = CKF_WRAP | CKF_UNWRAP;
+			// falls through
+#ifndef WITH_FIPS
+		case CKM_DES_ECB:
+		case CKM_DES_CBC:
+#endif
 		case CKM_DES3_CBC:
-			pInfo->flags = CKF_WRAP;
+			pInfo->flags |= CKF_WRAP;
 			// falls through
 		case CKM_DES3_ECB:
-		case CKM_DES3_CBC_PAD:
 			// Key size is not in use
 			pInfo->ulMinKeySize = 0;
 			pInfo->ulMaxKeySize = 0;
@@ -1146,11 +1151,13 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 			pInfo->ulMaxKeySize = 32;
 			pInfo->flags = CKF_GENERATE;
 			break;
+		case CKM_AES_CBC_PAD:
+			pInfo->flags = CKF_UNWRAP | CKF_WRAP;
+			// falls through
 		case CKM_AES_CBC:
-			pInfo->flags = CKF_WRAP;
+			pInfo->flags |= CKF_WRAP;
 			// falls through
 		case CKM_AES_ECB:
-		case CKM_AES_CBC_PAD:
 		case CKM_AES_CTR:
 		case CKM_AES_GCM:
 			pInfo->ulMinKeySize = 16;
@@ -6145,6 +6152,79 @@ CK_RV SoftHSM::C_GenerateKeyPair
 	return CKR_GENERAL_ERROR;
 }
 
+
+// PKCS#7 padding
+size_t SoftHSM::RFC5652Pad(ByteString &keydata, size_t blocksize)
+{
+	size_t wrappedlen = keydata.size();
+	auto padbytes = blocksize - (wrappedlen % blocksize);
+	if(padbytes == 0)
+		padbytes += blocksize;
+
+	keydata.resize(wrappedlen + padbytes);
+	memset(&keydata[wrappedlen], static_cast<char>(padbytes), padbytes);
+	return keydata.size();
+}
+
+
+// CKM_AES_KEY_WRAP unpadding
+size_t SoftHSM::RFC3394Pad(ByteString &keydata)
+{
+	size_t wrappedlen = keydata.size();
+
+	// [PKCS#11 v2.40, 2.14.3 AES Key Wrap]
+	// A key whose length is not a multiple of the AES Key Wrap block
+	// size (8 bytes) will be zero padded to fit.
+	auto alignment = wrappedlen % 8;
+	if (alignment != 0)
+	{
+		keydata.resize(wrappedlen + 8 - alignment);
+		memset(&keydata[wrappedlen], 0, 8 - alignment);
+	}
+	return keydata.size();
+}
+
+// PKCS#7 padding
+bool SoftHSM::RFC5652Unpad(ByteString &padded, size_t blocksize)
+{
+	auto wrappedlen = padded.size();
+
+	if( wrappedlen % blocksize != 0)
+	{
+		DEBUG_MSG("padded buffer length %d is not a multiple of %d", wrappedlen, blocksize);
+		return false;
+	}
+
+	auto padbyte = padded[wrappedlen-1];
+
+	if( padbyte == 0 || padbyte > blocksize )
+	{
+		DEBUG_MSG("invalid padbyte value %d, larger than blocksize %d", padbyte, blocksize);
+		return false;
+	}
+
+	for(auto i = wrappedlen-padbyte; i<wrappedlen; i++)
+	{
+		if( padded[i] != padbyte )
+		{
+			DEBUG_MSG("invalid padding byte %d at position %d", padded[i], i);
+			return false;
+		}
+	}
+
+	padded.resize(wrappedlen - padbyte); // forget padding
+	return true;
+}
+
+// CKM_AES_KEY_WRAP padding
+inline bool SoftHSM::RFC3394Unpad(ByteString &)
+{
+	// there is no unpadding operation, as the padding
+	// does not contain any padding length info
+	return true;
+}
+
+
 // Internal: Wrap blob using symmetric key
 CK_RV SoftHSM::WrapKeySym
 (
@@ -6159,23 +6239,13 @@ CK_RV SoftHSM::WrapKeySym
 	SymAlgo::Type algo = SymAlgo::Unknown;
 	SymWrap::Type mode = SymWrap::Unknown;
 	size_t bb = 8;
-#ifdef HAVE_AES_KEY_WRAP
-	CK_ULONG wrappedlen = keydata.size();
+	size_t blocksize = 0;
+	auto wrappedlen = keydata.size();
 
-	// [PKCS#11 v2.40, 2.14.3 AES Key Wrap]
-	// A key whose length is not a multiple of the AES Key Wrap block
-	// size (8 bytes) will be zero padded to fit.
-	CK_ULONG alignment = wrappedlen % 8;
-	if (alignment != 0)
-	{
-		keydata.resize(wrappedlen + 8 - alignment);
-		memset(&keydata[wrappedlen], 0, 8 - alignment);
-		wrappedlen = keydata.size();
-	}
-#endif
 	switch(pMechanism->mechanism) {
 #ifdef HAVE_AES_KEY_WRAP
 		case CKM_AES_KEY_WRAP:
+			wrappedlen = RFC3394Pad(keydata);
 			if ((wrappedlen < 16) || ((wrappedlen % 8) != 0))
 				return CKR_KEY_SIZE_RANGE;
 			algo = SymAlgo::AES;
@@ -6191,9 +6261,23 @@ CK_RV SoftHSM::WrapKeySym
 		case CKM_AES_CBC:
 			algo = SymAlgo::AES;
 			break;
+			
+		case CKM_AES_CBC_PAD:
+			blocksize = 16;
+			wrappedlen = RFC5652Pad(keydata, blocksize);
+			algo = SymAlgo::AES;
+			break;
+			
 		case CKM_DES3_CBC:
 			algo = SymAlgo::DES3;
 			break;
+			
+		case CKM_DES3_CBC_PAD:
+			blocksize = 8;
+			wrappedlen = RFC5652Pad(keydata, blocksize);
+			algo = SymAlgo::DES3;
+			break;
+			
 		default:
 			return CKR_MECHANISM_INVALID;
 	}
@@ -6215,17 +6299,15 @@ CK_RV SoftHSM::WrapKeySym
 	ByteString iv;
 	ByteString encryptedFinal;
 
-	if (pMechanism->mechanism == CKM_AES_CBC) {
-		iv.resize(16);
-		memcpy(&iv[0], pMechanism->pParameter, 16);
-	} else if (pMechanism->mechanism == CKM_DES3_CBC){
-		iv.resize(8);
-		memcpy(&iv[0], pMechanism->pParameter, 8);
-	}
 	switch(pMechanism->mechanism) {
 
 		case CKM_AES_CBC:
+	        case CKM_AES_CBC_PAD:
 		case CKM_DES3_CBC:
+	        case CKM_DES3_CBC_PAD:
+			iv.resize(blocksize);
+			memcpy(&iv[0], pMechanism->pParameter, blocksize);
+			
 			if (!cipher->encryptInit(wrappingkey, SymMode::CBC, iv, false))
 			{
 				cipher->recycleKey(wrappingkey);
@@ -6393,6 +6475,7 @@ CK_RV SoftHSM::C_WrapKey
 				return rv;
 			break;
 		case CKM_AES_CBC:
+	        case CKM_AES_CBC_PAD:
 			if (pMechanism->pParameter == NULL_PTR ||
                             pMechanism->ulParameterLen != 16)
                                 return CKR_ARGUMENTS_BAD;
@@ -6433,7 +6516,7 @@ CK_RV SoftHSM::C_WrapKey
 		return CKR_WRAPPING_KEY_TYPE_INCONSISTENT;
 	if ((pMechanism->mechanism == CKM_RSA_PKCS || pMechanism->mechanism == CKM_RSA_PKCS_OAEP) && wrapKey->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED) != CKK_RSA)
 		return CKR_WRAPPING_KEY_TYPE_INCONSISTENT;
-	if (pMechanism->mechanism == CKM_AES_CBC && wrapKey->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED) != CKK_AES)
+	if ((pMechanism->mechanism == CKM_AES_CBC || pMechanism->mechanism == CKM_AES_CBC_PAD) && wrapKey->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED) != CKK_AES)
 		return CKR_WRAPPING_KEY_TYPE_INCONSISTENT;
 	if (pMechanism->mechanism == CKM_DES3_CBC && (wrapKey->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED) != CKK_DES2 ||
 		wrapKey->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED) != CKK_DES3))
@@ -6637,6 +6720,8 @@ CK_RV SoftHSM::UnwrapKeySym
 	SymAlgo::Type algo = SymAlgo::Unknown;
 	SymWrap::Type mode = SymWrap::Unknown;
 	size_t bb = 8;
+	size_t blocksize = 0;
+	
 	switch(pMechanism->mechanism) {
 #ifdef HAVE_AES_KEY_WRAP
 		case CKM_AES_KEY_WRAP:
@@ -6650,9 +6735,20 @@ CK_RV SoftHSM::UnwrapKeySym
 			mode = SymWrap::AES_KEYWRAP_PAD;
 			break;
 #endif
+	        case CKM_AES_CBC_PAD:
+			algo = SymAlgo::AES;
+			blocksize = 16;
+			break;
+			
+	        case CKM_DES3_CBC_PAD:
+			algo = SymAlgo::DES3;
+			blocksize = 8;
+		        break;
+		  
 		default:
 			return CKR_MECHANISM_INVALID;
 	}
+
 	SymmetricAlgorithm* cipher = CryptoFactory::i()->getSymmetricAlgorithm(algo);
 	if (cipher == NULL) return CKR_MECHANISM_INVALID;
 
@@ -6668,12 +6764,54 @@ CK_RV SoftHSM::UnwrapKeySym
 	// adjust key bit length
 	unwrappingkey->setBitLen(unwrappingkey->getKeyBits().size() * bb);
 
-	// Unwrap the key
+	ByteString iv;
+	ByteString decryptedFinal;
 	CK_RV rv = CKR_OK;
-	if (!cipher->unwrapKey(unwrappingkey, mode, wrapped, keydata))
-		rv = CKR_GENERAL_ERROR;
-	cipher->recycleKey(unwrappingkey);
-	CryptoFactory::i()->recycleSymmetricAlgorithm(cipher);
+	
+	switch(pMechanism->mechanism) {
+
+	case CKM_AES_CBC_PAD:
+	case CKM_DES3_CBC_PAD:
+		iv.resize(blocksize);
+		memcpy(&iv[0], pMechanism->pParameter, blocksize);
+			
+		if (!cipher->decryptInit(unwrappingkey, SymMode::CBC, iv, false))
+		{
+			cipher->recycleKey(unwrappingkey);
+			CryptoFactory::i()->recycleSymmetricAlgorithm(cipher);
+			return CKR_MECHANISM_INVALID;
+		}
+		if (!cipher->decryptUpdate(wrapped, keydata))
+		{
+			cipher->recycleKey(unwrappingkey);
+			CryptoFactory::i()->recycleSymmetricAlgorithm(cipher);
+			return CKR_GENERAL_ERROR;
+		}
+		// Finalize encryption
+		if (!cipher->decryptFinal(decryptedFinal))
+		{
+			cipher->recycleKey(unwrappingkey);
+			CryptoFactory::i()->recycleSymmetricAlgorithm(cipher);
+			return CKR_GENERAL_ERROR;
+		}
+		keydata += decryptedFinal;
+
+		if(!RFC5652Unpad(keydata,blocksize))
+		{
+			cipher->recycleKey(unwrappingkey);
+			CryptoFactory::i()->recycleSymmetricAlgorithm(cipher);
+			return CKR_GENERAL_ERROR; // TODO should be another error
+		}
+		break;
+		
+	default:
+		// Unwrap the key
+		CK_RV rv = CKR_OK;
+		if (!cipher->unwrapKey(unwrappingkey, mode, wrapped, keydata))
+			rv = CKR_GENERAL_ERROR;
+		cipher->recycleKey(unwrappingkey);
+		CryptoFactory::i()->recycleSymmetricAlgorithm(cipher);
+	}
 	return rv;
 }
 
@@ -6687,6 +6825,7 @@ CK_RV SoftHSM::UnwrapKeyAsym
 	ByteString& keydata
 )
 {
+	CK_RV rv = CKR_OK;
 	// Get the symmetric algorithm matching the mechanism
 	AsymAlgo::Type algo = AsymAlgo::Unknown;
 	AsymMech::Type mode = AsymMech::Unknown;
@@ -6730,7 +6869,6 @@ CK_RV SoftHSM::UnwrapKeyAsym
 	}
 
 	// Unwrap the key
-	CK_RV rv = CKR_OK;
 	if (!cipher->unwrapKey(unwrappingkey, wrapped, keydata, mode))
 		rv = CKR_GENERAL_ERROR;
 	cipher->recyclePrivateKey(unwrappingkey);
@@ -6795,6 +6933,20 @@ CK_RV SoftHSM::C_UnwrapKey
 				return rv;
 			break;
 
+	        case CKM_AES_CBC_PAD:
+			// TODO check block length
+			if (pMechanism->pParameter == NULL_PTR ||
+                            pMechanism->ulParameterLen != 16)
+				return CKR_ARGUMENTS_BAD;
+			break;
+
+	        case CKM_DES3_CBC_PAD:
+			// TODO check block length
+			if (pMechanism->pParameter == NULL_PTR ||
+                            pMechanism->ulParameterLen != 8)
+				return CKR_ARGUMENTS_BAD;
+			break;
+			
 		default:
 			return CKR_MECHANISM_INVALID;
 	}
@@ -6831,7 +6983,12 @@ CK_RV SoftHSM::C_UnwrapKey
 		return CKR_UNWRAPPING_KEY_TYPE_INCONSISTENT;
 	if ((pMechanism->mechanism == CKM_RSA_PKCS || pMechanism->mechanism == CKM_RSA_PKCS_OAEP) && unwrapKey->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED) != CKK_RSA)
 		return CKR_UNWRAPPING_KEY_TYPE_INCONSISTENT;
-
+	if ((pMechanism->mechanism == CKM_AES_CBC || pMechanism->mechanism == CKM_AES_CBC_PAD) && unwrapKey->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED) != CKK_AES)
+		return CKR_WRAPPING_KEY_TYPE_INCONSISTENT;
+	if (pMechanism->mechanism == CKM_DES3_CBC && (unwrapKey->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED) != CKK_DES2 ||
+		unwrapKey->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED) != CKK_DES3))
+		return CKR_WRAPPING_KEY_TYPE_INCONSISTENT;
+	
 	// Check if the unwrapping key can be used for unwrapping
 	if (unwrapKey->getBooleanValue(CKA_UNWRAP, false) == false)
 		return CKR_KEY_FUNCTION_NOT_PERMITTED;
