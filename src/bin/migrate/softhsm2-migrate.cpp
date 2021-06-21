@@ -43,10 +43,10 @@
 #include <string.h>
 #ifndef _WIN32
 #include <unistd.h>
+#include <sched.h>
 #endif
 #include <iostream>
 #include <fstream>
-#include <sched.h>
 
 #ifdef _WIN32
 #define sched_yield() SleepEx(0, 0)
