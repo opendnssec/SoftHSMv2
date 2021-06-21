@@ -47,8 +47,13 @@ environment:
   matrix:
   - CRYPTO_BACKEND: openssl
     ADDITIONAL_CONFIGURE_OPTIONS: disable-eddsa disable-gost with-crypto-backend=openssl
+    DB_BACKEND: OFF
+  - CRYPTO_BACKEND: openssl
+    ADDITIONAL_CONFIGURE_OPTIONS: disable-eddsa disable-gost with-crypto-backend=openssl
+    DB_BACKEND: ON
   - CRYPTO_BACKEND: botan
     ADDITIONAL_CONFIGURE_OPTIONS: disable-eddsa disable-gost with-crypto-backend=botan
+    DB_BACKEND: OFF
 install:
 # Update vcpkg
 - cd c:\tools\vcpkg
@@ -69,7 +74,7 @@ build_script:
 - cmd: mkdir C:\projects\softhsmv2\build
 - cmd: cd C:\projects\softhsmv2\build
 - cmd: vcpkg integrate install
-- cmd: cmake .. -DCMAKE_TOOLCHAIN_FILE=C:/Tools/vcpkg/scripts/buildsystems/vcpkg.cmake -DWITH_CRYPTO_BACKEND=%CRYPTO_BACKEND% -DBUILD_TESTS=ON -DDISABLE_NON_PAGED_MEMORY=ON -DENABLE_GOST=OFF 
+- cmd: cmake .. -DCMAKE_TOOLCHAIN_FILE=C:/Tools/vcpkg/scripts/buildsystems/vcpkg.cmake -DWITH_OBJECTSTORE_BACKEND_DB=%DB_BACKEND% -DWITH_CRYPTO_BACKEND=%CRYPTO_BACKEND% -DBUILD_TESTS=ON -DDISABLE_NON_PAGED_MEMORY=ON -DENABLE_GOST=OFF 
 - cmd: cmake --build . --config RelWithDebInfo
 - cmd: ctest -C RelWithDebInfo --progress --verbose
 - cmd: cmake -DCMAKE_INSTALL_PREFIX=build/SoftHSMv2-$(Platform) -DCMAKE_INSTALL_CONFIG_NAME=RelWithDebInfo -P cmake_install.cmake

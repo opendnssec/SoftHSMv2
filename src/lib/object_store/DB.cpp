@@ -39,11 +39,22 @@
 #include <iostream>
 #include <vector>
 #include <sqlite3.h>
-#include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 #include <fcntl.h>
+#ifndef _WIN32
 #include <unistd.h>
 #include <errno.h>
+#else
+#define gmtime_r(tt, pm) (pm=gmtime(tt))
+#include <io.h>
+#define S_IRUSR 0400
+#define S_IWUSR 0200
+#define S_IRGRP 0
+#define S_IWGRP 0
+#define S_IROTH 0
+#define S_IWOTH 0
+#endif
 
 #include "DB.h"
 
@@ -69,7 +80,7 @@ static int static_log_err(const char *format, va_list ap)
 
 static DB::LogErrorHandler static_LogErrorhandler = static_log_err;
 
-void DB::logError(const std::string &format, ...)
+void DB::logError(const std::string format, ...)
 {
 	if (!static_LogErrorhandler)
 		return;
@@ -129,7 +140,7 @@ static time_t sqlite3_gmtime(struct tm *tm)
 	// The POSIX epoch is defined as the moment in time at midnight Coordinated
 	// Universal Time (UTC) of Thursday, January 1, 1970. A time_t value is
 	// the number of seconds elapsed since epoch.
-	struct tm ref_tm = {0,0,0,0,0,0,0,0,0,0,0};
+	struct tm ref_tm = {0,0,0,0,0,0,0,0,0};
 	ref_tm.tm_year = 70; // Years since 1900;
 	ref_tm.tm_mday = 10; // 10th
 
@@ -144,7 +155,10 @@ static time_t sqlite3_gmtime(struct tm *tm)
 	// Use gmtime_r to convert the POSIX time back to a tm struct.
 	// No time adjustment is done this time because POSIX time is
 	// defined in terms of UTC.
-	gmtime_r(&posix_time, &ref_tm);
+	//gmtime_r(&posix_time, &ref_tm);
+	struct tm *newtime=&ref_tm;
+	newtime = gmtime(&posix_time);
+	
 	if (ref_tm.tm_isdst != 0) {
 		DB::logError("expected gmtime_r to return zero in tm_isdst member of tm struct");
 		return ((time_t)-1);
@@ -477,7 +491,7 @@ time_t DB::Result::getDatetime(unsigned int fieldidx)
 	int valuelen = sqlite3_column_bytes(_handle->_stmt, fieldidx-1);
 
 	unsigned long years,mons,days,hours,mins,secs;
-	struct tm gm_tm = {0,0,0,0,0,0,0,0,0,0,0};
+	struct tm gm_tm = {0,0,0,0,0,0,0,0,0};
 	gm_tm.tm_isdst = 0; // Tell mktime not to take dst into account.
 	gm_tm.tm_year = 70; // 1970
 	gm_tm.tm_mday = 1; // 1th day of the month
@@ -742,7 +756,8 @@ const std::string &DB::Connection::dbpath()
 	return _dbpath;
 }
 
-DB::Statement DB::Connection::prepare(const std::string &format, ...){
+DB::Statement DB::Connection::prepare(const std::string format, ...){
+//DB::Statement DB::Connection::prepare(const char *format, ...){
 	// pstatement will hold a dynamically allocated string that needs to be deleted.
 	char *pstatement = NULL;
 
@@ -881,7 +896,7 @@ bool DB::Connection::setBusyTimeout(int ms)
 
 bool DB::Connection::tableExists(const std::string &tablename)
 {
-	Statement statement = prepare("select name from sqlite_master where type='table' and name='%s';",tablename.c_str());
+	Statement statement = prepare("select name from sqlite_master where type='table' and name='%s';", tablename.c_str());
 	return statement.step()==Statement::ReturnCodeRow && statement.step()==Statement::ReturnCodeDone;
 }
 
@@ -892,7 +907,9 @@ long long DB::Connection::lastInsertRowId()
 
 bool DB::Connection::inTransaction()
 {
-	return sqlite3_get_autocommit(_db)==0;
+	if(_db)
+		return sqlite3_get_autocommit(_db)==0;
+	return 0;
 }
 
 bool DB::Connection::beginTransactionRO()
