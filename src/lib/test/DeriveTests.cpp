@@ -666,11 +666,14 @@ void DeriveTests::symDerive(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hKey, C
 		0x25, 0x26, 0x27, 0x28, 0x29, 0x30, 0x31, 0x32
 	};
 	CK_ULONG secLen = 0;
+	CK_BBOOL oldMechs = CK_FALSE;
 
 	switch (mechType)
 	{
 		case CKM_DES_ECB_ENCRYPT_DATA:
 		case CKM_DES3_ECB_ENCRYPT_DATA:
+			oldMechs = CK_TRUE;
+			/* fall-through */
 		case CKM_AES_ECB_ENCRYPT_DATA:
 			param1.pData = &data[0];
 			param1.ulLen = sizeof(data);
@@ -679,6 +682,7 @@ void DeriveTests::symDerive(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hKey, C
 			break;
 		case CKM_DES_CBC_ENCRYPT_DATA:
 		case CKM_DES3_CBC_ENCRYPT_DATA:
+			oldMechs = CK_TRUE;
 			memcpy(param2.iv, "12345678", 8);
 			param2.pData = &data[0];
 			param2.length = sizeof(data);
@@ -703,10 +707,12 @@ void DeriveTests::symDerive(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hKey, C
 			break;
 		case CKK_DES:
 			mechEncrypt.mechanism = CKM_DES_ECB;
+			oldMechs = CK_TRUE;
 			break;
 		case CKK_DES2:
 		case CKK_DES3:
 			mechEncrypt.mechanism = CKM_DES3_ECB;
+			oldMechs = CK_TRUE;
 			break;
 		case CKK_AES:
 			mechEncrypt.mechanism = CKM_AES_ECB;
@@ -743,7 +749,11 @@ void DeriveTests::symDerive(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hKey, C
 				 keyAttribs, sizeof(keyAttribs)/sizeof(CK_ATTRIBUTE) - 1,
 				 &hDerive) );
 	}
-	CPPUNIT_ASSERT(rv == CKR_OK);
+	if (rv != CKR_OK && oldMechs == CK_TRUE) {
+		// Skip old mechanisms, they don't work under this crypto library
+		return;
+	}
+	CPPUNIT_ASSERT(rv==CKR_OK);
 
 	// Check that KCV has been set
 	CK_ATTRIBUTE checkAttribs[] = {
@@ -764,6 +774,10 @@ void DeriveTests::symDerive(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hKey, C
 	CK_ULONG ulRecoveredTextLen;
 
 	rv = CRYPTOKI_F_PTR( C_EncryptInit(hSession,&mechEncrypt,hDerive) );
+	if (rv != CKR_OK && oldMechs == CK_TRUE) {
+		// Skip old mechanisms, they don't work under this crypto library
+		return;
+	}
 	CPPUNIT_ASSERT(rv==CKR_OK);
 
 	ulCipherTextLen = sizeof(cipherText);
