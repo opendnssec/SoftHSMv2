@@ -147,7 +147,11 @@ bool AsymmetricAlgorithm::isWrappingMech(AsymMech::Type padding)
 	{
 		case AsymMech::RSA:
 		case AsymMech::RSA_PKCS:
-		case AsymMech::RSA_PKCS_OAEP:
+		case AsymMech::RSA_PKCS_OAEP_SHA1:
+		case AsymMech::RSA_PKCS_OAEP_SHA224:
+		case AsymMech::RSA_PKCS_OAEP_SHA256:
+		case AsymMech::RSA_PKCS_OAEP_SHA384:
+		case AsymMech::RSA_PKCS_OAEP_SHA512:
 			return true;
 
 		default:

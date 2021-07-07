@@ -36,6 +36,7 @@
 #include "OSSLRSAPrivateKey.h"
 #include "OSSLUtil.h"
 #include <openssl/bn.h>
+#include <openssl/evp.h>
 #include <openssl/x509.h>
 #ifdef WITH_FIPS
 #include <openssl/fips.h>
