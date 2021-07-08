@@ -65,9 +65,6 @@ void SecureDataManager::initObject()
 	// Set the initial login state
 	soLoggedIn = userLoggedIn = false;
 
-	// Set the magic
-	magic = ByteString("524A52"); // RJR
-
 	// Get a mutex
 	dataMgrMutex = MutexFactory::i()->getMutex();
 }
@@ -131,25 +128,15 @@ bool SecureDataManager::pbeEncryptKey(const ByteString& passphrase, ByteString& 
 
 	// Encrypt the data
 	ByteString block;
+	ByteString aad;
 
-	if (!aes->encryptInit(pbeKey, SymMode::CBC, IV))
+	if (!aes->encryptInit(pbeKey, SymMode::GCM, IV, true, 0, aad, 16))
 	{
 		delete pbeKey;
 
 		return false;
 	}
 
-	// First, add the magic
-	if (!aes->encryptUpdate(magic, block))
-	{
-		delete pbeKey;
-
-		return false;
-	}
-
-	encryptedKey += block;
-
-	// Then, add the key itself
 	ByteString key;
 
 	{
@@ -269,9 +256,10 @@ bool SecureDataManager::login(const ByteString& passphrase, const ByteString& en
 	// Decrypt the key data
 	ByteString decryptedKeyData;
 	ByteString finalBlock;
+	ByteString aad;
 
 	// NOTE: The login will fail here if incorrect passphrase is supplied
-	if (!aes->decryptInit(pbeKey, SymMode::CBC, IV) ||
+	if (!aes->decryptInit(pbeKey, SymMode::GCM, IV, 0, true, aad, 16) ||
 	    !aes->decryptUpdate(encryptedKeyData, decryptedKeyData) ||
 	    !aes->decryptFinal(finalBlock))
 	{
@@ -284,23 +272,8 @@ bool SecureDataManager::login(const ByteString& passphrase, const ByteString& en
 
 	decryptedKeyData += finalBlock;
 
-	// Check the magic
-	if (decryptedKeyData.substr(0, 3) != magic)
-	{
-		// The passphrase was incorrect
-		DEBUG_MSG("Incorrect passphrase supplied");
-
-		return false;
-	}
-
-	// Strip off the magic
-	ByteString key = decryptedKeyData.substr(3);
-
-	// And mask the key
-	decryptedKeyData.wipe();
-
 	MutexLocker lock(dataMgrMutex);
-	remask(key);
+	remask(decryptedKeyData);
 
 	return true;
 }
@@ -340,9 +313,10 @@ bool SecureDataManager::reAuthenticate(const ByteString& passphrase, const ByteS
 	// Decrypt the key data
 	ByteString decryptedKeyData;
 	ByteString finalBlock;
+	ByteString aad;
 
 	// NOTE: The login will fail here if incorrect passphrase is supplied
-	if (!aes->decryptInit(pbeKey, SymMode::CBC, IV) ||
+	if (!aes->decryptInit(pbeKey, SymMode::GCM, IV, true, 0, aad, 16) ||
 	    !aes->decryptUpdate(encryptedKeyData, decryptedKeyData) ||
 	    !aes->decryptFinal(finalBlock))
 	{
@@ -352,17 +326,6 @@ bool SecureDataManager::reAuthenticate(const ByteString& passphrase, const ByteS
 	}
 
 	delete pbeKey;
-
-	decryptedKeyData += finalBlock;
-
-	// Check the magic
-	if (decryptedKeyData.substr(0, 3) != magic)
-	{
-		// The passphrase was incorrect
-		DEBUG_MSG("Incorrect passphrase supplied");
-
-		return false;
-	}
 
 	// And mask the key
 	decryptedKeyData.wipe();
@@ -434,8 +397,9 @@ bool SecureDataManager::decrypt(const ByteString& encrypted, ByteString& plainte
 	}
 
 	ByteString finalBlock;
+	ByteString aad;
 
-	if (!aes->decryptInit(&theKey, SymMode::CBC, IV) ||
+	if (!aes->decryptInit(&theKey, SymMode::GCM, IV, true, 0, aad, 16) ||
 	    !aes->decryptUpdate(encrypted.substr(aes->getBlockSize()), plaintext) ||
 	    !aes->decryptFinal(finalBlock))
 	{
@@ -478,8 +442,9 @@ bool SecureDataManager::encrypt(const ByteString& plaintext, ByteString& encrypt
 	if (!rng->generateRandom(IV, aes->getBlockSize())) return false;
 
 	ByteString finalBlock;
+	ByteString aad;
 
-	if (!aes->encryptInit(&theKey, SymMode::CBC, IV) ||
+	if (!aes->encryptInit(&theKey, SymMode::GCM, IV, true, 0, aad, 16) ||
 	    !aes->encryptUpdate(plaintext, encrypted) ||
 	    !aes->encryptFinal(finalBlock))
 	{
