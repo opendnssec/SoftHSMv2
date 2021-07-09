@@ -106,7 +106,7 @@ SessionObject* SessionObjectStore::createObject(CK_SLOT_ID slotID, CK_SESSION_HA
 	// Create the new object file
 	SessionObject* newObject = new SessionObject(this, slotID, hSession, isPrivate);
 
-	if (!newObject->isValid())
+	if (!newObject->isValid(false))
 	{
 		ERROR_MSG("Failed to create new object");
 

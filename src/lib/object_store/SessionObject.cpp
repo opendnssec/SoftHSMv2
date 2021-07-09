@@ -217,7 +217,8 @@ bool SessionObject::deleteAttribute(CK_ATTRIBUTE_TYPE type)
 }
 
 // The validity state of the object
-bool SessionObject::isValid()
+// the doRefresh parameter has no meaning for this implementation since noting is stored on disk.
+bool SessionObject::isValid(const bool doRefresh __attribute__((unused)))
 {
     return valid;
 }

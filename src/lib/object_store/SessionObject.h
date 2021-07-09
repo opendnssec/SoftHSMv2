@@ -73,7 +73,7 @@ public:
 	virtual bool deleteAttribute(CK_ATTRIBUTE_TYPE type);
 
 	// The validity state of the object
-	virtual bool isValid();
+	virtual bool isValid(bool doRefresh);
 
 	bool hasSlotID(CK_SLOT_ID inSlotID);
 

@@ -262,11 +262,13 @@ bool ObjectFile::deleteAttribute(CK_ATTRIBUTE_TYPE type)
 	return valid;
 }
 
-// The validity state of the object (refresh from disk as a side effect)
-bool ObjectFile::isValid()
+// The validity state of the object (may refresh from disk as a side effect)
+bool ObjectFile::isValid(const bool doRefresh)
 {
-	refresh();
-
+	if(doRefresh)
+	{
+		refresh();
+	}
 	return valid;
 }
 

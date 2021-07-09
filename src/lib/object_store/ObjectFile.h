@@ -76,7 +76,7 @@ public:
 	virtual bool deleteAttribute(CK_ATTRIBUTE_TYPE type);
 
 	// The validity state of the object (refresh from disk as a side effect)
-	virtual bool isValid();
+	virtual bool isValid(bool doRefresh=true);
 
 	// Invalidate the object file externally; this method is normally
 	// only called by the OSToken class in case an object file has
