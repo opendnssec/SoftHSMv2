@@ -17,27 +17,23 @@ softhsm2-util \- support tool for libsofthsm2
 .PP
 .B softhsm2-util \-\-import
 .I path
+.RB [ \-\-import-type
+.IR type ]
+\\
+.ti +0.7i
 .RB [ \-\-file-pin
 .IR PIN ]
 .B \-\-token
 .I label
+.RB [ \-\-pin
+.I PIN]
+.B [\-\-no\-public\-key]
 \\
 .ti +0.7i
-.RB [ \-\-pin
-.I PIN
-.B \-\-no\-public\-key]
 .B \-\-label
 .I text
 .B \-\-id
 .I hex
-.PP
-.B softhsm2-util \-\-import
-.I path
-.B \-\-aes
-.B \-\-token
-.I label
-\\
-.ti +0.7i
 .RB [ \-\-pin
 .I PIN]
 .B \-\-label
@@ -122,11 +118,11 @@ Any content in token will be erased.
 Show the help information.
 .TP
 .B \-\-import \fIpath\fR
-Import a key pair from the given
+Import an object from the given
 .IR path .
-The file must be in PKCS#8-format.
 .br
 Use with
+.BR \-\-import-type,
 .BR \-\-slot
 or
 .BR \-\-token
@@ -138,10 +134,6 @@ or
 .BR \-\-label ,
 and
 .BR \-\-id .
-.br
-Can also be used with
-.BR \-\-aes
-to use file as is and import it as AES.
 .TP
 .B \-\-init-token
 Initialize the token at a given slot, token label or token serial.
@@ -173,8 +165,20 @@ Display all the available slots and their current status.
 Show the version info.
 .SH OPTIONS
 .TP
+.B \-\-import-type \fItype\fR
+Import object type, \fItype\fR may be one of:
+.RS
+.IP keypair\ [default]
+The file must be in PKCS#8 PEM format.
+.IP aes
+The file must be in binary format.
+.IP cert
+The file must be in X509 PEM format.
+.RE
+.TP
 .B \-\-aes
 Used to tell import to use file as is and import it as AES.
+Deprecated, use \fI--import-type aes\fR instead.
 .TP
 .B \-\-file-pin \fIPIN\fR
 The

@@ -101,10 +101,17 @@ void usage()
 	printf("                    WARNING: Any content in token will be erased.\n");
 	printf("  -h                Shows this help screen.\n");
 	printf("  --help            Shows this help screen.\n");
-	printf("  --import <path>   Import a key pair from the given path.\n");
-	printf("                    The file must be in PKCS#8-format.\n");
-	printf("                    Use with --slot or --token or --serial, --file-pin,\n");
-	printf("                    --label, --id, --no-public-key, and --pin.\n");
+	printf("  --import <path>   Import an object from the given path.\n");
+	printf("                    Use with --import-type, --slot or --token or --serial,\n");
+	printf("                    --file-pin, --label, --id, --no-public-key, and --pin.\n");
+	printf("  --import-type <type>\n");
+	printf("                    Import object type, type may be one of:\n");
+	printf("                        keypair [default]\n");
+	printf("                            The file must be in PKCS#8 PEM format.\n");
+	printf("                        aes\n");
+	printf("                            The file must be in binary format.\n");
+	printf("                        cert\n");
+	printf("                            The file must be in X509 PEM format.\n");
 	printf("  --init-token      Initialize the token at a given slot.\n");
 	printf("                    Use with --slot or --token or --serial or --free,\n");
 	printf("                    --label, --so-pin, and --pin.\n");
@@ -114,6 +121,7 @@ void usage()
 	printf("  --version         Show version info.\n");
 	printf("Options:\n");
 	printf("  --aes             Used to tell import to use file as is and import it as AES.\n");
+	printf("                    Deprecated, use '--import-type aes'.\n");
 	printf("  --file-pin <PIN>  Supply a PIN if the file is encrypted.\n");
 	printf("  --force           Used to override a warning.\n");
 	printf("  --free            Use the first free/uninitialized token.\n");
@@ -130,6 +138,13 @@ void usage()
 	printf("  --token <label>   Will use the token with a matching token label.\n");
 }
 
+// Enumeration of import types
+enum {
+	IMPORT_TYPE_KEYPAIR,
+	IMPORT_TYPE_AES,
+	IMPORT_TYPE_CERT
+};
+
 // Enumeration of the long options
 enum {
 	OPT_DELETE_TOKEN = 0x100,
@@ -139,6 +154,7 @@ enum {
 	OPT_HELP,
 	OPT_ID,
 	OPT_IMPORT,
+	OPT_IMPORT_TYPE,
 	OPT_INIT_TOKEN,
 	OPT_LABEL,
 	OPT_MODULE,
@@ -162,6 +178,7 @@ static const struct option long_options[] = {
 	{ "help",            0, NULL, OPT_HELP },
 	{ "id",              1, NULL, OPT_ID },
 	{ "import",          1, NULL, OPT_IMPORT },
+	{ "import-type",     1, NULL, OPT_IMPORT_TYPE },
 	{ "init-token",      0, NULL, OPT_INIT_TOKEN },
 	{ "label",           1, NULL, OPT_LABEL },
 	{ "module",          1, NULL, OPT_MODULE },
@@ -199,7 +216,7 @@ int main(int argc, char* argv[])
 	int forceExec = 0;
 	bool freeToken = false;
 	int noPublicKey = 0;
-	bool importAES = false;
+	int importType = IMPORT_TYPE_KEYPAIR;
 
 	int doInitToken = 0;
 	int doShowSlots = 0;
@@ -233,8 +250,20 @@ int main(int argc, char* argv[])
 				inPath = optarg;
 				needP11 = true;
 				break;
+			case OPT_IMPORT_TYPE:
+				if (!strcmp(optarg, "keypair"))
+					importType = IMPORT_TYPE_KEYPAIR;
+				else if (!strcmp(optarg, "aes"))
+					importType = IMPORT_TYPE_AES;
+				else if (!strcmp(optarg, "cert"))
+					importType = IMPORT_TYPE_CERT;
+				else
+				{
+					fprintf(stderr, "ERROR: Invalid import type '%s'\n", optarg);
+				}
+				break;
 			case OPT_AES:
-				importAES = true;
+				importType = IMPORT_TYPE_AES;
 				break;
 			case OPT_DELETE_TOKEN:
 				doDeleteToken = 1;
@@ -352,8 +381,22 @@ int main(int argc, char* argv[])
 		rv = findSlot(slot, serial, token, slotID);
 		if (!rv)
 		{
-			rv = importAES ? importSecretKey(inPath, slotID, userPIN, label, objectID)
-					: importKeyPair(inPath, filePIN, slotID, userPIN, label, objectID, forceExec, noPublicKey);
+			switch(importType)
+			{
+				case IMPORT_TYPE_KEYPAIR:
+					rv = importKeyPair(inPath, filePIN, slotID, userPIN, label, objectID, forceExec, noPublicKey);
+					break;
+				case IMPORT_TYPE_AES:
+					rv = importSecretKey(inPath, slotID, userPIN, label, objectID);
+					break;
+				case IMPORT_TYPE_CERT:
+					rv = importCertificate(inPath, slotID, userPIN, label, objectID, forceExec);
+					break;
+				default:
+					fprintf(stderr, "Invalid importType %d.\n", importType);
+					rv = 1;
+					break;
+			}
 		}
 	}
 
@@ -1099,7 +1142,7 @@ int importKeyPair
 		return 1;
 	}
 
-	CK_OBJECT_HANDLE oHandle = searchObject(hSession, objID, objIDLen);
+	CK_OBJECT_HANDLE oHandle = searchObject(hSession, CKO_PRIVATE_KEY, objID, objIDLen);
 	if (oHandle != CK_INVALID_HANDLE && forceExec == 0)
 	{
 		free(objID);
@@ -1183,6 +1226,98 @@ int importSecretKey(char* filePath, CK_SLOT_ID slotID, char* userPIN, char* labe
 	crypto_init();
 	int result = crypto_import_aes_key(hSession, filePath, label, objID, objIDLen);
 	crypto_final();
+
+	return result;
+}
+
+// Import a certificate from given path
+int importCertificate
+(
+	char* filePath,
+	CK_SLOT_ID slotID,
+	char* userPIN,
+	char* label,
+	char* objectID,
+	int forceExec
+)
+{
+	char user_pin_copy[MAX_PIN_LEN+1];
+
+	if (label == NULL)
+	{
+		fprintf(stderr, "ERROR: A label for the object must be supplied. "
+				"Use --label <text>\n");
+		return 1;
+	}
+
+	if (objectID == NULL)
+	{
+		fprintf(stderr, "ERROR: An ID for the object must be supplied. "
+				"Use --id <hex>\n");
+		return 1;
+	}
+
+	size_t objIDLen = 0;
+	char* objID = hexStrToBin(objectID, strlen(objectID), &objIDLen);
+	if (objID == NULL)
+	{
+		fprintf(stderr, "Please edit --id <hex> to correct error.\n");
+		return 1;
+	}
+
+	CK_SESSION_HANDLE hSession;
+	CK_RV rv = p11->C_OpenSession(slotID, CKF_SERIAL_SESSION | CKF_RW_SESSION,
+					NULL_PTR, NULL_PTR, &hSession);
+	if (rv != CKR_OK)
+	{
+		if (rv == CKR_SLOT_ID_INVALID)
+		{
+			fprintf(stderr, "ERROR: The given slot does not exist.\n");
+		}
+		else
+		{
+			fprintf(stderr, "ERROR: Could not open a session on the given slot.\n");
+		}
+		free(objID);
+		return 1;
+	}
+
+	// Get the password
+	if (getPW(userPIN, user_pin_copy, CKU_USER) != 0)
+	{
+		fprintf(stderr, "ERROR: Could not get user PIN\n");
+		free(objID);
+		return 1;
+	}
+
+	rv = p11->C_Login(hSession, CKU_USER, (CK_UTF8CHAR_PTR)user_pin_copy, strlen(user_pin_copy));
+	if (rv != CKR_OK)
+	{
+		if (rv == CKR_PIN_INCORRECT) {
+			fprintf(stderr, "ERROR: The given user PIN does not match the one in the token.\n");
+		}
+		else
+		{
+			fprintf(stderr, "ERROR: Could not log in on the token.\n");
+		}
+		free(objID);
+		return 1;
+	}
+
+	CK_OBJECT_HANDLE oHandle = searchObject(hSession, CKO_CERTIFICATE, objID, objIDLen);
+	if (oHandle != CK_INVALID_HANDLE && forceExec == 0)
+	{
+		free(objID);
+		fprintf(stderr, "ERROR: The ID is already assigned to another object. "
+				"Use --force to override this message.\n");
+		return 1;
+	}
+
+	crypto_init();
+	int result = crypto_import_certificate(hSession, filePath, label, objID, objIDLen);
+	crypto_final();
+
+	free(objID);
 
 	return result;
 }
@@ -1273,14 +1408,13 @@ int hexdigit_to_int(char ch)
 }
 
 // Search for an object
-CK_OBJECT_HANDLE searchObject(CK_SESSION_HANDLE hSession, char* objID, size_t objIDLen)
+CK_OBJECT_HANDLE searchObject(CK_SESSION_HANDLE hSession, CK_OBJECT_CLASS oClass, char* objID, size_t objIDLen)
 {
 	if (objID == NULL)
 	{
 		return CK_INVALID_HANDLE;
 	}
 
-	CK_OBJECT_CLASS oClass = CKO_PRIVATE_KEY;
 	CK_OBJECT_HANDLE hObject = CK_INVALID_HANDLE;
 	CK_ULONG objectCount = 0;
 

@@ -990,4 +990,85 @@ void crypto_free_eddsa(eddsa_key_material_t* keyMat)
 	free(keyMat);
 }
 
+// Import a key pair from given path
+int crypto_import_certificate
+(
+	CK_SESSION_HANDLE hSession,
+	char* filePath,
+	char* label,
+	char* objID,
+	size_t objIDLen
+)
+{
+	BIO* in = NULL;
+
+	if (!(in = BIO_new_file(filePath, "rb")))
+	{
+		fprintf(stderr, "ERROR: Could open the PKCS#8 file: %s\n", filePath);
+		return 1;
+	}
+
+	X509* x509 = PEM_read_bio_X509(in, NULL, NULL, NULL);
+	BIO_free(in);
+
+	if (!x509)
+	{
+		fprintf(stderr, "ERROR: Could not read the certificate file.\n");
+		return 1;
+	}
+
+	int blobSize = i2d_X509(x509, NULL);
+	CK_BYTE_PTR blob = (CK_BYTE_PTR)malloc(blobSize);
+	CK_BYTE_PTR p;
+	p = blob;
+	blobSize = i2d_X509(x509, &p);
+
+	int nameSize = i2d_X509_NAME(X509_get_subject_name(x509), NULL);
+	CK_BYTE_PTR name = (CK_BYTE_PTR)malloc(nameSize);
+	p = name;
+	nameSize = i2d_X509_NAME(X509_get_subject_name(x509), &p);
+
+	int issuerSize = i2d_X509_NAME(X509_get_issuer_name(x509), NULL);
+	CK_BYTE_PTR issuer = (CK_BYTE_PTR)malloc(issuerSize);
+	p = issuer;
+	issuerSize = i2d_X509_NAME(X509_get_issuer_name(x509), &p);
+
+	int serialSize = i2d_ASN1_INTEGER(X509_get_serialNumber(x509), NULL);
+	CK_BYTE_PTR serial = (CK_BYTE_PTR)malloc(serialSize);
+	p = serial;
+	serialSize = i2d_ASN1_INTEGER(X509_get_serialNumber(x509), &p);
+
+	CK_OBJECT_CLASS certClass = CKO_CERTIFICATE;
+	CK_CERTIFICATE_TYPE certType = CKC_X_509;
+	CK_BBOOL ckTrue = CK_TRUE, ckFalse = CK_FALSE, ckToken = CK_TRUE;
+	CK_ATTRIBUTE certTemplate[] = {
+		{ CKA_CLASS,            &certClass,   sizeof(certClass) },
+		{ CKA_CERTIFICATE_TYPE, &certType,    sizeof(certType) },
+		{ CKA_LABEL,            label,        strlen(label) },
+		{ CKA_ID,               objID,        objIDLen },
+		{ CKA_TOKEN,            &ckToken,     sizeof(ckToken) },
+		{ CKA_PRIVATE,          &ckFalse,     sizeof(ckTrue) },
+		{ CKA_VALUE,            blob,         (CK_ULONG)blobSize },
+		{ CKA_SUBJECT,          name,         (CK_ULONG)nameSize },
+		{ CKA_ISSUER,           issuer,       (CK_ULONG)issuerSize },
+		{ CKA_SERIAL_NUMBER,    serial,       (CK_ULONG)serialSize }
+	};
+
+	CK_OBJECT_HANDLE hCert;
+	CK_RV rv = p11->C_CreateObject(hSession, certTemplate, 10, &hCert);
+	free(issuer);
+	free(name);
+	free(blob);
+	X509_free(x509);
+	if (rv != CKR_OK)
+	{
+		fprintf(stderr, "ERROR: Could not save the certificate in the token.\n");
+		return 1;
+	}
+
+	printf("The certificate has been imported.\n");
+
+	return 0;
+}
+
 #endif

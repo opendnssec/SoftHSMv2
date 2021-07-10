@@ -49,8 +49,10 @@ bool rm(std::string path);
 int showSlots();
 int importKeyPair(char* filePath, char* filePIN, CK_SLOT_ID slotID, char* userPIN, char* objectLabel, char* objectID, int forceExec, int noPublicKey);
 int importSecretKey(char* filePath, CK_SLOT_ID slotID, char* userPIN, char* label, char* objectID);
+int importCertificate(char* filePath, CK_SLOT_ID slotID, char* userPIN, char* objectLabel, char* objectID, int forceExec);
 int crypto_import_key_pair(CK_SESSION_HANDLE hSession, char* filePath, char* filePIN, char* label, char* objID, size_t objIDLen, int noPublicKey);
 int crypto_import_aes_key(CK_SESSION_HANDLE hSession, char* filePath, char* label, char* objID, size_t objIDLen);
+int crypto_import_certificate(CK_SESSION_HANDLE hSession, char* filePath, char* label, char* objID, size_t objIDLen);
 
 // Support functions
 
@@ -72,6 +74,6 @@ static void* moduleHandle;
 extern CK_FUNCTION_LIST_PTR p11;
 
 /// PKCS#11 support
-CK_OBJECT_HANDLE searchObject(CK_SESSION_HANDLE hSession, char* objID, size_t objIDLen);
+CK_OBJECT_HANDLE searchObject(CK_SESSION_HANDLE hSession, CK_OBJECT_CLASS oClass, char* objID, size_t objIDLen);
 
 #endif // !_SOFTHSM_V2_SOFTHSM2_UTIL_H
