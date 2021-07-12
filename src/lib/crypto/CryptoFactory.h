@@ -56,6 +56,11 @@ public:
 	virtual bool getFipsSelfTestStatus() const = 0;
 #endif
 
+#ifdef WITH_GOST
+	// Parse GOST key type
+	virtual AsymAlgo::Type getGOSTType(const ByteString &param) = 0;
+#endif
+
 	// Create a concrete instance of a symmetric algorithm
 	virtual SymmetricAlgorithm* getSymmetricAlgorithm(SymAlgo::Type algorithm) = 0;
 

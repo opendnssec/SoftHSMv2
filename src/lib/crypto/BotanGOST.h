@@ -74,7 +74,7 @@ public:
 	virtual PrivateKey* newPrivateKey();
 	virtual AsymmetricParameters* newParameters();
 
-private:
+protected:
 	Botan::PK_Signer* signer;
 	Botan::PK_Verifier* verifier;
 };

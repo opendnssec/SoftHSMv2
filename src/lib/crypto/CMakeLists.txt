@@ -109,10 +109,14 @@ if(WITH_BOTAN)
                         BotanEDPrivateKey.cpp
                         BotanEDPublicKey.cpp
                         BotanGOST.cpp
+                        BotanGOST2012.cpp
+                        BotanGOST2012_512.cpp
                         BotanGOSTKeyPair.cpp
                         BotanGOSTPrivateKey.cpp
                         BotanGOSTPublicKey.cpp
                         BotanGOSTR3411.cpp
+                        BotanGOSTR3411_12_256.cpp
+                        BotanGOSTR3411_12_512.cpp
                         BotanHashAlgorithm.cpp
                         BotanMacAlgorithm.cpp
                         BotanMAC.cpp
@@ -131,6 +135,10 @@ if(WITH_BOTAN)
                         BotanUtil.cpp
                         )
 endif(WITH_BOTAN)
+
+if(WITH_GOST)
+    include_directories(AFTER ${CMAKE_SOURCE_DIR}/lib/object_store/)
+endif(WITH_GOST)
 
 include_directories(${INCLUDE_DIRS})
 

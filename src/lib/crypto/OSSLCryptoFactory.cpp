@@ -293,6 +293,25 @@ void OSSLCryptoFactory::reset()
 	instance.reset();
 }
 
+AsymAlgo::Type OSSLCryptoFactory::getGOSTType(const ByteString& param)
+{
+	char* name = new char[param.size() + 1];
+	memset(name, 0, param.size() + 1);
+	memcpy(name, param.const_byte_str(), param.size());
+	int nid = OBJ_txt2nid(name);
+	if(nid <= 0)
+		return AsymAlgo::Unknown;
+	switch (nid)
+	{
+		case NID_id_GostR3411_2012_256:
+			return AsymAlgo::GOST2012;
+		case NID_id_GostR3411_2012_512:
+			return AsymAlgo::GOST2012_512;
+		default:
+			return AsymAlgo::GOST;
+	}
+}
+
 #ifdef WITH_FIPS
 bool OSSLCryptoFactory::getFipsSelfTestStatus() const
 {
