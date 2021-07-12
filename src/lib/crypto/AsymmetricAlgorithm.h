@@ -89,6 +89,8 @@ struct AsymMech
 		ECDSA,
 		GOST,
 		GOST_GOST,
+		GOST_GOST_256,
+		GOST_GOST_512,
 		EDDSA
 	};
 };

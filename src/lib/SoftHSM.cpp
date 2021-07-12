@@ -4351,6 +4351,14 @@ CK_RV SoftHSM::AsymSignInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechan
 			mechanism = AsymMech::GOST_GOST;
 			bAllowMultiPartOp = true;
 			break;
+		case CKM_GOSTR3410_WITH_GOSTR3411_12_256:
+			mechanism = AsymMech::GOST_GOST_256;
+			bAllowMultiPartOp = true;
+			break;
+		case CKM_GOSTR3410_WITH_GOSTR3411_12_512:
+			mechanism = AsymMech::GOST_GOST_512;
+			bAllowMultiPartOp = true;
+			break;
 #endif
 #ifdef WITH_EDDSA
 		case CKM_EDDSA:
