@@ -121,7 +121,9 @@ bool SymmetricAlgorithm::decryptUpdate(const ByteString& encryptedData, ByteStri
 	}
 
 	currentBufferSize += encryptedData.size();
-	currentAEADBuffer += encryptedData;
+	if (currentCipherMode == SymMode::GCM) {
+		currentAEADBuffer += encryptedData;
+	}
 
 	return true;
 }
