@@ -33,6 +33,8 @@
 #include <config.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sstream>
+#include <iomanip>
 #include <climits>
 #include <array>
 //#include <iomanip>
@@ -64,12 +66,15 @@ WrappedMaterial rsa2048underdes56
 	CKM_DES_CBC_PAD,	// mechanism
 	CKO_PRIVATE_KEY,	// wrapped object class
 	CKK_RSA,		// wrapped key type
+	0,			// tagBits (GCM only)
 	{
 		{		// key
 			0xdf, 0xba, 0xd0, 0xdf, 0x91, 0xda, 0x3e, 0xf1,
 		},
 		{		// IV
 			0x48, 0x66, 0xc8, 0x2c, 0xe1, 0x40, 0x52, 0xa9, 
+		},
+		{		// AAD (GCM only)
 		},
 		{		// wrapped RSA key
 			0x74, 0x55, 0xe1, 0x60, 0x4e, 0x73, 0x91, 0x7f, 0x2c, 0xd9, 0x8a, 0xb7, 0x0c, 0x0e, 0xc6, 0xa7,
@@ -161,12 +166,15 @@ WrappedMaterial rsa2048underdes112
 	CKM_DES3_CBC_PAD,	// mechanism
 	CKO_PRIVATE_KEY,	// wrapped object class
 	CKK_RSA,		// wrapped key type
+	0,			// tagBits (GCM only)
 	{
 		{		// key
 			0xef, 0x4c, 0x9d, 0x73, 0xc8, 0x45, 0x0d, 0x31, 0x97, 0x4a, 0xfe, 0x2f, 0x9d, 0x94, 0x98, 0x54,
 		},
 		{		// IV
 			0x74, 0x83, 0xdb, 0xb8, 0xb3, 0x9f, 0x55, 0xdc, 
+		},
+		{		// AAD (GCM only)
 		},
 		{		// wrapped RSA key
 			0xca, 0x83, 0xa0, 0x2f, 0x06, 0xab, 0xc5, 0xf3, 0xa6, 0x10, 0x93, 0x75, 0x93, 0x8f, 0xa0, 0x9f, 
@@ -259,6 +267,7 @@ WrappedMaterial rsa2048underdes168
 	CKM_DES3_CBC_PAD,	// mechanism
 	CKO_PRIVATE_KEY,	// wrapped object class
 	CKK_RSA,		// wrapped key type
+	0,			// tagBits (GCM only)
 	{
 		{		// key
 			0xfe, 0x0e, 0x7f, 0x68, 0x9e, 0xcb, 0x23, 0x68, 0xb3, 0x51, 0xea, 0x49, 0x26, 0xf2, 0xf8, 0x49,
@@ -266,6 +275,8 @@ WrappedMaterial rsa2048underdes168
 		},
 		{		// IV
 			0x1e, 0x06, 0xbb, 0xa6, 0xd4, 0x3e, 0x1d, 0x05, 
+		},
+		{		// AAD (GCM only)
 		},
 		{		// wrapped RSA key
 			0x45, 0x84, 0xa6, 0xc7, 0xec, 0x3c, 0x6b, 0x38, 0xbe, 0x6f, 0x0d, 0x9d, 0x3a, 0x80, 0x17, 0x2d, 
@@ -356,6 +367,7 @@ WrappedMaterial rsa2048underaes128
 	CKM_AES_CBC_PAD,	// mechanism
 	CKO_PRIVATE_KEY,	// wrapped object class
 	CKK_RSA,		// wrapped key type
+	0,			// tagBits (GCM only)
 	{
 		{		// key
 			0xd5, 0x20, 0xbc, 0xaa, 0x9c, 0x3f, 0x1f, 0x32,
@@ -364,6 +376,8 @@ WrappedMaterial rsa2048underaes128
 		{		// IV
 			0x55, 0x7c, 0xc6, 0xab, 0xdf, 0xee, 0xa1, 0x10,
 			0xeb, 0x89, 0x42, 0x31, 0x72, 0x82, 0xbc, 0xeb
+		},
+		{		// AAD (GCM only)
 		},
 		{		// wrapped RSA key
 			0x7d, 0xa7, 0xa9, 0xe9, 0x8f, 0x73, 0x76, 0xde,	0x66, 0x9d, 0x81, 0x0b, 0x6f, 0xcb, 0x17, 0x87,
@@ -455,6 +469,7 @@ WrappedMaterial rsa2048underaes192
 	CKM_AES_CBC_PAD,	// mechanism
 	CKO_PRIVATE_KEY,	// wrapped object class
 	CKK_RSA,		// wrapped key type
+	0,			// tagBits (GCM only)
 	{
 		{		// key
 			0xe3, 0x38, 0xb0, 0xa3, 0xa9, 0x49, 0x66, 0xf3, 0x1b, 0xe8, 0xc6, 0x3c, 0x40, 0x9d, 0xe3, 0xf2, 
@@ -462,6 +477,8 @@ WrappedMaterial rsa2048underaes192
 		},
 		{		// IV
 			0x48, 0x5c, 0x96, 0x7e, 0x41, 0x47, 0xcf, 0x17, 0x35, 0xa3, 0x12, 0xf1, 0x76, 0x2e, 0x12, 0xdc, 
+		},
+		{		// AAD (GCM only)
 		},
 		{	        // wrapped RSA key
 			0x90, 0xe2, 0x9d, 0x99, 0xcb, 0xc3, 0xfe, 0x34, 0x4f, 0xe1, 0x73, 0x7b, 0xc2, 0xde, 0xed, 0xf3,
@@ -552,6 +569,7 @@ WrappedMaterial rsa2048underaes256
 	CKM_AES_CBC_PAD,	// mechanism
 	CKO_PRIVATE_KEY,	// wrapped object class
 	CKK_RSA,		// wrapped key type
+	0,			// tagBits (GCM only)
 	{
 		{		// key
 			0xda, 0x77, 0x34, 0x87, 0x98, 0x5c, 0xd3, 0x27, 0xc6, 0x11, 0x1a, 0x83, 0x65, 0x18, 0xb9, 0xe3,
@@ -559,6 +577,8 @@ WrappedMaterial rsa2048underaes256
 		},
 		{		// IV
 			0x0e, 0xee, 0x81, 0x64, 0x0d, 0x6d, 0xe1, 0x6e, 0xca, 0xbb, 0x39, 0x0c, 0xda, 0xda, 0x86, 0xe6, 			
+		},
+		{		// AAD (GCM only)
 		},
 		{	        // wrapped RSA key
 			0x86, 0x36, 0x43, 0xcb, 0x0e, 0x85, 0xb7, 0xaa, 0x59, 0x16, 0x92, 0x70, 0x31, 0x06, 0x54, 0x22,
@@ -642,10 +662,68 @@ WrappedMaterial rsa2048underaes256
 	}
 };
 
+WrappedMaterial aes128underaes256gcm
+{
+	"AES128 wrapped under AES256 using CKM_AES_GCM",
+	CKK_AES,		// wrapping key type
+	CKM_AES_GCM,	        // mechanism
+	CKO_SECRET_KEY,	        // wrapped object class
+	CKK_AES,		// wrapped key type
+	128,			// tagBits (GCM only)
+	{
+		{		// key
+			0x62, 0x63, 0xdf, 0x89, 0x9b, 0xf2, 0xeb, 0xb4, 0x84, 0x66, 0xf7, 0xe5, 0x51, 0xd0, 0x2c, 0x32,
+			0x59, 0x90, 0xd7, 0x0b, 0xa0, 0xec, 0x33, 0xb2, 0xdd, 0x86, 0x3f, 0x40, 0x58, 0xb3, 0xa4, 0x65,
+		},
+		{		// IV
+			0xfb, 0x71, 0x20, 0x70, 0x28, 0xc8, 0xd4, 0x19, 0xd5, 0xf2, 0x0f, 0x86, 0xb8, 0x8b, 0x22, 0x6d,
+		},
+		{		// AAD (GCM only)
+			// No AAD specified
+		},
+		{	        // wrapped AES key
+			0x0c, 0x82, 0x46, 0xdd, 0x1e, 0x07, 0x29, 0xf2, 0xbb, 0x54, 0x0f, 0xbb, 0xe0, 0xdd, 0x78, 0x77,
+			0xca, 0x01, 0x41, 0x1d, 0xf0, 0xdd, 0x19, 0x36, 0x79, 0x1b, 0x52, 0xaa, 0xd3, 0x3d, 0x78, 0x06,
+		}
+	}
+};
+
+WrappedMaterial aes256underaes256gcm
+{
+	"AES256 wrapped under AES256 using CKM_AES_GCM",
+	CKK_AES,		// wrapping key type
+	CKM_AES_GCM,	        // mechanism
+	CKO_SECRET_KEY,	        // wrapped object class
+	CKK_AES,		// wrapped key type
+	128,			// tagBits (GCM only)
+	{
+		{		// key
+			0x62, 0x63, 0xdf, 0x89, 0x9b, 0xf2, 0xeb, 0xb4, 0x84, 0x66, 0xf7, 0xe5, 0x51, 0xd0, 0x2c, 0x32,
+			0x59, 0x90, 0xd7, 0x0b, 0xa0, 0xec, 0x33, 0xb2, 0xdd, 0x86, 0x3f, 0x40, 0x58, 0xb3, 0xa4, 0x65,
+		},
+		{		// IV
+			0x4a, 0x82, 0xd3, 0xaa, 0x41, 0xd1, 0x1b, 0xae, 0xd0, 0x61, 0xd8, 0x9f, 0xaf, 0x22, 0x86, 0xc9, 
+		},
+		{		// AAD (GCM only)
+			'd', 'd', 'd', 'd',
+		},
+		{	        // wrapped AES key
+			0x89, 0x12, 0xa1, 0x46, 0x12, 0x1c, 0x85, 0xcc, 0x88, 0xe1, 0xa8, 0x30, 0x5b, 0xdf, 0xc0, 0x27,
+			0xf1, 0xb5, 0x29, 0xba, 0xea, 0x58, 0xd9, 0x58, 0xae, 0xe1, 0xf3, 0x69, 0x37, 0xcd, 0x7b, 0x20,
+			0x61, 0x18, 0x2f, 0x19, 0xc4, 0xa8, 0xa5, 0x2b, 0xba, 0x3c, 0x1e, 0x03, 0x4e, 0x84, 0xb4, 0x3e, 
+		}
+	}
+};
+
 std::vector<WrappedMaterial> aesCBCWrappedKeys {
 	rsa2048underaes128,
 	rsa2048underaes192,
 	rsa2048underaes256,
+};
+
+std::vector<WrappedMaterial> aesGCMWrappedKeys {
+	aes128underaes256gcm,
+	aes256underaes256gcm,
 };
 
 std::vector<WrappedMaterial> desCBCWrappedKeys {
@@ -656,6 +734,17 @@ std::vector<WrappedMaterial> desCBCWrappedKeys {
 	rsa2048underdes168,
 };
 
+
+// a small helper function to display int as hex strings
+// copied from https://stackoverflow.com/a/48643043/979318
+
+template <typename T>
+static inline std::string hex(T val, size_t width=sizeof(T)*2)
+{
+    std::stringstream ss;
+    ss << std::setfill('0') << std::setw(width) << std::hex << (val|0);
+    return ss.str();
+}
 
 
 CK_RV SymmetricAlgorithmTests::generateGenericKey(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_OBJECT_HANDLE &hKey)
@@ -958,7 +1047,7 @@ void SymmetricAlgorithmTests::encryptDecrypt(
 		if ( isSizeOK ) {
 			CPPUNIT_ASSERT_EQUAL( (CK_RV)CKR_OK, rv );
 			std::vector<CK_BYTE> vDecryptedData(ulDataLen);
-			CPPUNIT_ASSERT_EQUAL( (CK_RV)CKR_OK, CRYPTOKI_F_PTR( C_Decrypt(hSession,&vEncryptedData.front(),vEncryptedData.size(),&vDecryptedData.front(),&ulDataLen) ) );
+			CPPUNIT_ASSERT_EQUAL_MESSAGE( "C_Decrypt() call fails with mechanism 0x" + hex(pMechanism->mechanism,8), (CK_RV)CKR_OK, CRYPTOKI_F_PTR( C_Decrypt(hSession,&vEncryptedData.front(),vEncryptedData.size(),&vDecryptedData.front(),&ulDataLen) ) );
 			vDecryptedData.resize(ulDataLen);
 			CPPUNIT_ASSERT_MESSAGE("C_Encrypt C_Decrypt does not give the original", vData==vDecryptedData);
 		} else {
@@ -1142,15 +1231,38 @@ void SymmetricAlgorithmTests::aesWrapUnwrapGeneric(CK_MECHANISM_TYPE mechanismTy
 	CK_KEY_TYPE genKeyType = CKK_GENERIC_SECRET;
 	CK_BYTE keyPtr[128];
 	CK_ULONG keyLen =
-		mechanismType == CKM_AES_KEY_WRAP_PAD ? 125UL : 128UL;
+		mechanismType == CKM_AES_KEY_WRAP_PAD ? sizeof(keyPtr)-3 : sizeof(keyPtr);
 
 	CK_RV rv;
 	CK_BYTE ivPtr[16];
-	if( mechanismType == CKM_AES_CBC_PAD ) {
-		rv = CRYPTOKI_F_PTR( C_GenerateRandom(hSession, ivPtr, sizeof ivPtr) );
-		CPPUNIT_ASSERT(rv == CKR_OK);
-		mechanism.pParameter = ivPtr;
-		mechanism.ulParameterLen = sizeof ivPtr;
+	CK_BYTE aad[64];
+	CK_GCM_PARAMS gcmparams = { };
+	
+	switch(mechanismType)
+	{
+		case CKM_AES_CBC_PAD:
+			rv = CRYPTOKI_F_PTR( C_GenerateRandom(hSession, ivPtr, sizeof ivPtr) );
+			CPPUNIT_ASSERT(rv == CKR_OK);
+			mechanism.pParameter = ivPtr;
+			mechanism.ulParameterLen = sizeof ivPtr;
+			break;
+
+		case CKM_AES_GCM:
+			rv = CRYPTOKI_F_PTR( C_GenerateRandom(hSession, ivPtr, sizeof ivPtr) );
+			CPPUNIT_ASSERT(rv == CKR_OK);
+			rv = CRYPTOKI_F_PTR( C_GenerateRandom(hSession, aad, sizeof aad) );
+			CPPUNIT_ASSERT(rv == CKR_OK);
+
+			gcmparams.pIv = ivPtr;
+			gcmparams.ulIvLen = sizeof ivPtr;
+			gcmparams.ulIvBits = gcmparams.ulIvLen<<3;
+			gcmparams.pAAD = aad;
+			gcmparams.ulAADLen = sizeof aad;
+			gcmparams.ulTagBits = 128;
+			
+			mechanism.pParameter = &gcmparams;
+			mechanism.ulParameterLen = sizeof gcmparams;
+			break;
 	}
 
 	CK_ATTRIBUTE attribs[] = {
@@ -1647,6 +1759,7 @@ void SymmetricAlgorithmTests::testAesWrapUnwrap()
 
 	aesWrapUnwrapGeneric(CKM_AES_KEY_WRAP, hSession, hKey);
 	aesWrapUnwrapGeneric(CKM_AES_CBC_PAD, hSession, hKey);
+	aesWrapUnwrapGeneric(CKM_AES_GCM, hSession, hKey);
 	aesWrapUnwrapRsa(CKM_AES_KEY_WRAP, hSession, hKey);
 	aesWrapUnwrapRsa(CKM_AES_CBC_PAD, hSession, hKey);
 
@@ -1665,6 +1778,11 @@ void SymmetricAlgorithmTests::testAesWrapUnwrap()
 #endif
 #endif
 	for ( auto &wrapped : aesCBCWrappedKeys )
+	{
+		unwrapKnownKey(hSession, wrapped);
+	}
+
+	for ( auto &wrapped : aesGCMWrappedKeys )
 	{
 		unwrapKnownKey(hSession, wrapped);
 	}

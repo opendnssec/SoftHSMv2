@@ -125,6 +125,8 @@ class WrappedMaterial {
 	CK_KEY_TYPE m_wrappedkeytype;
 	CK_KEY_TYPE m_wrappingkeytype;
 	CK_MECHANISM m_mechanism;
+	size_t m_tagbits;	    // for AES GCM
+	CK_GCM_PARAMS m_gcm_params; // for AES GCM
 
 public:
 
@@ -133,11 +135,13 @@ public:
 			 CK_MECHANISM_TYPE mechType,
 			 CK_OBJECT_CLASS wrappedObjectClass,
 			 CK_KEY_TYPE wrappedKeyType,
+			 size_t tagBits,
 			 std::initializer_list<Bytes> il ) :
 		m_descr ( description ),
 		m_wrappedobjectclass ( wrappedObjectClass ),
 		m_wrappedkeytype ( wrappedKeyType ),
-		m_wrappingkeytype ( wrappingKeyType )
+		m_wrappingkeytype ( wrappingKeyType ),
+		m_tagbits ( tagBits )
 	{
 		for( auto &&i : il ) {
 			m_data.emplace_back( std::move(i) );
@@ -147,19 +151,32 @@ public:
 
 	std::string description() { return m_descr; }
 	Bytes &wrappingKeyBytes() { return m_data[0]; }
-	Bytes &cbcIv() { return m_data[1]; }
-	Bytes &wrappedKey() { return m_data[2]; };
+	Bytes &iv() { return m_data[1]; }
+	Bytes &aad() { return m_data[2]; }
+	size_t tagBits() { return m_tagbits; }
+	Bytes &wrappedKey() { return m_data[3]; };
 	CK_OBJECT_CLASS &wrappedObjectClass() { return m_wrappedobjectclass; };
 	CK_KEY_TYPE &wrappingKeyType() { return m_wrappingkeytype; };
 	CK_KEY_TYPE &wrappedKeyType() { return m_wrappedkeytype; };
 	CK_MECHANISM &mechanism() {
-		// adjust mechanism to point to data provided
-		// we do it here and not in the constructor,
-		// has data() can move around as we push to the vectors
-		m_mechanism.pParameter = m_data[1].data();
-		m_mechanism.ulParameterLen = m_data[1].size();
+		if(m_mechanism.mechanism==CKM_AES_GCM) {
+			m_gcm_params = {
+				.pIv = m_data[1].data(),
+				.ulIvLen = m_data[1].size(),
+				.ulIvBits = m_data[1].size()<<3,
+				.pAAD = m_data[2].data(),
+				.ulAADLen = m_data[2].size(),
+				.ulTagBits = m_tagbits };
+			
+			m_mechanism.pParameter = &m_gcm_params;
+			m_mechanism.ulParameterLen = sizeof(CK_GCM_PARAMS);
+		} else {
+			// other cases: pParameter points to the IV
+			m_mechanism.pParameter = m_data[1].data();
+			m_mechanism.ulParameterLen = m_data[1].size();
+		}
 		return m_mechanism;
 	};
 };
-
+	
 #endif // !_SOFTHSM_V2_SYMENCRYPTDECRYPTTESTS_H
