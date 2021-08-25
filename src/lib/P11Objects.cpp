@@ -272,7 +272,7 @@ CK_RV P11Object::saveTemplate(Token *token, bool isPrivate, CK_ATTRIBUTE_PTR pTe
 			if (!isSpecified)
 			{
 				ERROR_MSG("Mandatory attribute (0x%08X) was not specified in template", (unsigned int)i->first);
-
+				osobject->abortTransaction();
 				return CKR_TEMPLATE_INCOMPLETE;
 			}
 		}
