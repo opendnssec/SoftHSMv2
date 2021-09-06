@@ -489,7 +489,7 @@ private:
 
 	CK_RV MechParamCheckRSAPKCSOAEP(CK_MECHANISM_PTR pMechanism);
 
-	bool isMechanismPermitted(OSObject* key, CK_MECHANISM_PTR pMechanism);
+	bool isMechanismPermitted(OSObject* key, CK_MECHANISM_TYPE mechanism);
 	void prepareSupportedMecahnisms(std::map<std::string, CK_MECHANISM_TYPE> &t);
 	bool detectFork(void);
 };
