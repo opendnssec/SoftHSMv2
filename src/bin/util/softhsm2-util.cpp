@@ -110,6 +110,10 @@ void usage()
 	printf("                    --label, --so-pin, and --pin.\n");
 	printf("                    WARNING: Any content in token will be erased.\n");
 	printf("  --show-slots      Display all the available slots.\n");
+	printf("  --show-config <var>\n");
+	printf("                    Show configuration info, var may be one of:\n");
+	printf("                        default-pkcs11-lib\n");
+	printf("                            print the default PKCS#11 library.\n");
 	printf("  -v                Show version info.\n");
 	printf("  --version         Show version info.\n");
 	printf("Options:\n");
@@ -146,6 +150,7 @@ enum {
 	OPT_PIN,
 	OPT_SERIAL,
 	OPT_SHOW_SLOTS,
+	OPT_SHOW_CONFIG,
 	OPT_SLOT,
 	OPT_SO_PIN,
 	OPT_TOKEN,
@@ -169,6 +174,7 @@ static const struct option long_options[] = {
 	{ "pin",             1, NULL, OPT_PIN },
 	{ "serial",          1, NULL, OPT_SERIAL },
 	{ "show-slots",      0, NULL, OPT_SHOW_SLOTS },
+	{ "show-config",     1, NULL, OPT_SHOW_CONFIG },
 	{ "slot",            1, NULL, OPT_SLOT },
 	{ "so-pin",          1, NULL, OPT_SO_PIN },
 	{ "token",           1, NULL, OPT_TOKEN },
@@ -221,6 +227,18 @@ int main(int argc, char* argv[])
 				doShowSlots = 1;
 				action++;
 				needP11 = true;
+				break;
+			case OPT_SHOW_CONFIG:
+				if (!strcmp(optarg, "default-pkcs11-lib"))
+				{
+					printf("%s\n", DEFAULT_PKCS11_LIB);
+					exit(0);
+				}
+				else
+				{
+					fprintf(stderr, "ERROR: Invalid configuration key '%s'\n", optarg);
+					exit(1);
+				}
 				break;
 			case OPT_INIT_TOKEN:
 				doInitToken = 1;
