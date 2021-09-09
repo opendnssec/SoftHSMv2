@@ -847,6 +847,8 @@ void SymmetricAlgorithmTests::encryptDecrypt(
 	std::vector<CK_BYTE> vEncryptedData;
 	std::vector<CK_BYTE> vEncryptedDataParted;
 	PartSize partSize(blockSize, &vData);
+	CK_BBOOL oldMechs = CK_FALSE;
+	CK_RV rv = CKR_OK;
 
 	CPPUNIT_ASSERT_EQUAL( (CK_RV)CKR_OK, CRYPTOKI_F_PTR( C_GenerateRandom(hSession, (CK_BYTE_PTR)&vData.front(), messageSize) ) );
 
@@ -885,6 +887,8 @@ void SymmetricAlgorithmTests::encryptDecrypt(
 		case CKM_DES_CBC_PAD:
 		case CKM_DES3_CBC:
 		case CKM_DES3_CBC_PAD:
+			oldMechs = CK_TRUE;
+			/* fall-through */
 		case CKM_AES_CBC:
 		case CKM_AES_CBC_PAD:
 			pMechanism->pParameter = (CK_VOID_PTR)&vData.front();
@@ -898,12 +902,18 @@ void SymmetricAlgorithmTests::encryptDecrypt(
 			pMechanism->pParameter = &gcmParams;
 			pMechanism->ulParameterLen = sizeof(gcmParams);
 			break;
+		case CKM_DES_ECB:
+		case CKM_DES3_ECB:
+			oldMechs = CK_TRUE;
+			break;
 		default:
 			break;
 	}
 
 	// Single-part encryption
-	CPPUNIT_ASSERT_EQUAL( (CK_RV)CKR_OK, CRYPTOKI_F_PTR( C_EncryptInit(hSession,pMechanism,hKey) ) );
+	rv = CRYPTOKI_F_PTR( C_EncryptInit(hSession,pMechanism,hKey) );
+	CPPUNIT_ASSERT_EQUAL( (CK_BBOOL) CK_FALSE, (CK_BBOOL) ((rv != CKR_OK) && (oldMechs == CK_FALSE)) );
+	if (oldMechs == CK_FALSE)
 	{
 		CK_ULONG ulEncryptedDataLen;
 		const CK_RV rv( CRYPTOKI_F_PTR( C_Encrypt(hSession,(CK_BYTE_PTR)&vData.front(),messageSize,NULL_PTR,&ulEncryptedDataLen) ) );
@@ -919,40 +929,42 @@ void SymmetricAlgorithmTests::encryptDecrypt(
 	}
 
 	// Multi-part encryption
-	CPPUNIT_ASSERT_EQUAL( (CK_RV)CKR_OK, CRYPTOKI_F_PTR( C_EncryptInit(hSession,pMechanism,hKey) ) );
-
-	for ( std::vector<CK_BYTE>::const_iterator i(vData.begin()); i<vData.end(); i+=partSize.getCurrent() ) {
-		const CK_ULONG lPartLen( i+partSize.getNext()<vData.end() ? partSize.getCurrent() : vData.end()-i );
-		CK_ULONG ulEncryptedPartLen;
-		CPPUNIT_ASSERT_EQUAL( (CK_RV)CKR_OK, CRYPTOKI_F_PTR( C_EncryptUpdate(hSession,(CK_BYTE_PTR)&(*i),lPartLen,NULL_PTR,&ulEncryptedPartLen) ) );
-		const size_t oldSize( vEncryptedDataParted.size() );
-		vEncryptedDataParted.resize(oldSize+ulEncryptedPartLen);
-		CK_BYTE dummy;
-		const CK_BYTE_PTR pEncryptedPart( ulEncryptedPartLen>0 ? &vEncryptedDataParted.at(oldSize) : &dummy );
-		CPPUNIT_ASSERT_EQUAL( (CK_RV)CKR_OK, CRYPTOKI_F_PTR( C_EncryptUpdate(hSession,(CK_BYTE_PTR)&(*i),lPartLen,pEncryptedPart,&ulEncryptedPartLen) ) );
-		vEncryptedDataParted.resize(oldSize+ulEncryptedPartLen);
-	}
-	{
-		CK_ULONG ulLastEncryptedPartLen;
-		const CK_RV rv( CRYPTOKI_F_PTR( C_EncryptFinal(hSession,NULL_PTR,&ulLastEncryptedPartLen) ) );
-		if ( isSizeOK ) {
-			CPPUNIT_ASSERT_EQUAL( (CK_RV)CKR_OK, rv );
+	rv = CRYPTOKI_F_PTR( C_EncryptInit(hSession,pMechanism,hKey) );
+	CPPUNIT_ASSERT_EQUAL( (CK_BBOOL) CK_FALSE, (CK_BBOOL) ((rv != CKR_OK) && (oldMechs == CK_FALSE)) );
+	if (oldMechs == CK_FALSE) {
+		for ( std::vector<CK_BYTE>::const_iterator i(vData.begin()); i<vData.end(); i+=partSize.getCurrent() ) {
+			const CK_ULONG lPartLen( i+partSize.getNext()<vData.end() ? partSize.getCurrent() : vData.end()-i );
+			CK_ULONG ulEncryptedPartLen;
+			CPPUNIT_ASSERT_EQUAL( (CK_RV)CKR_OK, CRYPTOKI_F_PTR( C_EncryptUpdate(hSession,(CK_BYTE_PTR)&(*i),lPartLen,NULL_PTR,&ulEncryptedPartLen) ) );
 			const size_t oldSize( vEncryptedDataParted.size() );
+			vEncryptedDataParted.resize(oldSize+ulEncryptedPartLen);
 			CK_BYTE dummy;
-			vEncryptedDataParted.resize(oldSize+ulLastEncryptedPartLen);
-			const CK_BYTE_PTR pLastEncryptedPart( ulLastEncryptedPartLen>0 ? &vEncryptedDataParted.at(oldSize) : &dummy );
-			CPPUNIT_ASSERT_EQUAL( (CK_RV)CKR_OK, CRYPTOKI_F_PTR( C_EncryptFinal(hSession,pLastEncryptedPart,&ulLastEncryptedPartLen) ) );
-			vEncryptedDataParted.resize(oldSize+ulLastEncryptedPartLen);
-		} else {
-			CPPUNIT_ASSERT_EQUAL_MESSAGE("C_EncryptFinal should fail with C_CKR_DATA_LEN_RANGE", (CK_RV)CKR_DATA_LEN_RANGE, rv);
-			vEncryptedDataParted = vData;
+			const CK_BYTE_PTR pEncryptedPart( ulEncryptedPartLen>0 ? &vEncryptedDataParted.at(oldSize) : &dummy );
+			CPPUNIT_ASSERT_EQUAL( (CK_RV)CKR_OK, CRYPTOKI_F_PTR( C_EncryptUpdate(hSession,(CK_BYTE_PTR)&(*i),lPartLen,pEncryptedPart,&ulEncryptedPartLen) ) );
+			vEncryptedDataParted.resize(oldSize+ulEncryptedPartLen);
+		}
+		{
+			CK_ULONG ulLastEncryptedPartLen;
+			const CK_RV rv( CRYPTOKI_F_PTR( C_EncryptFinal(hSession,NULL_PTR,&ulLastEncryptedPartLen) ) );
+			if ( isSizeOK ) {
+				CPPUNIT_ASSERT_EQUAL( (CK_RV)CKR_OK, rv );
+				const size_t oldSize( vEncryptedDataParted.size() );
+				CK_BYTE dummy;
+				vEncryptedDataParted.resize(oldSize+ulLastEncryptedPartLen);
+				const CK_BYTE_PTR pLastEncryptedPart( ulLastEncryptedPartLen>0 ? &vEncryptedDataParted.at(oldSize) : &dummy );
+				CPPUNIT_ASSERT_EQUAL( (CK_RV)CKR_OK, CRYPTOKI_F_PTR( C_EncryptFinal(hSession,pLastEncryptedPart,&ulLastEncryptedPartLen) ) );
+				vEncryptedDataParted.resize(oldSize+ulLastEncryptedPartLen);
+			} else {
+				CPPUNIT_ASSERT_EQUAL_MESSAGE("C_EncryptFinal should fail with C_CKR_DATA_LEN_RANGE", (CK_RV)CKR_DATA_LEN_RANGE, rv);
+				vEncryptedDataParted = vData;
+			}
 		}
 	}
 
 	// Single-part decryption
-	CPPUNIT_ASSERT_EQUAL( (CK_RV)CKR_OK, CRYPTOKI_F_PTR( C_DecryptInit(hSession,pMechanism,hKey) ) );
-
-	{
+	rv = CRYPTOKI_F_PTR( C_DecryptInit(hSession,pMechanism,hKey) );
+	CPPUNIT_ASSERT_EQUAL( (CK_BBOOL) CK_FALSE, (CK_BBOOL) ((rv != CKR_OK) && (oldMechs == CK_FALSE)) );
+	if (oldMechs == CK_FALSE) {
 		CK_ULONG ulDataLen;
 		const CK_RV rv( CRYPTOKI_F_PTR( C_Decrypt(hSession,&vEncryptedData.front(),vEncryptedData.size(),NULL_PTR,&ulDataLen) ) );
 		if ( isSizeOK ) {
@@ -967,8 +979,9 @@ void SymmetricAlgorithmTests::encryptDecrypt(
 	}
 
 	// Multi-part decryption
-	CPPUNIT_ASSERT_EQUAL( (CK_RV)CKR_OK, CRYPTOKI_F_PTR( C_DecryptInit(hSession,pMechanism,hKey) ) );
-	{
+	rv = CRYPTOKI_F_PTR( C_DecryptInit(hSession,pMechanism,hKey) );
+	CPPUNIT_ASSERT_EQUAL( (CK_BBOOL) CK_FALSE, (CK_BBOOL) ((rv != CKR_OK) && (oldMechs == CK_FALSE)) );
+	if (oldMechs == CK_FALSE) {
 		std::vector<CK_BYTE> vDecryptedData;
 		CK_BYTE dummy;
 		for ( std::vector<CK_BYTE>::iterator i(vEncryptedDataParted.begin()); i<vEncryptedDataParted.end(); i+=partSize.getCurrent()) {
@@ -1711,44 +1724,44 @@ void SymmetricAlgorithmTests::testDesEncryptDecrypt()
 
 	// Generate all combinations of session/token keys.
 	rv = generateDesKey(hSessionRW,IN_SESSION,IS_PUBLIC,hKey);
-	CPPUNIT_ASSERT(rv == CKR_OK);
-
-	encryptDecrypt(CKM_DES_CBC_PAD,blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST-1);
-	encryptDecrypt(CKM_DES_CBC_PAD,blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST+1);
-	encryptDecrypt(CKM_DES_CBC_PAD,blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST);
-	encryptDecrypt(CKM_DES_CBC,blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST);
-	encryptDecrypt(CKM_DES_CBC,blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST+1, false);
-	encryptDecrypt(CKM_DES_ECB,blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST);
-	encryptDecrypt(CKM_DES_ECB,blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST+1, false);
+	if (rv == CKR_OK) {
+		encryptDecrypt(CKM_DES_CBC_PAD,blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST-1);
+		encryptDecrypt(CKM_DES_CBC_PAD,blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST+1);
+		encryptDecrypt(CKM_DES_CBC_PAD,blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST);
+		encryptDecrypt(CKM_DES_CBC,blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST);
+		encryptDecrypt(CKM_DES_CBC,blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST+1, false);
+		encryptDecrypt(CKM_DES_ECB,blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST);
+		encryptDecrypt(CKM_DES_ECB,blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST+1, false);
+	}
 
 	CK_OBJECT_HANDLE hKey2 = CK_INVALID_HANDLE;
 
 	// Generate all combinations of session/token keys.
 	rv = generateDes2Key(hSessionRW,IN_SESSION,IS_PUBLIC,hKey2);
-	CPPUNIT_ASSERT(rv == CKR_OK);
-
-	encryptDecrypt(CKM_DES3_CBC_PAD,blockSize,hSessionRO,hKey2,blockSize*NR_OF_BLOCKS_IN_TEST-1);
-	encryptDecrypt(CKM_DES3_CBC_PAD,blockSize,hSessionRO,hKey2,blockSize*NR_OF_BLOCKS_IN_TEST+1);
-	encryptDecrypt(CKM_DES3_CBC_PAD,blockSize,hSessionRO,hKey2,blockSize*NR_OF_BLOCKS_IN_TEST);
-	encryptDecrypt(CKM_DES3_CBC,blockSize,hSessionRO,hKey2,blockSize*NR_OF_BLOCKS_IN_TEST);
-	encryptDecrypt(CKM_DES3_CBC,blockSize,hSessionRO,hKey2,blockSize*NR_OF_BLOCKS_IN_TEST+1, false);
-	encryptDecrypt(CKM_DES3_ECB,blockSize,hSessionRO,hKey2,blockSize*NR_OF_BLOCKS_IN_TEST);
-	encryptDecrypt(CKM_DES3_ECB,blockSize,hSessionRO,hKey2,blockSize*NR_OF_BLOCKS_IN_TEST+1, false);
+	if (rv == CKR_OK) {
+		encryptDecrypt(CKM_DES3_CBC_PAD,blockSize,hSessionRO,hKey2,blockSize*NR_OF_BLOCKS_IN_TEST-1);
+		encryptDecrypt(CKM_DES3_CBC_PAD,blockSize,hSessionRO,hKey2,blockSize*NR_OF_BLOCKS_IN_TEST+1);
+		encryptDecrypt(CKM_DES3_CBC_PAD,blockSize,hSessionRO,hKey2,blockSize*NR_OF_BLOCKS_IN_TEST);
+		encryptDecrypt(CKM_DES3_CBC,blockSize,hSessionRO,hKey2,blockSize*NR_OF_BLOCKS_IN_TEST);
+		encryptDecrypt(CKM_DES3_CBC,blockSize,hSessionRO,hKey2,blockSize*NR_OF_BLOCKS_IN_TEST+1, false);
+		encryptDecrypt(CKM_DES3_ECB,blockSize,hSessionRO,hKey2,blockSize*NR_OF_BLOCKS_IN_TEST);
+		encryptDecrypt(CKM_DES3_ECB,blockSize,hSessionRO,hKey2,blockSize*NR_OF_BLOCKS_IN_TEST+1, false);
+	}
 #endif
 
 	CK_OBJECT_HANDLE hKey3 = CK_INVALID_HANDLE;
 
 	// Generate all combinations of session/token keys.
 	rv = generateDes3Key(hSessionRW,IN_SESSION,IS_PUBLIC,hKey3);
-	CPPUNIT_ASSERT(rv == CKR_OK);
-
-	encryptDecrypt(CKM_DES3_CBC_PAD,blockSize,hSessionRO,hKey3,blockSize*NR_OF_BLOCKS_IN_TEST-1);
-	encryptDecrypt(CKM_DES3_CBC_PAD,blockSize,hSessionRO,hKey3,blockSize*NR_OF_BLOCKS_IN_TEST+1);
-	encryptDecrypt(CKM_DES3_CBC_PAD,blockSize,hSessionRO,hKey3,blockSize*NR_OF_BLOCKS_IN_TEST);
-	encryptDecrypt(CKM_DES3_CBC,blockSize,hSessionRO,hKey3,blockSize*NR_OF_BLOCKS_IN_TEST);
-	encryptDecrypt(CKM_DES3_CBC,blockSize,hSessionRO,hKey3,blockSize*NR_OF_BLOCKS_IN_TEST+1, false);
-	encryptDecrypt(CKM_DES3_ECB,blockSize,hSessionRO,hKey3,blockSize*NR_OF_BLOCKS_IN_TEST);
-	encryptDecrypt(CKM_DES3_ECB,blockSize,hSessionRO,hKey3,blockSize*NR_OF_BLOCKS_IN_TEST+1, false);
+	if (rv == CKR_OK) {
+		encryptDecrypt(CKM_DES3_CBC_PAD,blockSize,hSessionRO,hKey3,blockSize*NR_OF_BLOCKS_IN_TEST-1);
+		encryptDecrypt(CKM_DES3_CBC_PAD,blockSize,hSessionRO,hKey3,blockSize*NR_OF_BLOCKS_IN_TEST+1);
+		encryptDecrypt(CKM_DES3_CBC_PAD,blockSize,hSessionRO,hKey3,blockSize*NR_OF_BLOCKS_IN_TEST);
+		encryptDecrypt(CKM_DES3_CBC,blockSize,hSessionRO,hKey3,blockSize*NR_OF_BLOCKS_IN_TEST);
+		encryptDecrypt(CKM_DES3_CBC,blockSize,hSessionRO,hKey3,blockSize*NR_OF_BLOCKS_IN_TEST+1, false);
+		encryptDecrypt(CKM_DES3_ECB,blockSize,hSessionRO,hKey3,blockSize*NR_OF_BLOCKS_IN_TEST);
+		encryptDecrypt(CKM_DES3_ECB,blockSize,hSessionRO,hKey3,blockSize*NR_OF_BLOCKS_IN_TEST+1, false);
+	}
 }
 
 void SymmetricAlgorithmTests::testDesWrapUnwrap()
