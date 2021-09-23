@@ -1227,9 +1227,19 @@ void SymmetricAlgorithmTests::aesWrapUnwrapGeneric(CK_MECHANISM_TYPE mechanismTy
 	CPPUNIT_ASSERT(rv == CKR_OK);
 	CPPUNIT_ASSERT(hNew != CK_INVALID_HANDLE);
 
+	CK_ULONG returned_value_len = 0;
+	CK_ATTRIBUTE checkattribs[] = {
+		{ CKA_VALUE_LEN, &returned_value_len, sizeof returned_value_len },
+	};
+
+	rv = CRYPTOKI_F_PTR( C_GetAttributeValue(hSession, hNew, checkattribs, sizeof(checkattribs)/sizeof(CK_ATTRIBUTE)) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	CPPUNIT_ASSERT(returned_value_len == keyLen);
+
 	free(wrappedPtr);
 	wrappedPtr = NULL_PTR;
 	rv = CRYPTOKI_F_PTR( C_DestroyObject(hSession, hSecret) );
+	rv = CRYPTOKI_F_PTR( C_DestroyObject(hSession, hNew) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 }
 
