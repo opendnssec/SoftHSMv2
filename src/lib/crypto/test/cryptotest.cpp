@@ -35,6 +35,9 @@
 #include <cppunit/TestResult.h>
 #include <cppunit/TestResultCollector.h>
 #include <cppunit/XmlOutputter.h>
+#include <cppunit/TextOutputter.h>
+#include <cppunit/BriefTestProgressListener.h>
+#include <cppunit/TextTestProgressListener.h>
 #include <fstream>
 
 #include "config.h"
@@ -78,12 +81,18 @@ int main(int /*argc*/, char** /*argv*/)
 	controller.addListener(&result);
 	CppUnit::TestFactoryRegistry &registry = CppUnit::TestFactoryRegistry::getRegistry();
 
+	CppUnit::BriefTestProgressListener progressListener;
+	controller.addListener(&progressListener);
+
 	runner.addTest(registry.makeTest());
 	runner.run(controller);
 
 	std::ofstream xmlFileOut("test-results.xml");
 	CppUnit::XmlOutputter xmlOut(&result, xmlFileOut);
 	xmlOut.write();
+
+	CppUnit::TextOutputter consoleOutputter(&result, std::cout);
+	consoleOutputter.write();
 
 	CryptoFactory::reset();
 

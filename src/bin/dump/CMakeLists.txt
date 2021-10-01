@@ -12,9 +12,11 @@ set(INSTALL_MAN_FILES ${PROJECT_NAME}-file.1)
 include_directories(${INCLUDE_DIRS})
 
 add_executable(${PROJECT_NAME}-file softhsm2-dump-file.cpp)
+target_compile_options(${PROJECT_NAME}-file PRIVATE ${COMPILE_OPTIONS})
 
 if(WITH_OBJECTSTORE_BACKEND_DB)
     add_executable(${PROJECT_NAME}-db softhsm2-dump-db.cpp)
+	target_compile_options(${PROJECT_NAME}-db PRIVATE ${COMPILE_OPTIONS})
     target_link_libraries(${PROJECT_NAME}-db ${SQLITE3_LIBS} ${YIELD_LIB})
     list(APPEND INSTALL_TARGETS ${PROJECT_NAME}-db)
     list(APPEND INSTALL_MAN_FILES ${PROJECT_NAME}-db.1)

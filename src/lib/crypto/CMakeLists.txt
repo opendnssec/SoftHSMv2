@@ -95,7 +95,6 @@ if(WITH_BOTAN)
                         BotanDSAKeyPair.cpp
                         BotanDSAPrivateKey.cpp
                         BotanDSAPublicKey.cpp
-                        Botan_ecb.cpp
                         BotanECDH.cpp
                         BotanECDHKeyPair.cpp
                         BotanECDHPrivateKey.cpp
@@ -132,9 +131,20 @@ if(WITH_BOTAN)
                         )
 endif(WITH_BOTAN)
 
-include_directories(${INCLUDE_DIRS})
+if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+	list(APPEND INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/../win32)
+ENDIF()
 
+if(WITH_BOTAN)
+	# mute botan specific warnings
+	# https://github.com/randombit/botan/issues/486
+	list(APPEND COMPILE_OPTIONS "/wd4250;/wd4251;/wd4275;/wd4127;/wd4273") 
+endif()
+
+include_directories(${INCLUDE_DIRS})
 add_library(${PROJECT_NAME} OBJECT ${SOURCES})
+target_compile_options(${PROJECT_NAME} PRIVATE ${COMPILE_OPTIONS})
+
 # Versions before CMake 3.12 cannot use target_link_libraries on object
 # libraries, a workaround exists in src/lib/CMakeLists.txt.
 if(NOT CMAKE_VERSION VERSION_LESS "3.12")

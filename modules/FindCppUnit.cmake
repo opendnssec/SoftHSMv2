@@ -9,25 +9,30 @@
 #  CPPUNIT_INCLUDE_DIR - The CppUnit include directory.
 #  CPPUNIT_LIBRARY     - The CppUnit library to link against.
 
-FIND_PATH(CPPUNIT_INCLUDE_DIR cppunit/Test.h)
-FIND_LIBRARY(CPPUNIT_LIBRARY NAMES cppunit)
+find_package(CppUnit CONFIG)
 
-IF (CPPUNIT_INCLUDE_DIR AND CPPUNIT_LIBRARY)
-	SET(CPPUNIT_FOUND TRUE)
-ENDIF (CPPUNIT_INCLUDE_DIR AND CPPUNIT_LIBRARY)
+if(NOT CPPUNIT_FOUND)
+  pkg_check_modules(cppunit CPPUNIT_FOUND)
+endif()
 
-IF (CPPUNIT_FOUND)
+if(NOT CPPUNIT_FOUND)
+	FIND_PATH(CPPUNIT_INCLUDE_DIR cppunit/Test.h)
+	FIND_LIBRARY(CPPUNIT_LIBRARY NAMES cppunit)
 
-	# show which CppUnit was found only if not quiet
-	IF (NOT CppUnit_FIND_QUIETLY)
-		MESSAGE(STATUS "Found CppUnit: ${CPPUNIT_LIBRARY}")
-	ENDIF (NOT CppUnit_FIND_QUIETLY)
+	IF (CPPUNIT_INCLUDE_DIR AND CPPUNIT_LIBRARY)
+		SET(CPPUNIT_FOUND TRUE)
+	ENDIF (CPPUNIT_INCLUDE_DIR AND CPPUNIT_LIBRARY)
 
-ELSE (CPPUNIT_FOUND)
+	IF (CPPUNIT_FOUND)
+		# show which CppUnit was found only if not quiet
+		IF (NOT CppUnit_FIND_QUIETLY)
+			MESSAGE(STATUS "Found CppUnit: ${CPPUNIT_LIBRARY}")
+		ENDIF (NOT CppUnit_FIND_QUIETLY)
+	ELSE (CPPUNIT_FOUND)
+		# fatal error if CppUnit is required but not found
+		IF (CppUnit_FIND_REQUIRED)
+			MESSAGE(FATAL_ERROR "Could not find CppUnit")
+		ENDIF (CppUnit_FIND_REQUIRED)
+	ENDIF (CPPUNIT_FOUND)
 
-	# fatal error if CppUnit is required but not found
-	IF (CppUnit_FIND_REQUIRED)
-		MESSAGE(FATAL_ERROR "Could not find CppUnit")
-	ENDIF (CppUnit_FIND_REQUIRED)
-
-ENDIF (CPPUNIT_FOUND)
+endif()

@@ -42,7 +42,7 @@
 namespace DB {
 
 // Log an error to the error handler that has been setup using a call to setLogErrorHandler declared below.
-void logError(const std::string &format, ...);
+void logError(const std::string format, ...);
 
 // The ap parameter has already been started with va_start.
 // So the handler only has to pass this on to a vprintf function
@@ -153,7 +153,8 @@ public:
 	// concatenation of dbdir and dbname
 	const std::string &dbpath();
 
-	Statement prepare(const std::string &format, ...);
+	Statement prepare(const std::string format, ...);
+	//Statement prepare(const char *format, ...);
 	Result perform(Statement &statement);
 	bool execute(Statement &statement);
 

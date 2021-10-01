@@ -169,6 +169,7 @@ bool BotanSymmetricAlgorithm::encryptInit(const SymmetricKey* key, const SymMode
 	try
 	{
 		Botan::SymmetricKey botanKey = Botan::SymmetricKey(key->getKeyBits().const_byte_str(), key->getKeyBits().size());
+/*
 		if (mode == SymMode::ECB)
 		{
 			// ECB cipher mode was dropped in Botan 2.0
@@ -188,7 +189,8 @@ bool BotanSymmetricAlgorithm::encryptInit(const SymmetricKey* key, const SymMode
 			cipher->set_key(botanKey);
 			cryption = new Botan::Pipe(cipher);
 		}
-		else if (mode == SymMode::GCM)
+		else */
+		if (mode == SymMode::GCM)
 		{
 			Botan::AEAD_Mode* aead = Botan::get_aead(cipherName, Botan::ENCRYPTION);
 			aead->set_key(botanKey);
@@ -404,7 +406,7 @@ bool BotanSymmetricAlgorithm::decryptInit(const SymmetricKey* key, const SymMode
 	try
 	{
 		Botan::SymmetricKey botanKey = Botan::SymmetricKey(key->getKeyBits().const_byte_str(), key->getKeyBits().size());
-		if (mode == SymMode::ECB)
+		/*if (mode == SymMode::ECB)
 		{
 			// ECB cipher mode was dropped in Botan 2.0
 			const std::vector<std::string> algo_parts = split_on_delim(cipherName, '/');
@@ -423,7 +425,8 @@ bool BotanSymmetricAlgorithm::decryptInit(const SymmetricKey* key, const SymMode
 			cipher->set_key(botanKey);
 			cryption = new Botan::Pipe(cipher);
 		}
-		else if (mode == SymMode::GCM)
+		else */
+		if (mode == SymMode::GCM)
 		{
 			Botan::AEAD_Mode* aead = Botan::get_aead(cipherName, Botan::DECRYPTION);
 			aead->set_key(botanKey);

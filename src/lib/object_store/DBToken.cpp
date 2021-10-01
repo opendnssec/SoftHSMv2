@@ -55,6 +55,10 @@
 #include <sys/stat.h>
 #include <errno.h>
 
+#ifdef _WIN32
+#include <direct.h>
+#endif
+
 const char * const DBTOKEN_FILE = "sqlite3.db";
 const long long DBTOKEN_OBJECT_TOKENINFO = 1;
 
@@ -276,6 +280,7 @@ DBToken::~DBToken()
 
 	if (_connection)
 	{
+		_connection->close();
 		delete _connection;
 		_connection = NULL;
 	}

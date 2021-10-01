@@ -178,7 +178,7 @@ void Generation::commit()
 			return;
 		}
 
-		unsigned long onDisk;
+		unsigned long onDisk = 0;
 
 		bool bOK = true;
 

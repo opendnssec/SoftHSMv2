@@ -46,7 +46,11 @@ CPPUNIT_TEST_SUITE_REGISTRATION(test_a_dbobject);
 
 void test_a_dbobject::setUp()
 {
+#ifndef _WIN32
 	CPPUNIT_ASSERT(!system("mkdir testdir"));
+#else
+	system("mkdir testdir 2> nul");
+#endif
 	connection = DB::Connection::Create("testdir", "TestToken", DEFAULT_UMASK);
 	CPPUNIT_ASSERT(connection != NULL);
 	CPPUNIT_ASSERT(connection->connect("<1>"));
