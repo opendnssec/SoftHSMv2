@@ -61,12 +61,15 @@ std::string BotanDES::getCipher() const
 	switch (currentKey->getBitLen())
 	{
 		case 56:
+		case 64:
 			// People shouldn't really be using 56-bit DES keys, generate a warning
 			DEBUG_MSG("CAUTION: use of 56-bit DES keys is not recommended!");
 			algo = "DES";
 			break;
 		case 112:
+		case 128:
 		case 168:
+		case 192:
 			algo = "TripleDES";
 			break;
 		default:

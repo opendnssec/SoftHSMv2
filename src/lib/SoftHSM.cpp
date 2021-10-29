@@ -6480,6 +6480,9 @@ CK_RV SoftHSM::C_WrapKey
                             pMechanism->ulParameterLen != 16)
                                 return CKR_ARGUMENTS_BAD;
                         break;
+		case CKM_DES3_CBC:
+		case CKM_DES3_CBC_PAD:
+			break;
 		default:
 			return CKR_MECHANISM_INVALID;
 	}
@@ -6518,8 +6521,8 @@ CK_RV SoftHSM::C_WrapKey
 		return CKR_WRAPPING_KEY_TYPE_INCONSISTENT;
 	if ((pMechanism->mechanism == CKM_AES_CBC || pMechanism->mechanism == CKM_AES_CBC_PAD) && wrapKey->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED) != CKK_AES)
 		return CKR_WRAPPING_KEY_TYPE_INCONSISTENT;
-	if (pMechanism->mechanism == CKM_DES3_CBC && (wrapKey->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED) != CKK_DES2 ||
-		wrapKey->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED) != CKK_DES3))
+	if ((pMechanism->mechanism == CKM_DES3_CBC || pMechanism->mechanism == CKM_DES3_CBC_PAD) && ((wrapKey->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED) != CKK_DES2 &&
+		wrapKey->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED) != CKK_DES3)))
 		return CKR_WRAPPING_KEY_TYPE_INCONSISTENT;
 
 	// Check if the wrapping key can be used for wrapping
