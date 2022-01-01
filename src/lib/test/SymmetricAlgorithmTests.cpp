@@ -1539,13 +1539,22 @@ void SymmetricAlgorithmTests::testAesEncryptDecrypt()
 		0xFE, 0xED, 0xFA, 0xCE, 0xDE, 0xAD, 0xBE, 0xEF,
 		0xAB, 0xAD, 0xDA, 0xD2
 	};
-	CK_GCM_PARAMS gcmParams =
+	CK_GCM_PARAMS gcmParamsWithAAD =
 	{
 		&gcmIV[0],
 		sizeof(gcmIV),
 		sizeof(gcmIV)*8,
 		&gcmAAD[0],
 		sizeof(gcmAAD),
+		16*8
+	};
+	CK_GCM_PARAMS gcmParamsWithoutAAD =
+	{
+		&gcmIV[0],
+		sizeof(gcmIV),
+		sizeof(gcmIV)*8,
+		NULL_PTR,
+		0,
 		16*8
 	};
 
@@ -1593,9 +1602,12 @@ void SymmetricAlgorithmTests::testAesEncryptDecrypt()
 	encryptDecrypt({CKM_AES_CTR,&ctrParams,sizeof(ctrParams)},blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST-1);
 	encryptDecrypt({CKM_AES_CTR,&ctrParams,sizeof(ctrParams)},blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST+1);
 	encryptDecrypt({CKM_AES_CTR,&ctrParams,sizeof(ctrParams)},blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST);
-	encryptDecrypt({CKM_AES_GCM,&gcmParams,sizeof(gcmParams)},blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST-1);
-	encryptDecrypt({CKM_AES_GCM,&gcmParams,sizeof(gcmParams)},blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST+1);
-	encryptDecrypt({CKM_AES_GCM,&gcmParams,sizeof(gcmParams)},blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST);
+	encryptDecrypt({CKM_AES_GCM,&gcmParamsWithAAD,sizeof(gcmParamsWithAAD)},blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST-1);
+	encryptDecrypt({CKM_AES_GCM,&gcmParamsWithAAD,sizeof(gcmParamsWithAAD)},blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST+1);
+	encryptDecrypt({CKM_AES_GCM,&gcmParamsWithAAD,sizeof(gcmParamsWithAAD)},blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST);
+	encryptDecrypt({CKM_AES_GCM,&gcmParamsWithoutAAD,sizeof(gcmParamsWithoutAAD)},blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST-1);
+	encryptDecrypt({CKM_AES_GCM,&gcmParamsWithoutAAD,sizeof(gcmParamsWithoutAAD)},blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST+1);
+	encryptDecrypt({CKM_AES_GCM,&gcmParamsWithoutAAD,sizeof(gcmParamsWithoutAAD)},blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST);
 }
 
 
