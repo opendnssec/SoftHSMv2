@@ -802,7 +802,7 @@ CK_RV SymmetricAlgorithmTests::generateDes3Key(CK_SESSION_HANDLE hSession, CK_BB
 }
 
 void SymmetricAlgorithmTests::encryptDecrypt(
-		const CK_MECHANISM_TYPE mechanismType,
+		const CK_MECHANISM mechanism,
 		const size_t blockSize,
 		const CK_SESSION_HANDLE hSession,
 		const CK_OBJECT_HANDLE hKey,
@@ -850,56 +850,10 @@ void SymmetricAlgorithmTests::encryptDecrypt(
 
 	CPPUNIT_ASSERT_EQUAL( (CK_RV)CKR_OK, CRYPTOKI_F_PTR( C_GenerateRandom(hSession, (CK_BYTE_PTR)&vData.front(), messageSize) ) );
 
-	const CK_MECHANISM mechanism = { mechanismType, NULL_PTR, 0 };
 	CK_MECHANISM_PTR pMechanism((CK_MECHANISM_PTR)&mechanism);
-	CK_AES_CTR_PARAMS ctrParams =
-	{
-		32,
-		{
-			0x00, 0x00, 0x00, 0x30, 0x00, 0x00, 0x00, 0x00,
-			0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01
-		}
-	};
-	CK_BYTE gcmIV[] = {
-		0xCA, 0xFE, 0xBA, 0xBE, 0xFA, 0xCE,
-		0xDB, 0xAD, 0xDE, 0xCA, 0xF8, 0x88
-	};
-	CK_BYTE gcmAAD[] = {
-		0xFE, 0xED, 0xFA, 0xCE, 0xDE, 0xAD, 0xBE, 0xEF,
-		0xFE, 0xED, 0xFA, 0xCE, 0xDE, 0xAD, 0xBE, 0xEF,
-		0xAB, 0xAD, 0xDA, 0xD2
-	};
-	CK_GCM_PARAMS gcmParams =
-	{
-		&gcmIV[0],
-		sizeof(gcmIV),
-		sizeof(gcmIV)*8,
-		&gcmAAD[0],
-		sizeof(gcmAAD),
-		16*8
-	};
-
-	switch (mechanismType)
-	{
-		case CKM_DES_CBC:
-		case CKM_DES_CBC_PAD:
-		case CKM_DES3_CBC:
-		case CKM_DES3_CBC_PAD:
-		case CKM_AES_CBC:
-		case CKM_AES_CBC_PAD:
-			pMechanism->pParameter = (CK_VOID_PTR)&vData.front();
-			pMechanism->ulParameterLen = blockSize;
-			break;
-		case CKM_AES_CTR:
-			pMechanism->pParameter = &ctrParams;
-			pMechanism->ulParameterLen = sizeof(ctrParams);
-			break;
-		case CKM_AES_GCM:
-			pMechanism->pParameter = &gcmParams;
-			pMechanism->ulParameterLen = sizeof(gcmParams);
-			break;
-		default:
-			break;
+	if (pMechanism->pParameter == NULL_PTR) {
+		pMechanism->pParameter = (CK_VOID_PTR)&vData.front();
+		pMechanism->ulParameterLen = blockSize;
 	}
 
 	// Single-part encryption
@@ -1568,6 +1522,43 @@ void SymmetricAlgorithmTests::testAesEncryptDecrypt()
 	CK_SESSION_HANDLE hSessionRO;
 	CK_SESSION_HANDLE hSessionRW;
 
+	CK_AES_CTR_PARAMS ctrParams =
+	{
+		32,
+		{
+			0x00, 0x00, 0x00, 0x30, 0x00, 0x00, 0x00, 0x00,
+			0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01
+		}
+	};
+	CK_BYTE gcmIV[] = {
+		0xCA, 0xFE, 0xBA, 0xBE, 0xFA, 0xCE,
+		0xDB, 0xAD, 0xDE, 0xCA, 0xF8, 0x88
+	};
+	CK_BYTE gcmAAD[] = {
+		0xFE, 0xED, 0xFA, 0xCE, 0xDE, 0xAD, 0xBE, 0xEF,
+		0xFE, 0xED, 0xFA, 0xCE, 0xDE, 0xAD, 0xBE, 0xEF,
+		0xAB, 0xAD, 0xDA, 0xD2
+	};
+	CK_GCM_PARAMS gcmParamsWithAAD =
+	{
+		&gcmIV[0],
+		sizeof(gcmIV),
+		sizeof(gcmIV)*8,
+		&gcmAAD[0],
+		sizeof(gcmAAD),
+		16*8
+	};
+	CK_GCM_PARAMS gcmParamsWithoutAAD =
+	{
+		&gcmIV[0],
+		sizeof(gcmIV),
+		sizeof(gcmIV)*8,
+		NULL_PTR,
+		0,
+		16*8
+	};
+
+
 	// Just make sure that we finalize any previous tests
 	CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
 
@@ -1601,19 +1592,22 @@ void SymmetricAlgorithmTests::testAesEncryptDecrypt()
 	// with padding all message sizes could be encrypted-decrypted.
 	// without padding the message size must be a multiple of the block size.
 	const int blockSize(0x10);
-	encryptDecrypt(CKM_AES_CBC_PAD,blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST-1);
-	encryptDecrypt(CKM_AES_CBC_PAD,blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST+1);
-	encryptDecrypt(CKM_AES_CBC_PAD,blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST);
-	encryptDecrypt(CKM_AES_CBC,blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST);
-	encryptDecrypt(CKM_AES_CBC,blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST+1, false);
-	encryptDecrypt(CKM_AES_ECB,blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST);
-	encryptDecrypt(CKM_AES_ECB,blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST+1, false);
-	encryptDecrypt(CKM_AES_CTR,blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST-1);
-	encryptDecrypt(CKM_AES_CTR,blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST+1);
-	encryptDecrypt(CKM_AES_CTR,blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST);
-	encryptDecrypt(CKM_AES_GCM,blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST-1);
-	encryptDecrypt(CKM_AES_GCM,blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST+1);
-	encryptDecrypt(CKM_AES_GCM,blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST);
+	encryptDecrypt({CKM_AES_CBC_PAD,NULL_PTR,0},blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST-1);
+	encryptDecrypt({CKM_AES_CBC_PAD,NULL_PTR,0},blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST+1);
+	encryptDecrypt({CKM_AES_CBC_PAD,NULL_PTR,0},blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST);
+	encryptDecrypt({CKM_AES_CBC,NULL_PTR,0},blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST);
+	encryptDecrypt({CKM_AES_CBC,NULL_PTR,0},blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST+1, false);
+	encryptDecrypt({CKM_AES_ECB,NULL_PTR,0},blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST);
+	encryptDecrypt({CKM_AES_ECB,NULL_PTR,0},blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST+1, false);
+	encryptDecrypt({CKM_AES_CTR,&ctrParams,sizeof(ctrParams)},blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST-1);
+	encryptDecrypt({CKM_AES_CTR,&ctrParams,sizeof(ctrParams)},blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST+1);
+	encryptDecrypt({CKM_AES_CTR,&ctrParams,sizeof(ctrParams)},blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST);
+	encryptDecrypt({CKM_AES_GCM,&gcmParamsWithAAD,sizeof(gcmParamsWithAAD)},blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST-1);
+	encryptDecrypt({CKM_AES_GCM,&gcmParamsWithAAD,sizeof(gcmParamsWithAAD)},blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST+1);
+	encryptDecrypt({CKM_AES_GCM,&gcmParamsWithAAD,sizeof(gcmParamsWithAAD)},blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST);
+	encryptDecrypt({CKM_AES_GCM,&gcmParamsWithoutAAD,sizeof(gcmParamsWithoutAAD)},blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST-1);
+	encryptDecrypt({CKM_AES_GCM,&gcmParamsWithoutAAD,sizeof(gcmParamsWithoutAAD)},blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST+1);
+	encryptDecrypt({CKM_AES_GCM,&gcmParamsWithoutAAD,sizeof(gcmParamsWithoutAAD)},blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST);
 }
 
 
@@ -1713,13 +1707,13 @@ void SymmetricAlgorithmTests::testDesEncryptDecrypt()
 	rv = generateDesKey(hSessionRW,IN_SESSION,IS_PUBLIC,hKey);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	encryptDecrypt(CKM_DES_CBC_PAD,blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST-1);
-	encryptDecrypt(CKM_DES_CBC_PAD,blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST+1);
-	encryptDecrypt(CKM_DES_CBC_PAD,blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST);
-	encryptDecrypt(CKM_DES_CBC,blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST);
-	encryptDecrypt(CKM_DES_CBC,blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST+1, false);
-	encryptDecrypt(CKM_DES_ECB,blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST);
-	encryptDecrypt(CKM_DES_ECB,blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST+1, false);
+	encryptDecrypt({CKM_DES_CBC_PAD,NULL_PTR,0},blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST-1);
+	encryptDecrypt({CKM_DES_CBC_PAD,NULL_PTR,0},blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST+1);
+	encryptDecrypt({CKM_DES_CBC_PAD,NULL_PTR,0},blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST);
+	encryptDecrypt({CKM_DES_CBC,NULL_PTR,0},blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST);
+	encryptDecrypt({CKM_DES_CBC,NULL_PTR,0},blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST+1, false);
+	encryptDecrypt({CKM_DES_ECB,NULL_PTR,0},blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST);
+	encryptDecrypt({CKM_DES_ECB,NULL_PTR,0},blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST+1, false);
 
 	CK_OBJECT_HANDLE hKey2 = CK_INVALID_HANDLE;
 
@@ -1727,13 +1721,13 @@ void SymmetricAlgorithmTests::testDesEncryptDecrypt()
 	rv = generateDes2Key(hSessionRW,IN_SESSION,IS_PUBLIC,hKey2);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	encryptDecrypt(CKM_DES3_CBC_PAD,blockSize,hSessionRO,hKey2,blockSize*NR_OF_BLOCKS_IN_TEST-1);
-	encryptDecrypt(CKM_DES3_CBC_PAD,blockSize,hSessionRO,hKey2,blockSize*NR_OF_BLOCKS_IN_TEST+1);
-	encryptDecrypt(CKM_DES3_CBC_PAD,blockSize,hSessionRO,hKey2,blockSize*NR_OF_BLOCKS_IN_TEST);
-	encryptDecrypt(CKM_DES3_CBC,blockSize,hSessionRO,hKey2,blockSize*NR_OF_BLOCKS_IN_TEST);
-	encryptDecrypt(CKM_DES3_CBC,blockSize,hSessionRO,hKey2,blockSize*NR_OF_BLOCKS_IN_TEST+1, false);
-	encryptDecrypt(CKM_DES3_ECB,blockSize,hSessionRO,hKey2,blockSize*NR_OF_BLOCKS_IN_TEST);
-	encryptDecrypt(CKM_DES3_ECB,blockSize,hSessionRO,hKey2,blockSize*NR_OF_BLOCKS_IN_TEST+1, false);
+	encryptDecrypt({CKM_DES3_CBC_PAD,NULL_PTR,0},blockSize,hSessionRO,hKey2,blockSize*NR_OF_BLOCKS_IN_TEST-1);
+	encryptDecrypt({CKM_DES3_CBC_PAD,NULL_PTR,0},blockSize,hSessionRO,hKey2,blockSize*NR_OF_BLOCKS_IN_TEST+1);
+	encryptDecrypt({CKM_DES3_CBC_PAD,NULL_PTR,0},blockSize,hSessionRO,hKey2,blockSize*NR_OF_BLOCKS_IN_TEST);
+	encryptDecrypt({CKM_DES3_CBC,NULL_PTR,0},blockSize,hSessionRO,hKey2,blockSize*NR_OF_BLOCKS_IN_TEST);
+	encryptDecrypt({CKM_DES3_CBC,NULL_PTR,0},blockSize,hSessionRO,hKey2,blockSize*NR_OF_BLOCKS_IN_TEST+1, false);
+	encryptDecrypt({CKM_DES3_ECB,NULL_PTR,0},blockSize,hSessionRO,hKey2,blockSize*NR_OF_BLOCKS_IN_TEST);
+	encryptDecrypt({CKM_DES3_ECB,NULL_PTR,0},blockSize,hSessionRO,hKey2,blockSize*NR_OF_BLOCKS_IN_TEST+1, false);
 #endif
 
 	CK_OBJECT_HANDLE hKey3 = CK_INVALID_HANDLE;
@@ -1742,13 +1736,13 @@ void SymmetricAlgorithmTests::testDesEncryptDecrypt()
 	rv = generateDes3Key(hSessionRW,IN_SESSION,IS_PUBLIC,hKey3);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	encryptDecrypt(CKM_DES3_CBC_PAD,blockSize,hSessionRO,hKey3,blockSize*NR_OF_BLOCKS_IN_TEST-1);
-	encryptDecrypt(CKM_DES3_CBC_PAD,blockSize,hSessionRO,hKey3,blockSize*NR_OF_BLOCKS_IN_TEST+1);
-	encryptDecrypt(CKM_DES3_CBC_PAD,blockSize,hSessionRO,hKey3,blockSize*NR_OF_BLOCKS_IN_TEST);
-	encryptDecrypt(CKM_DES3_CBC,blockSize,hSessionRO,hKey3,blockSize*NR_OF_BLOCKS_IN_TEST);
-	encryptDecrypt(CKM_DES3_CBC,blockSize,hSessionRO,hKey3,blockSize*NR_OF_BLOCKS_IN_TEST+1, false);
-	encryptDecrypt(CKM_DES3_ECB,blockSize,hSessionRO,hKey3,blockSize*NR_OF_BLOCKS_IN_TEST);
-	encryptDecrypt(CKM_DES3_ECB,blockSize,hSessionRO,hKey3,blockSize*NR_OF_BLOCKS_IN_TEST+1, false);
+	encryptDecrypt({CKM_DES3_CBC_PAD,NULL_PTR,0},blockSize,hSessionRO,hKey3,blockSize*NR_OF_BLOCKS_IN_TEST-1);
+	encryptDecrypt({CKM_DES3_CBC_PAD,NULL_PTR,0},blockSize,hSessionRO,hKey3,blockSize*NR_OF_BLOCKS_IN_TEST+1);
+	encryptDecrypt({CKM_DES3_CBC_PAD,NULL_PTR,0},blockSize,hSessionRO,hKey3,blockSize*NR_OF_BLOCKS_IN_TEST);
+	encryptDecrypt({CKM_DES3_CBC,NULL_PTR,0},blockSize,hSessionRO,hKey3,blockSize*NR_OF_BLOCKS_IN_TEST);
+	encryptDecrypt({CKM_DES3_CBC,NULL_PTR,0},blockSize,hSessionRO,hKey3,blockSize*NR_OF_BLOCKS_IN_TEST+1, false);
+	encryptDecrypt({CKM_DES3_ECB,NULL_PTR,0},blockSize,hSessionRO,hKey3,blockSize*NR_OF_BLOCKS_IN_TEST);
+	encryptDecrypt({CKM_DES3_ECB,NULL_PTR,0},blockSize,hSessionRO,hKey3,blockSize*NR_OF_BLOCKS_IN_TEST+1, false);
 }
 
 void SymmetricAlgorithmTests::testDesWrapUnwrap()

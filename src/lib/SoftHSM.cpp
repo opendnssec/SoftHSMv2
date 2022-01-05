@@ -2346,7 +2346,8 @@ CK_RV SoftHSM::SymEncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 			iv.resize(CK_GCM_PARAMS_PTR(pMechanism->pParameter)->ulIvLen);
 			memcpy(&iv[0], CK_GCM_PARAMS_PTR(pMechanism->pParameter)->pIv, CK_GCM_PARAMS_PTR(pMechanism->pParameter)->ulIvLen);
 			aad.resize(CK_GCM_PARAMS_PTR(pMechanism->pParameter)->ulAADLen);
-			memcpy(&aad[0], CK_GCM_PARAMS_PTR(pMechanism->pParameter)->pAAD, CK_GCM_PARAMS_PTR(pMechanism->pParameter)->ulAADLen);
+			if (CK_GCM_PARAMS_PTR(pMechanism->pParameter)->ulAADLen > 0)
+				memcpy(&aad[0], CK_GCM_PARAMS_PTR(pMechanism->pParameter)->pAAD, CK_GCM_PARAMS_PTR(pMechanism->pParameter)->ulAADLen);
 			tagBytes = CK_GCM_PARAMS_PTR(pMechanism->pParameter)->ulTagBits;
 			if (tagBytes > 128 || tagBytes % 8 != 0)
 			{
@@ -3066,7 +3067,8 @@ CK_RV SoftHSM::SymDecryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 			iv.resize(CK_GCM_PARAMS_PTR(pMechanism->pParameter)->ulIvLen);
 			memcpy(&iv[0], CK_GCM_PARAMS_PTR(pMechanism->pParameter)->pIv, CK_GCM_PARAMS_PTR(pMechanism->pParameter)->ulIvLen);
 			aad.resize(CK_GCM_PARAMS_PTR(pMechanism->pParameter)->ulAADLen);
-			memcpy(&aad[0], CK_GCM_PARAMS_PTR(pMechanism->pParameter)->pAAD, CK_GCM_PARAMS_PTR(pMechanism->pParameter)->ulAADLen);
+			if (CK_GCM_PARAMS_PTR(pMechanism->pParameter)->ulAADLen > 0)
+				memcpy(&aad[0], CK_GCM_PARAMS_PTR(pMechanism->pParameter)->pAAD, CK_GCM_PARAMS_PTR(pMechanism->pParameter)->ulAADLen);
 			tagBytes = CK_GCM_PARAMS_PTR(pMechanism->pParameter)->ulTagBits;
 			if (tagBytes > 128 || tagBytes % 8 != 0)
 			{
