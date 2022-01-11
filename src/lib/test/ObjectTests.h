@@ -61,6 +61,8 @@ class ObjectTests : public TestsBase
 	CPPUNIT_TEST(testReAuthentication);
 	CPPUNIT_TEST(testTemplateAttribute);
 	CPPUNIT_TEST(testCreateSecretKey);
+	CPPUNIT_TEST(testDefaultRSAPubAttributesWithDates);
+	CPPUNIT_TEST(testDefaultRSAPrivAttributesWithDates);
 	CPPUNIT_TEST_SUITE_END();
 
 public:
@@ -84,6 +86,8 @@ public:
 	void testAllowedMechanisms();
 	void testTemplateAttribute();
 	void testCreateSecretKey();
+	void testDefaultRSAPubAttributesWithDates();
+	void testDefaultRSAPrivAttributesWithDates();
 
 protected:
 	void checkCommonObjectAttributes

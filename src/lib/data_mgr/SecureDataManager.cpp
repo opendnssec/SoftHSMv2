@@ -397,6 +397,7 @@ void SecureDataManager::logout()
 // Decrypt the supplied data
 bool SecureDataManager::decrypt(const ByteString& encrypted, ByteString& plaintext)
 {
+	DEBUG_MSG("encrypted %s", encrypted.const_byte_str());
 	// Check the object logged in state
 	if ((!userLoggedIn && !soLoggedIn) || (maskedKey.size() != 32))
 	{
@@ -424,6 +425,7 @@ bool SecureDataManager::decrypt(const ByteString& encrypted, ByteString& plainte
 	}
 
 	// Take the IV from the input data
+	DEBUG_MSG("AES block size %d", aes->getBlockSize());
 	ByteString IV = encrypted.substr(0, aes->getBlockSize());
 
 	if (IV.size() != aes->getBlockSize())
@@ -433,16 +435,21 @@ bool SecureDataManager::decrypt(const ByteString& encrypted, ByteString& plainte
 		return false;
 	}
 
+	DEBUG_MSG("IV %s", IV.const_byte_str());
+
 	ByteString finalBlock;
 
 	if (!aes->decryptInit(&theKey, SymMode::CBC, IV) ||
 	    !aes->decryptUpdate(encrypted.substr(aes->getBlockSize()), plaintext) ||
 	    !aes->decryptFinal(finalBlock))
 	{
+		ERROR_MSG("Error when decrypting data");
 		return false;
 	}
 
 	plaintext += finalBlock;
+
+	DEBUG_MSG("plaintext %s", plaintext.const_byte_str());
 
 	return true;
 }
