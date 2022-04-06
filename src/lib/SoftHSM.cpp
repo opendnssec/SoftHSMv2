@@ -1,4 +1,5 @@
 /*
+ * Copyright (c) 2022 NLnet Labs
  * Copyright (c) 2010 SURFnet bv
  * Copyright (c) 2010 .SE (The Internet Infrastructure Foundation)
  * All rights reserved.
@@ -7122,8 +7123,10 @@ CK_RV SoftHSM::C_UnwrapKey
 	{
 		OSObject* osobject = (OSObject*)handleManager->getObject(*hKey);
 		if (osobject == NULL_PTR || !osobject->isValid())
+        {
 			rv = CKR_FUNCTION_FAILED;
-		if (osobject->startTransaction())
+        }
+		else if (osobject->startTransaction())
 		{
 			bool bOK = true;
 
@@ -7781,9 +7784,12 @@ CK_RV SoftHSM::generateAES
 	if (rv == CKR_OK)
 	{
 		OSObject* osobject = (OSObject*)handleManager->getObject(*phKey);
-		if (osobject == NULL_PTR || !osobject->isValid()) {
+		if (osobject == NULL_PTR || !osobject->isValid()) 
+        {
 			rv = CKR_FUNCTION_FAILED;
-		} else if (osobject->startTransaction()) {
+		} 
+        else if (osobject->startTransaction()) 
+        {
 			bool bOK = true;
 
 			// Common Attributes
