@@ -141,6 +141,9 @@ check_include_files(memory.h HAVE_MEMORY_H)
 check_include_files(pthread.h HAVE_PTHREAD_H)
 check_function_exists(getpwuid_r HAVE_GETPWUID_R)
 
+check_include_files(getopt.h HAVE_GETOPT_H)
+check_function_exists(getopt_long HAVE_GETOPT_LONG)
+
 # Find Botan Crypto Backend
 if(WITH_CRYPTO_BACKEND STREQUAL "botan")
     set(WITH_BOTAN 1)
