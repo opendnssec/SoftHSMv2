@@ -329,6 +329,7 @@ void InfoTests::testGetMechanismListConfig()
 	CK_RV rv;
 	CK_ULONG ulMechCount = 0;
 	CK_MECHANISM_TYPE_PTR pMechanismList;
+	CK_MECHANISM_INFO info;
 
 #ifndef _WIN32
 	setenv("SOFTHSM2_CONF", "./softhsm2-mech.conf", 1);
@@ -357,6 +358,20 @@ void InfoTests::testGetMechanismListConfig()
 	CPPUNIT_ASSERT(pMechanismList[0] == CKM_RSA_X_509);
 	CPPUNIT_ASSERT(pMechanismList[1] == CKM_RSA_PKCS);
 	free(pMechanismList);
+
+	/* Get good mechanism info */
+	rv = CRYPTOKI_F_PTR( C_GetMechanismInfo(m_initializedTokenSlotID, CKM_RSA_X_509, &info) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	CPPUNIT_ASSERT(info.flags & CKF_SIGN);
+	rv = CRYPTOKI_F_PTR( C_GetMechanismInfo(m_initializedTokenSlotID, CKM_RSA_PKCS, &info) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	CPPUNIT_ASSERT(info.flags & CKF_SIGN);
+
+	/* Get bad mechanism info */
+	rv = CRYPTOKI_F_PTR( C_GetMechanismInfo(m_initializedTokenSlotID, CKM_ECDSA, &info) );
+	CPPUNIT_ASSERT(rv == CKR_MECHANISM_INVALID);
+	rv = CRYPTOKI_F_PTR( C_GetMechanismInfo(m_initializedTokenSlotID, CKM_DSA, &info) );
+	CPPUNIT_ASSERT(rv == CKR_MECHANISM_INVALID);
 
 	CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
 #ifndef _WIN32
