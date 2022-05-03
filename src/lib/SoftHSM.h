@@ -337,8 +337,7 @@ private:
 		CK_BBOOL isPrivate
 	);
 	CK_RV generateGOST
-	(
-		CK_SESSION_HANDLE hSession,
+	(CK_SESSION_HANDLE hSession,
 		CK_ATTRIBUTE_PTR pPublicKeyTemplate,
 		CK_ULONG ulPublicKeyAttributeCount,
 		CK_ATTRIBUTE_PTR pPrivateKeyTemplate,
@@ -348,7 +347,8 @@ private:
 		CK_BBOOL isPublicKeyOnToken,
 		CK_BBOOL isPublicKeyPrivate,
 		CK_BBOOL isPrivateKeyOnToken,
-		CK_BBOOL isPrivateKeyPrivate
+		CK_BBOOL isPrivateKeyPrivate,
+		CK_KEY_TYPE keyType
 	);
 	CK_RV generateGeneric
 	(

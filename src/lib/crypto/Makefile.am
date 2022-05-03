@@ -115,10 +115,14 @@ libsofthsm_crypto_la_SOURCES +=	BotanAES.cpp \
 				BotanEDPrivateKey.cpp \
 				BotanEDPublicKey.cpp \
 				BotanGOST.cpp \
+				BotanGOST2012.cpp \
+				BotanGOST2012_512.cpp \
 				BotanGOSTKeyPair.cpp \
 				BotanGOSTPrivateKey.cpp \
 				BotanGOSTPublicKey.cpp \
 				BotanGOSTR3411.cpp \
+				BotanGOSTR3411_12_256.cpp \
+				BotanGOSTR3411_12_512.cpp \
 				BotanHashAlgorithm.cpp \
 				BotanMAC.cpp \
 				BotanMacAlgorithm.cpp \

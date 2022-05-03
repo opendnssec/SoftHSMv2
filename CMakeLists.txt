@@ -82,6 +82,8 @@ endif(NOT CMAKE_BUILD_TYPE)
 
 message(STATUS "Build Configuration: ${CMAKE_BUILD_TYPE}")
 
+add_definitions(-DDEFAULT_UMASK=0077)
+
 # Build Modules Path
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}
                       ${CMAKE_SOURCE_DIR}/modules
