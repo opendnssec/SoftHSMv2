@@ -6812,9 +6812,10 @@ CK_RV SoftHSM::UnwrapKeySym
 		CK_RV rv = CKR_OK;
 		if (!cipher->unwrapKey(unwrappingkey, mode, wrapped, keydata))
 			rv = CKR_GENERAL_ERROR;
-		cipher->recycleKey(unwrappingkey);
-		CryptoFactory::i()->recycleSymmetricAlgorithm(cipher);
 	}
+
+	cipher->recycleKey(unwrappingkey);
+	CryptoFactory::i()->recycleSymmetricAlgorithm(cipher);
 	return rv;
 }
 
