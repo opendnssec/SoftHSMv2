@@ -57,7 +57,7 @@ OSToken::OSToken(const std::string inTokenPath, int inUmask)
 	umask = inUmask;
 
 	tokenDir = new Directory(tokenPath);
-	gen = Generation::create(tokenPath + OS_PATHSEP + "generation", true);
+	gen = Generation::create(tokenPath + OS_PATHSEP + "generation", umask, true);
 	tokenObject = new ObjectFile(this, tokenPath + OS_PATHSEP + "token.object", umask, tokenPath + OS_PATHSEP + "token.lock");
 	tokenMutex = MutexFactory::i()->getMutex();
 	valid = (gen != NULL) && (tokenMutex != NULL) && tokenDir->isValid() && tokenObject->valid;
