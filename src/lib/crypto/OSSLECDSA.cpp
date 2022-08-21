@@ -53,10 +53,32 @@ bool OSSLECDSA::sign(PrivateKey* privateKey, const ByteString& dataToSign,
 		     ByteString& signature, const AsymMech::Type mechanism,
 		     const void* /* param = NULL */, const size_t /* paramLen = 0 */)
 {
+
+	HashAlgo::Type hash = HashAlgo::Unknown;
+
 	if (mechanism != AsymMech::ECDSA)
 	{
-		ERROR_MSG("Invalid mechanism supplied (%i)", mechanism);
-		return false;
+		switch (mechanism)
+		{
+			case AsymMech::ECDSA_SHA1:
+				hash = HashAlgo::SHA1;
+				break;
+			case AsymMech::ECDSA_SHA224:
+				hash = HashAlgo::SHA224;
+				break;
+			case AsymMech::ECDSA_SHA256:
+				hash = HashAlgo::SHA256;
+				break;
+			case AsymMech::ECDSA_SHA384:
+				hash = HashAlgo::SHA384;
+				break;
+			case AsymMech::ECDSA_SHA512:
+				hash = HashAlgo::SHA512;
+				break;
+			default:
+				ERROR_MSG("Invalid mechanism supplied (%i)", mechanism);
+				return false;
+		}
 	}
 
 	// Check if the private key is the right type
@@ -93,6 +115,24 @@ bool OSSLECDSA::sign(PrivateKey* privateKey, const ByteString& dataToSign,
 	EC_KEY_set_method(eckey, EC_KEY_OpenSSL());
 #endif
 
+	// Pre-hash the data if necessary
+	ByteString prepDataToSign;
+	if (hash == HashAlgo::Unknown) {
+		prepDataToSign = dataToSign;
+	} else {
+		HashAlgorithm* digest = CryptoFactory::i()->getHashAlgorithm(hash);
+
+		if (!digest->hashInit()
+				|| !digest->hashUpdate(dataToSign)
+				|| !digest->hashFinal(prepDataToSign))
+		{
+			delete digest;
+			return false;
+		}
+		delete digest;
+	}
+
+
 	// Perform the signature operation
 	size_t len = pk->getOrderLength();
 	if (len == 0)
@@ -102,7 +142,7 @@ bool OSSLECDSA::sign(PrivateKey* privateKey, const ByteString& dataToSign,
 	}
 	signature.resize(2 * len);
 	memset(&signature[0], 0, 2 * len);
-	ECDSA_SIG *sig = ECDSA_do_sign(dataToSign.const_byte_str(), dataToSign.size(), eckey);
+	ECDSA_SIG *sig = ECDSA_do_sign(prepDataToSign.const_byte_str(), prepDataToSign.size(), eckey);
 	if (sig == NULL)
 	{
 		ERROR_MSG("ECDSA sign failed (0x%08X)", ERR_get_error());

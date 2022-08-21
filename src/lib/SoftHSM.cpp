@@ -804,6 +804,11 @@ void SoftHSM::prepareSupportedMecahnisms(std::map<std::string, CK_MECHANISM_TYPE
 #ifdef WITH_ECC
 	t["CKM_EC_KEY_PAIR_GEN"]	= CKM_EC_KEY_PAIR_GEN;
 	t["CKM_ECDSA"]			= CKM_ECDSA;
+	t["CKM_ECDSA_SHA1"]		= CKM_ECDSA_SHA1;
+	t["CKM_ECDSA_SHA224"]		= CKM_ECDSA_SHA224;
+	t["CKM_ECDSA_SHA256"]		= CKM_ECDSA_SHA256;
+	t["CKM_ECDSA_SHA384"]		= CKM_ECDSA_SHA384;
+	t["CKM_ECDSA_SHA512"]		= CKM_ECDSA_SHA512;
 #endif
 #if defined(WITH_ECC) || defined(WITH_EDDSA)
 	t["CKM_ECDH1_DERIVE"]		= CKM_ECDH1_DERIVE;
@@ -4336,6 +4341,31 @@ CK_RV SoftHSM::AsymSignInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechan
 #ifdef WITH_ECC
 		case CKM_ECDSA:
 			mechanism = AsymMech::ECDSA;
+			bAllowMultiPartOp = false;
+			isECDSA = true;
+			break;
+		case CKM_ECDSA_SHA1:
+			mechanism = AsymMech::ECDSA_SHA1;
+			bAllowMultiPartOp = false;
+			isECDSA = true;
+			break;
+		case CKM_ECDSA_SHA224:
+			mechanism = AsymMech::ECDSA_SHA224;
+			bAllowMultiPartOp = false;
+			isECDSA = true;
+			break;
+		case CKM_ECDSA_SHA256:
+			mechanism = AsymMech::ECDSA_SHA256;
+			bAllowMultiPartOp = false;
+			isECDSA = true;
+			break;
+		case CKM_ECDSA_SHA384:
+			mechanism = AsymMech::ECDSA_SHA384;
+			bAllowMultiPartOp = false;
+			isECDSA = true;
+			break;
+		case CKM_ECDSA_SHA512:
+			mechanism = AsymMech::ECDSA_SHA512;
 			bAllowMultiPartOp = false;
 			isECDSA = true;
 			break;
