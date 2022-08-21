@@ -65,17 +65,33 @@ bool BotanECDSA::sign(PrivateKey* privateKey, const ByteString& dataToSign,
 		      ByteString& signature, const AsymMech::Type mechanism,
 		      const void* /* param = NULL */, const size_t /* paramLen = 0 */)
 {
-	std::string emsa;
+	std::string emsa = "Raw";
 
-	if (mechanism == AsymMech::ECDSA)
+	HashAlgo::Type hash = HashAlgo::Unknown;
+	if (mechanism != AsymMech::ECDSA)
 	{
-		emsa = "Raw";
+		switch (mechanism)
+		{
+			case AsymMech::ECDSA_SHA1:
+				hash = HashAlgo::SHA1;
+				break;
+			case AsymMech::ECDSA_SHA224:
+				hash = HashAlgo::SHA224;
+				break;
+			case AsymMech::ECDSA_SHA256:
+				hash = HashAlgo::SHA256;
+				break;
+			case AsymMech::ECDSA_SHA384:
+				hash = HashAlgo::SHA384;
+				break;
+			case AsymMech::ECDSA_SHA512:
+				hash = HashAlgo::SHA512;
+				break;
+			default:
+				ERROR_MSG("Invalid mechanism supplied (%i)", mechanism);
+				return false;
+		}
 	}
-        else
-        {
-		ERROR_MSG("Invalid mechanism supplied (%i)", mechanism);
-		return false;
-        }
 
 	// Check if the private key is the right type
 	if (!privateKey->isOfType(BotanECDSAPrivateKey::type))
@@ -107,12 +123,30 @@ bool BotanECDSA::sign(PrivateKey* privateKey, const ByteString& dataToSign,
 		return false;
 	}
 
+	// Pre-hash the data if necessary
+	ByteString prepDataToSign;
+
+	if (hash == HashAlgo::Unknown) {
+		prepDataToSign = dataToSign;
+	} else {
+		HashAlgorithm* digest = BotanCryptoFactory::i()->getHashAlgorithm(hash);
+
+		if (!digest->hashInit()
+				|| !digest->hashUpdate(dataToSign)
+				|| !digest->hashFinal(prepDataToSign))
+		{
+			delete digest;
+			return false;
+		}
+		delete digest;
+	}
+
 	// Perform the signature operation
 	std::vector<uint8_t> signResult;
 	try
 	{
 		BotanRNG* rng = (BotanRNG*)BotanCryptoFactory::i()->getRNG();
-		signResult = signer->sign_message(dataToSign.const_byte_str(), dataToSign.size(), *rng->getRNG());
+		signResult = signer->sign_message(prepDataToSign.const_byte_str(), prepDataToSign.size(), *rng->getRNG());
 	}
 	catch (...)
 	{
