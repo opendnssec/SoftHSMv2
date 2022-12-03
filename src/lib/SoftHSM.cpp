@@ -3296,7 +3296,7 @@ static CK_RV SymDecrypt(Session* session, CK_BYTE_PTR pEncryptedData, CK_ULONG u
 	if (!cipher->decryptUpdate(encryptedData,data))
 	{
 		session->resetOp();
-		return CKR_GENERAL_ERROR;
+		return CKR_ENCRYPTED_DATA_INVALID;
 	}
 
 	// Finalize decryption
@@ -3304,7 +3304,7 @@ static CK_RV SymDecrypt(Session* session, CK_BYTE_PTR pEncryptedData, CK_ULONG u
 	if (!cipher->decryptFinal(dataFinal))
 	{
 		session->resetOp();
-		return CKR_GENERAL_ERROR;
+		return CKR_ENCRYPTED_DATA_INVALID;
 	}
 	data += dataFinal;
 	if (data.size() > ulEncryptedDataLen)
@@ -3365,7 +3365,7 @@ static CK_RV AsymDecrypt(Session* session, CK_BYTE_PTR pEncryptedData, CK_ULONG 
 	if (!asymCrypto->decrypt(privateKey,encryptedData,data,mechanism))
 	{
 		session->resetOp();
-		return CKR_GENERAL_ERROR;
+		return CKR_ENCRYPTED_DATA_INVALID;
 	}
 
 	// Check size
@@ -3373,7 +3373,7 @@ static CK_RV AsymDecrypt(Session* session, CK_BYTE_PTR pEncryptedData, CK_ULONG 
 	{
 		ERROR_MSG("The size of the decrypted data exceeds the size of the mechanism");
 		session->resetOp();
-		return CKR_GENERAL_ERROR;
+		return CKR_ENCRYPTED_DATA_LEN_RANGE;
 	}
 	if (data.size() != 0)
 	{
@@ -3458,22 +3458,22 @@ static CK_RV SymDecryptUpdate(Session* session, CK_BYTE_PTR pEncryptedData, CK_U
 	ByteString data(pEncryptedData, ulEncryptedDataLen);
 	ByteString decryptedData;
 
-	// Encrypt the data
+	// Decrypt the data
 	if (!cipher->decryptUpdate(data, decryptedData))
 	{
 		session->resetOp();
-		return CKR_GENERAL_ERROR;
+		return CKR_ENCRYPTED_DATA_INVALID;
 	}
 	DEBUG_MSG("ulEncryptedDataLen: %#5x  output buffer size: %#5x  blockSize: %#3x  remainingSize: %#4x  maxSize: %#5x  decryptedData.size(): %#5x",
 		  ulEncryptedDataLen, *pDataLen, blockSize, remainingSize, maxSize, decryptedData.size());
 
-	// Check output size from crypto. Unrecoverable error if to large.
+	// Check output size from crypto. Unrecoverable error if too large.
 	if (*pDataLen < decryptedData.size())
 	{
 		session->resetOp();
 		ERROR_MSG("DecryptUpdate returning too much data. Length of output data buffer is %i but %i bytes was returned by the decrypt.",
 				*pDataLen, decryptedData.size());
-		return CKR_GENERAL_ERROR;
+		return CKR_ENCRYPTED_DATA_LEN_RANGE;
 	}
 
 	if (decryptedData.size() > 0)
@@ -3557,7 +3557,7 @@ static CK_RV SymDecryptFinal(Session* session, CK_BYTE_PTR pDecryptedData, CK_UL
 	if (!cipher->decryptFinal(decryptedFinal))
 	{
 		session->resetOp();
-		return CKR_GENERAL_ERROR;
+		return CKR_ENCRYPTED_DATA_INVALID;
 	}
 	DEBUG_MSG("output buffer size: %#2x  size: %#2x  decryptedFinal.size(): %#2x",
 		  *pulDecryptedDataLen, size, decryptedFinal.size());
@@ -3568,7 +3568,7 @@ static CK_RV SymDecryptFinal(Session* session, CK_BYTE_PTR pDecryptedData, CK_UL
 		session->resetOp();
 		ERROR_MSG("DecryptFinal returning too much data. Length of output data buffer is %i but %i bytes was returned by the encrypt.",
 			  *pulDecryptedDataLen, decryptedFinal.size());
-		return CKR_GENERAL_ERROR;
+		return CKR_ENCRYPTED_DATA_LEN_RANGE;
 	}
 
 	if (decryptedFinal.size() > 0)
