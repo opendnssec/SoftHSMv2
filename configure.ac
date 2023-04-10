@@ -56,8 +56,8 @@ AC_ARG_ENABLE(pkcs11_packing,
 	AS_HELP_STRING([--enable-pkcs11-packing],
 		[enable 1 byte structure packing for PKCS11 API]
 	),
-		[enable_pkcs11_packing="no"], 
-                [enable_pkcs11_packing="yes"]
+		[enable_pkcs11_packing="yes"], 
+                [enable_pkcs11_packing="no"]
 )
 	if test "${enable_pkcs11_packing}" = "yes"; then
 		CFLAGS="${CFLAGS} -DPKCS11_PACKING"
