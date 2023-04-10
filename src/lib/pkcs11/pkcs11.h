@@ -57,7 +57,57 @@
 #if defined(__cplusplus)
 extern "C" {
 #endif
+#ifdef PKCS11_LONGTYPE
+ #include <stdint.h>
+ #if PKCS11_LONGTYPE==u32
+ typedef uint32_t PKCS11_ULONG_TYPE;
+ typedef int32_t PKCS11_LONG_TYPE;
+ #define _CK_UL "u"
+ #define _CK_L "d"
+ #elif PKCS11_LONGTYPE==u64
+ typedef uint64_t PKCS11_ULONG_TYPE;
+ typedef int64_t PKCS11_LONG_TYPE;
+ #define _CK_UL "lu"
+ #define _CK_L "ld"
+ #elif PKCS11_LONGTYPE==ulong
+ typedef unsigned long PKCS11_ULONG_TYPE;
+ typedef signed long PKCS11_LONG_TYPE;
+ #define _CK_UL "lu"
+ #define _CK_L "ld"
+ #else
+ typedef unsigned long PKCS11_ULONG_TYPE;
+ typedef signed long PKCS11_LONG_TYPE;
+ #define _CK_UL "lu"
+ #define _CK_L "ld"
+ #endif
+#else
+ typedef unsigned long PKCS11_ULONG_TYPE;
+ typedef signed long PKCS11_LONG_TYPE;
+ #define _CK_UL "lu"
+ #define _CK_L "ld"
+#endif
+#ifndef CK_ULONG
+typedef PKCS11_ULONG_TYPE CK_ULONG;
+#endif
+#ifndef CK_LONG
+typedef PKCS11_LONG_TYPE CK_LONG;
+#endif
 
+#ifndef CK_FLAGS
+ #define CK_FLAGS CK_ULONG
+#else
+ #warn Using unknown CK_FLAGS type
+#endif
+#ifndef ck_flags_t
+#define ck_flags_t CK_FLAGS
+#else
+ #warn using unknown ck_flags_t type
+#endif
+#ifdef PKCS11_PACKING
+#define PACKED  __attribute__ ((packed))
+#else
+#define PACKED
+#endif
 
 /* The version of cryptoki we implement.  The revision is changed with
    each modification of this file.  */
@@ -115,7 +165,7 @@ extern "C" {
 #define hardware_version hardwareVersion
 #define firmware_version firmwareVersion
 
-#define ck_token_info _CK_TOKEN_INFO
+//#define ck_token_info _CK_TOKEN_INFO
 #define serial_number serialNumber
 #define max_session_count ulMaxSessionCount
 #define session_count ulSessionCount
@@ -211,13 +261,13 @@ extern "C" {
 
 
 
-typedef unsigned long ck_flags_t;
+typedef PKCS11_ULONG_TYPE ck_flags_t;
 
 struct ck_version
 {
   unsigned char major;
   unsigned char minor;
-};
+}PACKED;
 
 
 struct ck_info
@@ -227,15 +277,15 @@ struct ck_info
   ck_flags_t flags;
   unsigned char library_description[32];
   struct ck_version library_version;
-};
+}PACKED;
 
 
-typedef unsigned long ck_notification_t;
+typedef PKCS11_ULONG_TYPE ck_notification_t;
 
 #define CKN_SURRENDER	(0UL)
 
 
-typedef unsigned long ck_slot_id_t;
+typedef PKCS11_ULONG_TYPE ck_slot_id_t;
 
 
 struct ck_slot_info
@@ -245,7 +295,7 @@ struct ck_slot_info
   ck_flags_t flags;
   struct ck_version hardware_version;
   struct ck_version firmware_version;
-};
+}PACKED;
 
 
 #define CKF_TOKEN_PRESENT	(1UL << 0)
@@ -261,20 +311,20 @@ struct ck_token_info
   unsigned char model[16];
   unsigned char serial_number[16];
   ck_flags_t flags;
-  unsigned long max_session_count;
-  unsigned long session_count;
-  unsigned long max_rw_session_count;
-  unsigned long rw_session_count;
-  unsigned long max_pin_len;
-  unsigned long min_pin_len;
-  unsigned long total_public_memory;
-  unsigned long free_public_memory;
-  unsigned long total_private_memory;
-  unsigned long free_private_memory;
+  PKCS11_ULONG_TYPE max_session_count;
+  PKCS11_ULONG_TYPE session_count;
+  PKCS11_ULONG_TYPE max_rw_session_count;
+  PKCS11_ULONG_TYPE rw_session_count;
+  PKCS11_ULONG_TYPE max_pin_len;
+  PKCS11_ULONG_TYPE min_pin_len;
+  PKCS11_ULONG_TYPE total_public_memory;
+  PKCS11_ULONG_TYPE free_public_memory;
+  PKCS11_ULONG_TYPE total_private_memory;
+  PKCS11_ULONG_TYPE free_private_memory;
   struct ck_version hardware_version;
   struct ck_version firmware_version;
   unsigned char utc_time[16];
-};
+}PACKED;
 
 
 #define CKF_RNG					(1UL << 0)
@@ -294,25 +344,26 @@ struct ck_token_info
 #define CKF_SO_PIN_COUNT_LOW			(1UL << 20)
 #define CKF_SO_PIN_FINAL_TRY			(1UL << 21)
 #define CKF_SO_PIN_LOCKED			(1UL << 22)
-#define CKF_SO_PIN_TO_BE_CHANGED		(1UL << 23)
+#define CKF_SO_PIN_TO_BE_CHANGED                (CKF_SO_PIN_LOCKED<<1)
+//#define CKF_SO_PIN_TO_BE_CHANGED (PKCS11_ULONG_TYPE)(((PKCS11_ULONG_TYPE)1) << 23)
 
-#define CK_UNAVAILABLE_INFORMATION	((unsigned long)-1L)
+#define CK_UNAVAILABLE_INFORMATION	((PKCS11_ULONG_TYPE)-1L)
 #define CK_EFFECTIVELY_INFINITE		(0UL)
 
 
-typedef unsigned long ck_session_handle_t;
+typedef PKCS11_ULONG_TYPE ck_session_handle_t;
 
 #define CK_INVALID_HANDLE	(0UL)
 
 
-typedef unsigned long ck_user_type_t;
+typedef PKCS11_ULONG_TYPE ck_user_type_t;
 
 #define CKU_SO			(0UL)
 #define CKU_USER		(1UL)
 #define CKU_CONTEXT_SPECIFIC	(2UL)
 
 
-typedef unsigned long ck_state_t;
+typedef PKCS11_ULONG_TYPE ck_state_t;
 
 #define CKS_RO_PUBLIC_SESSION	(0UL)
 #define CKS_RO_USER_FUNCTIONS	(1UL)
@@ -326,17 +377,17 @@ struct ck_session_info
   ck_slot_id_t slot_id;
   ck_state_t state;
   ck_flags_t flags;
-  unsigned long device_error;
-};
+  PKCS11_ULONG_TYPE device_error;
+}PACKED;
 
 #define CKF_RW_SESSION		(1UL << 1)
 #define CKF_SERIAL_SESSION	(1UL << 2)
 
 
-typedef unsigned long ck_object_handle_t;
+typedef PKCS11_ULONG_TYPE ck_object_handle_t;
 
 
-typedef unsigned long ck_object_class_t;
+typedef PKCS11_ULONG_TYPE ck_object_class_t;
 
 #define CKO_DATA		(0UL)
 #define CKO_CERTIFICATE		(1UL)
@@ -347,18 +398,18 @@ typedef unsigned long ck_object_class_t;
 #define CKO_DOMAIN_PARAMETERS	(6UL)
 #define CKO_MECHANISM		(7UL)
 #define CKO_OTP_KEY		(8UL)
-#define CKO_VENDOR_DEFINED	((unsigned long) (1UL << 31))
+#define CKO_VENDOR_DEFINED	((PKCS11_ULONG_TYPE) (1UL << 31))
 
 
-typedef unsigned long ck_hw_feature_type_t;
+typedef PKCS11_ULONG_TYPE ck_hw_feature_type_t;
 
 #define CKH_MONOTONIC_COUNTER	(1UL)
 #define CKH_CLOCK		(2UL)
 #define CKH_USER_INTERFACE	(3UL)
-#define CKH_VENDOR_DEFINED	((unsigned long) (1UL << 31))
+#define CKH_VENDOR_DEFINED	((PKCS11_ULONG_TYPE) (1UL << 31))
 
 
-typedef unsigned long ck_key_type_t;
+typedef PKCS11_ULONG_TYPE ck_key_type_t;
 
 #define CKK_RSA			(0UL)
 #define CKK_DSA			(1UL)
@@ -403,19 +454,19 @@ typedef unsigned long ck_key_type_t;
 #define CKK_GOSTR3411		(0x31UL)
 #define CKK_GOST28147		(0x32UL)
 #define CKK_EC_EDWARDS		(0x40UL)
-#define CKK_VENDOR_DEFINED	((unsigned long) (1UL << 31))
+#define CKK_VENDOR_DEFINED	((PKCS11_ULONG_TYPE) (1UL << 31))
 
 
-typedef unsigned long ck_certificate_type_t;
+typedef PKCS11_ULONG_TYPE ck_certificate_type_t;
 
 #define CKC_X_509		(0UL)
 #define CKC_X_509_ATTR_CERT	(1UL)
 #define CKC_WTLS		(2UL)
-#define CKC_VENDOR_DEFINED	((unsigned long) (1UL << 31))
+#define CKC_VENDOR_DEFINED	((PKCS11_ULONG_TYPE) (1UL << 31))
 
 #define CKC_OPENPGP		(CKC_VENDOR_DEFINED|0x504750UL)
 
-typedef unsigned long ck_attribute_type_t;
+typedef PKCS11_ULONG_TYPE ck_attribute_type_t;
 
 #define CKA_CLASS			(0UL)
 #define CKA_TOKEN			(1UL)
@@ -523,15 +574,15 @@ typedef unsigned long ck_attribute_type_t;
 #define CKA_UNWRAP_TEMPLATE		(CKF_ARRAY_ATTRIBUTE | 0x212UL)
 #define CKA_DERIVE_TEMPLATE		(CKF_ARRAY_ATTRIBUTE | 0x213UL)
 #define CKA_ALLOWED_MECHANISMS		(CKF_ARRAY_ATTRIBUTE | 0x600UL)
-#define CKA_VENDOR_DEFINED		((unsigned long) (1UL << 31))
+#define CKA_VENDOR_DEFINED		((PKCS11_ULONG_TYPE) (1UL << 31))
 
 
 struct ck_attribute
 {
   ck_attribute_type_t type;
   void *value;
-  unsigned long value_len;
-};
+  PKCS11_ULONG_TYPE value_len;
+}PACKED;
 
 
 struct ck_date
@@ -539,10 +590,10 @@ struct ck_date
   unsigned char year[4];
   unsigned char month[2];
   unsigned char day[2];
-};
+}PACKED;
 
 
-typedef unsigned long ck_mechanism_type_t;
+typedef PKCS11_ULONG_TYPE ck_mechanism_type_t;
 
 #define CKM_RSA_PKCS_KEY_PAIR_GEN	(0UL)
 #define CKM_RSA_PKCS			(1UL)
@@ -859,7 +910,7 @@ typedef unsigned long ck_mechanism_type_t;
 #define CKM_AES_CFB128			(0x2107UL)
 #define CKM_AES_CFB1			(0x2108UL)
 
-#define CKM_VENDOR_DEFINED		((unsigned long) (1UL << 31))
+#define CKM_VENDOR_DEFINED		((PKCS11_ULONG_TYPE) (1UL << 31))
 
 /* Ammendments */
 #define CKM_SHA224			(0x255UL)
@@ -920,35 +971,35 @@ struct ck_mechanism
 {
   ck_mechanism_type_t mechanism;
   void *parameter;
-  unsigned long parameter_len;
-};
+  PKCS11_ULONG_TYPE parameter_len;
+}PACKED;
 
 
 struct ck_mechanism_info
 {
-  unsigned long min_key_size;
-  unsigned long max_key_size;
+  PKCS11_ULONG_TYPE min_key_size;
+  PKCS11_ULONG_TYPE max_key_size;
   ck_flags_t flags;
-};
+}PACKED;
 
-typedef unsigned long ck_param_type;
+typedef PKCS11_ULONG_TYPE ck_param_type;
 
 typedef struct ck_otp_param {
    ck_param_type type;
    void *value;
-   unsigned long value_len;
-} ck_otp_param;
+   PKCS11_ULONG_TYPE value_len;
+}PACKED ck_otp_param;
 
 typedef struct ck_otp_params {
    struct ck_otp_param *params;
-   unsigned long count;
-} ck_otp_params;
+   PKCS11_ULONG_TYPE count;
+}PACKED ck_otp_params;
 
 typedef struct ck_otp_signature_info
 {
   struct ck_otp_param *params;
-  unsigned long count;
-} ck_otp_signature_info;
+  PKCS11_ULONG_TYPE count;
+}PACKED ck_otp_signature_info;
 
 #define CKG_MGF1_SHA1 0x00000001UL
 #define CKG_MGF1_SHA224 0x00000005UL
@@ -956,37 +1007,37 @@ typedef struct ck_otp_signature_info
 #define CKG_MGF1_SHA384 0x00000003UL
 #define CKG_MGF1_SHA512 0x00000004UL
 
-typedef unsigned long ck_rsa_pkcs_mgf_type_t;
+typedef PKCS11_ULONG_TYPE ck_rsa_pkcs_mgf_type_t;
 
 struct ck_rsa_pkcs_pss_params {
   ck_mechanism_type_t hash_alg;
   ck_rsa_pkcs_mgf_type_t mgf;
-  unsigned long s_len;
-};
+  PKCS11_ULONG_TYPE s_len;
+}PACKED;
 
-typedef unsigned long ck_rsa_pkcs_oaep_source_type_t;
+typedef PKCS11_ULONG_TYPE ck_rsa_pkcs_oaep_source_type_t;
 
 struct ck_rsa_pkcs_oaep_params {
   ck_mechanism_type_t hash_alg;
   ck_rsa_pkcs_mgf_type_t mgf;
   ck_rsa_pkcs_oaep_source_type_t source;
   void *source_data;
-  unsigned long source_data_len;
-};
+  PKCS11_ULONG_TYPE source_data_len;
+}PACKED;
 
 struct ck_aes_ctr_params {
-  unsigned long counter_bits;
+  PKCS11_ULONG_TYPE counter_bits;
   unsigned char cb[16];
-};
+}PACKED;
 
 struct ck_gcm_params {
   unsigned char *iv_ptr;
-  unsigned long iv_len;
-  unsigned long iv_bits;
+  PKCS11_ULONG_TYPE iv_len;
+  PKCS11_ULONG_TYPE iv_bits;
   unsigned char *aad_ptr;
-  unsigned long aad_len;
-  unsigned long tag_bits;
-};
+  PKCS11_ULONG_TYPE aad_len;
+  PKCS11_ULONG_TYPE tag_bits;
+}PACKED;
 
 
 /* The following EC Key Derivation Functions are defined */
@@ -1002,32 +1053,32 @@ struct ck_gcm_params {
 #define CKD_SHA512_KDF			(0x08UL)
 #define CKD_CPDIVERSIFY_KDF		(0x09UL)
 
-typedef unsigned long ck_ec_kdf_t;
+typedef PKCS11_ULONG_TYPE ck_ec_kdf_t;
 
 struct ck_ecdh1_derive_params {
   ck_ec_kdf_t kdf;
-  unsigned long shared_data_len;
+  PKCS11_ULONG_TYPE shared_data_len;
   unsigned char *shared_data;
-  unsigned long public_data_len;
+  PKCS11_ULONG_TYPE public_data_len;
   unsigned char *public_data;
-};
+}PACKED;
 
 struct ck_key_derivation_string_data {
   unsigned char *string_data;
-  unsigned long string_data_len;
-};
+  PKCS11_ULONG_TYPE string_data_len;
+}PACKED;
 
 struct ck_des_cbc_encrypt_data_params {
   unsigned char iv[8];
   unsigned char *data_params;
-  unsigned long length;
-};
+  PKCS11_ULONG_TYPE length;
+}PACKED;
 
 struct ck_aes_cbc_encrypt_data_params {
   unsigned char iv[16];
   unsigned char *data_params;
-  unsigned long length;
-};
+  PKCS11_ULONG_TYPE length;
+}PACKED;
 
 #define CKF_HW			(1UL << 0)
 #define CKF_ENCRYPT		(1UL << 8)
@@ -1042,7 +1093,7 @@ struct ck_aes_cbc_encrypt_data_params {
 #define CKF_WRAP		(1UL << 17)
 #define CKF_UNWRAP		(1UL << 18)
 #define CKF_DERIVE		(1UL << 19)
-#define CKF_EXTENSION		((unsigned long) (1UL << 31))
+#define CKF_EXTENSION		((PKCS11_ULONG_TYPE) (1UL << 31))
 
 #define CKF_EC_F_P		(1UL << 20)
 #define CKF_EC_NAMEDCURVE	(1UL << 23)
@@ -1054,7 +1105,7 @@ struct ck_aes_cbc_encrypt_data_params {
 #define CKF_DONT_BLOCK				(1UL)
 
 
-typedef unsigned long ck_rv_t;
+typedef PKCS11_ULONG_TYPE ck_rv_t;
 
 
 typedef ck_rv_t (*ck_notify_t) (ck_session_handle_t session,
@@ -1075,7 +1126,7 @@ _CK_DECLARE_FUNCTION (C_GetFunctionList,
 
 _CK_DECLARE_FUNCTION (C_GetSlotList,
 		      (unsigned char token_present, ck_slot_id_t *slot_list,
-		       unsigned long *count));
+		       PKCS11_ULONG_TYPE *count));
 _CK_DECLARE_FUNCTION (C_GetSlotInfo,
 		      (ck_slot_id_t slot_id, struct ck_slot_info *info));
 _CK_DECLARE_FUNCTION (C_GetTokenInfo,
@@ -1085,20 +1136,20 @@ _CK_DECLARE_FUNCTION (C_WaitForSlotEvent,
 _CK_DECLARE_FUNCTION (C_GetMechanismList,
 		      (ck_slot_id_t slot_id,
 		       ck_mechanism_type_t *mechanism_list,
-		       unsigned long *count));
+		       PKCS11_ULONG_TYPE *count));
 _CK_DECLARE_FUNCTION (C_GetMechanismInfo,
 		      (ck_slot_id_t slot_id, ck_mechanism_type_t type,
 		       struct ck_mechanism_info *info));
 _CK_DECLARE_FUNCTION (C_InitToken,
 		      (ck_slot_id_t slot_id, unsigned char *pin,
-		       unsigned long pin_len, unsigned char *label));
+		       PKCS11_ULONG_TYPE pin_len, unsigned char *label));
 _CK_DECLARE_FUNCTION (C_InitPIN,
 		      (ck_session_handle_t session, unsigned char *pin,
-		       unsigned long pin_len));
+		       PKCS11_ULONG_TYPE pin_len));
 _CK_DECLARE_FUNCTION (C_SetPIN,
 		      (ck_session_handle_t session, unsigned char *old_pin,
-		       unsigned long old_len, unsigned char *new_pin,
-		       unsigned long new_len));
+		       PKCS11_ULONG_TYPE old_len, unsigned char *new_pin,
+		       PKCS11_ULONG_TYPE new_len));
 
 _CK_DECLARE_FUNCTION (C_OpenSession,
 		      (ck_slot_id_t slot_id, ck_flags_t flags,
@@ -1112,25 +1163,25 @@ _CK_DECLARE_FUNCTION (C_GetSessionInfo,
 _CK_DECLARE_FUNCTION (C_GetOperationState,
 		      (ck_session_handle_t session,
 		       unsigned char *operation_state,
-		       unsigned long *operation_state_len));
+		       PKCS11_ULONG_TYPE *operation_state_len));
 _CK_DECLARE_FUNCTION (C_SetOperationState,
 		      (ck_session_handle_t session,
 		       unsigned char *operation_state,
-		       unsigned long operation_state_len,
+		       PKCS11_ULONG_TYPE operation_state_len,
 		       ck_object_handle_t encryption_key,
 		       ck_object_handle_t authentiation_key));
 _CK_DECLARE_FUNCTION (C_Login,
 		      (ck_session_handle_t session, ck_user_type_t user_type,
-		       unsigned char *pin, unsigned long pin_len));
+		       unsigned char *pin, PKCS11_ULONG_TYPE pin_len));
 _CK_DECLARE_FUNCTION (C_Logout, (ck_session_handle_t session));
 
 _CK_DECLARE_FUNCTION (C_CreateObject,
 		      (ck_session_handle_t session,
 		       struct ck_attribute *templ,
-		       unsigned long count, ck_object_handle_t *object));
+		       PKCS11_ULONG_TYPE count, ck_object_handle_t *object));
 _CK_DECLARE_FUNCTION (C_CopyObject,
 		      (ck_session_handle_t session, ck_object_handle_t object,
-		       struct ck_attribute *templ, unsigned long count,
+		       struct ck_attribute *templ, PKCS11_ULONG_TYPE count,
 		       ck_object_handle_t *new_object));
 _CK_DECLARE_FUNCTION (C_DestroyObject,
 		      (ck_session_handle_t session,
@@ -1138,26 +1189,26 @@ _CK_DECLARE_FUNCTION (C_DestroyObject,
 _CK_DECLARE_FUNCTION (C_GetObjectSize,
 		      (ck_session_handle_t session,
 		       ck_object_handle_t object,
-		       unsigned long *size));
+		       PKCS11_ULONG_TYPE *size));
 _CK_DECLARE_FUNCTION (C_GetAttributeValue,
 		      (ck_session_handle_t session,
 		       ck_object_handle_t object,
 		       struct ck_attribute *templ,
-		       unsigned long count));
+		       PKCS11_ULONG_TYPE count));
 _CK_DECLARE_FUNCTION (C_SetAttributeValue,
 		      (ck_session_handle_t session,
 		       ck_object_handle_t object,
 		       struct ck_attribute *templ,
-		       unsigned long count));
+		       PKCS11_ULONG_TYPE count));
 _CK_DECLARE_FUNCTION (C_FindObjectsInit,
 		      (ck_session_handle_t session,
 		       struct ck_attribute *templ,
-		       unsigned long count));
+		       PKCS11_ULONG_TYPE count));
 _CK_DECLARE_FUNCTION (C_FindObjects,
 		      (ck_session_handle_t session,
 		       ck_object_handle_t *object,
-		       unsigned long max_object_count,
-		       unsigned long *object_count));
+		       PKCS11_ULONG_TYPE max_object_count,
+		       PKCS11_ULONG_TYPE *object_count));
 _CK_DECLARE_FUNCTION (C_FindObjectsFinal,
 		      (ck_session_handle_t session));
 
@@ -1167,18 +1218,18 @@ _CK_DECLARE_FUNCTION (C_EncryptInit,
 		       ck_object_handle_t key));
 _CK_DECLARE_FUNCTION (C_Encrypt,
 		      (ck_session_handle_t session,
-		       unsigned char *data, unsigned long data_len,
+		       unsigned char *data, PKCS11_ULONG_TYPE data_len,
 		       unsigned char *encrypted_data,
-		       unsigned long *encrypted_data_len));
+		       PKCS11_ULONG_TYPE *encrypted_data_len));
 _CK_DECLARE_FUNCTION (C_EncryptUpdate,
 		      (ck_session_handle_t session,
-		       unsigned char *part, unsigned long part_len,
+		       unsigned char *part, PKCS11_ULONG_TYPE part_len,
 		       unsigned char *encrypted_part,
-		       unsigned long *encrypted_part_len));
+		       PKCS11_ULONG_TYPE *encrypted_part_len));
 _CK_DECLARE_FUNCTION (C_EncryptFinal,
 		      (ck_session_handle_t session,
 		       unsigned char *last_encrypted_part,
-		       unsigned long *last_encrypted_part_len));
+		       PKCS11_ULONG_TYPE *last_encrypted_part_len));
 
 _CK_DECLARE_FUNCTION (C_DecryptInit,
 		      (ck_session_handle_t session,
@@ -1187,35 +1238,35 @@ _CK_DECLARE_FUNCTION (C_DecryptInit,
 _CK_DECLARE_FUNCTION (C_Decrypt,
 		      (ck_session_handle_t session,
 		       unsigned char *encrypted_data,
-		       unsigned long encrypted_data_len,
-		       unsigned char *data, unsigned long *data_len));
+		       PKCS11_ULONG_TYPE encrypted_data_len,
+		       unsigned char *data, PKCS11_ULONG_TYPE *data_len));
 _CK_DECLARE_FUNCTION (C_DecryptUpdate,
 		      (ck_session_handle_t session,
 		       unsigned char *encrypted_part,
-		       unsigned long encrypted_part_len,
-		       unsigned char *part, unsigned long *part_len));
+		       PKCS11_ULONG_TYPE encrypted_part_len,
+		       unsigned char *part, PKCS11_ULONG_TYPE *part_len));
 _CK_DECLARE_FUNCTION (C_DecryptFinal,
 		      (ck_session_handle_t session,
 		       unsigned char *last_part,
-		       unsigned long *last_part_len));
+		       PKCS11_ULONG_TYPE *last_part_len));
 
 _CK_DECLARE_FUNCTION (C_DigestInit,
 		      (ck_session_handle_t session,
 		       struct ck_mechanism *mechanism));
 _CK_DECLARE_FUNCTION (C_Digest,
 		      (ck_session_handle_t session,
-		       unsigned char *data, unsigned long data_len,
+		       unsigned char *data, PKCS11_ULONG_TYPE data_len,
 		       unsigned char *digest,
-		       unsigned long *digest_len));
+		       PKCS11_ULONG_TYPE *digest_len));
 _CK_DECLARE_FUNCTION (C_DigestUpdate,
 		      (ck_session_handle_t session,
-		       unsigned char *part, unsigned long part_len));
+		       unsigned char *part, PKCS11_ULONG_TYPE part_len));
 _CK_DECLARE_FUNCTION (C_DigestKey,
 		      (ck_session_handle_t session, ck_object_handle_t key));
 _CK_DECLARE_FUNCTION (C_DigestFinal,
 		      (ck_session_handle_t session,
 		       unsigned char *digest,
-		       unsigned long *digest_len));
+		       PKCS11_ULONG_TYPE *digest_len));
 
 _CK_DECLARE_FUNCTION (C_SignInit,
 		      (ck_session_handle_t session,
@@ -1223,25 +1274,25 @@ _CK_DECLARE_FUNCTION (C_SignInit,
 		       ck_object_handle_t key));
 _CK_DECLARE_FUNCTION (C_Sign,
 		      (ck_session_handle_t session,
-		       unsigned char *data, unsigned long data_len,
+		       unsigned char *data, PKCS11_ULONG_TYPE data_len,
 		       unsigned char *signature,
-		       unsigned long *signature_len));
+		       PKCS11_ULONG_TYPE *signature_len));
 _CK_DECLARE_FUNCTION (C_SignUpdate,
 		      (ck_session_handle_t session,
-		       unsigned char *part, unsigned long part_len));
+		       unsigned char *part, PKCS11_ULONG_TYPE part_len));
 _CK_DECLARE_FUNCTION (C_SignFinal,
 		      (ck_session_handle_t session,
 		       unsigned char *signature,
-		       unsigned long *signature_len));
+		       PKCS11_ULONG_TYPE *signature_len));
 _CK_DECLARE_FUNCTION (C_SignRecoverInit,
 		      (ck_session_handle_t session,
 		       struct ck_mechanism *mechanism,
 		       ck_object_handle_t key));
 _CK_DECLARE_FUNCTION (C_SignRecover,
 		      (ck_session_handle_t session,
-		       unsigned char *data, unsigned long data_len,
+		       unsigned char *data, PKCS11_ULONG_TYPE data_len,
 		       unsigned char *signature,
-		       unsigned long *signature_len));
+		       PKCS11_ULONG_TYPE *signature_len));
 
 _CK_DECLARE_FUNCTION (C_VerifyInit,
 		      (ck_session_handle_t session,
@@ -1249,16 +1300,16 @@ _CK_DECLARE_FUNCTION (C_VerifyInit,
 		       ck_object_handle_t key));
 _CK_DECLARE_FUNCTION (C_Verify,
 		      (ck_session_handle_t session,
-		       unsigned char *data, unsigned long data_len,
+		       unsigned char *data, PKCS11_ULONG_TYPE data_len,
 		       unsigned char *signature,
-		       unsigned long signature_len));
+		       PKCS11_ULONG_TYPE signature_len));
 _CK_DECLARE_FUNCTION (C_VerifyUpdate,
 		      (ck_session_handle_t session,
-		       unsigned char *part, unsigned long part_len));
+		       unsigned char *part, PKCS11_ULONG_TYPE part_len));
 _CK_DECLARE_FUNCTION (C_VerifyFinal,
 		      (ck_session_handle_t session,
 		       unsigned char *signature,
-		       unsigned long signature_len));
+		       PKCS11_ULONG_TYPE signature_len));
 _CK_DECLARE_FUNCTION (C_VerifyRecoverInit,
 		      (ck_session_handle_t session,
 		       struct ck_mechanism *mechanism,
@@ -1266,46 +1317,46 @@ _CK_DECLARE_FUNCTION (C_VerifyRecoverInit,
 _CK_DECLARE_FUNCTION (C_VerifyRecover,
 		      (ck_session_handle_t session,
 		       unsigned char *signature,
-		       unsigned long signature_len,
+		       PKCS11_ULONG_TYPE signature_len,
 		       unsigned char *data,
-		       unsigned long *data_len));
+		       PKCS11_ULONG_TYPE *data_len));
 
 _CK_DECLARE_FUNCTION (C_DigestEncryptUpdate,
 		      (ck_session_handle_t session,
-		       unsigned char *part, unsigned long part_len,
+		       unsigned char *part, PKCS11_ULONG_TYPE part_len,
 		       unsigned char *encrypted_part,
-		       unsigned long *encrypted_part_len));
+		       PKCS11_ULONG_TYPE *encrypted_part_len));
 _CK_DECLARE_FUNCTION (C_DecryptDigestUpdate,
 		      (ck_session_handle_t session,
 		       unsigned char *encrypted_part,
-		       unsigned long encrypted_part_len,
+		       PKCS11_ULONG_TYPE encrypted_part_len,
 		       unsigned char *part,
-		       unsigned long *part_len));
+		       PKCS11_ULONG_TYPE *part_len));
 _CK_DECLARE_FUNCTION (C_SignEncryptUpdate,
 		      (ck_session_handle_t session,
-		       unsigned char *part, unsigned long part_len,
+		       unsigned char *part, PKCS11_ULONG_TYPE part_len,
 		       unsigned char *encrypted_part,
-		       unsigned long *encrypted_part_len));
+		       PKCS11_ULONG_TYPE *encrypted_part_len));
 _CK_DECLARE_FUNCTION (C_DecryptVerifyUpdate,
 		      (ck_session_handle_t session,
 		       unsigned char *encrypted_part,
-		       unsigned long encrypted_part_len,
+		       PKCS11_ULONG_TYPE encrypted_part_len,
 		       unsigned char *part,
-		       unsigned long *part_len));
+		       PKCS11_ULONG_TYPE *part_len));
 
 _CK_DECLARE_FUNCTION (C_GenerateKey,
 		      (ck_session_handle_t session,
 		       struct ck_mechanism *mechanism,
 		       struct ck_attribute *templ,
-		       unsigned long count,
+		       PKCS11_ULONG_TYPE count,
 		       ck_object_handle_t *key));
 _CK_DECLARE_FUNCTION (C_GenerateKeyPair,
 		      (ck_session_handle_t session,
 		       struct ck_mechanism *mechanism,
 		       struct ck_attribute *public_key_template,
-		       unsigned long public_key_attribute_count,
+		       PKCS11_ULONG_TYPE public_key_attribute_count,
 		       struct ck_attribute *private_key_template,
-		       unsigned long private_key_attribute_count,
+		       PKCS11_ULONG_TYPE private_key_attribute_count,
 		       ck_object_handle_t *public_key,
 		       ck_object_handle_t *private_key));
 _CK_DECLARE_FUNCTION (C_WrapKey,
@@ -1314,31 +1365,31 @@ _CK_DECLARE_FUNCTION (C_WrapKey,
 		       ck_object_handle_t wrapping_key,
 		       ck_object_handle_t key,
 		       unsigned char *wrapped_key,
-		       unsigned long *wrapped_key_len));
+		       PKCS11_ULONG_TYPE *wrapped_key_len));
 _CK_DECLARE_FUNCTION (C_UnwrapKey,
 		      (ck_session_handle_t session,
 		       struct ck_mechanism *mechanism,
 		       ck_object_handle_t unwrapping_key,
 		       unsigned char *wrapped_key,
-		       unsigned long wrapped_key_len,
+		       PKCS11_ULONG_TYPE wrapped_key_len,
 		       struct ck_attribute *templ,
-		       unsigned long attribute_count,
+		       PKCS11_ULONG_TYPE attribute_count,
 		       ck_object_handle_t *key));
 _CK_DECLARE_FUNCTION (C_DeriveKey,
 		      (ck_session_handle_t session,
 		       struct ck_mechanism *mechanism,
 		       ck_object_handle_t base_key,
 		       struct ck_attribute *templ,
-		       unsigned long attribute_count,
+		       PKCS11_ULONG_TYPE attribute_count,
 		       ck_object_handle_t *key));
 
 _CK_DECLARE_FUNCTION (C_SeedRandom,
 		      (ck_session_handle_t session, unsigned char *seed,
-		       unsigned long seed_len));
+		       PKCS11_ULONG_TYPE seed_len));
 _CK_DECLARE_FUNCTION (C_GenerateRandom,
 		      (ck_session_handle_t session,
 		       unsigned char *random_data,
-		       unsigned long random_len));
+		       PKCS11_ULONG_TYPE random_len));
 
 _CK_DECLARE_FUNCTION (C_GetFunctionStatus, (ck_session_handle_t session));
 _CK_DECLARE_FUNCTION (C_CancelFunction, (ck_session_handle_t session));
@@ -1415,7 +1466,7 @@ struct ck_function_list
   CK_C_GetFunctionStatus C_GetFunctionStatus;
   CK_C_CancelFunction C_CancelFunction;
   CK_C_WaitForSlotEvent C_WaitForSlotEvent;
-};
+}PACKED;
 
 
 typedef ck_rv_t (*ck_createmutex_t) (void **mutex);
@@ -1432,7 +1483,7 @@ struct ck_c_initialize_args
   ck_unlockmutex_t unlock_mutex;
   ck_flags_t flags;
   void *reserved;
-};
+}PACKED;
 
 
 #define CKF_LIBRARY_CANT_CREATE_OS_THREADS	(1UL << 0)
@@ -1531,7 +1582,7 @@ struct ck_c_initialize_args
 #define CKR_PIN_TOO_WEAK			(0x1c3UL)
 #define CKR_PUBLIC_KEY_INVALID			(0x1c4UL)
 #define CKR_FUNCTION_REJECTED			(0x200UL)
-#define CKR_VENDOR_DEFINED			((unsigned long) (1UL << 31))
+#define CKR_VENDOR_DEFINED			((PKCS11_ULONG_TYPE) (1UL << 31))
 
 
 #define CKZ_DATA_SPECIFIED			(0x01UL)
@@ -1552,8 +1603,8 @@ typedef unsigned char CK_BYTE;
 typedef unsigned char CK_CHAR;
 typedef unsigned char CK_UTF8CHAR;
 typedef unsigned char CK_BBOOL;
-typedef unsigned long int CK_ULONG;
-typedef long int CK_LONG;
+typedef PKCS11_ULONG_TYPE CK_ULONG;
+typedef PKCS11_LONG_TYPE CK_LONG;
 typedef CK_BYTE *CK_BYTE_PTR;
 typedef CK_CHAR *CK_CHAR_PTR;
 typedef CK_UTF8CHAR *CK_UTF8CHAR_PTR;

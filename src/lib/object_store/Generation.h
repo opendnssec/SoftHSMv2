@@ -60,10 +60,10 @@ public:
 	void commit();
 
 	// Set the current value when read from disk
-	void set(unsigned long onDisk);
+	void set(CK_ULONG onDisk);
 
 	// Return new value
-	unsigned long get();
+	CK_ULONG get();
 
 	// Rollback (called when the new value failed to be written)
 	void rollback();
@@ -85,7 +85,7 @@ private:
 	bool pendingUpdate;
 
 	// Current value
-	unsigned long currentValue;
+	CK_ULONG currentValue;
 
 	// For thread safeness
 	Mutex* genMutex;

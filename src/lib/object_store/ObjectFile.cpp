@@ -109,7 +109,7 @@ OSAttribute ObjectFile::getAttribute(CK_ATTRIBUTE_TYPE type)
 	if (attr == NULL)
 	{
 		ERROR_MSG("The attribute does not exist: 0x%08X", type);
-		return OSAttribute((unsigned long)0);
+		return OSAttribute((CK_ULONG)0);
 	}
 
 	return *attr;
@@ -137,7 +137,7 @@ bool ObjectFile::getBooleanValue(CK_ATTRIBUTE_TYPE type, bool val)
 	}
 }
 
-unsigned long ObjectFile::getUnsignedLongValue(CK_ATTRIBUTE_TYPE type, unsigned long val)
+CK_ULONG ObjectFile::getUnsignedLongValue(CK_ATTRIBUTE_TYPE type, CK_ULONG val)
 {
 	MutexLocker lock(objectMutex);
 
@@ -154,7 +154,7 @@ unsigned long ObjectFile::getUnsignedLongValue(CK_ATTRIBUTE_TYPE type, unsigned 
 	}
 	else
 	{
-		ERROR_MSG("The attribute is not an unsigned long: 0x%08X", type);
+		ERROR_MSG("The attribute is not an CK_ULONG: 0x%08X", type);
 		return val;
 	}
 }
@@ -336,7 +336,7 @@ void ObjectFile::refresh(bool isFirstTime /* = false */)
 	MutexLocker lock(objectMutex);
 
 	// Read back the generation number
-	unsigned long curGen;
+	CK_ULONG curGen;
 
 	if (!objectFile.readULong(curGen))
 	{
@@ -359,8 +359,8 @@ void ObjectFile::refresh(bool isFirstTime /* = false */)
 	// Read back the attributes
 	while (!objectFile.isEOF())
 	{
-		unsigned long p11AttrType;
-		unsigned long osAttrType;
+		CK_ULONG p11AttrType;
+		CK_ULONG osAttrType;
 
 		if (!objectFile.readULong(p11AttrType))
 		{
@@ -414,7 +414,7 @@ void ObjectFile::refresh(bool isFirstTime /* = false */)
 		}
 		else if (osAttrType == ULONG_ATTR)
 		{
-			unsigned long value;
+			CK_ULONG value;
 
 			if (!objectFile.readULong(value))
 			{
@@ -541,7 +541,7 @@ bool ObjectFile::writeAttributes(File &objectFile)
 
 	gen->update();
 
-	unsigned long newGen = gen->get();
+	CK_ULONG newGen = gen->get();
 
 	if (!objectFile.writeULong(newGen))
 	{
@@ -562,7 +562,7 @@ bool ObjectFile::writeAttributes(File &objectFile)
 			continue;
 		}
 
-		unsigned long p11AttrType = i->first;
+		CK_ULONG p11AttrType = i->first;
 
 		if (!objectFile.writeULong(p11AttrType))
 		{
@@ -575,7 +575,7 @@ bool ObjectFile::writeAttributes(File &objectFile)
 
 		if (i->second->isBooleanAttribute())
 		{
-			unsigned long osAttrType = BOOLEAN_ATTR;
+			CK_ULONG osAttrType = BOOLEAN_ATTR;
 			bool value = i->second->getBooleanValue();
 
 			if (!objectFile.writeULong(osAttrType) || !objectFile.writeBool(value))
@@ -589,8 +589,8 @@ bool ObjectFile::writeAttributes(File &objectFile)
 		}
 		else if (i->second->isUnsignedLongAttribute())
 		{
-			unsigned long osAttrType = ULONG_ATTR;
-			unsigned long value = i->second->getUnsignedLongValue();
+			CK_ULONG osAttrType = ULONG_ATTR;
+			CK_ULONG value = i->second->getUnsignedLongValue();
 
 			if (!objectFile.writeULong(osAttrType) || !objectFile.writeULong(value))
 			{
@@ -603,7 +603,7 @@ bool ObjectFile::writeAttributes(File &objectFile)
 		}
 		else if (i->second->isByteStringAttribute())
 		{
-			unsigned long osAttrType = BYTESTR_ATTR;
+			CK_ULONG osAttrType = BYTESTR_ATTR;
 			const ByteString& value = i->second->getByteStringValue();
 
 			if (!objectFile.writeULong(osAttrType) || !objectFile.writeByteString(value))
@@ -617,7 +617,7 @@ bool ObjectFile::writeAttributes(File &objectFile)
 		}
 		else if (i->second->isMechanismTypeSetAttribute())
 		{
-			unsigned long osAttrType = MECHSET_ATTR;
+			CK_ULONG osAttrType = MECHSET_ATTR;
 			const std::set<CK_MECHANISM_TYPE>& value = i->second->getMechanismTypeSetValue();
 
 			if (!objectFile.writeULong(osAttrType) || !objectFile.writeMechanismTypeSet(value))
@@ -631,7 +631,7 @@ bool ObjectFile::writeAttributes(File &objectFile)
 		}
 		else if (i->second->isAttributeMapAttribute())
 		{
-			unsigned long osAttrType = ATTRMAP_ATTR;
+			CK_ULONG osAttrType = ATTRMAP_ATTR;
 			const std::map<CK_ATTRIBUTE_TYPE,OSAttribute>& value = i->second->getAttributeMapValue();
 
 			if (!objectFile.writeULong(osAttrType) || !objectFile.writeAttributeMap(value))

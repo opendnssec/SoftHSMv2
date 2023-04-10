@@ -467,7 +467,7 @@ int initToken(CK_SLOT_ID slotID, char* label, char* soPIN, char* userPIN)
 		case CKR_OK:
 			break;
 		case CKR_SLOT_ID_INVALID:
-			fprintf(stderr, "CKR_SLOT_ID_INVALID: Slot %lu does not exist.\n", slotID);
+			fprintf(stderr, "CKR_SLOT_ID_INVALID: Slot %" _CK_UL " does not exist.\n", slotID);
 			return 1;
 			break;
 		case CKR_PIN_INCORRECT:
@@ -514,7 +514,7 @@ int initToken(CK_SLOT_ID slotID, char* label, char* soPIN, char* userPIN)
 	rv = p11->C_GetTokenInfo(slotID, &tokenInfo);
 	if (rv != CKR_OK)
 	{
-		fprintf(stderr, "ERROR: Could not get info about the initialized token in slot %lu.\n", slotID);
+		fprintf(stderr, "ERROR: Could not get info about the initialized token in slot %" _CK_UL ".\n", slotID);
 		return 1;
 	}
 
@@ -536,11 +536,11 @@ int initToken(CK_SLOT_ID slotID, char* label, char* soPIN, char* userPIN)
 
 	if (slotID == newSlotID)
 	{
-		printf("The token has been initialized on slot %lu\n", newSlotID);
+		printf("The token has been initialized on slot %" _CK_UL "\n", newSlotID);
 	}
 	else
 	{
-		printf("The token has been initialized and is reassigned to slot %lu\n", newSlotID);
+		printf("The token has been initialized and is reassigned to slot %" _CK_UL "\n", newSlotID);
 	}
 
 	return 0;
@@ -975,11 +975,11 @@ int showSlots()
 		rv = p11->C_GetSlotInfo(pSlotList[i], &slotInfo);
 		if (rv != CKR_OK)
 		{
-			fprintf(stderr, "ERROR: Could not get info about slot %lu.\n", pSlotList[i]);
+			fprintf(stderr, "ERROR: Could not get info about slot %" _CK_UL ".\n", pSlotList[i]);
 			continue;
 		}
 
-		printf("Slot %lu\n", pSlotList[i]);
+		printf("Slot %" _CK_UL "\n", pSlotList[i]);
 		printf("    Slot info:\n");
 		printf("        Description:      %.*s\n", 64, slotInfo.slotDescription);
 		printf("        Manufacturer ID:  %.*s\n", 32, slotInfo.manufacturerID);
@@ -1000,7 +1000,7 @@ int showSlots()
 		rv = p11->C_GetTokenInfo(pSlotList[i], &tokenInfo);
 		if (rv != CKR_OK)
 		{
-			fprintf(stderr, "ERROR: Could not get info about the token in slot %lu.\n",
+			fprintf(stderr, "ERROR: Could not get info about the token in slot %" _CK_UL ".\n",
 				pSlotList[i]);
 			continue;
 		}
@@ -1291,7 +1291,7 @@ int hexdigit_to_int(char ch)
 }
 
 // Search for an object
-CK_OBJECT_HANDLE searchObject(CK_SESSION_HANDLE hSession, char* objID, size_t objIDLen)
+CK_OBJECT_HANDLE searchObject(CK_SESSION_HANDLE hSession, char* objID, CK_ULONG objIDLen)
 {
 	if (objID == NULL)
 	{

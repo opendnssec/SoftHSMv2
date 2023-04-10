@@ -47,8 +47,8 @@ public:
 	// Constructor for a boolean type attribute
 	OSAttribute(const bool value);
 
-	// Constructor for an unsigned long type attribute
-	OSAttribute(const unsigned long value);
+	// Constructor for an CK_ULONG type attribute
+	OSAttribute(const CK_ULONG value);
 
 	// Constructor for a byte string type attribute
 	OSAttribute(const ByteString& value);
@@ -71,7 +71,7 @@ public:
 
 	// Retrieve the attribute value
 	bool getBooleanValue() const;
-	unsigned long getUnsignedLongValue() const;
+	CK_ULONG getUnsignedLongValue() const;
 	const ByteString& getByteStringValue() const;
 	const std::set<CK_MECHANISM_TYPE>& getMechanismTypeSetValue() const;
 	const std::map<CK_ATTRIBUTE_TYPE,OSAttribute>& getAttributeMapValue() const;
@@ -93,7 +93,7 @@ private:
 
 	// The attribute value
 	bool boolValue;
-	unsigned long ulongValue;
+	CK_ULONG ulongValue;
 	ByteString byteStrValue;
 	std::set<CK_MECHANISM_TYPE> mechSetValue;
 	std::map<CK_ATTRIBUTE_TYPE,OSAttribute> attrMapValue;

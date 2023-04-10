@@ -63,7 +63,7 @@ public:
 	bool isEOF();
 
 	// Read an unsigned long value; warning: not thread safe without locking!
-	bool readULong(unsigned long& value);
+	bool readULong(CK_ULONG& value);
 
 	// Read a ByteString value; warning: not thread safe without locking!
 	bool readByteString(ByteString& value);
@@ -81,7 +81,7 @@ public:
 	bool readAttributeMap(std::map<CK_ATTRIBUTE_TYPE,OSAttribute>& value);
 
 	// Write an unsigned long value; warning: not thread safe without locking!
-	bool writeULong(const unsigned long value);
+	bool writeULong(const CK_ULONG value);
 
 	// Write a ByteString value; warning: not thread safe without locking!
 	bool writeByteString(const ByteString& value);

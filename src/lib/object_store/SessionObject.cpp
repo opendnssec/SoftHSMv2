@@ -70,7 +70,7 @@ OSAttribute SessionObject::getAttribute(CK_ATTRIBUTE_TYPE type)
 	if (attr == NULL)
 	{
 		ERROR_MSG("The attribute does not exist: 0x%08X", type);
-		return OSAttribute((unsigned long)0);
+		return OSAttribute((CK_ULONG)0);
 	}
 
 	return *attr;
@@ -98,7 +98,7 @@ bool SessionObject::getBooleanValue(CK_ATTRIBUTE_TYPE type, bool val)
 	}
 }
 
-unsigned long SessionObject::getUnsignedLongValue(CK_ATTRIBUTE_TYPE type, unsigned long val)
+CK_ULONG SessionObject::getUnsignedLongValue(CK_ATTRIBUTE_TYPE type, CK_ULONG val)
 {
 	MutexLocker lock(objectMutex);
 
@@ -115,7 +115,7 @@ unsigned long SessionObject::getUnsignedLongValue(CK_ATTRIBUTE_TYPE type, unsign
 	}
 	else
 	{
-		ERROR_MSG("The attribute is not an unsigned long: 0x%08X", type);
+		ERROR_MSG("The attribute is not an CK_ULONG: 0x%08X", type);
 		return val;
 	}
 }

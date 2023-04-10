@@ -477,7 +477,8 @@ CK_RV Token::getTokenInfo(CK_TOKEN_INFO_PTR info)
 	// Token specific information
 	if (token)
 	{
-		if (!token->getTokenFlags(info->flags))
+		CK_ULONG flags=info->flags;
+		if (!token->getTokenFlags(flags))
 		{
 			ERROR_MSG("Could not get the token flags");
 			return CKR_GENERAL_ERROR;

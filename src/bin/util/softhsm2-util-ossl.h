@@ -145,25 +145,25 @@ typedef struct eddsa_key_material_t {
 EVP_PKEY* crypto_read_file(char* filePath, char* filePIN);
 
 // RSA
-int crypto_save_rsa(CK_SESSION_HANDLE hSession, char* label, char* objID, size_t objIDLen, int noPublicKey, RSA* rsa);
+int crypto_save_rsa(CK_SESSION_HANDLE hSession, char* label, char* objID, CK_ULONG objIDLen, int noPublicKey, RSA* rsa);
 rsa_key_material_t* crypto_malloc_rsa(RSA* rsa);
 void crypto_free_rsa(rsa_key_material_t* keyMat);
 
 // DSA
-int crypto_save_dsa(CK_SESSION_HANDLE hSession, char* label, char* objID, size_t objIDLen, int noPublicKey, DSA* dsa);
+int crypto_save_dsa(CK_SESSION_HANDLE hSession, char* label, char* objID, CK_ULONG objIDLen, int noPublicKey, DSA* dsa);
 dsa_key_material_t* crypto_malloc_dsa(DSA* dsa);
 void crypto_free_dsa(dsa_key_material_t* keyMat);
 
 #ifdef WITH_ECC
 // ECDSA
-int crypto_save_ecdsa(CK_SESSION_HANDLE hSession, char* label, char* objID, size_t objIDLen, int noPublicKey, EC_KEY* ecdsa);
+int crypto_save_ecdsa(CK_SESSION_HANDLE hSession, char* label, char* objID, CK_ULONG objIDLen, int noPublicKey, EC_KEY* ecdsa);
 ecdsa_key_material_t* crypto_malloc_ecdsa(EC_KEY* ecdsa);
 void crypto_free_ecdsa(ecdsa_key_material_t* keyMat);
 #endif
 
 #ifdef WITH_EDDSA
 // EDDSA
-int crypto_save_eddsa(CK_SESSION_HANDLE hSession, char* label, char* objID, size_t objIDLen, int noPublicKey, EVP_PKEY* eddsa);
+int crypto_save_eddsa(CK_SESSION_HANDLE hSession, char* label, char* objID, CK_ULONG objIDLen, int noPublicKey, EVP_PKEY* eddsa);
 eddsa_key_material_t* crypto_malloc_eddsa(EVP_PKEY* eddsa);
 void crypto_free_eddsa(eddsa_key_material_t* keyMat);
 #endif

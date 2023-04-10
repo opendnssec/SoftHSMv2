@@ -194,8 +194,8 @@ bool File::isEOF()
 	return valid && feof(stream);
 }
 
-// Read an unsigned long value; warning: not thread safe without locking!
-bool File::readULong(unsigned long& value)
+// Read an CK_ULONG value; warning: not thread safe without locking!
+bool File::readULong(CK_ULONG& value)
 {
 	if (!valid) return false;
 
@@ -219,7 +219,7 @@ bool File::readByteString(ByteString& value)
 	if (!valid) return false;
 
 	// Retrieve the length to read from the file
-	unsigned long len;
+	CK_ULONG len;
 
 	if (!readULong(len))
 	{
@@ -265,12 +265,12 @@ bool File::readMechanismTypeSet(std::set<CK_MECHANISM_TYPE>& value)
 {
 	if (!valid) return false;
 
-	unsigned long count;
+	CK_ULONG count;
 	if (!readULong(count)) return false;
 
-	for (unsigned long i = 0; i < count; i++)
+	for (CK_ULONG i = 0; i < count; i++)
 	{
-		unsigned long mechType;
+		CK_ULONG mechType;
 		if (!readULong(mechType))
 		{
 			return false;
@@ -288,7 +288,7 @@ bool File::readAttributeMap(std::map<CK_ATTRIBUTE_TYPE,OSAttribute>& value)
 	if (!valid) return false;
 
 	// Retrieve the length to read from the file
-	unsigned long len;
+	CK_ULONG len;
 
 	if (!readULong(len))
 	{
@@ -297,7 +297,7 @@ bool File::readAttributeMap(std::map<CK_ATTRIBUTE_TYPE,OSAttribute>& value)
 
 	while (len != 0)
 	{
-		unsigned long attrType;
+		CK_ULONG attrType;
 		if (!readULong(attrType))
 		{
 			return false;
@@ -308,7 +308,7 @@ bool File::readAttributeMap(std::map<CK_ATTRIBUTE_TYPE,OSAttribute>& value)
 		}
 		len -= 8;
 
-		unsigned long attrKind;
+		CK_ULONG attrKind;
 		if (!readULong(attrKind))
 		{
 			return false;
@@ -340,7 +340,7 @@ bool File::readAttributeMap(std::map<CK_ATTRIBUTE_TYPE,OSAttribute>& value)
 
 			case akInteger:
 			{
-				unsigned long val;
+				CK_ULONG val;
 				if (!readULong(val))
 				{
 					return false;
@@ -403,7 +403,7 @@ bool File::readString(std::string& value)
 	if (!valid) return false;
 
 	// Retrieve the length to read from the file
-	unsigned long len;
+	CK_ULONG len;
 
 	if (!readULong(len))
 	{
@@ -421,8 +421,8 @@ bool File::readString(std::string& value)
 	return true;
 }
 
-// Write an unsigned long value; warning: not thread safe without locking!
-bool File::writeULong(const unsigned long value)
+// Write an CK_ULONG value; warning: not thread safe without locking!
+bool File::writeULong(const CK_ULONG value)
 {
 	if (!valid) return false;
 
@@ -458,7 +458,7 @@ bool File::writeString(const std::string& value)
 {
 	if (!valid) return false;
 
-	ByteString toWrite((unsigned long) value.size());
+	ByteString toWrite((CK_ULONG) value.size());
 
 	// Write the value to the file
 	if ((fwrite(toWrite.const_byte_str(), 1, toWrite.size(), stream) != toWrite.size()) ||
@@ -496,7 +496,7 @@ bool File::writeAttributeMap(const std::map<CK_ATTRIBUTE_TYPE,OSAttribute>& valu
 	if (!valid) return false;
 
 	// compute length
-	unsigned long len = 0;
+	CK_ULONG len = 0;
 	for (std::map<CK_ATTRIBUTE_TYPE,OSAttribute>::const_iterator i = value.begin(); i != value.end(); ++i)
 	{
 		OSAttribute attr = i->second;
@@ -537,7 +537,7 @@ bool File::writeAttributeMap(const std::map<CK_ATTRIBUTE_TYPE,OSAttribute>& valu
 	for (std::map<CK_ATTRIBUTE_TYPE,OSAttribute>::const_iterator i = value.begin(); i != value.end(); ++i)
 	{
 		OSAttribute attr = i->second;
-		unsigned long attrType = (unsigned long) i->first;
+		CK_ULONG attrType = (CK_ULONG) i->first;
 		if (!writeULong(attrType))
 		{
 			return false;
@@ -545,7 +545,7 @@ bool File::writeAttributeMap(const std::map<CK_ATTRIBUTE_TYPE,OSAttribute>& valu
 
 		if (attr.isBooleanAttribute())
 		{
-			unsigned long attrKind = akBoolean;
+			CK_ULONG attrKind = akBoolean;
 			if (!writeULong(attrKind))
 			{
 				return false;
@@ -559,13 +559,13 @@ bool File::writeAttributeMap(const std::map<CK_ATTRIBUTE_TYPE,OSAttribute>& valu
 		}
 		else if (attr.isUnsignedLongAttribute())
 		{
-			unsigned long attrKind = akInteger;
+			CK_ULONG attrKind = akInteger;
 			if (!writeULong(attrKind))
 			{
 				return false;
 			}
 
-			unsigned long val = attr.getUnsignedLongValue();
+			CK_ULONG val = attr.getUnsignedLongValue();
 			if (!writeULong(val))
 			{
 				return false;
@@ -573,7 +573,7 @@ bool File::writeAttributeMap(const std::map<CK_ATTRIBUTE_TYPE,OSAttribute>& valu
 		}
 		else if (attr.isByteStringAttribute())
 		{
-			unsigned long attrKind = akBinary;
+			CK_ULONG attrKind = akBinary;
 			if (!writeULong(attrKind))
 			{
 				return false;
@@ -587,7 +587,7 @@ bool File::writeAttributeMap(const std::map<CK_ATTRIBUTE_TYPE,OSAttribute>& valu
 		}
 		else if (attr.isMechanismTypeSetAttribute())
 		{
-			unsigned long attrKind = akMechSet;
+			CK_ULONG attrKind = akMechSet;
 			if (!writeULong(attrKind))
 			{
 				return false;

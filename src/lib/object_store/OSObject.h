@@ -51,7 +51,7 @@ public:
 	// Retrieve the specified attribute
 	virtual OSAttribute getAttribute(CK_ATTRIBUTE_TYPE type) = 0;
 	virtual bool getBooleanValue(CK_ATTRIBUTE_TYPE type, bool val) = 0;
-	virtual unsigned long getUnsignedLongValue(CK_ATTRIBUTE_TYPE type, unsigned long val) = 0;
+	virtual CK_ULONG getUnsignedLongValue(CK_ATTRIBUTE_TYPE type, CK_ULONG val) = 0;
 	virtual ByteString getByteStringValue(CK_ATTRIBUTE_TYPE type) = 0;
 
 	// Retrieve the next attribute type

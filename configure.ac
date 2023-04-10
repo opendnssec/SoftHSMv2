@@ -51,6 +51,28 @@ ACX_PEDANTIC
 ACX_STRICT
 ACX_64BIT
 AX_CXX_COMPILE_STDCXX_11([noext],[optional])
+#PKCS11 structure packing
+AC_ARG_ENABLE(pkcs11_packing,
+	AS_HELP_STRING([--enable-pkcs11-packing],
+		[enable 1 byte structure packing for PKCS11 API]
+	),
+		[enable_pkcs11_packing="no"], 
+                [enable_pkcs11_packing="yes"]
+)
+	if test "${enable_pkcs11_packing}" = "yes"; then
+		CFLAGS="${CFLAGS} -DPKCS11_PACKING"
+		CPPFLAGS="${CPPFLAGS} -DPKCS11_PACKING"
+	fi
+#PKCS11 unsigned long size
+AC_ARG_WITH(pkcs11-longtype,
+        AC_HELP_STRING([--with-pkcs11-longtype=type],
+                [Set pkcs11 longtype u16,u32,u64,ulong (ulong)]
+        ),
+        [pkcs11_longtype="${withval}"],
+        [pkcs11_longtype="ulong"]
+)
+CFLAGS="${CFLAGS} -DPKCS11_LONGTYPE=${pkcs11_longtype}"
+CPPFLAGS="${CPPFLAGS} -DPKCS11_LONGTYPE=${pkcs11_longtype}"
 
 # Check for libraries (-ldl can be required by OpenSSL too)
 ACX_DLOPEN
@@ -120,6 +142,7 @@ ACX_P11KIT
 
 # cppunit settings
 ACX_CPPUNIT
+
 
 # Set full directory paths
 full_sysconfdir=`eval eval eval eval eval echo "${sysconfdir}" | sed "s#NONE#${prefix}#" | sed "s#NONE#${ac_default_prefix}#"`

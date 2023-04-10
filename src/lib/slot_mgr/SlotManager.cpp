@@ -66,7 +66,7 @@ SlotManager::SlotManager(ObjectStore*const objectStore)
 		// mask for 31 bits.
 		// this since sunpkcs11 java wrapper is parsing the slot ID to a java int that needs to be positive.
 		// java int is 32 bit and the the sign bit is removed.
-		const CK_SLOT_ID mask( ((CK_SLOT_ID)1<<31)-1 );
+		const CK_SLOT_ID mask( ((CK_SLOT_ID)1<<((sizeof(CK_SLOT_ID)*8)-1))-1 );
 		const CK_SLOT_ID slotID(mask&l);
 
 		insertToken(objectStore, slotID, pToken);

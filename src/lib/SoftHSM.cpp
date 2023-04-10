@@ -9801,7 +9801,7 @@ CK_RV SoftHSM::generateDH
 
 				if (bitLen == 0)
 				{
-					bOK = bOK && osobject->setAttribute(CKA_VALUE_BITS, (unsigned long)priv->getX().bits());
+					bOK = bOK && osobject->setAttribute(CKA_VALUE_BITS, (CK_ULONG)priv->getX().bits());
 				}
 
 				if (bOK)

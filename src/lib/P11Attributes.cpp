@@ -493,7 +493,7 @@ CK_RV P11Attribute::update(Token* token, bool isPrivate, CK_VOID_PTR pValue, CK_
 // Set default value
 bool P11AttrClass::setDefault()
 {
-	OSAttribute attrClass((unsigned long)CKO_VENDOR_DEFINED);
+	OSAttribute attrClass((CK_ULONG)CKO_VENDOR_DEFINED);
 	return osobject->setAttribute(type, attrClass);
 }
 
@@ -522,7 +522,7 @@ CK_RV P11AttrClass::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR
 // Set default value
 bool P11AttrKeyType::setDefault()
 {
-	OSAttribute attr((unsigned long)CKK_VENDOR_DEFINED);
+	OSAttribute attr((CK_ULONG)CKK_VENDOR_DEFINED);
 	return osobject->setAttribute(type, attr);
 }
 
@@ -553,7 +553,7 @@ CK_RV P11AttrKeyType::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_P
 // Set default value
 bool P11AttrCertificateType::setDefault()
 {
-	OSAttribute attr((unsigned long)CKC_VENDOR_DEFINED);
+	OSAttribute attr((CK_ULONG)CKC_VENDOR_DEFINED);
 	return osobject->setAttribute(type, attr);
 }
 
@@ -963,14 +963,14 @@ CK_RV P11AttrValue::updateAttr(Token *token, bool isPrivate, CK_VOID_PTR pValue,
 		// Set the CKA_VALUE_LEN
 		if (osobject->attributeExists(CKA_VALUE_LEN))
 		{
-			OSAttribute bytes((unsigned long)plaintext.size());
+			OSAttribute bytes((CK_ULONG)plaintext.size());
 			osobject->setAttribute(CKA_VALUE_LEN, bytes);
 		}
 
 		// Set the CKA_VALUE_BITS
 		if (osobject->attributeExists(CKA_VALUE_BITS))
 		{
-			OSAttribute bits((unsigned long)plaintext.bits());
+			OSAttribute bits((CK_ULONG)plaintext.bits());
 			osobject->setAttribute(CKA_VALUE_BITS, bits);
 		}
 	}
@@ -1132,7 +1132,7 @@ CK_RV P11AttrTrusted::updateAttr(Token *token, bool /*isPrivate*/, CK_VOID_PTR p
 // Set default value
 bool P11AttrCertificateCategory::setDefault()
 {
-	OSAttribute attr((unsigned long)0);
+	OSAttribute attr((CK_ULONG)0);
 	return osobject->setAttribute(type, attr);
 }
 
@@ -1257,7 +1257,7 @@ bool P11AttrHashOfIssuerPublicKey::setDefault()
 // Set default value
 bool P11AttrJavaMidpSecurityDomain::setDefault()
 {
-	OSAttribute attr((unsigned long)0);
+	OSAttribute attr((CK_ULONG)0);
 	return osobject->setAttribute(type, attr);
 }
 
@@ -1284,7 +1284,7 @@ CK_RV P11AttrJavaMidpSecurityDomain::updateAttr(Token* /*token*/, bool /*isPriva
 // Set default value
 bool P11AttrNameHashAlgorithm::setDefault()
 {
-	OSAttribute attr((unsigned long)CKM_SHA_1);
+	OSAttribute attr((CK_ULONG)CKM_SHA_1);
 	return osobject->setAttribute(type, attr);
 }
 
@@ -1670,7 +1670,7 @@ CK_RV P11AttrLocal::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR
 // Set default value
 bool P11AttrKeyGenMechanism::setDefault()
 {
-	OSAttribute attr((unsigned long)CK_UNAVAILABLE_INFORMATION);
+	OSAttribute attr((CK_ULONG)CK_UNAVAILABLE_INFORMATION);
 	return osobject->setAttribute(type, attr);
 }
 
@@ -1944,7 +1944,7 @@ CK_RV P11AttrModulus::updateAttr(Token *token, bool isPrivate, CK_VOID_PTR pValu
 
 	if (op == OBJECT_OP_CREATE && osobject->attributeExists(CKA_MODULUS_BITS))
 	{
-		OSAttribute bits((unsigned long)plaintext.bits());
+		OSAttribute bits((CK_ULONG)plaintext.bits());
 		osobject->setAttribute(CKA_MODULUS_BITS, bits);
 	}
 
@@ -2035,7 +2035,7 @@ bool P11AttrCoefficient::setDefault()
 // Set default value
 bool P11AttrModulusBits::setDefault()
 {
-	OSAttribute attr((unsigned long)0);
+	OSAttribute attr((CK_ULONG)0);
 	return osobject->setAttribute(type, attr);
 }
 
@@ -2101,7 +2101,7 @@ CK_RV P11AttrPrime::updateAttr(Token *token, bool isPrivate, CK_VOID_PTR pValue,
 
 	if (op == OBJECT_OP_CREATE && osobject->attributeExists(CKA_PRIME_BITS))
 	{
-		OSAttribute bits((unsigned long)plaintext.bits());
+		OSAttribute bits((CK_ULONG)plaintext.bits());
 		osobject->setAttribute(CKA_PRIME_BITS, bits);
 	}
 
@@ -2137,7 +2137,7 @@ bool P11AttrBase::setDefault()
 // Set default value
 bool P11AttrPrimeBits::setDefault()
 {
-	OSAttribute attr((unsigned long)0);
+	OSAttribute attr((CK_ULONG)0);
 	return osobject->setAttribute(type, attr);
 }
 
@@ -2170,7 +2170,7 @@ CK_RV P11AttrPrimeBits::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID
 // Set default value
 bool P11AttrValueBits::setDefault()
 {
-	OSAttribute attr((unsigned long)0);
+	OSAttribute attr((CK_ULONG)0);
 	return osobject->setAttribute(type, attr);
 }
 
@@ -2258,7 +2258,7 @@ bool P11AttrGost28147Params::setDefault()
 // Set default value
 bool P11AttrValueLen::setDefault()
 {
-	OSAttribute attr((unsigned long)0);
+	OSAttribute attr((CK_ULONG)0);
 	return osobject->setAttribute(type, attr);
 }
 
@@ -2299,6 +2299,7 @@ bool P11AttrWrapTemplate::setDefault()
 // Update the value
 CK_RV P11AttrWrapTemplate::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int /*op*/)
 {
+	CK_ULONG ltype;
 	// Attribute specific checks
 	if ((ulValueLen % sizeof(CK_ATTRIBUTE)) != 0)
 	{
@@ -2339,7 +2340,8 @@ CK_RV P11AttrWrapTemplate::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_V
 			if (attr->ulValueLen != sizeof(CK_BBOOL))
 				return CKR_ATTRIBUTE_VALUE_INVALID;
 			bool elem = (*(CK_BBOOL*)attr->pValue != CK_FALSE);
-			data.insert(std::pair<CK_ATTRIBUTE_TYPE,OSAttribute> (attr->type, elem));
+			ltype=attr->type;
+			data.insert(std::pair<CK_ATTRIBUTE_TYPE,OSAttribute> (ltype, elem));
 		}
 		break;
 
@@ -2360,8 +2362,9 @@ CK_RV P11AttrWrapTemplate::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_V
 			// CK_ULONG
 			if (attr->ulValueLen != sizeof(CK_ULONG))
 				return CKR_ATTRIBUTE_VALUE_INVALID;
-			unsigned long elem = *(CK_ULONG*)attr->pValue;
-			data.insert(std::pair<CK_ATTRIBUTE_TYPE,OSAttribute> (attr->type, elem));
+			CK_ULONG elem = *(CK_ULONG*)attr->pValue;
+			ltype=attr->type;
+			data.insert(std::pair<CK_ATTRIBUTE_TYPE,OSAttribute> (ltype, elem));
 		}
 		break;
 
@@ -2371,9 +2374,10 @@ CK_RV P11AttrWrapTemplate::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_V
 
 	default:
 		{
+			ltype=attr->type;
 			// CK_BYTE
 			ByteString elem = ByteString((unsigned char*)attr->pValue, attr->ulValueLen);
-			data.insert(std::pair<CK_ATTRIBUTE_TYPE,OSAttribute> (attr->type, elem));
+			data.insert(std::pair<CK_ATTRIBUTE_TYPE,OSAttribute> (ltype, elem));
 		}
 	}
 
@@ -2403,7 +2407,7 @@ CK_RV P11AttrUnwrapTemplate::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK
 	{
 		return CKR_ATTRIBUTE_VALUE_INVALID;
 	}
-
+	CK_ULONG ltype;
 	// Fill the template vector with elements
 	CK_ATTRIBUTE_PTR attr = (CK_ATTRIBUTE_PTR) pValue;
 	std::map<CK_ATTRIBUTE_TYPE,OSAttribute> data;
@@ -2438,7 +2442,8 @@ CK_RV P11AttrUnwrapTemplate::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK
 			if (attr->ulValueLen != sizeof(CK_BBOOL))
 				return CKR_ATTRIBUTE_VALUE_INVALID;
 			bool elem = (*(CK_BBOOL*)attr->pValue != CK_FALSE);
-			data.insert(std::pair<CK_ATTRIBUTE_TYPE,OSAttribute> (attr->type, elem));
+			ltype=attr->type;
+			data.insert(std::pair<CK_ATTRIBUTE_TYPE,OSAttribute> (ltype, elem));
 		}
 		break;
 
@@ -2459,8 +2464,9 @@ CK_RV P11AttrUnwrapTemplate::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK
 			// CK_ULONG
 			if (attr->ulValueLen != sizeof(CK_ULONG))
 				return CKR_ATTRIBUTE_VALUE_INVALID;
-			unsigned long elem = *(CK_ULONG*)attr->pValue;
-			data.insert(std::pair<CK_ATTRIBUTE_TYPE,OSAttribute> (attr->type, elem));
+			CK_ULONG elem = *(CK_ULONG*)attr->pValue;
+			ltype=attr->type;
+			data.insert(std::pair<CK_ATTRIBUTE_TYPE,OSAttribute> (ltype, elem));
 		}
 		break;
 
@@ -2472,7 +2478,8 @@ CK_RV P11AttrUnwrapTemplate::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK
 		{
 			// CK_BYTE
 			ByteString elem = ByteString((unsigned char*)attr->pValue, attr->ulValueLen);
-			data.insert(std::pair<CK_ATTRIBUTE_TYPE,OSAttribute> (attr->type, elem));
+			ltype=attr->type;
+			data.insert(std::pair<CK_ATTRIBUTE_TYPE,OSAttribute> (ltype, elem));
 		}
 	}
 

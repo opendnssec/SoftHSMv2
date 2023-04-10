@@ -53,8 +53,8 @@ OSAttribute::OSAttribute(const bool value)
 	ulongValue = 0;
 }
 
-// Constructor for an unsigned long type attribute
-OSAttribute::OSAttribute(const unsigned long value)
+// Constructor for an CK_ULONG type attribute
+OSAttribute::OSAttribute(const CK_ULONG value)
 {
 	ulongValue = value;
 	attributeType = ULONG;
@@ -124,7 +124,7 @@ bool OSAttribute::getBooleanValue() const
 	return boolValue;
 }
 
-unsigned long OSAttribute::getUnsignedLongValue() const
+CK_ULONG OSAttribute::getUnsignedLongValue() const
 {
 	return ulongValue;
 }

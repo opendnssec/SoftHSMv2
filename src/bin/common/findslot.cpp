@@ -122,7 +122,7 @@ int findSlot(char* slot, char* serial, char* token, bool freeToken, CK_SLOT_ID& 
 		rv = p11->C_GetTokenInfo(pSlotList[i], &tokenInfo);
 		if (rv != CKR_OK)
 		{
-			fprintf(stderr, "ERROR: Could not get info about the token in slot %lu.\n",
+			fprintf(stderr, "ERROR: Could not get info about the token in slot %" _CK_UL ".\n",
 				pSlotList[i]);
 			free(pSlotList);
 			return 1;
@@ -132,7 +132,7 @@ int findSlot(char* slot, char* serial, char* token, bool freeToken, CK_SLOT_ID& 
 		{
 			if ((tokenInfo.flags & CKF_TOKEN_INITIALIZED) == 0)
 			{
-				printf("Slot %lu has a free/uninitialized token.\n", pSlotList[i]);
+				printf("Slot %" _CK_UL " has a free/uninitialized token.\n", pSlotList[i]);
 				slotID = pSlotList[i];
 				free(pSlotList);
 				return 0;
@@ -143,7 +143,7 @@ int findSlot(char* slot, char* serial, char* token, bool freeToken, CK_SLOT_ID& 
 			if (serial != NULL && token == NULL &&
 				memcmp(tokenInfo.serialNumber, paddedSerial, sizeof(paddedSerial)) == 0)
 			{
-				printf("Found slot %lu with matching serial.\n",
+				printf("Found slot %" _CK_UL " with matching serial.\n",
 				       pSlotList[i]);
 				slotID = pSlotList[i];
 				counter++;
@@ -151,7 +151,7 @@ int findSlot(char* slot, char* serial, char* token, bool freeToken, CK_SLOT_ID& 
 			if (serial == NULL && token != NULL &&
 				memcmp(tokenInfo.label, paddedToken, sizeof(paddedToken)) == 0)
 			{
-				printf("Found slot %lu with matching token label.\n",
+				printf("Found slot %" _CK_UL " with matching token label.\n",
 				       pSlotList[i]);
 				slotID = pSlotList[i];
 				counter++;
@@ -160,7 +160,7 @@ int findSlot(char* slot, char* serial, char* token, bool freeToken, CK_SLOT_ID& 
 				memcmp(tokenInfo.serialNumber, paddedSerial, sizeof(paddedSerial)) == 0 &&
 				memcmp(tokenInfo.label, paddedToken, sizeof(paddedToken)) == 0)
 			{
-				printf("Found slot %lu with matching serial and token label.\n",
+				printf("Found slot %" _CK_UL " with matching serial and token label.\n",
 				       pSlotList[i]);
 				slotID = pSlotList[i];
 				counter++;
@@ -264,7 +264,7 @@ int findSlot(char* slot, char* serial, char* token, CK_SLOT_ID& slotID)
 		rv = p11->C_GetTokenInfo(pSlotList[i], &tokenInfo);
 		if (rv != CKR_OK)
 		{
-			fprintf(stderr, "ERROR: Could not get info about the token in slot %lu.\n",
+			fprintf(stderr, "ERROR: Could not get info about the token in slot %" _CK_UL ".\n",
 				pSlotList[i]);
 			free(pSlotList);
 			return 1;
@@ -273,7 +273,7 @@ int findSlot(char* slot, char* serial, char* token, CK_SLOT_ID& slotID)
 		if (serial != NULL && token == NULL &&
 			memcmp(tokenInfo.serialNumber, paddedSerial, sizeof(paddedSerial)) == 0)
 		{
-			printf("Found slot %lu with matching serial.\n",
+			printf("Found slot %" _CK_UL " with matching serial.\n",
 			       pSlotList[i]);
 			slotID = pSlotList[i];
 			counter++;
@@ -281,7 +281,7 @@ int findSlot(char* slot, char* serial, char* token, CK_SLOT_ID& slotID)
 		if (serial == NULL && token != NULL &&
 			memcmp(tokenInfo.label, paddedToken, sizeof(paddedToken)) == 0)
 		{
-			printf("Found slot %lu with matching token label.\n",
+			printf("Found slot %" _CK_UL " with matching token label.\n",
 			       pSlotList[i]);
 			slotID = pSlotList[i];
 			counter++;
@@ -290,7 +290,7 @@ int findSlot(char* slot, char* serial, char* token, CK_SLOT_ID& slotID)
 			memcmp(tokenInfo.serialNumber, paddedSerial, sizeof(paddedSerial)) == 0 &&
 			memcmp(tokenInfo.label, paddedToken, sizeof(paddedToken)) == 0)
 		{
-			printf("Found slot %lu with matching serial and token label.\n",
+			printf("Found slot %" _CK_UL " with matching serial and token label.\n",
 			       pSlotList[i]);
 			slotID = pSlotList[i];
 			counter++;
@@ -344,7 +344,7 @@ int findSlot(CK_TOKEN_INFO tokenInfo, CK_SLOT_ID& slotID)
 		rv = p11->C_GetTokenInfo(pSlotList[i], &currentTokenInfo);
 		if (rv != CKR_OK)
 		{
-			fprintf(stderr, "ERROR: Could not get info about the token in slot %lu.\n",
+			fprintf(stderr, "ERROR: Could not get info about the token in slot %" _CK_UL ".\n",
 				pSlotList[i]);
 			free(pSlotList);
 			return 1;

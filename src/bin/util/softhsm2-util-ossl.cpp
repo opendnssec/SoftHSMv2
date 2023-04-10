@@ -78,7 +78,7 @@ int crypto_import_aes_key
 	char* filePath,
 	char* label,
 	char* objID,
-	size_t objIDLen
+	CK_ULONG objIDLen
 )
 {
 	const size_t cMaxAesKeySize = 1024 + 1; // including null-character
@@ -103,13 +103,13 @@ int crypto_import_aes_key
 	CK_ATTRIBUTE keyTemplate[] = {
 		{ CKA_CLASS,            &keyClass,    sizeof(keyClass) },
 		{ CKA_KEY_TYPE,         &keyType,     sizeof(keyType) },
-		{ CKA_LABEL,            label,        strlen(label) },
+		{ CKA_LABEL,            label,        (CK_ULONG)strlen(label) },
 		{ CKA_ID,               objID,        objIDLen },
 		{ CKA_TOKEN,            &ckTrue,      sizeof(ckTrue) },
 		{ CKA_ENCRYPT,          &ckTrue,      sizeof(ckTrue) },
 		{ CKA_DECRYPT,          &ckTrue,      sizeof(ckTrue) },
 		{ CKA_SENSITIVE,        &ckTrue,      sizeof(ckTrue) },
-        	{ CKA_VALUE,		&aesKeyValue, strlen(aesKeyValue) }
+        	{ CKA_VALUE,		&aesKeyValue, (CK_ULONG)strlen(aesKeyValue) }
 	};
 
 	CK_OBJECT_HANDLE hKey;
@@ -132,7 +132,7 @@ int crypto_import_key_pair
 	char* filePIN,
 	char* label,
 	char* objID,
-	size_t objIDLen,
+	CK_ULONG objIDLen,
 	int noPublicKey
 )
 {
@@ -284,7 +284,7 @@ int crypto_save_rsa
 	CK_SESSION_HANDLE hSession,
 	char* label,
 	char* objID,
-	size_t objIDLen,
+	CK_ULONG objIDLen,
 	int noPublicKey,
 	RSA* rsa
 )
@@ -306,7 +306,7 @@ int crypto_save_rsa
 	CK_ATTRIBUTE pubTemplate[] = {
 		{ CKA_CLASS,            &pubClass,    sizeof(pubClass) },
 		{ CKA_KEY_TYPE,         &keyType,     sizeof(keyType) },
-		{ CKA_LABEL,            label,        strlen(label) },
+		{ CKA_LABEL,            label,        (CK_ULONG)strlen(label) },
 		{ CKA_ID,               objID,        objIDLen },
 		{ CKA_TOKEN,            &ckToken,     sizeof(ckToken) },
 		{ CKA_VERIFY,           &ckTrue,      sizeof(ckTrue) },
@@ -318,7 +318,7 @@ int crypto_save_rsa
 	CK_ATTRIBUTE privTemplate[] = {
 		{ CKA_CLASS,            &privClass,      sizeof(privClass) },
 		{ CKA_KEY_TYPE,         &keyType,        sizeof(keyType) },
-		{ CKA_LABEL,            label,           strlen(label) },
+		{ CKA_LABEL,            label,           (CK_ULONG)strlen(label) },
 		{ CKA_ID,               objID,           objIDLen },
 		{ CKA_SIGN,             &ckTrue,         sizeof(ckTrue) },
 		{ CKA_DECRYPT,          &ckTrue,         sizeof(ckTrue) },
@@ -455,7 +455,7 @@ int crypto_save_dsa
 	CK_SESSION_HANDLE hSession,
 	char* label,
 	char* objID,
-	size_t objIDLen,
+	CK_ULONG objIDLen,
 	int noPublicKey,
 	DSA* dsa
 )
@@ -477,7 +477,7 @@ int crypto_save_dsa
 	CK_ATTRIBUTE pubTemplate[] = {
 		{ CKA_CLASS,            &pubClass,    sizeof(pubClass) },
 		{ CKA_KEY_TYPE,         &keyType,     sizeof(keyType) },
-		{ CKA_LABEL,            label,        strlen(label) },
+		{ CKA_LABEL,            label,        (CK_ULONG)strlen(label) },
 		{ CKA_ID,               objID,        objIDLen },
 		{ CKA_TOKEN,            &ckToken,     sizeof(ckToken) },
 		{ CKA_VERIFY,           &ckTrue,      sizeof(ckTrue) },
@@ -491,7 +491,7 @@ int crypto_save_dsa
 	CK_ATTRIBUTE privTemplate[] = {
 		{ CKA_CLASS,            &privClass,   sizeof(privClass) },
 		{ CKA_KEY_TYPE,         &keyType,     sizeof(keyType) },
-		{ CKA_LABEL,            label,        strlen(label) },
+		{ CKA_LABEL,            label,        (CK_ULONG)strlen(label) },
 		{ CKA_ID,               objID,        objIDLen },
 		{ CKA_SIGN,             &ckTrue,      sizeof(ckTrue) },
 		{ CKA_DECRYPT,          &ckFalse,     sizeof(ckFalse) },
@@ -600,7 +600,7 @@ int crypto_save_ecdsa
 	CK_SESSION_HANDLE hSession,
 	char* label,
 	char* objID,
-	size_t objIDLen,
+	CK_ULONG objIDLen,
 	int noPublicKey,
 	EC_KEY* ecdsa
 )
@@ -622,7 +622,7 @@ int crypto_save_ecdsa
 	CK_ATTRIBUTE pubTemplate[] = {
 		{ CKA_CLASS,          &pubClass,         sizeof(pubClass) },
 		{ CKA_KEY_TYPE,       &keyType,          sizeof(keyType) },
-		{ CKA_LABEL,          label,             strlen(label) },
+		{ CKA_LABEL,          label,             (CK_ULONG)strlen(label) },
 		{ CKA_ID,             objID,             objIDLen },
 		{ CKA_TOKEN,          &ckToken,          sizeof(ckToken) },
 		{ CKA_VERIFY,         &ckTrue,           sizeof(ckTrue) },
@@ -634,7 +634,7 @@ int crypto_save_ecdsa
 	CK_ATTRIBUTE privTemplate[] = {
 		{ CKA_CLASS,          &privClass,        sizeof(privClass) },
 		{ CKA_KEY_TYPE,       &keyType,          sizeof(keyType) },
-		{ CKA_LABEL,          label,             strlen(label) },
+		{ CKA_LABEL,          label,             (CK_ULONG)strlen(label) },
 		{ CKA_ID,             objID,             objIDLen },
 		{ CKA_SIGN,           &ckTrue,           sizeof(ckTrue) },
 		{ CKA_DECRYPT,        &ckFalse,          sizeof(ckFalse) },
@@ -817,7 +817,7 @@ int crypto_save_eddsa
 	CK_SESSION_HANDLE hSession,
 	char* label,
 	char* objID,
-	size_t objIDLen,
+	CK_ULONG objIDLen,
 	int noPublicKey,
 	EVP_PKEY* eddsa
 )

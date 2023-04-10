@@ -66,7 +66,7 @@ bool Generation::sync(File &objectFile)
 		return false;
 	}
 
-	unsigned long onDisk;
+	CK_ULONG onDisk;
 
 	if (!objectFile.readULong(onDisk))
 	{
@@ -101,7 +101,7 @@ bool Generation::wasUpdated()
 
 		genFile.lock();
 
-		unsigned long onDisk;
+		CK_ULONG onDisk;
 
 		if (!genFile.readULong(onDisk))
 		{
@@ -127,7 +127,7 @@ bool Generation::wasUpdated()
 
 		objectFile.lock();
 
-		unsigned long onDisk;
+		CK_ULONG onDisk;
 
 		if (!objectFile.readULong(onDisk))
 		{
@@ -178,7 +178,7 @@ void Generation::commit()
 			return;
 		}
 
-		unsigned long onDisk;
+		CK_ULONG onDisk;
 
 		bool bOK = true;
 
@@ -209,13 +209,13 @@ void Generation::commit()
 }
 
 // Set the current value when read from disk
-void Generation::set(unsigned long onDisk)
+void Generation::set(CK_ULONG onDisk)
 {
 	currentValue = onDisk;
 }
 
 // Return new value
-unsigned long Generation::get()
+CK_ULONG Generation::get()
 {
 	pendingUpdate = false;
 
