@@ -40,11 +40,18 @@
  *****************************************************************************/
 
 #include "config.h"
+#include "Configuration.h"
 #include "SecureDataManager.h"
 #include "CryptoFactory.h"
 #include "AESKey.h"
 #include "SymmetricAlgorithm.h"
 #include "RFC4880.h"
+
+#ifdef _WIN32
+#include <Windows.h>
+#else
+#include <unistd.h>
+#endif
 
 // Constructors
 
@@ -263,6 +270,7 @@ bool SecureDataManager::login(const ByteString& passphrase, const ByteString& en
 
 	if (!RFC4880::PBEDeriveKey(passphrase, salt, &pbeKey))
 	{
+		sleep(Configuration::i()->getInt("login.fail_delay", 0));
 		return false;
 	}
 
@@ -275,6 +283,7 @@ bool SecureDataManager::login(const ByteString& passphrase, const ByteString& en
 	    !aes->decryptUpdate(encryptedKeyData, decryptedKeyData) ||
 	    !aes->decryptFinal(finalBlock))
 	{
+		sleep(Configuration::i()->getInt("login.fail_delay", 0));
 		delete pbeKey;
 
 		return false;
@@ -288,6 +297,7 @@ bool SecureDataManager::login(const ByteString& passphrase, const ByteString& en
 	if (decryptedKeyData.substr(0, 3) != magic)
 	{
 		// The passphrase was incorrect
+		sleep(Configuration::i()->getInt("login.fail_delay", 0));
 		DEBUG_MSG("Incorrect passphrase supplied");
 
 		return false;
