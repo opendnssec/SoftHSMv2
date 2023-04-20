@@ -51,6 +51,7 @@ const struct config Configuration::valid_config[] = {
 	{ "slots.removable",		CONFIG_TYPE_BOOL },
 	{ "slots.mechanisms",		CONFIG_TYPE_STRING },
 	{ "library.reset_on_fork",	CONFIG_TYPE_BOOL },
+	{ "login.fail_delay",		CONFIG_TYPE_INT },
 	{ "",				CONFIG_TYPE_UNSUPPORTED }
 };
 
