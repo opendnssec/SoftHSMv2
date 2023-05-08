@@ -519,7 +519,7 @@ CK_RV Token::getTokenInfo(CK_TOKEN_INFO_PTR info)
 	info->ulRwSessionCount = CK_UNAVAILABLE_INFORMATION;
 
 	info->ulMaxRwSessionCount = CK_EFFECTIVELY_INFINITE;
-	info->ulMaxSessionCount = CK_EFFECTIVELY_INFINITE;
+	info->ulMaxSessionCount = MAX_SESSION_COUNT;
 	info->ulMaxPinLen = MAX_PIN_LEN;
 	info->ulMinPinLen = MIN_PIN_LEN;
 	info->ulTotalPublicMemory = CK_UNAVAILABLE_INFORMATION;

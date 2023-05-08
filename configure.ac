@@ -158,6 +158,11 @@ AC_DEFINE_UNQUOTED(
 	[Minimum PIN length]
 )
 AC_DEFINE_UNQUOTED(
+	[MAX_SESSION_COUNT],
+	[16],
+	[Maximum session count]
+)
+AC_DEFINE_UNQUOTED(
 	[DEFAULT_SOFTHSM2_CONF],
 	["$default_softhsm2_conf"],
 	[The default location of softhsm2.conf]
