@@ -109,7 +109,7 @@ message(STATUS "Build Configuration: ${CMAKE_BUILD_TYPE}")
 
 # Build Modules Path
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}
-                      ${CMAKE_SOURCE_DIR}/modules
+                      ${CMAKE_SOURCE_DIR}/cmake/modules
                       )
 
 # Custom Modules

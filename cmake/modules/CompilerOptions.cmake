@@ -177,7 +177,7 @@ if(WITH_CRYPTO_BACKEND STREQUAL "botan")
 
     # acx_botan_ecc.m4
     if(ENABLE_ECC)
-        set(testfile ${CMAKE_SOURCE_DIR}/modules/tests/test_botan_ecc.cpp)
+        set(testfile ${CMAKE_SOURCE_DIR}/cmake/modules/tests/test_botan_ecc.cpp)
         try_run(RUN_ECC COMPILE_RESULT
                 "${CMAKE_BINARY_DIR}/prebuild_santity_tests" ${testfile}
                 LINK_LIBRARIES ${CRYPTO_LIBS}
@@ -198,7 +198,7 @@ if(WITH_CRYPTO_BACKEND STREQUAL "botan")
     # acx_botan_eddsa.m4
     if(ENABLE_EDDSA)
         # ED25519
-        set(testfile ${CMAKE_SOURCE_DIR}/modules/tests/test_botan_ed25519.cpp)
+        set(testfile ${CMAKE_SOURCE_DIR}/cmake/modules/tests/test_botan_ed25519.cpp)
         try_run(RUN_ED25519 COMPILE_RESULT
                 "${CMAKE_BINARY_DIR}/prebuild_santity_tests" ${testfile}
                 LINK_LIBRARIES ${CRYPTO_LIBS}
@@ -218,7 +218,7 @@ if(WITH_CRYPTO_BACKEND STREQUAL "botan")
 
     # acx_botan_gost.m4
     if(ENABLE_GOST)
-        set(testfile ${CMAKE_SOURCE_DIR}/modules/tests/test_botan_gost.cpp)
+        set(testfile ${CMAKE_SOURCE_DIR}/cmake/modules/tests/test_botan_gost.cpp)
         try_run(RUN_GOST COMPILE_RESULT
                 "${CMAKE_BINARY_DIR}/prebuild_santity_tests" ${testfile}
                 LINK_LIBRARIES ${CRYPTO_LIBS}
@@ -244,7 +244,7 @@ if(WITH_CRYPTO_BACKEND STREQUAL "botan")
     set(HAVE_AES_KEY_WRAP 1)
 
     # acx_botan_rfc5649.m4
-    set(testfile ${CMAKE_SOURCE_DIR}/modules/tests/test_botan_rfc5649.cpp)
+    set(testfile ${CMAKE_SOURCE_DIR}/cmake/modules/tests/test_botan_rfc5649.cpp)
     try_run(RUN_AES_KEY_WRAP_PAD COMPILE_RESULT
             "${CMAKE_BINARY_DIR}/prebuild_santity_tests" ${testfile}
             LINK_LIBRARIES ${CRYPTO_LIBS}
@@ -259,7 +259,7 @@ if(WITH_CRYPTO_BACKEND STREQUAL "botan")
     endif()
 
     # acx_botan_rawpss.m4
-    set(testfile ${CMAKE_SOURCE_DIR}/modules/tests/test_botan_rawpss.cpp)
+    set(testfile ${CMAKE_SOURCE_DIR}/cmake/modules/tests/test_botan_rawpss.cpp)
     try_run(RUN_RAWPSS COMPILE_RESULT
             "${CMAKE_BINARY_DIR}/prebuild_santity_tests" ${testfile}
             LINK_LIBRARIES ${CRYPTO_LIBS}
@@ -299,7 +299,7 @@ elseif(WITH_CRYPTO_BACKEND STREQUAL "openssl")
 
     # acx_openssl_ecc.m4
     if(ENABLE_ECC)
-        set(testfile ${CMAKE_SOURCE_DIR}/modules/tests/test_openssl_ecc.c)
+        set(testfile ${CMAKE_SOURCE_DIR}/cmake/modules/tests/test_openssl_ecc.c)
         try_run(RUN_ECC COMPILE_RESULT
                 "${CMAKE_BINARY_DIR}/prebuild_santity_tests" ${testfile}
                 LINK_LIBRARIES ${CRYPTO_LIBS}
@@ -320,7 +320,7 @@ elseif(WITH_CRYPTO_BACKEND STREQUAL "openssl")
     # acx_openssl_eddsa.m4
     if(ENABLE_EDDSA)
         # ED25519
-        set(testfile ${CMAKE_SOURCE_DIR}/modules/tests/test_openssl_ed25519.c)
+        set(testfile ${CMAKE_SOURCE_DIR}/cmake/modules/tests/test_openssl_ed25519.c)
         try_run(RUN_ED25519 COMPILE_RESULT
                 "${CMAKE_BINARY_DIR}/prebuild_santity_tests" ${testfile}
                 LINK_LIBRARIES ${CRYPTO_LIBS}
@@ -335,7 +335,7 @@ elseif(WITH_CRYPTO_BACKEND STREQUAL "openssl")
             message(FATAL_ERROR ${error_msg})
         endif()
         # ED448
-        set(testfile ${CMAKE_SOURCE_DIR}/modules/tests/test_openssl_ed448.c)
+        set(testfile ${CMAKE_SOURCE_DIR}/cmake/modules/tests/test_openssl_ed448.c)
         try_run(RUN_ED448 COMPILE_RESULT
                 "${CMAKE_BINARY_DIR}/prebuild_santity_tests" ${testfile}
                 LINK_LIBRARIES ${CRYPTO_LIBS}
@@ -354,7 +354,7 @@ elseif(WITH_CRYPTO_BACKEND STREQUAL "openssl")
 
     # acx_openssl_gost.m4
     if(ENABLE_GOST)
-        set(testfile ${CMAKE_SOURCE_DIR}/modules/tests/test_openssl_gost.c)
+        set(testfile ${CMAKE_SOURCE_DIR}/cmake/modules/tests/test_openssl_gost.c)
         try_run(RUN_GOST COMPILE_RESULT
                 "${CMAKE_BINARY_DIR}/prebuild_santity_tests" ${testfile}
                 LINK_LIBRARIES ${CRYPTO_LIBS}
@@ -374,7 +374,7 @@ elseif(WITH_CRYPTO_BACKEND STREQUAL "openssl")
 
     # acx_openssl_fips.m4
     if(ENABLE_FIPS)
-        set(testfile ${CMAKE_SOURCE_DIR}/modules/tests/test_openssl_fips.c)
+        set(testfile ${CMAKE_SOURCE_DIR}/cmake/modules/tests/test_openssl_fips.c)
         try_run(RUN_FIPS COMPILE_RESULT
                 "${CMAKE_BINARY_DIR}/prebuild_santity_tests" ${testfile}
                 LINK_LIBRARIES ${CRYPTO_LIBS}
@@ -393,7 +393,7 @@ elseif(WITH_CRYPTO_BACKEND STREQUAL "openssl")
     endif(ENABLE_FIPS)
 
     # acx_openssl_rfc3349
-    set(testfile ${CMAKE_SOURCE_DIR}/modules/tests/test_openssl_rfc3394.c)
+    set(testfile ${CMAKE_SOURCE_DIR}/cmake/modules/tests/test_openssl_rfc3394.c)
     try_run(RUN_AES_KEY_WRAP COMPILE_RESULT
             "${CMAKE_BINARY_DIR}/prebuild_santity_tests" ${testfile}
             LINK_LIBRARIES ${CRYPTO_LIBS}
@@ -408,7 +408,7 @@ elseif(WITH_CRYPTO_BACKEND STREQUAL "openssl")
     endif()
 
     # acx_openssl_rfc5649
-    set(testfile ${CMAKE_SOURCE_DIR}/modules/tests/test_openssl_rfc5649.c)
+    set(testfile ${CMAKE_SOURCE_DIR}/cmake/modules/tests/test_openssl_rfc5649.c)
     try_run(RUN_AES_KEY_WRAP_PAD COMPILE_RESULT
             "${CMAKE_BINARY_DIR}/prebuild_santity_tests" ${testfile}
             LINK_LIBRARIES ${CRYPTO_LIBS}
