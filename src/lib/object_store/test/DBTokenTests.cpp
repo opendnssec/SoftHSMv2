@@ -489,7 +489,7 @@ void test_a_dbtoken::support_clearing_a_token()
 	CPPUNIT_ASSERT(newToken->createObject() != NULL);
 	delete newToken;
 
-#if 0
+#if 1
 	// Reopen the newly created token and keep a reference around.
 	DBToken referencingToken("testdir", "newToken", DEFAULT_UMASK);
 	CPPUNIT_ASSERT(referencingToken.isValid());
@@ -529,7 +529,7 @@ void test_a_dbtoken::support_clearing_a_token()
 	DBToken clearedToken("testdir", "newToken", DEFAULT_UMASK);
 	CPPUNIT_ASSERT(!clearedToken.isValid());
 
-#if 0
+#if 1
 	// Verify that it is no longer possible to access the database...
 	CPPUNIT_ASSERT(!referencingToken.getSOPIN(retrievedSOPIN));
 	CPPUNIT_ASSERT(retrievedSOPIN == soPIN);

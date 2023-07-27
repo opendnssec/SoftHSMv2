@@ -19,9 +19,9 @@ if(WITH_BOTAN)
 endif(WITH_BOTAN)
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-	list(APPEND INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/../win32)
-	list(APPEND SOURCES ${PROJECT_SOURCE_DIR}/../win32/getopt.cpp)
-	list(APPEND CRYPTO_LIBS "Ws2_32.lib;Crypt32.lib")
+    list(APPEND INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/../win32)
+    list(APPEND SOURCES ${PROJECT_SOURCE_DIR}/../win32/getopt.cpp)
+    list(APPEND CRYPTO_LIBS "Ws2_32.lib;Crypt32.lib")
 endif()
 
 include_directories(${INCLUDE_DIRS})

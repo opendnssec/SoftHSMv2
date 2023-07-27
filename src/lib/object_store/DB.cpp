@@ -155,9 +155,7 @@ static time_t sqlite3_gmtime(struct tm *tm)
 	// Use gmtime_r to convert the POSIX time back to a tm struct.
 	// No time adjustment is done this time because POSIX time is
 	// defined in terms of UTC.
-	//gmtime_r(&posix_time, &ref_tm);
-	struct tm *newtime=&ref_tm;
-	newtime = gmtime(&posix_time);
+	gmtime_r(&posix_time, &ref_tm);
 	
 	if (ref_tm.tm_isdst != 0) {
 		DB::logError("expected gmtime_r to return zero in tm_isdst member of tm struct");
@@ -757,7 +755,6 @@ const std::string &DB::Connection::dbpath()
 }
 
 DB::Statement DB::Connection::prepare(const std::string format, ...){
-//DB::Statement DB::Connection::prepare(const char *format, ...){
 	// pstatement will hold a dynamically allocated string that needs to be deleted.
 	char *pstatement = NULL;
 

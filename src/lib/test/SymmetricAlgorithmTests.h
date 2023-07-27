@@ -79,7 +79,7 @@ protected:
 #endif
 	CK_RV generateDes3Key(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_OBJECT_HANDLE &hKey);
 	void encryptDecrypt(
-			CK_MECHANISM_TYPE mechanismType,
+			CK_MECHANISM mechanism,
 			size_t sizeOfIV,
 			CK_SESSION_HANDLE hSession,
 			CK_OBJECT_HANDLE hKey,

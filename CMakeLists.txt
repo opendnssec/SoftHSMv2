@@ -6,8 +6,8 @@ option(BUILD_TESTS "Compile tests along with libraries" OFF)
 option(DISABLE_NON_PAGED_MEMORY "Disable non-paged memory for secure storage" OFF)
 option(DISABLE_VISIBILITY "Disables and unsets -fvisibility=hidden" OFF)
 option(ENABLE_64bit "Enable 64-bit compiling" OFF)
-option(ENABLE_ECC "Enable support for ECC" OFF)
-option(ENABLE_EDDSA "Enable support for EDDSA" OFF)
+option(ENABLE_ECC "Enable support for ECC" ON)
+option(ENABLE_EDDSA "Enable support for EDDSA" ON)
 option(ENABLE_GOST "Enable support for GOST" OFF)
 option(ENABLE_FIPS "Enable support for FIPS 140-2 mode" OFF)
 option(ENABLE_P11_KIT "Enable p11-kit integration" ON)
@@ -58,7 +58,7 @@ set(DEFAULT_TOKENDIR "${CMAKE_INSTALL_FULL_LOCALSTATEDIR}/lib/softhsm/tokens/"
     CACHE STRING "The default location of the token directory")
 set(DEFAULT_UMASK "0077"
     CACHE STRING "The default file mode creation mask")
-	
+
 set(MAX_PIN_LEN 255 CACHE STRING "Maximum PIN length")
 set(MIN_PIN_LEN 4 CACHE STRING "Minimum PIN length")
 
@@ -133,11 +133,6 @@ if(ENABLE_P11_KIT)
             DESTINATION ${P11KIT_PATH}
             )
 endif(ENABLE_P11_KIT)
-
-#get_cmake_property(_variableNames VARIABLES)
-#foreach (_variableName ${_variableNames})
-#    message(STATUS "${_variableName}=${${_variableName}}")
-#endforeach()
 
 # Packaging
 set(CPACK_PACKAGE_NAME ${PACKAGE_NAME})

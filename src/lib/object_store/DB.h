@@ -154,7 +154,6 @@ public:
 	const std::string &dbpath();
 
 	Statement prepare(const std::string format, ...);
-	//Statement prepare(const char *format, ...);
 	Result perform(Statement &statement);
 	bool execute(Statement &statement);
 

@@ -14,7 +14,7 @@ set(SOURCES HandleManager.cpp
             )
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-	list(APPEND INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/../win32)
+    list(APPEND INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/../win32)
 ENDIF()
 
 include_directories(${INCLUDE_DIRS})

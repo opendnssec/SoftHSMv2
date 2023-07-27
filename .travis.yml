@@ -9,6 +9,7 @@ before_install:
   - sudo apt-get install build-essential autoconf automake libtool libcppunit-dev libsqlite3-dev sqlite3 libbotan-2-dev libssl-dev p11-kit
 script: sh testing/travis/travis.sh
 env:
+  - CPP_LIBRARY_ASSERTIONS=yes CRYPTO=openssl OBJSTORE=file
   - CRYPTO=openssl OBJSTORE=file
   - CRYPTO=openssl OBJSTORE=sqlite
   - CRYPTO=botan   OBJSTORE=file

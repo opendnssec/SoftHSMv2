@@ -14,8 +14,8 @@ set(SOURCES SessionManager.cpp
             )
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-	list(APPEND INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/../win32)
-ENDIF()
+    list(APPEND INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/../win32)
+endif()
 
 include_directories(${INCLUDE_DIRS})
 add_library(${PROJECT_NAME} OBJECT ${SOURCES})

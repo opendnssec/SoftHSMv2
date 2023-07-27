@@ -2,6 +2,7 @@ version: 2.6.0-{build}
 configuration: Release
 platform:
 - x86
+- x64
 init:
 - ps: >-
     If ($env:Platform -Match "x86") {
@@ -58,29 +59,24 @@ install:
 # Update vcpkg
 - cd c:\tools\vcpkg
 - cmd: git fetch
-- cmd: git checkout 2021.05.12
 - cmd: bootstrap-vcpkg.bat
-- cmd: vcpkg install sqlite3:x86-windows
-- cmd: vcpkg install openssl-windows:x86-windows
-- cmd: vcpkg install botan:x86-windows
-- cmd: vcpkg install cppunit:x86-windows
-# static link is forbidden with components under GNU license
-# switch to a source code under a more permissive NETBSD license
-#- cmd: vcpkg install getopt-win32:x86-windows-static
 - cmd: vcpkg update
 - cmd: vcpkg upgrade --no-dry-run
-build_script:
-- cmd: if exist "C:\projects\softhsmv2\build" rd /s /q C:\projects\softhsmv2\build
-- cmd: mkdir C:\projects\softhsmv2\build
-- cmd: cd C:\projects\softhsmv2\build
+- cmd: vcpkg install sqlite3:x86-windows
+- cmd: vcpkg install openssl-windows:x84-windows
+- cmd: vcpkg install openssl-windows:x64-windows
+- cmd: vcpkg install botan:x86-windows
+- cmd: vcpkg install cppunit:x86-windows
 - cmd: vcpkg integrate install
-- cmd: cmake .. -DCMAKE_TOOLCHAIN_FILE=C:/Tools/vcpkg/scripts/buildsystems/vcpkg.cmake -DWITH_OBJECTSTORE_BACKEND_DB=%DB_BACKEND% -DWITH_CRYPTO_BACKEND=%CRYPTO_BACKEND% -DBUILD_TESTS=ON -DDISABLE_NON_PAGED_MEMORY=ON -DENABLE_GOST=OFF 
-- cmd: cmake --build . --config RelWithDebInfo
-- cmd: ctest -C RelWithDebInfo --progress --verbose
-- cmd: cmake -DCMAKE_INSTALL_PREFIX=build/SoftHSMv2-$(Platform) -DCMAKE_INSTALL_CONFIG_NAME=RelWithDebInfo -P cmake_install.cmake
-#on_finish:
-#  - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
-#test: off
+build_script:
+- cmd: if exist "C:\projects\softhsmv2\build" rmdir /s /q C:\projects\softhsmv2\build
+- cmd: mkdir C:\projects\softhsmv2\build
+- cmd: cmake -Bbuild -DCMAKE_TOOLCHAIN_FILE=C:\Tools\vcpkg\scripts\buildsystems\vcpkg.cmake -DWITH_OBJECTSTORE_BACKEND_DB=%DB_BACKEND% -DWITH_CRYPTO_BACKEND=%CRYPTO_BACKEND% -DBUILD_TESTS=ON -DDISABLE_NON_PAGED_MEMORY=ON -DENABLE_GOST=OFF
+- cmd: cmake -Bbuild --build . --config RelWithDebInfo
+- cmd: ctest -Bbuild -C RelWithDebInfo --progress --verbose
+- cmd: cmake -Bbuild -DCMAKE_INSTALL_PREFIX=build/SoftHSMv2-$(Platform) -DCMAKE_INSTALL_CONFIG_NAME=RelWithDebInfo -P cmake_install.cmake
+- cmd: IF "%ENV_PLATFORM%"=="x86" ( CD win32\Release ) ELSE ( CD win32\x64\Release)
+test: on
 artifacts:
 - path: build/SoftHSMv2-$(Platform)
   name: SoftHSMv2-$(PACKAGE_VERSION_NAME)-$(Platform)

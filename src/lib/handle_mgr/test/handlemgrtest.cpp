@@ -114,7 +114,7 @@ int main(int /*argc*/, char** /*argv*/)
 
 	runner.addTest(registry.makeTest());
 	runner.run(controller);
-	
+
 	std::ofstream xmlFileOut("test-results.xml");
 	CppUnit::XmlOutputter xmlOut(&result, xmlFileOut);
 	xmlOut.write();

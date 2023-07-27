@@ -1,4 +1,5 @@
 /*
+ * Copyright (c) 2022 NLnet Labs
  * Copyright (c) 2010 SURFnet bv
  * Copyright (c) 2010 .SE (The Internet Infrastructure Foundation)
  * All rights reserved.
@@ -861,7 +862,6 @@ void SoftHSM::prepareSupportedMecahnisms(std::map<std::string, CK_MECHANISM_TYPE
 			}
 			catch (const std::out_of_range& e)
 			{
-				(e);
 				WARNING_MSG("Unknown mechanism provided: %s", token.c_str());
 			}
 			prev = pos + 1;
@@ -1124,17 +1124,20 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 			break;
 #ifndef WITH_FIPS
 		case CKM_DES_CBC_PAD:
+			/* FALLTHROUGH */
 #endif
 		case CKM_DES3_CBC_PAD:
 			pInfo->flags = CKF_WRAP | CKF_UNWRAP;
-			// falls through
+			/* FALLTHROUGH */
 #ifndef WITH_FIPS
 		case CKM_DES_ECB:
+			/* FALLTHROUGH */
 		case CKM_DES_CBC:
+			/* FALLTHROUGH */
 #endif
 		case CKM_DES3_CBC:
 			pInfo->flags |= CKF_WRAP;
-			// falls through
+			/* FALLTHROUGH */
 		case CKM_DES3_ECB:
 			// Key size is not in use
 			pInfo->ulMinKeySize = 0;
@@ -1154,10 +1157,9 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 			break;
 		case CKM_AES_CBC_PAD:
 			pInfo->flags = CKF_UNWRAP | CKF_WRAP;
-			// falls through
+			/* FALLTHROUGH */
 		case CKM_AES_CBC:
 			pInfo->flags |= CKF_WRAP;
-			// falls through
 		case CKM_AES_ECB:
 		case CKM_AES_CTR:
 		case CKM_AES_GCM:
@@ -2347,7 +2349,8 @@ CK_RV SoftHSM::SymEncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 			iv.resize(CK_GCM_PARAMS_PTR(pMechanism->pParameter)->ulIvLen);
 			memcpy(&iv[0], CK_GCM_PARAMS_PTR(pMechanism->pParameter)->pIv, CK_GCM_PARAMS_PTR(pMechanism->pParameter)->ulIvLen);
 			aad.resize(CK_GCM_PARAMS_PTR(pMechanism->pParameter)->ulAADLen);
-			memcpy(&aad[0], CK_GCM_PARAMS_PTR(pMechanism->pParameter)->pAAD, CK_GCM_PARAMS_PTR(pMechanism->pParameter)->ulAADLen);
+			if (CK_GCM_PARAMS_PTR(pMechanism->pParameter)->ulAADLen > 0)
+				memcpy(&aad[0], CK_GCM_PARAMS_PTR(pMechanism->pParameter)->pAAD, CK_GCM_PARAMS_PTR(pMechanism->pParameter)->ulAADLen);
 			tagBytes = CK_GCM_PARAMS_PTR(pMechanism->pParameter)->ulTagBits;
 			if (tagBytes > 128 || tagBytes % 8 != 0)
 			{
@@ -3067,7 +3070,8 @@ CK_RV SoftHSM::SymDecryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 			iv.resize(CK_GCM_PARAMS_PTR(pMechanism->pParameter)->ulIvLen);
 			memcpy(&iv[0], CK_GCM_PARAMS_PTR(pMechanism->pParameter)->pIv, CK_GCM_PARAMS_PTR(pMechanism->pParameter)->ulIvLen);
 			aad.resize(CK_GCM_PARAMS_PTR(pMechanism->pParameter)->ulAADLen);
-			memcpy(&aad[0], CK_GCM_PARAMS_PTR(pMechanism->pParameter)->pAAD, CK_GCM_PARAMS_PTR(pMechanism->pParameter)->ulAADLen);
+			if (CK_GCM_PARAMS_PTR(pMechanism->pParameter)->ulAADLen > 0)
+				memcpy(&aad[0], CK_GCM_PARAMS_PTR(pMechanism->pParameter)->pAAD, CK_GCM_PARAMS_PTR(pMechanism->pParameter)->ulAADLen);
 			tagBytes = CK_GCM_PARAMS_PTR(pMechanism->pParameter)->ulTagBits;
 			if (tagBytes > 128 || tagBytes % 8 != 0)
 			{
@@ -7121,8 +7125,10 @@ CK_RV SoftHSM::C_UnwrapKey
 	{
 		OSObject* osobject = (OSObject*)handleManager->getObject(*hKey);
 		if (osobject == NULL_PTR || !osobject->isValid())
+        {
 			rv = CKR_FUNCTION_FAILED;
-		if (osobject->startTransaction())
+        }
+		else if (osobject->startTransaction())
 		{
 			bool bOK = true;
 
@@ -7780,9 +7786,12 @@ CK_RV SoftHSM::generateAES
 	if (rv == CKR_OK)
 	{
 		OSObject* osobject = (OSObject*)handleManager->getObject(*phKey);
-		if (osobject == NULL_PTR || !osobject->isValid()) {
+		if (osobject == NULL_PTR || !osobject->isValid()) 
+        {
 			rv = CKR_FUNCTION_FAILED;
-		} else if (osobject->startTransaction()) {
+		} 
+        else if (osobject->startTransaction()) 
+        {
 			bool bOK = true;
 
 			// Common Attributes
