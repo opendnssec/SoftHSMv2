@@ -63,7 +63,7 @@ install:
 - cmd: vcpkg update
 - cmd: vcpkg upgrade --no-dry-run
 - cmd: vcpkg install sqlite3:x86-windows
-- cmd: vcpkg install openssl-windows:x84-windows
+- cmd: vcpkg install openssl-windows:x86-windows
 - cmd: vcpkg install openssl-windows:x64-windows
 - cmd: vcpkg install botan:x86-windows
 - cmd: vcpkg install cppunit:x86-windows
