@@ -169,26 +169,7 @@ bool BotanSymmetricAlgorithm::encryptInit(const SymmetricKey* key, const SymMode
 	try
 	{
 		Botan::SymmetricKey botanKey = Botan::SymmetricKey(key->getKeyBits().const_byte_str(), key->getKeyBits().size());
-		if (mode == SymMode::ECB)
-		{
-			// ECB cipher mode was dropped in Botan 2.0
-			const std::vector<std::string> algo_parts = split_on_delim(cipherName, '/');
-			const std::string cipher_name = algo_parts[0];
-			bool with_pkcs7_padding;
-			if (algo_parts.size() == 3 && algo_parts[2] == "PKCS7")
-			{
-				with_pkcs7_padding = true;
-			}
-			else
-			{
-				with_pkcs7_padding = false;
-			}
-			std::unique_ptr<Botan::BlockCipher> bc(Botan::BlockCipher::create(cipher_name));
-			Botan::Keyed_Filter* cipher = new Botan::Cipher_Mode_Filter(new Botan::ECB_Encryption(bc.release(), with_pkcs7_padding));
-			cipher->set_key(botanKey);
-			cryption = new Botan::Pipe(cipher);
-		}
-		else if (mode == SymMode::GCM)
+		if (mode == SymMode::GCM)
 		{
 			Botan::AEAD_Mode* aead = Botan::get_aead(cipherName, Botan::ENCRYPTION);
 			aead->set_key(botanKey);
@@ -404,26 +385,7 @@ bool BotanSymmetricAlgorithm::decryptInit(const SymmetricKey* key, const SymMode
 	try
 	{
 		Botan::SymmetricKey botanKey = Botan::SymmetricKey(key->getKeyBits().const_byte_str(), key->getKeyBits().size());
-		if (mode == SymMode::ECB)
-		{
-			// ECB cipher mode was dropped in Botan 2.0
-			const std::vector<std::string> algo_parts = split_on_delim(cipherName, '/');
-			const std::string cipher_name = algo_parts[0];
-			bool with_pkcs7_padding;
-			if (algo_parts.size() == 3 && algo_parts[2] == "PKCS7")
-			{
-				with_pkcs7_padding = true;
-			}
-			else
-			{
-				with_pkcs7_padding = false;
-			}
-			std::unique_ptr<Botan::BlockCipher> bc(Botan::BlockCipher::create(cipher_name));
-			Botan::Keyed_Filter* cipher = new Botan::Cipher_Mode_Filter(new Botan::ECB_Decryption(bc.release(),with_pkcs7_padding));
-			cipher->set_key(botanKey);
-			cryption = new Botan::Pipe(cipher);
-		}
-		else if (mode == SymMode::GCM)
+		if (mode == SymMode::GCM)
 		{
 			Botan::AEAD_Mode* aead = Botan::get_aead(cipherName, Botan::DECRYPTION);
 			aead->set_key(botanKey);

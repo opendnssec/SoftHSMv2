@@ -874,9 +874,9 @@ void SymmetricAlgorithmTests::encryptDecrypt(
 
 	// Multi-part encryption
 	CPPUNIT_ASSERT_EQUAL( (CK_RV)CKR_OK, CRYPTOKI_F_PTR( C_EncryptInit(hSession,pMechanism,hKey) ) );
-
-	for ( std::vector<CK_BYTE>::const_iterator i(vData.begin()); i<vData.end(); i+=partSize.getCurrent() ) {
-		const CK_ULONG lPartLen( i+partSize.getNext()<vData.end() ? partSize.getCurrent() : vData.end()-i );
+	CK_ULONG lPartLen = 0;
+	for ( std::vector<CK_BYTE>::const_iterator i(vData.begin()); i<vData.end(); i+= lPartLen) {
+		lPartLen = ( i<vData.end()-partSize.getNext() ? partSize.getCurrent() : vData.end()-i );
 		CK_ULONG ulEncryptedPartLen;
 		CPPUNIT_ASSERT_EQUAL( (CK_RV)CKR_OK, CRYPTOKI_F_PTR( C_EncryptUpdate(hSession,(CK_BYTE_PTR)&(*i),lPartLen,NULL_PTR,&ulEncryptedPartLen) ) );
 		const size_t oldSize( vEncryptedDataParted.size() );
@@ -925,8 +925,9 @@ void SymmetricAlgorithmTests::encryptDecrypt(
 	{
 		std::vector<CK_BYTE> vDecryptedData;
 		CK_BYTE dummy;
-		for ( std::vector<CK_BYTE>::iterator i(vEncryptedDataParted.begin()); i<vEncryptedDataParted.end(); i+=partSize.getCurrent()) {
-			const CK_ULONG ulPartLen( i+partSize.getNext()<vEncryptedDataParted.end() ? partSize.getCurrent() : vEncryptedDataParted.end()-i );
+		CK_ULONG ulPartLen = 0;
+		for ( std::vector<CK_BYTE>::iterator i(vEncryptedDataParted.begin()); i<vEncryptedDataParted.end(); i+= ulPartLen) {
+			ulPartLen = ( i<vEncryptedDataParted.end()- partSize.getNext() ? partSize.getCurrent() : vEncryptedDataParted.end()-i );
 			CK_ULONG ulDecryptedPartLen;
 			CPPUNIT_ASSERT_EQUAL( (CK_RV)CKR_OK, CRYPTOKI_F_PTR( C_DecryptUpdate(hSession,&(*i),ulPartLen,NULL_PTR,&ulDecryptedPartLen) ) );
 			const size_t oldSize( vDecryptedData.size() );
@@ -1592,6 +1593,7 @@ void SymmetricAlgorithmTests::testAesEncryptDecrypt()
 	// with padding all message sizes could be encrypted-decrypted.
 	// without padding the message size must be a multiple of the block size.
 	const int blockSize(0x10);
+
 	encryptDecrypt({CKM_AES_CBC_PAD,NULL_PTR,0},blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST-1);
 	encryptDecrypt({CKM_AES_CBC_PAD,NULL_PTR,0},blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST+1);
 	encryptDecrypt({CKM_AES_CBC_PAD,NULL_PTR,0},blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST);

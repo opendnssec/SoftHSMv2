@@ -1124,17 +1124,20 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 			break;
 #ifndef WITH_FIPS
 		case CKM_DES_CBC_PAD:
+			/* FALLTHROUGH */
 #endif
 		case CKM_DES3_CBC_PAD:
 			pInfo->flags = CKF_WRAP | CKF_UNWRAP;
-			// falls through
+			/* FALLTHROUGH */
 #ifndef WITH_FIPS
 		case CKM_DES_ECB:
+			/* FALLTHROUGH */
 		case CKM_DES_CBC:
+			/* FALLTHROUGH */
 #endif
 		case CKM_DES3_CBC:
 			pInfo->flags |= CKF_WRAP;
-			// falls through
+			/* FALLTHROUGH */
 		case CKM_DES3_ECB:
 			// Key size is not in use
 			pInfo->ulMinKeySize = 0;
@@ -1154,10 +1157,9 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 			break;
 		case CKM_AES_CBC_PAD:
 			pInfo->flags = CKF_UNWRAP | CKF_WRAP;
-			// falls through
+			/* FALLTHROUGH */
 		case CKM_AES_CBC:
 			pInfo->flags |= CKF_WRAP;
-			// falls through
 		case CKM_AES_ECB:
 		case CKM_AES_CTR:
 		case CKM_AES_GCM:
@@ -6809,7 +6811,7 @@ CK_RV SoftHSM::UnwrapKeySym
 		
 	default:
 		// Unwrap the key
-		CK_RV rv = CKR_OK;
+		rv = CKR_OK;
 		if (!cipher->unwrapKey(unwrappingkey, mode, wrapped, keydata))
 			rv = CKR_GENERAL_ERROR;
 		cipher->recycleKey(unwrappingkey);

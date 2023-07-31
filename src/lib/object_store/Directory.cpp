@@ -229,6 +229,7 @@ bool Directory::mkdir(std::string name, int umask)
 #ifndef _WIN32
 	int rv = ::mkdir(fullPath.c_str(), S_IFDIR | ((S_IRWXU | S_IRWXG | S_IRWXO) & ~umask));
 #else
+	(void)umask;
 	int rv = _mkdir(fullPath.c_str());
 #endif
 

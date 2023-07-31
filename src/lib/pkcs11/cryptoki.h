@@ -47,7 +47,10 @@
 // return type and a function name.
 
 #ifdef _WIN32
-#ifdef CRYPTOKI_EXPORTS
+#ifdef CRYPTOKI_STATIC
+#define CK_DECLARE_FUNCTION(returnType, name) \
+   returnType name
+#elif defined(CRYPTOKI_EXPORTS)
 #define CK_DECLARE_FUNCTION(returnType, name) \
    returnType __declspec(dllexport) name
 #else

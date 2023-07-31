@@ -22,7 +22,7 @@ closelog() {
  * Initialize event logging
  */
 void
-openlog(const char *ident, int logopt, int facility) {
+openlog(const char *ident, int , int ) {
 	/* Get a handle to the Application event log */
 	hEventLog = RegisterEventSourceA(NULL, ident);
 }

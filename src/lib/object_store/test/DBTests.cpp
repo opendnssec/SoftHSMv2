@@ -44,7 +44,11 @@ static int dummy_print(const char *, va_list )
 
 void test_a_db::setUp()
 {
+#ifndef _WIN32
 	CPPUNIT_ASSERT(!system("mkdir testdir"));
+#else
+	system("mkdir testdir 2> nul");
+#endif
 	null = NULL;
 }
 
@@ -53,7 +57,7 @@ void test_a_db::tearDown()
 #ifndef _WIN32
 	CPPUNIT_ASSERT(!system("rm -rf testdir"));
 #else
-	CPPUNIT_ASSERT(!system("rmdir /s /q testdir 2> nul"));
+	system("rmdir /s /q testdir 2> nul");
 #endif
 }
 
@@ -103,6 +107,7 @@ void test_a_db_with_a_connection::tearDown()
 	CPPUNIT_ASSERT(connection != null);
 	connection->close();
 	delete connection;
+	connection = null;
 	test_a_db::tearDown();
 }
 
@@ -246,10 +251,24 @@ void test_a_db_with_a_connection_with_tables::can_insert_records()
 	CPPUNIT_ASSERT(object_id != 0);
 
 	statement = connection->prepare(
-				"insert into attribute_text (value,type,object_id) values ('%s',%d,%lld)",
-				"testing testing testing",
-				1234,
-				object_id);
+		"insert into attribute_text (value,type,object_id) values ('%s',%d,%lld)",
+		"testing testing testing",
+		1234,
+		object_id);
+	CPPUNIT_ASSERT(connection->execute(statement));
+
+	statement = connection->prepare(
+		"insert into attribute_datetime (value,type,object_id) values (%s,%d,%lld)",
+		"date('now')",
+		2345,
+		object_id);
+	CPPUNIT_ASSERT(connection->execute(statement));
+
+	statement = connection->prepare(
+		"insert into attribute_datetime (value,type,object_id) values (%s,%d,%lld)",
+		"datetime('1972-07-29 19:50:10')",
+		3456,
+		object_id);
 	CPPUNIT_ASSERT(connection->execute(statement));
 }
 
@@ -258,10 +277,17 @@ void test_a_db_with_a_connection_with_tables::can_retrieve_records()
 	can_insert_records();
 
 	DB::Statement statement = connection->prepare(
-				"select value from attribute_text as t where t.type=%d",
-				1234);
+		"select value from attribute_text as t where t.type=%d",
+		1234);
 	DB::Result result = connection->perform(statement);
 	CPPUNIT_ASSERT_EQUAL(std::string(result.getString(1)), std::string("testing testing testing"));
+
+	statement = connection->prepare(
+		"select value from attribute_datetime as t where t.type=%d",
+		3456);
+	result = connection->perform(statement);
+	time_t t = result.getDatetime(1);
+	//CPPUNIT_ASSERT_EQUAL(std::string(result.getDatetime(1)), std::string("testing testing testing"));
 }
 
 void test_a_db_with_a_connection_with_tables::can_cascade_delete_objects_and_attributes()
@@ -283,7 +309,6 @@ void test_a_db_with_a_connection_with_tables::can_cascade_delete_objects_and_att
 	// Check cascade delete was successful.
 	CPPUNIT_ASSERT(!result.isValid());
 }
-
 
 void test_a_db_with_a_connection_with_tables::can_update_text_attribute()
 {
@@ -443,7 +468,6 @@ void test_a_db_with_a_connection_with_tables::can_update_blob_attribute_bound_va
 	CPPUNIT_ASSERT_EQUAL(msg, msgstored);
 }
 
-
 void test_a_db_with_a_connection_with_tables::will_not_insert_non_existing_attribute_on_update()
 {
 	DB::Statement statement;
@@ -474,7 +498,6 @@ void test_a_db_with_a_connection_with_tables::will_not_insert_non_existing_attri
 	result = connection->perform(statement);
 	CPPUNIT_ASSERT(!result.isValid());
 }
-
 
 void test_a_db_with_a_connection_with_tables::can_update_boolean_attribute_bound_value()
 {
@@ -524,7 +547,6 @@ void test_a_db_with_a_connection_with_tables::can_update_boolean_attribute_bound
 	// check that the retrieved value matches the original value
 	CPPUNIT_ASSERT_EQUAL(result.getInt(1), 0);
 }
-
 
 void test_a_db_with_a_connection_with_tables::can_update_real_attribute_bound_value()
 {
@@ -624,7 +646,6 @@ void test_a_db_with_a_connection_with_tables_with_a_second_connection_open::hand
 
 	DB::setLogErrorHandler(eh);
 }
-
 
 void test_a_db_with_a_connection_with_tables_with_a_second_connection_open::supports_transactions_with_other_connections_open()
 {

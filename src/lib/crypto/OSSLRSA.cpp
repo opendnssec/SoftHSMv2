@@ -182,11 +182,11 @@ bool OSSLRSA::sign(PrivateKey* privateKey, const ByteString& dataToSign,
 			return false;
 		}
 
-		size_t sLen = pssParam->sLen;
-		if (sLen > ((privateKey->getBitLength()+6)/8-2-allowedLen))
+		size_t sParamLen = pssParam->sLen;
+		if (sParamLen > ((privateKey->getBitLength()+6)/8-2-allowedLen))
 		{
 			ERROR_MSG("sLen (%lu) is too large for current key size (%lu)",
-				  (unsigned long)sLen, privateKey->getBitLength());
+				  (unsigned long)sParamLen, privateKey->getBitLength());
 			return false;
 		}
 
@@ -785,11 +785,11 @@ bool OSSLRSA::verify(PublicKey* publicKey, const ByteString& originalData,
 			return false;
 		}
 
-		size_t sLen = pssParam->sLen;
-		if (sLen > ((osslKey->getBitLength()+6)/8-2-allowedLen))
+		size_t sParamLen = pssParam->sLen;
+		if (sParamLen > ((osslKey->getBitLength()+6)/8-2-allowedLen))
 		{
 			ERROR_MSG("sLen (%lu) is too large for current key size (%lu)",
-				  (unsigned long)sLen, osslKey->getBitLength());
+				  (unsigned long)sParamLen, osslKey->getBitLength());
 			return false;
 		}
 

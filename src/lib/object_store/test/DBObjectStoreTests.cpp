@@ -47,10 +47,12 @@ void test_a_newly_created_object_store::setUp()
 {
 #ifndef _WIN32
 	CPPUNIT_ASSERT(!system("rm -rf testdir"));
-#else
-	CPPUNIT_ASSERT(!system("rmdir /s /q testdir 2> nul"));
-#endif
 	CPPUNIT_ASSERT(!system("mkdir testdir"));
+#else
+	system("rmdir /s /q testdir 2> nul");
+	system("mkdir testdir 2> nul");
+#endif
+	
 
 	ObjectStoreToken::selectBackend("db");
 

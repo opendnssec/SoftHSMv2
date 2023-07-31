@@ -39,6 +39,9 @@
 #include <cppunit/Message.h>
 #include <cppunit/Exception.h>
 #include <cppunit/XmlOutputter.h>
+#include <cppunit/TextOutputter.h>
+#include <cppunit/BriefTestProgressListener.h>
+#include <cppunit/TextTestProgressListener.h>
 #include <fstream>
 #include <stdlib.h>
 #include <iostream>
@@ -47,7 +50,7 @@
 #endif
 
 class MyListener : public CPPUNIT_NS::TestListener {
-	virtual void startTest( CPPUNIT_NS::Test*const pTest ) {
+	virtual void startTest( CPPUNIT_NS::Test* pTest ) {
 		std::cout << std::endl << pTest->getName() << ' ' << pTest->countTestCases() << std::endl << std::endl;
 	}
 	virtual void addFailure( const CPPUNIT_NS::TestFailure & failure ) {
@@ -57,7 +60,8 @@ class MyListener : public CPPUNIT_NS::TestListener {
 		std::cout << message.details() << std::endl << std::endl;
 	}
 };
-int main(int argc, char**const argv)
+
+int main(int /*argc*/, char**const /*argv*/)
 {
 #ifndef P11_SHARED_LIBRARY
 #ifndef _WIN32
@@ -71,24 +75,30 @@ int main(int argc, char**const argv)
 
 	CPPUNIT_NS::TextTestRunner runner;
 	runner.addTest(registry.makeTest());
-	if ( argc<2 ) {
+/*
+if ( argc<2 ) {
 		return runner.run() ? 0 : 1;
 	}
 	if ( std::string("direct").find(*(argv+1))==std::string::npos ) {
 		return runner.run(*(argv+1)) ? 0 : 1;
 	}
-	runner.addTest(registry.makeTest());
+*/
+
 	CPPUNIT_NS::TestResult controller;
 	CPPUNIT_NS::TestResultCollector result;
 	controller.addListener( &result );
-	MyListener progress;
-	controller.addListener( &progress );
+
+	CPPUNIT_NS::BriefTestProgressListener progressListener;
+	controller.addListener(&progressListener);
 
 	runner.run(controller);
 
 	std::ofstream xmlFileOut("test-results.xml");
 	CppUnit::XmlOutputter xmlOut(&result, xmlFileOut);
 	xmlOut.write();
+
+	CppUnit::TextOutputter consoleOutputter(&result, std::cout);
+	consoleOutputter.write();
 
 	return result.wasSuccessful() ? 0 : 1;
 }
