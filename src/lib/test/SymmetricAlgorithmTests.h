@@ -54,6 +54,7 @@ class SymmetricAlgorithmTests : public TestsBase
 	CPPUNIT_TEST(testAesCtrOverflow);
 	CPPUNIT_TEST(testGenericKey);
 	CPPUNIT_TEST(testEncDecFinalNULLValidation);
+	CPPUNIT_TEST(testOpTermIssue585);
 	CPPUNIT_TEST_SUITE_END();
 
 public:
@@ -69,6 +70,7 @@ public:
 	void testAesCtrOverflow();
 	void testGenericKey();
 	void testEncDecFinalNULLValidation();
+	void testOpTermIssue585();
 
 protected:
 	CK_RV generateGenericKey(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_OBJECT_HANDLE &hKey);
