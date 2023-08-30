@@ -196,18 +196,33 @@ bool BotanECDSA::verify(PublicKey* publicKey, const ByteString& originalData,
 			const ByteString& signature, const AsymMech::Type mechanism,
 			const void* /* param = NULL */, const size_t /* paramLen = 0 */)
 {
-	std::string emsa;
+	std::string emsa = "Raw";
 
-	if (mechanism == AsymMech::ECDSA)
-	{
-		emsa = "Raw";
-	}
-        else
+	HashAlgo::Type hash = HashAlgo::Unknown;
+    if (mechanism != AsymMech::ECDSA)
+    {
+        switch (mechanism)
         {
-		ERROR_MSG("Invalid mechanism supplied (%i)", mechanism);
-
-		return false;
-	}
+            case AsymMech::ECDSA_SHA1:
+                hash = HashAlgo::SHA1;
+                break;
+            case AsymMech::ECDSA_SHA224:
+                hash = HashAlgo::SHA224;
+                break;
+            case AsymMech::ECDSA_SHA256:
+                hash = HashAlgo::SHA256;
+                break;
+            case AsymMech::ECDSA_SHA384:
+                hash = HashAlgo::SHA384;
+                break;
+            case AsymMech::ECDSA_SHA512:
+                hash = HashAlgo::SHA512;
+                break;
+            default:
+                ERROR_MSG("Invalid mechanism supplied (%i)", mechanism);
+                return false;
+        }
+    }
 
 	// Check if the public key is the right type
 	if (!publicKey->isOfType(BotanECDSAPublicKey::type))
@@ -238,12 +253,30 @@ bool BotanECDSA::verify(PublicKey* publicKey, const ByteString& originalData,
 		return false;
 	}
 
+	// Pre-hash the data if necessary
+    ByteString prepDataToSign;
+
+    if (hash == HashAlgo::Unknown) {
+        prepDataToSign = originalData;
+    } else {
+        HashAlgorithm* digest = BotanCryptoFactory::i()->getHashAlgorithm(hash);
+
+        if (!digest->hashInit()
+                || !digest->hashUpdate(originalData)
+                || !digest->hashFinal(prepDataToSign))
+        {
+            delete digest;
+            return false;
+        }
+        delete digest;
+    }
+
 	// Perform the verify operation
 	bool verResult;
 	try
 	{
-		verResult = verifier->verify_message(originalData.const_byte_str(),
-							originalData.size(),
+		verResult = verifier->verify_message(prepDataToSign.const_byte_str(),
+							prepDataToSign.size(),
 							signature.const_byte_str(),
 							signature.size());
 	}

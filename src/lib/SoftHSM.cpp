@@ -1245,6 +1245,11 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 			pInfo->flags = CKF_GENERATE_KEY_PAIR | CKF_EC_COMMOM;
 			break;
 		case CKM_ECDSA:
+		case CKM_ECDSA_SHA1:
+		case CKM_ECDSA_SHA224:
+		case CKM_ECDSA_SHA256:
+		case CKM_ECDSA_SHA384:
+		case CKM_ECDSA_SHA512:
 			pInfo->ulMinKeySize = ecdsaMinSize;
 			pInfo->ulMaxKeySize = ecdsaMaxSize;
 			pInfo->flags = CKF_SIGN | CKF_VERIFY | CKF_EC_COMMOM;
@@ -5364,6 +5369,31 @@ CK_RV SoftHSM::AsymVerifyInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 			bAllowMultiPartOp = false;
 			isECDSA = true;
 			break;
+        case CKM_ECDSA_SHA1:
+            mechanism = AsymMech::ECDSA_SHA1;
+            bAllowMultiPartOp = false;
+            isECDSA = true;
+            break;
+        case CKM_ECDSA_SHA224:
+            mechanism = AsymMech::ECDSA_SHA224;
+            bAllowMultiPartOp = false;
+            isECDSA = true;
+            break;
+        case CKM_ECDSA_SHA256:
+            mechanism = AsymMech::ECDSA_SHA256;
+            bAllowMultiPartOp = false;
+            isECDSA = true;
+            break;
+        case CKM_ECDSA_SHA384:
+            mechanism = AsymMech::ECDSA_SHA384;
+            bAllowMultiPartOp = false;
+            isECDSA = true;
+            break;
+        case CKM_ECDSA_SHA512:
+            mechanism = AsymMech::ECDSA_SHA512;
+            bAllowMultiPartOp = false;
+            isECDSA = true;
+            break;
 #endif
 #ifdef WITH_GOST
 		case CKM_GOSTR3410:

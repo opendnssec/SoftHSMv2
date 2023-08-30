@@ -185,11 +185,33 @@ bool OSSLECDSA::verify(PublicKey* publicKey, const ByteString& originalData,
 		       const ByteString& signature, const AsymMech::Type mechanism,
 		       const void* /* param = NULL */, const size_t /* paramLen = 0 */)
 {
+
+	HashAlgo::Type hash = HashAlgo::Unknown;
+
 	if (mechanism != AsymMech::ECDSA)
-	{
-		ERROR_MSG("Invalid mechanism supplied (%i)", mechanism);
-		return false;
-	}
+    {
+        switch (mechanism)
+        {
+            case AsymMech::ECDSA_SHA1:
+                hash = HashAlgo::SHA1;
+                break;
+            case AsymMech::ECDSA_SHA224:
+                hash = HashAlgo::SHA224;
+                break;
+            case AsymMech::ECDSA_SHA256:
+                hash = HashAlgo::SHA256;
+                break;
+            case AsymMech::ECDSA_SHA384:
+                hash = HashAlgo::SHA384;
+                break;
+            case AsymMech::ECDSA_SHA512:
+                hash = HashAlgo::SHA512;
+                break;
+            default:
+                ERROR_MSG("Invalid mechanism supplied (%i)", mechanism);
+                return false;
+        }
+    }
 
 	// Check if the private key is the right type
 	if (!publicKey->isOfType(OSSLECPublicKey::type))
@@ -253,7 +275,25 @@ bool OSSLECDSA::verify(PublicKey* publicKey, const ByteString& originalData,
 		ECDSA_SIG_free(sig);
 		return false;
 	}
-	int ret = ECDSA_do_verify(originalData.const_byte_str(), originalData.size(), sig, eckey);
+
+	// Pre-hash the data if necessary
+    ByteString prepDataToSign;
+    if (hash == HashAlgo::Unknown) {
+        prepDataToSign = originalData;
+    } else {
+        HashAlgorithm* digest = CryptoFactory::i()->getHashAlgorithm(hash);
+
+        if (!digest->hashInit()
+                || !digest->hashUpdate(originalData)
+                || !digest->hashFinal(prepDataToSign))
+        {
+            delete digest;
+            return false;
+        }
+        delete digest;
+    }
+
+	int ret = ECDSA_do_verify(prepDataToSign.const_byte_str(), prepDataToSign.size(), sig, eckey);
 	if (ret != 1)
 	{
 		if (ret < 0)
