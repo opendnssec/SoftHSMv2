@@ -51,7 +51,11 @@ ByteString AESKey::getKeyCheckValue() const
 	data.resize(cipher->getBlockSize());
 	memset(&data[0], 0, data.size());
 
-	if (!cipher->encryptInit(this, SymMode::ECB, iv, false) ||
+	// Single block of null (0x00) bytes
+	iv.resize(cipher->getBlockSize());
+	memset(&iv[0], 0, iv.size());
+
+	if (!cipher->encryptInit(this, SymMode::CBC, iv, false) ||
 	    !cipher->encryptUpdate(data, encryptedData) ||
 	    !cipher->encryptFinal(encryptedFinal))
 	{
