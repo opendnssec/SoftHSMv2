@@ -10607,6 +10607,7 @@ CK_RV SoftHSM::deriveECDH
 	CK_BBOOL isPrivate)
 {
 	*phKey = CK_INVALID_HANDLE;
+	HashAlgorithm* kdfAlgorithm = NULL;
 
 	if ((pMechanism->pParameter == NULL_PTR) ||
 	    (pMechanism->ulParameterLen != sizeof(CK_ECDH1_DERIVE_PARAMS)))
@@ -10614,22 +10615,44 @@ CK_RV SoftHSM::deriveECDH
 		DEBUG_MSG("pParameter must be of type CK_ECDH1_DERIVE_PARAMS");
 		return CKR_MECHANISM_PARAM_INVALID;
 	}
-	if (CK_ECDH1_DERIVE_PARAMS_PTR(pMechanism->pParameter)->kdf != CKD_NULL)
-	{
-		DEBUG_MSG("kdf must be CKD_NULL");
-		return CKR_MECHANISM_PARAM_INVALID;
-	}
-	if ((CK_ECDH1_DERIVE_PARAMS_PTR(pMechanism->pParameter)->ulSharedDataLen != 0) ||
-	    (CK_ECDH1_DERIVE_PARAMS_PTR(pMechanism->pParameter)->pSharedData != NULL_PTR))
-	{
-		DEBUG_MSG("there must be no shared data");
-		return CKR_MECHANISM_PARAM_INVALID;
-	}
-	if ((CK_ECDH1_DERIVE_PARAMS_PTR(pMechanism->pParameter)->ulPublicDataLen == 0) ||
-	    (CK_ECDH1_DERIVE_PARAMS_PTR(pMechanism->pParameter)->pPublicData == NULL_PTR))
+
+	CK_ECDH1_DERIVE_PARAMS_PTR ecdhParams = CK_ECDH1_DERIVE_PARAMS_PTR(pMechanism->pParameter);
+
+	if ((ecdhParams->ulPublicDataLen == 0) ||
+	    (ecdhParams->pPublicData == NULL_PTR))
 	{
 		DEBUG_MSG("there must be a public data");
 		return CKR_MECHANISM_PARAM_INVALID;
+	}
+
+	switch (ecdhParams->kdf)
+	{
+		case CKD_NULL:
+			if ((ecdhParams->ulSharedDataLen != 0) ||
+				(ecdhParams->pSharedData != NULL_PTR))
+			{
+				DEBUG_MSG("there must be no shared data when KDF is CKD_NULL");
+				return CKR_MECHANISM_PARAM_INVALID;
+			}
+			break;
+		case CKD_SHA1_KDF:
+			kdfAlgorithm = CryptoFactory::i()->getHashAlgorithm(HashAlgo::SHA1);
+			break;
+		case CKD_SHA224_KDF:
+			kdfAlgorithm = CryptoFactory::i()->getHashAlgorithm(HashAlgo::SHA224);
+			break;
+		case CKD_SHA256_KDF:
+			kdfAlgorithm = CryptoFactory::i()->getHashAlgorithm(HashAlgo::SHA256);
+			break;
+		case CKD_SHA384_KDF:
+			kdfAlgorithm = CryptoFactory::i()->getHashAlgorithm(HashAlgo::SHA384);
+			break;
+		case CKD_SHA512_KDF:
+			kdfAlgorithm = CryptoFactory::i()->getHashAlgorithm(HashAlgo::SHA512);
+			break;
+		default:
+			DEBUG_MSG("Unknown KDF");
+			return CKR_MECHANISM_PARAM_INVALID;
 	}
 
 	// Get the session
@@ -10678,6 +10701,14 @@ CK_RV SoftHSM::deriveECDH
 	switch (keyType)
 	{
 		case CKK_GENERIC_SECRET:
+			if (kdfAlgorithm != NULL) {
+				const size_t maxLen = kdfAlgorithm->getHashSize() * (1UL << 32);
+				if (byteLen > maxLen)
+				{
+					INFO_MSG("CKA_VALUE_LEN must be at most %zu", maxLen);
+					return CKR_ATTRIBUTE_VALUE_INVALID;
+				}
+			}
 			break;
 #ifndef WITH_FIPS
 		case CKK_DES:
@@ -10741,10 +10772,8 @@ CK_RV SoftHSM::deriveECDH
 	}
 
 	ByteString publicData;
-	publicData.resize(CK_ECDH1_DERIVE_PARAMS_PTR(pMechanism->pParameter)->ulPublicDataLen);
-	memcpy(&publicData[0],
-	       CK_ECDH1_DERIVE_PARAMS_PTR(pMechanism->pParameter)->pPublicData,
-	       CK_ECDH1_DERIVE_PARAMS_PTR(pMechanism->pParameter)->ulPublicDataLen);
+	publicData.resize(ecdhParams->ulPublicDataLen);
+	memcpy(&publicData[0], ecdhParams->pPublicData, ecdhParams->ulPublicDataLen);
 	PublicKey* publicKey = ecdh->newPublicKey();
 	if (publicKey == NULL)
 	{
@@ -10767,6 +10796,44 @@ CK_RV SoftHSM::deriveECDH
 		rv = CKR_GENERAL_ERROR;
 	ecdh->recyclePrivateKey(privateKey);
 	ecdh->recyclePublicKey(publicKey);
+
+	// Apply key derivation function (ANSI X9.63)
+	if (rv == CKR_OK && kdfAlgorithm != NULL) {
+		const ByteString& secretBits = secret->getKeyBits();
+		const size_t counterOffset = secretBits.size();
+		unsigned long counter = 1;
+
+		ByteString hashInput;
+		hashInput.resize(secretBits.size() + 4 + ecdhParams->ulSharedDataLen);
+
+		// Prepare hash input content - derived secret, 4 bytes for counter, shared data
+		memcpy(&hashInput[0], secretBits.const_byte_str(), secretBits.size());
+		memcpy(&hashInput[secretBits.size() + 4], ecdhParams->pSharedData, ecdhParams->ulSharedDataLen);
+
+		ByteString hashOutput;
+		ByteString derivedOutput;
+
+		while (derivedOutput.size() < byteLen) {
+			hashInput[counterOffset + 0] = (counter >> 48) & 0xFF;
+			hashInput[counterOffset + 1] = (counter >> 32) & 0xFF;
+			hashInput[counterOffset + 2] = (counter >> 16) & 0xFF;
+			hashInput[counterOffset + 3] = (counter >>  0) & 0xFF;
+
+			kdfAlgorithm->hashInit();
+			kdfAlgorithm->hashUpdate(hashInput);
+			kdfAlgorithm->hashFinal(hashOutput);
+
+			derivedOutput += hashOutput;
+			counter++;
+		}
+
+		// Trim to desired length
+		derivedOutput.resize(byteLen);
+
+		secret->setBitLen(byteLen * 8);
+		if (!secret->setKeyBits(derivedOutput))
+			rv = CKR_FUNCTION_FAILED;
+	}
 
 	// Create the secret object using C_CreateObject
 	const CK_ULONG maxAttribs = 32;
@@ -10961,6 +11028,7 @@ CK_RV SoftHSM::deriveEDDSA
 	CK_BBOOL isPrivate)
 {
 	*phKey = CK_INVALID_HANDLE;
+	HashAlgorithm* kdfAlgorithm = NULL;
 
 	if ((pMechanism->pParameter == NULL_PTR) ||
 	    (pMechanism->ulParameterLen != sizeof(CK_ECDH1_DERIVE_PARAMS)))
@@ -10968,22 +11036,44 @@ CK_RV SoftHSM::deriveEDDSA
 		DEBUG_MSG("pParameter must be of type CK_ECDH1_DERIVE_PARAMS");
 		return CKR_MECHANISM_PARAM_INVALID;
 	}
-	if (CK_ECDH1_DERIVE_PARAMS_PTR(pMechanism->pParameter)->kdf != CKD_NULL)
-	{
-		DEBUG_MSG("kdf must be CKD_NULL");
-		return CKR_MECHANISM_PARAM_INVALID;
-	}
-	if ((CK_ECDH1_DERIVE_PARAMS_PTR(pMechanism->pParameter)->ulSharedDataLen != 0) ||
-	    (CK_ECDH1_DERIVE_PARAMS_PTR(pMechanism->pParameter)->pSharedData != NULL_PTR))
-	{
-		DEBUG_MSG("there must be no shared data");
-		return CKR_MECHANISM_PARAM_INVALID;
-	}
-	if ((CK_ECDH1_DERIVE_PARAMS_PTR(pMechanism->pParameter)->ulPublicDataLen == 0) ||
-	    (CK_ECDH1_DERIVE_PARAMS_PTR(pMechanism->pParameter)->pPublicData == NULL_PTR))
+
+	CK_ECDH1_DERIVE_PARAMS_PTR ecdhParams = CK_ECDH1_DERIVE_PARAMS_PTR(pMechanism->pParameter);
+
+	if ((ecdhParams->ulPublicDataLen == 0) ||
+	    (ecdhParams->pPublicData == NULL_PTR))
 	{
 		DEBUG_MSG("there must be a public data");
 		return CKR_MECHANISM_PARAM_INVALID;
+	}
+
+	switch (ecdhParams->kdf)
+	{
+		case CKD_NULL:
+			if ((ecdhParams->ulSharedDataLen != 0) ||
+				(ecdhParams->pSharedData != NULL_PTR))
+			{
+				DEBUG_MSG("there must be no shared data when KDF is CKD_NULL");
+				return CKR_MECHANISM_PARAM_INVALID;
+			}
+			break;
+		case CKD_SHA1_KDF:
+			kdfAlgorithm = CryptoFactory::i()->getHashAlgorithm(HashAlgo::SHA1);
+			break;
+		case CKD_SHA224_KDF:
+			kdfAlgorithm = CryptoFactory::i()->getHashAlgorithm(HashAlgo::SHA224);
+			break;
+		case CKD_SHA256_KDF:
+			kdfAlgorithm = CryptoFactory::i()->getHashAlgorithm(HashAlgo::SHA256);
+			break;
+		case CKD_SHA384_KDF:
+			kdfAlgorithm = CryptoFactory::i()->getHashAlgorithm(HashAlgo::SHA384);
+			break;
+		case CKD_SHA512_KDF:
+			kdfAlgorithm = CryptoFactory::i()->getHashAlgorithm(HashAlgo::SHA512);
+			break;
+		default:
+			DEBUG_MSG("Unknown KDF");
+			return CKR_MECHANISM_PARAM_INVALID;
 	}
 
 	// Get the session
@@ -11032,6 +11122,14 @@ CK_RV SoftHSM::deriveEDDSA
 	switch (keyType)
 	{
 		case CKK_GENERIC_SECRET:
+			if (kdfAlgorithm != NULL) {
+				const size_t maxLen = kdfAlgorithm->getHashSize() * (1UL << 32);
+				if (byteLen > maxLen)
+				{
+					INFO_MSG("CKA_VALUE_LEN must be at most %zu", maxLen);
+					return CKR_ATTRIBUTE_VALUE_INVALID;
+				}
+			}
 			break;
 #ifndef WITH_FIPS
 		case CKK_DES:
@@ -11095,10 +11193,8 @@ CK_RV SoftHSM::deriveEDDSA
 	}
 
 	ByteString publicData;
-	publicData.resize(CK_ECDH1_DERIVE_PARAMS_PTR(pMechanism->pParameter)->ulPublicDataLen);
-	memcpy(&publicData[0],
-	       CK_ECDH1_DERIVE_PARAMS_PTR(pMechanism->pParameter)->pPublicData,
-	       CK_ECDH1_DERIVE_PARAMS_PTR(pMechanism->pParameter)->ulPublicDataLen);
+	publicData.resize(ecdhParams->ulPublicDataLen);
+	memcpy(&publicData[0], ecdhParams->pPublicData, ecdhParams->ulPublicDataLen);
 	PublicKey* publicKey = eddsa->newPublicKey();
 	if (publicKey == NULL)
 	{
@@ -11121,6 +11217,44 @@ CK_RV SoftHSM::deriveEDDSA
 		rv = CKR_GENERAL_ERROR;
 	eddsa->recyclePrivateKey(privateKey);
 	eddsa->recyclePublicKey(publicKey);
+
+	// Apply key derivation function (ANSI X9.63)
+	if (rv == CKR_OK && kdfAlgorithm != NULL) {
+		const ByteString& secretBits = secret->getKeyBits();
+		const size_t counterOffset = secretBits.size();
+		unsigned long counter = 1;
+
+		ByteString hashInput;
+		hashInput.resize(secretBits.size() + 4 + ecdhParams->ulSharedDataLen);
+
+		// Prepare hash input content - derived secret, 4 bytes for counter, shared data
+		memcpy(&hashInput[0], secretBits.const_byte_str(), secretBits.size());
+		memcpy(&hashInput[secretBits.size() + 4], ecdhParams->pSharedData, ecdhParams->ulSharedDataLen);
+
+		ByteString hashOutput;
+		ByteString derivedOutput;
+
+		while (derivedOutput.size() < byteLen) {
+			hashInput[counterOffset + 0] = (counter >> 48) & 0xFF;
+			hashInput[counterOffset + 1] = (counter >> 32) & 0xFF;
+			hashInput[counterOffset + 2] = (counter >> 16) & 0xFF;
+			hashInput[counterOffset + 3] = (counter >>  0) & 0xFF;
+
+			kdfAlgorithm->hashInit();
+			kdfAlgorithm->hashUpdate(hashInput);
+			kdfAlgorithm->hashFinal(hashOutput);
+
+			derivedOutput += hashOutput;
+			counter++;
+		}
+
+		// Trim to desired length
+		derivedOutput.resize(byteLen);
+
+		secret->setBitLen(byteLen * 8);
+		if (!secret->setKeyBits(derivedOutput))
+			rv = CKR_FUNCTION_FAILED;
+	}
 
 	// Create the secret object using C_CreateObject
 	const CK_ULONG maxAttribs = 32;
