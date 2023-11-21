@@ -36,6 +36,7 @@
 
 #include "SessionManager.h"
 #include "log.h"
+#include "config.h"
 
 // Constructor
 SessionManager::SessionManager()
@@ -82,8 +83,7 @@ CK_RV SessionManager::openSession
 	// Can not open a Read-Only session when in SO mode
 	if ((flags & CKF_RW_SESSION) == 0 && token->isSOLoggedIn()) return CKR_SESSION_READ_WRITE_SO_EXISTS;
 
-	// TODO: Do we want to check for maximum number of sessions?
-	// return CKR_SESSION_COUNT
+	if (sessions.size() == MAX_SESSION_COUNT) return CKR_SESSION_COUNT;
 
 	// Create the session
 	bool rwSession = ((flags & CKF_RW_SESSION) == CKF_RW_SESSION) ? true : false;
