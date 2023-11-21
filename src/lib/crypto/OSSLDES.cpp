@@ -57,9 +57,12 @@ const EVP_CIPHER* OSSLDES::getCipher() const
 	if (
 #ifndef WITH_FIPS
 	    (currentKey->getBitLen() != 56) &&
+	    (currentKey->getBitLen() != 64) &&
 #endif
 	    (currentKey->getBitLen() != 112) &&
-            (currentKey->getBitLen() != 168))
+	    (currentKey->getBitLen() != 128) &&
+	    (currentKey->getBitLen() != 168) &&
+            (currentKey->getBitLen() != 192))
 	{
 		ERROR_MSG("Invalid DES currentKey length (%d bits)", currentKey->getBitLen());
 
@@ -67,7 +70,7 @@ const EVP_CIPHER* OSSLDES::getCipher() const
 	}
 
 	// People shouldn't really be using 56-bit DES keys, generate a warning
-	if (currentKey->getBitLen() == 56)
+	if (currentKey->getBitLen() == 56 || currentKey->getBitLen() == 64)
 	{
 		DEBUG_MSG("CAUTION: use of 56-bit DES keys is not recommended!");
 	}
@@ -78,10 +81,13 @@ const EVP_CIPHER* OSSLDES::getCipher() const
 		switch(currentKey->getBitLen())
 		{
 			case 56:
+			case 64:
 				return EVP_des_cbc();
 			case 112:
+			case 128:
 				return EVP_des_ede_cbc();
 			case 168:
+			case 192:
 				return EVP_des_ede3_cbc();
 		};
 	}
@@ -90,10 +96,13 @@ const EVP_CIPHER* OSSLDES::getCipher() const
 		switch(currentKey->getBitLen())
 		{
 			case 56:
+			case 64:
 				return EVP_des_ecb();
 			case 112:
+			case 128:
 				return EVP_des_ede_ecb();
 			case 168:
+			case 192:
 				return EVP_des_ede3_ecb();
 		};
 	}
@@ -102,10 +111,13 @@ const EVP_CIPHER* OSSLDES::getCipher() const
 		switch(currentKey->getBitLen())
 		{
 			case 56:
+			case 64:
 				return EVP_des_ofb();
 			case 112:
+			case 128:
 				return EVP_des_ede_ofb();
 			case 168:
+			case 192:
 				return EVP_des_ede3_ofb();
 		};
 	}
@@ -114,10 +126,13 @@ const EVP_CIPHER* OSSLDES::getCipher() const
 		switch(currentKey->getBitLen())
 		{
 			case 56:
+			case 64:
 				return EVP_des_cfb();
 			case 112:
+			case 128:
 				return EVP_des_ede_cfb();
 			case 168:
+			case 192:
 				return EVP_des_ede3_cfb();
 		};
 	}
