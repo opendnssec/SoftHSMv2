@@ -53,7 +53,7 @@ ObjectFile::ObjectFile(OSToken* parent, std::string inPath, int inUmask, std::st
 {
 	path = inPath;
 	umask = inUmask;
-	gen = Generation::create(path, umask);
+	gen = Generation::create(path, umask, false);
 	objectMutex = MutexFactory::i()->getMutex();
 	valid = (gen != NULL) && (objectMutex != NULL);
 	token = parent;
