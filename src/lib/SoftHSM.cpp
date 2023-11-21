@@ -7160,12 +7160,17 @@ CK_RV SoftHSM::C_UnwrapKey
 			// Secret Attributes
 			if (objClass == CKO_SECRET_KEY)
 			{
-				ByteString value;
-				if (isPrivate)
-					token->encrypt(keydata, value);
-				else
-					value = keydata;
-				bOK = bOK && osobject->setAttribute(CKA_VALUE, value);
+				// CKA_VALUE_LEN synthetized for all secret keys
+				bOK = bOK && osobject->setAttribute(CKA_VALUE_LEN, keydata.size());
+
+				if(bOK) {
+					ByteString value;
+					if (isPrivate)
+						token->encrypt(keydata, value);
+					else
+						value = keydata;
+					bOK = bOK && osobject->setAttribute(CKA_VALUE, value);
+				}
 			}
 			else if (keyType == CKK_RSA)
 			{
