@@ -132,9 +132,6 @@ private:
 	// The masked version of the actual key
 	ByteString maskedKey;
 
-	// The "magic" data used to detect if a PIN was likely to be correct
-	ByteString magic;
-
 	// The mask; this is not a stack member but a heap member. This
 	// hopefully ensures that the mask ends up in a memory location
 	// that is not logically linked to the masked key
