@@ -684,7 +684,7 @@ OSObject *DBToken::createObject()
 		return NULL;
 	}
 
-	if (!newObject->isValid())
+	if (!newObject->isValid(true))
 	{
 		newObject->abortTransaction();
 		delete newObject;

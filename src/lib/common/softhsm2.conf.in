@@ -15,3 +15,6 @@ slots.mechanisms = ALL
 
 # If the library should reset the state on fork
 library.reset_on_fork = false
+
+# Set to false if there should be no update of a token objects each time it is used.
+objectstore.readrefresh = true

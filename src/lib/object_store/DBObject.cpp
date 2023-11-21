@@ -1364,7 +1364,7 @@ bool DBObject::deleteAttribute(CK_ATTRIBUTE_TYPE type)
 }
 
 // The validity state of the object
-bool DBObject::isValid()
+bool DBObject::isValid(const bool doRefresh __attribute__((unused)))
 {
 	MutexLocker lock(_mutex);
 

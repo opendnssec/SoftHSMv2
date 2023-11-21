@@ -64,7 +64,8 @@ public:
 	virtual bool deleteAttribute(CK_ATTRIBUTE_TYPE type) = 0;
 
 	// The validity state of the object
-	virtual bool isValid() = 0;
+	// If doRefresh==true then update the object from the storage before validating.
+	virtual bool isValid(bool doRefresh=true) = 0;
 
 	// Start an attribute set transaction; this method is used when - for
 	// example - a key is generated and all its attributes need to be
