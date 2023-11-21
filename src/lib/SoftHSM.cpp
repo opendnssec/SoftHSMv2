@@ -2433,6 +2433,10 @@ CK_RV SoftHSM::AsymEncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMec
 	if (!key->getBooleanValue(CKA_ENCRYPT, false))
 		return CKR_KEY_FUNCTION_NOT_PERMITTED;
 
+	// Check if the specified mechanism is allowed for the key
+	if (!isMechanismPermitted(key, pMechanism->mechanism))
+		return CKR_MECHANISM_INVALID;
+
 	// Get key info
 	CK_KEY_TYPE keyType = key->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED);
 
@@ -3189,22 +3193,9 @@ CK_RV SoftHSM::AsymDecryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMec
 		case CKM_RSA_PKCS_OAEP:
 			if (keyType != CKK_RSA)
 				return CKR_KEY_TYPE_INCONSISTENT;
-			if (pMechanism->pParameter == NULL_PTR ||
-			    pMechanism->ulParameterLen != sizeof(CK_RSA_PKCS_OAEP_PARAMS))
-			{
-				DEBUG_MSG("pParameter must be of type CK_RSA_PKCS_OAEP_PARAMS");
-				return CKR_ARGUMENTS_BAD;
-			}
-			if (CK_RSA_PKCS_OAEP_PARAMS_PTR(pMechanism->pParameter)->hashAlg != CKM_SHA_1)
-			{
-				DEBUG_MSG("hashAlg must be CKM_SHA_1");
-				return CKR_ARGUMENTS_BAD;
-			}
-			if (CK_RSA_PKCS_OAEP_PARAMS_PTR(pMechanism->pParameter)->mgf != CKG_MGF1_SHA1)
-			{
-				DEBUG_MSG("mgf must be CKG_MGF1_SHA1");
-				return CKR_ARGUMENTS_BAD;
-			}
+			rv = MechParamCheckRSAPKCSOAEP(pMechanism);
+			if (rv != CKR_OK)
+				return rv;
 
 			mechanism = AsymMech::RSA_PKCS_OAEP;
 			isRSA = true;
