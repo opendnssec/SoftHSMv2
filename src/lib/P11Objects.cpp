@@ -158,6 +158,7 @@ CK_RV P11Object::loadTemplate(Token *token, CK_ATTRIBUTE_PTR pTemplate, CK_ULONG
 		}
 
 		// case 1,3,4 and 5 of the attribute checks are done while retrieving the attribute itself.
+		DEBUG_MSG("Attribute 0x%lx = (%p) @ %d", pTemplate[i].type, pTemplate[i].pValue, i);
 		CK_RV retrieve_rv = attr->retrieve(token, isPrivate, pTemplate[i].pValue, &pTemplate[i].ulValueLen);
 		if (retrieve_rv == CKR_ATTRIBUTE_SENSITIVE) {
 			// If case 1 applies to any of the requested attributes, then the call should
@@ -168,6 +169,7 @@ CK_RV P11Object::loadTemplate(Token *token, CK_ATTRIBUTE_PTR pTemplate, CK_ULONG
 			// return the value CKR_BUFFER_TOO_SMALL.
 			buffer_too_small = true;
 		} else if (retrieve_rv != CKR_OK) {
+			ERROR_MSG("Could not update Attribute in loadTemplate 0x%lx = (%x) @ %d", pTemplate[i].type, pTemplate[i].pValue, i);
 		    return CKR_GENERAL_ERROR;
 		}
 
@@ -231,9 +233,11 @@ CK_RV P11Object::saveTemplate(Token *token, bool isPrivate, CK_ATTRIBUTE_PTR pTe
 		}
 
 		// Additonal checks are done while updating the attributes themselves.
+		DEBUG_MSG("Attribute 0x%lx = (%x)", pTemplate[i].type, pTemplate[i].pValue);
 		CK_RV rv = attr->update(token,isPrivate, pTemplate[i].pValue, pTemplate[i].ulValueLen, op);
 		if (rv != CKR_OK)
 		{
+			ERROR_MSG("Could not update Attribute in saveTemplate 0x%lx = (%x) @ %d", pTemplate[i].type, pTemplate[i].pValue, i);
 			osobject->abortTransaction();
 			return rv;
 		}
