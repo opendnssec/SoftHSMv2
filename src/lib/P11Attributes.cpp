@@ -411,13 +411,13 @@ CK_RV P11Attribute::update(Token* token, bool isPrivate, CK_VOID_PTR pValue, CK_
 	//    given non-Cryptoki attribute is read-only is obviously outside the scope of Cryptoki.
 
 	// Attributes cannot be changed if CKA_MODIFIABLE is set to false
-	if (!isModifiable() && op != OBJECT_OP_GENERATE && op != OBJECT_OP_CREATE) {
+	if (!isModifiable() && op != OBJECT_OP_GENERATE && op != OBJECT_OP_CREATE && op != OBJECT_OP_UNWRAP) {
 		ERROR_MSG("An object is with CKA_MODIFIABLE set to false is not modifiable");
 		return CKR_ATTRIBUTE_READ_ONLY;
 	}
 
 	// Attributes cannot be modified if CKA_TRUSTED is true on a certificate object.
-	if (isTrusted() && op != OBJECT_OP_GENERATE && op != OBJECT_OP_CREATE) {
+	if (isTrusted() && op != OBJECT_OP_GENERATE && op != OBJECT_OP_CREATE && op != OBJECT_OP_UNWRAP) {
 		if (osobject->getUnsignedLongValue(CKA_CLASS, CKO_VENDOR_DEFINED) == CKO_CERTIFICATE)
 		{
 			ERROR_MSG("A trusted certificate cannot be modified");
