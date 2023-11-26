@@ -1229,7 +1229,7 @@ void ObjectTests::testGetObjectSize()
 	// Get the object size
 	CK_ULONG objectSize;
 	rv = CRYPTOKI_F_PTR( C_GetObjectSize(hSession, hObject, &objectSize) );
-	CPPUNIT_ASSERT(rv == CKR_OK);
+	CPPUNIT_ASSERT(rv == CKR_FUNCTION_NOT_SUPPORTED);
 	CPPUNIT_ASSERT(objectSize == CK_UNAVAILABLE_INFORMATION);
 
 	// Close session

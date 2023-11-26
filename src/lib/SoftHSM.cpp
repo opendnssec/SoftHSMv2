@@ -1829,7 +1829,7 @@ CK_RV SoftHSM::C_GetObjectSize(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObj
 
 	*pulSize = CK_UNAVAILABLE_INFORMATION;
 
-	return CKR_OK;
+	return CKR_FUNCTION_NOT_SUPPORTED;
 }
 
 // Retrieve the specified attributes for the given object
