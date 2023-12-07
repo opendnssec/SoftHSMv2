@@ -21,9 +21,9 @@ EXTRA_DIST =	$(srcdir)/CMakeLists.txt \
 		$(srcdir)/FIPS-NOTES.md \
 		$(srcdir)/LICENSE \
 		$(srcdir)/m4/*.m4 \
-		$(srcdir)/modules/*.cmake \
-		$(srcdir)/modules/tests/*.c \
-		$(srcdir)/modules/tests/*.cpp \
+		$(srcdir)/cmake/modules/*.cmake \
+		$(srcdir)/cmake/modules/tests/*.c \
+		$(srcdir)/cmake/modules/tests/*.cpp \
 		$(srcdir)/OSX-NOTES.md \
 		$(srcdir)/README.md \
 		$(srcdir)/win32/convarch/convarch.vcxproj.in \

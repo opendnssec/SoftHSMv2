@@ -1,5 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
-
+cmake_minimum_required(VERSION 3.16)
 project(softhsm2 C CXX)
 
 # Build Options
@@ -8,8 +7,8 @@ option(DISABLE_NON_PAGED_MEMORY "Disable non-paged memory for secure storage" OF
 option(DISABLE_VISIBILITY "Disables and unsets -fvisibility=hidden" OFF)
 option(ENABLE_64bit "Enable 64-bit compiling" OFF)
 option(ENABLE_ECC "Enable support for ECC" ON)
-option(ENABLE_EDDSA "Enable support for EDDSA" OFF)
-option(ENABLE_GOST "Enable support for GOST" ON)
+option(ENABLE_EDDSA "Enable support for EDDSA" ON)
+option(ENABLE_GOST "Enable support for GOST" OFF)
 option(ENABLE_FIPS "Enable support for FIPS 140-2 mode" OFF)
 option(ENABLE_P11_KIT "Enable p11-kit integration" ON)
 option(ENABLE_PEDANTIC "Enable pedantic compile mode" OFF)
@@ -80,11 +79,37 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING "Default build type for SoftHSMv2 project" FORCE)
 endif(NOT CMAKE_BUILD_TYPE)
 
+
+set(CMAKE_CXX_FLAGS_MAINTAINER "-Wall -Wabi" CACHE STRING
+ "Flags used by the C++ compiler during maintainer builds."
+  FORCE)
+set(CMAKE_C_FLAGS_MAINTAINER "-Wall -pedantic" CACHE STRING
+  "Flags used by the C compiler during maintainer builds."
+  FORCE)
+set(CMAKE_EXE_LINKER_FLAGS_MAINTAINER
+  "-Wl,--warn-unresolved-symbols,--warn-once" CACHE STRING
+  "Flags used for linking binaries during maintainer builds."
+  FORCE)
+set(CMAKE_SHARED_LINKER_FLAGS_MAINTAINER
+  "-Wl,--warn-unresolved-symbols,--warn-once" CACHE STRING
+  "Flags used by the shared libraries linker during maintainer builds."
+  FORCE)
+mark_as_advanced(
+  CMAKE_CXX_FLAGS_MAINTAINER
+  CMAKE_C_FLAGS_MAINTAINER
+  CMAKE_EXE_LINKER_FLAGS_MAINTAINER
+  CMAKE_SHARED_LINKER_FLAGS_MAINTAINER)
+
+set(CMAKE_BUILD_TYPE "${CMAKE_BUILD_TYPE}" CACHE STRING
+  "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel Maintainer."
+  FORCE)
+
+
 message(STATUS "Build Configuration: ${CMAKE_BUILD_TYPE}")
 
 # Build Modules Path
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}
-                      ${CMAKE_SOURCE_DIR}/modules
+                      ${CMAKE_SOURCE_DIR}/cmake/modules
                       )
 
 # Custom Modules
@@ -102,6 +127,7 @@ add_subdirectory(src)
 # p11-kit
 set(default_softhsm2_lib ${DEFAULT_PKCS11_LIB})
 configure_file(softhsm2.module.in softhsm2.module)
+
 if(ENABLE_P11_KIT)
     install(FILES ${PROJECT_BINARY_DIR}/softhsm2.module
             DESTINATION ${P11KIT_PATH}

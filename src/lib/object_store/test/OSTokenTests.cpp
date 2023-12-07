@@ -48,7 +48,11 @@ CPPUNIT_TEST_SUITE_REGISTRATION(OSTokenTests);
 
 void OSTokenTests::setUp()
 {
+#ifndef _WIN32
 	CPPUNIT_ASSERT(!system("mkdir testdir"));
+#else
+	system("mkdir testdir 2> nul");
+#endif
 }
 
 void OSTokenTests::tearDown()

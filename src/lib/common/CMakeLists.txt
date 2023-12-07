@@ -14,9 +14,15 @@ set(SOURCES Configuration.cpp
             SimpleConfigLoader.cpp
             )
 
+if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+	list(APPEND SOURCES ${PROJECT_SOURCE_DIR}/../win32/syslog.cpp)
+	list(APPEND INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/../win32)
+ENDIF()
+
 include_directories(${INCLUDE_DIRS})
 
 add_library(${PROJECT_NAME} OBJECT ${SOURCES})
+target_compile_options(${PROJECT_NAME} PRIVATE ${COMPILE_OPTIONS})
 
 set(softhsmtokendir ${DEFAULT_TOKENDIR})
 set(default_softhsm2_conf ${CMAKE_INSTALL_FULL_SYSCONFDIR}/softhsm2.conf)

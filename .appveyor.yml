@@ -41,31 +41,42 @@ init:
     $env:RELEASE_DIR=Join-Path $env:BUILD_DIR "SoftHSMv2-$env:ENV_PLATFORM"
 
     $env:CONFIGURE_OPTIONS = "$env:CONFIGURE_OPTIONS with-crypto-backend=$env:CRYPTO_BACKEND with-$env:CRYPTO_BACKEND=$env:CRYPTO_PACKAGE_PATH\ with-cppunit=$env:CPPUNIT_PATH\"
+cache: 
+  - C:/Tools/vcpkg/installed/
 environment:
+  APPVEYOR_SAVE_CACHE_ON_ERROR: true
   matrix:
-  - CRYPTO_BACKEND: botan
-    ADDITIONAL_CONFIGURE_OPTIONS: disable-eddsa disable-gost with-crypto-backend=botan
   - CRYPTO_BACKEND: openssl
     ADDITIONAL_CONFIGURE_OPTIONS: disable-eddsa disable-gost with-crypto-backend=openssl
+    DB_BACKEND: OFF
+  - CRYPTO_BACKEND: openssl
+    ADDITIONAL_CONFIGURE_OPTIONS: disable-eddsa disable-gost with-crypto-backend=openssl
+    DB_BACKEND: ON
+  - CRYPTO_BACKEND: botan
+    ADDITIONAL_CONFIGURE_OPTIONS: disable-eddsa disable-gost with-crypto-backend=botan
+    DB_BACKEND: OFF
 install:
+# Update vcpkg
+- cd c:\tools\vcpkg
+- cmd: git fetch
+- cmd: bootstrap-vcpkg.bat
+- cmd: vcpkg update
+- cmd: vcpkg upgrade --no-dry-run
 - cmd: vcpkg install sqlite3:x86-windows
+- cmd: vcpkg install openssl-windows:x86-windows
 - cmd: vcpkg install openssl-windows:x64-windows
 - cmd: vcpkg install botan:x86-windows
 - cmd: vcpkg install cppunit:x86-windows
-- cmd: vcpkg install getopt-win32:x86-windows
-build_script:
 - cmd: vcpkg integrate install
-- cmd: cmake -DCMAKE_TOOLCHAIN_FILE=C:/Tools/vcpkg/scripts/buildsystems/vcpkg.cmake -DWITH_CRYPTO_BACKEND=%CRYPTO_BACKEND% -DBUILD_TESTS=OFF -DDISABLE_NON_PAGED_MEMORY=ON -DENABLE_GOST=OFF .
-- cmd: msbuild softhsm2.sln /p:Configuration="Release" /p:Platform="Win32" /p:PlatformToolset=v140 /target:Build
+build_script:
+- cmd: if exist "C:\projects\softhsmv2\build" rmdir /s /q C:\projects\softhsmv2\build
+- cmd: mkdir C:\projects\softhsmv2\build
+- cmd: cmake -Bbuild -DCMAKE_TOOLCHAIN_FILE=C:\Tools\vcpkg\scripts\buildsystems\vcpkg.cmake -DWITH_OBJECTSTORE_BACKEND_DB=%DB_BACKEND% -DWITH_CRYPTO_BACKEND=%CRYPTO_BACKEND% -DBUILD_TESTS=ON -DDISABLE_NON_PAGED_MEMORY=ON -DENABLE_GOST=OFF
+- cmd: cmake -Bbuild --build . --config RelWithDebInfo
+- cmd: ctest -Bbuild -C RelWithDebInfo --progress --verbose
+- cmd: cmake -Bbuild -DCMAKE_INSTALL_PREFIX=build/SoftHSMv2-$(Platform) -DCMAKE_INSTALL_CONFIG_NAME=RelWithDebInfo -P cmake_install.cmake
 - cmd: IF "%ENV_PLATFORM%"=="x86" ( CD win32\Release ) ELSE ( CD win32\x64\Release)
-- cmd: cryptotest.exe
-- cmd: datamgrtest.exe
-- cmd: handlemgrtest.exe
-- cmd: objstoretest.exe
-- cmd: p11test.exe
-- cmd: sessionmgrtest.exe
-- cmd: slotmgrtest.exe
-test: off
+test: on
 artifacts:
 - path: build/SoftHSMv2-$(Platform)
   name: SoftHSMv2-$(PACKAGE_VERSION_NAME)-$(Platform)

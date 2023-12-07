@@ -180,6 +180,7 @@ protected:
 		CK_BYTE_PTR pExponent2, CK_ULONG ulExponent2Len,
 		CK_BYTE_PTR pCoefficient, CK_ULONG ulCoefficientLen
 	);
+	void checkToTrueAttributes(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject);
 
 	CK_RV createDataObjectMinimal(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_OBJECT_HANDLE &hObject);
 	CK_RV createDataObjectMCD(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_BBOOL bModifiable, CK_BBOOL bCopyable, CK_BBOOL bDestroyable, CK_OBJECT_HANDLE &hObject);

@@ -32,7 +32,11 @@
 
 #include <config.h>
 
+#ifndef _WIN32
 #include <sched.h>
+#else
+#define sched_yield SwitchToThread
+#endif
 #include <sqlite3.h>
 #include <string.h>
 

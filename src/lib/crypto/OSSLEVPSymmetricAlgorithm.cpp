@@ -505,9 +505,9 @@ bool OSSLEVPSymmetricAlgorithm::decryptFinal(ByteString& data)
 	data.resize(initialSize + getBlockSize());
 
 	int outLen = data.size() - initialSize;
-	int rv;
+	int rv = EVP_DecryptFinal(pCurCTX, &data[initialSize], &outLen);
 
-	if (!(rv = EVP_DecryptFinal(pCurCTX, &data[initialSize], &outLen)))
+	if (!rv)
 	{
 		ERROR_MSG("EVP_DecryptFinal failed (0x%08X): %s", rv, ERR_error_string(ERR_get_error(), NULL));
 

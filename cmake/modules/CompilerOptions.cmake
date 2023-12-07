@@ -1,3 +1,5 @@
+find_package(PkgConfig)
+
 include(CheckCXXCompilerFlag)
 include(CheckFunctionExists)
 include(CheckIncludeFiles)
@@ -117,6 +119,14 @@ else(DISABLE_NON_PAGED_MEMORY)
     endif(NOT "${MLOCK_SIZE}" STREQUAL "unlimited")
 endif(DISABLE_NON_PAGED_MEMORY)
 
+
+if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+	# disable 
+    # C4996 warning for deprecated posix function name
+    # C4456 declaration of 'identifier' hides previous local declaration
+	set(COMPILE_OPTIONS "/MP;/W4;/wd4996;/wd4456")
+endif()
+
 # Check if -ldl exists (equivalent of acx_dlopen.m4)
 check_library_exists(dl dlopen "" HAVE_DLOPEN)
 check_function_exists(LoadLibrary HAVE_LOADLIBRARY)
@@ -150,8 +160,8 @@ if(WITH_CRYPTO_BACKEND STREQUAL "botan")
         message(FATAL_ERROR "Failed to find Botan!")
     endif()
 
-    set(CRYPTO_INCLUDES ${BOTAN_INCLUDE_DIRS})
-    set(CRYPTO_LIBS ${BOTAN_LIBRARIES})
+    set(CRYPTO_INCLUDES ${BOTAN_INCLUDE_DIR})
+    set(CRYPTO_LIBS ${BOTAN_LIBRARY})
     message(STATUS "Botan: Includes: ${CRYPTO_INCLUDES}")
     message(STATUS "Botan: Libs: ${CRYPTO_LIBS}")
 
@@ -167,7 +177,7 @@ if(WITH_CRYPTO_BACKEND STREQUAL "botan")
 
     # acx_botan_ecc.m4
     if(ENABLE_ECC)
-        set(testfile ${CMAKE_SOURCE_DIR}/modules/tests/test_botan_ecc.cpp)
+        set(testfile ${CMAKE_SOURCE_DIR}/cmake/modules/tests/test_botan_ecc.cpp)
         try_run(RUN_ECC COMPILE_RESULT
                 "${CMAKE_BINARY_DIR}/prebuild_santity_tests" ${testfile}
                 LINK_LIBRARIES ${CRYPTO_LIBS}
@@ -188,7 +198,7 @@ if(WITH_CRYPTO_BACKEND STREQUAL "botan")
     # acx_botan_eddsa.m4
     if(ENABLE_EDDSA)
         # ED25519
-        set(testfile ${CMAKE_SOURCE_DIR}/modules/tests/test_botan_ed25519.cpp)
+        set(testfile ${CMAKE_SOURCE_DIR}/cmake/modules/tests/test_botan_ed25519.cpp)
         try_run(RUN_ED25519 COMPILE_RESULT
                 "${CMAKE_BINARY_DIR}/prebuild_santity_tests" ${testfile}
                 LINK_LIBRARIES ${CRYPTO_LIBS}
@@ -208,7 +218,7 @@ if(WITH_CRYPTO_BACKEND STREQUAL "botan")
 
     # acx_botan_gost.m4
     if(ENABLE_GOST)
-        set(testfile ${CMAKE_SOURCE_DIR}/modules/tests/test_botan_gost.cpp)
+        set(testfile ${CMAKE_SOURCE_DIR}/cmake/modules/tests/test_botan_gost.cpp)
         try_run(RUN_GOST COMPILE_RESULT
                 "${CMAKE_BINARY_DIR}/prebuild_santity_tests" ${testfile}
                 LINK_LIBRARIES ${CRYPTO_LIBS}
@@ -234,7 +244,7 @@ if(WITH_CRYPTO_BACKEND STREQUAL "botan")
     set(HAVE_AES_KEY_WRAP 1)
 
     # acx_botan_rfc5649.m4
-    set(testfile ${CMAKE_SOURCE_DIR}/modules/tests/test_botan_rfc5649.cpp)
+    set(testfile ${CMAKE_SOURCE_DIR}/cmake/modules/tests/test_botan_rfc5649.cpp)
     try_run(RUN_AES_KEY_WRAP_PAD COMPILE_RESULT
             "${CMAKE_BINARY_DIR}/prebuild_santity_tests" ${testfile}
             LINK_LIBRARIES ${CRYPTO_LIBS}
@@ -249,7 +259,7 @@ if(WITH_CRYPTO_BACKEND STREQUAL "botan")
     endif()
 
     # acx_botan_rawpss.m4
-    set(testfile ${CMAKE_SOURCE_DIR}/modules/tests/test_botan_rawpss.cpp)
+    set(testfile ${CMAKE_SOURCE_DIR}/cmake/modules/tests/test_botan_rawpss.cpp)
     try_run(RUN_RAWPSS COMPILE_RESULT
             "${CMAKE_BINARY_DIR}/prebuild_santity_tests" ${testfile}
             LINK_LIBRARIES ${CRYPTO_LIBS}
@@ -289,7 +299,7 @@ elseif(WITH_CRYPTO_BACKEND STREQUAL "openssl")
 
     # acx_openssl_ecc.m4
     if(ENABLE_ECC)
-        set(testfile ${CMAKE_SOURCE_DIR}/modules/tests/test_openssl_ecc.c)
+        set(testfile ${CMAKE_SOURCE_DIR}/cmake/modules/tests/test_openssl_ecc.c)
         try_run(RUN_ECC COMPILE_RESULT
                 "${CMAKE_BINARY_DIR}/prebuild_santity_tests" ${testfile}
                 LINK_LIBRARIES ${CRYPTO_LIBS}
@@ -310,7 +320,7 @@ elseif(WITH_CRYPTO_BACKEND STREQUAL "openssl")
     # acx_openssl_eddsa.m4
     if(ENABLE_EDDSA)
         # ED25519
-        set(testfile ${CMAKE_SOURCE_DIR}/modules/tests/test_openssl_ed25519.c)
+        set(testfile ${CMAKE_SOURCE_DIR}/cmake/modules/tests/test_openssl_ed25519.c)
         try_run(RUN_ED25519 COMPILE_RESULT
                 "${CMAKE_BINARY_DIR}/prebuild_santity_tests" ${testfile}
                 LINK_LIBRARIES ${CRYPTO_LIBS}
@@ -325,7 +335,7 @@ elseif(WITH_CRYPTO_BACKEND STREQUAL "openssl")
             message(FATAL_ERROR ${error_msg})
         endif()
         # ED448
-        set(testfile ${CMAKE_SOURCE_DIR}/modules/tests/test_openssl_ed448.c)
+        set(testfile ${CMAKE_SOURCE_DIR}/cmake/modules/tests/test_openssl_ed448.c)
         try_run(RUN_ED448 COMPILE_RESULT
                 "${CMAKE_BINARY_DIR}/prebuild_santity_tests" ${testfile}
                 LINK_LIBRARIES ${CRYPTO_LIBS}
@@ -344,7 +354,7 @@ elseif(WITH_CRYPTO_BACKEND STREQUAL "openssl")
 
     # acx_openssl_gost.m4
     if(ENABLE_GOST)
-        set(testfile ${CMAKE_SOURCE_DIR}/modules/tests/test_openssl_gost.c)
+        set(testfile ${CMAKE_SOURCE_DIR}/cmake/modules/tests/test_openssl_gost.c)
         try_run(RUN_GOST COMPILE_RESULT
                 "${CMAKE_BINARY_DIR}/prebuild_santity_tests" ${testfile}
                 LINK_LIBRARIES ${CRYPTO_LIBS}
@@ -364,7 +374,7 @@ elseif(WITH_CRYPTO_BACKEND STREQUAL "openssl")
 
     # acx_openssl_fips.m4
     if(ENABLE_FIPS)
-        set(testfile ${CMAKE_SOURCE_DIR}/modules/tests/test_openssl_fips.c)
+        set(testfile ${CMAKE_SOURCE_DIR}/cmake/modules/tests/test_openssl_fips.c)
         try_run(RUN_FIPS COMPILE_RESULT
                 "${CMAKE_BINARY_DIR}/prebuild_santity_tests" ${testfile}
                 LINK_LIBRARIES ${CRYPTO_LIBS}
@@ -383,7 +393,7 @@ elseif(WITH_CRYPTO_BACKEND STREQUAL "openssl")
     endif(ENABLE_FIPS)
 
     # acx_openssl_rfc3349
-    set(testfile ${CMAKE_SOURCE_DIR}/modules/tests/test_openssl_rfc3394.c)
+    set(testfile ${CMAKE_SOURCE_DIR}/cmake/modules/tests/test_openssl_rfc3394.c)
     try_run(RUN_AES_KEY_WRAP COMPILE_RESULT
             "${CMAKE_BINARY_DIR}/prebuild_santity_tests" ${testfile}
             LINK_LIBRARIES ${CRYPTO_LIBS}
@@ -398,7 +408,7 @@ elseif(WITH_CRYPTO_BACKEND STREQUAL "openssl")
     endif()
 
     # acx_openssl_rfc5649
-    set(testfile ${CMAKE_SOURCE_DIR}/modules/tests/test_openssl_rfc5649.c)
+    set(testfile ${CMAKE_SOURCE_DIR}/cmake/modules/tests/test_openssl_rfc5649.c)
     try_run(RUN_AES_KEY_WRAP_PAD COMPILE_RESULT
             "${CMAKE_BINARY_DIR}/prebuild_santity_tests" ${testfile}
             LINK_LIBRARIES ${CRYPTO_LIBS}
@@ -435,10 +445,6 @@ if(WITH_SQLITE3)
 
     check_include_files(sqlite3.h HAVE_SQLITE3_H)
     check_library_exists(sqlite3 sqlite3_prepare_v2 "" HAVE_LIBSQLITE3)
-    find_program(SQLITE3_COMMAND NAMES sqlite3)
-    if(SQLITE3_COMMAND MATCHES "-NOTFOUND")
-        message(FATAL_ERROR "SQLite3: Command was not found")
-    endif(SQLITE3_COMMAND MATCHES "-NOTFOUND")
 else(WITH_SQLITE3)
     message(STATUS "Not including SQLite3 in build")
 endif(WITH_SQLITE3)
@@ -476,7 +482,7 @@ endif(ENABLE_P11_KIT)
 
 if(BUILD_TESTS)
     # Find CppUnit (equivalent of acx_cppunit.m4)
-    set(CppUnit_FIND_QUIETLY ON)
+    set(CppUnit_FIND_QUIETLY OFF)
     include(FindCppUnit)
     if(NOT CPPUNIT_FOUND)
         message(FATAL_ERROR "Failed to find CppUnit!")
@@ -484,6 +490,7 @@ if(BUILD_TESTS)
 
     set(CPPUNIT_INCLUDES ${CPPUNIT_INCLUDE_DIR})
     set(CPPUNIT_LIBS ${CPPUNIT_LIBRARY})
+    set(CPPUNIT_LIBRARIES ${CPPUNIT_LIBRARIES})
     message(STATUS "CppUnit: Includes: ${CPPUNIT_INCLUDES}")
     message(STATUS "CppUnit: Libs: ${CPPUNIT_LIBS}")
 else(BUILD_TESTS)
