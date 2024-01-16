@@ -7856,25 +7856,18 @@ CK_RV SoftHSM::generateAES
 
 			// Common Attributes
 			bOK = bOK && osobject->setAttribute(CKA_LOCAL,true);
-			DEBUG_MSG("bOK CKA_LOCAL: %d", bOK);
 			CK_ULONG ulKeyGenMechanism = (CK_ULONG)CKM_AES_KEY_GEN;
 			bOK = bOK && osobject->setAttribute(CKA_KEY_GEN_MECHANISM,ulKeyGenMechanism);
-			DEBUG_MSG("bOK CKA_KEY_GEN_MECHANISM: %d", bOK);
 
 			// Common Secret Key Attributes
 			bool bAlwaysSensitive = osobject->getBooleanValue(CKA_SENSITIVE, false);
 			bOK = bOK && osobject->setAttribute(CKA_ALWAYS_SENSITIVE,bAlwaysSensitive);
 			bool bNeverExtractable = osobject->getBooleanValue(CKA_EXTRACTABLE, false) == false;
 			bOK = bOK && osobject->setAttribute(CKA_NEVER_EXTRACTABLE, bNeverExtractable);
-			DEBUG_MSG("bOK CKA_NEVER_EXTRACTABLE: %d", bOK);
 
 			// AES Secret Key Attributes
 			ByteString value;
 			ByteString kcv;
-			DEBUG_MSG("isPrivate: %d", isPrivate);
-			DEBUG_MSG("checkValue: %d", checkValue);
-			DEBUG_MSG("key->getKeyBits(): %s", key->getKeyBits().hex_str().c_str());
-			DEBUG_MSG("key->getKeyCheckValue(): %s", key->getKeyCheckValue().hex_str().c_str());
 			if (isPrivate)
 			{
 				token->encrypt(key->getKeyBits(), value);
@@ -8036,7 +8029,6 @@ CK_RV SoftHSM::generateDES
 			// Common Secret Key Attributes
 			bool bAlwaysSensitive = osobject->getBooleanValue(CKA_SENSITIVE, false);
 			bOK = bOK && osobject->setAttribute(CKA_ALWAYS_SENSITIVE,bAlwaysSensitive);
-			DEBUG_MSG("bOK CKA_ALWAYS_SENSITIVE: %d", bOK);
 			bool bNeverExtractable = osobject->getBooleanValue(CKA_EXTRACTABLE, false) == false;
 			bOK = bOK && osobject->setAttribute(CKA_NEVER_EXTRACTABLE, bNeverExtractable);
 
@@ -8054,10 +8046,6 @@ CK_RV SoftHSM::generateDES
 				kcv = key->getKeyCheckValue();
 			}
 			bOK = bOK && osobject->setAttribute(CKA_VALUE, value);
-
-			DEBUG_MSG("bOK CKA_VALUE: %d", bOK);
-			DEBUG_MSG("value: %s", value.hex_str().c_str());
-			DEBUG_MSG("kcv: %s", kcv.hex_str().c_str());
 
 			if (checkValue)
 				bOK = bOK && osobject->setAttribute(CKA_CHECK_VALUE, kcv);

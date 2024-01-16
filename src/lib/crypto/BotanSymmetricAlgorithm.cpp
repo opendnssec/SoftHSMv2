@@ -154,7 +154,6 @@ bool BotanSymmetricAlgorithm::encryptInit(const SymmetricKey* key, const SymMode
 
 	// Determine the cipher
 	std::string cipherName = getCipher();
-	DEBUG_MSG("cipherName: %s", cipherName.c_str());
 
 	if (cipherName == "")
 	{
