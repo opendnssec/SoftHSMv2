@@ -41,7 +41,9 @@ class AESTests : public CppUnit::TestFixture
 	CPPUNIT_TEST_SUITE(AESTests);
 	CPPUNIT_TEST(testBlockSize);
 	CPPUNIT_TEST(testCBC);
+	#ifndef WITH_BOTAN
 	CPPUNIT_TEST(testECB);
+	#endif
 	CPPUNIT_TEST(testCTR);
 	CPPUNIT_TEST(testGCM);
 #ifdef HAVE_AES_KEY_WRAP

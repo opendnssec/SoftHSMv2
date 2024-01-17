@@ -597,7 +597,7 @@ CK_RV SoftHSM::C_Initialize(CK_VOID_PTR pInitArgs)
 	}
 
 	// Load the enabled list of algorithms
-	prepareSupportedMecahnisms(mechanisms_table);
+	prepareSupportedMechanisms(mechanisms_table);
 
 	isRemovable = Configuration::i()->getBool("slots.removable", false);
 
@@ -720,7 +720,7 @@ CK_RV SoftHSM::C_GetTokenInfo(CK_SLOT_ID slotID, CK_TOKEN_INFO_PTR pInfo)
 	return token->getTokenInfo(pInfo);
 }
 
-void SoftHSM::prepareSupportedMecahnisms(std::map<std::string, CK_MECHANISM_TYPE> &t)
+void SoftHSM::prepareSupportedMechanisms(std::map<std::string, CK_MECHANISM_TYPE> &t)
 {
 #ifndef WITH_FIPS
 	t["CKM_MD5"]			= CKM_MD5;
@@ -765,20 +765,30 @@ void SoftHSM::prepareSupportedMecahnisms(std::map<std::string, CK_MECHANISM_TYPE
 	t["CKM_DES2_KEY_GEN"]		= CKM_DES2_KEY_GEN;
 	t["CKM_DES3_KEY_GEN"]		= CKM_DES3_KEY_GEN;
 #ifndef WITH_FIPS
+#ifndef WITH_BOTAN
 	t["CKM_DES_ECB"]		= CKM_DES_ECB;
+#endif
 	t["CKM_DES_CBC"]		= CKM_DES_CBC;
 	t["CKM_DES_CBC_PAD"]		= CKM_DES_CBC_PAD;
+#ifndef WITH_BOTAN
 	t["CKM_DES_ECB_ENCRYPT_DATA"]	= CKM_DES_ECB_ENCRYPT_DATA;
+#endif
 	t["CKM_DES_CBC_ENCRYPT_DATA"]	= CKM_DES_CBC_ENCRYPT_DATA;
 #endif
+#ifndef WITH_BOTAN
 	t["CKM_DES3_ECB"]		= CKM_DES3_ECB;
+#endif
 	t["CKM_DES3_CBC"]		= CKM_DES3_CBC;
 	t["CKM_DES3_CBC_PAD"]		= CKM_DES3_CBC_PAD;
+#ifndef WITH_BOTAN
 	t["CKM_DES3_ECB_ENCRYPT_DATA"]	= CKM_DES3_ECB_ENCRYPT_DATA;
+#endif
 	t["CKM_DES3_CBC_ENCRYPT_DATA"]	= CKM_DES3_CBC_ENCRYPT_DATA;
 	t["CKM_DES3_CMAC"]		= CKM_DES3_CMAC;
 	t["CKM_AES_KEY_GEN"]		= CKM_AES_KEY_GEN;
+#ifndef WITH_BOTAN
 	t["CKM_AES_ECB"]		= CKM_AES_ECB;
+#endif
 	t["CKM_AES_CBC"]		= CKM_AES_CBC;
 	t["CKM_AES_CBC_PAD"]		= CKM_AES_CBC_PAD;
 	t["CKM_AES_CTR"]		= CKM_AES_CTR;
@@ -787,7 +797,9 @@ void SoftHSM::prepareSupportedMecahnisms(std::map<std::string, CK_MECHANISM_TYPE
 #ifdef HAVE_AES_KEY_WRAP_PAD
 	t["CKM_AES_KEY_WRAP_PAD"]	= CKM_AES_KEY_WRAP_PAD;
 #endif
+#ifndef WITH_BOTAN
 	t["CKM_AES_ECB_ENCRYPT_DATA"]	= CKM_AES_ECB_ENCRYPT_DATA;
+#endif
 	t["CKM_AES_CBC_ENCRYPT_DATA"]	= CKM_AES_CBC_ENCRYPT_DATA;
 	t["CKM_AES_CMAC"]		= CKM_AES_CMAC;
 	t["CKM_DSA_PARAMETER_GEN"]	= CKM_DSA_PARAMETER_GEN;
@@ -1130,20 +1142,24 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 			pInfo->flags = CKF_WRAP | CKF_UNWRAP;
 			/* FALLTHROUGH */
 #ifndef WITH_FIPS
+#ifndef WITH_BOTAN
 		case CKM_DES_ECB:
 			/* FALLTHROUGH */
+#endif
 		case CKM_DES_CBC:
 			/* FALLTHROUGH */
 #endif
 		case CKM_DES3_CBC:
 			pInfo->flags |= CKF_WRAP;
 			/* FALLTHROUGH */
+#ifndef WITH_BOTAN
 		case CKM_DES3_ECB:
 			// Key size is not in use
 			pInfo->ulMinKeySize = 0;
 			pInfo->ulMaxKeySize = 0;
 			pInfo->flags |= CKF_ENCRYPT | CKF_DECRYPT;
 			break;
+#endif
 		case CKM_DES3_CMAC:
 			// Key size is not in use
 			pInfo->ulMinKeySize = 0;
@@ -1160,7 +1176,9 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 			/* FALLTHROUGH */
 		case CKM_AES_CBC:
 			pInfo->flags |= CKF_WRAP;
+#ifndef WITH_BOTAN
 		case CKM_AES_ECB:
+#endif
 		case CKM_AES_CTR:
 		case CKM_AES_GCM:
 			pInfo->ulMinKeySize = 16;
@@ -1180,12 +1198,18 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 			break;
 #endif
 #ifndef WITH_FIPS
+#ifndef WITH_BOTAN
 		case CKM_DES_ECB_ENCRYPT_DATA:
+#endif
 		case CKM_DES_CBC_ENCRYPT_DATA:
 #endif
+#ifndef WITH_BOTAN
 		case CKM_DES3_ECB_ENCRYPT_DATA:
+#endif
 		case CKM_DES3_CBC_ENCRYPT_DATA:
+#ifndef WITH_BOTAN
 		case CKM_AES_ECB_ENCRYPT_DATA:
+#endif
 		case CKM_AES_CBC_ENCRYPT_DATA:
 			// Key size is not in use
 			pInfo->ulMinKeySize = 0;
@@ -2203,6 +2227,7 @@ CK_RV SoftHSM::SymEncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 	size_t tagBytes = 0;
 	switch(pMechanism->mechanism) {
 #ifndef WITH_FIPS
+#ifndef WITH_BOTAN
 		case CKM_DES_ECB:
 			if (keyType != CKK_DES)
 				return CKR_KEY_TYPE_INCONSISTENT;
@@ -2210,6 +2235,7 @@ CK_RV SoftHSM::SymEncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 			mode = SymMode::ECB;
 			bb = 7;
 			break;
+#endif
 		case CKM_DES_CBC:
 			if (keyType != CKK_DES)
 				return CKR_KEY_TYPE_INCONSISTENT;
@@ -2242,6 +2268,7 @@ CK_RV SoftHSM::SymEncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 			bb = 7;
 			break;
 #endif
+#ifndef WITH_BOTAN
 		case CKM_DES3_ECB:
 			if (keyType != CKK_DES2 && keyType != CKK_DES3)
 				return CKR_KEY_TYPE_INCONSISTENT;
@@ -2249,6 +2276,7 @@ CK_RV SoftHSM::SymEncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 			mode = SymMode::ECB;
 			bb = 7;
 			break;
+#endif
 		case CKM_DES3_CBC:
 			if (keyType != CKK_DES2 && keyType != CKK_DES3)
 				return CKR_KEY_TYPE_INCONSISTENT;
@@ -2280,12 +2308,14 @@ CK_RV SoftHSM::SymEncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 			memcpy(&iv[0], pMechanism->pParameter, pMechanism->ulParameterLen);
 			bb = 7;
 			break;
+#ifndef WITH_BOTAN
 		case CKM_AES_ECB:
 			if (keyType != CKK_AES)
 				return CKR_KEY_TYPE_INCONSISTENT;
 			algo = SymAlgo::AES;
 			mode = SymMode::ECB;
 			break;
+#endif
 		case CKM_AES_CBC:
 			if (keyType != CKK_AES)
 				return CKR_KEY_TYPE_INCONSISTENT;
@@ -2933,6 +2963,7 @@ CK_RV SoftHSM::SymDecryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 	size_t tagBytes = 0;
 	switch(pMechanism->mechanism) {
 #ifndef WITH_FIPS
+#ifndef WITH_BOTAN
 		case CKM_DES_ECB:
 			if (keyType != CKK_DES)
 				return CKR_KEY_TYPE_INCONSISTENT;
@@ -2940,6 +2971,7 @@ CK_RV SoftHSM::SymDecryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 			mode = SymMode::ECB;
 			bb = 7;
 			break;
+#endif
 		case CKM_DES_CBC:
 			if (keyType != CKK_DES)
 				return CKR_KEY_TYPE_INCONSISTENT;
@@ -2972,6 +3004,7 @@ CK_RV SoftHSM::SymDecryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 			bb = 7;
 			break;
 #endif
+#ifndef WITH_BOTAN
 		case CKM_DES3_ECB:
 			if (keyType != CKK_DES2 && keyType != CKK_DES3)
 				return CKR_KEY_TYPE_INCONSISTENT;
@@ -2979,6 +3012,7 @@ CK_RV SoftHSM::SymDecryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 			mode = SymMode::ECB;
 			bb = 7;
 			break;
+#endif
 		case CKM_DES3_CBC:
 			if (keyType != CKK_DES2 && keyType != CKK_DES3)
 				return CKR_KEY_TYPE_INCONSISTENT;
@@ -3010,12 +3044,14 @@ CK_RV SoftHSM::SymDecryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 			memcpy(&iv[0], pMechanism->pParameter, pMechanism->ulParameterLen);
 			bb = 7;
 			break;
+#ifndef WITH_BOTAN
 		case CKM_AES_ECB:
 			if (keyType != CKK_AES)
 				return CKR_KEY_TYPE_INCONSISTENT;
 			algo = SymAlgo::AES;
 			mode = SymMode::ECB;
 			break;
+#endif
 		case CKM_AES_CBC:
 			if (keyType != CKK_AES)
 				return CKR_KEY_TYPE_INCONSISTENT;
@@ -7257,12 +7293,18 @@ CK_RV SoftHSM::C_DeriveKey
 		case CKM_ECDH1_DERIVE:
 #endif
 #ifndef WITH_FIPS
+#ifndef WITH_BOTAN
 		case CKM_DES_ECB_ENCRYPT_DATA:
+#endif
 		case CKM_DES_CBC_ENCRYPT_DATA:
 #endif
+#ifndef WITH_BOTAN
 		case CKM_DES3_ECB_ENCRYPT_DATA:
+#endif
 		case CKM_DES3_CBC_ENCRYPT_DATA:
+#ifndef WITH_BOTAN
 		case CKM_AES_ECB_ENCRYPT_DATA:
+#endif
 		case CKM_AES_CBC_ENCRYPT_DATA:
 		case CKM_CONCATENATE_DATA_AND_BASE:
 		case CKM_CONCATENATE_BASE_AND_DATA:
@@ -8004,6 +8046,7 @@ CK_RV SoftHSM::generateDES
 				kcv = key->getKeyCheckValue();
 			}
 			bOK = bOK && osobject->setAttribute(CKA_VALUE, value);
+
 			if (checkValue)
 				bOK = bOK && osobject->setAttribute(CKA_CHECK_VALUE, kcv);
 
@@ -11547,11 +11590,13 @@ CK_RV SoftHSM::deriveSymmetric
 	size_t bb = 8;
 	switch(pMechanism->mechanism) {
 #ifndef WITH_FIPS
+#ifndef WITH_BOTAN
 		case CKM_DES_ECB_ENCRYPT_DATA:
 			algo = SymAlgo::DES;
 			mode = SymMode::ECB;
 			bb = 7;
 			break;
+#endif
 		case CKM_DES_CBC_ENCRYPT_DATA:
 			algo = SymAlgo::DES;
 			mode = SymMode::CBC;
@@ -11562,11 +11607,13 @@ CK_RV SoftHSM::deriveSymmetric
 			       8);
 			break;
 #endif
+#ifndef WITH_BOTAN
 		case CKM_DES3_ECB_ENCRYPT_DATA:
 			algo = SymAlgo::DES3;
 			mode = SymMode::ECB;
 			bb = 7;
 			break;
+#endif
 		case CKM_DES3_CBC_ENCRYPT_DATA:
 			algo = SymAlgo::DES3;
 			mode = SymMode::CBC;
@@ -11576,10 +11623,12 @@ CK_RV SoftHSM::deriveSymmetric
 			       &(CK_DES_CBC_ENCRYPT_DATA_PARAMS_PTR(pMechanism->pParameter)->iv[0]),
 			       8);
 			break;
+#ifndef WITH_BOTAN
 		case CKM_AES_ECB_ENCRYPT_DATA:
 			algo = SymAlgo::AES;
 			mode = SymMode::ECB;
 			break;
+#endif
 		case CKM_AES_CBC_ENCRYPT_DATA:
 			algo = SymAlgo::AES;
 			mode = SymMode::CBC;
