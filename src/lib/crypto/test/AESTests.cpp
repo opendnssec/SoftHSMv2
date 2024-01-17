@@ -328,7 +328,6 @@ void AESTests::testCBC()
 	}
 }
 
-#ifndef WITH_BOTAN
 void AESTests::testECB()
 {
 	char testKeys128[][33] =
@@ -594,7 +593,6 @@ void AESTests::testECB()
 		}
 	}
 }
-#endif
 
 void AESTests::testCTR()
 {

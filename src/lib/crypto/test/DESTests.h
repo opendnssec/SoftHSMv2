@@ -41,7 +41,9 @@ class DESTests : public CppUnit::TestFixture
 	CPPUNIT_TEST_SUITE(DESTests);
 	CPPUNIT_TEST(testBlockSize);
 	CPPUNIT_TEST(testCBC);
+	#ifndef WITH_BOTAN
 	CPPUNIT_TEST(testECB);
+	#endif
 	CPPUNIT_TEST(testOFB);
 	CPPUNIT_TEST(testCFB);
 	CPPUNIT_TEST_SUITE_END();
