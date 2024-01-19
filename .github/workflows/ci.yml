@@ -50,7 +50,7 @@ jobs:
           arch: ${{ matrix.arch }}
       - name: Create vcpkg.json
         run: >
-          echo '{ "dependencies": [ "openssl", "botan" ],
+          echo '{ "dependencies": [ "openssl", "botan", "cppunit" ],
                   "overrides": [ { "name": "openssl", "version-string": "1.1.1n" },
                                  { "name": "botan",   "version-string": "2.19.3" } ],
                   "builtin-baseline": "38d1652f152d36481f2f4e8a85c0f1e14f3769f7" }' > vcpkg.json
@@ -63,5 +63,10 @@ jobs:
       - name: Build
         run: |
           mkdir build
-          cmake -B build ${{ steps.vcpkg.outputs.vcpkg-cmake-config }} -A ${{ matrix.target-platform }} -DWITH_CRYPTO_BACKEND=${{ matrix.backend }} -DDISABLE_NON_PAGED_MEMORY=ON
+          cmake -B build ${{ steps.vcpkg.outputs.vcpkg-cmake-config }} -A ${{ matrix.target-platform }} -DWITH_CRYPTO_BACKEND=${{ matrix.backend }} -DDISABLE_NON_PAGED_MEMORY=ON -DBUILD_TESTS=ON
           cmake --build build
+      - name: Test
+        env:
+          CTEST_OUTPUT_ON_FAILURE: 1
+        run: |
+          cmake --build build --target RUN_TESTS
