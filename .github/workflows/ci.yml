@@ -27,6 +27,31 @@ jobs:
         run: |
           make check || (find . -name test-suite.log -exec cat {} \; && false)
 
+  macos:
+    name: macOS (${{ matrix.backend }})
+    runs-on: macos-12
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - backend: openssl
+            extra-options: --with-openssl=$(brew --prefix openssl@1.1)
+          - backend: botan
+            extra-options: --with-botan=$(brew --prefix botan@2)
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prepare
+        run: |
+          brew install automake cppunit botan@2
+      - name: Build
+        run: |
+          ./autogen.sh
+          ./configure --with-crypto-backend=${{ matrix.backend }} ${{ matrix.extra-options }}
+          make
+      - name: Test
+        run: |
+          make check || (find . -name test-suite.log -exec cat {} \; && false)
+
   windows:
     name: Windows (${{ matrix.arch }}, ${{ matrix.backend }})
     runs-on: windows-2022
