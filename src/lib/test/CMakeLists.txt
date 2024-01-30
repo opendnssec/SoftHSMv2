@@ -32,10 +32,12 @@ set(SOURCES p11test.cpp
 add_executable(${PROJECT_NAME} ${SOURCES})
 			
 if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-    list(APPEND SOURCES ${PROJECT_SOURCE_DIR}/../win32/setenv.cpp ${PROJECT_SOURCE_DIR}/../win32/syslog.cpp)
+    target_sources(${PROJECT_NAME} PRIVATE
+                   ${PROJECT_SOURCE_DIR}/../win32/setenv.cpp
+                   ${PROJECT_SOURCE_DIR}/../win32/syslog.cpp)
     list(APPEND COMPILE_OPTIONS "/DCRYPTOKI_STATIC")
 else()
-    list(APPEND SOURCES "ForkTests.cpp")
+    target_sources(${PROJECT_NAME} PRIVATE "ForkTests.cpp")
     set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS -pthread)
 endif()
 
@@ -43,7 +45,6 @@ include_directories(${INCLUDE_DIRS})
 
 
 target_link_libraries(${PROJECT_NAME} softhsm2-static ${SQLITE3_LIBS} ${CPPUNIT_LIBRARIES})
-set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS -pthread)
 
 target_compile_options(${PROJECT_NAME} PRIVATE ${COMPILE_OPTIONS})
 
