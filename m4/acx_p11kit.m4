@@ -1,6 +1,6 @@
 AC_DEFUN([ACX_P11KIT],[
 	AC_ARG_ENABLE([p11-kit],
-		AC_HELP_STRING([--enable-p11-kit],
+		AS_HELP_STRING([--enable-p11-kit],
 			[Enable p11-kit integration (default enabled)]
 		),
 		[enable_p11kit="${enableval}"],
@@ -8,7 +8,7 @@ AC_DEFUN([ACX_P11KIT],[
 	)
 
 	AC_ARG_WITH(p11-kit,
-		AC_HELP_STRING([--with-p11-kit=PATH],[Specify install path of the p11-kit module, will override path given by pkg-config]),
+		AS_HELP_STRING([--with-p11-kit=PATH],[Specify install path of the p11-kit module, will override path given by pkg-config]),
 		[P11KIT_PATH="$withval"],
 		[P11KIT_PATH=""]
 	)

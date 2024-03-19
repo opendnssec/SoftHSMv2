@@ -1,6 +1,6 @@
 AC_DEFUN([ACX_OPENSSL],[
 	AC_ARG_WITH(openssl,
-        	AC_HELP_STRING([--with-openssl=PATH],[Specify prefix of path of OpenSSL]),
+		AS_HELP_STRING([--with-openssl=PATH],[Specify prefix of path of OpenSSL]),
 		[
 			OPENSSL_INCLUDES="-I$withval/include"
 			OPENSSL_LIBDIRS="-L$withval/lib"

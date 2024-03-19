@@ -67,7 +67,7 @@ ACX_NON_PAGED_MEMORY
 # If the user want to have the migration tool
 # Requires SQLite3
 AC_ARG_WITH(migrate,
-	AC_HELP_STRING([--with-migrate],
+	AS_HELP_STRING([--with-migrate],
 		[Build the migration tool. Requires SQLite3.]
 	),
 	[build_migrate="${withval}"],
@@ -84,7 +84,7 @@ AM_CONDITIONAL([BUILD_MIGRATE], [test "x${build_migrate}" = "xyes"])
 
 # If the user wants to have the database storage backend
 AC_ARG_WITH([objectstore-backend-db],
-	AC_HELP_STRING([--with-objectstore-backend-db],
+	AS_HELP_STRING([--with-objectstore-backend-db],
 		[Build with object store backend database (SQLite3).]
 	),
 	[build_objectstore_backend_db="${withval}"],
