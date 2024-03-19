@@ -194,7 +194,7 @@ AC_SUBST([default_softhsm2_lib])
 
 # Generate the libtool script and install script
 AC_PROG_INSTALL
-AC_PROG_LIBTOOL
+LT_INIT
 
 # Generate the makefiles
 AC_CONFIG_FILES([
