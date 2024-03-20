@@ -1,7 +1,7 @@
 AC_DEFUN([ACX_NON_PAGED_MEMORY],[
 
 	AC_ARG_ENABLE(non-paged-memory,
-		AC_HELP_STRING([--disable-non-paged-memory],
+		AS_HELP_STRING([--disable-non-paged-memory],
 			[Disable non-paged memory for secure storage (default enabled)]
 		),
 		[enable_non_paged_memory="${enableval}"],

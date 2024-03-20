@@ -3,7 +3,7 @@ AC_DEFUN([ACX_CRYPTO_BACKEND],[
 	# First check if we want to support ECC and GOST
 
 	AC_ARG_ENABLE(ecc,
-		AC_HELP_STRING([--enable-ecc],
+		AS_HELP_STRING([--enable-ecc],
 			[Enable support for ECC (default detect)]
 		),
 		[enable_ecc="${enableval}"],
@@ -11,7 +11,7 @@ AC_DEFUN([ACX_CRYPTO_BACKEND],[
 	)
 
 	AC_ARG_ENABLE(gost,
-		AC_HELP_STRING([--enable-gost],
+		AS_HELP_STRING([--enable-gost],
 			[Enable support for GOST (default detect)]
 		),
 		[enable_gost="${enableval}"],
@@ -21,7 +21,7 @@ AC_DEFUN([ACX_CRYPTO_BACKEND],[
 	# Add Eddsa check
 
 	AC_ARG_ENABLE(eddsa,
-		AC_HELP_STRING([--enable-eddsa],
+		AS_HELP_STRING([--enable-eddsa],
 			[Enable support for EDDSA (default detect)]
 		),
 		[enable_eddsa="${enableval}"],
@@ -31,7 +31,7 @@ AC_DEFUN([ACX_CRYPTO_BACKEND],[
 	# Second check for the FIPS 140-2 mode
 
 	AC_ARG_ENABLE(fips,
-		AC_HELP_STRING([--enable-fips],
+		AS_HELP_STRING([--enable-fips],
 			[Enable support for FIPS 140-2 mode (default disabled)]
 		),
 		[enable_fips="${enableval}"],
@@ -52,7 +52,7 @@ AC_DEFUN([ACX_CRYPTO_BACKEND],[
 	# Then check what crypto library we want to use
 
 	AC_ARG_WITH(crypto-backend,
-		AC_HELP_STRING([--with-crypto-backend],
+		AS_HELP_STRING([--with-crypto-backend],
 			[Select crypto backend (openssl|botan)]
 		),
 		[crypto_backend="${withval}"],
