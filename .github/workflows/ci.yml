@@ -62,7 +62,7 @@ jobs:
       - name: Prepare
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y libcppunit-dev libssl-dev p11-kit
+          sudo apt-get install -y libcppunit-dev libssl-dev p11-kit pkcs11-provider
       - name: Build
         # Once all OpenSSL deprecations fixed, uncomment this
         # env:
