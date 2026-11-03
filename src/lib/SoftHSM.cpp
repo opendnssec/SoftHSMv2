@@ -8812,7 +8812,7 @@ CK_RV SoftHSM::C_WaitForSlotEvent(CK_FLAGS flags, CK_SLOT_ID_PTR /*pSlot*/, CK_V
 }
 
 #ifdef WITH_ML_KEM
-// Wrap the specified key using the specified wrapping key and mechanism
+// Encapsulate a shared secret and create a secret-key object.
 CK_RV SoftHSM::C_EncapsulateKey
 	(
         CK_SESSION_HANDLE    hSession,        /* the session's handle */
@@ -8829,6 +8829,8 @@ CK_RV SoftHSM::C_EncapsulateKey
 
 	if (pMechanism == NULL_PTR) return CKR_ARGUMENTS_BAD;
 	if (hPublicKey == NULL_PTR) return CKR_ARGUMENTS_BAD;
+	if (pTemplate == NULL_PTR && ulAttributeCount != 0) return CKR_ARGUMENTS_BAD;
+	if (pulCipherTextLen == NULL_PTR) return CKR_ARGUMENTS_BAD;
 	if (phKey == NULL_PTR) return CKR_ARGUMENTS_BAD;
 
 	*phKey = CK_INVALID_HANDLE;
@@ -8906,13 +8908,20 @@ CK_RV SoftHSM::C_EncapsulateKey
 	// Check the mechanism, only accept advanced ML-KEM
 	switch(pMechanism->mechanism)
 	{
+#ifdef WITH_ML_KEM
 		case CKM_ML_KEM:
+			if (encapsulationKey->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED) != CKK_ML_KEM)
+				return CKR_KEY_TYPE_INCONSISTENT;
 			algo = AsymAlgo::MLKEM;
 			mech = AsymMech::MLKEM;
 			break;
+#endif
 		default:
 			return CKR_MECHANISM_INVALID;
 	}
+
+	if (pMechanism->pParameter != NULL_PTR || pMechanism->ulParameterLen != 0)
+		return CKR_MECHANISM_PARAM_INVALID;
 
 	ByteString cipherText;
 	ByteString secretKey;
@@ -8922,7 +8931,20 @@ CK_RV SoftHSM::C_EncapsulateKey
 
 	PublicKey* publicKey = cipher->newPublicKey();
 
-	if (MLKEMUtil::getMLKEMPublicKey((MLKEMPublicKey*)publicKey, token, encapsulationKey) != CKR_OK)
+#ifdef WITH_ML_KEM
+	if (algo == AsymAlgo::MLKEM)
+	{
+		if (MLKEMUtil::getMLKEMPublicKey((MLKEMPublicKey*)publicKey, token, encapsulationKey) != CKR_OK)
+		{
+			cipher->recyclePublicKey(publicKey);
+			CryptoFactory::i()->recycleAsymmetricAlgorithm(cipher);
+			return CKR_GENERAL_ERROR;
+		}
+	}
+#endif
+
+	unsigned long ctLen = publicKey->getOutputLength();
+	if (ctLen == 0)
 	{
 		cipher->recyclePublicKey(publicKey);
 		CryptoFactory::i()->recycleAsymmetricAlgorithm(cipher);
@@ -8931,12 +8953,17 @@ CK_RV SoftHSM::C_EncapsulateKey
 
 	if (pCipherText == NULL_PTR)
 	{
-		unsigned long ctLen = ((MLKEMPublicKey*)publicKey)->getOutputLength();
 		cipher->recyclePublicKey(publicKey);
 		CryptoFactory::i()->recycleAsymmetricAlgorithm(cipher);
-		if (ctLen == 0) return CKR_GENERAL_ERROR;
 		*pulCipherTextLen = ctLen;
 		return CKR_OK;
+	}
+	if (*pulCipherTextLen < ctLen)
+	{
+		cipher->recyclePublicKey(publicKey);
+		CryptoFactory::i()->recycleAsymmetricAlgorithm(cipher);
+		*pulCipherTextLen = ctLen;
+		return CKR_BUFFER_TOO_SMALL;
 	}
 
 	SymmetricKey *secret = NULL;
@@ -8972,7 +8999,8 @@ CK_RV SoftHSM::C_EncapsulateKey
 			}
 		}
 
-		rv = this->CreateObject(hSession, secretAttribs, secretAttribsCount, phKey, OBJECT_OP_DERIVE);
+		if (rv == CKR_OK)
+			rv = this->CreateObject(hSession, secretAttribs, secretAttribsCount, phKey, OBJECT_OP_DERIVE);
 
 		// Store the attributes that are being supplied
 		if (rv == CKR_OK)
@@ -9039,18 +9067,18 @@ CK_RV SoftHSM::C_EncapsulateKey
 					ByteString plainKCV;
 					ByteString kcv;
 
-					// Truncate value when requested, remove from the leading end
+					// Truncate value when requested, remove from the trailing end
 					if (byteLen < secretValue.size())
 						secretValue.resize(byteLen);
+					secret->setBitLen(byteLen * 8);
+					bOK = bOK && secret->setKeyBits(secretValue);
 					// Get the KCV
 					switch (keyType)
 					{
 						case CKK_GENERIC_SECRET:
-							secret->setBitLen(byteLen * 8);
 							plainKCV = secret->getKeyCheckValue();
 							break;
 						case CKK_AES:
-							secret->setBitLen(byteLen * 8);
 							plainKCV = ((AESKey*)secret)->getKeyCheckValue();
 							break;
 						default:
@@ -9060,8 +9088,8 @@ CK_RV SoftHSM::C_EncapsulateKey
 
 					if (isPrivate)
 					{
-						token->encrypt(secretValue, value);
-						token->encrypt(plainKCV, kcv);
+						bOK = bOK && token->encrypt(secretValue, value);
+						bOK = bOK && token->encrypt(plainKCV, kcv);
 					}
 					else
 					{
@@ -9069,6 +9097,7 @@ CK_RV SoftHSM::C_EncapsulateKey
 						kcv = plainKCV;
 					}
 					bOK = bOK && osobject->setAttribute(CKA_VALUE, value);
+					bOK = bOK && osobject->setAttribute(CKA_VALUE_LEN, (unsigned long)byteLen);
 					if (checkValue)
 						bOK = bOK && osobject->setAttribute(CKA_CHECK_VALUE, kcv);
 					if (bOK) {
@@ -9115,6 +9144,9 @@ CK_RV SoftHSM::C_EncapsulateKey
 
 		return rv;
 	} else {
+		cipher->recycleSymmetricKey(secret);
+		cipher->recyclePublicKey(publicKey);
+		CryptoFactory::i()->recycleAsymmetricAlgorithm(cipher);
 		return CKR_GENERAL_ERROR;
 	}
 }
@@ -9152,6 +9184,7 @@ CK_RV SoftHSM::C_DecapsulateKey
 
 	if (pMechanism == NULL_PTR) return CKR_ARGUMENTS_BAD;
 	if (hPrivateKey == NULL_PTR) return CKR_ARGUMENTS_BAD;
+	if (pTemplate == NULL_PTR && ulAttributeCount != 0) return CKR_ARGUMENTS_BAD;
 	if (phKey == NULL_PTR) return CKR_ARGUMENTS_BAD;
 
 	*phKey = CK_INVALID_HANDLE;
@@ -9229,13 +9262,20 @@ CK_RV SoftHSM::C_DecapsulateKey
 	// Check the mechanism, only accept advanced AES key wrapping and RSA
 	switch(pMechanism->mechanism)
 	{
+#ifdef WITH_ML_KEM
 		case CKM_ML_KEM:
+			if (decapsulationKey->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED) != CKK_ML_KEM)
+				return CKR_KEY_TYPE_INCONSISTENT;
 			algo = AsymAlgo::MLKEM;
 			mech = AsymMech::MLKEM;
 			break;
+#endif
 		default:
 			return CKR_MECHANISM_INVALID;
 	}
+
+	if (pMechanism->pParameter != NULL_PTR || pMechanism->ulParameterLen != 0)
+		return CKR_MECHANISM_PARAM_INVALID;
 
 	AsymmetricAlgorithm* cipher = CryptoFactory::i()->getAsymmetricAlgorithm(algo);
 	if (cipher == NULL) return CKR_MECHANISM_INVALID;
@@ -9246,22 +9286,25 @@ CK_RV SoftHSM::C_DecapsulateKey
 		return CKR_ATTRIBUTE_VALUE_INVALID;
 	}
 
+
 	PrivateKey* privateKey = cipher->newPrivateKey();
 
-	if (MLKEMUtil::getMLKEMPrivateKey((MLKEMPrivateKey*)privateKey, token, decapsulationKey) != CKR_OK)
+#ifdef WITH_ML_KEM
+	if (algo == AsymAlgo::MLKEM &&
+		MLKEMUtil::getMLKEMPrivateKey((MLKEMPrivateKey*)privateKey,
+		                               token, decapsulationKey) != CKR_OK)
 	{
 		cipher->recyclePrivateKey(privateKey);
 		CryptoFactory::i()->recycleAsymmetricAlgorithm(cipher);
 		return CKR_GENERAL_ERROR;
 	}
+#endif
 
 	SymmetricKey *secret = NULL;
 	ByteString cipherText = ByteString(pCipherText, ulCipherTextLen);
 
 	if (cipher->decapsulate(privateKey, cipherText, &secret, keyType, mech))
 	{
-		DEBUG_MSG("secret: %s", secret->getKeyBits().hex_str().c_str());
-
 		// Create the secret object using C_CreateObject
 		const CK_ULONG maxAttribs = 32;
 		CK_OBJECT_CLASS objClass = CKO_SECRET_KEY;
@@ -9291,7 +9334,8 @@ CK_RV SoftHSM::C_DecapsulateKey
 			}
 		}
 
-		rv = this->CreateObject(hSession, secretAttribs, secretAttribsCount, phKey, OBJECT_OP_DECAPSULATE);
+		if (rv == CKR_OK)
+			rv = this->CreateObject(hSession, secretAttribs, secretAttribsCount, phKey, OBJECT_OP_DECAPSULATE);
 
 		// Store the attributes that are being supplied
 		if (rv == CKR_OK)
@@ -9357,18 +9401,18 @@ CK_RV SoftHSM::C_DecapsulateKey
 					ByteString plainKCV;
 					ByteString kcv;
 
-					// Truncate value when requested, remove from the leading end
+					// Truncate value when requested, remove from the trailing end
 					if (byteLen < secretValue.size())
 						secretValue.resize(byteLen);
+					secret->setBitLen(byteLen * 8);
+					bOK = bOK && secret->setKeyBits(secretValue);
 					// Get the KCV
 					switch (keyType)
 					{
 						case CKK_GENERIC_SECRET:
-							secret->setBitLen(byteLen * 8);
 							plainKCV = secret->getKeyCheckValue();
 							break;
 						case CKK_AES:
-							secret->setBitLen(byteLen * 8);
 							plainKCV = ((AESKey*)secret)->getKeyCheckValue();
 							break;
 						default:
@@ -9378,8 +9422,8 @@ CK_RV SoftHSM::C_DecapsulateKey
 
 					if (isPrivate)
 					{
-						token->encrypt(secretValue, value);
-						token->encrypt(plainKCV, kcv);
+						bOK = bOK && token->encrypt(secretValue, value);
+						bOK = bOK && token->encrypt(plainKCV, kcv);
 					}
 					else
 					{
@@ -9387,6 +9431,7 @@ CK_RV SoftHSM::C_DecapsulateKey
 						kcv = plainKCV;
 					}
 					bOK = bOK && osobject->setAttribute(CKA_VALUE, value);
+					bOK = bOK && osobject->setAttribute(CKA_VALUE_LEN, (unsigned long)byteLen);
 					if (checkValue)
 						bOK = bOK && osobject->setAttribute(CKA_CHECK_VALUE, kcv);
 					if (bOK) {
@@ -9404,26 +9449,29 @@ CK_RV SoftHSM::C_DecapsulateKey
 				rv = CKR_FUNCTION_FAILED;
 		}
 
-		// Clean up
-		cipher->recycleSymmetricKey(secret);
-		cipher->recyclePrivateKey(privateKey);
-		CryptoFactory::i()->recycleAsymmetricAlgorithm(cipher);
-		// Remove secret that may have been created already when the function fails.
-		if (rv != CKR_OK)
-		{
-			if (*phKey != CK_INVALID_HANDLE)
-			{
-				OSObject* ossecret = (OSObject*)handleManager->getObject(*phKey);
-				handleManager->destroyObject(*phKey);
-				if (ossecret) ossecret->destroyObject();
-				*phKey = CK_INVALID_HANDLE;
-			}
-		}
-
-		return rv;
-	} else {
-		return CKR_GENERAL_ERROR;
 	}
+	else
+	{
+		rv = CKR_GENERAL_ERROR;
+	}
+
+	// Clean up
+	cipher->recycleSymmetricKey(secret);
+	cipher->recyclePrivateKey(privateKey);
+	CryptoFactory::i()->recycleAsymmetricAlgorithm(cipher);
+	// Remove secret that may have been created already when the function fails.
+	if (rv != CKR_OK)
+	{
+		if (*phKey != CK_INVALID_HANDLE)
+		{
+			OSObject* ossecret = (OSObject*)handleManager->getObject(*phKey);
+			handleManager->destroyObject(*phKey);
+			if (ossecret) ossecret->destroyObject();
+			*phKey = CK_INVALID_HANDLE;
+		}
+	}
+
+	return rv;
 }
 #else
 CK_RV SoftHSM::C_DecapsulateKey

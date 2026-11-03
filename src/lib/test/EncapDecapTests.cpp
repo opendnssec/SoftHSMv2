@@ -23,6 +23,7 @@ const CK_BBOOL IS_PUBLIC = CK_FALSE;
 
 CPPUNIT_TEST_SUITE_REGISTRATION(EncapDecapTests);
 
+
 #ifdef WITH_ML_KEM
 CK_RV EncapDecapTests::generateMLKEM(CK_ULONG parameterSet, CK_SESSION_HANDLE hSession, CK_BBOOL bTokenPuk, CK_BBOOL bPrivatePuk, CK_BBOOL bTokenPrk, CK_BBOOL bPrivatePrk, CK_OBJECT_HANDLE &hPuk, CK_OBJECT_HANDLE &hPrk)
 {
@@ -675,4 +676,162 @@ void EncapDecapTests::testMLKEMEncapsulationDecapsulationWithValueLenWrong()
 	CPPUNIT_ASSERT(rv == CKR_OK);
 }
 
+#endif
+
+#ifdef WITH_ML_KEM
+CK_RV EncapDecapTests::generateKEM(CK_MECHANISM_TYPE mechanismType,
+	CK_SESSION_HANDLE session, CK_OBJECT_HANDLE& publicKey,
+	CK_OBJECT_HANDLE& privateKey)
+{
+#ifdef WITH_ML_KEM
+	if (mechanismType == CKM_ML_KEM)
+		return generateMLKEM(CKP_ML_KEM_768, session, IN_SESSION,
+			IS_PUBLIC, IN_SESSION, IS_PRIVATE, publicKey, privateKey);
+#endif
+	return CKR_MECHANISM_INVALID;
+}
+
+void EncapDecapTests::testKEMTemplateValidation(CK_MECHANISM_TYPE mechanismType)
+{
+	CRYPTOKI_F_PTR(C_Finalize(NULL_PTR));
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR(C_Initialize(NULL_PTR)));
+	CK_SESSION_HANDLE session;
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR(C_OpenSession(
+		m_initializedTokenSlotID, CKF_SERIAL_SESSION | CKF_RW_SESSION,
+		NULL_PTR, NULL_PTR, &session)));
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR(C_Login(
+		session, CKU_USER, m_userPin1, m_userPin1Length)));
+	CK_OBJECT_HANDLE publicKey, privateKey;
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, generateKEM(mechanismType, session, publicKey, privateKey));
+	CK_MECHANISM mechanism = { mechanismType, NULL_PTR, 0 };
+	CK_OBJECT_CLASS objectClass = CKO_SECRET_KEY;
+	CK_KEY_TYPE keyType = CKK_GENERIC_SECRET;
+	CK_ATTRIBUTE attributes[] = {
+		{ CKA_CLASS, &objectClass, sizeof(objectClass) },
+		{ CKA_KEY_TYPE, &keyType, sizeof(keyType) }
+	};
+	CK_BYTE ciphertext[2048];
+	CK_ULONG ciphertextLength = sizeof(ciphertext);
+	CK_OBJECT_HANDLE secretKey = CK_INVALID_HANDLE;
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR(C_EncapsulateKey(
+		session, &mechanism, publicKey, attributes, 2,
+		ciphertext, &ciphertextLength, &secretKey)));
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR(C_DestroyObject(session, secretKey)));
+
+	// Both APIs must reject parameters, including inconsistent pointer/length pairs.
+	CK_BYTE parameter = 0;
+	CK_MECHANISM invalidMechanisms[] = {
+		{ mechanismType, &parameter, 1 },
+		{ mechanismType, &parameter, 0 },
+		{ mechanismType, NULL_PTR, 1 }
+	};
+	for (const CK_MECHANISM& invalid : invalidMechanisms)
+	{
+		CK_MECHANISM invalidMechanism = invalid;
+		CK_ULONG capacity = sizeof(ciphertext);
+		secretKey = publicKey;
+		CPPUNIT_ASSERT_EQUAL(CKR_MECHANISM_PARAM_INVALID, CRYPTOKI_F_PTR(C_EncapsulateKey(
+			session, &invalidMechanism, publicKey, attributes, 2,
+			ciphertext, &capacity, &secretKey)));
+		CPPUNIT_ASSERT_EQUAL(CK_INVALID_HANDLE, secretKey);
+		secretKey = privateKey;
+		CPPUNIT_ASSERT_EQUAL(CKR_MECHANISM_PARAM_INVALID, CRYPTOKI_F_PTR(C_DecapsulateKey(
+			session, &invalidMechanism, privateKey, attributes, 2,
+			ciphertext, ciphertextLength, &secretKey)));
+		CPPUNIT_ASSERT_EQUAL(CK_INVALID_HANDLE, secretKey);
+	}
+
+	// An oversized template must fail, rather than silently discard its attributes.
+	CK_BYTE label = 1;
+	CK_ATTRIBUTE oversized[29];
+	for (CK_ULONG i = 0; i < 29; i++)
+		oversized[i] = CK_ATTRIBUTE{ CKA_LABEL, &label, sizeof(label) };
+	oversized[0] = attributes[0];
+	oversized[1] = attributes[1];
+	CK_ULONG capacity = sizeof(ciphertext);
+	CPPUNIT_ASSERT_EQUAL(CKR_TEMPLATE_INCONSISTENT, CRYPTOKI_F_PTR(C_EncapsulateKey(
+		session, &mechanism, publicKey, oversized, sizeof(oversized) / sizeof(CK_ATTRIBUTE),
+		ciphertext, &capacity, &secretKey)));
+	CPPUNIT_ASSERT_EQUAL(CK_INVALID_HANDLE, secretKey);
+	CPPUNIT_ASSERT_EQUAL(CKR_TEMPLATE_INCONSISTENT, CRYPTOKI_F_PTR(C_DecapsulateKey(
+		session, &mechanism, privateKey, oversized, sizeof(oversized) / sizeof(CK_ATTRIBUTE),
+		ciphertext, ciphertextLength, &secretKey)));
+	CPPUNIT_ASSERT_EQUAL(CK_INVALID_HANDLE, secretKey);
+
+	CPPUNIT_ASSERT_EQUAL(CKR_ARGUMENTS_BAD, CRYPTOKI_F_PTR(C_EncapsulateKey(
+		session, &mechanism, publicKey, NULL_PTR, 2,
+		ciphertext, &capacity, &secretKey)));
+	CPPUNIT_ASSERT_EQUAL(CKR_ARGUMENTS_BAD, CRYPTOKI_F_PTR(C_DecapsulateKey(
+		session, &mechanism, privateKey, NULL_PTR, 2,
+		ciphertext, ciphertextLength, &secretKey)));
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR(C_CloseSession(session)));
+	CRYPTOKI_F_PTR(C_Finalize(NULL_PTR));
+}
+
+void EncapDecapTests::testKEMSecretCheckValue(CK_MECHANISM_TYPE mechanismType)
+{
+	CRYPTOKI_F_PTR(C_Finalize(NULL_PTR));
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR(C_Initialize(NULL_PTR)));
+	CK_SESSION_HANDLE session;
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR(C_OpenSession(
+		m_initializedTokenSlotID, CKF_SERIAL_SESSION | CKF_RW_SESSION,
+		NULL_PTR, NULL_PTR, &session)));
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR(C_Login(
+		session, CKU_USER, m_userPin1, m_userPin1Length)));
+	CK_OBJECT_HANDLE publicKey, privateKey;
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, generateKEM(mechanismType, session, publicKey, privateKey));
+	CK_MECHANISM mechanism = { mechanismType, NULL_PTR, 0 };
+	CK_OBJECT_CLASS objectClass = CKO_SECRET_KEY;
+	CK_KEY_TYPE keyType = CKK_GENERIC_SECRET;
+	CK_BBOOL bFalse = CK_FALSE, bTrue = CK_TRUE;
+	CK_ULONG lengths[] = { 1, 16, 24, 32 };
+	for (CK_ULONG length : lengths)
+	{
+		CK_ATTRIBUTE attributes[] = {
+			{ CKA_CLASS, &objectClass, sizeof(objectClass) },
+			{ CKA_KEY_TYPE, &keyType, sizeof(keyType) },
+			{ CKA_PRIVATE, &bFalse, sizeof(bFalse) },
+			{ CKA_SENSITIVE, &bFalse, sizeof(bFalse) },
+			{ CKA_EXTRACTABLE, &bTrue, sizeof(bTrue) },
+			{ CKA_VALUE_LEN, &length, sizeof(length) }
+		};
+		// Exercise the default length as well as explicit truncation.
+		CK_ULONG count = length == 32 ? 5 : 6;
+		CK_BYTE ciphertext[2048];
+		CK_ULONG ciphertextLength = sizeof(ciphertext);
+		CK_OBJECT_HANDLE encapKey, decapKey;
+		CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR(C_EncapsulateKey(
+			session, &mechanism, publicKey, attributes, count,
+			ciphertext, &ciphertextLength, &encapKey)));
+		CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR(C_DecapsulateKey(
+			session, &mechanism, privateKey, attributes, count,
+			ciphertext, ciphertextLength, &decapKey)));
+		CK_BYTE encapValue[32] = { 0 };
+		for (CK_OBJECT_HANDLE key : { encapKey, decapKey })
+		{
+			CK_BYTE value[32], checkValue[3];
+			CK_ULONG storedLength = 0;
+			CK_ATTRIBUTE outputs[] = {
+				{ CKA_VALUE, value, sizeof(value) },
+				{ CKA_CHECK_VALUE, checkValue, sizeof(checkValue) },
+				{ CKA_VALUE_LEN, &storedLength, sizeof(storedLength) }
+			};
+			CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR(C_GetAttributeValue(session, key, outputs, 3)));
+			CPPUNIT_ASSERT_EQUAL(length, outputs[0].ulValueLen);
+			CPPUNIT_ASSERT_EQUAL(length, storedLength);
+			CPPUNIT_ASSERT_EQUAL((CK_ULONG)3, outputs[1].ulValueLen);
+			CK_MECHANISM digestMechanism = { CKM_SHA_1, NULL_PTR, 0 };
+			CK_BYTE digest[20];
+			CK_ULONG digestLength = sizeof(digest);
+			CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR(C_DigestInit(session, &digestMechanism)));
+			CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR(C_Digest(session, value, length, digest, &digestLength)));
+			CPPUNIT_ASSERT(memcmp(checkValue, digest, sizeof(checkValue)) == 0);
+			if (key == encapKey) memcpy(encapValue, value, length);
+			else CPPUNIT_ASSERT(memcmp(encapValue, value, length) == 0);
+			CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR(C_DestroyObject(session, key)));
+		}
+	}
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR(C_CloseSession(session)));
+	CRYPTOKI_F_PTR(C_Finalize(NULL_PTR));
+}
 #endif
