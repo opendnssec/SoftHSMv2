@@ -160,6 +160,9 @@
 /* Compile with SHA3 support */
 #cmakedefine WITH_SHA3 @WITH_SHA3@
 
+/* Compile with X-Wing support */
+#cmakedefine WITH_X_WING @WITH_X_WING@
+
 /* Compile with FIPS 140-2 mode */
 #cmakedefine WITH_FIPS @WITH_FIPS@
 

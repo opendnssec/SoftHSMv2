@@ -29,10 +29,19 @@ class EncapDecapTests : public TestsBase
 	CPPUNIT_TEST(testMLKEMDecapsulationCiphertextIsNull);
 	CPPUNIT_TEST(testMLKEMDecapsulationCiphertextLengthIsZero);
 #endif
+#ifdef WITH_X_WING
+	CPPUNIT_TEST_PARAMETERIZED(testKEMTemplateValidation, {CKM_X_WING});
+	CPPUNIT_TEST_PARAMETERIZED(testKEMSecretCheckValue, {CKM_X_WING});
+	CPPUNIT_TEST(testXWingEncapsulation);
+	CPPUNIT_TEST(testXWingEncapsulationDecapsulation);
+	CPPUNIT_TEST(testXWingEncapsulationBufferTooSmall);
+	CPPUNIT_TEST(testXWingEncapsulationInvalidInputs);
+	CPPUNIT_TEST(testXWingDecapsulationInvalidInputs);
+#endif
 	CPPUNIT_TEST_SUITE_END();
 
 public:
-#ifdef WITH_ML_KEM
+#if defined(WITH_ML_KEM) || defined(WITH_X_WING)
 	void testKEMTemplateValidation(CK_MECHANISM_TYPE mechanismType);
 	void testKEMSecretCheckValue(CK_MECHANISM_TYPE mechanismType);
 #endif
@@ -44,14 +53,28 @@ public:
 	void testMLKEMDecapsulationCiphertextIsNull();
 	void testMLKEMDecapsulationCiphertextLengthIsZero();
 #endif
+#ifdef WITH_X_WING
+	void testXWingEncapsulation();
+	void testXWingEncapsulationDecapsulation();
+	void testXWingEncapsulationBufferTooSmall();
+	void testXWingEncapsulationInvalidInputs();
+	void testXWingDecapsulationInvalidInputs();
+#endif
 
 protected:
-#ifdef WITH_ML_KEM
+#if defined(WITH_ML_KEM) || defined(WITH_X_WING)
 	CK_RV generateKEM(CK_MECHANISM_TYPE mechanismType, CK_SESSION_HANDLE session,
 	                  CK_OBJECT_HANDLE& publicKey, CK_OBJECT_HANDLE& privateKey);
 #endif
 #ifdef WITH_ML_KEM
 	CK_RV generateMLKEM(CK_ULONG parameterSet, CK_SESSION_HANDLE hSession, CK_BBOOL bTokenPuk, CK_BBOOL bPrivatePuk, CK_BBOOL bTokenPrk, CK_BBOOL bPrivatePrk, CK_OBJECT_HANDLE &hPuk, CK_OBJECT_HANDLE &hPrk);
+#endif
+#ifdef WITH_X_WING
+	CK_RV generateXWing(CK_SESSION_HANDLE hSession, CK_BBOOL bTokenPuk, CK_BBOOL bPrivatePuk, CK_BBOOL bTokenPrk, CK_BBOOL bPrivatePrk, CK_OBJECT_HANDLE &hPuk, CK_OBJECT_HANDLE &hPrk);
+	void encapsulateXWing(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hPublicKey);
+	void encapsulateDecapsulateXWing(CK_SESSION_HANDLE hSession,
+	                                CK_OBJECT_HANDLE hPublicKey,
+	                                CK_OBJECT_HANDLE hPrivateKey);
 #endif
 
 };

@@ -70,6 +70,9 @@
 #ifdef WITH_ML_KEM
 #include "OSSLMLKEM.h"
 #endif
+#ifdef WITH_X_WING
+#include "OSSLXWing.h"
+#endif
 
 #include <algorithm>
 #include <string.h>
@@ -372,6 +375,10 @@ AsymmetricAlgorithm* OSSLCryptoFactory::getAsymmetricAlgorithm(AsymAlgo::Type al
 #ifdef WITH_ML_KEM
 		case AsymAlgo::MLKEM:
 			return new OSSLMLKEM();
+#endif
+#ifdef WITH_X_WING
+		case AsymAlgo::XWING:
+			return new OSSLXWing();
 #endif
 		default:
 			break;

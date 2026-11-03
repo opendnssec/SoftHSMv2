@@ -85,6 +85,7 @@ Options:
 	--enable-mldsa		Enable support for ML-DSA (default detect)
 	--enable-mlkem		Enable support for ML-KEM (default detect)
 	--enable-sha3		Enable support for SHA3 (default detect)
+	--enable-xwing		Enable support for X-Wing (default detect)
 	--disable-visibility	Disable hidden visibilty link mode [enabled]
 	--with-crypto-backend	Select crypto backend (openssl|botan)
 	--with-openssl=PATH	Specify prefix of path of OpenSSL
@@ -102,6 +103,21 @@ For more options:
 
 	./configure --help
 
+
+### X-Wing support (OpenSSL)
+
+X-Wing support requires OpenSSL 3.5 or later with ML-KEM-768 and X25519
+available. Enable it with `--enable-xwing` (Autotools), or
+`-DENABLE_XWING=ON` (CMake). Autotools detects the primitives by default;
+the CMake option is disabled by default. The construction and key encoding
+follow [draft-connolly-cfrg-xwing-kem-10](https://datatracker.ietf.org/doc/html/draft-connolly-cfrg-xwing-kem-10).
+
+The vendor-defined mechanisms `CKM_X_WING_KEY_PAIR_GEN` and `CKM_X_WING`
+provide key generation, encapsulation and decapsulation through the PKCS#11
+3.2 interface. Public keys are 1216 bytes, ciphertexts are 1120 bytes and
+shared secrets are 32 bytes. Private keys use the 32-byte seed representation;
+`softhsm2-util` accepts this representation in PKCS#8 PEM. The shared secret
+is returned as a secret-key object using the supplied template.
 
 ### Compile
 

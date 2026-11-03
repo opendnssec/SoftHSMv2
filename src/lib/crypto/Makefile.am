@@ -45,7 +45,11 @@ libsofthsm_crypto_la_SOURCES =	AESKey.cpp \
 				RSAPublicKey.cpp \
 				RSAUtil.cpp \
 				SymmetricAlgorithm.cpp \
-				SymmetricKey.cpp
+				SymmetricKey.cpp \
+				XWingParameters.cpp \
+				XWingPrivateKey.cpp \
+				XWingPublicKey.cpp \
+				XWingUtil.cpp
 libsofthsm_crypto_la_LIBADD =	@CRYPTO_LIBS@
 
 SUBDIRS =			test
@@ -111,7 +115,11 @@ libsofthsm_crypto_la_SOURCES +=	OSSLAES.cpp \
 				OSSLSHA3_256.cpp \
 				OSSLSHA3_384.cpp \
 				OSSLSHA3_512.cpp \
-				OSSLUtil.cpp
+				OSSLUtil.cpp \
+				OSSLXWing.cpp \
+				OSSLXWingKeyPair.cpp \
+				OSSLXWingPrivateKey.cpp \
+				OSSLXWingPublicKey.cpp
 endif
 
 # Compile with support of Botan

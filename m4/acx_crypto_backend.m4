@@ -58,6 +58,16 @@ AC_DEFUN([ACX_CRYPTO_BACKEND],[
 		[enable_sha3="detect"]
 	)
 
+	# Add X-Wing check
+
+	AC_ARG_ENABLE(xwing,
+		AS_HELP_STRING([--enable-xwing],
+			[Enable support for X-Wing (default detect)]
+		),
+		[enable_xwing="${enableval}"],
+		[enable_xwing="detect"]
+	)
+
 	# Second check for the FIPS 140-2 mode
 
 	AC_ARG_ENABLE(fips,
@@ -156,6 +166,15 @@ AC_DEFUN([ACX_CRYPTO_BACKEND],[
 			detect-*) enable_sha3="${have_lib_openssl_sha3_support}";;
 		esac
 
+		case "${enable_xwing}" in
+			yes|detect) ACX_OPENSSL_XWING;;
+		esac
+		case "${enable_xwing}-${have_lib_openssl_xwing_support}" in
+			yes-no) AC_MSG_ERROR([OpenSSL library has no ML-KEM-768 and X25519 support required by X-Wing]);;
+			detect-yes) enable_xwing="yes";;
+			detect-no) enable_xwing="no";;
+		esac
+
 		case "${enable_gost}-${enable_fips}" in
 			yes-yes) AC_MSG_ERROR([GOST is not FIPS approved]);;
 			yes-no|detect-no) ACX_OPENSSL_GOST;;
@@ -235,6 +254,11 @@ AC_DEFUN([ACX_CRYPTO_BACKEND],[
 		case "${enable_sha3}" in
 			detect) enable_sha3="yes";;
 		esac
+
+		if test "x${enable_xwing}" = "xyes"; then
+			AC_MSG_ERROR([Botan does not support X-Wing])
+		fi
+		enable_xwing="no"
 
 		case "${enable_gost}" in
 			yes|detect) ACX_BOTAN_GOST;;
@@ -338,7 +362,21 @@ AC_DEFUN([ACX_CRYPTO_BACKEND],[
 	else
 		AC_MSG_RESULT(no)
 	fi
+
+	AC_MSG_CHECKING(for X-Wing support)
+	if test "x${enable_xwing}" = "xyes"; then
+		AC_MSG_RESULT(yes)
+		AC_DEFINE_UNQUOTED(
+			[WITH_X_WING],
+			[],
+			[Compile with X-Wing support]
+		)
+	else
+		AC_MSG_RESULT(no)
+	fi
 	AM_CONDITIONAL([WITH_SHA3], [test "x${enable_sha3}" = "xyes"])
+
+	AM_CONDITIONAL([WITH_X_WING], [test "x${enable_xwing}" = "xyes"])
 
 
 	AC_SUBST(CRYPTO_INCLUDES)

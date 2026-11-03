@@ -49,6 +49,11 @@ class ObjectTests : public TestsBase
 	CPPUNIT_TEST(testSetAttributeValue);
 	CPPUNIT_TEST(testFindObjects);
 	CPPUNIT_TEST(testGenerateKeys);
+#ifdef WITH_X_WING
+	CPPUNIT_TEST(testXWingKeyGeneration);
+	CPPUNIT_TEST(testXWingTokenPersistence);
+	CPPUNIT_TEST(testXWingErrors);
+#endif
 	CPPUNIT_TEST(testCreateCertificates);
 	CPPUNIT_TEST(testDefaultDataAttributes);
 	CPPUNIT_TEST(testDefaultX509CertAttributes);
@@ -72,6 +77,11 @@ public:
 	void testSetAttributeValue();
 	void testFindObjects();
 	void testGenerateKeys();
+#ifdef WITH_X_WING
+	void testXWingKeyGeneration();
+	void testXWingTokenPersistence();
+	void testXWingErrors();
+#endif
 	void testCreateCertificates();
 	void testDefaultDataAttributes();
 	void testDefaultX509CertAttributes();
@@ -190,6 +200,10 @@ protected:
 	CK_RV createCertificateObjectX509(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_OBJECT_HANDLE &hObject);
 
 	CK_RV generateRsaKeyPair(CK_SESSION_HANDLE hSession, CK_BBOOL bTokenPuk, CK_BBOOL bPrivatePuk, CK_BBOOL bTokenPrk, CK_BBOOL bPrivatePrk, CK_OBJECT_HANDLE &hPuk, CK_OBJECT_HANDLE &hPrk);
+#ifdef WITH_X_WING
+	CK_RV generateXWingKeyPair(CK_SESSION_HANDLE hSession, CK_BBOOL bTokenPuk, CK_BBOOL bPrivatePuk, CK_BBOOL bTokenPrk, CK_BBOOL bPrivatePrk, CK_OBJECT_HANDLE &hPuk, CK_OBJECT_HANDLE &hPrk);
+	CK_OBJECT_HANDLE findXWingObject(CK_SESSION_HANDLE hSession, CK_OBJECT_CLASS objectClass, const char* label);
+#endif
 };
 
 #endif // !_SOFTHSM_V2_OBJECTTESTS_H

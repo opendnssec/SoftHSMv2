@@ -702,6 +702,62 @@ CK_RV ObjectTests::generateRsaKeyPair(CK_SESSION_HANDLE hSession, CK_BBOOL bToke
 							 &hPuk, &hPrk) );
 }
 
+#ifdef WITH_X_WING
+CK_RV ObjectTests::generateXWingKeyPair(CK_SESSION_HANDLE hSession, CK_BBOOL bTokenPuk, CK_BBOOL bPrivatePuk, CK_BBOOL bTokenPrk, CK_BBOOL bPrivatePrk, CK_OBJECT_HANDLE &hPuk, CK_OBJECT_HANDLE &hPrk)
+{
+	CK_MECHANISM mechanism = { CKM_X_WING_KEY_PAIR_GEN, NULL_PTR, 0 };
+	CK_KEY_TYPE keyType = CKK_X_WING;
+	CK_BYTE label[] = "x-wing-test";
+	CK_BYTE id[] = { 123 };
+	CK_BBOOL bFalse = CK_FALSE;
+	CK_BBOOL bTrue = CK_TRUE;
+	CK_ATTRIBUTE pukAttribs[] = {
+		{ CKA_LABEL, label, sizeof(label) - 1 },
+		{ CKA_ID, id, sizeof(id) },
+		{ CKA_KEY_TYPE, &keyType, sizeof(keyType) },
+		{ CKA_ENCAPSULATE, &bTrue, sizeof(bTrue) },
+		{ CKA_TOKEN, &bTokenPuk, sizeof(bTokenPuk) },
+		{ CKA_PRIVATE, &bPrivatePuk, sizeof(bPrivatePuk) }
+	};
+	CK_ATTRIBUTE prkAttribs[] = {
+		{ CKA_LABEL, label, sizeof(label) - 1 },
+		{ CKA_ID, id, sizeof(id) },
+		{ CKA_KEY_TYPE, &keyType, sizeof(keyType) },
+		{ CKA_DECAPSULATE, &bTrue, sizeof(bTrue) },
+		{ CKA_SENSITIVE, &bTrue, sizeof(bTrue) },
+		{ CKA_TOKEN, &bTokenPrk, sizeof(bTokenPrk) },
+		{ CKA_PRIVATE, &bPrivatePrk, sizeof(bPrivatePrk) },
+		{ CKA_EXTRACTABLE, &bFalse, sizeof(bFalse) }
+	};
+
+	hPuk = CK_INVALID_HANDLE;
+	hPrk = CK_INVALID_HANDLE;
+	return CRYPTOKI_F_PTR( C_GenerateKeyPair(hSession, &mechanism,
+		pukAttribs, sizeof(pukAttribs) / sizeof(CK_ATTRIBUTE),
+		prkAttribs, sizeof(prkAttribs) / sizeof(CK_ATTRIBUTE),
+		&hPuk, &hPrk) );
+}
+
+CK_OBJECT_HANDLE ObjectTests::findXWingObject(CK_SESSION_HANDLE hSession, CK_OBJECT_CLASS objectClass, const char* label)
+{
+	CK_KEY_TYPE keyType = CKK_X_WING;
+	CK_ATTRIBUTE attribs[] = {
+		{ CKA_CLASS, &objectClass, sizeof(objectClass) },
+		{ CKA_KEY_TYPE, &keyType, sizeof(keyType) },
+		{ CKA_LABEL, (CK_VOID_PTR)label, strlen(label) }
+	};
+	CK_OBJECT_HANDLE object = CK_INVALID_HANDLE;
+	CK_ULONG objectCount = 0;
+	CK_RV rv = CRYPTOKI_F_PTR( C_FindObjectsInit(hSession, attribs, sizeof(attribs) / sizeof(CK_ATTRIBUTE)) );
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, rv);
+	rv = CRYPTOKI_F_PTR( C_FindObjects(hSession, &object, 1, &objectCount) );
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, rv);
+	rv = CRYPTOKI_F_PTR( C_FindObjectsFinal(hSession) );
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, rv);
+	return objectCount == 1 ? object : CK_INVALID_HANDLE;
+}
+#endif
+
 void ObjectTests::testCreateObject()
 {
 //    printf("\ntestCreateObject\n");
@@ -1583,6 +1639,208 @@ void ObjectTests::testGenerateKeys()
 	rv = generateRsaKeyPair(hSessionRW,ON_TOKEN,IS_PRIVATE,ON_TOKEN,IS_PRIVATE,hPuk,hPrk);
 	CPPUNIT_ASSERT_EQUAL(CKR_OK, rv);
 }
+
+#ifdef WITH_X_WING
+void ObjectTests::testXWingKeyGeneration()
+{
+	CK_RV rv;
+	CK_SESSION_HANDLE hSession;
+	CK_OBJECT_HANDLE hPuk;
+	CK_OBJECT_HANDLE hPrk;
+
+	CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR( C_Initialize(NULL_PTR) ));
+	rv = CRYPTOKI_F_PTR( C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSession) );
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, rv);
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR( C_Login(hSession, CKU_USER, m_userPin1, m_userPin1Length) ));
+
+	rv = generateXWingKeyPair(hSession, IN_SESSION, IS_PUBLIC, IN_SESSION, IS_PRIVATE, hPuk, hPrk);
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, rv);
+	CPPUNIT_ASSERT(hPuk != CK_INVALID_HANDLE);
+	CPPUNIT_ASSERT(hPrk != CK_INVALID_HANDLE);
+
+	CK_OBJECT_CLASS publicClass = CKO_VENDOR_DEFINED;
+	CK_KEY_TYPE publicKeyType = CKK_VENDOR_DEFINED;
+	CK_BBOOL publicLocal = CK_FALSE;
+	CK_BBOOL canEncapsulate = CK_FALSE;
+	CK_MECHANISM_TYPE publicKeyGenMechanism = CKM_VENDOR_DEFINED;
+	CK_ATTRIBUTE publicAttribs[] = {
+		{ CKA_CLASS, &publicClass, sizeof(publicClass) },
+		{ CKA_KEY_TYPE, &publicKeyType, sizeof(publicKeyType) },
+		{ CKA_LOCAL, &publicLocal, sizeof(publicLocal) },
+		{ CKA_KEY_GEN_MECHANISM, &publicKeyGenMechanism, sizeof(publicKeyGenMechanism) },
+		{ CKA_ENCAPSULATE, &canEncapsulate, sizeof(canEncapsulate) },
+		{ CKA_VALUE, NULL_PTR, 0 }
+	};
+	rv = CRYPTOKI_F_PTR( C_GetAttributeValue(hSession, hPuk, publicAttribs, sizeof(publicAttribs) / sizeof(CK_ATTRIBUTE)) );
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, rv);
+	CPPUNIT_ASSERT_EQUAL((CK_OBJECT_CLASS)CKO_PUBLIC_KEY, publicClass);
+	CPPUNIT_ASSERT_EQUAL((CK_KEY_TYPE)CKK_X_WING, publicKeyType);
+	CPPUNIT_ASSERT_EQUAL((CK_BBOOL)CK_TRUE, publicLocal);
+	CPPUNIT_ASSERT_EQUAL((CK_MECHANISM_TYPE)CKM_X_WING_KEY_PAIR_GEN, publicKeyGenMechanism);
+	CPPUNIT_ASSERT_EQUAL((CK_BBOOL)CK_TRUE, canEncapsulate);
+	CPPUNIT_ASSERT_EQUAL((CK_ULONG)1216, publicAttribs[5].ulValueLen);
+
+	CK_BYTE publicValue[1216];
+	publicAttribs[5].pValue = publicValue;
+	rv = CRYPTOKI_F_PTR( C_GetAttributeValue(hSession, hPuk, &publicAttribs[5], 1) );
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, rv);
+	CPPUNIT_ASSERT_EQUAL((CK_ULONG)sizeof(publicValue), publicAttribs[5].ulValueLen);
+
+	CK_OBJECT_CLASS privateClass = CKO_VENDOR_DEFINED;
+	CK_KEY_TYPE privateKeyType = CKK_VENDOR_DEFINED;
+	CK_BBOOL privateLocal = CK_FALSE;
+	CK_BBOOL canDecapsulate = CK_FALSE;
+	CK_BBOOL alwaysSensitive = CK_FALSE;
+	CK_BBOOL neverExtractable = CK_FALSE;
+	CK_MECHANISM_TYPE privateKeyGenMechanism = CKM_VENDOR_DEFINED;
+	CK_ATTRIBUTE privateAttribs[] = {
+		{ CKA_CLASS, &privateClass, sizeof(privateClass) },
+		{ CKA_KEY_TYPE, &privateKeyType, sizeof(privateKeyType) },
+		{ CKA_LOCAL, &privateLocal, sizeof(privateLocal) },
+		{ CKA_KEY_GEN_MECHANISM, &privateKeyGenMechanism, sizeof(privateKeyGenMechanism) },
+		{ CKA_DECAPSULATE, &canDecapsulate, sizeof(canDecapsulate) },
+		{ CKA_ALWAYS_SENSITIVE, &alwaysSensitive, sizeof(alwaysSensitive) },
+		{ CKA_NEVER_EXTRACTABLE, &neverExtractable, sizeof(neverExtractable) }
+	};
+	rv = CRYPTOKI_F_PTR( C_GetAttributeValue(hSession, hPrk, privateAttribs, sizeof(privateAttribs) / sizeof(CK_ATTRIBUTE)) );
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, rv);
+	CPPUNIT_ASSERT_EQUAL((CK_OBJECT_CLASS)CKO_PRIVATE_KEY, privateClass);
+	CPPUNIT_ASSERT_EQUAL((CK_KEY_TYPE)CKK_X_WING, privateKeyType);
+	CPPUNIT_ASSERT_EQUAL((CK_BBOOL)CK_TRUE, privateLocal);
+	CPPUNIT_ASSERT_EQUAL((CK_MECHANISM_TYPE)CKM_X_WING_KEY_PAIR_GEN, privateKeyGenMechanism);
+	CPPUNIT_ASSERT_EQUAL((CK_BBOOL)CK_TRUE, canDecapsulate);
+	CPPUNIT_ASSERT_EQUAL((CK_BBOOL)CK_TRUE, alwaysSensitive);
+	CPPUNIT_ASSERT_EQUAL((CK_BBOOL)CK_TRUE, neverExtractable);
+
+	CK_ATTRIBUTE privateValue = { CKA_VALUE, NULL_PTR, 0 };
+	rv = CRYPTOKI_F_PTR( C_GetAttributeValue(hSession, hPrk, &privateValue, 1) );
+	CPPUNIT_ASSERT_EQUAL(CKR_ATTRIBUTE_SENSITIVE, rv);
+	CPPUNIT_ASSERT_EQUAL((CK_ULONG)CK_UNAVAILABLE_INFORMATION, privateValue.ulValueLen);
+
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR( C_DestroyObject(hSession, hPrk) ));
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR( C_DestroyObject(hSession, hPuk) ));
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR( C_CloseSession(hSession) ));
+}
+
+void ObjectTests::testXWingTokenPersistence()
+{
+	CK_RV rv;
+	CK_SESSION_HANDLE hSession;
+	CK_OBJECT_HANDLE hPuk;
+	CK_OBJECT_HANDLE hPrk;
+	const char* label = "x-wing-test";
+
+	CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR( C_Initialize(NULL_PTR) ));
+	rv = CRYPTOKI_F_PTR( C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSession) );
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, rv);
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR( C_Login(hSession, CKU_USER, m_userPin1, m_userPin1Length) ));
+	rv = generateXWingKeyPair(hSession, ON_TOKEN, IS_PUBLIC, ON_TOKEN, IS_PRIVATE, hPuk, hPrk);
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, rv);
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR( C_CloseSession(hSession) ));
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) ));
+
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR( C_Initialize(NULL_PTR) ));
+	rv = CRYPTOKI_F_PTR( C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSession) );
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, rv);
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR( C_Login(hSession, CKU_USER, m_userPin1, m_userPin1Length) ));
+
+	hPuk = findXWingObject(hSession, CKO_PUBLIC_KEY, label);
+	hPrk = findXWingObject(hSession, CKO_PRIVATE_KEY, label);
+	CPPUNIT_ASSERT(hPuk != CK_INVALID_HANDLE);
+	CPPUNIT_ASSERT(hPrk != CK_INVALID_HANDLE);
+
+	CK_ATTRIBUTE publicValue = { CKA_VALUE, NULL_PTR, 0 };
+	rv = CRYPTOKI_F_PTR( C_GetAttributeValue(hSession, hPuk, &publicValue, 1) );
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, rv);
+	CPPUNIT_ASSERT_EQUAL((CK_ULONG)1216, publicValue.ulValueLen);
+	CK_ATTRIBUTE privateValue = { CKA_VALUE, NULL_PTR, 0 };
+	rv = CRYPTOKI_F_PTR( C_GetAttributeValue(hSession, hPrk, &privateValue, 1) );
+	CPPUNIT_ASSERT_EQUAL(CKR_ATTRIBUTE_SENSITIVE, rv);
+	CPPUNIT_ASSERT_EQUAL((CK_ULONG)CK_UNAVAILABLE_INFORMATION, privateValue.ulValueLen);
+
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR( C_DestroyObject(hSession, hPrk) ));
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR( C_DestroyObject(hSession, hPuk) ));
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR( C_CloseSession(hSession) ));
+}
+
+void ObjectTests::testXWingErrors()
+{
+	CK_RV rv;
+	CK_SESSION_HANDLE hSession;
+	CK_OBJECT_HANDLE hPuk = CK_INVALID_HANDLE;
+	CK_OBJECT_HANDLE hPrk = CK_INVALID_HANDLE;
+	CK_MECHANISM mechanism = { CKM_X_WING_KEY_PAIR_GEN, NULL_PTR, 0 };
+	CK_KEY_TYPE publicKeyType = CKK_RSA;
+	CK_KEY_TYPE privateKeyType = CKK_X_WING;
+	CK_BBOOL bFalse = CK_FALSE;
+	CK_BBOOL bTrue = CK_TRUE;
+	const char* rollbackLabel = "x-wing-rollback";
+	CK_ATTRIBUTE publicAttribs[] = {
+		{ CKA_LABEL, (CK_VOID_PTR)rollbackLabel, strlen(rollbackLabel) },
+		{ CKA_KEY_TYPE, &publicKeyType, sizeof(publicKeyType) },
+		{ CKA_ENCAPSULATE, &bTrue, sizeof(bTrue) },
+		{ CKA_TOKEN, &bFalse, sizeof(bFalse) },
+		{ CKA_PRIVATE, &bFalse, sizeof(bFalse) }
+	};
+	CK_ATTRIBUTE privateAttribs[] = {
+		{ CKA_KEY_TYPE, &privateKeyType, sizeof(privateKeyType) },
+		{ CKA_DECAPSULATE, &bTrue, sizeof(bTrue) },
+		{ CKA_SENSITIVE, &bTrue, sizeof(bTrue) },
+		{ CKA_TOKEN, &bFalse, sizeof(bFalse) },
+		{ CKA_PRIVATE, &bTrue, sizeof(bTrue) },
+		{ CKA_EXTRACTABLE, &bFalse, sizeof(bFalse) }
+	};
+
+	CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR( C_Initialize(NULL_PTR) ));
+	rv = CRYPTOKI_F_PTR( C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSession) );
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, rv);
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR( C_Login(hSession, CKU_USER, m_userPin1, m_userPin1Length) ));
+
+	rv = CRYPTOKI_F_PTR( C_GenerateKeyPair(hSession, &mechanism,
+		publicAttribs, sizeof(publicAttribs) / sizeof(CK_ATTRIBUTE),
+		privateAttribs, sizeof(privateAttribs) / sizeof(CK_ATTRIBUTE),
+		&hPuk, &hPrk) );
+	CPPUNIT_ASSERT_EQUAL(CKR_TEMPLATE_INCONSISTENT, rv);
+	CPPUNIT_ASSERT_EQUAL((CK_OBJECT_HANDLE)CK_INVALID_HANDLE, hPuk);
+	CPPUNIT_ASSERT_EQUAL((CK_OBJECT_HANDLE)CK_INVALID_HANDLE, hPrk);
+
+	publicKeyType = CKK_X_WING;
+	privateKeyType = CKK_RSA;
+	hPuk = CK_INVALID_HANDLE;
+	hPrk = CK_INVALID_HANDLE;
+	rv = CRYPTOKI_F_PTR( C_GenerateKeyPair(hSession, &mechanism,
+		publicAttribs, sizeof(publicAttribs) / sizeof(CK_ATTRIBUTE),
+		privateAttribs, sizeof(privateAttribs) / sizeof(CK_ATTRIBUTE),
+		&hPuk, &hPrk) );
+	CPPUNIT_ASSERT_EQUAL(CKR_TEMPLATE_INCONSISTENT, rv);
+	CPPUNIT_ASSERT_EQUAL((CK_OBJECT_HANDLE)CK_INVALID_HANDLE, hPuk);
+	CPPUNIT_ASSERT_EQUAL((CK_OBJECT_HANDLE)CK_INVALID_HANDLE, hPrk);
+
+	privateKeyType = CKK_X_WING;
+	CK_ATTRIBUTE oversizedPrivateTemplate[29];
+	for (CK_ULONG i = 0; i < 29; ++i)
+	{
+		oversizedPrivateTemplate[i].type = CKA_LABEL;
+		oversizedPrivateTemplate[i].pValue = (CK_VOID_PTR)rollbackLabel;
+		oversizedPrivateTemplate[i].ulValueLen = strlen(rollbackLabel);
+	}
+	hPuk = CK_INVALID_HANDLE;
+	hPrk = CK_INVALID_HANDLE;
+	rv = CRYPTOKI_F_PTR( C_GenerateKeyPair(hSession, &mechanism,
+		publicAttribs, sizeof(publicAttribs) / sizeof(CK_ATTRIBUTE),
+		oversizedPrivateTemplate, 29, &hPuk, &hPrk) );
+	CPPUNIT_ASSERT_EQUAL(CKR_TEMPLATE_INCONSISTENT, rv);
+	CPPUNIT_ASSERT_EQUAL((CK_OBJECT_HANDLE)CK_INVALID_HANDLE, hPuk);
+	CPPUNIT_ASSERT_EQUAL((CK_OBJECT_HANDLE)CK_INVALID_HANDLE, hPrk);
+	CPPUNIT_ASSERT_EQUAL((CK_OBJECT_HANDLE)CK_INVALID_HANDLE,
+		findXWingObject(hSession, CKO_PUBLIC_KEY, rollbackLabel));
+
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR( C_CloseSession(hSession) ));
+}
+#endif
 
 void ObjectTests::testCreateCertificates()
 {
