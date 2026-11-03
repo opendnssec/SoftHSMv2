@@ -49,6 +49,12 @@ class ObjectTests : public TestsBase
 	CPPUNIT_TEST(testSetAttributeValue);
 	CPPUNIT_TEST(testFindObjects);
 	CPPUNIT_TEST(testGenerateKeys);
+#ifdef WITH_FALCON
+	CPPUNIT_TEST_PARAMETERIZED(testFalconKeyGeneration,
+		{CKP_FALCON_512, CKP_FALCON_1024});
+	CPPUNIT_TEST_PARAMETERIZED(testFalconTokenPersistence,
+		{CKP_FALCON_512, CKP_FALCON_1024});
+#endif
 	CPPUNIT_TEST(testCreateCertificates);
 	CPPUNIT_TEST(testDefaultDataAttributes);
 	CPPUNIT_TEST(testDefaultX509CertAttributes);
@@ -72,6 +78,10 @@ public:
 	void testSetAttributeValue();
 	void testFindObjects();
 	void testGenerateKeys();
+#ifdef WITH_FALCON
+	void testFalconKeyGeneration(CK_ULONG parameterSet);
+	void testFalconTokenPersistence(CK_ULONG parameterSet);
+#endif
 	void testCreateCertificates();
 	void testDefaultDataAttributes();
 	void testDefaultX509CertAttributes();
@@ -190,6 +200,11 @@ protected:
 	CK_RV createCertificateObjectX509(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_OBJECT_HANDLE &hObject);
 
 	CK_RV generateRsaKeyPair(CK_SESSION_HANDLE hSession, CK_BBOOL bTokenPuk, CK_BBOOL bPrivatePuk, CK_BBOOL bTokenPrk, CK_BBOOL bPrivatePrk, CK_OBJECT_HANDLE &hPuk, CK_OBJECT_HANDLE &hPrk);
+#ifdef WITH_FALCON
+	CK_RV generateFalconKeyPair(CK_ULONG parameterSet, CK_SESSION_HANDLE hSession, CK_BBOOL bTokenPuk, CK_BBOOL bPrivatePuk, CK_BBOOL bTokenPrk, CK_BBOOL bPrivatePrk, CK_OBJECT_HANDLE &hPuk, CK_OBJECT_HANDLE &hPrk);
+	CK_OBJECT_HANDLE findFalconObject(CK_SESSION_HANDLE hSession, CK_OBJECT_CLASS objectClass, CK_ULONG parameterSet, const char* label);
+	void checkFalconKeyAttributes(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject, CK_OBJECT_CLASS objectClass, CK_BBOOL bToken, CK_ULONG parameterSet);
+#endif
 };
 
 #endif // !_SOFTHSM_V2_OBJECTTESTS_H

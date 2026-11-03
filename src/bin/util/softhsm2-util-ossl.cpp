@@ -39,6 +39,10 @@
 #include "softhsm2-util.h"
 #include "softhsm2-util-ossl.h"
 #include "OSSLComp.h"
+#ifdef WITH_FALCON
+#include "OSSLFalconPrivateKey.h"
+#include "OSSLFalconPublicKey.h"
+#endif
 
 #include <stdio.h>
 #include <string.h>
@@ -155,6 +159,9 @@ int crypto_import_key_pair
 #ifdef WITH_EDDSA
 	EVP_PKEY* eddsa = NULL;
 #endif
+#ifdef WITH_FALCON
+	EVP_PKEY* falcon = NULL;
+#endif
 #ifdef WITH_ML_DSA
 	EVP_PKEY* mldsa = NULL;
 #endif
@@ -202,9 +209,14 @@ int crypto_import_key_pair
 #if OPENSSL_VERSION_NUMBER >= 0x30000000L
 	} else {
 		// Provider Keys management
-		#if defined(WITH_ML_DSA) || defined(WITH_ML_KEM)
+		#if defined(WITH_FALCON) || defined(WITH_ML_DSA) || defined(WITH_ML_KEM)
+            int isFalcon = 0;
             int isMldsa = 0;
             int isMlkem = 0;
+		#ifdef WITH_FALCON
+            isFalcon = (EVP_PKEY_is_a(pkey, "falcon512") ||
+                        EVP_PKEY_is_a(pkey, "falcon1024"));
+		#endif
 		#ifdef WITH_ML_DSA
             isMldsa = (EVP_PKEY_is_a(pkey, "ML-DSA-44") ||
                        EVP_PKEY_is_a(pkey, "ML-DSA-65") ||
@@ -215,12 +227,19 @@ int crypto_import_key_pair
                        EVP_PKEY_is_a(pkey, "ML-KEM-768") ||
                        EVP_PKEY_is_a(pkey, "ML-KEM-1024"));
 		#endif
-            if (!isMldsa && !isMlkem)
+            if (!isFalcon && !isMldsa && !isMlkem)
             {
 	            fprintf(stderr, "ERROR: Cannot handle this algorithm.\n");
 	            EVP_PKEY_free(pkey);
 	            return 1;
 	        }
+		#ifdef WITH_FALCON
+            if (isFalcon)
+            {
+                EVP_PKEY_up_ref(pkey);
+                falcon = pkey;
+            }
+		#endif
 		#ifdef WITH_ML_DSA
 	        if (isMldsa)
 	        {
@@ -264,6 +283,13 @@ int crypto_import_key_pair
 	{
 		result = crypto_save_eddsa(hSession, label, objID, objIDLen, noPublicKey, eddsa);
 		EVP_PKEY_free(eddsa);
+	}
+#endif
+#ifdef WITH_FALCON
+	else if (falcon)
+	{
+		result = crypto_save_falcon(hSession, label, objID, objIDLen, noPublicKey, falcon);
+		EVP_PKEY_free(falcon);
 	}
 #endif
 #ifdef WITH_ML_DSA
@@ -1626,4 +1652,78 @@ void crypto_free_mlkem(mlkem_key_material_t* keyMat)
 	free(keyMat);
 }
 
+#endif
+
+#ifdef WITH_FALCON
+// Save the key data in PKCS#11.
+int crypto_save_falcon(CK_SESSION_HANDLE hSession, char* label, char* objID,
+	size_t objIDLen, int noPublicKey, EVP_PKEY* falcon)
+{
+	OSSLFalconPrivateKey privateKey;
+	OSSLFalconPublicKey publicKey;
+	publicKey.setFromOSSL(falcon);
+	if (!privateKey.setFromOSSL(falcon) || publicKey.getValue().size() == 0)
+	{
+		fprintf(stderr, "ERROR: Could not convert the Falcon key material to binary information.\n");
+		return 1;
+	}
+
+	ByteString privateValue = privateKey.getValue();
+	ByteString publicValue = publicKey.getValue();
+	ByteString publicKeyInfo = privateKey.getPublicKeyInfo();
+	CK_ULONG parameterSet = privateKey.getParameterSet();
+	CK_OBJECT_CLASS pubClass = CKO_PUBLIC_KEY, privClass = CKO_PRIVATE_KEY;
+	CK_KEY_TYPE keyType = CKK_FALCON;
+	CK_BBOOL ckTrue = CK_TRUE, ckFalse = CK_FALSE;
+	CK_BBOOL ckToken = noPublicKey ? CK_FALSE : CK_TRUE;
+	CK_ATTRIBUTE pubTemplate[] = {
+		{ CKA_CLASS, &pubClass, sizeof(pubClass) },
+		{ CKA_KEY_TYPE, &keyType, sizeof(keyType) },
+		{ CKA_LABEL, label, strlen(label) },
+		{ CKA_ID, objID, objIDLen },
+		{ CKA_TOKEN, &ckToken, sizeof(ckToken) },
+		{ CKA_VERIFY, &ckTrue, sizeof(ckTrue) },
+		{ CKA_ENCRYPT, &ckFalse, sizeof(ckFalse) },
+		{ CKA_WRAP, &ckFalse, sizeof(ckFalse) },
+		{ CKA_PARAMETER_SET, &parameterSet, sizeof(parameterSet) },
+		{ CKA_VALUE, publicValue.byte_str(), publicValue.size() }
+	};
+	CK_ATTRIBUTE privTemplate[] = {
+		{ CKA_CLASS, &privClass, sizeof(privClass) },
+		{ CKA_KEY_TYPE, &keyType, sizeof(keyType) },
+		{ CKA_LABEL, label, strlen(label) },
+		{ CKA_ID, objID, objIDLen },
+		{ CKA_SIGN, &ckTrue, sizeof(ckTrue) },
+		{ CKA_DECRYPT, &ckFalse, sizeof(ckFalse) },
+		{ CKA_UNWRAP, &ckFalse, sizeof(ckFalse) },
+		{ CKA_SENSITIVE, &ckTrue, sizeof(ckTrue) },
+		{ CKA_TOKEN, &ckTrue, sizeof(ckTrue) },
+		{ CKA_PRIVATE, &ckTrue, sizeof(ckTrue) },
+		{ CKA_EXTRACTABLE, &ckFalse, sizeof(ckFalse) },
+		{ CKA_PARAMETER_SET, &parameterSet, sizeof(parameterSet) },
+		{ CKA_PUBLIC_KEY_INFO, publicKeyInfo.byte_str(), publicKeyInfo.size() },
+		{ CKA_VALUE, privateValue.byte_str(), privateValue.size() }
+	};
+
+	CK_OBJECT_HANDLE hPrivateKey, hPublicKey;
+	CK_RV rv = p11->C_CreateObject(hSession, privTemplate,
+		sizeof(privTemplate) / sizeof(CK_ATTRIBUTE), &hPrivateKey);
+	if (rv != CKR_OK)
+	{
+		fprintf(stderr, "ERROR: Could not save the private key in the token. "
+			"Maybe the algorithm is not supported.\n");
+		return 1;
+	}
+	rv = p11->C_CreateObject(hSession, pubTemplate,
+		sizeof(pubTemplate) / sizeof(CK_ATTRIBUTE), &hPublicKey);
+	if (rv != CKR_OK)
+	{
+		p11->C_DestroyObject(hSession, hPrivateKey);
+		fprintf(stderr, "ERROR: Could not save the public key in the token.\n");
+		return 1;
+	}
+
+	printf("The Falcon key pair with label=%s has been imported.\n", label);
+	return 0;
+}
 #endif

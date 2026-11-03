@@ -702,6 +702,132 @@ CK_RV ObjectTests::generateRsaKeyPair(CK_SESSION_HANDLE hSession, CK_BBOOL bToke
 							 &hPuk, &hPrk) );
 }
 
+#ifdef WITH_FALCON
+CK_RV ObjectTests::generateFalconKeyPair(CK_ULONG parameterSet, CK_SESSION_HANDLE hSession, CK_BBOOL bTokenPuk, CK_BBOOL bPrivatePuk, CK_BBOOL bTokenPrk, CK_BBOOL bPrivatePrk, CK_OBJECT_HANDLE &hPuk, CK_OBJECT_HANDLE &hPrk)
+{
+	CK_MECHANISM mechanism = { CKM_FALCON_KEY_PAIR_GEN, NULL_PTR, 0 };
+	CK_KEY_TYPE keyType = CKK_FALCON;
+	CK_BYTE label[] = "falcon-test";
+	CK_BYTE id[] = { 123 };
+	CK_BBOOL bFalse = CK_FALSE;
+	CK_BBOOL bTrue = CK_TRUE;
+	CK_ATTRIBUTE pukAttribs[] = {
+		{ CKA_PARAMETER_SET, &parameterSet, sizeof(parameterSet) },
+		{ CKA_LABEL, label, sizeof(label) - 1 },
+		{ CKA_ID, id, sizeof(id) },
+		{ CKA_KEY_TYPE, &keyType, sizeof(keyType) },
+		{ CKA_VERIFY, &bTrue, sizeof(bTrue) },
+		{ CKA_TOKEN, &bTokenPuk, sizeof(bTokenPuk) },
+		{ CKA_PRIVATE, &bPrivatePuk, sizeof(bPrivatePuk) }
+	};
+	CK_ATTRIBUTE prkAttribs[] = {
+		{ CKA_LABEL, label, sizeof(label) - 1 },
+		{ CKA_ID, id, sizeof(id) },
+		{ CKA_KEY_TYPE, &keyType, sizeof(keyType) },
+		{ CKA_SIGN, &bTrue, sizeof(bTrue) },
+		{ CKA_SENSITIVE, &bTrue, sizeof(bTrue) },
+		{ CKA_TOKEN, &bTokenPrk, sizeof(bTokenPrk) },
+		{ CKA_PRIVATE, &bPrivatePrk, sizeof(bPrivatePrk) },
+		{ CKA_EXTRACTABLE, &bFalse, sizeof(bFalse) }
+	};
+
+	hPuk = CK_INVALID_HANDLE;
+	hPrk = CK_INVALID_HANDLE;
+	return CRYPTOKI_F_PTR( C_GenerateKeyPair(hSession, &mechanism,
+		pukAttribs, sizeof(pukAttribs) / sizeof(CK_ATTRIBUTE),
+		prkAttribs, sizeof(prkAttribs) / sizeof(CK_ATTRIBUTE),
+		&hPuk, &hPrk) );
+}
+
+CK_OBJECT_HANDLE ObjectTests::findFalconObject(CK_SESSION_HANDLE hSession, CK_OBJECT_CLASS objectClass, CK_ULONG parameterSet, const char* label)
+{
+	CK_KEY_TYPE keyType = CKK_FALCON;
+	CK_ATTRIBUTE attribs[] = {
+		{ CKA_CLASS, &objectClass, sizeof(objectClass) },
+		{ CKA_KEY_TYPE, &keyType, sizeof(keyType) },
+		{ CKA_PARAMETER_SET, &parameterSet, sizeof(parameterSet) },
+		{ CKA_LABEL, (CK_VOID_PTR)label, strlen(label) }
+	};
+	CK_OBJECT_HANDLE object = CK_INVALID_HANDLE;
+	CK_ULONG objectCount = 0;
+	CK_RV rv = CRYPTOKI_F_PTR( C_FindObjectsInit(hSession, attribs, sizeof(attribs) / sizeof(CK_ATTRIBUTE)) );
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, rv);
+	rv = CRYPTOKI_F_PTR( C_FindObjects(hSession, &object, 1, &objectCount) );
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, rv);
+	rv = CRYPTOKI_F_PTR( C_FindObjectsFinal(hSession) );
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, rv);
+	return objectCount == 1 ? object : CK_INVALID_HANDLE;
+}
+
+void ObjectTests::checkFalconKeyAttributes(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject, CK_OBJECT_CLASS objectClass, CK_BBOOL bToken, CK_ULONG parameterSet)
+{
+	CK_OBJECT_CLASS keyClass = CKO_VENDOR_DEFINED;
+	CK_KEY_TYPE keyType = CKK_VENDOR_DEFINED;
+	CK_BBOOL local = CK_FALSE;
+	CK_BBOOL token = !bToken;
+	CK_BBOOL canUse = CK_FALSE;
+	CK_MECHANISM_TYPE keyGenMechanism = CKM_VENDOR_DEFINED;
+	CK_ULONG keyParameterSet = 0;
+	CK_ATTRIBUTE attribs[] = {
+		{ CKA_CLASS, &keyClass, sizeof(keyClass) },
+		{ CKA_KEY_TYPE, &keyType, sizeof(keyType) },
+		{ CKA_LOCAL, &local, sizeof(local) },
+		{ CKA_TOKEN, &token, sizeof(token) },
+		{ CKA_KEY_GEN_MECHANISM, &keyGenMechanism, sizeof(keyGenMechanism) },
+		{ CKA_PARAMETER_SET, &keyParameterSet, sizeof(keyParameterSet) },
+		{ objectClass == CKO_PUBLIC_KEY ? CKA_VERIFY : CKA_SIGN, &canUse, sizeof(canUse) }
+	};
+	CK_RV rv = CRYPTOKI_F_PTR( C_GetAttributeValue(hSession, hObject, attribs, sizeof(attribs) / sizeof(CK_ATTRIBUTE)) );
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, rv);
+	CPPUNIT_ASSERT_EQUAL(objectClass, keyClass);
+	CPPUNIT_ASSERT_EQUAL((CK_KEY_TYPE)CKK_FALCON, keyType);
+	CPPUNIT_ASSERT_EQUAL((CK_BBOOL)CK_TRUE, local);
+	CPPUNIT_ASSERT_EQUAL(bToken, token);
+	CPPUNIT_ASSERT_EQUAL((CK_MECHANISM_TYPE)CKM_FALCON_KEY_PAIR_GEN, keyGenMechanism);
+	CPPUNIT_ASSERT_EQUAL(parameterSet, keyParameterSet);
+	CPPUNIT_ASSERT_EQUAL((CK_BBOOL)CK_TRUE, canUse);
+
+	CK_ATTRIBUTE value = { CKA_VALUE, NULL_PTR, 0 };
+	if (objectClass == CKO_PUBLIC_KEY)
+	{
+		CK_ULONG publicKeyLength = parameterSet == CKP_FALCON_512 ? 897 : 1793;
+		rv = CRYPTOKI_F_PTR( C_GetAttributeValue(hSession, hObject, &value, 1) );
+		CPPUNIT_ASSERT_EQUAL(CKR_OK, rv);
+		CPPUNIT_ASSERT_EQUAL(publicKeyLength, value.ulValueLen);
+
+		CK_BYTE publicValue[1793];
+		value.pValue = publicValue;
+		value.ulValueLen = sizeof(publicValue);
+		rv = CRYPTOKI_F_PTR( C_GetAttributeValue(hSession, hObject, &value, 1) );
+		CPPUNIT_ASSERT_EQUAL(CKR_OK, rv);
+		CPPUNIT_ASSERT_EQUAL(publicKeyLength, value.ulValueLen);
+	}
+	else
+	{
+		CK_BBOOL sensitive = CK_FALSE;
+		CK_BBOOL extractable = CK_TRUE;
+		CK_BBOOL alwaysSensitive = CK_FALSE;
+		CK_BBOOL neverExtractable = CK_FALSE;
+		CK_ATTRIBUTE privateAttribs[] = {
+			{ CKA_SENSITIVE, &sensitive, sizeof(sensitive) },
+			{ CKA_EXTRACTABLE, &extractable, sizeof(extractable) },
+			{ CKA_ALWAYS_SENSITIVE, &alwaysSensitive, sizeof(alwaysSensitive) },
+			{ CKA_NEVER_EXTRACTABLE, &neverExtractable, sizeof(neverExtractable) }
+		};
+		rv = CRYPTOKI_F_PTR( C_GetAttributeValue(hSession, hObject, privateAttribs, sizeof(privateAttribs) / sizeof(CK_ATTRIBUTE)) );
+		CPPUNIT_ASSERT_EQUAL(CKR_OK, rv);
+		CPPUNIT_ASSERT_EQUAL((CK_BBOOL)CK_TRUE, sensitive);
+		CPPUNIT_ASSERT_EQUAL((CK_BBOOL)CK_FALSE, extractable);
+		CPPUNIT_ASSERT_EQUAL((CK_BBOOL)CK_TRUE, alwaysSensitive);
+		CPPUNIT_ASSERT_EQUAL((CK_BBOOL)CK_TRUE, neverExtractable);
+
+		rv = CRYPTOKI_F_PTR( C_GetAttributeValue(hSession, hObject, &value, 1) );
+		CPPUNIT_ASSERT_EQUAL(CKR_ATTRIBUTE_SENSITIVE, rv);
+		CPPUNIT_ASSERT_EQUAL((CK_ULONG)CK_UNAVAILABLE_INFORMATION, value.ulValueLen);
+	}
+}
+#endif
+
 void ObjectTests::testCreateObject()
 {
 //    printf("\ntestCreateObject\n");
@@ -1582,7 +1708,122 @@ void ObjectTests::testGenerateKeys()
 	CPPUNIT_ASSERT_EQUAL(CKR_OK, rv);
 	rv = generateRsaKeyPair(hSessionRW,ON_TOKEN,IS_PRIVATE,ON_TOKEN,IS_PRIVATE,hPuk,hPrk);
 	CPPUNIT_ASSERT_EQUAL(CKR_OK, rv);
+
+#ifdef WITH_FALCON
+	CK_MECHANISM falconMechanism = {
+		CKM_FALCON_KEY_PAIR_GEN, NULL_PTR, 0
+	};
+	hPuk = CK_INVALID_HANDLE;
+	hPrk = CK_INVALID_HANDLE;
+	rv = CRYPTOKI_F_PTR(C_GenerateKeyPair(hSessionRW, &falconMechanism,
+		NULL_PTR, 0, NULL_PTR, 0, &hPuk, &hPrk));
+	CPPUNIT_ASSERT_EQUAL(CKR_TEMPLATE_INCOMPLETE, rv);
+	CPPUNIT_ASSERT_EQUAL(CK_INVALID_HANDLE, hPuk);
+	CPPUNIT_ASSERT_EQUAL(CK_INVALID_HANDLE, hPrk);
+
+	CK_ULONG unsupportedParameterSet = CKP_FALCON_1024 + 1;
+	CK_ATTRIBUTE falconPublicKeyTemplate[] = {
+		{ CKA_PARAMETER_SET, &unsupportedParameterSet,
+			sizeof(unsupportedParameterSet) }
+	};
+	hPuk = CK_INVALID_HANDLE;
+	hPrk = CK_INVALID_HANDLE;
+	rv = CRYPTOKI_F_PTR(C_GenerateKeyPair(hSessionRW, &falconMechanism,
+		falconPublicKeyTemplate,
+		sizeof(falconPublicKeyTemplate) / sizeof(CK_ATTRIBUTE),
+		NULL_PTR, 0, &hPuk, &hPrk));
+	CPPUNIT_ASSERT_EQUAL(CKR_PARAMETER_SET_NOT_SUPPORTED, rv);
+	CPPUNIT_ASSERT_EQUAL(CK_INVALID_HANDLE, hPuk);
+	CPPUNIT_ASSERT_EQUAL(CK_INVALID_HANDLE, hPrk);
+#endif
 }
+
+#ifdef WITH_FALCON
+void ObjectTests::testFalconKeyGeneration(CK_ULONG parameterSet)
+{
+	CK_RV rv;
+	CK_SESSION_HANDLE hSession;
+	CK_OBJECT_HANDLE hPuk;
+	CK_OBJECT_HANDLE hPrk;
+
+	CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR( C_Initialize(NULL_PTR) ));
+	rv = CRYPTOKI_F_PTR( C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSession) );
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, rv);
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR( C_Login(hSession, CKU_USER, m_userPin1, m_userPin1Length) ));
+
+	rv = generateFalconKeyPair(parameterSet, hSession, IN_SESSION, IS_PUBLIC, IN_SESSION, IS_PRIVATE, hPuk, hPrk);
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, rv);
+	CPPUNIT_ASSERT(hPuk != CK_INVALID_HANDLE);
+	CPPUNIT_ASSERT(hPrk != CK_INVALID_HANDLE);
+	checkFalconKeyAttributes(hSession, hPuk, CKO_PUBLIC_KEY, IN_SESSION, parameterSet);
+	checkFalconKeyAttributes(hSession, hPrk, CKO_PRIVATE_KEY, IN_SESSION, parameterSet);
+
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR( C_DestroyObject(hSession, hPrk) ));
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR( C_DestroyObject(hSession, hPuk) ));
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR( C_CloseSession(hSession) ));
+}
+
+void ObjectTests::testFalconTokenPersistence(CK_ULONG parameterSet)
+{
+	CK_RV rv;
+	CK_SESSION_HANDLE hSession;
+	CK_OBJECT_HANDLE hPuk;
+	CK_OBJECT_HANDLE hPrk;
+	const char* label = "falcon-test";
+	CK_MECHANISM mechanism = { CKM_FALCON, NULL_PTR, 0 };
+	CK_BYTE data[] = "Falcon token persistence";
+	CK_BYTE signature[1462];
+	CK_ULONG ulSignatureLen = sizeof(signature);
+	CK_BYTE publicValue[1793];
+	CK_ATTRIBUTE value = { CKA_VALUE, publicValue, sizeof(publicValue) };
+
+	CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR( C_Initialize(NULL_PTR) ));
+	rv = CRYPTOKI_F_PTR( C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSession) );
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, rv);
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR( C_Login(hSession, CKU_USER, m_userPin1, m_userPin1Length) ));
+	rv = generateFalconKeyPair(parameterSet, hSession, ON_TOKEN, IS_PUBLIC, ON_TOKEN, IS_PRIVATE, hPuk, hPrk);
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, rv);
+	checkFalconKeyAttributes(hSession, hPuk, CKO_PUBLIC_KEY, ON_TOKEN, parameterSet);
+	checkFalconKeyAttributes(hSession, hPrk, CKO_PRIVATE_KEY, ON_TOKEN, parameterSet);
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR( C_GetAttributeValue(hSession, hPuk, &value, 1) ));
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR( C_SignInit(hSession, &mechanism, hPrk) ));
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR( C_Sign(hSession, data, sizeof(data), signature, &ulSignatureLen) ));
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR( C_CloseSession(hSession) ));
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) ));
+
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR( C_Initialize(NULL_PTR) ));
+	rv = CRYPTOKI_F_PTR( C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSession) );
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, rv);
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR( C_Login(hSession, CKU_USER, m_userPin1, m_userPin1Length) ));
+	hPuk = findFalconObject(hSession, CKO_PUBLIC_KEY, parameterSet, label);
+	hPrk = findFalconObject(hSession, CKO_PRIVATE_KEY, parameterSet, label);
+	CPPUNIT_ASSERT(hPuk != CK_INVALID_HANDLE);
+	CPPUNIT_ASSERT(hPrk != CK_INVALID_HANDLE);
+	checkFalconKeyAttributes(hSession, hPuk, CKO_PUBLIC_KEY, ON_TOKEN, parameterSet);
+	checkFalconKeyAttributes(hSession, hPrk, CKO_PRIVATE_KEY, ON_TOKEN, parameterSet);
+
+	CK_BYTE restoredPublicValue[1793];
+	CK_ATTRIBUTE restoredValue = { CKA_VALUE, restoredPublicValue, sizeof(restoredPublicValue) };
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR( C_GetAttributeValue(hSession, hPuk, &restoredValue, 1) ));
+	CPPUNIT_ASSERT_EQUAL(value.ulValueLen, restoredValue.ulValueLen);
+	CPPUNIT_ASSERT(memcmp(publicValue, restoredPublicValue, value.ulValueLen) == 0);
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR( C_VerifyInit(hSession, &mechanism, hPuk) ));
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR( C_Verify(hSession, data, sizeof(data), signature, ulSignatureLen) ));
+
+	// The restored private key must still produce usable signatures.
+	ulSignatureLen = sizeof(signature);
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR( C_SignInit(hSession, &mechanism, hPrk) ));
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR( C_Sign(hSession, data, sizeof(data), signature, &ulSignatureLen) ));
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR( C_VerifyInit(hSession, &mechanism, hPuk) ));
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR( C_Verify(hSession, data, sizeof(data), signature, ulSignatureLen) ));
+
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR( C_DestroyObject(hSession, hPrk) ));
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR( C_DestroyObject(hSession, hPuk) ));
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR( C_CloseSession(hSession) ));
+}
+#endif
 
 void ObjectTests::testCreateCertificates()
 {

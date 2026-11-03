@@ -1639,6 +1639,92 @@ void SymmetricAlgorithmTests::aesWrapUnwrapED(CK_MECHANISM_TYPE mechanismType, C
 }
 #endif
 
+#ifdef WITH_FALCON
+void SymmetricAlgorithmTests::aesWrapUnwrapFalcon(CK_MECHANISM_TYPE mechanismType,
+	CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hKey)
+{
+	CK_BBOOL bTrue = CK_TRUE, bFalse = CK_FALSE;
+	CK_OBJECT_CLASS privateClass = CKO_PRIVATE_KEY;
+	CK_KEY_TYPE keyType = CKK_FALCON;
+	CK_MECHANISM mechanism = { mechanismType, NULL_PTR, 0 };
+	CK_BYTE iv[16];
+	if (mechanismType == CKM_AES_CBC_PAD)
+	{
+		CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR( C_GenerateRandom(hSession, iv, sizeof(iv)) ));
+		mechanism.pParameter = iv;
+		mechanism.ulParameterLen = sizeof(iv);
+	}
+
+	for (CK_ULONG parameterSet : { CKP_FALCON_512, CKP_FALCON_1024 })
+	{
+		for (CK_BBOOL isPrivate : { CK_FALSE, CK_TRUE })
+		{
+			CK_BBOOL onToken = CK_TRUE;
+			CK_MECHANISM keygen = { CKM_FALCON_KEY_PAIR_GEN, NULL_PTR, 0 };
+			CK_ATTRIBUTE publicTemplate[] = {
+				{ CKA_PARAMETER_SET, &parameterSet, sizeof(parameterSet) },
+				{ CKA_VERIFY, &bTrue, sizeof(bTrue) },
+				{ CKA_TOKEN, &bFalse, sizeof(bFalse) },
+				{ CKA_PRIVATE, &bFalse, sizeof(bFalse) }
+			};
+			CK_ATTRIBUTE privateTemplate[] = {
+				{ CKA_CLASS, &privateClass, sizeof(privateClass) },
+				{ CKA_KEY_TYPE, &keyType, sizeof(keyType) },
+				{ CKA_TOKEN, &onToken, sizeof(onToken) },
+				{ CKA_PRIVATE, &isPrivate, sizeof(isPrivate) },
+				{ CKA_SIGN, &bTrue, sizeof(bTrue) },
+				{ CKA_SENSITIVE, &bTrue, sizeof(bTrue) },
+				{ CKA_EXTRACTABLE, &bTrue, sizeof(bTrue) }
+			};
+			CK_OBJECT_HANDLE hPublicKey, hPrivateKey;
+			CK_RV rv = CRYPTOKI_F_PTR( C_GenerateKeyPair(hSession, &keygen,
+				publicTemplate, sizeof(publicTemplate) / sizeof(CK_ATTRIBUTE),
+				privateTemplate, sizeof(privateTemplate) / sizeof(CK_ATTRIBUTE),
+				&hPublicKey, &hPrivateKey) );
+			CPPUNIT_ASSERT_EQUAL(CKR_OK, rv);
+			CK_ULONG length = 0;
+			rv = CRYPTOKI_F_PTR( C_WrapKey(hSession, &mechanism, hKey,
+				hPrivateKey, NULL_PTR, &length) );
+			CPPUNIT_ASSERT_EQUAL(CKR_OK, rv);
+			Bytes wrapped(length);
+			rv = CRYPTOKI_F_PTR( C_WrapKey(hSession, &mechanism, hKey,
+				hPrivateKey, wrapped.data(), &length) );
+			CPPUNIT_ASSERT_EQUAL(CKR_OK, rv);
+			CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR( C_DestroyObject(hSession, hPrivateKey) ));
+			onToken = CK_FALSE;
+			rv = CRYPTOKI_F_PTR( C_UnwrapKey(hSession, &mechanism, hKey,
+				wrapped.data(), length, privateTemplate,
+				sizeof(privateTemplate) / sizeof(CK_ATTRIBUTE), &hPrivateKey) );
+			CPPUNIT_ASSERT_EQUAL(CKR_OK, rv);
+			CK_ULONG storedParameterSet = 0;
+			CK_ATTRIBUTE parameterAttribute = {
+				CKA_PARAMETER_SET, &storedParameterSet, sizeof(storedParameterSet)
+			};
+			rv = CRYPTOKI_F_PTR( C_GetAttributeValue(hSession, hPrivateKey, &parameterAttribute, 1) );
+			CPPUNIT_ASSERT_EQUAL(CKR_OK, rv);
+			CPPUNIT_ASSERT_EQUAL(parameterSet, storedParameterSet);
+
+			CK_MECHANISM signing = { CKM_FALCON, NULL_PTR, 0 };
+			CK_BYTE message[] = { 1, 2, 3 };
+			CK_ULONG signatureLength = 0;
+			CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR( C_SignInit(hSession, &signing, hPrivateKey) ));
+			CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR( C_Sign(hSession, message, sizeof(message), NULL_PTR, &signatureLength) ));
+			Bytes signature(signatureLength);
+			CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR( C_Sign(hSession, message, sizeof(message), signature.data(), &signatureLength) ));
+			CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR( C_VerifyInit(hSession, &signing, hPublicKey) ));
+			CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR( C_Verify(hSession, message, sizeof(message), signature.data(), signatureLength) ));
+
+			// Rewrapping must preserve the public component without a public-key object.
+			CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR( C_DestroyObject(hSession, hPublicKey) ));
+			rv = CRYPTOKI_F_PTR( C_WrapKey(hSession, &mechanism, hKey,
+				hPrivateKey, wrapped.data(), &length) );
+			CPPUNIT_ASSERT_EQUAL(CKR_OK, rv);
+			CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR( C_DestroyObject(hSession, hPrivateKey) ));
+		}
+	}
+}
+#endif
+
 void SymmetricAlgorithmTests::testAesEncryptDecrypt()
 {
 	CK_RV rv;
@@ -1773,6 +1859,10 @@ void SymmetricAlgorithmTests::testAesWrapUnwrap()
     aesWrapUnwrapNonModifiableGeneric(CKM_AES_CBC, hSession, hKey);
 	aesWrapUnwrapRsa(CKM_AES_KEY_WRAP, hSession, hKey);
 	aesWrapUnwrapRsa(CKM_AES_CBC_PAD, hSession, hKey);
+#ifdef WITH_FALCON
+	aesWrapUnwrapFalcon(CKM_AES_KEY_WRAP, hSession, hKey);
+	aesWrapUnwrapFalcon(CKM_AES_CBC_PAD, hSession, hKey);
+#endif
 
 #ifdef WITH_GOST
 	aesWrapUnwrapGost(CKM_AES_KEY_WRAP, hSession, hKey);
@@ -1781,6 +1871,9 @@ void SymmetricAlgorithmTests::testAesWrapUnwrap()
 #ifdef HAVE_AES_KEY_WRAP_PAD
 	aesWrapUnwrapGeneric(CKM_AES_KEY_WRAP_PAD, hSession, hKey);
 	aesWrapUnwrapRsa(CKM_AES_KEY_WRAP_PAD, hSession, hKey);
+#ifdef WITH_FALCON
+	aesWrapUnwrapFalcon(CKM_AES_KEY_WRAP_PAD, hSession, hKey);
+#endif
 #ifdef WITH_GOST
 	aesWrapUnwrapGost(CKM_AES_KEY_WRAP_PAD, hSession, hKey);
 #endif

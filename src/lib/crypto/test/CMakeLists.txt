@@ -19,6 +19,7 @@ set(SOURCES cryptotest.cpp
             ECDHTests.cpp
             ECDSATests.cpp
             EDDSATests.cpp
+            FalconTests.cpp
             GOSTTests.cpp
             HashTests.cpp
             MacTests.cpp

@@ -34,7 +34,7 @@
 #include "log.h"
 #include "DerUtil.h"
 #include "OSSLUtil.h"
-#if defined(WITH_ML_DSA) || defined(WITH_ML_KEM)
+#if defined(WITH_ML_DSA) || defined(WITH_ML_KEM) || defined(WITH_FALCON)
 #include <map>
 #endif
 #ifdef WITH_ML_DSA
@@ -42,6 +42,9 @@
 #endif
 #ifdef WITH_ML_KEM
 #include "MLKEMParameters.h"
+#endif
+#ifdef WITH_FALCON
+#include "FalconParameters.h"
 #endif
 #include <openssl/asn1.h>
 #include <openssl/evp.h>
@@ -60,6 +63,13 @@ static const std::map<unsigned long, const char*> mlkemAlgNameFromParameterSet {
 	{MLKEMParameters::ML_KEM_512_PARAMETER_SET, "ML-KEM-512"},
 	{MLKEMParameters::ML_KEM_768_PARAMETER_SET, "ML-KEM-768"},
 	{MLKEMParameters::ML_KEM_1024_PARAMETER_SET, "ML-KEM-1024"}
+};
+#endif
+
+#ifdef WITH_FALCON
+static const std::map<unsigned long, const char*> falconAlgNameFromParameterSet {
+	{FalconParameters::FALCON_512_PARAMETER_SET, "falcon512"},
+	{FalconParameters::FALCON_1024_PARAMETER_SET, "falcon1024"}
 };
 #endif
 
@@ -274,6 +284,16 @@ const char* OSSL::mlkemParameterSet2Name(unsigned long parameterSet) {
 		return it->second;
 	}
 
+	return NULL;
+}
+#endif
+
+#ifdef WITH_FALCON
+const char* OSSL::falconParameterSet2Name(unsigned long parameterSet)
+{
+	std::map<unsigned long, const char*>::const_iterator it =
+		falconAlgNameFromParameterSet.find(parameterSet);
+	if (it != falconAlgNameFromParameterSet.end()) return it->second;
 	return NULL;
 }
 #endif

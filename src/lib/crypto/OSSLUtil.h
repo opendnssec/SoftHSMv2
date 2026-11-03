@@ -79,6 +79,9 @@ namespace OSSL
 #ifdef WITH_ML_KEM
 	const char* mlkemParameterSet2Name(unsigned long parameterSet);
 #endif
+#ifdef WITH_FALCON
+	const char* falconParameterSet2Name(unsigned long parameterSet);
+#endif
 }
 
 #endif // !_SOFTHSM_V2_OSSLUTIL_H
