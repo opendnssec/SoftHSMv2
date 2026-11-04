@@ -1026,6 +1026,51 @@ bool P11MLKEMPublicKeyObj::init(OSObject *inobject)
 }
 
 // Constructor
+P11XWingPublicKeyObj::P11XWingPublicKeyObj()
+{
+	initialized = false;
+}
+
+// Add attributes
+bool P11XWingPublicKeyObj::init(OSObject *inobject)
+{
+	if (initialized) return true;
+	if (inobject == NULL) return false;
+
+	if (!inobject->attributeExists(CKA_KEY_TYPE) || inobject->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED) != CKK_X_WING) {
+		OSAttribute setKeyType((unsigned long)CKK_X_WING);
+		inobject->setAttribute(CKA_KEY_TYPE, setKeyType);
+	}
+
+	// Create parent
+	if (!P11PublicKeyObj::init(inobject)) return false;
+
+	// Create attributes
+	P11Attribute* attrEncapsulate = new P11AttrEncapsulate(osobject);
+	P11Attribute* attrValue = new P11AttrValue(osobject,P11Attribute::ck1|P11Attribute::ck4);
+
+	// Initialize the attributes
+	if
+	(
+		!attrEncapsulate->init() ||
+		!attrValue->init()
+	)
+	{
+		ERROR_MSG("Could not initialize the attribute");
+		delete attrEncapsulate;
+		delete attrValue;
+		return false;
+	}
+
+	// Add them to the map
+	attributes[attrEncapsulate->getType()] = attrEncapsulate;
+	attributes[attrValue->getType()] = attrValue;
+
+	initialized = true;
+	return true;
+}
+
+// Constructor
 P11DHPublicKeyObj::P11DHPublicKeyObj()
 {
 	initialized = false;
@@ -1526,6 +1571,51 @@ bool P11MLKEMPrivateKeyObj::init(OSObject *inobject)
 	attributes[attrDecapsulate->getType()] = attrDecapsulate;
 	attributes[attrParameterSet->getType()] = attrParameterSet;
 	attributes[attrSeed->getType()] = attrSeed;
+	attributes[attrValue->getType()] = attrValue;
+
+	initialized = true;
+	return true;
+}
+
+// Constructor
+P11XWingPrivateKeyObj::P11XWingPrivateKeyObj()
+{
+	initialized = false;
+}
+
+// Add attributes
+bool P11XWingPrivateKeyObj::init(OSObject *inobject)
+{
+	if (initialized) return true;
+	if (inobject == NULL) return false;
+
+	if (!inobject->attributeExists(CKA_KEY_TYPE) || inobject->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED) != CKK_X_WING) {
+		OSAttribute setKeyType((unsigned long)CKK_X_WING);
+		inobject->setAttribute(CKA_KEY_TYPE, setKeyType);
+	}
+
+	// Create parent
+	if (!P11PrivateKeyObj::init(inobject)) return false;
+
+	// Create attributes
+	P11Attribute* attrDecapsulate = new P11AttrDecapsulate(osobject);
+	P11Attribute* attrValue = new P11AttrValue(osobject,P11Attribute::ck1|P11Attribute::ck4|P11Attribute::ck6|P11Attribute::ck7);
+
+	// Initialize the attributes
+	if
+	(
+		!attrDecapsulate->init() ||
+		!attrValue->init()
+	)
+	{
+		ERROR_MSG("Could not initialize the attribute");
+		delete attrDecapsulate;
+		delete attrValue;
+		return false;
+	}
+
+	// Add them to the map
+	attributes[attrDecapsulate->getType()] = attrDecapsulate;
 	attributes[attrValue->getType()] = attrValue;
 
 	initialized = true;

@@ -11,6 +11,7 @@
 #   ALGO_NAME        – human-readable algorithm name, e.g. "ML-DSA"
 #   OPENSSL_ALGO     – OpenSSL algorithm identifier, e.g. "ML-DSA-44"
 #   TOKEN_DIR_NAME   – token directory name, e.g. "tokens-mldsa-44"
+# Optional: KEY_FILE_SOURCE – PKCS#8 PEM fixture when OpenSSL cannot generate the key.
 
 
 if [[ "$CI" == "true" ]] && [[ "$CI_TEST_ENABLED" != "true" ]] ; then
@@ -36,8 +37,11 @@ if test "$RUNNER_OS" = "Windows" ; then
 		fi
 	done
 else
+	# Autotools uses .libs; CMake places the module directly in lib.
 	if ! D=$(cd ../../../lib/.libs/ 2>/dev/null && pwd) ; then
-		D=
+		if ! D=$(cd ../../../lib/ 2>/dev/null && pwd) ; then
+			D=
+		fi
 	fi
 fi
 
@@ -168,7 +172,11 @@ if ! softhsm2_tool --init-token --label test0 --slot free --so-pin 12345678 --pi
 	exit 1
 fi
 
-openssl genpkey -algorithm "$OPENSSL_ALGO" -out "$KEY_FILE"
+if test -n "${KEY_FILE_SOURCE:-}" ; then
+	cp "$KEY_FILE_SOURCE" "$KEY_FILE"
+else
+	openssl genpkey -algorithm "$OPENSSL_ALGO" -out "$KEY_FILE"
+fi
 
 if ! softhsm2_tool --import "$KEY_FILE" --import-type keypair --id $TOKEN_ID --label test_key --token test0 --pin $TOKEN_PIN >"$IMPORT_OUT" 2>&1; then
 	echo "Failed to import $ALGO_NAME key"

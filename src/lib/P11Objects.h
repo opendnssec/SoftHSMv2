@@ -224,6 +224,19 @@ protected:
 	bool initialized;
 };
 
+class P11XWingPublicKeyObj : public P11PublicKeyObj
+{
+public:
+	// Constructor
+	P11XWingPublicKeyObj();
+
+	// Add attributes
+	virtual bool init(OSObject *inobject);
+
+protected:
+	bool initialized;
+};
+
 class P11DHPublicKeyObj : public P11PublicKeyObj
 {
 public:
@@ -331,6 +344,19 @@ class P11MLKEMPrivateKeyObj : public P11PrivateKeyObj
 public:
 	// Constructor
 	P11MLKEMPrivateKeyObj();
+
+	// Add attributes
+	virtual bool init(OSObject *inobject);
+
+protected:
+	bool initialized;
+};
+
+class P11XWingPrivateKeyObj : public P11PrivateKeyObj
+{
+public:
+	// Constructor
+	P11XWingPrivateKeyObj();
 
 	// Add attributes
 	virtual bool init(OSObject *inobject);

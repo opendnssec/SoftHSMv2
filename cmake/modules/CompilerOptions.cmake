@@ -158,6 +158,10 @@ check_function_exists(getpwuid_r HAVE_GETPWUID_R)
 if(WITH_CRYPTO_BACKEND STREQUAL "botan")
     set(WITH_BOTAN 1)
 
+    if(ENABLE_XWING)
+        message(FATAL_ERROR "Botan does not support X-Wing")
+    endif()
+
     include(FindBotan)
     if(NOT BOTAN_FOUND)
         message(FATAL_ERROR "Failed to find Botan!")
@@ -432,6 +436,26 @@ elseif(WITH_CRYPTO_BACKEND STREQUAL "openssl")
         set(error_msg "OpenSSL: Cannot find SHA3! OpenSSL library has no SHA3 support (requires OpenSSL >= 1.1.1 or LibreSSL >= 3.8.0)!")
         message(FATAL_ERROR ${error_msg})
     endif()
+
+    # acx_openssl_xwing.m4
+    if(ENABLE_XWING)
+        set(testfile ${CMAKE_SOURCE_DIR}/cmake/modules/tests/test_openssl_xwing.c)
+        try_run(RUN_XWING COMPILE_RESULT
+                "${CMAKE_BINARY_DIR}/prebuild_santity_tests" ${testfile}
+                LINK_LIBRARIES ${CRYPTO_LIBS}
+                CMAKE_FLAGS
+                    "-DINCLUDE_DIRECTORIES=${CRYPTO_INCLUDES}"
+                )
+        if(COMPILE_RESULT AND RUN_XWING EQUAL 0)
+            set(WITH_X_WING 1)
+            message(STATUS "OpenSSL: Found ML-KEM-768 and X25519 for X-Wing")
+        else()
+            set(error_msg "OpenSSL: Cannot find ML-KEM-768 and X25519! OpenSSL library has no X-Wing support!")
+            message(FATAL_ERROR ${error_msg})
+        endif()
+    else(ENABLE_XWING)
+        message(STATUS "OpenSSL: Support for X-Wing is disabled")
+    endif(ENABLE_XWING)
 
     # acx_openssl_gost.m4
     if(ENABLE_GOST)

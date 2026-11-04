@@ -46,6 +46,10 @@ set(SOURCES AESKey.cpp
             RSAUtil.cpp
             SymmetricAlgorithm.cpp
             SymmetricKey.cpp
+            XWingParameters.cpp
+            XWingPrivateKey.cpp
+            XWingPublicKey.cpp
+            XWingUtil.cpp
             )
 
 if(WITH_OPENSSL)
@@ -105,6 +109,10 @@ if(WITH_OPENSSL)
                         OSSLSHA3_384.cpp
                         OSSLSHA3_512.cpp
                         OSSLUtil.cpp
+                        OSSLXWing.cpp
+                        OSSLXWingKeyPair.cpp
+                        OSSLXWingPrivateKey.cpp
+                        OSSLXWingPublicKey.cpp
                         )
 endif(WITH_OPENSSL)
 

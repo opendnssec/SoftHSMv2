@@ -26,6 +26,7 @@ set(SOURCES cryptotest.cpp
             MLKEMTests.cpp
             RNGTests.cpp
             RSATests.cpp
+            XWingTests.cpp
             chisq.c
             ent.c
             iso8859.c

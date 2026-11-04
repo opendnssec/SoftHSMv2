@@ -813,6 +813,7 @@ extern "C" {
 #define CKK_ML_DSA                              (0x4AUL)
 #define CKK_SLH_DSA                             (0x4BUL)
 #define CKK_VENDOR_DEFINED                      ((unsigned long) (1UL << 31))
+#define CKK_X_WING                              (CKK_VENDOR_DEFINED | 0x00000002UL)
 
 /* CK_MECHANISM_TYPE */
 #define CKM_RSA_PKCS_KEY_PAIR_GEN               (0UL)
@@ -1294,6 +1295,8 @@ extern "C" {
 #define CKM_ECDH_COF_AES_KEY_WRAP               (0x4039UL)
 #define CKM_PUB_KEY_FROM_PRIV_KEY               (0x403AUL)
 #define CKM_VENDOR_DEFINED                      ((unsigned long) (1UL << 31))
+#define CKM_X_WING_KEY_PAIR_GEN                 (CKM_VENDOR_DEFINED | 0x00000003UL)
+#define CKM_X_WING                              (CKM_VENDOR_DEFINED | 0x00000004UL)
 
 /* CK_NOTIFICATION */
 #define CKN_SURRENDER                           (0UL)

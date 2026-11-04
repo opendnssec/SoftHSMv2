@@ -42,11 +42,14 @@
 #ifdef WITH_ECC
 #include <openssl/ec.h>
 #endif
-#if defined(WITH_EDDSA) || defined(WITH_ML_DSA) || defined(WITH_ML_KEM)
+#if defined(WITH_EDDSA) || defined(WITH_X_WING) || defined(WITH_ML_DSA) || defined(WITH_ML_KEM)
 #include <openssl/evp.h>
 #endif
 #if defined(WITH_ML_DSA) || defined(WITH_ML_KEM)
 #include <openssl/core_names.h>
+#endif
+#ifdef WITH_X_WING
+#include <openssl/x509.h>
 #endif
 #ifdef WITH_ML_DSA
 #include "MLDSAParameters.h"
@@ -197,8 +200,6 @@ typedef struct mlkem_key_material_t {
 } mlkem_key_material_t;
 #endif
 
-EVP_PKEY* crypto_read_file(char* filePath, char* filePIN);
-
 // RSA
 int crypto_save_rsa(CK_SESSION_HANDLE hSession, char* label, char* objID, size_t objIDLen, int noPublicKey, RSA* rsa);
 rsa_key_material_t* crypto_malloc_rsa(RSA* rsa);
@@ -235,6 +236,11 @@ void crypto_free_mldsa(mldsa_key_material_t* keyMat);
 int crypto_save_mlkem(CK_SESSION_HANDLE hSession, char* label, char* objID, size_t objIDLen, int noPublicKey, EVP_PKEY* mlkem);
 mlkem_key_material_t* crypto_malloc_mlkem(EVP_PKEY* mlkem);
 void crypto_free_mlkem(mlkem_key_material_t* keyMat);
+#endif
+
+#ifdef WITH_X_WING
+// X-Wing
+int crypto_save_xwing(CK_SESSION_HANDLE hSession, char* label, char* objID, size_t objIDLen, int noPublicKey, PKCS8_PRIV_KEY_INFO* keyInfo);
 #endif
 
 #endif // !_SOFTHSM_V2_SOFTHSM2_UTIL_OSSL_H
