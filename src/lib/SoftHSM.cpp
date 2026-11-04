@@ -9565,6 +9565,9 @@ CK_RV SoftHSM::C_DecapsulateKey
 						osobject->abortTransaction();
 					}
 				}
+				else {
+					osobject->abortTransaction();
+				}
 
 				if (!bOK)
 					rv = CKR_FUNCTION_FAILED;

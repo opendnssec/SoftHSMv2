@@ -1366,6 +1366,25 @@ void EncapDecapTests::testKEMTemplateValidation(CK_MECHANISM_TYPE mechanismType)
 	CPPUNIT_ASSERT_EQUAL(CKR_ARGUMENTS_BAD, CRYPTOKI_F_PTR(C_DecapsulateKey(
 		session, &mechanism, privateKey, NULL_PTR, 2,
 		ciphertext, ciphertextLength, &secretKey)));
+
+	// A rejected token-object template must not leave the transaction open.
+	CK_BBOOL bTrue = CK_TRUE;
+	CK_ULONG invalidLength = 33;
+	CK_ATTRIBUTE tokenAttributes[] = {
+		{ CKA_CLASS, &objectClass, sizeof(objectClass) },
+		{ CKA_KEY_TYPE, &keyType, sizeof(keyType) },
+		{ CKA_TOKEN, &bTrue, sizeof(bTrue) },
+		{ CKA_VALUE_LEN, &invalidLength, sizeof(invalidLength) }
+	};
+	secretKey = CK_INVALID_HANDLE;
+	CPPUNIT_ASSERT_EQUAL(CKR_WRAPPED_KEY_LEN_RANGE, CRYPTOKI_F_PTR(C_DecapsulateKey(
+		session, &mechanism, privateKey, tokenAttributes, 4,
+		ciphertext, ciphertextLength, &secretKey)));
+	CPPUNIT_ASSERT_EQUAL(CK_INVALID_HANDLE, secretKey);
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR(C_DecapsulateKey(
+		session, &mechanism, privateKey, tokenAttributes, 3,
+		ciphertext, ciphertextLength, &secretKey)));
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR(C_DestroyObject(session, secretKey)));
 	CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR(C_CloseSession(session)));
 	CRYPTOKI_F_PTR(C_Finalize(NULL_PTR));
 }
