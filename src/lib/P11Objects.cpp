@@ -952,7 +952,7 @@ bool P11FalconPublicKeyObj::init(OSObject *inobject)
 	if (!P11PublicKeyObj::init(inobject)) return false;
 
 	// Create attributes
-	P11Attribute* attrParameterSet = new P11AttrParameterSet(osobject,P11Attribute::ck3);
+	P11Attribute* attrParameterSet = new P11AttrParameterSet(osobject,P11Attribute::ck1|P11Attribute::ck3);
 	P11Attribute* attrValue = new P11AttrValue(osobject,P11Attribute::ck1|P11Attribute::ck4);
 
 	// Initialize the attributes
@@ -1496,7 +1496,7 @@ bool P11FalconPrivateKeyObj::init(OSObject *inobject)
 	if (!P11PrivateKeyObj::init(inobject)) return false;
 
 	// Create attributes
-	P11Attribute* attrParameterSet = new P11AttrParameterSet(osobject,P11Attribute::ck4|P11Attribute::ck6);
+	P11Attribute* attrParameterSet = new P11AttrParameterSet(osobject,P11Attribute::ck1|P11Attribute::ck4|P11Attribute::ck6);
 	P11Attribute* attrValue = new P11AttrValue(osobject,P11Attribute::ck1|P11Attribute::ck4|P11Attribute::ck6|P11Attribute::ck7);
 
 	// Initialize the attributes

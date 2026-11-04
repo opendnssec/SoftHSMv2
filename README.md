@@ -113,12 +113,6 @@ SoftHSM. Enable it with `--enable-falcon` (Autotools), or
 `-DENABLE_FALCON=ON` (CMake). Autotools detects provider availability by default;
 the CMake option is disabled by default.
 
-When cross-compiling with Autotools, the runtime probe cannot run on the target.
-After verifying that the target provider supports both Falcon variants, set
-`acx_cv_lib_openssl_falcon_support=yes` in the environment when invoking
-`configure --enable-falcon`. This cache override skips the runtime probe; the
-provider must still be available on the target when running SoftHSM.
-
 The vendor-defined mechanisms `CKM_FALCON_KEY_PAIR_GEN` and `CKM_FALCON`
 provide key generation and single-part signing/verification. Select
 `CKP_FALCON_512` or `CKP_FALCON_1024` through `CKA_PARAMETER_SET` in the public-key

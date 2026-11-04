@@ -1865,6 +1865,8 @@ void ObjectTests::testFalconObjectTemplates(CK_ULONG parameterSet)
 		declaredParameterSet = CKP_FALCON_1024 + 1;
 		CPPUNIT_ASSERT_EQUAL(CKR_ATTRIBUTE_VALUE_INVALID,
 			CRYPTOKI_F_PTR(C_CreateObject(session, attributes, count, &object)));
+		CPPUNIT_ASSERT_EQUAL(CKR_TEMPLATE_INCOMPLETE,
+			CRYPTOKI_F_PTR(C_CreateObject(session, attributes, count - 1, &object)));
 	}
 	CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR(C_CloseSession(session)));
 }
