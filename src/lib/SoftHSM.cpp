@@ -14814,6 +14814,23 @@ CK_RV SoftHSM::CreateObject(CK_SESSION_HANDLE hSession, CK_ATTRIBUTE_PTR pTempla
 	{
 		return CKR_TEMPLATE_INCONSISTENT;
 	}
+#ifdef WITH_X_WING
+	if (op == OBJECT_OP_CREATE && keyType == CKK_X_WING &&
+	    (objClass == CKO_PUBLIC_KEY || objClass == CKO_PRIVATE_KEY))
+	{
+		const CK_ULONG expectedLength = objClass == CKO_PUBLIC_KEY ?
+			XWingParameters::X_WING_PUB_LENGTH :
+			XWingParameters::X_WING_PRIV_LENGTH;
+		for (CK_ULONG i = 0; i < ulCount; ++i)
+		{
+			if (pTemplate[i].type == CKA_VALUE &&
+			    (pTemplate[i].pValue == NULL_PTR ||
+			     pTemplate[i].ulValueLen != expectedLength))
+				return CKR_ATTRIBUTE_VALUE_INVALID;
+		}
+	}
+#endif
+
 	for (CK_ULONG i=0; i < ulCount; i++)
 	{
 		switch (pTemplate[i].type)

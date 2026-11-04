@@ -1765,6 +1765,52 @@ void ObjectTests::testXWingTokenPersistence()
 	CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR( C_CloseSession(hSession) ));
 }
 
+void ObjectTests::testXWingObjectValueLengths()
+{
+	CRYPTOKI_F_PTR(C_Finalize(NULL_PTR));
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR(C_Initialize(NULL_PTR)));
+	CK_SESSION_HANDLE session;
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR(C_OpenSession(
+		m_initializedTokenSlotID, CKF_SERIAL_SESSION | CKF_RW_SESSION,
+		NULL_PTR, NULL_PTR, &session)));
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR(C_Login(
+		session, CKU_USER, m_userPin1, m_userPin1Length)));
+
+	CK_KEY_TYPE keyType = CKK_X_WING;
+	CK_BBOOL isPrivate = CK_FALSE;
+	CK_BYTE value[1217] = { 0 };
+	const CK_OBJECT_CLASS classes[] = { CKO_PUBLIC_KEY, CKO_PRIVATE_KEY };
+	for (CK_OBJECT_CLASS objectClass : classes)
+	{
+		const CK_ULONG length = objectClass == CKO_PUBLIC_KEY ? 1216UL : 32UL;
+		CK_ATTRIBUTE attributes[] = {
+			{ CKA_CLASS, &objectClass, sizeof(objectClass) },
+			{ CKA_KEY_TYPE, &keyType, sizeof(keyType) },
+			{ CKA_PRIVATE, &isPrivate, sizeof(isPrivate) },
+			{ CKA_VALUE, value, length }
+		};
+		const CK_ULONG count = sizeof(attributes) / sizeof(CK_ATTRIBUTE);
+		CK_OBJECT_HANDLE object = CK_INVALID_HANDLE;
+		CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR(C_CreateObject(
+			session, attributes, count, &object)));
+		CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR(C_DestroyObject(session, object)));
+		const CK_ULONG invalidLengths[] = { 0, length - 1, length + 1 };
+		for (CK_ULONG invalidLength : invalidLengths)
+		{
+			attributes[3].ulValueLen = invalidLength;
+			object = CK_INVALID_HANDLE;
+			CPPUNIT_ASSERT_EQUAL(CKR_ATTRIBUTE_VALUE_INVALID,
+				CRYPTOKI_F_PTR(C_CreateObject(session, attributes, count, &object)));
+			CPPUNIT_ASSERT_EQUAL(CK_INVALID_HANDLE, object);
+		}
+		attributes[3].ulValueLen = length;
+		attributes[3].pValue = NULL_PTR;
+		CPPUNIT_ASSERT_EQUAL(CKR_ATTRIBUTE_VALUE_INVALID,
+			CRYPTOKI_F_PTR(C_CreateObject(session, attributes, count, &object)));
+	}
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR(C_CloseSession(session)));
+}
+
 void ObjectTests::testXWingErrors()
 {
 	CK_RV rv;

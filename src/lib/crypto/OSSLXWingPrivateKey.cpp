@@ -210,6 +210,16 @@ bool OSSLXWingPrivateKey::PKCS8Decode(const ByteString& ber)
 	PKCS8_PRIV_KEY_INFO* p8 = d2i_PKCS8_PRIV_KEY_INFO(NULL, &input, ber.size());
 	if (p8 == NULL) return false;
 
+	const size_t consumed = static_cast<size_t>(input - ber.const_byte_str());
+	for (size_t i = consumed; i < ber.size(); ++i)
+	{
+		if (ber.const_byte_str()[i] != 0)
+		{
+			PKCS8_PRIV_KEY_INFO_free(p8);
+			return false;
+		}
+	}
+
 	const ASN1_OBJECT* algorithm = NULL;
 	const unsigned char* privateKey = NULL;
 	const X509_ALGOR* algorithmIdentifier = NULL;

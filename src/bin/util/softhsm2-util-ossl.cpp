@@ -1711,8 +1711,17 @@ int crypto_save_xwing(CK_SESSION_HANDLE hSession, char* label, char* objID,
 		sizeof(pubTemplate) / sizeof(CK_ATTRIBUTE), &hPublicKey);
 	if (rv != CKR_OK)
 	{
-		p11->C_DestroyObject(hSession, hPrivateKey);
+		const CK_RV rollbackRV = p11->C_DestroyObject(hSession, hPrivateKey);
 		fprintf(stderr, "ERROR: Could not save the public key in the token.\n");
+		if (rollbackRV != CKR_OK)
+		{
+			fprintf(stderr, "ERROR: Could not roll back the private-key import "
+				"(rv: 0x%08lX). A private key may remain on the token "
+				"with label=%s, ID=", (unsigned long)rollbackRV, label);
+			for (size_t i = 0; i < objIDLen; ++i)
+				fprintf(stderr, "%02X", static_cast<unsigned char>(objID[i]));
+			fprintf(stderr, ". Check the token before retrying the import.\n");
+		}
 		return 1;
 	}
 

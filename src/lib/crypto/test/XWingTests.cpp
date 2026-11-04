@@ -370,6 +370,19 @@ void XWingTests::testPKCS8()
 	CPPUNIT_ASSERT(decodedPrivateKey->PKCS8Decode(paddedPKCS8));
 	CPPUNIT_ASSERT(privateKey->serialise() == decodedPrivateKey->serialise());
 
+	// Trailing zero padding is allowed, but extra non-zero content is not.
+	ByteString invalidPKCS8 = pkcs8;
+	invalidPKCS8.resize(pkcs8.size() + 1);
+	invalidPKCS8[pkcs8.size()] = 0xa5;
+	CPPUNIT_ASSERT(!decodedPrivateKey->PKCS8Decode(invalidPKCS8));
+	CPPUNIT_ASSERT(privateKey->serialise() == decodedPrivateKey->serialise());
+
+	invalidPKCS8 = paddedPKCS8;
+	invalidPKCS8.resize(paddedPKCS8.size() + 8);
+	invalidPKCS8[invalidPKCS8.size() - 1] = 0xa5;
+	CPPUNIT_ASSERT(!decodedPrivateKey->PKCS8Decode(invalidPKCS8));
+	CPPUNIT_ASSERT(privateKey->serialise() == decodedPrivateKey->serialise());
+
 	SymmetricKey* secretKey = NULL;
 	CPPUNIT_ASSERT(xWing->decapsulate(decodedPrivateKey,
 		ByteString(testVectors[0].cipherText), &secretKey, CKK_AES, AsymMech::XWING));

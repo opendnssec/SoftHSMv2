@@ -53,6 +53,7 @@ class ObjectTests : public TestsBase
 	CPPUNIT_TEST(testXWingKeyGeneration);
 	CPPUNIT_TEST(testXWingTokenPersistence);
 	CPPUNIT_TEST(testXWingErrors);
+	CPPUNIT_TEST(testXWingObjectValueLengths);
 #endif
 	CPPUNIT_TEST(testCreateCertificates);
 	CPPUNIT_TEST(testDefaultDataAttributes);
@@ -81,6 +82,7 @@ public:
 	void testXWingKeyGeneration();
 	void testXWingTokenPersistence();
 	void testXWingErrors();
+	void testXWingObjectValueLengths();
 #endif
 	void testCreateCertificates();
 	void testDefaultDataAttributes();

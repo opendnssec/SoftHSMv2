@@ -13,6 +13,10 @@ AC_DEFUN([ACX_OPENSSL_XWING],[
 		AC_RUN_IFELSE([
 			AC_LANG_SOURCE([[
 				#include <openssl/evp.h>
+				#include <openssl/core_names.h>
+				#if !defined(OSSL_PKEY_PARAM_ML_KEM_SEED) || !defined(OSSL_KEM_PARAM_IKME)
+				#error "OpenSSL headers lack X-Wing parameter definitions"
+				#endif
 				int main()
 				{
 					EVP_PKEY_CTX *mlkem =
