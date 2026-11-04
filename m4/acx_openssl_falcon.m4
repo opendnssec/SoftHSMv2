@@ -35,7 +35,7 @@ AC_DEFUN([ACX_OPENSSL_FALCON],[
 			AC_MSG_RESULT([no])
 			acx_cv_lib_openssl_falcon_support=no
 		],[
-			AC_MSG_WARN([Cannot test, Falcon-512 and Falcon-1024])
+			AC_MSG_WARN([Cannot run the Falcon probe while cross-compiling; set acx_cv_lib_openssl_falcon_support=yes only if target support is known])
 			acx_cv_lib_openssl_falcon_support=no
 		])
 	])

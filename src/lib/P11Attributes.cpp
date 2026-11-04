@@ -2262,7 +2262,9 @@ CK_RV P11AttrParameterSet::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_V
 
 	// Store data
 
-	osobject->setAttribute(type, *(CK_ULONG*)pValue);
+	CK_ULONG parameterSet;
+	memcpy(&parameterSet, pValue, sizeof(parameterSet));
+	osobject->setAttribute(type, parameterSet);
 
 	return CKR_OK;
 }

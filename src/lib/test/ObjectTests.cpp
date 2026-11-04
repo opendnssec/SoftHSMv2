@@ -1764,6 +1764,111 @@ void ObjectTests::testFalconKeyGeneration(CK_ULONG parameterSet)
 	CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR( C_CloseSession(hSession) ));
 }
 
+void ObjectTests::testFalconUnalignedParameterSet(CK_ULONG parameterSet)
+{
+	CRYPTOKI_F_PTR(C_Finalize(NULL_PTR));
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR(C_Initialize(NULL_PTR)));
+	CK_SESSION_HANDLE session;
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR(C_OpenSession(
+		m_initializedTokenSlotID, CKF_SERIAL_SESSION | CKF_RW_SESSION,
+		NULL_PTR, NULL_PTR, &session)));
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR(C_Login(
+		session, CKU_USER, m_userPin1, m_userPin1Length)));
+
+	alignas(CK_ULONG) CK_BYTE parameterBytes[sizeof(parameterSet) + 1];
+	memcpy(parameterBytes + 1, &parameterSet, sizeof(parameterSet));
+	CK_ATTRIBUTE parameter = {
+		CKA_PARAMETER_SET, parameterBytes + 1, sizeof(parameterSet)
+	};
+	CK_MECHANISM mechanism = { CKM_FALCON_KEY_PAIR_GEN, NULL_PTR, 0 };
+	CK_OBJECT_HANDLE publicKey, privateKey;
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR(C_GenerateKeyPair(session,
+		&mechanism, &parameter, 1, NULL_PTR, 0, &publicKey, &privateKey)));
+
+	CK_BYTE value[1793];
+	CK_ATTRIBUTE publicValue = { CKA_VALUE, value, sizeof(value) };
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR(C_GetAttributeValue(
+		session, publicKey, &publicValue, 1)));
+	CK_OBJECT_CLASS objectClass = CKO_PUBLIC_KEY;
+	CK_KEY_TYPE keyType = CKK_FALCON;
+	CK_BBOOL isPrivate = CK_FALSE;
+	CK_ATTRIBUTE attributes[] = {
+		{ CKA_CLASS, &objectClass, sizeof(objectClass) },
+		{ CKA_KEY_TYPE, &keyType, sizeof(keyType) },
+		{ CKA_PRIVATE, &isPrivate, sizeof(isPrivate) },
+		publicValue, parameter
+	};
+	CK_OBJECT_HANDLE imported;
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR(C_CreateObject(session,
+		attributes, sizeof(attributes) / sizeof(CK_ATTRIBUTE), &imported)));
+	CK_ULONG storedParameterSet = 0;
+	CK_ATTRIBUTE stored = {
+		CKA_PARAMETER_SET, &storedParameterSet, sizeof(storedParameterSet)
+	};
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR(C_GetAttributeValue(
+		session, imported, &stored, 1)));
+	CPPUNIT_ASSERT_EQUAL(parameterSet, storedParameterSet);
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR(C_CloseSession(session)));
+}
+
+void ObjectTests::testFalconObjectTemplates(CK_ULONG parameterSet)
+{
+	CRYPTOKI_F_PTR(C_Finalize(NULL_PTR));
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR(C_Initialize(NULL_PTR)));
+	CK_SESSION_HANDLE session;
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR(C_OpenSession(
+		m_initializedTokenSlotID, CKF_SERIAL_SESSION | CKF_RW_SESSION,
+		NULL_PTR, NULL_PTR, &session)));
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR(C_Login(
+		session, CKU_USER, m_userPin1, m_userPin1Length)));
+
+	CK_KEY_TYPE keyType = CKK_FALCON;
+	CK_BBOOL isPrivate = CK_FALSE;
+	CK_BYTE value[2305] = { 0 };
+	const CK_OBJECT_CLASS classes[] = { CKO_PUBLIC_KEY, CKO_PRIVATE_KEY };
+	for (CK_OBJECT_CLASS objectClass : classes)
+	{
+		const CK_ULONG length = objectClass == CKO_PUBLIC_KEY ?
+			(parameterSet == CKP_FALCON_512 ? 897UL : 1793UL) :
+			(parameterSet == CKP_FALCON_512 ? 1281UL : 2305UL);
+		CK_ULONG declaredParameterSet = parameterSet;
+		// Put the value before the parameter set to check attribute-order independence.
+		CK_ATTRIBUTE attributes[] = {
+			{ CKA_CLASS, &objectClass, sizeof(objectClass) },
+			{ CKA_KEY_TYPE, &keyType, sizeof(keyType) },
+			{ CKA_PRIVATE, &isPrivate, sizeof(isPrivate) },
+			{ CKA_VALUE, value, length },
+			{ CKA_PARAMETER_SET, &declaredParameterSet, sizeof(declaredParameterSet) }
+		};
+		const CK_ULONG count = sizeof(attributes) / sizeof(CK_ATTRIBUTE);
+		CK_OBJECT_HANDLE object = CK_INVALID_HANDLE;
+		CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR(C_CreateObject(
+			session, attributes, count, &object)));
+		CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR(C_DestroyObject(session, object)));
+
+		declaredParameterSet = parameterSet == CKP_FALCON_512 ?
+			CKP_FALCON_1024 : CKP_FALCON_512;
+		object = CK_INVALID_HANDLE;
+		CPPUNIT_ASSERT_EQUAL(CKR_TEMPLATE_INCONSISTENT,
+			CRYPTOKI_F_PTR(C_CreateObject(session, attributes, count, &object)));
+		CPPUNIT_ASSERT_EQUAL(CK_INVALID_HANDLE, object);
+
+		declaredParameterSet = parameterSet;
+		attributes[3].ulValueLen = length - 1;
+		CPPUNIT_ASSERT_EQUAL(CKR_ATTRIBUTE_VALUE_INVALID,
+			CRYPTOKI_F_PTR(C_CreateObject(session, attributes, count, &object)));
+		attributes[3].ulValueLen = length;
+		attributes[3].pValue = NULL_PTR;
+		CPPUNIT_ASSERT_EQUAL(CKR_ATTRIBUTE_VALUE_INVALID,
+			CRYPTOKI_F_PTR(C_CreateObject(session, attributes, count, &object)));
+		attributes[3].pValue = value;
+		declaredParameterSet = CKP_FALCON_1024 + 1;
+		CPPUNIT_ASSERT_EQUAL(CKR_ATTRIBUTE_VALUE_INVALID,
+			CRYPTOKI_F_PTR(C_CreateObject(session, attributes, count, &object)));
+	}
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR(C_CloseSession(session)));
+}
+
 void ObjectTests::testFalconTokenPersistence(CK_ULONG parameterSet)
 {
 	CK_RV rv;

@@ -52,6 +52,10 @@ class ObjectTests : public TestsBase
 #ifdef WITH_FALCON
 	CPPUNIT_TEST_PARAMETERIZED(testFalconKeyGeneration,
 		{CKP_FALCON_512, CKP_FALCON_1024});
+	CPPUNIT_TEST_PARAMETERIZED(testFalconUnalignedParameterSet,
+		{CKP_FALCON_512, CKP_FALCON_1024});
+	CPPUNIT_TEST_PARAMETERIZED(testFalconObjectTemplates,
+		{CKP_FALCON_512, CKP_FALCON_1024});
 	CPPUNIT_TEST_PARAMETERIZED(testFalconTokenPersistence,
 		{CKP_FALCON_512, CKP_FALCON_1024});
 #endif
@@ -80,6 +84,8 @@ public:
 	void testGenerateKeys();
 #ifdef WITH_FALCON
 	void testFalconKeyGeneration(CK_ULONG parameterSet);
+	void testFalconUnalignedParameterSet(CK_ULONG parameterSet);
+	void testFalconObjectTemplates(CK_ULONG parameterSet);
 	void testFalconTokenPersistence(CK_ULONG parameterSet);
 #endif
 	void testCreateCertificates();

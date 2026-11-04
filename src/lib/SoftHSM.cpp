@@ -11731,7 +11731,7 @@ CK_RV SoftHSM::generateFalcon
 			INFO_MSG("CKA_PARAMETER_SET must have a value");
 			return CKR_ATTRIBUTE_VALUE_INVALID;
 		}
-		parameterSet = *(CK_ULONG*)pPublicKeyTemplate[i].pValue;
+		memcpy(&parameterSet, pPublicKeyTemplate[i].pValue, sizeof(parameterSet));
 	}
 
 	if (parameterSet == 0)
@@ -14850,6 +14850,49 @@ CK_RV SoftHSM::CreateObject(CK_SESSION_HANDLE hSession, CK_ATTRIBUTE_PTR pTempla
 	{
 		return CKR_TEMPLATE_INCONSISTENT;
 	}
+#ifdef WITH_FALCON
+	if (op == OBJECT_OP_CREATE && keyType == CKK_FALCON &&
+	    (objClass == CKO_PUBLIC_KEY || objClass == CKO_PRIVATE_KEY))
+	{
+		CK_ATTRIBUTE_PTR value = NULL_PTR;
+		CK_ULONG parameterSet = 0;
+		bool hasParameterSet = false;
+		for (CK_ULONG i = 0; i < ulCount; ++i)
+		{
+			if (pTemplate[i].type == CKA_VALUE)
+				value = &pTemplate[i];
+			if (pTemplate[i].type == CKA_PARAMETER_SET)
+			{
+				if (pTemplate[i].pValue == NULL_PTR ||
+				    pTemplate[i].ulValueLen != sizeof(parameterSet))
+					return CKR_ATTRIBUTE_VALUE_INVALID;
+				memcpy(&parameterSet, pTemplate[i].pValue, sizeof(parameterSet));
+				hasParameterSet = true;
+			}
+		}
+		if (value == NULL_PTR) return CKR_TEMPLATE_INCOMPLETE;
+		if (value->pValue == NULL_PTR) return CKR_ATTRIBUTE_VALUE_INVALID;
+
+		const CK_ULONG length512 = objClass == CKO_PUBLIC_KEY ?
+			FalconParameters::FALCON_512_PUB_LENGTH :
+			FalconParameters::FALCON_512_PRIV_LENGTH;
+		const CK_ULONG length1024 = objClass == CKO_PUBLIC_KEY ?
+			FalconParameters::FALCON_1024_PUB_LENGTH :
+			FalconParameters::FALCON_1024_PRIV_LENGTH;
+		if (value->ulValueLen != length512 && value->ulValueLen != length1024)
+			return CKR_ATTRIBUTE_VALUE_INVALID;
+		if (hasParameterSet)
+		{
+			if (parameterSet != CKP_FALCON_512 && parameterSet != CKP_FALCON_1024)
+				return CKR_ATTRIBUTE_VALUE_INVALID;
+			const CK_ULONG expectedLength = parameterSet == CKP_FALCON_512 ?
+				length512 : length1024;
+			if (value->ulValueLen != expectedLength)
+				return CKR_TEMPLATE_INCONSISTENT;
+		}
+	}
+#endif
+
 	for (CK_ULONG i=0; i < ulCount; i++)
 	{
 		switch (pTemplate[i].type)
