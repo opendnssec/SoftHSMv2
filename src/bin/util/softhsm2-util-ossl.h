@@ -42,7 +42,7 @@
 #ifdef WITH_ECC
 #include <openssl/ec.h>
 #endif
-#if defined(WITH_EDDSA) || defined(WITH_ML_DSA) || defined(WITH_ML_KEM)
+#if defined(WITH_EDDSA) || defined(WITH_FALCON) || defined(WITH_ML_DSA) || defined(WITH_ML_KEM)
 #include <openssl/evp.h>
 #endif
 #if defined(WITH_ML_DSA) || defined(WITH_ML_KEM)
@@ -221,6 +221,11 @@ void crypto_free_ecdsa(ecdsa_key_material_t* keyMat);
 int crypto_save_eddsa(CK_SESSION_HANDLE hSession, char* label, char* objID, size_t objIDLen, int noPublicKey, EVP_PKEY* eddsa);
 eddsa_key_material_t* crypto_malloc_eddsa(EVP_PKEY* eddsa);
 void crypto_free_eddsa(eddsa_key_material_t* keyMat);
+#endif
+
+#ifdef WITH_FALCON
+// Falcon
+int crypto_save_falcon(CK_SESSION_HANDLE hSession, char* label, char* objID, size_t objIDLen, int noPublicKey, EVP_PKEY* falcon);
 #endif
 
 #ifdef WITH_ML_DSA

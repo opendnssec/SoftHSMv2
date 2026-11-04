@@ -64,6 +64,9 @@
 #ifdef WITH_EDDSA
 #include "OSSLEDDSA.h"
 #endif
+#ifdef WITH_FALCON
+#include "OSSLFalcon.h"
+#endif
 #ifdef WITH_ML_DSA
 #include "OSSLMLDSA.h"
 #endif
@@ -364,6 +367,10 @@ AsymmetricAlgorithm* OSSLCryptoFactory::getAsymmetricAlgorithm(AsymAlgo::Type al
 #ifdef WITH_EDDSA
 		case AsymAlgo::EDDSA:
 			return new OSSLEDDSA();
+#endif
+#ifdef WITH_FALCON
+		case AsymAlgo::FALCON:
+			return new OSSLFalcon();
 #endif
 #ifdef WITH_ML_DSA
 		case AsymAlgo::MLDSA:

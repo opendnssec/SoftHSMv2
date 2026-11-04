@@ -415,6 +415,22 @@ private:
 		CK_BBOOL isOnToken,
 		CK_BBOOL isPrivate
 	);
+#ifdef WITH_FALCON
+	CK_RV generateFalcon
+	(
+		CK_SESSION_HANDLE hSession,
+		CK_ATTRIBUTE_PTR pPublicKeyTemplate,
+		CK_ULONG ulPublicKeyAttributeCount,
+		CK_ATTRIBUTE_PTR pPrivateKeyTemplate,
+		CK_ULONG ulPrivateKeyAttributeCount,
+		CK_OBJECT_HANDLE_PTR phPublicKey,
+		CK_OBJECT_HANDLE_PTR phPrivateKey,
+		CK_BBOOL isPublicKeyOnToken,
+		CK_BBOOL isPublicKeyPrivate,
+		CK_BBOOL isPrivateKeyOnToken,
+		CK_BBOOL isPrivateKeyPrivate
+	);
+#endif
 #ifdef WITH_ML_DSA
 	CK_RV generateMLDSA
 	(

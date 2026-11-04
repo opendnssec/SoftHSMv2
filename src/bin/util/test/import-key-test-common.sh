@@ -36,8 +36,11 @@ if test "$RUNNER_OS" = "Windows" ; then
 		fi
 	done
 else
+	# Autotools uses .libs; CMake places the module directly in lib.
 	if ! D=$(cd ../../../lib/.libs/ 2>/dev/null && pwd) ; then
-		D=
+		if ! D=$(cd ../../../lib/ 2>/dev/null && pwd) ; then
+			D=
+		fi
 	fi
 fi
 

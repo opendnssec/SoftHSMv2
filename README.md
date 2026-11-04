@@ -85,6 +85,7 @@ Options:
 	--enable-mldsa		Enable support for ML-DSA (default detect)
 	--enable-mlkem		Enable support for ML-KEM (default detect)
 	--enable-sha3		Enable support for SHA3 (default detect)
+	--enable-falcon		Enable support for Falcon-512 and Falcon-1024 (default detect)
 	--disable-visibility	Disable hidden visibilty link mode [enabled]
 	--with-crypto-backend	Select crypto backend (openssl|botan)
 	--with-openssl=PATH	Specify prefix of path of OpenSSL
@@ -102,6 +103,22 @@ For more options:
 
 	./configure --help
 
+
+### Falcon support (OpenSSL)
+
+Falcon support uses the OpenSSL 3 provider interface and requires both
+`falcon512` and `falcon1024` to be available, for example through oqs-provider.
+Load the provider in the OpenSSL configuration used when configuring and running
+SoftHSM. Enable it with `--enable-falcon` (Autotools), or
+`-DENABLE_FALCON=ON` (CMake). Autotools detects provider availability by default;
+the CMake option is disabled by default.
+
+The vendor-defined mechanisms `CKM_FALCON_KEY_PAIR_GEN` and `CKM_FALCON`
+provide key generation and single-part signing/verification. Select
+`CKP_FALCON_512` or `CKP_FALCON_1024` through `CKA_PARAMETER_SET` in the public-key
+template. Multipart signing and verification are not supported. Private-key
+import uses PKCS#8 PEM, and private keys also support PKCS#8 encoding for the
+existing wrapping and unwrapping operations.
 
 ### Compile
 

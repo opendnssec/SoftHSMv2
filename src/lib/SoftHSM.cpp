@@ -63,6 +63,12 @@
 #include "DHPrivateKey.h"
 #include "GOSTPublicKey.h"
 #include "GOSTPrivateKey.h"
+#ifdef WITH_FALCON
+#include "FalconParameters.h"
+#include "FalconPublicKey.h"
+#include "FalconPrivateKey.h"
+#include "FalconUtil.h"
+#endif
 #ifdef WITH_ML_DSA
 #include "MLDSAParameters.h"
 #include "MLDSAMechanismParam.h"
@@ -154,6 +160,10 @@ static CK_RV newP11Object(CK_OBJECT_CLASS objClass, CK_KEY_TYPE keyType, CK_CERT
 				*p11object = new P11GOSTPublicKeyObj();
 			else if (keyType == CKK_EC_EDWARDS)
 				*p11object = new P11EDPublicKeyObj();
+#ifdef WITH_FALCON
+			else if (keyType == CKK_FALCON)
+				*p11object = new P11FalconPublicKeyObj();
+#endif
 #ifdef WITH_ML_DSA
 			else if (keyType == CKK_ML_DSA)
 				*p11object = new P11MLDSAPublicKeyObj();
@@ -179,6 +189,10 @@ static CK_RV newP11Object(CK_OBJECT_CLASS objClass, CK_KEY_TYPE keyType, CK_CERT
 				*p11object = new P11GOSTPrivateKeyObj();
 			else if (keyType == CKK_EC_EDWARDS)
 				*p11object = new P11EDPrivateKeyObj();
+#ifdef WITH_FALCON
+			else if (keyType == CKK_FALCON)
+				*p11object = new P11FalconPrivateKeyObj();
+#endif
 #ifdef WITH_ML_DSA
 			else if (keyType == CKK_ML_DSA)
 				*p11object = new P11MLDSAPrivateKeyObj();
@@ -906,6 +920,10 @@ void SoftHSM::prepareSupportedMechanisms(std::map<std::string, CK_MECHANISM_TYPE
 	t["CKM_EC_EDWARDS_KEY_PAIR_GEN"] = CKM_EC_EDWARDS_KEY_PAIR_GEN;
 	t["CKM_EDDSA"]			= CKM_EDDSA;
 #endif
+#ifdef WITH_FALCON
+	t["CKM_FALCON_KEY_PAIR_GEN"] = CKM_FALCON_KEY_PAIR_GEN;
+	t["CKM_FALCON"] = CKM_FALCON;
+#endif
 #ifdef WITH_ML_DSA
 	t["CKM_ML_DSA_KEY_PAIR_GEN"] = CKM_ML_DSA_KEY_PAIR_GEN;
 	t["CKM_ML_DSA"]			= CKM_ML_DSA;
@@ -1018,6 +1036,9 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 	unsigned long ecdhMinSize = 0, ecdhMaxSize = 0;
 	unsigned long eddsaMinSize = 0, eddsaMaxSize = 0;
 #endif
+#ifdef WITH_FALCON
+	unsigned long falconMinSize = 0, falconMaxSize = 0;
+#endif
 #ifdef WITH_ML_DSA
 	// ML‑DSA min/max sizes are bytes (PKCS#11 v3.2).
     unsigned long mldsaMinSize = 0, mldsaMaxSize = 0;
@@ -1122,6 +1143,19 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 		return CKR_GENERAL_ERROR;
 	}
 	CryptoFactory::i()->recycleAsymmetricAlgorithm(eddsa);
+#endif
+#ifdef WITH_FALCON
+	AsymmetricAlgorithm* falcon = CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::FALCON);
+	if (falcon != NULL)
+	{
+		falconMinSize = falcon->getMinKeySize();
+		falconMaxSize = falcon->getMaxKeySize();
+	}
+	else
+	{
+		return CKR_GENERAL_ERROR;
+	}
+	CryptoFactory::i()->recycleAsymmetricAlgorithm(falcon);
 #endif
 #ifdef WITH_ML_DSA
 	AsymmetricAlgorithm* mldsa = CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::MLDSA);
@@ -1486,6 +1520,18 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 		case CKM_EDDSA:
 			pInfo->ulMinKeySize = eddsaMinSize;
 			pInfo->ulMaxKeySize = eddsaMaxSize;
+			pInfo->flags = CKF_SIGN | CKF_VERIFY;
+			break;
+#endif
+#ifdef WITH_FALCON
+		case CKM_FALCON_KEY_PAIR_GEN:
+			pInfo->ulMinKeySize = falconMinSize;
+			pInfo->ulMaxKeySize = falconMaxSize;
+			pInfo->flags = CKF_GENERATE_KEY_PAIR;
+			break;
+		case CKM_FALCON:
+			pInfo->ulMinKeySize = falconMinSize;
+			pInfo->ulMaxKeySize = falconMaxSize;
 			pInfo->flags = CKF_SIGN | CKF_VERIFY;
 			break;
 #endif
@@ -4459,6 +4505,9 @@ CK_RV SoftHSM::AsymSignInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechan
 #ifdef WITH_EDDSA
 	bool isEDDSA = false;
 #endif
+#ifdef WITH_FALCON
+	bool isFalcon = false;
+#endif
 #ifdef WITH_ML_DSA
 	bool isMLDSA = false;
 	MLDSAMechanismParam mldsaParam;
@@ -4883,6 +4932,19 @@ CK_RV SoftHSM::AsymSignInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechan
 			isEDDSA = true;
 			break;
 #endif
+#ifdef WITH_FALCON
+		case CKM_FALCON:
+			if (pMechanism->pParameter != NULL_PTR ||
+				pMechanism->ulParameterLen != 0)
+			{
+				ERROR_MSG("Invalid Falcon parameters");
+				return CKR_ARGUMENTS_BAD;
+			}
+			mechanism = AsymMech::FALCON;
+			bAllowMultiPartOp = false;
+			isFalcon = true;
+			break;
+#endif
 #ifdef WITH_ML_DSA
 		case CKM_ML_DSA:
 			mechanism = AsymMech::MLDSA;
@@ -5016,6 +5078,30 @@ CK_RV SoftHSM::AsymSignInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechan
 		}
 
 		if (getEDPrivateKey((EDPrivateKey*)privateKey, token, key) != CKR_OK)
+		{
+			asymCrypto->recyclePrivateKey(privateKey);
+			CryptoFactory::i()->recycleAsymmetricAlgorithm(asymCrypto);
+			return CKR_GENERAL_ERROR;
+		}
+	}
+#endif
+#ifdef WITH_FALCON
+	else if (isFalcon)
+	{
+		if (keyType != CKK_FALCON)
+			return CKR_KEY_TYPE_INCONSISTENT;
+
+		asymCrypto = CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::FALCON);
+		if (asymCrypto == NULL) return CKR_MECHANISM_INVALID;
+
+		privateKey = asymCrypto->newPrivateKey();
+		if (privateKey == NULL)
+		{
+			CryptoFactory::i()->recycleAsymmetricAlgorithm(asymCrypto);
+			return CKR_HOST_MEMORY;
+		}
+
+		if (FalconUtil::getFalconPrivateKey((FalconPrivateKey*)privateKey, token, key) != CKR_OK)
 		{
 			asymCrypto->recyclePrivateKey(privateKey);
 			CryptoFactory::i()->recycleAsymmetricAlgorithm(asymCrypto);
@@ -5230,14 +5316,16 @@ static CK_RV AsymSign(Session* session, CK_BYTE_PTR pData, CK_ULONG ulDataLen, C
 	}
 
 	// Check size
-	if (signature.size() != size)
+	const bool hasVariableSignatureLength = mechanism == AsymMech::FALCON;
+	if (signature.size() == 0 || signature.size() > size ||
+		(!hasVariableSignatureLength && signature.size() != size))
 	{
 		ERROR_MSG("The size of the signature differs from the size of the mechanism");
 		session->resetOp();
 		return CKR_GENERAL_ERROR;
 	}
-	memcpy(pSignature, signature.byte_str(), size);
-	*pulSignatureLen = size;
+	memcpy(pSignature, signature.byte_str(), signature.size());
+	*pulSignatureLen = signature.size();
 
 	session->resetOp();
 	return CKR_OK;
@@ -5733,6 +5821,9 @@ CK_RV SoftHSM::AsymVerifyInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 #ifdef WITH_EDDSA
 	bool isEDDSA = false;
 #endif
+#ifdef WITH_FALCON
+	bool isFalcon = false;
+#endif
 #ifdef WITH_ML_DSA
 	bool isMLDSA = false;
 	MLDSAMechanismParam mldsaParam;
@@ -6156,6 +6247,19 @@ CK_RV SoftHSM::AsymVerifyInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 			isEDDSA = true;
 			break;
 #endif
+#ifdef WITH_FALCON
+		case CKM_FALCON:
+			if (pMechanism->pParameter != NULL_PTR ||
+				pMechanism->ulParameterLen != 0)
+			{
+				ERROR_MSG("Invalid Falcon parameters");
+				return CKR_ARGUMENTS_BAD;
+			}
+			mechanism = AsymMech::FALCON;
+			bAllowMultiPartOp = false;
+			isFalcon = true;
+			break;
+#endif
 #ifdef WITH_ML_DSA
 		case CKM_ML_DSA:
 			mechanism = AsymMech::MLDSA;
@@ -6289,6 +6393,30 @@ CK_RV SoftHSM::AsymVerifyInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 		}
 
 		if (getEDPublicKey((EDPublicKey*)publicKey, token, key) != CKR_OK)
+		{
+			asymCrypto->recyclePublicKey(publicKey);
+			CryptoFactory::i()->recycleAsymmetricAlgorithm(asymCrypto);
+			return CKR_GENERAL_ERROR;
+		}
+	}
+#endif
+#ifdef WITH_FALCON
+	else if (isFalcon)
+	{
+		if (keyType != CKK_FALCON)
+			return CKR_KEY_TYPE_INCONSISTENT;
+
+		asymCrypto = CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::FALCON);
+		if (asymCrypto == NULL) return CKR_MECHANISM_INVALID;
+
+		publicKey = asymCrypto->newPublicKey();
+		if (publicKey == NULL)
+		{
+			CryptoFactory::i()->recycleAsymmetricAlgorithm(asymCrypto);
+			return CKR_HOST_MEMORY;
+		}
+
+		if (FalconUtil::getFalconPublicKey((FalconPublicKey*)publicKey, token, key) != CKR_OK)
 		{
 			asymCrypto->recyclePublicKey(publicKey);
 			CryptoFactory::i()->recycleAsymmetricAlgorithm(asymCrypto);
@@ -6439,7 +6567,9 @@ static CK_RV AsymVerify(Session* session, CK_BYTE_PTR pData, CK_ULONG ulDataLen,
 	CK_ULONG size = publicKey->getOutputLength();
 
 	// Check buffer size
-	if (ulSignatureLen != size)
+	const bool isFalcon = mechanism == AsymMech::FALCON;
+	if ((isFalcon && (ulSignatureLen == 0 || ulSignatureLen > size)) ||
+		(!isFalcon && ulSignatureLen != size))
 	{
 		ERROR_MSG("The size of the signature differs from the size of the mechanism");
 		DEBUG_MSG("size: %lu, ulSignatureLen: %lu", size, ulSignatureLen);
@@ -6936,6 +7066,11 @@ CK_RV SoftHSM::C_GenerateKeyPair
 			keyType = CKK_EC_EDWARDS;
 			break;
 #endif
+#ifdef WITH_FALCON
+		case CKM_FALCON_KEY_PAIR_GEN:
+			keyType = CKK_FALCON;
+			break;
+#endif
 #ifdef WITH_ML_DSA
 		case CKM_ML_DSA_KEY_PAIR_GEN:
 			keyType = CKK_ML_DSA;
@@ -6973,6 +7108,8 @@ CK_RV SoftHSM::C_GenerateKeyPair
 		return CKR_TEMPLATE_INCONSISTENT;
 	if (pMechanism->mechanism == CKM_EC_EDWARDS_KEY_PAIR_GEN && keyType != CKK_EC_EDWARDS)
 		return CKR_TEMPLATE_INCONSISTENT;
+	if (pMechanism->mechanism == CKM_FALCON_KEY_PAIR_GEN && keyType != CKK_FALCON)
+		return CKR_TEMPLATE_INCONSISTENT;
 	if (pMechanism->mechanism == CKM_ML_DSA_KEY_PAIR_GEN && keyType != CKK_ML_DSA)
 		return CKR_TEMPLATE_INCONSISTENT;
 	if (pMechanism->mechanism == CKM_ML_KEM_KEY_PAIR_GEN && keyType != CKK_ML_KEM)
@@ -6999,6 +7136,8 @@ CK_RV SoftHSM::C_GenerateKeyPair
 	if (pMechanism->mechanism == CKM_GOSTR3410_KEY_PAIR_GEN && keyType != CKK_GOSTR3410)
 		return CKR_TEMPLATE_INCONSISTENT;
 	if (pMechanism->mechanism == CKM_EC_EDWARDS_KEY_PAIR_GEN && keyType != CKK_EC_EDWARDS)
+		return CKR_TEMPLATE_INCONSISTENT;
+	if (pMechanism->mechanism == CKM_FALCON_KEY_PAIR_GEN && keyType != CKK_FALCON)
 		return CKR_TEMPLATE_INCONSISTENT;
 	if (pMechanism->mechanism == CKM_ML_DSA_KEY_PAIR_GEN && keyType != CKK_ML_DSA)
 		return CKR_TEMPLATE_INCONSISTENT;
@@ -7076,6 +7215,17 @@ CK_RV SoftHSM::C_GenerateKeyPair
 									 phPublicKey, phPrivateKey,
 									 ispublicKeyToken, ispublicKeyPrivate, isprivateKeyToken, isprivateKeyPrivate);
 	}
+
+#ifdef WITH_FALCON
+	if (pMechanism->mechanism == CKM_FALCON_KEY_PAIR_GEN)
+	{
+		return this->generateFalcon(hSession,
+									 pPublicKeyTemplate, ulPublicKeyAttributeCount,
+									 pPrivateKeyTemplate, ulPrivateKeyAttributeCount,
+									 phPublicKey, phPrivateKey,
+									 ispublicKeyToken, ispublicKeyPrivate, isprivateKeyToken, isprivateKeyPrivate);
+	}
+#endif
 
 #ifdef WITH_ML_DSA
 	if (pMechanism->mechanism == CKM_ML_DSA_KEY_PAIR_GEN)
@@ -7712,6 +7862,11 @@ CK_RV SoftHSM::C_WrapKey
 				alg = AsymAlgo::MLDSA;
 				break;
 #endif
+#ifdef WITH_FALCON
+			case CKK_FALCON:
+				alg = AsymAlgo::FALCON;
+				break;
+#endif
 #ifdef WITH_ML_KEM
 			case CKK_ML_KEM:
 				alg = AsymAlgo::MLKEM;
@@ -7759,6 +7914,11 @@ CK_RV SoftHSM::C_WrapKey
 #ifdef WITH_ML_DSA
 			case CKK_ML_DSA:
 				rv = MLDSAUtil::getMLDSAPrivateKey((MLDSAPrivateKey*)privateKey, token, key);
+				break;
+#endif
+#ifdef WITH_FALCON
+			case CKK_FALCON:
+				rv = FalconUtil::getFalconPrivateKey((FalconPrivateKey*)privateKey, token, key);
 				break;
 #endif
 #ifdef WITH_ML_KEM
@@ -8494,6 +8654,12 @@ CK_RV SoftHSM::C_UnwrapKey
 			else if (keyType == CKK_ML_DSA)
 			{
 				bOK = bOK && MLDSAUtil::setMLDSAPrivateKey(osobject, keydata, token, isPrivate != CK_FALSE);
+			}
+#endif
+#ifdef WITH_FALCON
+			else if (keyType == CKK_FALCON)
+			{
+				bOK = bOK && FalconUtil::setFalconPrivateKey(osobject, keydata, token, isPrivate != CK_FALSE);
 			}
 #endif
 #ifdef WITH_ML_KEM
@@ -11524,6 +11690,278 @@ CK_RV SoftHSM::generateED
 	return rv;
 }
 
+#ifdef WITH_FALCON
+// Generate a Falcon key pair
+CK_RV SoftHSM::generateFalcon
+(CK_SESSION_HANDLE hSession,
+	CK_ATTRIBUTE_PTR pPublicKeyTemplate,
+	CK_ULONG ulPublicKeyAttributeCount,
+	CK_ATTRIBUTE_PTR pPrivateKeyTemplate,
+	CK_ULONG ulPrivateKeyAttributeCount,
+	CK_OBJECT_HANDLE_PTR phPublicKey,
+	CK_OBJECT_HANDLE_PTR phPrivateKey,
+	CK_BBOOL isPublicKeyOnToken,
+	CK_BBOOL isPublicKeyPrivate,
+	CK_BBOOL isPrivateKeyOnToken,
+	CK_BBOOL isPrivateKeyPrivate)
+{
+	*phPublicKey = CK_INVALID_HANDLE;
+	*phPrivateKey = CK_INVALID_HANDLE;
+
+	Session* session = (Session*)handleManager->getSession(hSession);
+	if (session == NULL)
+		return CKR_SESSION_HANDLE_INVALID;
+
+	Token* token = session->getToken();
+	if (token == NULL)
+		return CKR_GENERAL_ERROR;
+
+	CK_ULONG parameterSet = 0;
+	for (CK_ULONG i = 0; i < ulPublicKeyAttributeCount; i++)
+	{
+		if (pPublicKeyTemplate[i].type != CKA_PARAMETER_SET)
+			continue;
+		if (pPublicKeyTemplate[i].ulValueLen != sizeof(CK_ULONG))
+		{
+			INFO_MSG("CKA_PARAMETER_SET must be sizeof(CK_ULONG)");
+			return CKR_ATTRIBUTE_VALUE_INVALID;
+		}
+		if (pPublicKeyTemplate[i].pValue == NULL_PTR)
+		{
+			INFO_MSG("CKA_PARAMETER_SET must have a value");
+			return CKR_ATTRIBUTE_VALUE_INVALID;
+		}
+		memcpy(&parameterSet, pPublicKeyTemplate[i].pValue, sizeof(parameterSet));
+	}
+
+	if (parameterSet == 0)
+	{
+		INFO_MSG("Missing CKA_PARAMETER_SET in pPublicKeyTemplate");
+		return CKR_TEMPLATE_INCOMPLETE;
+	}
+	if (parameterSet != FalconParameters::FALCON_512_PARAMETER_SET &&
+		parameterSet != FalconParameters::FALCON_1024_PARAMETER_SET)
+	{
+		INFO_MSG("Unsupported Falcon parameter set: %lu", (unsigned long)parameterSet);
+		return CKR_PARAMETER_SET_NOT_SUPPORTED;
+	}
+
+	FalconParameters parameters;
+	parameters.setParameterSet(parameterSet);
+
+	AsymmetricKeyPair* keyPair = NULL;
+	AsymmetricAlgorithm* falcon =
+		CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::FALCON);
+	if (falcon == NULL)
+		return CKR_GENERAL_ERROR;
+	if (!falcon->generateKeyPair(&keyPair, &parameters))
+	{
+		ERROR_MSG("Could not generate Falcon key pair");
+		CryptoFactory::i()->recycleAsymmetricAlgorithm(falcon);
+		return CKR_GENERAL_ERROR;
+	}
+
+	FalconPublicKey* publicKey =
+		static_cast<FalconPublicKey*>(keyPair->getPublicKey());
+	FalconPrivateKey* privateKey =
+		static_cast<FalconPrivateKey*>(keyPair->getPrivateKey());
+	CK_RV rv = CKR_OK;
+
+	if (rv == CKR_OK)
+	{
+		const CK_ULONG maxAttribs = 32;
+		CK_OBJECT_CLASS publicKeyClass = CKO_PUBLIC_KEY;
+		CK_KEY_TYPE publicKeyType = CKK_FALCON;
+		CK_ATTRIBUTE publicKeyAttribs[maxAttribs] = {
+			{ CKA_CLASS, &publicKeyClass, sizeof(publicKeyClass) },
+			{ CKA_TOKEN, &isPublicKeyOnToken, sizeof(isPublicKeyOnToken) },
+			{ CKA_PRIVATE, &isPublicKeyPrivate, sizeof(isPublicKeyPrivate) },
+			{ CKA_KEY_TYPE, &publicKeyType, sizeof(publicKeyType) },
+		};
+		CK_ULONG publicKeyAttribsCount = 4;
+
+		if (ulPublicKeyAttributeCount > (maxAttribs - publicKeyAttribsCount))
+			rv = CKR_TEMPLATE_INCONSISTENT;
+		for (CK_ULONG i = 0; i < ulPublicKeyAttributeCount && rv == CKR_OK; ++i)
+		{
+			switch (pPublicKeyTemplate[i].type)
+			{
+				case CKA_CLASS:
+				case CKA_TOKEN:
+				case CKA_PRIVATE:
+				case CKA_KEY_TYPE:
+					continue;
+				default:
+					publicKeyAttribs[publicKeyAttribsCount++] =
+						pPublicKeyTemplate[i];
+			}
+		}
+
+		if (rv == CKR_OK)
+			rv = this->CreateObject(hSession, publicKeyAttribs,
+				publicKeyAttribsCount, phPublicKey, OBJECT_OP_GENERATE);
+
+		if (rv == CKR_OK)
+		{
+			OSObject* osobject =
+				(OSObject*)handleManager->getObject(*phPublicKey);
+			if (osobject == NULL_PTR || !osobject->isValid())
+			{
+				rv = CKR_FUNCTION_FAILED;
+			}
+			else if (osobject->startTransaction())
+			{
+				bool bOK = true;
+				bOK = bOK && osobject->setAttribute(CKA_LOCAL, true);
+				CK_ULONG keyGenMechanism =
+					(CK_ULONG)CKM_FALCON_KEY_PAIR_GEN;
+				bOK = bOK && osobject->setAttribute(
+					CKA_KEY_GEN_MECHANISM, keyGenMechanism);
+
+				ByteString value;
+				if (isPublicKeyPrivate)
+					bOK = bOK && token->encrypt(publicKey->getValue(), value);
+				else
+					value = publicKey->getValue();
+				bOK = bOK && osobject->setAttribute(
+					CKA_PARAMETER_SET, publicKey->getParameterSet());
+				bOK = bOK && osobject->setAttribute(CKA_VALUE, value);
+
+				if (bOK)
+					bOK = osobject->commitTransaction();
+				else
+					osobject->abortTransaction();
+				if (!bOK)
+					rv = CKR_FUNCTION_FAILED;
+			}
+			else
+			{
+				rv = CKR_FUNCTION_FAILED;
+			}
+		}
+	}
+
+	if (rv == CKR_OK)
+	{
+		const CK_ULONG maxAttribs = 32;
+		CK_OBJECT_CLASS privateKeyClass = CKO_PRIVATE_KEY;
+		CK_KEY_TYPE privateKeyType = CKK_FALCON;
+		CK_ATTRIBUTE privateKeyAttribs[maxAttribs] = {
+			{ CKA_CLASS, &privateKeyClass, sizeof(privateKeyClass) },
+			{ CKA_TOKEN, &isPrivateKeyOnToken, sizeof(isPrivateKeyOnToken) },
+			{ CKA_PRIVATE, &isPrivateKeyPrivate, sizeof(isPrivateKeyPrivate) },
+			{ CKA_KEY_TYPE, &privateKeyType, sizeof(privateKeyType) },
+		};
+		CK_ULONG privateKeyAttribsCount = 4;
+
+		if (ulPrivateKeyAttributeCount > (maxAttribs - privateKeyAttribsCount))
+			rv = CKR_TEMPLATE_INCONSISTENT;
+		for (CK_ULONG i = 0; i < ulPrivateKeyAttributeCount && rv == CKR_OK; ++i)
+		{
+			switch (pPrivateKeyTemplate[i].type)
+			{
+				case CKA_CLASS:
+				case CKA_TOKEN:
+				case CKA_PRIVATE:
+				case CKA_KEY_TYPE:
+					continue;
+				default:
+					privateKeyAttribs[privateKeyAttribsCount++] =
+						pPrivateKeyTemplate[i];
+			}
+		}
+
+		if (rv == CKR_OK)
+			rv = this->CreateObject(hSession, privateKeyAttribs,
+				privateKeyAttribsCount, phPrivateKey, OBJECT_OP_GENERATE);
+
+		if (rv == CKR_OK)
+		{
+			OSObject* osobject =
+				(OSObject*)handleManager->getObject(*phPrivateKey);
+			if (osobject == NULL_PTR || !osobject->isValid())
+			{
+				rv = CKR_FUNCTION_FAILED;
+			}
+			else if (osobject->startTransaction())
+			{
+				bool bOK = true;
+				bOK = bOK && osobject->setAttribute(CKA_LOCAL, true);
+				CK_ULONG keyGenMechanism =
+					(CK_ULONG)CKM_FALCON_KEY_PAIR_GEN;
+				bOK = bOK && osobject->setAttribute(
+					CKA_KEY_GEN_MECHANISM, keyGenMechanism);
+
+				bool alwaysSensitive =
+					osobject->getBooleanValue(CKA_SENSITIVE, false);
+				bOK = bOK && osobject->setAttribute(
+					CKA_ALWAYS_SENSITIVE, alwaysSensitive);
+				bool neverExtractable =
+					!osobject->getBooleanValue(CKA_EXTRACTABLE, false);
+				bOK = bOK && osobject->setAttribute(
+					CKA_NEVER_EXTRACTABLE, neverExtractable);
+
+				ByteString value;
+				ByteString publicKeyInfo = privateKey->getPublicKeyInfo();
+				if (isPrivateKeyPrivate)
+				{
+					ByteString encryptedInfo;
+					bOK = bOK && token->encrypt(publicKeyInfo, encryptedInfo);
+					publicKeyInfo = encryptedInfo;
+					bOK = bOK && token->encrypt(privateKey->getValue(), value);
+				}
+				else
+					value = privateKey->getValue();
+				bOK = bOK && osobject->setAttribute(
+					CKA_PARAMETER_SET, privateKey->getParameterSet());
+				bOK = bOK && osobject->setAttribute(CKA_PUBLIC_KEY_INFO, publicKeyInfo);
+				bOK = bOK && osobject->setAttribute(CKA_VALUE, value);
+				value.wipe();
+
+				if (bOK)
+					bOK = osobject->commitTransaction();
+				else
+					osobject->abortTransaction();
+				if (!bOK)
+					rv = CKR_FUNCTION_FAILED;
+			}
+			else
+			{
+				rv = CKR_FUNCTION_FAILED;
+			}
+		}
+	}
+
+	falcon->recycleKeyPair(keyPair);
+	CryptoFactory::i()->recycleAsymmetricAlgorithm(falcon);
+
+	if (rv != CKR_OK)
+	{
+		if (*phPrivateKey != CK_INVALID_HANDLE)
+		{
+			OSObject* privateObject =
+				(OSObject*)handleManager->getObject(*phPrivateKey);
+			handleManager->destroyObject(*phPrivateKey);
+			if (privateObject != NULL)
+				privateObject->destroyObject();
+			*phPrivateKey = CK_INVALID_HANDLE;
+		}
+
+		if (*phPublicKey != CK_INVALID_HANDLE)
+		{
+			OSObject* publicObject =
+				(OSObject*)handleManager->getObject(*phPublicKey);
+			handleManager->destroyObject(*phPublicKey);
+			if (publicObject != NULL)
+				publicObject->destroyObject();
+			*phPublicKey = CK_INVALID_HANDLE;
+		}
+	}
+
+	return rv;
+}
+#endif
+
 #ifdef WITH_ML_DSA
 // Generate an MLDSA key pair
 CK_RV SoftHSM::generateMLDSA
@@ -14412,6 +14850,49 @@ CK_RV SoftHSM::CreateObject(CK_SESSION_HANDLE hSession, CK_ATTRIBUTE_PTR pTempla
 	{
 		return CKR_TEMPLATE_INCONSISTENT;
 	}
+#ifdef WITH_FALCON
+	if (op == OBJECT_OP_CREATE && keyType == CKK_FALCON &&
+	    (objClass == CKO_PUBLIC_KEY || objClass == CKO_PRIVATE_KEY))
+	{
+		CK_ATTRIBUTE_PTR value = NULL_PTR;
+		CK_ULONG parameterSet = 0;
+		bool hasParameterSet = false;
+		for (CK_ULONG i = 0; i < ulCount; ++i)
+		{
+			if (pTemplate[i].type == CKA_VALUE)
+				value = &pTemplate[i];
+			if (pTemplate[i].type == CKA_PARAMETER_SET)
+			{
+				if (pTemplate[i].pValue == NULL_PTR ||
+				    pTemplate[i].ulValueLen != sizeof(parameterSet))
+					return CKR_ATTRIBUTE_VALUE_INVALID;
+				memcpy(&parameterSet, pTemplate[i].pValue, sizeof(parameterSet));
+				hasParameterSet = true;
+			}
+		}
+		if (value == NULL_PTR) return CKR_TEMPLATE_INCOMPLETE;
+		if (value->pValue == NULL_PTR) return CKR_ATTRIBUTE_VALUE_INVALID;
+
+		const CK_ULONG length512 = objClass == CKO_PUBLIC_KEY ?
+			FalconParameters::FALCON_512_PUB_LENGTH :
+			FalconParameters::FALCON_512_PRIV_LENGTH;
+		const CK_ULONG length1024 = objClass == CKO_PUBLIC_KEY ?
+			FalconParameters::FALCON_1024_PUB_LENGTH :
+			FalconParameters::FALCON_1024_PRIV_LENGTH;
+		if (value->ulValueLen != length512 && value->ulValueLen != length1024)
+			return CKR_ATTRIBUTE_VALUE_INVALID;
+		if (hasParameterSet)
+		{
+			if (parameterSet != CKP_FALCON_512 && parameterSet != CKP_FALCON_1024)
+				return CKR_ATTRIBUTE_VALUE_INVALID;
+			const CK_ULONG expectedLength = parameterSet == CKP_FALCON_512 ?
+				length512 : length1024;
+			if (value->ulValueLen != expectedLength)
+				return CKR_TEMPLATE_INCONSISTENT;
+		}
+	}
+#endif
+
 	for (CK_ULONG i=0; i < ulCount; i++)
 	{
 		switch (pTemplate[i].type)
