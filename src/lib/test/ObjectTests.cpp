@@ -1760,6 +1760,35 @@ void ObjectTests::testXWingTokenPersistence()
 	CPPUNIT_ASSERT_EQUAL(CKR_ATTRIBUTE_SENSITIVE, rv);
 	CPPUNIT_ASSERT_EQUAL((CK_ULONG)CK_UNAVAILABLE_INFORMATION, privateValue.ulValueLen);
 
+	CK_MECHANISM mechanism = { CKM_X_WING, NULL_PTR, 0 };
+	CK_OBJECT_CLASS secretClass = CKO_SECRET_KEY;
+	CK_KEY_TYPE secretType = CKK_GENERIC_SECRET;
+	CK_BBOOL bFalse = CK_FALSE;
+	CK_BBOOL bTrue = CK_TRUE;
+	CK_ATTRIBUTE secretAttribs[] = {
+		{ CKA_CLASS, &secretClass, sizeof(secretClass) },
+		{ CKA_KEY_TYPE, &secretType, sizeof(secretType) },
+		{ CKA_SENSITIVE, &bFalse, sizeof(bFalse) },
+		{ CKA_EXTRACTABLE, &bTrue, sizeof(bTrue) }
+	};
+	CK_BYTE cipherText[1120];
+	CK_ULONG cipherTextLen = sizeof(cipherText);
+	CK_OBJECT_HANDLE hEncapKey, hDecapKey;
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR( C_EncapsulateKey(hSession,
+		&mechanism, hPuk, secretAttribs, 4, cipherText, &cipherTextLen, &hEncapKey) ));
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR( C_DecapsulateKey(hSession,
+		&mechanism, hPrk, secretAttribs, 4, cipherText, cipherTextLen, &hDecapKey) ));
+	CK_BYTE encapSecret[32];
+	CK_BYTE decapSecret[32];
+	CK_ATTRIBUTE encapValue = { CKA_VALUE, encapSecret, sizeof(encapSecret) };
+	CK_ATTRIBUTE decapValue = { CKA_VALUE, decapSecret, sizeof(decapSecret) };
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR( C_GetAttributeValue(hSession, hEncapKey, &encapValue, 1) ));
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR( C_GetAttributeValue(hSession, hDecapKey, &decapValue, 1) ));
+	CPPUNIT_ASSERT_EQUAL((CK_ULONG)32, decapValue.ulValueLen);
+	CPPUNIT_ASSERT(memcmp(encapSecret, decapSecret, sizeof(encapSecret)) == 0);
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR( C_DestroyObject(hSession, hEncapKey) ));
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR( C_DestroyObject(hSession, hDecapKey) ));
+
 	CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR( C_DestroyObject(hSession, hPrk) ));
 	CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR( C_DestroyObject(hSession, hPuk) ));
 	CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR( C_CloseSession(hSession) ));

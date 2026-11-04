@@ -1424,6 +1424,16 @@ void EncapDecapTests::testKEMSecretCheckValue(CK_MECHANISM_TYPE mechanismType)
 		CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR(C_EncapsulateKey(
 			session, &mechanism, publicKey, attributes, count,
 			ciphertext, &ciphertextLength, &encapKey)));
+		CK_BYTE fullValue[32];
+		CK_OBJECT_HANDLE fullKey;
+		CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR(C_DecapsulateKey(
+			session, &mechanism, privateKey, attributes, 5,
+			ciphertext, ciphertextLength, &fullKey)));
+		CK_ATTRIBUTE fullOutput = { CKA_VALUE, fullValue, sizeof(fullValue) };
+		CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR(C_GetAttributeValue(
+			session, fullKey, &fullOutput, 1)));
+		CPPUNIT_ASSERT_EQUAL((CK_ULONG)32, fullOutput.ulValueLen);
+		CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR(C_DestroyObject(session, fullKey)));
 		CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR(C_DecapsulateKey(
 			session, &mechanism, privateKey, attributes, count,
 			ciphertext, ciphertextLength, &decapKey)));
@@ -1449,6 +1459,7 @@ void EncapDecapTests::testKEMSecretCheckValue(CK_MECHANISM_TYPE mechanismType)
 			CPPUNIT_ASSERT(memcmp(checkValue, digest, sizeof(checkValue)) == 0);
 			if (key == encapKey) memcpy(encapValue, value, length);
 			else CPPUNIT_ASSERT(memcmp(encapValue, value, length) == 0);
+			CPPUNIT_ASSERT(memcmp(fullValue, value, length) == 0);
 			CPPUNIT_ASSERT_EQUAL(CKR_OK, CRYPTOKI_F_PTR(C_DestroyObject(session, key)));
 		}
 	}

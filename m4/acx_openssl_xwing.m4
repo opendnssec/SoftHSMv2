@@ -41,7 +41,7 @@ AC_DEFUN([ACX_OPENSSL_XWING],[
 			AC_MSG_RESULT([no])
 			acx_cv_lib_openssl_xwing_support=no
 		],[
-			AC_MSG_WARN([Cannot test, X-Wing])
+			AC_MSG_WARN([Cannot run the X-Wing probe while cross-compiling; set acx_cv_lib_openssl_xwing_support=yes only if target support is known])
 			acx_cv_lib_openssl_xwing_support=no
 		])
 	])
