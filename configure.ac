@@ -35,6 +35,10 @@ AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_SRCDIR([src/Makefile.am])
 AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE([foreign subdir-objects])
+# Support silent build rules - requires at least automake-1.11.
+# Disable by either passing --disable-silent-rules to configure
+# or passing V=1 to make
+m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 ACX_PREFIXHACK
 
 # Version info for the library
