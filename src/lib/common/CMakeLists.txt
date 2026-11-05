@@ -14,7 +14,7 @@ set(SOURCES Configuration.cpp
             SimpleConfigLoader.cpp
             )
 
-if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+if(WIN32)
 	list(APPEND SOURCES ${PROJECT_SOURCE_DIR}/../win32/syslog.cpp)
 	list(APPEND INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/../win32)
 ENDIF()
