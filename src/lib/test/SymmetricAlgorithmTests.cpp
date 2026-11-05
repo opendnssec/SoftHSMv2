@@ -1291,15 +1291,16 @@ void SymmetricAlgorithmTests::aesWrapUnwrapNonModifiableGeneric(CK_MECHANISM_TYP
 	CPPUNIT_ASSERT(rv == CKR_OK);
 	CPPUNIT_ASSERT(hNew != CK_INVALID_HANDLE);
 
+	CK_BBOOL bModifiable = CK_TRUE;
 	CK_ATTRIBUTE modifiableAttribs[] = {
-		{ CKA_MODIFIABLE, &bFalse, sizeof(bFalse) }
+		{ CKA_MODIFIABLE, &bModifiable, sizeof(bModifiable) }
 	};
 
 	rv = CRYPTOKI_F_PTR( C_GetAttributeValue(hSession, hNew, modifiableAttribs, sizeof(modifiableAttribs)/sizeof(CK_ATTRIBUTE)) );
 	CPPUNIT_ASSERT(rv == CKR_OK);
 
-	CPPUNIT_ASSERT(modifiableAttribs[0].ulValueLen == sizeof(bFalse));
-	CPPUNIT_ASSERT(*(CK_BBOOL*)modifiableAttribs[0].pValue == bFalse);
+	CPPUNIT_ASSERT(modifiableAttribs[0].ulValueLen == sizeof(bModifiable));
+	CPPUNIT_ASSERT(bModifiable == CK_FALSE);
 
 	free(wrappedPtr);
 	wrappedPtr = NULL_PTR;

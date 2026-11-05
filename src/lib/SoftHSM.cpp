@@ -14244,7 +14244,7 @@ CK_RV SoftHSM::deriveSymmetric
 				// attributes set to CK_TRUE
 				bool bNeverExtractable = baseKey->getBooleanValue(CKA_NEVER_EXTRACTABLE, false) &&
 										 otherKey->getBooleanValue(CKA_NEVER_EXTRACTABLE, false);
-				bOK = bOK && osobject->setAttribute(CKA_ALWAYS_SENSITIVE, bNeverExtractable);
+				bOK = bOK && osobject->setAttribute(CKA_NEVER_EXTRACTABLE, bNeverExtractable);
 			}
 			else if (pMechanism->mechanism == CKM_CONCATENATE_BASE_AND_DATA ||
 				 pMechanism->mechanism == CKM_CONCATENATE_DATA_AND_BASE)

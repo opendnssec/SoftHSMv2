@@ -1102,6 +1102,70 @@ void DeriveTests::testMiscDerivations() {
 	ASSERT_KEY_IS_NOT_EXTRACTABLE("Derived key should be extractable if base key is extractable", hDerive);
 	ASSERT_KEY_IS_SENSITIVE("Derived key should be sensitive if one of the keys is sensitive", hDerive);
 
+	// CKA_ALWAYS_SENSITIVE and CKA_NEVER_EXTRACTABLE are set only on generated keys
+	CK_MECHANISM genMechanism = { CKM_AES_KEY_GEN, NULL_PTR, 0 };
+	CK_ULONG genBytes = 16;
+	CK_ATTRIBUTE genAttribs[] = {
+		{ CKA_TOKEN, &bFalse, sizeof(bFalse) },
+		{ CKA_PRIVATE, &bFalse, sizeof(bFalse) },
+		{ CKA_SENSITIVE, &bTrue, sizeof(bTrue) },
+		{ CKA_EXTRACTABLE, &bFalse, sizeof(bFalse) },
+		{ CKA_DERIVE, &bTrue, sizeof(bTrue) },
+		{ CKA_VALUE_LEN, &genBytes, sizeof(genBytes) }
+	};
+	CK_OBJECT_HANDLE hNeverExtractable1 = CK_INVALID_HANDLE;
+	CK_OBJECT_HANDLE hNeverExtractable2 = CK_INVALID_HANDLE;
+	CK_OBJECT_HANDLE hExtractable = CK_INVALID_HANDLE;
+	rv = CRYPTOKI_F_PTR( C_GenerateKey(hSessionRW, &genMechanism, genAttribs, sizeof(genAttribs)/sizeof(CK_ATTRIBUTE), &hNeverExtractable1) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	rv = CRYPTOKI_F_PTR( C_GenerateKey(hSessionRW, &genMechanism, genAttribs, sizeof(genAttribs)/sizeof(CK_ATTRIBUTE), &hNeverExtractable2) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	genAttribs[3].pValue = &bTrue;
+	rv = CRYPTOKI_F_PTR( C_GenerateKey(hSessionRW, &genMechanism, genAttribs, sizeof(genAttribs)/sizeof(CK_ATTRIBUTE), &hExtractable) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	CK_BBOOL bAlwaysSensitive;
+	CK_BBOOL bNeverExtractable;
+	CK_ATTRIBUTE derivedAttribs[] = {
+		{ CKA_ALWAYS_SENSITIVE, &bAlwaysSensitive, sizeof(bAlwaysSensitive) },
+		{ CKA_NEVER_EXTRACTABLE, &bNeverExtractable, sizeof(bNeverExtractable) }
+	};
+
+	// Both keys are always sensitive and never extractable, so is the derived key
+	mechanism.pParameter = &hNeverExtractable2;
+	rv = CRYPTOKI_F_PTR( C_DeriveKey(hSessionRW, &mechanism, hNeverExtractable1,
+									 keyAttribs, 1, &hDerive) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	rv = CRYPTOKI_F_PTR( C_GetAttributeValue(hSessionRW, hDerive, derivedAttribs, sizeof(derivedAttribs)/sizeof(CK_ATTRIBUTE)) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	CPPUNIT_ASSERT_MESSAGE("Derived key should be always sensitive if both keys are", bAlwaysSensitive == CK_TRUE);
+	CPPUNIT_ASSERT_MESSAGE("Derived key should be never extractable if both keys are", bNeverExtractable == CK_TRUE);
+
+	// The other key has been extractable, so the derived key is not never extractable
+	mechanism.pParameter = &hExtractable;
+	rv = CRYPTOKI_F_PTR( C_DeriveKey(hSessionRW, &mechanism, hNeverExtractable1,
+									 keyAttribs, 1, &hDerive) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	rv = CRYPTOKI_F_PTR( C_GetAttributeValue(hSessionRW, hDerive, derivedAttribs, sizeof(derivedAttribs)/sizeof(CK_ATTRIBUTE)) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	CPPUNIT_ASSERT_MESSAGE("Derived key should be always sensitive if both keys are", bAlwaysSensitive == CK_TRUE);
+	CPPUNIT_ASSERT_MESSAGE("Derived key should not be never extractable if one key is not", bNeverExtractable == CK_FALSE);
+
+	// The other key has not been sensitive, so the derived key is not always sensitive
+	CK_OBJECT_HANDLE hNotSensitive = CK_INVALID_HANDLE;
+	genAttribs[2].pValue = &bFalse;
+	genAttribs[3].pValue = &bFalse;
+	rv = CRYPTOKI_F_PTR( C_GenerateKey(hSessionRW, &genMechanism, genAttribs, sizeof(genAttribs)/sizeof(CK_ATTRIBUTE), &hNotSensitive) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	mechanism.pParameter = &hNotSensitive;
+	rv = CRYPTOKI_F_PTR( C_DeriveKey(hSessionRW, &mechanism, hNeverExtractable1,
+									 keyAttribs, 1, &hDerive) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	rv = CRYPTOKI_F_PTR( C_GetAttributeValue(hSessionRW, hDerive, derivedAttribs, sizeof(derivedAttribs)/sizeof(CK_ATTRIBUTE)) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	CPPUNIT_ASSERT_MESSAGE("Derived key should not be always sensitive if one key is not", bAlwaysSensitive == CK_FALSE);
+	CPPUNIT_ASSERT_MESSAGE("Derived key should be never extractable if both keys are", bNeverExtractable == CK_TRUE);
+
 #undef ASSERT_KEY_IS_NOT_EXTRACTABLE
 #undef ASSERT_KEY_IS_EXTRACTABLE
 }
