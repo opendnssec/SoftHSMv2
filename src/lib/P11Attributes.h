@@ -123,11 +123,24 @@ protected:
 	// Update the value if allowed
 	virtual CK_RV updateAttr(Token *token, bool isPrivate, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op);
 
+	// Retrieve the value if allowed
+	virtual CK_RV retrieveAttrByteString(Token *token, bool isPrivate, OSAttribute *attr, ByteString &value);
+
 	// Helper functions
 	bool isModifiable();
 	bool isSensitive();
 	bool isExtractable();
 	bool isTrusted();
+};
+
+class P11NonPrivateAttribute : public P11Attribute
+{
+protected:
+	// Constructor
+	P11NonPrivateAttribute(OSObject* inobject) : P11Attribute(inobject) {};
+
+	// Retrie the value if allowed
+	virtual CK_RV retrieveAttrByteString(Token *token, bool isPrivate, OSAttribute *attr, ByteString &value);
 };
 
 /*****************************************
@@ -456,11 +469,11 @@ protected:
  * CKA_START_DATE
  *****************************************/
 
-class P11AttrStartDate : public P11Attribute
+class P11AttrStartDate : public P11NonPrivateAttribute
 {
 public:
 	// Constructor
-	P11AttrStartDate(OSObject* inobject, CK_ULONG inchecks) : P11Attribute(inobject) { type = CKA_START_DATE; checks = inchecks; }
+	P11AttrStartDate(OSObject* inobject, CK_ULONG inchecks) : P11NonPrivateAttribute(inobject) { type = CKA_START_DATE; checks = inchecks; }
 
 protected:
 	// Set the default value of the attribute
@@ -474,11 +487,11 @@ protected:
  * CKA_END_DATE
  *****************************************/
 
-class P11AttrEndDate : public P11Attribute
+class P11AttrEndDate : public P11NonPrivateAttribute
 {
 public:
 	// Constructor
-	P11AttrEndDate(OSObject* inobject, CK_ULONG inchecks) : P11Attribute(inobject) { type = CKA_END_DATE; checks = inchecks; }
+	P11AttrEndDate(OSObject* inobject, CK_ULONG inchecks) : P11NonPrivateAttribute(inobject) { type = CKA_END_DATE; checks = inchecks; }
 
 protected:
 	// Set the default value of the attribute

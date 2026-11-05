@@ -1775,22 +1775,28 @@ void ObjectTests::testDefaultRSAPrivAttributes()
 			 0x4B, 0x3F, 0x9D, 0x4E, 0xCB, 0x78, 0x12, 0xA9, 0x42, 0xAD,
 			 0x51, 0x1F, 0x3B, 0xBD, 0x3D, 0x6A, 0xE5, 0x38, 0xB7, 0x45,
 			 0x65, 0x50, 0x30, 0x35 };
-        CK_BYTE pD[] = { 0x6D, 0x94, 0x6B, 0xEB, 0xFF, 0xDC, 0x03, 0x80, 0x7B, 0x0A,
+		CK_BYTE pD[] = { 0x6D, 0x94, 0x6B, 0xEB, 0xFF, 0xDC, 0x03, 0x80, 0x7B, 0x0A,
 			 0x4F, 0x0A, 0x98, 0x6C, 0xA3, 0x2A, 0x8A, 0xE4, 0xAA, 0x18,
 			 0x44, 0xA4, 0xA5, 0x39, 0x37, 0x0A, 0x2C, 0xFC, 0x5F, 0xD1,
 			 0x44, 0x6E, 0xCE, 0x25, 0x9B, 0xE5, 0xD1, 0x51, 0xAF, 0xA8,
 			 0x30, 0xD1, 0x4D, 0x3C, 0x60, 0x33, 0xB5, 0xED, 0x4C, 0x39,
 			 0xDA, 0x68, 0x78, 0xF9, 0x6B, 0x4F, 0x47, 0x55, 0xB2, 0x02,
 			 0x00, 0x7E, 0x9C, 0x05 };
-	CK_DATE emptyDate;
+	CK_DATE startDate = {{'2', '0', '0', '0'}, {'0', '1'}, {'0', '2'}};
+	CK_DATE endDate = {{'2', '0', '1', '0'}, {'0', '1'}, {'0', '2'}};
+	CK_BYTE pSubject[] = "RSA private key subject";
 	// Make the key non-sensitive and extractable so that we can test it.
 	CK_ATTRIBUTE objTemplate[] = {
 		{ CKA_CLASS, &objClass, sizeof(objClass) },
 		{ CKA_KEY_TYPE, &objType, sizeof(objType) },
+		{ CKA_PRIVATE, &bTrue, sizeof(bTrue) },
+		{ CKA_SUBJECT, pSubject, sizeof(pSubject)-1 },
 		{ CKA_SENSITIVE, &bFalse, sizeof(bFalse) },
 		{ CKA_EXTRACTABLE, &bTrue, sizeof(bTrue) },
 		{ CKA_MODULUS, pN, sizeof(pN) },
-		{ CKA_PRIVATE_EXPONENT, pD, sizeof(pD) }
+		{ CKA_PRIVATE_EXPONENT, pD, sizeof(pD) },
+		{ CKA_START_DATE, &startDate, sizeof(startDate) },
+		{ CKA_END_DATE, &endDate, sizeof(endDate)}
 	};
 
 	// Just make sure that we finalize any previous tests
@@ -1815,12 +1821,30 @@ void ObjectTests::testDefaultRSAPrivAttributes()
 	// Check attributes in RSA public key object
 	checkCommonObjectAttributes(hSession, hObject, objClass);
 	checkCommonStorageObjectAttributes(hSession, hObject, CK_FALSE, CK_TRUE, CK_TRUE, NULL_PTR, 0, CK_TRUE, CK_TRUE);
-	memset(&emptyDate, 0, sizeof(emptyDate));
-	checkCommonKeyAttributes(hSession, hObject, objType, NULL_PTR, 0, emptyDate, 0, emptyDate, 0, CK_FALSE, CK_FALSE, CK_UNAVAILABLE_INFORMATION, NULL_PTR, 0);
-	checkCommonPrivateKeyAttributes(hSession, hObject, NULL_PTR, 0, CK_FALSE, CK_TRUE, CK_TRUE, CK_TRUE, CK_TRUE, CK_TRUE, CK_FALSE, CK_FALSE, CK_FALSE, NULL_PTR, 0, CK_FALSE);
+	checkCommonKeyAttributes(hSession, hObject, objType, NULL_PTR, 0, startDate, sizeof(startDate), endDate, sizeof(endDate), CK_FALSE, CK_FALSE, CK_UNAVAILABLE_INFORMATION, NULL_PTR, 0);
+	checkCommonPrivateKeyAttributes(hSession, hObject, pSubject, sizeof(pSubject)-1, CK_FALSE, CK_TRUE, CK_TRUE, CK_TRUE, CK_TRUE, CK_TRUE, CK_FALSE, CK_FALSE, CK_FALSE, NULL_PTR, 0, CK_FALSE);
 	checkCommonRSAPrivateKeyAttributes(hSession, hObject, pN, sizeof(pN), NULL_PTR, 0, pD, sizeof(pD), NULL_PTR, 0, NULL_PTR, 0, NULL_PTR, 0, NULL_PTR, 0, NULL_PTR, 0);
 	checkToTrueAttributes(hSession, hObject);
+
+	// The private key must be findable by its subject and dates
+	CK_ATTRIBUTE findTemplate[] = {
+		{ CKA_CLASS, &objClass, sizeof(objClass) },
+		{ CKA_SUBJECT, pSubject, sizeof(pSubject)-1 },
+		{ CKA_START_DATE, &startDate, sizeof(startDate) },
+		{ CKA_END_DATE, &endDate, sizeof(endDate) }
+	};
+	CK_OBJECT_HANDLE hFound[2];
+	CK_ULONG ulFoundCount = 0;
+	rv = CRYPTOKI_F_PTR( C_FindObjectsInit(hSession, findTemplate, sizeof(findTemplate)/sizeof(CK_ATTRIBUTE)) );
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, rv);
+	rv = CRYPTOKI_F_PTR( C_FindObjects(hSession, hFound, 2, &ulFoundCount) );
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, rv);
+	CPPUNIT_ASSERT_EQUAL((CK_ULONG)1, ulFoundCount);
+	CPPUNIT_ASSERT_EQUAL(hObject, hFound[0]);
+	rv = CRYPTOKI_F_PTR( C_FindObjectsFinal(hSession) );
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, rv);
 }
+
 
 void ObjectTests::testAlwaysNeverAttribute()
 {
@@ -2433,4 +2457,3 @@ void ObjectTests::testCreateSecretKey()
 	rv = CRYPTOKI_F_PTR( C_DestroyObject(hSession,hObject) );
 	CPPUNIT_ASSERT_EQUAL(CKR_OK, rv);
 }
-
