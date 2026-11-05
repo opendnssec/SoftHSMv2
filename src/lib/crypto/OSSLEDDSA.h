@@ -77,6 +77,11 @@ public:
 	virtual AsymmetricParameters* newParameters();
 
 private:
+#if OPENSSL_VERSION_NUMBER >= 0x30200000L
+	// Derive the EdDSA instance from the key size and pre-hash flag, and build the params to pass to the digest init
+	// params must hold at least 3 entries; contextData must outlive the init call
+	static bool buildInstanceParams(OSSL_PARAM* params, size_t orderLength, bool preHash, const ByteString& contextData, const char* operation);
+#endif
 };
 
 #endif // !_SOFTHSM_V2_OSSLEDDSA_H

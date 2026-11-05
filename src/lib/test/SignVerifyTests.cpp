@@ -305,15 +305,15 @@ void SignVerifyTests::signVerifySingleData(size_t dataSize, CK_MECHANISM_TYPE me
 {
 	CK_RV rv;
 	CK_MECHANISM mechanism = { mechanismType, param, paramLen };
-	CK_BYTE *data = (CK_BYTE*)malloc(dataSize);
 	CK_BYTE signature[1024];
 	CK_ULONG ulSignatureLen = 0;
-	unsigned i;
 
+	CPPUNIT_ASSERT(dataSize > 0);
+	CK_BYTE *data = (CK_BYTE*)malloc(dataSize);
 	CPPUNIT_ASSERT(data != NULL);
 
-	for (i=0;i<dataSize;i++)
-		data[i] = i;
+	for (size_t i = 0; i < dataSize; i++)
+		data[i] = (CK_BYTE) i;
 
 	rv = CRYPTOKI_F_PTR( C_SignInit(hSession,&mechanism,hPrivateKey) );
 	CPPUNIT_ASSERT(rv==CKR_OK);
@@ -337,6 +337,42 @@ void SignVerifyTests::signVerifySingleData(size_t dataSize, CK_MECHANISM_TYPE me
 	CPPUNIT_ASSERT(rv==CKR_SIGNATURE_INVALID);
 
 	free(data);
+}
+
+void SignVerifyTests::signVerifySingleData(CK_BYTE_PTR data, size_t dataSize, CK_MECHANISM_TYPE mechanismType, CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hPublicKey, CK_OBJECT_HANDLE hPrivateKey, CK_VOID_PTR param /* = NULL_PTR */, CK_ULONG paramLen /* = 0 */)
+{
+	CK_RV rv;
+	CK_MECHANISM mechanism = { mechanismType, param, paramLen };
+	CK_BYTE signature[1024];
+	CK_ULONG ulSignatureLen = 0;
+
+	CPPUNIT_ASSERT(dataSize > 0);
+	CPPUNIT_ASSERT(data != NULL);
+
+	rv = CRYPTOKI_F_PTR( C_SignInit(hSession,&mechanism,hPrivateKey) );
+	CPPUNIT_ASSERT(rv==CKR_OK);
+
+	ulSignatureLen = sizeof(signature);
+	rv = CRYPTOKI_F_PTR( C_Sign(hSession,data,dataSize,signature,&ulSignatureLen) );
+	CPPUNIT_ASSERT(rv==CKR_OK);
+
+	rv = CRYPTOKI_F_PTR( C_VerifyInit(hSession,&mechanism,hPublicKey) );
+	CPPUNIT_ASSERT(rv==CKR_OK);
+
+	rv = CRYPTOKI_F_PTR( C_Verify(hSession,data,dataSize,signature,ulSignatureLen) );
+	CPPUNIT_ASSERT(rv==CKR_OK);
+
+	// verify again, but now change the input that is being signed.
+	rv = CRYPTOKI_F_PTR( C_VerifyInit(hSession,&mechanism,hPublicKey) );
+	CPPUNIT_ASSERT(rv==CKR_OK);
+
+	CK_BYTE origByte = data[0];
+	data[0] = 0xff;
+	rv = CRYPTOKI_F_PTR( C_Verify(hSession,data,dataSize,signature,ulSignatureLen) );
+	CPPUNIT_ASSERT(rv==CKR_SIGNATURE_INVALID);
+
+	// the caller owns the buffer and may reuse it, so leave it untouched
+	data[0] = origByte;
 }
 
 void SignVerifyTests::signVerifyMulti(CK_MECHANISM_TYPE mechanismType, CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hPublicKey, CK_OBJECT_HANDLE hPrivateKey, CK_VOID_PTR param /* = NULL_PTR */, CK_ULONG paramLen /* = 0 */)
@@ -987,6 +1023,358 @@ void SignVerifyTests::testEdSignVerify(const char* curve)
 	rv = generateED(curve, hSessionRW,ON_TOKEN,IS_PRIVATE,ON_TOKEN,IS_PRIVATE,hPuk,hPrk);
 	CPPUNIT_ASSERT(rv == CKR_OK);
 	signVerifySingle(CKM_EDDSA, hSessionRO, hPuk,hPrk);
+}
+
+void SignVerifyTests::testEdSignVerifyWithContext(const char* curve)
+{
+	bool contextSupported = true;
+
+#ifdef WITH_BOTAN
+	// Botan 2.X has no context support
+	contextSupported = false;
+#endif
+#if defined(WITH_OPENSSL) && OPENSSL_VERSION_NUMBER < 0x30200000L
+	contextSupported = false;
+#endif
+
+	if (!contextSupported)
+	{
+		fprintf(stdout, "EdDSA context is not supported. Skipping testEdSignVerifyWithContext.\n");
+		return;
+	}	
+
+	CK_RV rv;
+	CK_SESSION_HANDLE hSessionRO;
+	CK_SESSION_HANDLE hSessionRW;
+
+	// Just make sure that we finalize any previous tests
+	CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
+
+	// Open read-only session on when the token is not initialized should fail
+	rv = CRYPTOKI_F_PTR( C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSessionRO) );
+	CPPUNIT_ASSERT(rv == CKR_CRYPTOKI_NOT_INITIALIZED);
+
+	// Initialize the library and start the test.
+	rv = CRYPTOKI_F_PTR( C_Initialize(NULL_PTR) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Open read-only session
+	rv = CRYPTOKI_F_PTR( C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSessionRO) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Open read-write session
+	rv = CRYPTOKI_F_PTR( C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSessionRW) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Login USER into the sessions so we can create a private objects
+	rv = CRYPTOKI_F_PTR( C_Login(hSessionRO,CKU_USER,m_userPin1,m_userPin1Length) );
+	CPPUNIT_ASSERT(rv==CKR_OK);
+
+	CK_OBJECT_HANDLE hPuk = CK_INVALID_HANDLE;
+	CK_OBJECT_HANDLE hPrk = CK_INVALID_HANDLE;
+
+	// Test EdDSA signature with context data
+	// Create EdDSA parameters with context
+	CK_BYTE contextData[] = "context-data";
+	CK_ULONG dataSize = (CK_ULONG)(sizeof(contextData) - 1); // exclude trailing NULL
+	CK_EDDSA_PARAMS params = 
+			{
+			CK_FALSE,  // phFlag = 0 (no pre-hash)
+			dataSize,  // context_data_len
+			contextData  // context_data
+	};
+
+	// Public Session keys with context
+	rv = generateED(curve, hSessionRW,IN_SESSION,IS_PUBLIC,IN_SESSION,IS_PUBLIC,hPuk,hPrk);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	signVerifySingle(CKM_EDDSA, hSessionRO, hPuk, hPrk, &params, sizeof(params));
+
+	// Private Session Keys with context
+	rv = generateED(curve, hSessionRW,IN_SESSION,IS_PRIVATE,IN_SESSION,IS_PRIVATE,hPuk,hPrk);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	signVerifySingle(CKM_EDDSA, hSessionRO, hPuk, hPrk, &params, sizeof(params));
+
+	// Test with different context data
+	CK_BYTE anotherContext[] = "Bob";
+	dataSize = (CK_ULONG)(sizeof(anotherContext) - 1); // exclude trailing NULL
+	CK_EDDSA_PARAMS eddsaParams2 = {
+		CK_FALSE,  // phFlag = 0
+		dataSize,  // context_data_len
+		anotherContext  // context_data
+	};
+
+	// Public Token Keys with different context
+	rv = generateED(curve, hSessionRW,ON_TOKEN,IS_PUBLIC,ON_TOKEN,IS_PUBLIC,hPuk,hPrk);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	signVerifySingle(CKM_EDDSA, hSessionRO, hPuk, hPrk, &eddsaParams2, sizeof(eddsaParams2));
+
+	// Private Token Keys with different context
+	rv = generateED(curve, hSessionRW,ON_TOKEN,IS_PRIVATE,ON_TOKEN,IS_PRIVATE,hPuk,hPrk);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	signVerifySingle(CKM_EDDSA, hSessionRO, hPuk, hPrk, &eddsaParams2, sizeof(eddsaParams2));
+
+	// Test with empty context
+	CK_EDDSA_PARAMS eddsaParamsNoCtx = {
+		CK_FALSE,  // phFlag = 0
+		0,     // context_data_len = 0
+		NULL   // context_data = NULL
+	};
+
+	// Generate new keys for empty context test
+	rv = generateED(curve, hSessionRW,IN_SESSION,IS_PUBLIC,IN_SESSION,IS_PUBLIC,hPuk,hPrk);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	signVerifySingle(CKM_EDDSA, hSessionRO, hPuk, hPrk, &eddsaParamsNoCtx, sizeof(CK_EDDSA_PARAMS));
+}
+
+void SignVerifyTests::testEdSignVerifyWithContextPreHashed(const char* curve)
+{
+#ifdef WITH_BOTAN
+	// Botan 2.X does not support Ed448 curve, so we skip this test for now.
+	if (strcmp(curve, "Ed448") == 0)
+	{
+		fprintf(stdout, "Botan 2.X does not support Ed448. Skipping testEdSignVerifyWithContextPreHashed for Ed448.\n");
+		return;
+	}
+#endif
+#if defined(WITH_OPENSSL) && OPENSSL_VERSION_NUMBER < 0x30200000L
+	fprintf(stdout, "OpenSSL 3.2.0 or later is required for EDDSA with context support. Skipping testEdSignVerifyWithContextPreHashed.\n");
+	return;
+#endif
+
+	CK_RV rv;
+	CK_SESSION_HANDLE hSessionRO;
+	CK_SESSION_HANDLE hSessionRW;
+
+	// Just make sure that we finalize any previous tests
+	CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
+
+	// Open read-only session on when the token is not initialized should fail
+	rv = CRYPTOKI_F_PTR( C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSessionRO) );
+	CPPUNIT_ASSERT(rv == CKR_CRYPTOKI_NOT_INITIALIZED);
+
+	// Initialize the library and start the test.
+	rv = CRYPTOKI_F_PTR( C_Initialize(NULL_PTR) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Open read-only session
+	rv = CRYPTOKI_F_PTR( C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSessionRO) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Open read-write session
+	rv = CRYPTOKI_F_PTR( C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSessionRW) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Login USER into the sessions so we can create a private objects
+	rv = CRYPTOKI_F_PTR( C_Login(hSessionRO,CKU_USER,m_userPin1,m_userPin1Length) );
+	CPPUNIT_ASSERT(rv==CKR_OK);
+
+	CK_OBJECT_HANDLE hPuk = CK_INVALID_HANDLE;
+	CK_OBJECT_HANDLE hPrk = CK_INVALID_HANDLE;
+
+	// With phFlag set the token does the pre-hashing, so this is just the message to be signed
+	CK_BYTE message[] = { 0x11, 0x79, 0x06, 0xd8, 0xd7, 0xd9, 0x4d, 0xbc, 0x02, 0x01, 0x93, 0x2f, 0xbb, 0xab, 0x01, 0xed, 0x5b, 0x9e, 0xbc, 0x0f, 0x3c, 0x85, 0xef, 0xa0, 0x78, 0x61, 0xa1, 0xfa, 0xff, 0xb4, 0xee, 0xb2, 0x33, 0xdf, 0x44, 0xaa, 0xa0, 0x2d, 0x7b, 0x8f, 0xf2, 0x50, 0x7f, 0x98, 0x42, 0x7e, 0x3e, 0x1f, 0x5c, 0x7b, 0x9d, 0x6a, 0x2e, 0x4c, 0x8f, 0x1a, 0x3b, 0x5d, 0x6e, 0x7f, 0x8a, 0x9b };
+	CK_EDDSA_PARAMS eddsaParams = {
+		CK_TRUE,  // phFlag = 1 (pre-hash)
+		0,     // context_data_len = 0
+		NULL   // context_data = NULL
+	};
+
+	// Public Session keys
+	rv = generateED(curve, hSessionRW,IN_SESSION,IS_PUBLIC,IN_SESSION,IS_PUBLIC,hPuk,hPrk);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	signVerifySingleData(message, sizeof(message), CKM_EDDSA, hSessionRO, hPuk, hPrk, &eddsaParams, sizeof(CK_EDDSA_PARAMS));
+
+	// Private Session Keys
+	rv = generateED(curve, hSessionRW,IN_SESSION,IS_PRIVATE,IN_SESSION,IS_PRIVATE,hPuk,hPrk);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	signVerifySingleData(message, sizeof(message), CKM_EDDSA, hSessionRO, hPuk, hPrk, &eddsaParams, sizeof(CK_EDDSA_PARAMS));
+
+	// Test with a different message
+	CK_BYTE anotherMessage[] = { 0x13, 0xe8, 0x06, 0x38, 0x7a, 0xdc, 0x2d, 0x73, 0x3c, 0x85, 0xa9, 0xd0, 0x81, 0x91, 0xfa, 0xa0, 0xcd, 0xeb, 0x11, 0xca, 0x4d, 0x1c, 0x2a, 0x05, 0x7c, 0x27, 0xf3, 0x6c, 0xeb, 0xc4, 0xdf, 0x88, 0x8a, 0x45, 0x6a, 0xc5, 0xc0, 0x91, 0x69, 0x31, 0x4e, 0xb0, 0x49, 0xe7, 0xdf, 0xdc, 0xf8, 0x68, 0x67, 0x21, 0xf6, 0xda, 0x13, 0x46, 0x1c, 0x57, 0x5c, 0x6e, 0x78, 0x36, 0x91, 0xc4, 0x2d, 0x09 };
+	CK_EDDSA_PARAMS eddsaParams2 = {
+		CK_TRUE,  // phFlag = 1 (pre-hash)
+		0,     // context_data_len = 0
+		NULL   // context_data = NULL
+	};
+
+	// Public Token Keys
+	rv = generateED(curve, hSessionRW,ON_TOKEN,IS_PUBLIC,ON_TOKEN,IS_PUBLIC,hPuk,hPrk);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	signVerifySingleData(anotherMessage, sizeof(anotherMessage), CKM_EDDSA, hSessionRO, hPuk, hPrk, &eddsaParams2, sizeof(CK_EDDSA_PARAMS));
+
+	// Private Token Keys
+	rv = generateED(curve, hSessionRW,ON_TOKEN,IS_PRIVATE,ON_TOKEN,IS_PRIVATE,hPuk,hPrk);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	signVerifySingleData(anotherMessage, sizeof(anotherMessage), CKM_EDDSA, hSessionRO, hPuk, hPrk, &eddsaParams2, sizeof(CK_EDDSA_PARAMS));
+
+	// Test with empty context
+	CK_EDDSA_PARAMS eddsaParamsNoCtx = {
+		CK_TRUE,  // phFlag = 1 (pre-hash)
+		0,     // context_data_len = 0
+		NULL   // context_data = NULL
+	};
+
+	// Generate new keys for empty context test
+	rv = generateED(curve, hSessionRW,IN_SESSION,IS_PUBLIC,IN_SESSION,IS_PUBLIC,hPuk,hPrk);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	signVerifySingleData(64, CKM_EDDSA, hSessionRO, hPuk, hPrk, &eddsaParamsNoCtx, sizeof(CK_EDDSA_PARAMS));
+}
+
+void SignVerifyTests::signVerifyMismatchedParams(CK_BYTE_PTR data, size_t dataSize, CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hPublicKey, CK_OBJECT_HANDLE hPrivateKey, CK_VOID_PTR signParam, CK_ULONG signParamLen, CK_VOID_PTR verifyParam, CK_ULONG verifyParamLen)
+{
+	CK_RV rv;
+	CK_MECHANISM signMechanism = { CKM_EDDSA, signParam, signParamLen };
+	CK_MECHANISM verifyMechanism = { CKM_EDDSA, verifyParam, verifyParamLen };
+	CK_BYTE signature[1024];
+	CK_ULONG ulSignatureLen = sizeof(signature);
+
+	rv = CRYPTOKI_F_PTR( C_SignInit(hSession,&signMechanism,hPrivateKey) );
+	CPPUNIT_ASSERT(rv==CKR_OK);
+
+	rv = CRYPTOKI_F_PTR( C_Sign(hSession,data,dataSize,signature,&ulSignatureLen) );
+	CPPUNIT_ASSERT(rv==CKR_OK);
+
+	rv = CRYPTOKI_F_PTR( C_VerifyInit(hSession,&verifyMechanism,hPublicKey) );
+	CPPUNIT_ASSERT(rv==CKR_OK);
+
+	rv = CRYPTOKI_F_PTR( C_Verify(hSession,data,dataSize,signature,ulSignatureLen) );
+	CPPUNIT_ASSERT(rv==CKR_SIGNATURE_INVALID);
+}
+
+// A signature made with one set of EdDSA parameters must not verify under another
+void SignVerifyTests::testEdSignVerifyMismatchedParams(const char* curve)
+{
+	bool contextSupported = true;
+	bool preHashSupported = true;
+
+#ifdef WITH_BOTAN
+	// Botan 2.X has no context support and only pre-hashes Ed25519
+	contextSupported = false;
+	if (strcmp(curve, "Ed448") == 0)
+		preHashSupported = false;
+#endif
+#if defined(WITH_OPENSSL) && OPENSSL_VERSION_NUMBER < 0x30200000L
+	contextSupported = false;
+	preHashSupported = false;
+#endif
+
+	if (!contextSupported && !preHashSupported)
+	{
+		fprintf(stdout, "Neither EdDSA context nor pre-hash is supported. Skipping testEdSignVerifyMismatchedParams.\n");
+		return;
+	}
+
+	CK_RV rv;
+	CK_SESSION_HANDLE hSessionRO;
+	CK_SESSION_HANDLE hSessionRW;
+
+	// Just make sure that we finalize any previous tests
+	CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
+
+	rv = CRYPTOKI_F_PTR( C_Initialize(NULL_PTR) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	rv = CRYPTOKI_F_PTR( C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSessionRO) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	rv = CRYPTOKI_F_PTR( C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSessionRW) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	rv = CRYPTOKI_F_PTR( C_Login(hSessionRO,CKU_USER,m_userPin1,m_userPin1Length) );
+	CPPUNIT_ASSERT(rv==CKR_OK);
+
+	CK_OBJECT_HANDLE hPuk = CK_INVALID_HANDLE;
+	CK_OBJECT_HANDLE hPrk = CK_INVALID_HANDLE;
+
+	rv = generateED(curve, hSessionRW,IN_SESSION,IS_PUBLIC,IN_SESSION,IS_PUBLIC,hPuk,hPrk);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	CK_BYTE data[64];
+	for (size_t i = 0; i < sizeof(data); i++)
+		data[i] = (CK_BYTE) i;
+
+	CK_BYTE contextAlice[] = "Alice";
+	CK_BYTE contextBob[] = "Bob";
+	CK_EDDSA_PARAMS aliceParams = { CK_FALSE, (CK_ULONG)(sizeof(contextAlice) - 1), contextAlice };
+	CK_EDDSA_PARAMS bobParams   = { CK_FALSE, (CK_ULONG)(sizeof(contextBob) - 1), contextBob };
+	CK_EDDSA_PARAMS pureParams  = { CK_FALSE, 0, NULL };
+	CK_EDDSA_PARAMS preHashParams = { CK_TRUE, 0, NULL };
+
+	if (contextSupported)
+	{
+		// Different context data
+		signVerifyMismatchedParams(data, sizeof(data), hSessionRO, hPuk, hPrk,
+					   &aliceParams, sizeof(aliceParams), &bobParams, sizeof(bobParams));
+
+		// Context data on signing only
+		signVerifyMismatchedParams(data, sizeof(data), hSessionRO, hPuk, hPrk,
+					   &aliceParams, sizeof(aliceParams), &pureParams, sizeof(pureParams));
+
+		// Context data dropped by omitting the parameters altogether
+		signVerifyMismatchedParams(data, sizeof(data), hSessionRO, hPuk, hPrk,
+					   &aliceParams, sizeof(aliceParams), NULL_PTR, 0);
+	}
+
+	if (preHashSupported)
+	{
+		// Pre-hash on signing only
+		signVerifyMismatchedParams(data, sizeof(data), hSessionRO, hPuk, hPrk,
+					   &preHashParams, sizeof(preHashParams), &pureParams, sizeof(pureParams));
+	}
+}
+
+void SignVerifyTests::testEdSignVerifyInvalidParams()
+{
+	CK_RV rv;
+	CK_SESSION_HANDLE hSessionRO;
+	CK_SESSION_HANDLE hSessionRW;
+
+	// Just make sure that we finalize any previous tests
+	CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
+
+	rv = CRYPTOKI_F_PTR( C_Initialize(NULL_PTR) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	rv = CRYPTOKI_F_PTR( C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSessionRO) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	rv = CRYPTOKI_F_PTR( C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSessionRW) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	rv = CRYPTOKI_F_PTR( C_Login(hSessionRO,CKU_USER,m_userPin1,m_userPin1Length) );
+	CPPUNIT_ASSERT(rv==CKR_OK);
+
+	CK_OBJECT_HANDLE hPuk = CK_INVALID_HANDLE;
+	CK_OBJECT_HANDLE hPrk = CK_INVALID_HANDLE;
+
+	rv = generateED("Ed25519", hSessionRW,IN_SESSION,IS_PUBLIC,IN_SESSION,IS_PUBLIC,hPuk,hPrk);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	CK_BYTE context[256] = { 0 };
+	CK_EDDSA_PARAMS validParams = { CK_FALSE, 0, NULL };
+	CK_EDDSA_PARAMS tooLongContext = { CK_FALSE, (CK_ULONG) sizeof(context), context };
+	CK_EDDSA_PARAMS nullContext = { CK_FALSE, 1, NULL };
+
+	CK_MECHANISM mechanisms[] = {
+		// No parameters but a non-zero length
+		{ CKM_EDDSA, NULL_PTR, sizeof(CK_EDDSA_PARAMS) },
+		// Wrong parameter length
+		{ CKM_EDDSA, &validParams, sizeof(CK_EDDSA_PARAMS) - 1 },
+		{ CKM_EDDSA, &validParams, sizeof(CK_EDDSA_PARAMS) + 1 },
+		// Context data longer than 255 bytes
+		{ CKM_EDDSA, &tooLongContext, sizeof(tooLongContext) },
+		// Non-zero context length with a NULL context pointer
+		{ CKM_EDDSA, &nullContext, sizeof(nullContext) }
+	};
+
+	for (size_t i = 0; i < sizeof(mechanisms) / sizeof(CK_MECHANISM); i++)
+	{
+		rv = CRYPTOKI_F_PTR( C_SignInit(hSessionRO,&mechanisms[i],hPrk) );
+		CPPUNIT_ASSERT_EQUAL((CK_RV) CKR_MECHANISM_PARAM_INVALID, rv);
+
+		rv = CRYPTOKI_F_PTR( C_VerifyInit(hSessionRO,&mechanisms[i],hPuk) );
+		CPPUNIT_ASSERT_EQUAL((CK_RV) CKR_MECHANISM_PARAM_INVALID, rv);
+	}
 }
 #endif
 

@@ -837,7 +837,7 @@ eddsa_key_material_t* crypto_malloc_eddsa
 		return NULL;
 	}
 
-	eddsa_key_material_t* keyMat = (eddsa_key_material_t*)malloc(sizeof(eddsa_key_material_t));
+	eddsa_key_material_t* keyMat = (eddsa_key_material_t*)calloc(1, sizeof(eddsa_key_material_t));
 	if (keyMat == NULL)
 	{
 		return NULL;
@@ -848,13 +848,13 @@ eddsa_key_material_t* crypto_malloc_eddsa
 	if (ed25519) oid = Botan::OIDS::lookup("Ed25519");
 	if (oid.empty())
 	{
+		crypto_free_eddsa(keyMat);
 		return NULL;
 	}
 
 	Botan::secure_vector<Botan::byte> derOID;
 	derOID = Botan::DER_Encoder().encode(oid).get_contents();
 
-	memset(keyMat, 0, sizeof(*keyMat));
 	keyMat->sizeOID = derOID.size();
 	keyMat->derOID = (CK_VOID_PTR)malloc(keyMat->sizeOID);
 

@@ -38,6 +38,7 @@
 #include "CryptoFactory.h"
 #include "BotanCryptoFactory.h"
 #include "ECParameters.h"
+#include "EDDSAMechanismParam.h"
 #include "BotanEDKeyPair.h"
 #include "BotanUtil.h"
 #include <algorithm>
@@ -62,22 +63,56 @@ BotanEDDSA::~BotanEDDSA()
 	delete verifier;
 }
 
+// Select the Botan EMSA for the requested EdDSA instance
+bool BotanEDDSA::selectEmsa(std::string& emsa, size_t orderLength, const MechanismParam* mechanismParam)
+{
+	emsa = "Pure";
+
+	if (mechanismParam == NULL || !mechanismParam->isOfType(EDDSAMechanismParam::type))
+	{
+		return true;
+	}
+
+	const EDDSAMechanismParam* eddsaParam = (const EDDSAMechanismParam*) mechanismParam;
+
+	if (eddsaParam->contextData.size() > 0)
+	{
+		ERROR_MSG("EDDSA: Context data is not supported in the Botan 2 EDDSA implementation");
+		return false;
+	}
+
+	if (!eddsaParam->prehash)
+	{
+		return true;
+	}
+
+	// Ed25519: orderLength = 32, Ed448: orderLength = 57
+	if (orderLength == 32)
+	{
+		emsa = "Ed25519ph";
+		return true;
+	}
+
+	if (orderLength == 57)
+	{
+		ERROR_MSG("EDDSA: Ed448 is not supported in the Botan 2 EDDSA implementation");
+		return false;
+	}
+
+	ERROR_MSG("EDDSA: Unknown EdDSA key size: %lu", (unsigned long) orderLength);
+	return false;
+}
+
 // Signing functions
 bool BotanEDDSA::sign(PrivateKey* privateKey, const ByteString& dataToSign,
 		      ByteString& signature, const AsymMech::Type mechanism,
-		      const MechanismParam* /* mechanismParam */)
+		      const MechanismParam* mechanismParam)
 {
-	std::string emsa;
-
-	if (mechanism == AsymMech::EDDSA)
+	if (mechanism != AsymMech::EDDSA)
 	{
-		emsa = "Pure";
-	}
-        else
-        {
 		ERROR_MSG("Invalid mechanism supplied (%i)", mechanism);
 		return false;
-        }
+	}
 
 	// Check if the private key is the right type
 	if (!privateKey->isOfType(BotanEDPrivateKey::type))
@@ -87,13 +122,20 @@ bool BotanEDDSA::sign(PrivateKey* privateKey, const ByteString& dataToSign,
 		return false;
 	}
 
-        BotanEDPrivateKey* pk = (BotanEDPrivateKey*) privateKey;
-        Botan::Ed25519_PrivateKey* botanKey = dynamic_cast<Botan::Ed25519_PrivateKey*>(pk->getBotanKey());
+	BotanEDPrivateKey* pk = (BotanEDPrivateKey*) privateKey;
+	Botan::Ed25519_PrivateKey* botanKey = dynamic_cast<Botan::Ed25519_PrivateKey*>(pk->getBotanKey());
 
-        if (botanKey == NULL)
-        {
+	if (botanKey == NULL)
+	{
 		ERROR_MSG("Could not get the Botan private key");
 
+		return false;
+	}
+
+	std::string emsa;
+	if (!selectEmsa(emsa, pk->getOrderLength(), mechanismParam))
+	{
+		ERROR_MSG("Could not select the EMSA for the Botan 2 EDDSA implementation");
 		return false;
 	}
 
@@ -104,7 +146,7 @@ bool BotanEDDSA::sign(PrivateKey* privateKey, const ByteString& dataToSign,
 	}
 	catch (...)
 	{
-		ERROR_MSG("Could not create the signer token");
+		ERROR_MSG("Could not create the signer token. emsa: %s", emsa.c_str());
 
 		return false;
 	}
@@ -162,16 +204,10 @@ bool BotanEDDSA::signFinal(ByteString& /*signature*/)
 // Verification functions
 bool BotanEDDSA::verify(PublicKey* publicKey, const ByteString& originalData,
 			const ByteString& signature, const AsymMech::Type mechanism,
-		    const MechanismParam* /* mechanismParam */)
+		    const MechanismParam* mechanismParam)
 {
-	std::string emsa;
-
-	if (mechanism == AsymMech::EDDSA)
+	if (mechanism != AsymMech::EDDSA)
 	{
-		emsa = "Pure";
-	}
-        else
-        {
 		ERROR_MSG("Invalid mechanism supplied (%i)", mechanism);
 
 		return false;
@@ -195,13 +231,20 @@ bool BotanEDDSA::verify(PublicKey* publicKey, const ByteString& originalData,
 		return false;
 	}
 
+	std::string emsa;
+	if (!selectEmsa(emsa, pk->getOrderLength(), mechanismParam))
+	{
+		ERROR_MSG("Could not select the EMSA for the Botan 2 EDDSA implementation");
+		return false;
+	}
+
 	try
 	{
 		verifier = new Botan::PK_Verifier(*botanKey, emsa);
 	}
 	catch (...)
 	{
-		ERROR_MSG("Could not create the verifier token");
+		ERROR_MSG("Could not create the verifier token. emsa: %s", emsa.c_str());
 
 		return false;
 	}

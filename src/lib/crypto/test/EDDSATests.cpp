@@ -43,6 +43,33 @@
 #include "ECParameters.h"
 #include "EDPublicKey.h"
 #include "EDPrivateKey.h"
+#include "EDDSAMechanismParam.h"
+#ifdef WITH_OPENSSL
+#include <openssl/opensslv.h>
+#endif
+
+// Contexts and pre-hashing need OpenSSL 3.2 or later; Botan 2.X has no context support at all
+#if defined(WITH_OPENSSL) && OPENSSL_VERSION_NUMBER < 0x30200000L
+	#define EDDSA_HAVE_CONTEXT	0
+	#define EDDSA_HAVE_PREHASH	0
+#elif defined(WITH_BOTAN)
+	#define EDDSA_HAVE_CONTEXT	0
+	#define EDDSA_HAVE_PREHASH	1
+#else
+	#define EDDSA_HAVE_CONTEXT	1
+	#define EDDSA_HAVE_PREHASH	1
+#endif
+
+// Botan 2.X only supports Ed25519
+#ifdef WITH_BOTAN
+	#define EDDSA_HAVE_ED448	0
+#else
+	#define EDDSA_HAVE_ED448	1
+#endif
+
+// Curve identifiers used by the test vectors below
+#define ED25519_CURVE	"06032b6570"
+#define ED448_CURVE	"130a65647761726473343438"
 
 CPPUNIT_TEST_SUITE_REGISTRATION(EDDSATests);
 
@@ -397,6 +424,199 @@ void EDDSATests::testSignVerifyKnownVectorEd448()
 	eddsa->recyclePublicKey(pubKey2);
 	eddsa->recyclePrivateKey(privKey1);
 	eddsa->recyclePrivateKey(privKey2);
+#endif
+}
+
+void EDDSATests::checkKnownVector(const char* ec, const char* k, const char* a, const char* msg,
+				  const char* ctx, bool preHash, const char* sig)
+{
+	EDPublicKey* pubKey = (EDPublicKey*) eddsa->newPublicKey();
+	EDPrivateKey* privKey = (EDPrivateKey*) eddsa->newPrivateKey();
+	CPPUNIT_ASSERT(pubKey != NULL);
+	CPPUNIT_ASSERT(privKey != NULL);
+
+	ByteString curve = ec;
+	pubKey->setEC(curve);
+	pubKey->setA(ByteString(a));
+	privKey->setEC(curve);
+	privKey->setK(ByteString(k));
+
+	ByteString data;
+	if (msg != NULL) data = ByteString(msg);
+
+	EDDSAMechanismParam param;
+	param.prehash = preHash;
+	if (ctx != NULL) param.contextData = ByteString(ctx);
+
+	ByteString expected = sig;
+
+	// EdDSA is deterministic, so the signature must match the test vector octet for octet
+	ByteString signature;
+	CPPUNIT_ASSERT(eddsa->sign(privKey, data, signature, AsymMech::EDDSA, &param));
+	CPPUNIT_ASSERT(signature == expected);
+
+	CPPUNIT_ASSERT(eddsa->verify(pubKey, data, expected, AsymMech::EDDSA, &param));
+
+	// Flipping a single bit of the signature must break verification
+	ByteString badSignature = expected;
+	badSignature[0] ^= 0x01;
+	CPPUNIT_ASSERT(!eddsa->verify(pubKey, data, badSignature, AsymMech::EDDSA, &param));
+
+	eddsa->recyclePublicKey(pubKey);
+	eddsa->recyclePrivateKey(privKey);
+}
+
+void EDDSATests::testSignVerifyKnownVectorEd25519ctx()
+{
+#if EDDSA_HAVE_CONTEXT
+	// Test vectors from RFC 8032 section 7.2
+
+	const char* k1 = "0305334e381af78f141cb666f6199f57bc3495335a256a95bd2a55bf546663f6";
+	const char* a1 = "0420dfc9425e4f968f7f0c29f0259cf5f9aed6851c2bb4ad8bfb860cfee0ab248292";
+	const char* msg1 = "f726936d19c800494e3fdaff20b276a8";
+	const char* ctxFoo = "666f6f"; // "foo"
+	const char* ctxBar = "626172"; // "bar"
+
+	// foo
+	checkKnownVector(ED25519_CURVE, k1, a1, msg1, ctxFoo, false,
+		"55a4cc2f70a54e04288c5f4cd1e45a7bb520b36292911876cada7323198dd87a"
+		"8b36950b95130022907a7fb7c4e9b2d5f6cca685a587b4b21f4b888e4e7edb0d");
+
+	// bar: same key and message, different context
+	checkKnownVector(ED25519_CURVE, k1, a1, msg1, ctxBar, false,
+		"fc60d5872fc46b3aa69f8b5b4351d5808f92bcc044606db097abab6dbcb1aee3"
+		"216c48e8b3b66431b5b186d1d28f8ee15a5ca2df6668346291c2043d4eb3e90d");
+
+	// foo2: same key and context, different message
+	checkKnownVector(ED25519_CURVE, k1, a1, "508e9e6882b979fea900f62adceaca35", ctxFoo, false,
+		"8b70c1cc8310e1de20ac53ce28ae6e7207f33c3295e03bb5c0732a1d20dc6490"
+		"8922a8b052cf99b7c4fe107a5abb5b2c4085ae75890d02df26269d8945f84b0b");
+
+	// foo3: different key
+	checkKnownVector(ED25519_CURVE,
+		"ab9c2853ce297ddab85c993b3ae14bcad39b2c682beabc27d6d4eb20711d6560",
+		"04200f1d1274943b91415889152e893d80e93275a1fc0b65fd71b4b0dda10ad7d772",
+		msg1, ctxFoo, false,
+		"21655b5f1aa965996b3f97b3c849eafba922a0a62992f73b3d1b73106a84ad85"
+		"e9b86a7b6005ea868337ff2d20a7f5fbd4cd10b0be49a68da2b2e0dc0ad8960f");
+
+	// The "foo" signature must not verify under the "bar" context
+	EDPublicKey* pubKey = (EDPublicKey*) eddsa->newPublicKey();
+	ByteString curve = ED25519_CURVE;
+	pubKey->setEC(curve);
+	pubKey->setA(ByteString(a1));
+
+	ByteString data = msg1;
+	ByteString fooSignature =
+		"55a4cc2f70a54e04288c5f4cd1e45a7bb520b36292911876cada7323198dd87a"
+		"8b36950b95130022907a7fb7c4e9b2d5f6cca685a587b4b21f4b888e4e7edb0d";
+
+	EDDSAMechanismParam barParam;
+	barParam.prehash = false;
+	barParam.contextData = ByteString(ctxBar);
+	CPPUNIT_ASSERT(!eddsa->verify(pubKey, data, fooSignature, AsymMech::EDDSA, &barParam));
+
+	// Nor without any context at all
+	EDDSAMechanismParam pureParam;
+	pureParam.prehash = false;
+	CPPUNIT_ASSERT(!eddsa->verify(pubKey, data, fooSignature, AsymMech::EDDSA, &pureParam));
+
+	eddsa->recyclePublicKey(pubKey);
+#endif
+}
+
+void EDDSATests::testSignVerifyKnownVectorEd25519ph()
+{
+#if EDDSA_HAVE_PREHASH
+	// Test vector from RFC 8032 section 7.3
+
+	const char* k = "833fe62409237b9d62ec77587520911e9a759cec1d19755b7da901b96dca3d42";
+	const char* a = "0420ec172b93ad5e563bf4932c70e1245034c35467ef2efd4d64ebf819683467e2bf";
+	const char* msg = "616263"; // "abc"
+	const char* sig =
+		"98a70222f0b8121aa9d30f813d683f809e462b469c7ff87639499bb94e6dae41"
+		"31f85042463c2a355a2003d062adf5aaa10b8c61e636062aaad11c2a26083406";
+
+	checkKnownVector(ED25519_CURVE, k, a, msg, NULL, true, sig);
+
+	// The pre-hashed signature must not verify as a pure Ed25519 signature
+	EDPublicKey* pubKey = (EDPublicKey*) eddsa->newPublicKey();
+	ByteString curve = ED25519_CURVE;
+	pubKey->setEC(curve);
+	pubKey->setA(ByteString(a));
+
+	ByteString data = msg;
+	ByteString signature = sig;
+
+	EDDSAMechanismParam pureParam;
+	pureParam.prehash = false;
+	CPPUNIT_ASSERT(!eddsa->verify(pubKey, data, signature, AsymMech::EDDSA, &pureParam));
+
+	eddsa->recyclePublicKey(pubKey);
+#endif
+}
+
+void EDDSATests::testSignVerifyKnownVectorEd448ctx()
+{
+#if EDDSA_HAVE_ED448 && EDDSA_HAVE_CONTEXT
+	// Test vector "1 octet (with context)" from RFC 8032 section 7.4
+
+	const char* k = "c4eab05d357007c632f3dbb48489924d552b08fe0c353a0d4a1f00acda2c463a"
+			"fbea67c5e8d2877c5e3bc397a659949ef8021e954e0a12274e";
+	const char* a = "0439"
+			"43ba28f430cdff456ae531545f7ecd0ac834a55d9358c0372bfa0c6c6798c086"
+			"6aea01eb00742802b8438ea4cb82169c235160627b4c3a9480";
+	const char* msg = "03";
+	const char* sig =
+		"d4f8f6131770dd46f40867d6fd5d5055de43541f8c5e35abbcd001b32a89f7d2"
+		"151f7647f11d8ca2ae279fb842d607217fce6e042f6815ea000c85741de5c8da"
+		"1144a6a1aba7f96de42505d7a7298524fda538fccbbb754f578c1cad10d54d0d"
+		"5428407e85dcbc98a49155c13764e66c3c00";
+
+	checkKnownVector(ED448_CURVE, k, a, msg, "666f6f", false, sig);
+
+	// The same signature must not verify without the context
+	EDPublicKey* pubKey = (EDPublicKey*) eddsa->newPublicKey();
+	ByteString curve = ED448_CURVE;
+	pubKey->setEC(curve);
+	pubKey->setA(ByteString(a));
+
+	ByteString data = msg;
+	ByteString signature = sig;
+
+	EDDSAMechanismParam pureParam;
+	pureParam.prehash = false;
+	CPPUNIT_ASSERT(!eddsa->verify(pubKey, data, signature, AsymMech::EDDSA, &pureParam));
+
+	eddsa->recyclePublicKey(pubKey);
+#endif
+}
+
+void EDDSATests::testSignVerifyKnownVectorEd448ph()
+{
+#if EDDSA_HAVE_ED448 && EDDSA_HAVE_PREHASH
+	// Test vectors from RFC 8032 section 7.5
+
+	const char* k = "833fe62409237b9d62ec77587520911e9a759cec1d19755b7da901b96dca3d42"
+			"ef7822e0d5104127dc05d6dbefde69e3ab2cec7c867c6e2c49";
+	const char* a = "0439"
+			"259b71c19f83ef77a7abd26524cbdb3161b590a48f7d17de3ee0ba9c52beb743"
+			"c09428a131d6b1b57303d90d8132c276d5ed3d5d01c0f53880";
+	const char* msg = "616263"; // "abc"
+
+	checkKnownVector(ED448_CURVE, k, a, msg, NULL, true,
+		"822f6901f7480f3d5f562c592994d9693602875614483256505600bbc281ae38"
+		"1f54d6bce2ea911574932f52a4e6cadd78769375ec3ffd1b801a0d9b3f4030cd"
+		"433964b6457ea39476511214f97469b57dd32dbc560a9a94d00bff07620464a3"
+		"ad203df7dc7ce360c3cd3696d9d9fab90f00");
+
+#if EDDSA_HAVE_CONTEXT
+	checkKnownVector(ED448_CURVE, k, a, msg, "666f6f", true,
+		"c32299d46ec8ff02b54540982814dce9a05812f81962b649d528095916a2aa48"
+		"1065b1580423ef927ecf0af5888f90da0f6a9a85ad5dc3f280d91224ba9911a3"
+		"653d00e484e2ce232521481c8658df304bb7745a73514cdb9bf3e15784ab7128"
+		"4f8d0704a608c54a6b62d97beb511d132100");
+#endif
 #endif
 }
 

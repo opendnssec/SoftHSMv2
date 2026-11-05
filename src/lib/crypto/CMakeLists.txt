@@ -26,6 +26,8 @@ set(SOURCES AESKey.cpp
             ECPublicKey.cpp
             EDPrivateKey.cpp
             EDPublicKey.cpp
+            EDDSAMechanismParam.cpp
+            EDDSAUtil.cpp
             GOSTPrivateKey.cpp
             GOSTPublicKey.cpp
             HashAlgorithm.cpp
@@ -165,7 +167,7 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
 	list(APPEND INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/../win32)
 ENDIF()
 
-if(WITH_BOTAN)
+if(WITH_BOTAN AND CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
 	# mute botan specific warnings
 	# https://github.com/randombit/botan/issues/486
 	list(APPEND COMPILE_OPTIONS "/wd4250;/wd4251;/wd4275;/wd4127;/wd4273") 

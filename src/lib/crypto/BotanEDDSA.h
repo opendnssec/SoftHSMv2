@@ -80,6 +80,9 @@ public:
 	virtual AsymmetricParameters* newParameters();
 
 private:
+	// Derive the Botan EMSA from the key size and the pre-hash flag; context data is not supported
+	static bool selectEmsa(std::string& emsa, size_t orderLength, const MechanismParam* mechanismParam);
+
 	Botan::PK_Signer* signer;
 	Botan::PK_Verifier* verifier;
 };

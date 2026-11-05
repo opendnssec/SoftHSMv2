@@ -37,6 +37,9 @@
 #include "config.h"
 #include "TestsBase.h"
 #include <cppunit/extensions/HelperMacros.h>
+#ifdef WITH_OPENSSL
+	#include <openssl/opensslv.h>
+#endif
 
 class SignVerifyTests : public TestsBase
 {
@@ -47,6 +50,10 @@ class SignVerifyTests : public TestsBase
 #endif
 #ifdef WITH_EDDSA
 	CPPUNIT_TEST_PARAMETERIZED(testEdSignVerify, {"Ed25519", "Ed448"});
+	CPPUNIT_TEST_PARAMETERIZED(testEdSignVerifyWithContext, {"Ed25519", "Ed448"});
+	CPPUNIT_TEST_PARAMETERIZED(testEdSignVerifyWithContextPreHashed, {"Ed25519", "Ed448"});
+	CPPUNIT_TEST_PARAMETERIZED(testEdSignVerifyMismatchedParams, {"Ed25519", "Ed448"});
+	CPPUNIT_TEST(testEdSignVerifyInvalidParams);
 #endif
 	CPPUNIT_TEST(testMacSignVerify);
 #ifdef WITH_ML_DSA
@@ -63,6 +70,10 @@ public:
 #endif
 #ifdef WITH_EDDSA
 	void testEdSignVerify(const char* curve);
+	void testEdSignVerifyWithContext(const char* curve);
+	void testEdSignVerifyWithContextPreHashed(const char* curve);
+	void testEdSignVerifyMismatchedParams(const char* curve);
+	void testEdSignVerifyInvalidParams();
 #endif
 	void testMacSignVerify();
 #ifdef WITH_ML_DSA
@@ -84,6 +95,10 @@ protected:
 #endif
 	void signVerifySingle(CK_MECHANISM_TYPE mechanismType, CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hPublicKey, CK_OBJECT_HANDLE hPrivateKey, CK_VOID_PTR param = NULL_PTR, CK_ULONG paramLen = 0);
 	void signVerifySingleData(size_t dataSize, CK_MECHANISM_TYPE mechanismType, CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hPublicKey, CK_OBJECT_HANDLE hPrivateKey, CK_VOID_PTR param = NULL_PTR, CK_ULONG paramLen = 0);
+	void signVerifySingleData(CK_BYTE_PTR data, size_t dataSize, CK_MECHANISM_TYPE mechanismType, CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hPublicKey, CK_OBJECT_HANDLE hPrivateKey, CK_VOID_PTR param = NULL_PTR, CK_ULONG paramLen = 0);
+#ifdef WITH_EDDSA
+	void signVerifyMismatchedParams(CK_BYTE_PTR data, size_t dataSize, CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hPublicKey, CK_OBJECT_HANDLE hPrivateKey, CK_VOID_PTR signParam, CK_ULONG signParamLen, CK_VOID_PTR verifyParam, CK_ULONG verifyParamLen);
+#endif
 	void signVerifyMulti(CK_MECHANISM_TYPE mechanismType, CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hPublicKey, CK_OBJECT_HANDLE hPrivateKey, CK_VOID_PTR param = NULL_PTR, CK_ULONG paramLen = 0);
 	CK_RV generateKey(CK_SESSION_HANDLE hSession, CK_KEY_TYPE keyType, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_OBJECT_HANDLE &hKey);
 	CK_RV generateDes2Key(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_OBJECT_HANDLE &hKey);

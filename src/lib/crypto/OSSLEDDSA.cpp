@@ -36,6 +36,7 @@
 #include "OSSLEDDSA.h"
 #include "CryptoFactory.h"
 #include "ECParameters.h"
+#include "EDDSAMechanismParam.h"
 #include "OSSLEDKeyPair.h"
 #include "OSSLComp.h"
 #include "OSSLUtil.h"
@@ -43,23 +44,80 @@
 #include <openssl/evp.h>
 #include <openssl/pem.h>
 #include <openssl/err.h>
+#if OPENSSL_VERSION_NUMBER >= 0x30200000L
+#include <openssl/params.h>
+#include <openssl/core_names.h>
+#endif
 #include <string.h>
+
+#if OPENSSL_VERSION_NUMBER >= 0x30200000L
+bool OSSLEDDSA::buildInstanceParams(OSSL_PARAM* params, size_t orderLength, bool preHash, const ByteString& contextData, const char* operation)
+{
+	// Select the instance based on key type and pre-hash flag
+	// Ed25519: orderLength = 32, Ed448: orderLength = 57
+	const char* instance = NULL;
+
+	DEBUG_MSG("%s with key of order length %zu, contextData.size(): %zu, keySize: %zu, preHash: %s", operation, orderLength, contextData.size(), orderLength, preHash ? "true" : "false");
+
+	if (orderLength == 32)
+	{
+		if (preHash)
+		{
+			instance = "Ed25519ph";
+		}
+		else if (contextData.size() > 0)
+		{
+			instance = "Ed25519ctx";
+		}
+	}
+	else if (orderLength == 57)
+	{
+		if (preHash)
+		{
+			instance = "Ed448ph";
+		}
+		else
+		{
+			instance = "Ed448";
+		}
+	}
+	else
+	{
+		ERROR_MSG("EDDSA: Unknown EdDSA key size: %zu", orderLength);
+		return false;
+	}
+
+	size_t i = 0;
+	if (instance != NULL)
+	{
+		DEBUG_MSG("Setting instance for %s: %s", operation, instance);
+		params[i++] = OSSL_PARAM_construct_utf8_string(OSSL_SIGNATURE_PARAM_INSTANCE, (char*) instance, 0);
+	}
+	if (contextData.size() > 0)
+	{
+		params[i++] = OSSL_PARAM_construct_octet_string(OSSL_SIGNATURE_PARAM_CONTEXT_STRING, (void*) contextData.const_byte_str(), contextData.size());
+	}
+	params[i] = OSSL_PARAM_construct_end();
+
+	return true;
+}
+#endif
 
 // Signing functions
 bool OSSLEDDSA::sign(PrivateKey* privateKey, const ByteString& dataToSign,
 		     ByteString& signature, const AsymMech::Type mechanism,
-		     const MechanismParam* /* mechanismParam */)
+		     const MechanismParam* mechanismParam)
 {
 	if (mechanism != AsymMech::EDDSA)
 	{
-		ERROR_MSG("Invalid mechanism supplied (%i)", mechanism);
+		ERROR_MSG("EDDSA: Invalid mechanism supplied (%i)", mechanism);
 		return false;
 	}
 
 	// Check if the private key is the right type
 	if (!privateKey->isOfType(OSSLEDPrivateKey::type))
 	{
-		ERROR_MSG("Invalid key type supplied");
+		ERROR_MSG("EDDSA: Invalid key type supplied");
 
 		return false;
 	}
@@ -69,10 +127,31 @@ bool OSSLEDDSA::sign(PrivateKey* privateKey, const ByteString& dataToSign,
 
 	if (pkey == NULL)
 	{
-		ERROR_MSG("Could not get the OpenSSL private key");
+		ERROR_MSG("EDDSA: Could not get the OpenSSL private key");
 
 		return false;
 	}
+
+#if OPENSSL_VERSION_NUMBER >= 0x30200000L
+	bool preHash = false;
+	ByteString contextData;
+	if (mechanismParam != NULL && mechanismParam->isOfType(EDDSAMechanismParam::type))
+	{
+		EDDSAMechanismParam* eddsaParam = (EDDSAMechanismParam*) mechanismParam;
+		preHash = eddsaParam->prehash;
+		contextData = eddsaParam->contextData;
+	}
+#else
+	if (mechanismParam != NULL && mechanismParam->isOfType(EDDSAMechanismParam::type))
+	{
+		EDDSAMechanismParam* eddsaParam = (EDDSAMechanismParam*) mechanismParam;
+		if (eddsaParam->prehash || eddsaParam->contextData.size() > 0)
+		{
+			ERROR_MSG("EDDSA: Pre-hash and context data are not supported in OpenSSL < 3.2");
+			return false;
+		}
+	}
+#endif
 
 	// Perform the signature operation
 	size_t len = pk->getOrderLength();
@@ -85,18 +164,34 @@ bool OSSLEDDSA::sign(PrivateKey* privateKey, const ByteString& dataToSign,
 	signature.resize(len);
 	memset(&signature[0], 0, len);
 	EVP_MD_CTX* ctx = EVP_MD_CTX_new();
-	if (!EVP_DigestSignInit(ctx, NULL, NULL, NULL, pkey))
+
+#if OPENSSL_VERSION_NUMBER >= 0x30200000L
+	OSSL_PARAM params[3];
+	if (!buildInstanceParams(params, pk->getOrderLength(), preHash, contextData, "Signing"))
 	{
-		ERROR_MSG("EDDSA sign init failed (0x%08X)", ERR_get_error());
 		EVP_MD_CTX_free(ctx);
 		return false;
 	}
+
+	if (!EVP_DigestSignInit_ex(ctx, NULL, NULL, NULL, NULL, pkey, params))
+#else
+	if (!EVP_DigestSignInit(ctx, NULL, NULL, NULL, pkey))
+#endif
+	{
+		long err = ERR_get_error();
+		ERROR_MSG("EDDSA sign init failed (0x%08X): %s", err, ERR_error_string(err, NULL));
+		EVP_MD_CTX_free(ctx);
+		return false;
+	}
+
 	if (!EVP_DigestSign(ctx, &signature[0], &len, dataToSign.const_byte_str(), dataToSign.size()))
 	{
-		ERROR_MSG("EDDSA sign failed (0x%08X)", ERR_get_error());
+		long err = ERR_get_error();
+		ERROR_MSG("EDDSA sign failed (0x%08X): %s", err, ERR_error_string(err, NULL));
 		EVP_MD_CTX_free(ctx);
 		return false;
 	}
+	DEBUG_MSG("Signature length: %zu, signature: %s", len, signature.hex_str().c_str());
 	EVP_MD_CTX_free(ctx);
 	return true;
 }
@@ -126,7 +221,7 @@ bool OSSLEDDSA::signFinal(ByteString& /*signature*/)
 // Verification functions
 bool OSSLEDDSA::verify(PublicKey* publicKey, const ByteString& originalData,
 		       const ByteString& signature, const AsymMech::Type mechanism,
-		       const MechanismParam* /* mechanismParam */)
+		       const MechanismParam* mechanismParam)
 {
 	if (mechanism != AsymMech::EDDSA)
 	{
@@ -152,6 +247,27 @@ bool OSSLEDDSA::verify(PublicKey* publicKey, const ByteString& originalData,
 		return false;
 	}
 
+#if OPENSSL_VERSION_NUMBER >= 0x30200000L
+	bool preHash = false;
+	ByteString contextData;
+	if (mechanismParam != NULL && mechanismParam->isOfType(EDDSAMechanismParam::type))
+	{
+		EDDSAMechanismParam* eddsaParam = (EDDSAMechanismParam*) mechanismParam;
+		preHash = eddsaParam->prehash;
+		contextData = eddsaParam->contextData;
+	}
+#else
+	if (mechanismParam != NULL && mechanismParam->isOfType(EDDSAMechanismParam::type))
+	{
+		EDDSAMechanismParam* eddsaParam = (EDDSAMechanismParam*) mechanismParam;
+		if (eddsaParam->prehash || eddsaParam->contextData.size() > 0)
+		{
+			ERROR_MSG("EDDSA: Pre-hash and context data are not supported in OpenSSL < 3.2");
+			return false;
+		}
+	}
+#endif
+
 	// Perform the verify operation
 	size_t len = pk->getOrderLength();
 	if (len == 0)
@@ -166,17 +282,37 @@ bool OSSLEDDSA::verify(PublicKey* publicKey, const ByteString& originalData,
 		return false;
 	}
 	EVP_MD_CTX* ctx = EVP_MD_CTX_new();
-	if (!EVP_DigestVerifyInit(ctx, NULL, NULL, NULL, pkey))
+
+#if OPENSSL_VERSION_NUMBER >= 0x30200000L
+	OSSL_PARAM params[3];
+	if (!buildInstanceParams(params, pk->getOrderLength(), preHash, contextData, "Verifying"))
 	{
-		ERROR_MSG("EDDSA verify init failed (0x%08X)", ERR_get_error());
 		EVP_MD_CTX_free(ctx);
 		return false;
 	}
+
+	if (!EVP_DigestVerifyInit_ex(ctx, NULL, NULL, NULL, NULL, pkey, params))
+#else
+	if (!EVP_DigestVerifyInit(ctx, NULL, NULL, NULL, pkey))
+#endif
+	{
+		long err = ERR_get_error();
+		ERROR_MSG("EDDSA verify init failed (0x%08X): %s", err, ERR_error_string(err, NULL));
+		EVP_MD_CTX_free(ctx);
+		return false;
+	}
+
+	DEBUG_MSG("Verifying signature of length: %zu, signature: %s", len, signature.hex_str().c_str());
+
 	int ret = EVP_DigestVerify(ctx, signature.const_byte_str(), len, originalData.const_byte_str(), originalData.size());
+	DEBUG_MSG("Verify result: %d", ret);
 	if (ret != 1)
 	{
 		if (ret < 0)
-			ERROR_MSG("EDDSA verify failed (0x%08X)", ERR_get_error());
+		{
+			long err = ERR_get_error();
+			ERROR_MSG("EDDSA verify failed (0x%08X): %s", err, ERR_error_string(err, NULL));
+		}
 		EVP_MD_CTX_free(ctx);
 		return false;
 	}
@@ -256,14 +392,16 @@ bool OSSLEDDSA::generateKeyPair(AsymmetricKeyPair** ppKeyPair, AsymmetricParamet
 	int ret = EVP_PKEY_keygen_init(ctx);
 	if (ret != 1)
 	{
-		ERROR_MSG("EDDSA key generation init failed (0x%08X)", ERR_get_error());
+		long err = ERR_get_error();
+		ERROR_MSG("EDDSA key generation init failed (0x%08X): %s", err, ERR_error_string(err, NULL));
 		EVP_PKEY_CTX_free(ctx);
 		return false;
 	}
 	ret = EVP_PKEY_keygen(ctx, &pkey);
 	if (ret != 1)
 	{
-		ERROR_MSG("EDDSA key generation failed (0x%08X)", ERR_get_error());
+		long err = ERR_get_error();
+		ERROR_MSG("EDDSA key generation failed (0x%08X): %s", err, ERR_error_string(err, NULL));
 		EVP_PKEY_CTX_free(ctx);
 		return false;
 	}

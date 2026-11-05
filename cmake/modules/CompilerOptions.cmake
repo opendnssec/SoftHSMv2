@@ -163,6 +163,18 @@ if(WITH_CRYPTO_BACKEND STREQUAL "botan")
         message(FATAL_ERROR "Failed to find Botan!")
     endif()
 
+    set(testfile ${CMAKE_SOURCE_DIR}/cmake/modules/tests/test_botan_version.cpp)
+    unset(BOTAN_VERSION_SUPPORTED CACHE)
+    try_compile(BOTAN_VERSION_SUPPORTED
+                "${CMAKE_BINARY_DIR}/prebuild_santity_tests"
+                ${testfile}
+                CMAKE_FLAGS
+                    "-DINCLUDE_DIRECTORIES=${BOTAN_INCLUDE_DIR}"
+                )
+    if(NOT BOTAN_VERSION_SUPPORTED)
+        message(FATAL_ERROR "Botan 2.11.0 or newer is required")
+    endif()
+
     set(CRYPTO_INCLUDES ${BOTAN_INCLUDE_DIR})
     set(CRYPTO_LIBS ${BOTAN_LIBRARY})
     message(STATUS "Botan: Includes: ${CRYPTO_INCLUDES}")

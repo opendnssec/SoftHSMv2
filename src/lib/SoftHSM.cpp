@@ -58,6 +58,10 @@
 #include "ECParameters.h"
 #include "EDPublicKey.h"
 #include "EDPrivateKey.h"
+#ifdef WITH_EDDSA
+#include "EDDSAMechanismParam.h"
+#include "EDDSAUtil.h"
+#endif
 #include "DHParameters.h"
 #include "DHPublicKey.h"
 #include "DHPrivateKey.h"
@@ -4458,6 +4462,7 @@ CK_RV SoftHSM::AsymSignInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechan
 #endif
 #ifdef WITH_EDDSA
 	bool isEDDSA = false;
+	EDDSAMechanismParam eddsaParam;
 #endif
 #ifdef WITH_ML_DSA
 	bool isMLDSA = false;
@@ -4878,10 +4883,17 @@ CK_RV SoftHSM::AsymSignInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechan
 #endif
 #ifdef WITH_EDDSA
 		case CKM_EDDSA:
+		{
 			mechanism = AsymMech::EDDSA;
 			bAllowMultiPartOp = false;
 			isEDDSA = true;
+			CK_RV eddsaRv = EDDSAUtil::getEddsaParam(pMechanism, eddsaParam, &mechanismParam);
+			if (eddsaRv != CKR_OK)
+			{
+				return eddsaRv;
+			}
 			break;
+		}
 #endif
 #ifdef WITH_ML_DSA
 		case CKM_ML_DSA:
@@ -5732,6 +5744,7 @@ CK_RV SoftHSM::AsymVerifyInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 #endif
 #ifdef WITH_EDDSA
 	bool isEDDSA = false;
+	EDDSAMechanismParam eddsaParam;
 #endif
 #ifdef WITH_ML_DSA
 	bool isMLDSA = false;
@@ -6151,10 +6164,17 @@ CK_RV SoftHSM::AsymVerifyInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 #endif
 #ifdef WITH_EDDSA
 		case CKM_EDDSA:
+		{
 			mechanism = AsymMech::EDDSA;
 			bAllowMultiPartOp = false;
 			isEDDSA = true;
+			CK_RV eddsaRv = EDDSAUtil::getEddsaParam(pMechanism, eddsaParam, &mechanismParam);
+			if (eddsaRv != CKR_OK)
+			{
+				return eddsaRv;
+			}
 			break;
+		}
 #endif
 #ifdef WITH_ML_DSA
 		case CKM_ML_DSA:

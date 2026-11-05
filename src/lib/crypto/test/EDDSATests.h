@@ -44,7 +44,11 @@ class EDDSATests : public CppUnit::TestFixture
 	CPPUNIT_TEST(testPKCS8);
 	CPPUNIT_TEST(testSigningVerifying);
 	CPPUNIT_TEST(testSignVerifyKnownVectorEd25519);
+	CPPUNIT_TEST(testSignVerifyKnownVectorEd25519ctx);
+	CPPUNIT_TEST(testSignVerifyKnownVectorEd25519ph);
 	CPPUNIT_TEST(testSignVerifyKnownVectorEd448);
+	CPPUNIT_TEST(testSignVerifyKnownVectorEd448ctx);
+	CPPUNIT_TEST(testSignVerifyKnownVectorEd448ph);
 	CPPUNIT_TEST(testDerivation);
 	CPPUNIT_TEST(testDeriveKnownVectorX25519);
 	CPPUNIT_TEST(testDeriveKnownVectorX448);
@@ -56,7 +60,11 @@ public:
 	void testPKCS8();
 	void testSigningVerifying();
 	void testSignVerifyKnownVectorEd25519();
+	void testSignVerifyKnownVectorEd25519ctx();
+	void testSignVerifyKnownVectorEd25519ph();
 	void testSignVerifyKnownVectorEd448();
+	void testSignVerifyKnownVectorEd448ctx();
+	void testSignVerifyKnownVectorEd448ph();
 	void testDerivation();
 	void testDeriveKnownVectorX25519();
 	void testDeriveKnownVectorX448();
@@ -65,6 +73,10 @@ public:
 	void tearDown();
 
 private:
+	// Sign and verify an RFC 8032 test vector; ec, k, a, msg and sig are hex, ctx may be NULL
+	void checkKnownVector(const char* ec, const char* k, const char* a, const char* msg,
+			      const char* ctx, bool preHash, const char* sig);
+
 	// EDDSA instance
 	AsymmetricAlgorithm* eddsa;
 };

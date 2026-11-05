@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 source `dirname "$0"`/lib.sh && init || exit 1
 
-BOTAN="Botan-2.5.0"
+BOTAN="Botan-2.11.0"
 BOTAN_URL="https://botan.randombit.net/releases/$BOTAN.tgz"
 BOTAN_FILENAME="$BOTAN.tgz"
 BOTAN_HASH_TYPE="sha1"
