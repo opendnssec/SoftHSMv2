@@ -52,6 +52,7 @@ set(SOURCES AESKey.cpp
 
 if(WITH_OPENSSL)
     list(APPEND SOURCES OSSLAES.cpp
+                        OSSLChaCha20Poly1305.cpp
                         OSSLCMAC.cpp
                         OSSLComp.cpp
                         OSSLCryptoFactory.cpp
@@ -112,6 +113,7 @@ endif(WITH_OPENSSL)
 
 if(WITH_BOTAN)
     list(APPEND SOURCES BotanAES.cpp
+                        BotanChaCha20Poly1305.cpp
                         BotanCryptoFactory.cpp
                         BotanDES.cpp
                         BotanDH.cpp

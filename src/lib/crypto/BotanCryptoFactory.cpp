@@ -33,6 +33,7 @@
 #include "config.h"
 #include "BotanCryptoFactory.h"
 #include "BotanAES.h"
+#include "BotanChaCha20Poly1305.h"
 #include "BotanDES.h"
 #include "BotanDSA.h"
 #include "BotanDH.h"
@@ -119,6 +120,8 @@ SymmetricAlgorithm* BotanCryptoFactory::getSymmetricAlgorithm(SymAlgo::Type algo
 		case SymAlgo::DES:
 		case SymAlgo::DES3:
 	                return new BotanDES();
+		case SymAlgo::ChaCha20Poly1305:
+			return new BotanChaCha20Poly1305();
 		default:
 	                // No algorithm implementation is available
         	        ERROR_MSG("Unknown algorithm '%i'", algorithm);

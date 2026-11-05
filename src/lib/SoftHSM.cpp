@@ -227,6 +227,10 @@ static CK_RV newP11Object(CK_OBJECT_CLASS objClass, CK_KEY_TYPE keyType, CK_CERT
 			{
 				*p11object = new P11GOSTSecretKeyObj();
 			}
+			else if (keyType == CKK_CHACHA20)
+			{
+				*p11object = new P11ChaCha20SecretKeyObj();
+			}
 			else
 				return CKR_ATTRIBUTE_VALUE_INVALID;
 			break;
@@ -864,6 +868,8 @@ void SoftHSM::prepareSupportedMechanisms(std::map<std::string, CK_MECHANISM_TYPE
 	t["CKM_AES_ECB_ENCRYPT_DATA"]	= CKM_AES_ECB_ENCRYPT_DATA;
 	t["CKM_AES_CBC_ENCRYPT_DATA"]	= CKM_AES_CBC_ENCRYPT_DATA;
 	t["CKM_AES_CMAC"]		= CKM_AES_CMAC;
+	t["CKM_CHACHA20_KEY_GEN"]	= CKM_CHACHA20_KEY_GEN;
+	t["CKM_CHACHA20_POLY1305"]	= CKM_CHACHA20_POLY1305;
 	t["CKM_DSA_PARAMETER_GEN"]	= CKM_DSA_PARAMETER_GEN;
 	t["CKM_DSA_KEY_PAIR_GEN"]	= CKM_DSA_KEY_PAIR_GEN;
 	t["CKM_DSA"]			= CKM_DSA;
@@ -1340,6 +1346,16 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 			pInfo->ulMinKeySize = 16;
 			pInfo->ulMaxKeySize = 32;
 			pInfo->flags |= CKF_ENCRYPT | CKF_DECRYPT;
+			break;
+		case CKM_CHACHA20_KEY_GEN:
+			pInfo->ulMinKeySize = 32;
+			pInfo->ulMaxKeySize = 32;
+			pInfo->flags = CKF_GENERATE;
+			break;
+		case CKM_CHACHA20_POLY1305:
+			pInfo->ulMinKeySize = 32;
+			pInfo->ulMaxKeySize = 32;
+			pInfo->flags = CKF_ENCRYPT | CKF_DECRYPT;
 			break;
 		case CKM_AES_KEY_WRAP:
 			pInfo->ulMinKeySize = 16;
@@ -2383,6 +2399,7 @@ static bool isSymMechanism(CK_MECHANISM_PTR pMechanism)
 		case CKM_AES_CBC_PAD:
 		case CKM_AES_CTR:
 		case CKM_AES_GCM:
+		case CKM_CHACHA20_POLY1305:
 			return true;
 		default:
 			return false;
@@ -2601,6 +2618,49 @@ CK_RV SoftHSM::SymEncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 				return CKR_ARGUMENTS_BAD;
 			}
 			tagBytes = tagBytes / 8;
+			break;
+		case CKM_CHACHA20_POLY1305:
+			if (keyType != CKK_CHACHA20)
+				return CKR_KEY_TYPE_INCONSISTENT;
+			algo = SymAlgo::ChaCha20Poly1305;
+			mode = SymMode::ChaCha20Poly1305;
+			if (pMechanism->pParameter == NULL_PTR ||
+			    pMechanism->ulParameterLen != sizeof(CK_SALSA20_CHACHA20_POLY1305_PARAMS))
+			{
+				DEBUG_MSG("ChaCha20-Poly1305 requires parameters");
+				return CKR_ARGUMENTS_BAD;
+			}
+#if defined(WITH_OPENSSL)
+			// The OpenSSL backend's ChaCha20-Poly1305 IV length is fixed at
+			// 96 bits; other lengths are silently truncated/over-read by EVP.
+			if (CK_SALSA20_CHACHA20_POLY1305_PARAMS_PTR(pMechanism->pParameter)->ulNonceBits != 96)
+#else
+			if (CK_SALSA20_CHACHA20_POLY1305_PARAMS_PTR(pMechanism->pParameter)->ulNonceBits == 0 ||
+			    CK_SALSA20_CHACHA20_POLY1305_PARAMS_PTR(pMechanism->pParameter)->ulNonceBits % 8 != 0 ||
+			    CK_SALSA20_CHACHA20_POLY1305_PARAMS_PTR(pMechanism->pParameter)->ulNonceBits > 192)
+#endif
+			{
+				DEBUG_MSG("Invalid ulNonceBits");
+				return CKR_MECHANISM_PARAM_INVALID;
+			}
+			if (CK_SALSA20_CHACHA20_POLY1305_PARAMS_PTR(pMechanism->pParameter)->pNonce == NULL_PTR)
+			{
+				DEBUG_MSG("ChaCha20-Poly1305 requires a nonce");
+				return CKR_ARGUMENTS_BAD;
+			}
+			iv.resize(CK_SALSA20_CHACHA20_POLY1305_PARAMS_PTR(pMechanism->pParameter)->ulNonceBits / 8);
+			memcpy(&iv[0], CK_SALSA20_CHACHA20_POLY1305_PARAMS_PTR(pMechanism->pParameter)->pNonce, iv.size());
+			aad.resize(CK_SALSA20_CHACHA20_POLY1305_PARAMS_PTR(pMechanism->pParameter)->ulAADLen);
+			if (aad.size() > 0)
+			{
+				if (CK_SALSA20_CHACHA20_POLY1305_PARAMS_PTR(pMechanism->pParameter)->pAAD == NULL_PTR)
+				{
+					DEBUG_MSG("Invalid AAD parameter");
+					return CKR_ARGUMENTS_BAD;
+				}
+				memcpy(&aad[0], CK_SALSA20_CHACHA20_POLY1305_PARAMS_PTR(pMechanism->pParameter)->pAAD, aad.size());
+			}
+			tagBytes = 16;
 			break;
 		default:
 			return CKR_MECHANISM_INVALID;
@@ -3357,6 +3417,49 @@ CK_RV SoftHSM::SymDecryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 				return CKR_ARGUMENTS_BAD;
 			}
 			tagBytes = tagBytes / 8;
+			break;
+		case CKM_CHACHA20_POLY1305:
+			if (keyType != CKK_CHACHA20)
+				return CKR_KEY_TYPE_INCONSISTENT;
+			algo = SymAlgo::ChaCha20Poly1305;
+			mode = SymMode::ChaCha20Poly1305;
+			if (pMechanism->pParameter == NULL_PTR ||
+			    pMechanism->ulParameterLen != sizeof(CK_SALSA20_CHACHA20_POLY1305_PARAMS))
+			{
+				DEBUG_MSG("ChaCha20-Poly1305 requires parameters");
+				return CKR_ARGUMENTS_BAD;
+			}
+#if defined(WITH_OPENSSL)
+			// The OpenSSL backend's ChaCha20-Poly1305 IV length is fixed at
+			// 96 bits; other lengths are silently truncated/over-read by EVP.
+			if (CK_SALSA20_CHACHA20_POLY1305_PARAMS_PTR(pMechanism->pParameter)->ulNonceBits != 96)
+#else
+			if (CK_SALSA20_CHACHA20_POLY1305_PARAMS_PTR(pMechanism->pParameter)->ulNonceBits == 0 ||
+			    CK_SALSA20_CHACHA20_POLY1305_PARAMS_PTR(pMechanism->pParameter)->ulNonceBits % 8 != 0 ||
+			    CK_SALSA20_CHACHA20_POLY1305_PARAMS_PTR(pMechanism->pParameter)->ulNonceBits > 192)
+#endif
+			{
+				DEBUG_MSG("Invalid ulNonceBits");
+				return CKR_MECHANISM_PARAM_INVALID;
+			}
+			if (CK_SALSA20_CHACHA20_POLY1305_PARAMS_PTR(pMechanism->pParameter)->pNonce == NULL_PTR)
+			{
+				DEBUG_MSG("ChaCha20-Poly1305 requires a nonce");
+				return CKR_ARGUMENTS_BAD;
+			}
+			iv.resize(CK_SALSA20_CHACHA20_POLY1305_PARAMS_PTR(pMechanism->pParameter)->ulNonceBits / 8);
+			memcpy(&iv[0], CK_SALSA20_CHACHA20_POLY1305_PARAMS_PTR(pMechanism->pParameter)->pNonce, iv.size());
+			aad.resize(CK_SALSA20_CHACHA20_POLY1305_PARAMS_PTR(pMechanism->pParameter)->ulAADLen);
+			if (aad.size() > 0)
+			{
+				if (CK_SALSA20_CHACHA20_POLY1305_PARAMS_PTR(pMechanism->pParameter)->pAAD == NULL_PTR)
+				{
+					DEBUG_MSG("Invalid AAD parameter");
+					return CKR_ARGUMENTS_BAD;
+				}
+				memcpy(&aad[0], CK_SALSA20_CHACHA20_POLY1305_PARAMS_PTR(pMechanism->pParameter)->pAAD, aad.size());
+			}
+			tagBytes = 16;
 			break;
 		default:
 			return CKR_MECHANISM_INVALID;
@@ -6806,6 +6909,10 @@ CK_RV SoftHSM::C_GenerateKey(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMecha
 			objClass = CKO_SECRET_KEY;
 			keyType = CKK_AES;
 			break;
+		case CKM_CHACHA20_KEY_GEN:
+			objClass = CKO_SECRET_KEY;
+			keyType = CKK_CHACHA20;
+			break;
 		case CKM_GENERIC_SECRET_KEY_GEN:
 			objClass = CKO_SECRET_KEY;
 			keyType = CKK_GENERIC_SECRET;
@@ -6841,6 +6948,9 @@ CK_RV SoftHSM::C_GenerateKey(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMecha
 		return CKR_TEMPLATE_INCONSISTENT;
 	if (pMechanism->mechanism == CKM_AES_KEY_GEN &&
 	    (objClass != CKO_SECRET_KEY || keyType != CKK_AES))
+		return CKR_TEMPLATE_INCONSISTENT;
+	if (pMechanism->mechanism == CKM_CHACHA20_KEY_GEN &&
+	    (objClass != CKO_SECRET_KEY || keyType != CKK_CHACHA20))
 		return CKR_TEMPLATE_INCONSISTENT;
 	if (pMechanism->mechanism == CKM_GENERIC_SECRET_KEY_GEN &&
 	    (objClass != CKO_SECRET_KEY || keyType != CKK_GENERIC_SECRET))
@@ -6892,6 +7002,12 @@ CK_RV SoftHSM::C_GenerateKey(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMecha
 	if (pMechanism->mechanism == CKM_AES_KEY_GEN)
 	{
 		return this->generateAES(hSession, pTemplate, ulCount, phKey, isOnToken, isPrivate);
+	}
+
+	// Generate ChaCha20 secret key
+	if (pMechanism->mechanism == CKM_CHACHA20_KEY_GEN)
+	{
+		return this->generateChaCha20(hSession, pTemplate, ulCount, phKey, isOnToken, isPrivate);
 	}
 
 	// Generate generic secret key
@@ -9810,6 +9926,173 @@ CK_RV SoftHSM::generateAES
 	// Clean up
 	aes->recycleKey(key);
 	CryptoFactory::i()->recycleSymmetricAlgorithm(aes);
+
+	// Remove the key that may have been created already when the function fails.
+	if (rv != CKR_OK)
+	{
+		if (*phKey != CK_INVALID_HANDLE)
+		{
+			OSObject* oskey = (OSObject*)handleManager->getObject(*phKey);
+			handleManager->destroyObject(*phKey);
+			if (oskey) oskey->destroyObject();
+			*phKey = CK_INVALID_HANDLE;
+		}
+	}
+
+	return rv;
+}
+
+// Generate a ChaCha20 secret key
+CK_RV SoftHSM::generateChaCha20
+(CK_SESSION_HANDLE hSession,
+	CK_ATTRIBUTE_PTR pTemplate,
+	CK_ULONG ulCount,
+	CK_OBJECT_HANDLE_PTR phKey,
+	CK_BBOOL isOnToken,
+	CK_BBOOL isPrivate)
+{
+	*phKey = CK_INVALID_HANDLE;
+
+	// Get the session
+	Session* session = (Session*)handleManager->getSession(hSession);
+	if (session == NULL)
+		return CKR_SESSION_HANDLE_INVALID;
+
+	// Get the token
+	Token* token = session->getToken();
+	if (token == NULL)
+		return CKR_GENERAL_ERROR;
+
+	// Extract desired parameter information
+	bool checkValue = true;
+	for (CK_ULONG i = 0; i < ulCount; i++)
+	{
+		switch (pTemplate[i].type)
+		{
+			case CKA_CHECK_VALUE:
+				if (pTemplate[i].ulValueLen > 0)
+				{
+					INFO_MSG("CKA_CHECK_VALUE must be a no-value (0 length) entry");
+					return CKR_ATTRIBUTE_VALUE_INVALID;
+				}
+				checkValue = false;
+				break;
+			default:
+				break;
+		}
+	}
+
+	// Generate the secret key; ChaCha20-Poly1305 always uses a 256-bit key
+	SymmetricKey* key = new SymmetricKey(256);
+	SymmetricAlgorithm* chacha20 = CryptoFactory::i()->getSymmetricAlgorithm(SymAlgo::ChaCha20Poly1305);
+	if (chacha20 == NULL)
+	{
+		ERROR_MSG("Could not get SymmetricAlgorithm");
+		delete key;
+		return CKR_GENERAL_ERROR;
+	}
+	RNG* rng = CryptoFactory::i()->getRNG();
+	if (rng == NULL)
+	{
+		ERROR_MSG("Could not get RNG");
+		chacha20->recycleKey(key);
+		CryptoFactory::i()->recycleSymmetricAlgorithm(chacha20);
+		return CKR_GENERAL_ERROR;
+	}
+	if (!chacha20->generateKey(*key, rng))
+	{
+		ERROR_MSG("Could not generate ChaCha20 secret key");
+		chacha20->recycleKey(key);
+		CryptoFactory::i()->recycleSymmetricAlgorithm(chacha20);
+		return CKR_GENERAL_ERROR;
+	}
+
+	CK_RV rv = CKR_OK;
+
+	// Create the secret key object using C_CreateObject
+	const CK_ULONG maxAttribs = 32;
+	CK_OBJECT_CLASS objClass = CKO_SECRET_KEY;
+	CK_KEY_TYPE keyType = CKK_CHACHA20;
+	CK_ATTRIBUTE keyAttribs[maxAttribs] = {
+		{ CKA_CLASS, &objClass, sizeof(objClass) },
+		{ CKA_TOKEN, &isOnToken, sizeof(isOnToken) },
+		{ CKA_PRIVATE, &isPrivate, sizeof(isPrivate) },
+		{ CKA_KEY_TYPE, &keyType, sizeof(keyType) },
+	};
+	CK_ULONG keyAttribsCount = 4;
+
+	// Add the additional
+	if (ulCount > (maxAttribs - keyAttribsCount))
+		rv = CKR_TEMPLATE_INCONSISTENT;
+	for (CK_ULONG i=0; i < ulCount && rv == CKR_OK; ++i)
+	{
+		switch (pTemplate[i].type)
+		{
+			case CKA_CLASS:
+			case CKA_TOKEN:
+			case CKA_PRIVATE:
+			case CKA_KEY_TYPE:
+			case CKA_CHECK_VALUE:
+				continue;
+		default:
+			keyAttribs[keyAttribsCount++] = pTemplate[i];
+		}
+	}
+
+	if (rv == CKR_OK)
+		rv = this->CreateObject(hSession, keyAttribs, keyAttribsCount, phKey, OBJECT_OP_GENERATE);
+
+	// Store the attributes that are being supplied
+	if (rv == CKR_OK)
+	{
+		OSObject* osobject = (OSObject*)handleManager->getObject(*phKey);
+		if (osobject == NULL_PTR || !osobject->isValid()) {
+			rv = CKR_FUNCTION_FAILED;
+		} else if (osobject->startTransaction()) {
+			bool bOK = true;
+
+			// Common Attributes
+			bOK = bOK && osobject->setAttribute(CKA_LOCAL,true);
+			CK_ULONG ulKeyGenMechanism = (CK_ULONG)CKM_CHACHA20_KEY_GEN;
+			bOK = bOK && osobject->setAttribute(CKA_KEY_GEN_MECHANISM,ulKeyGenMechanism);
+
+			// Common Secret Key Attributes
+			bool bAlwaysSensitive = osobject->getBooleanValue(CKA_SENSITIVE, false);
+			bOK = bOK && osobject->setAttribute(CKA_ALWAYS_SENSITIVE,bAlwaysSensitive);
+			bool bNeverExtractable = osobject->getBooleanValue(CKA_EXTRACTABLE, false) == false;
+			bOK = bOK && osobject->setAttribute(CKA_NEVER_EXTRACTABLE, bNeverExtractable);
+
+			// ChaCha20 Secret Key Attributes
+			ByteString value;
+			ByteString kcv;
+			if (isPrivate)
+			{
+				bOK = bOK && token->encrypt(key->getKeyBits(), value);
+				bOK = bOK && token->encrypt(key->getKeyCheckValue(), kcv);
+			}
+			else
+			{
+				value = key->getKeyBits();
+				kcv = key->getKeyCheckValue();
+			}
+			bOK = bOK && osobject->setAttribute(CKA_VALUE, value);
+			if (checkValue)
+				bOK = bOK && osobject->setAttribute(CKA_CHECK_VALUE, kcv);
+
+			if (bOK)
+				bOK = osobject->commitTransaction();
+			else
+				osobject->abortTransaction();
+
+			if (!bOK)
+				rv = CKR_FUNCTION_FAILED;
+		} else
+			rv = CKR_FUNCTION_FAILED;
+	}
+
+	// Clean up
+	chacha20->recycleKey(key);
+	CryptoFactory::i()->recycleSymmetricAlgorithm(chacha20);
 
 	// Remove the key that may have been created already when the function fails.
 	if (rv != CKR_OK)

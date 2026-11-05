@@ -1947,6 +1947,44 @@ bool P11GOSTSecretKeyObj::init(OSObject *inobject)
 }
 
 // Constructor
+P11ChaCha20SecretKeyObj::P11ChaCha20SecretKeyObj()
+{
+	initialized = false;
+}
+
+// Add attributes
+bool P11ChaCha20SecretKeyObj::init(OSObject *inobject)
+{
+	if (initialized) return true;
+	if (inobject == NULL) return false;
+
+	if (!inobject->attributeExists(CKA_KEY_TYPE) || inobject->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED) != CKK_CHACHA20) {
+		OSAttribute setKeyType((unsigned long)CKK_CHACHA20);
+		inobject->setAttribute(CKA_KEY_TYPE, setKeyType);
+	}
+
+	// Create parent
+	if (!P11SecretKeyObj::init(inobject)) return false;
+
+	// ChaCha20 keys always have a fixed 256-bit length; no CKA_VALUE_LEN
+	P11Attribute* attrValue = new P11AttrValue(osobject,P11Attribute::ck1|P11Attribute::ck4|P11Attribute::ck6|P11Attribute::ck7);
+
+	// Initialize the attributes
+	if (!attrValue->init())
+	{
+		ERROR_MSG("Could not initialize the attribute");
+		delete attrValue;
+		return false;
+	}
+
+	// Add them to the map
+	attributes[attrValue->getType()] = attrValue;
+
+	initialized = true;
+	return true;
+}
+
+// Constructor
 P11DomainObj::P11DomainObj()
 {
 	initialized = false;

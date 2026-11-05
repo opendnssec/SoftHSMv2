@@ -35,6 +35,7 @@
 #include <string.h>
 #include <climits>
 #include <array>
+#include <algorithm>
 //#include <iomanip>
 #include "SymmetricAlgorithmTests.h"
 
@@ -692,6 +693,24 @@ CK_RV SymmetricAlgorithmTests::generateAesKey(CK_SESSION_HANDLE hSession, CK_BBO
 		{ CKA_WRAP, &bTrue, sizeof(bTrue) },
 		{ CKA_UNWRAP, &bTrue, sizeof(bTrue) },
 		{ CKA_VALUE_LEN, &bytes, sizeof(bytes) },
+	};
+
+	hKey = CK_INVALID_HANDLE;
+	return CRYPTOKI_F_PTR( C_GenerateKey(hSession, &mechanism,
+			     keyAttribs, sizeof(keyAttribs)/sizeof(CK_ATTRIBUTE),
+			     &hKey) );
+}
+
+CK_RV SymmetricAlgorithmTests::generateChaCha20Key(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_OBJECT_HANDLE &hKey)
+{
+	CK_MECHANISM mechanism = { CKM_CHACHA20_KEY_GEN, NULL_PTR, 0 };
+	// CK_BBOOL bFalse = CK_FALSE;
+	CK_BBOOL bTrue = CK_TRUE;
+	CK_ATTRIBUTE keyAttribs[] = {
+		{ CKA_TOKEN, &bToken, sizeof(bToken) },
+		{ CKA_PRIVATE, &bPrivate, sizeof(bPrivate) },
+		{ CKA_ENCRYPT, &bTrue, sizeof(bTrue) },
+		{ CKA_DECRYPT, &bTrue, sizeof(bTrue) },
 	};
 
 	hKey = CK_INVALID_HANDLE;
@@ -1736,6 +1755,258 @@ void SymmetricAlgorithmTests::testAesEncryptDecrypt()
 	encryptDecrypt({CKM_AES_GCM,&gcmParamsWithoutAAD,sizeof(gcmParamsWithoutAAD)},blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST);
 }
 
+
+void SymmetricAlgorithmTests::testChaCha20Poly1305EncryptDecrypt()
+{
+	CK_RV rv;
+	CK_SESSION_HANDLE hSessionRO;
+
+	CK_BYTE chachaNonce[] = {
+		0xCA, 0xFE, 0xBA, 0xBE, 0xFA, 0xCE,
+		0xDB, 0xAD, 0xDE, 0xCA, 0xF8, 0x88
+	};
+	CK_BYTE chachaAAD[] = {
+		0xFE, 0xED, 0xFA, 0xCE, 0xDE, 0xAD, 0xBE, 0xEF,
+		0xFE, 0xED, 0xFA, 0xCE, 0xDE, 0xAD, 0xBE, 0xEF,
+		0xAB, 0xAD, 0xDA, 0xD2
+	};
+	CK_SALSA20_CHACHA20_POLY1305_PARAMS chachaParamsWithAAD =
+	{
+		&chachaNonce[0],
+		sizeof(chachaNonce)*8,
+		&chachaAAD[0],
+		sizeof(chachaAAD)
+	};
+	CK_SALSA20_CHACHA20_POLY1305_PARAMS chachaParamsWithoutAAD =
+	{
+		&chachaNonce[0],
+		sizeof(chachaNonce)*8,
+		NULL_PTR,
+		0
+	};
+
+	// Just make sure that we finalize any previous tests
+	CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
+
+	// Initialize the library and start the test.
+	rv = CRYPTOKI_F_PTR( C_Initialize(NULL_PTR) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Open read-only session
+	rv = CRYPTOKI_F_PTR( C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSessionRO) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Login USER into the session so we can create a private object
+	rv = CRYPTOKI_F_PTR( C_Login(hSessionRO,CKU_USER,m_userPin1,m_userPin1Length) );
+	CPPUNIT_ASSERT(rv==CKR_OK);
+
+	CK_OBJECT_HANDLE hKey = CK_INVALID_HANDLE;
+
+	rv = generateChaCha20Key(hSessionRO,IN_SESSION,IS_PUBLIC,hKey);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// ChaCha20-Poly1305 is a stream cipher; reuse the AES block size purely
+	// to size the multi-part chunks exercised by the test helper.
+	const int blockSize(0x10);
+
+	encryptDecrypt({CKM_CHACHA20_POLY1305,&chachaParamsWithAAD,sizeof(chachaParamsWithAAD)},blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST-1);
+	encryptDecrypt({CKM_CHACHA20_POLY1305,&chachaParamsWithAAD,sizeof(chachaParamsWithAAD)},blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST+1);
+	encryptDecrypt({CKM_CHACHA20_POLY1305,&chachaParamsWithAAD,sizeof(chachaParamsWithAAD)},blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST);
+	encryptDecrypt({CKM_CHACHA20_POLY1305,&chachaParamsWithoutAAD,sizeof(chachaParamsWithoutAAD)},blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST-1);
+	encryptDecrypt({CKM_CHACHA20_POLY1305,&chachaParamsWithoutAAD,sizeof(chachaParamsWithoutAAD)},blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST+1);
+	encryptDecrypt({CKM_CHACHA20_POLY1305,&chachaParamsWithoutAAD,sizeof(chachaParamsWithoutAAD)},blockSize,hSessionRO,hKey,blockSize*NR_OF_BLOCKS_IN_TEST);
+}
+
+static SymmetricAlgorithmTests::Bytes hexToBytes(const char* hex)
+{
+	SymmetricAlgorithmTests::Bytes out;
+	for (size_t i = 0; hex[i] != '\0' && hex[i+1] != '\0'; i += 2)
+	{
+		char byte[3] = { hex[i], hex[i+1], '\0' };
+		out.push_back((CK_BYTE)strtoul(byte, NULL, 16));
+	}
+	return out;
+}
+
+void SymmetricAlgorithmTests::testChaCha20Poly1305KnownAnswer()
+{
+	// Test vectors from RFC 8439: key, nonce, plaintext, AAD, ciphertext || tag
+	static const char* testVectors[2][5] =
+	{
+		// Section 2.8.2 (nonce is the 32-bit constant 07000000 || IV 4041424344454647)
+		{
+			"808182838485868788898A8B8C8D8E8F909192939495969798999A9B9C9D9E9F",
+			"070000004041424344454647",
+			"4C616469657320616E642047656E746C656D656E206F662074686520636C617373206F66202739393A204966204920636F756C64206F6666657220796F75206F6E6C79206F6E652074697020666F7220746865206675747572652C2073756E73637265656E20776F756C642062652069742E",
+			"50515253C0C1C2C3C4C5C6C7",
+			"D31A8D34648E60DB7B86AFBC53EF7EC2A4ADED51296E08FEA9E2B5A736EE62D63DBEA45E8CA9671282FAFB69DA92728B1A71DE0A9E060B2905D6A5B67ECD3B3692DDBD7F2D778B8C9803AEE328091B58FAB324E4FAD675945585808B4831D7BC3FF4DEF08E4B7A9DE576D26586CEC64B6116"
+			"1AE10B594F09E26A7E902ECBD0600691"
+		},
+		// Appendix A.5
+		{
+			"1C9240A5EB55D38AF333888604F6B5F0473917C1402B80099DCA5CBC207075C0",
+			"000000000102030405060708",
+			"496E7465726E65742D4472616674732061726520647261667420646F63756D656E74732076616C696420666F722061206D6178696D756D206F6620736978206D6F6E74687320616E64206D617920626520757064617465642C207265706C616365642C206F72206F62736F6C65746564206279206F7468657220646F63756D656E747320617420616E792074696D652E20497420697320696E617070726F70726961746520746F2075736520496E7465726E65742D447261667473206173207265666572656E6365206D6174657269616C206F7220746F2063697465207468656D206F74686572207468616E206173202FE2809C776F726B20696E2070726F67726573732E2FE2809D",
+			"F33388860000000000004E91",
+			"64A0861575861AF460F062C79BE643BD5E805CFD345CF389F108670AC76C8CB24C6CFC18755D43EEA09EE94E382D26B0BDB7B73C321B0100D4F03B7F355894CF332F830E710B97CE98C8A84ABD0B948114AD176E008D33BD60F982B1FF37C8559797A06EF4F0EF61C186324E2B3506383606907B6A7C02B0F9F6157B53C867E4B9166C767B804D46A59B5216CDE7A4E99040C5A40433225EE282A1B0A06C523EAF4534D7F83FA1155B0047718CBC546A0D072B04B3564EEA1B422273F548271A0BB2316053FA76991955EBD63159434ECEBB4E466DAE5A1073A6727627097A1049E617D91D361094FA68F0FF77987130305BEABA2EDA04DF997B714D6C6F2C29A6AD5CB4022B02709B"
+			"EEAD9D67890CBB22392336FEA1851F38"
+		}
+	};
+
+	CK_RV rv;
+	CK_SESSION_HANDLE hSessionRO;
+
+	// Just make sure that we finalize any previous tests
+	CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
+
+	// Initialize the library and start the test.
+	rv = CRYPTOKI_F_PTR( C_Initialize(NULL_PTR) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Open read-only session
+	rv = CRYPTOKI_F_PTR( C_OpenSession(m_initializedTokenSlotID, CKF_SERIAL_SESSION, NULL_PTR, NULL_PTR, &hSessionRO) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Login USER into the session so we can create a private object
+	rv = CRYPTOKI_F_PTR( C_Login(hSessionRO,CKU_USER,m_userPin1,m_userPin1Length) );
+	CPPUNIT_ASSERT(rv==CKR_OK);
+
+	for (int i = 0; i < 2; i++)
+	{
+		Bytes vKey = hexToBytes(testVectors[i][0]);
+		Bytes vNonce = hexToBytes(testVectors[i][1]);
+		Bytes vPlainText = hexToBytes(testVectors[i][2]);
+		Bytes vAAD = hexToBytes(testVectors[i][3]);
+		Bytes vCipherText = hexToBytes(testVectors[i][4]);
+
+		// Import the known key
+		CK_BBOOL bTrue = CK_TRUE;
+		CK_BBOOL bFalse = CK_FALSE;
+		CK_OBJECT_CLASS secretClass = CKO_SECRET_KEY;
+		CK_KEY_TYPE keyType = CKK_CHACHA20;
+		CK_ATTRIBUTE keyAttribs[] = {
+			{ CKA_TOKEN, &bFalse, sizeof(bFalse) },
+			{ CKA_PRIVATE, &bTrue, sizeof(bTrue) },
+			{ CKA_CLASS, &secretClass, sizeof(secretClass) },
+			{ CKA_KEY_TYPE, &keyType, sizeof(keyType) },
+			{ CKA_ENCRYPT, &bTrue, sizeof(bTrue) },
+			{ CKA_DECRYPT, &bTrue, sizeof(bTrue) },
+			{ CKA_VALUE, vKey.data(), vKey.size() }
+		};
+		CK_OBJECT_HANDLE hKey = CK_INVALID_HANDLE;
+		rv = CRYPTOKI_F_PTR( C_CreateObject(hSessionRO, keyAttribs, sizeof(keyAttribs)/sizeof(CK_ATTRIBUTE), &hKey) );
+		CPPUNIT_ASSERT(rv == CKR_OK);
+
+		CK_SALSA20_CHACHA20_POLY1305_PARAMS params =
+		{
+			vNonce.data(),
+			vNonce.size()*8,
+			vAAD.data(),
+			vAAD.size()
+		};
+		CK_MECHANISM mechanism = { CKM_CHACHA20_POLY1305, &params, sizeof(params) };
+		CK_ULONG ulLen;
+
+		// Single-part encryption must produce the RFC ciphertext and tag
+		rv = CRYPTOKI_F_PTR( C_EncryptInit(hSessionRO, &mechanism, hKey) );
+		CPPUNIT_ASSERT(rv == CKR_OK);
+		rv = CRYPTOKI_F_PTR( C_Encrypt(hSessionRO, vPlainText.data(), vPlainText.size(), NULL_PTR, &ulLen) );
+		CPPUNIT_ASSERT(rv == CKR_OK);
+		CPPUNIT_ASSERT(ulLen == vCipherText.size());
+		Bytes vEncrypted(ulLen);
+		rv = CRYPTOKI_F_PTR( C_Encrypt(hSessionRO, vPlainText.data(), vPlainText.size(), vEncrypted.data(), &ulLen) );
+		CPPUNIT_ASSERT(rv == CKR_OK);
+		vEncrypted.resize(ulLen);
+		CPPUNIT_ASSERT(vEncrypted == vCipherText);
+
+		// Single-part decryption must recover the RFC plaintext
+		rv = CRYPTOKI_F_PTR( C_DecryptInit(hSessionRO, &mechanism, hKey) );
+		CPPUNIT_ASSERT(rv == CKR_OK);
+		rv = CRYPTOKI_F_PTR( C_Decrypt(hSessionRO, vCipherText.data(), vCipherText.size(), NULL_PTR, &ulLen) );
+		CPPUNIT_ASSERT(rv == CKR_OK);
+		Bytes vDecrypted(ulLen);
+		rv = CRYPTOKI_F_PTR( C_Decrypt(hSessionRO, vCipherText.data(), vCipherText.size(), vDecrypted.data(), &ulLen) );
+		CPPUNIT_ASSERT(rv == CKR_OK);
+		vDecrypted.resize(ulLen);
+		CPPUNIT_ASSERT(vDecrypted == vPlainText);
+
+		// Multi-part encryption with chunks that do not line up with the
+		// 16-byte Poly1305 block or the 64-byte ChaCha20 block
+		const CK_ULONG chunk = 7;
+		rv = CRYPTOKI_F_PTR( C_EncryptInit(hSessionRO, &mechanism, hKey) );
+		CPPUNIT_ASSERT(rv == CKR_OK);
+		vEncrypted.clear();
+		for (CK_ULONG pos = 0; pos < vPlainText.size(); pos += chunk)
+		{
+			CK_ULONG len = std::min<CK_ULONG>(chunk, vPlainText.size() - pos);
+			Bytes vOut(vCipherText.size());
+			ulLen = vOut.size();
+			rv = CRYPTOKI_F_PTR( C_EncryptUpdate(hSessionRO, &vPlainText[pos], len, vOut.data(), &ulLen) );
+			CPPUNIT_ASSERT(rv == CKR_OK);
+			vEncrypted.insert(vEncrypted.end(), vOut.begin(), vOut.begin() + ulLen);
+		}
+		{
+			Bytes vOut(vCipherText.size());
+			ulLen = vOut.size();
+			rv = CRYPTOKI_F_PTR( C_EncryptFinal(hSessionRO, vOut.data(), &ulLen) );
+			CPPUNIT_ASSERT(rv == CKR_OK);
+			vEncrypted.insert(vEncrypted.end(), vOut.begin(), vOut.begin() + ulLen);
+		}
+		CPPUNIT_ASSERT(vEncrypted == vCipherText);
+
+		// Multi-part decryption
+		rv = CRYPTOKI_F_PTR( C_DecryptInit(hSessionRO, &mechanism, hKey) );
+		CPPUNIT_ASSERT(rv == CKR_OK);
+		vDecrypted.clear();
+		for (CK_ULONG pos = 0; pos < vCipherText.size(); pos += chunk)
+		{
+			CK_ULONG len = std::min<CK_ULONG>(chunk, vCipherText.size() - pos);
+			Bytes vOut(vCipherText.size());
+			ulLen = vOut.size();
+			rv = CRYPTOKI_F_PTR( C_DecryptUpdate(hSessionRO, &vCipherText[pos], len, vOut.data(), &ulLen) );
+			CPPUNIT_ASSERT(rv == CKR_OK);
+			vDecrypted.insert(vDecrypted.end(), vOut.begin(), vOut.begin() + ulLen);
+		}
+		{
+			Bytes vOut(vCipherText.size());
+			ulLen = vOut.size();
+			rv = CRYPTOKI_F_PTR( C_DecryptFinal(hSessionRO, vOut.data(), &ulLen) );
+			CPPUNIT_ASSERT(rv == CKR_OK);
+			vDecrypted.insert(vDecrypted.end(), vOut.begin(), vOut.begin() + ulLen);
+		}
+		CPPUNIT_ASSERT(vDecrypted == vPlainText);
+
+		// A tampered tag must be rejected
+		Bytes vTampered(vCipherText);
+		vTampered.back() ^= 0x01;
+		rv = CRYPTOKI_F_PTR( C_DecryptInit(hSessionRO, &mechanism, hKey) );
+		CPPUNIT_ASSERT(rv == CKR_OK);
+		vDecrypted.assign(vTampered.size(), 0);
+		ulLen = vDecrypted.size();
+		rv = CRYPTOKI_F_PTR( C_Decrypt(hSessionRO, vTampered.data(), vTampered.size(), vDecrypted.data(), &ulLen) );
+		CPPUNIT_ASSERT(rv == CKR_ENCRYPTED_DATA_INVALID);
+
+		// A tampered AAD must be rejected
+		Bytes vBadAAD(vAAD);
+		vBadAAD[0] ^= 0x01;
+		CK_SALSA20_CHACHA20_POLY1305_PARAMS badParams =
+		{
+			vNonce.data(),
+			vNonce.size()*8,
+			vBadAAD.data(),
+			vBadAAD.size()
+		};
+		CK_MECHANISM badMechanism = { CKM_CHACHA20_POLY1305, &badParams, sizeof(badParams) };
+		rv = CRYPTOKI_F_PTR( C_DecryptInit(hSessionRO, &badMechanism, hKey) );
+		CPPUNIT_ASSERT(rv == CKR_OK);
+		ulLen = vDecrypted.size();
+		rv = CRYPTOKI_F_PTR( C_Decrypt(hSessionRO, vCipherText.data(), vCipherText.size(), vDecrypted.data(), &ulLen) );
+		CPPUNIT_ASSERT(rv == CKR_ENCRYPTED_DATA_INVALID);
+
+		rv = CRYPTOKI_F_PTR( C_DestroyObject(hSessionRO, hKey) );
+		CPPUNIT_ASSERT(rv == CKR_OK);
+	}
+}
 
 void SymmetricAlgorithmTests::testAesWrapUnwrap()
 {

@@ -13,6 +13,7 @@ set(INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/..
 
 set(SOURCES cryptotest.cpp
             AESTests.cpp
+            ChaChaTests.cpp
             DESTests.cpp
             DHTests.cpp
             DSATests.cpp

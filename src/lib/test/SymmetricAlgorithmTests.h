@@ -43,6 +43,8 @@ class SymmetricAlgorithmTests : public TestsBase
 {
 	CPPUNIT_TEST_SUITE(SymmetricAlgorithmTests);
 	CPPUNIT_TEST(testAesEncryptDecrypt);
+	CPPUNIT_TEST(testChaCha20Poly1305EncryptDecrypt);
+	CPPUNIT_TEST(testChaCha20Poly1305KnownAnswer);
 	CPPUNIT_TEST(testDesEncryptDecrypt);
 #ifdef HAVE_AES_KEY_WRAP
 	CPPUNIT_TEST(testAesWrapUnwrap);
@@ -61,6 +63,8 @@ public:
 	using Bytes = std::vector<CK_BYTE>;
 	
 	void testAesEncryptDecrypt();
+	void testChaCha20Poly1305EncryptDecrypt();
+	void testChaCha20Poly1305KnownAnswer();
 	void testDesEncryptDecrypt();
 	void testAesWrapUnwrap();
 	void testDesWrapUnwrap();
@@ -75,6 +79,7 @@ public:
 protected:
 	CK_RV generateGenericKey(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_OBJECT_HANDLE &hKey);
 	CK_RV generateAesKey(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_OBJECT_HANDLE &hKey);
+	CK_RV generateChaCha20Key(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_OBJECT_HANDLE &hKey);
 #ifndef WITH_FIPS
 	CK_RV generateDesKey(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_OBJECT_HANDLE &hKey);
 	CK_RV generateDes2Key(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_OBJECT_HANDLE &hKey);

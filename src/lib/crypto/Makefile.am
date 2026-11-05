@@ -59,6 +59,7 @@ EXTRA_DIST =			$(srcdir)/CMakeLists.txt \
 # Compile with support of OpenSSL
 if WITH_OPENSSL
 libsofthsm_crypto_la_SOURCES +=	OSSLAES.cpp \
+				OSSLChaCha20Poly1305.cpp \
 				OSSLComp.cpp \
 				OSSLCryptoFactory.cpp \
 				OSSLDES.cpp \
@@ -119,6 +120,7 @@ endif
 # Compile with support of Botan
 if WITH_BOTAN
 libsofthsm_crypto_la_SOURCES +=	BotanAES.cpp \
+				BotanChaCha20Poly1305.cpp \
 				BotanCryptoFactory.cpp \
 				BotanDES.cpp \
 				BotanDH.cpp \

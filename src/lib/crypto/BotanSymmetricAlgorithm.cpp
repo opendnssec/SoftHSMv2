@@ -101,7 +101,7 @@ bool BotanSymmetricAlgorithm::encryptInit(const SymmetricKey* key, const SymMode
 	}
 
 	// Check the IV
-	if (mode != SymMode::GCM && (IV.size() > 0) && (IV.size() != getBlockSize()))
+	if (mode != SymMode::GCM && mode != SymMode::ChaCha20Poly1305 && (IV.size() > 0) && (IV.size() != getBlockSize()))
 	{
 		ERROR_MSG("Invalid IV size (%d bytes, expected %d bytes)", IV.size(), getBlockSize());
 
@@ -188,7 +188,7 @@ bool BotanSymmetricAlgorithm::encryptInit(const SymmetricKey* key, const SymMode
 			cipher->set_key(botanKey);
 			cryption = new Botan::Pipe(cipher);
 		}
-		else if (mode == SymMode::GCM)
+		else if (mode == SymMode::GCM || mode == SymMode::ChaCha20Poly1305)
 		{
 			Botan::AEAD_Mode* aead = Botan::get_aead(cipherName, Botan::ENCRYPTION);
 			aead->set_key(botanKey);
@@ -336,7 +336,7 @@ bool BotanSymmetricAlgorithm::decryptInit(const SymmetricKey* key, const SymMode
 	}
 
 	// Check the IV
-	if (mode != SymMode::GCM && (IV.size() > 0) && (IV.size() != getBlockSize()))
+	if (mode != SymMode::GCM && mode != SymMode::ChaCha20Poly1305 && (IV.size() > 0) && (IV.size() != getBlockSize()))
 	{
 		ERROR_MSG("Invalid IV size (%d bytes, expected %d bytes)", IV.size(), getBlockSize());
 
@@ -423,7 +423,7 @@ bool BotanSymmetricAlgorithm::decryptInit(const SymmetricKey* key, const SymMode
 			cipher->set_key(botanKey);
 			cryption = new Botan::Pipe(cipher);
 		}
-		else if (mode == SymMode::GCM)
+		else if (mode == SymMode::GCM || mode == SymMode::ChaCha20Poly1305)
 		{
 			Botan::AEAD_Mode* aead = Botan::get_aead(cipherName, Botan::DECRYPTION);
 			aead->set_key(botanKey);
@@ -468,7 +468,7 @@ bool BotanSymmetricAlgorithm::decryptUpdate(const ByteString& encryptedData, Byt
 	}
 
 	// AEAD ciphers should not return decrypted data until final is called
-	if (currentCipherMode == SymMode::GCM)
+	if (currentCipherMode == SymMode::GCM || currentCipherMode == SymMode::ChaCha20Poly1305)
 	{
 		data.resize(0);
 		return true;
@@ -541,7 +541,7 @@ bool BotanSymmetricAlgorithm::decryptFinal(ByteString& data)
 		return false;
 	}
 
-	if (mode == SymMode::GCM)
+	if (mode == SymMode::GCM || mode == SymMode::ChaCha20Poly1305)
 	{
 		// Write data
 		try

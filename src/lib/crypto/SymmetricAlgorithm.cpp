@@ -121,7 +121,7 @@ bool SymmetricAlgorithm::decryptUpdate(const ByteString& encryptedData, ByteStri
 	}
 
 	currentBufferSize += encryptedData.size();
-	if (currentCipherMode == SymMode::GCM) {
+	if (currentCipherMode == SymMode::GCM || currentCipherMode == SymMode::ChaCha20Poly1305) {
 		currentAEADBuffer += encryptedData;
 	}
 
@@ -208,6 +208,7 @@ bool SymmetricAlgorithm::isStreamCipher()
 		case SymMode::CTR:
 		case SymMode::GCM:
 		case SymMode::OFB:
+		case SymMode::ChaCha20Poly1305:
 			return true;
 		default:
 			break;
