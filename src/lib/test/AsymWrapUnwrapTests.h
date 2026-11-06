@@ -41,10 +41,12 @@ class AsymWrapUnwrapTests : public TestsBase
 {
 	CPPUNIT_TEST_SUITE(AsymWrapUnwrapTests);
 	CPPUNIT_TEST(testRsaWrapUnwrap);
+	CPPUNIT_TEST(testWrapTemplatePrivateAttribute);
 	CPPUNIT_TEST_SUITE_END();
 
 public:
 	void testRsaWrapUnwrap();
+	void testWrapTemplatePrivateAttribute();
 
 protected:
 	CK_RV generateAesKey(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE &hKey);

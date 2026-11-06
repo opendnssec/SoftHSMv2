@@ -7675,7 +7675,28 @@ CK_RV SoftHSM::C_WrapKey
 
 				OSAttribute keyAttr = key->getAttribute(it->first);
 				ByteString v1, v2;
-				if (!keyAttr.peekValue(v1) || !it->second.peekValue(v2) || (v1 != v2))
+				if (!keyAttr.peekValue(v1) || !it->second.peekValue(v2))
+				{
+					return CKR_KEY_NOT_WRAPPABLE;
+				}
+
+				// Byte string attributes of a private object are held
+				// encrypted in the object store, while the template
+				// carries the plaintext supplied by the caller. Decrypt
+				// before comparing, otherwise every byte string entry in
+				// CKA_WRAP_TEMPLATE compares ciphertext against plaintext
+				// and can never match.
+				if (isKeyPrivate && keyAttr.isByteStringAttribute())
+				{
+					ByteString plain;
+					if (!token->decrypt(v1, plain))
+					{
+						return CKR_GENERAL_ERROR;
+					}
+					v1 = plain;
+				}
+
+				if (v1 != v2)
 				{
 					return CKR_KEY_NOT_WRAPPABLE;
 				}

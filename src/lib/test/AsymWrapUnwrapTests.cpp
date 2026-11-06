@@ -338,3 +338,130 @@ void AsymWrapUnwrapTests::testRsaWrapUnwrap()
 	rsaWrapUnwrap(CKM_RSA_PKCS_OAEP,hSessionRO,hPublicKey,hPrivateKey);
 	rsaWrapUnwrap(CKM_RSA_AES_KEY_WRAP, hSessionRO, hPublicKey, hPrivateKey);
 }
+
+// Reproducer: CKA_WRAP_TEMPLATE entries that carry a byte string value
+// (e.g. CKA_LABEL) must match against the PLAINTEXT attribute of the key
+// being wrapped. Byte string attributes of a private object are stored
+// encrypted, so comparing the raw stored value against the caller supplied
+// template can never match and C_WrapKey wrongly returns
+// CKR_KEY_NOT_WRAPPABLE for a key that does satisfy the template.
+void AsymWrapUnwrapTests::testWrapTemplatePrivateAttribute()
+{
+	CK_RV rv;
+	CK_SESSION_HANDLE hSession;
+	CK_UTF8CHAR label[] = "authorized";
+	CK_UTF8CHAR otherLabel[] = "unauthorized";
+
+	// Just make sure that we finalize any previous tests
+	CRYPTOKI_F_PTR( C_Finalize(NULL_PTR) );
+
+	rv = CRYPTOKI_F_PTR( C_Initialize(NULL_PTR) );
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, rv);
+
+	rv = CRYPTOKI_F_PTR( C_OpenSession(m_initializedTokenSlotID,
+		CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL_PTR, NULL_PTR, &hSession) );
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, rv);
+
+	rv = CRYPTOKI_F_PTR( C_Login(hSession, CKU_USER, m_userPin1, m_userPin1Length) );
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, rv);
+
+	// Wrapping key restricted to secrets labelled "authorized"
+	CK_ATTRIBUTE wrapTemplate[] = {
+		{ CKA_LABEL, label, sizeof(label) - 1 }
+	};
+
+	CK_BBOOL bTrue = CK_TRUE;
+	CK_ULONG modulusBits = 1536;
+	CK_BYTE publicExponent[] = { 0x01, 0x00, 0x01 };
+	CK_MECHANISM keyGenMech = { CKM_RSA_PKCS_KEY_PAIR_GEN, NULL_PTR, 0 };
+
+	CK_ATTRIBUTE pukAttribs[] = {
+		{ CKA_TOKEN, &bTrue, sizeof(bTrue) },
+		{ CKA_WRAP, &bTrue, sizeof(bTrue) },
+		{ CKA_MODULUS_BITS, &modulusBits, sizeof(modulusBits) },
+		{ CKA_PUBLIC_EXPONENT, publicExponent, sizeof(publicExponent) },
+		{ CKA_WRAP_TEMPLATE, wrapTemplate, sizeof(wrapTemplate) }
+	};
+	CK_ATTRIBUTE prkAttribs[] = {
+		{ CKA_TOKEN, &bTrue, sizeof(bTrue) },
+		{ CKA_PRIVATE, &bTrue, sizeof(bTrue) },
+		{ CKA_UNWRAP, &bTrue, sizeof(bTrue) }
+	};
+
+	CK_OBJECT_HANDLE hPuk = CK_INVALID_HANDLE;
+	CK_OBJECT_HANDLE hPrk = CK_INVALID_HANDLE;
+	rv = CRYPTOKI_F_PTR( C_GenerateKeyPair(hSession, &keyGenMech,
+		pukAttribs, sizeof(pukAttribs)/sizeof(CK_ATTRIBUTE),
+		prkAttribs, sizeof(prkAttribs)/sizeof(CK_ATTRIBUTE), &hPuk, &hPrk) );
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, rv);
+
+	CK_MECHANISM wrapMech = { CKM_RSA_PKCS, NULL_PTR, 0 };
+	CK_BYTE wrapped[1024];
+	CK_ULONG wrappedLen;
+
+	CK_KEY_TYPE genericType = CKK_GENERIC_SECRET;
+	CK_OBJECT_CLASS secretClass = CKO_SECRET_KEY;
+	CK_BYTE secretValue[16] = { 0 };
+
+	// A PRIVATE secret whose label satisfies the template: must be wrappable
+	CK_ATTRIBUTE matching[] = {
+		{ CKA_CLASS, &secretClass, sizeof(secretClass) },
+		{ CKA_KEY_TYPE, &genericType, sizeof(genericType) },
+		{ CKA_LABEL, label, sizeof(label) - 1 },
+		{ CKA_VALUE, secretValue, sizeof(secretValue) },
+		{ CKA_TOKEN, &bTrue, sizeof(bTrue) },
+		{ CKA_PRIVATE, &bTrue, sizeof(bTrue) },
+		{ CKA_EXTRACTABLE, &bTrue, sizeof(bTrue) }
+	};
+	CK_OBJECT_HANDLE hMatching = CK_INVALID_HANDLE;
+	rv = CRYPTOKI_F_PTR( C_CreateObject(hSession, matching,
+		sizeof(matching)/sizeof(CK_ATTRIBUTE), &hMatching) );
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, rv);
+
+	wrappedLen = sizeof(wrapped);
+	rv = CRYPTOKI_F_PTR( C_WrapKey(hSession, &wrapMech, hPuk, hMatching, wrapped, &wrappedLen) );
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, rv);
+
+	// A PRIVATE secret whose label does not satisfy the template: must be refused
+	CK_ATTRIBUTE nonMatching[] = {
+		{ CKA_CLASS, &secretClass, sizeof(secretClass) },
+		{ CKA_KEY_TYPE, &genericType, sizeof(genericType) },
+		{ CKA_LABEL, otherLabel, sizeof(otherLabel) - 1 },
+		{ CKA_VALUE, secretValue, sizeof(secretValue) },
+		{ CKA_TOKEN, &bTrue, sizeof(bTrue) },
+		{ CKA_PRIVATE, &bTrue, sizeof(bTrue) },
+		{ CKA_EXTRACTABLE, &bTrue, sizeof(bTrue) }
+	};
+	CK_OBJECT_HANDLE hNonMatching = CK_INVALID_HANDLE;
+	rv = CRYPTOKI_F_PTR( C_CreateObject(hSession, nonMatching,
+		sizeof(nonMatching)/sizeof(CK_ATTRIBUTE), &hNonMatching) );
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, rv);
+
+	wrappedLen = sizeof(wrapped);
+	rv = CRYPTOKI_F_PTR( C_WrapKey(hSession, &wrapMech, hPuk, hNonMatching, wrapped, &wrappedLen) );
+	CPPUNIT_ASSERT_EQUAL(CKR_KEY_NOT_WRAPPABLE, rv);
+
+	// A PRIVATE secret carrying no CKA_LABEL at all: must also be refused.
+	// The attribute defaults to an empty byte string, so this exercises the
+	// path where the key side of the comparison decrypts to nothing rather
+	// than to a differing value -- the template must still not match.
+	CK_ATTRIBUTE noLabel[] = {
+		{ CKA_CLASS, &secretClass, sizeof(secretClass) },
+		{ CKA_KEY_TYPE, &genericType, sizeof(genericType) },
+		{ CKA_VALUE, secretValue, sizeof(secretValue) },
+		{ CKA_TOKEN, &bTrue, sizeof(bTrue) },
+		{ CKA_PRIVATE, &bTrue, sizeof(bTrue) },
+		{ CKA_EXTRACTABLE, &bTrue, sizeof(bTrue) }
+	};
+	CK_OBJECT_HANDLE hNoLabel = CK_INVALID_HANDLE;
+	rv = CRYPTOKI_F_PTR( C_CreateObject(hSession, noLabel,
+		sizeof(noLabel)/sizeof(CK_ATTRIBUTE), &hNoLabel) );
+	CPPUNIT_ASSERT_EQUAL(CKR_OK, rv);
+
+	wrappedLen = sizeof(wrapped);
+	rv = CRYPTOKI_F_PTR( C_WrapKey(hSession, &wrapMech, hPuk, hNoLabel, wrapped, &wrappedLen) );
+	CPPUNIT_ASSERT_EQUAL(CKR_KEY_NOT_WRAPPABLE, rv);
+
+	CRYPTOKI_F_PTR( C_Logout(hSession) );
+	CRYPTOKI_F_PTR( C_CloseSession(hSession) );
+}
