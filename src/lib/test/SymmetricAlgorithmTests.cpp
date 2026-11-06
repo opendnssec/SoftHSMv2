@@ -648,7 +648,7 @@ std::vector<WrappedMaterial> aesCBCWrappedKeys {
 
 std::vector<WrappedMaterial> desCBCWrappedKeys {
 #ifndef WITH_FIPS
-	rsa2048underdes56,
+	// rsa2048underdes56 is not included, single DES does not support unwrapping
 	rsa2048underdes112,
 #endif
 	rsa2048underdes168,
@@ -1319,6 +1319,77 @@ inline void SymmetricAlgorithmTests::desWrapUnwrapRsa(CK_MECHANISM_TYPE mechanis
 	wrapUnwrapRsa(mechanismType, hSession, hKey);
 }
 
+// Wrap a secret key with a DES2/DES3 key, compare the result against
+// expectedWrapped (if not empty), unwrap it again and check the value.
+void SymmetricAlgorithmTests::des3WrapUnwrapSecret(CK_MECHANISM_TYPE mechanismType,
+						   CK_SESSION_HANDLE hSession,
+						   CK_OBJECT_HANDLE hKey,
+						   CK_KEY_TYPE keyType,
+						   const Bytes &keyValue,
+						   const Bytes &expectedWrapped,
+						   const Bytes &expectedUnwrapped)
+{
+	CK_BYTE iv[] = { 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07 };
+	CK_MECHANISM mechanism = { mechanismType, NULL_PTR, 0 };
+	if (mechanismType != CKM_DES3_ECB)
+	{
+		mechanism.pParameter = iv;
+		mechanism.ulParameterLen = sizeof(iv);
+	}
+	CK_BBOOL bFalse = CK_FALSE;
+	CK_BBOOL bTrue = CK_TRUE;
+	CK_OBJECT_CLASS secretClass = CKO_SECRET_KEY;
+	CK_ATTRIBUTE attribs[] = {
+		{ CKA_CLASS, &secretClass, sizeof(secretClass) },
+		{ CKA_KEY_TYPE, &keyType, sizeof(keyType) },
+		{ CKA_TOKEN, &bFalse, sizeof(bFalse) },
+		{ CKA_PRIVATE, &bTrue, sizeof(bTrue) },
+		{ CKA_SENSITIVE, &bFalse, sizeof(bFalse) },
+		{ CKA_EXTRACTABLE, &bTrue, sizeof(bTrue) },
+		{ CKA_VALUE, const_cast<CK_BYTE_PTR>(keyValue.data()), static_cast<CK_ULONG>(keyValue.size()) }
+	};
+
+	CK_OBJECT_HANDLE hSecret = CK_INVALID_HANDLE;
+	CK_RV rv = CRYPTOKI_F_PTR( C_CreateObject(hSession, attribs, sizeof(attribs)/sizeof(CK_ATTRIBUTE), &hSecret) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Wrapped length is the key padded to the DES block size
+	const CK_ULONG keyLen = static_cast<CK_ULONG>(keyValue.size());
+	CK_ULONG expectedLen = (keyLen + 7) & ~7UL;
+	if (mechanismType == CKM_DES3_CBC_PAD)
+		expectedLen = keyLen + 8 - (keyLen % 8);
+
+	CK_ULONG wrappedLen = 0UL;
+	rv = CRYPTOKI_F_PTR( C_WrapKey(hSession, &mechanism, hKey, hSecret, NULL_PTR, &wrappedLen) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	CPPUNIT_ASSERT(wrappedLen == expectedLen);
+
+	Bytes wrapped(wrappedLen);
+	rv = CRYPTOKI_F_PTR( C_WrapKey(hSession, &mechanism, hKey, hSecret, wrapped.data(), &wrappedLen) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	CPPUNIT_ASSERT(wrappedLen == expectedLen);
+	if (!expectedWrapped.empty())
+		CPPUNIT_ASSERT(wrapped == expectedWrapped);
+
+	rv = CRYPTOKI_F_PTR( C_DestroyObject(hSession, hSecret) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	CK_OBJECT_HANDLE hNew = CK_INVALID_HANDLE;
+	rv = CRYPTOKI_F_PTR( C_UnwrapKey(hSession, &mechanism, hKey, wrapped.data(), wrappedLen, attribs, sizeof(attribs)/sizeof(CK_ATTRIBUTE) - 1, &hNew) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	CPPUNIT_ASSERT(hNew != CK_INVALID_HANDLE);
+
+	Bytes unwrapped(wrappedLen);
+	CK_ATTRIBUTE valueAttrib = { CKA_VALUE, unwrapped.data(), static_cast<CK_ULONG>(unwrapped.size()) };
+	rv = CRYPTOKI_F_PTR( C_GetAttributeValue(hSession, hNew, &valueAttrib, 1) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	unwrapped.resize(valueAttrib.ulValueLen);
+	CPPUNIT_ASSERT(unwrapped == expectedUnwrapped);
+
+	rv = CRYPTOKI_F_PTR( C_DestroyObject(hSession, hNew) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+}
+
 
 void SymmetricAlgorithmTests::wrapUnwrapRsa(CK_MECHANISM_TYPE mechanismType, CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hKey)
 {
@@ -1897,27 +1968,276 @@ void SymmetricAlgorithmTests::testDesWrapUnwrap()
 	rv = CRYPTOKI_F_PTR( C_Login(hSession,CKU_USER,m_userPin1,m_userPin1Length) );
 	CPPUNIT_ASSERT(rv==CKR_OK);
 
-	std::array<CK_OBJECT_HANDLE,3> hKey { CK_INVALID_HANDLE, CK_INVALID_HANDLE, CK_INVALID_HANDLE };
+	const CK_MECHANISM_TYPE mechanisms[] = { CKM_DES3_ECB, CKM_DES3_CBC, CKM_DES3_CBC_PAD };
 
-#ifndef WITH_FIPS
-	rv = generateDesKey(hSession,IN_SESSION,IS_PUBLIC,hKey[0]);
-	CPPUNIT_ASSERT(rv == CKR_OK);
-	rv = generateDes2Key(hSession,IN_SESSION,IS_PUBLIC,hKey[1]);
-	CPPUNIT_ASSERT(rv == CKR_OK);
-#endif
-	rv = generateDes3Key(hSession,IN_SESSION,IS_PUBLIC,hKey[2]);
-	CPPUNIT_ASSERT(rv == CKR_OK);
-
-#ifndef WITH_FIPS
-	desWrapUnwrapRsa(CKM_DES_CBC_PAD, hSession, hKey[0]);
-	desWrapUnwrapRsa(CKM_DES3_CBC_PAD, hSession, hKey[1]);
-#endif
-	desWrapUnwrapRsa(CKM_DES3_CBC_PAD, hSession, hKey[2]);
-
-	for ( auto &wrapped : desCBCWrappedKeys )
+	// All 3DES block cipher mechanisms can wrap and unwrap
+	CK_MECHANISM_INFO mechInfo;
+	for (auto mechanismType : mechanisms)
 	{
-		unwrapKnownKey(hSession, wrapped);
-	}	
+		rv = CRYPTOKI_F_PTR( C_GetMechanismInfo(m_initializedTokenSlotID, mechanismType, &mechInfo) );
+		CPPUNIT_ASSERT(rv == CKR_OK);
+		CPPUNIT_ASSERT(mechInfo.flags & CKF_WRAP);
+		CPPUNIT_ASSERT(mechInfo.flags & CKF_UNWRAP);
+	}
+#ifndef WITH_FIPS
+	// Single DES does not support wrapping
+	rv = CRYPTOKI_F_PTR( C_GetMechanismInfo(m_initializedTokenSlotID, CKM_DES_CBC, &mechInfo) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	CPPUNIT_ASSERT((mechInfo.flags & (CKF_WRAP | CKF_UNWRAP)) == 0);
+#endif
+
+	// Keying option 1 key from NIST SP 800-67
+	const Bytes des3Key {
+		0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef,
+		0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef, 0x01,
+		0x45, 0x67, 0x89, 0xab, 0xcd, 0xef, 0x01, 0x23
+	};
+	const Bytes des2Key {
+		0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef,
+		0xfe, 0xdc, 0xba, 0x98, 0x76, 0x54, 0x32, 0x10
+	};
+	const Bytes des3Value {
+		0x8a, 0x7b, 0x6c, 0x5d, 0x4e, 0x3f, 0x2a, 0x1b,
+		0x1a, 0x2b, 0x3c, 0x4d, 0x5e, 0x6f, 0x7a, 0x8b,
+		0xc1, 0xd2, 0xe3, 0xf4, 0xa5, 0xb6, 0xc7, 0xd8
+	};
+	const Bytes des2Value(des3Key.begin(), des3Key.begin() + 16);
+	const Bytes aesValue {
+		0x2b, 0x7e, 0x15, 0x16, 0x28, 0xae, 0xd2, 0xa6,
+		0xab, 0xf7, 0x15, 0x88, 0x09, 0xcf, 0x4f, 0x3c
+	};
+	// Not a multiple of the DES block size
+	const Bytes secretValue {
+		0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+		0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
+		0x10, 0x11, 0x12, 0x13
+	};
+	Bytes secretValuePadded(secretValue);
+	secretValuePadded.resize(24, 0x00);
+
+	CK_OBJECT_HANDLE hDes3 = CK_INVALID_HANDLE;
+	rv = importDes3Key(hSession, IN_SESSION, IS_PUBLIC, hDes3, des3Key);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	std::vector<CK_OBJECT_HANDLE> wrappingKeys { hDes3 };
+#ifndef WITH_FIPS
+	CK_OBJECT_HANDLE hDes2 = CK_INVALID_HANDLE;
+	rv = importDes2Key(hSession, IN_SESSION, IS_PUBLIC, hDes2, des2Key);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	wrappingKeys.push_back(hDes2);
+#endif
+
+	// Known answers, computed independently with OpenSSL's des-ede3 and des-ede ciphers.
+	// ECB and CBC pad the key value with null bytes, which are kept on unwrap
+	// when the key type does not define the length.
+	des3WrapUnwrapSecret(CKM_DES3_ECB, hSession, hDes3, CKK_GENERIC_SECRET, secretValue,
+		{
+			0x30, 0x32, 0x92, 0x53, 0xbd, 0x29, 0x65, 0x40,
+			0x2e, 0xa4, 0x37, 0xbe, 0x92, 0x66, 0x17, 0x8c,
+			0x12, 0x3e, 0x17, 0x52, 0xb2, 0x69, 0x1a, 0x27
+		},
+		secretValuePadded);
+	des3WrapUnwrapSecret(CKM_DES3_CBC_PAD, hSession, hDes3, CKK_GENERIC_SECRET, secretValue,
+		{
+			0x4e, 0xba, 0x73, 0x9c, 0x99, 0x8b, 0xcb, 0x60,
+			0x20, 0x12, 0xc4, 0x74, 0x5e, 0xe8, 0x66, 0x10,
+			0x80, 0xcd, 0x65, 0xa4, 0x39, 0x64, 0x1d, 0xe4
+		},
+		secretValue);
+#ifndef WITH_FIPS
+	des3WrapUnwrapSecret(CKM_DES3_CBC, hSession, hDes2, CKK_DES3, des3Value,
+		{
+			0x0c, 0xd8, 0x00, 0x36, 0xee, 0xf3, 0xe3, 0xa4,
+			0x8c, 0x07, 0x25, 0x77, 0x20, 0xe5, 0xf3, 0xe0,
+			0x83, 0x2d, 0x1e, 0xcd, 0x2e, 0x88, 0xef, 0x53
+		},
+		des3Value);
+	des3WrapUnwrapSecret(CKM_DES3_ECB, hSession, hDes2, CKK_DES2, des2Value,
+		{
+			0x1a, 0x4d, 0x67, 0x2d, 0xca, 0x6c, 0xb3, 0x35,
+			0x38, 0x84, 0xbf, 0x7e, 0x7a, 0xd7, 0xa2, 0xde
+		},
+		des2Value);
+#endif
+
+	// Round trips with every mechanism and wrapping key
+	for (auto hKey : wrappingKeys)
+	{
+		for (auto mechanismType : mechanisms)
+		{
+			des3WrapUnwrapSecret(mechanismType, hSession, hKey, CKK_DES2, des2Value, {}, des2Value);
+			des3WrapUnwrapSecret(mechanismType, hSession, hKey, CKK_DES3, des3Value, {}, des3Value);
+			des3WrapUnwrapSecret(mechanismType, hSession, hKey, CKK_AES, aesValue, {}, aesValue);
+		}
+		des3WrapUnwrapSecret(CKM_DES3_CBC_PAD, hSession, hKey, CKK_GENERIC_SECRET, secretValue, {}, secretValue);
+
+		// Private keys can be wrapped only with padding
+		desWrapUnwrapRsa(CKM_DES3_CBC_PAD, hSession, hKey);
+	}
+
+	CK_BYTE iv[] = { 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07 };
+	CK_BYTE longIv[16] = { 0 };
+	CK_MECHANISM ecbMechanism = { CKM_DES3_ECB, NULL_PTR, 0 };
+	CK_MECHANISM cbcMechanism = { CKM_DES3_CBC, iv, sizeof(iv) };
+	CK_MECHANISM cbcPadMechanism = { CKM_DES3_CBC_PAD, iv, sizeof(iv) };
+	CK_BBOOL bFalse = CK_FALSE;
+	CK_BBOOL bTrue = CK_TRUE;
+	CK_OBJECT_CLASS secretClass = CKO_SECRET_KEY;
+	CK_OBJECT_CLASS privateClass = CKO_PRIVATE_KEY;
+	CK_KEY_TYPE des2Type = CKK_DES2;
+	CK_KEY_TYPE des3Type = CKK_DES3;
+	CK_KEY_TYPE rsaType = CKK_RSA;
+	CK_ATTRIBUTE des3Attribs[] = {
+		{ CKA_CLASS, &secretClass, sizeof(secretClass) },
+		{ CKA_KEY_TYPE, &des3Type, sizeof(des3Type) },
+		{ CKA_TOKEN, &bFalse, sizeof(bFalse) },
+		{ CKA_PRIVATE, &bTrue, sizeof(bTrue) },
+		{ CKA_SENSITIVE, &bFalse, sizeof(bFalse) },
+		{ CKA_EXTRACTABLE, &bTrue, sizeof(bTrue) },
+		{ CKA_VALUE, const_cast<CK_BYTE_PTR>(des3Value.data()), static_cast<CK_ULONG>(des3Value.size()) }
+	};
+	const CK_ULONG des3AttribsCount = sizeof(des3Attribs)/sizeof(CK_ATTRIBUTE);
+	CK_ATTRIBUTE des2Attribs[] = {
+		{ CKA_CLASS, &secretClass, sizeof(secretClass) },
+		{ CKA_KEY_TYPE, &des2Type, sizeof(des2Type) },
+		{ CKA_TOKEN, &bFalse, sizeof(bFalse) },
+		{ CKA_PRIVATE, &bTrue, sizeof(bTrue) },
+		{ CKA_SENSITIVE, &bFalse, sizeof(bFalse) },
+		{ CKA_EXTRACTABLE, &bTrue, sizeof(bTrue) }
+	};
+	CK_ATTRIBUTE rsaAttribs[] = {
+		{ CKA_CLASS, &privateClass, sizeof(privateClass) },
+		{ CKA_KEY_TYPE, &rsaType, sizeof(rsaType) },
+		{ CKA_TOKEN, &bFalse, sizeof(bFalse) },
+		{ CKA_PRIVATE, &bTrue, sizeof(bTrue) }
+	};
+
+	CK_OBJECT_HANDLE hSecret = CK_INVALID_HANDLE;
+	rv = CRYPTOKI_F_PTR( C_CreateObject(hSession, des3Attribs, des3AttribsCount, &hSecret) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	CK_BYTE wrapped[32];
+	CK_ULONG wrappedLen = sizeof(wrapped);
+	CK_OBJECT_HANDLE hNew = CK_INVALID_HANDLE;
+
+	// Invalid mechanism parameters
+	CK_MECHANISM badMechanism = { CKM_DES3_ECB, iv, sizeof(iv) };
+	rv = CRYPTOKI_F_PTR( C_WrapKey(hSession, &badMechanism, hDes3, hSecret, wrapped, &wrappedLen) );
+	CPPUNIT_ASSERT(rv == CKR_ARGUMENTS_BAD);
+	badMechanism = { CKM_DES3_CBC, NULL_PTR, 0 };
+	rv = CRYPTOKI_F_PTR( C_WrapKey(hSession, &badMechanism, hDes3, hSecret, wrapped, &wrappedLen) );
+	CPPUNIT_ASSERT(rv == CKR_ARGUMENTS_BAD);
+	badMechanism = { CKM_DES3_CBC_PAD, longIv, sizeof(longIv) };
+	rv = CRYPTOKI_F_PTR( C_WrapKey(hSession, &badMechanism, hDes3, hSecret, wrapped, &wrappedLen) );
+	CPPUNIT_ASSERT(rv == CKR_ARGUMENTS_BAD);
+	rv = CRYPTOKI_F_PTR( C_UnwrapKey(hSession, &badMechanism, hDes3, wrapped, 24, des2Attribs, sizeof(des2Attribs)/sizeof(CK_ATTRIBUTE), &hNew) );
+	CPPUNIT_ASSERT(rv == CKR_ARGUMENTS_BAD);
+
+	// The wrapping key must be a DES2 or DES3 key
+	CK_OBJECT_HANDLE hAes = CK_INVALID_HANDLE;
+	rv = importAesKey(hSession, IN_SESSION, IS_PUBLIC, hAes, aesValue);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	rv = CRYPTOKI_F_PTR( C_WrapKey(hSession, &cbcPadMechanism, hAes, hSecret, wrapped, &wrappedLen) );
+	CPPUNIT_ASSERT(rv == CKR_WRAPPING_KEY_TYPE_INCONSISTENT);
+	rv = CRYPTOKI_F_PTR( C_UnwrapKey(hSession, &cbcPadMechanism, hAes, wrapped, 24, des2Attribs, sizeof(des2Attribs)/sizeof(CK_ATTRIBUTE), &hNew) );
+	CPPUNIT_ASSERT(rv == CKR_UNWRAPPING_KEY_TYPE_INCONSISTENT);
+
+	// The wrapped key length must be a non-zero multiple of the block size
+	for (auto mechanism : { ecbMechanism, cbcMechanism, cbcPadMechanism })
+	{
+		rv = CRYPTOKI_F_PTR( C_UnwrapKey(hSession, &mechanism, hDes3, wrapped, 20, des2Attribs, sizeof(des2Attribs)/sizeof(CK_ATTRIBUTE), &hNew) );
+		CPPUNIT_ASSERT(rv == CKR_WRAPPED_KEY_LEN_RANGE);
+		rv = CRYPTOKI_F_PTR( C_UnwrapKey(hSession, &mechanism, hDes3, wrapped, 0, des2Attribs, sizeof(des2Attribs)/sizeof(CK_ATTRIBUTE), &hNew) );
+		CPPUNIT_ASSERT(rv == CKR_WRAPPED_KEY_LEN_RANGE);
+	}
+
+	// ECB and CBC truncate the unwrapped value to the length of the key type
+	wrappedLen = sizeof(wrapped);
+	rv = CRYPTOKI_F_PTR( C_WrapKey(hSession, &ecbMechanism, hDes3, hSecret, wrapped, &wrappedLen) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	CPPUNIT_ASSERT(wrappedLen == 24);
+	rv = CRYPTOKI_F_PTR( C_UnwrapKey(hSession, &ecbMechanism, hDes3, wrapped, wrappedLen, des2Attribs, sizeof(des2Attribs)/sizeof(CK_ATTRIBUTE), &hNew) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	CK_BYTE value[24];
+	CK_ATTRIBUTE valueAttrib = { CKA_VALUE, value, sizeof(value) };
+	rv = CRYPTOKI_F_PTR( C_GetAttributeValue(hSession, hNew, &valueAttrib, 1) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	CPPUNIT_ASSERT(valueAttrib.ulValueLen == 16);
+	CPPUNIT_ASSERT(memcmp(value, des3Value.data(), 16) == 0);
+	rv = CRYPTOKI_F_PTR( C_DestroyObject(hSession, hNew) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	// ...and fail if the unwrapped value is too short for the key type
+	rv = CRYPTOKI_F_PTR( C_UnwrapKey(hSession, &ecbMechanism, hDes3, wrapped, 16, des3Attribs, des3AttribsCount - 1, &hNew) );
+	CPPUNIT_ASSERT(rv == CKR_WRAPPED_KEY_INVALID);
+
+	// ECB and CBC truncate a generic secret to CKA_VALUE_LEN of the template
+	const CK_BYTE secretWrapped[] = {
+		0x30, 0x32, 0x92, 0x53, 0xbd, 0x29, 0x65, 0x40,
+		0x2e, 0xa4, 0x37, 0xbe, 0x92, 0x66, 0x17, 0x8c,
+		0x12, 0x3e, 0x17, 0x52, 0xb2, 0x69, 0x1a, 0x27
+	};
+	CK_KEY_TYPE genericType = CKK_GENERIC_SECRET;
+	CK_KEY_TYPE aesType = CKK_AES;
+	CK_ULONG secretLen = static_cast<CK_ULONG>(secretValue.size());
+	CK_ATTRIBUTE secretAttribs[] = {
+		{ CKA_CLASS, &secretClass, sizeof(secretClass) },
+		{ CKA_KEY_TYPE, &genericType, sizeof(genericType) },
+		{ CKA_TOKEN, &bFalse, sizeof(bFalse) },
+		{ CKA_PRIVATE, &bTrue, sizeof(bTrue) },
+		{ CKA_SENSITIVE, &bFalse, sizeof(bFalse) },
+		{ CKA_EXTRACTABLE, &bTrue, sizeof(bTrue) },
+		{ CKA_VALUE_LEN, &secretLen, sizeof(secretLen) }
+	};
+	const CK_ULONG secretAttribsCount = sizeof(secretAttribs)/sizeof(CK_ATTRIBUTE);
+	rv = CRYPTOKI_F_PTR( C_UnwrapKey(hSession, &ecbMechanism, hDes3, const_cast<CK_BYTE_PTR>(secretWrapped), sizeof(secretWrapped), secretAttribs, secretAttribsCount, &hNew) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	CK_ULONG unwrappedLen = 0;
+	CK_ATTRIBUTE secretCheck[] = {
+		{ CKA_VALUE, value, sizeof(value) },
+		{ CKA_VALUE_LEN, &unwrappedLen, sizeof(unwrappedLen) }
+	};
+	rv = CRYPTOKI_F_PTR( C_GetAttributeValue(hSession, hNew, secretCheck, 2) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	CPPUNIT_ASSERT(secretCheck[0].ulValueLen == secretLen);
+	CPPUNIT_ASSERT(memcmp(value, secretValue.data(), secretLen) == 0);
+	CPPUNIT_ASSERT(unwrappedLen == secretLen);
+	rv = CRYPTOKI_F_PTR( C_DestroyObject(hSession, hNew) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	// ...and fail if CKA_VALUE_LEN is longer than the unwrapped value
+	secretLen = sizeof(secretWrapped) + 8;
+	rv = CRYPTOKI_F_PTR( C_UnwrapKey(hSession, &ecbMechanism, hDes3, const_cast<CK_BYTE_PTR>(secretWrapped), sizeof(secretWrapped), secretAttribs, secretAttribsCount, &hNew) );
+	CPPUNIT_ASSERT(rv == CKR_TEMPLATE_INCONSISTENT);
+	// CKA_VALUE_LEN is still not allowed when unwrapping an AES key
+	secretLen = 16;
+	secretAttribs[1].pValue = &aesType;
+	rv = CRYPTOKI_F_PTR( C_UnwrapKey(hSession, &ecbMechanism, hDes3, const_cast<CK_BYTE_PTR>(secretWrapped), sizeof(secretWrapped), secretAttribs, secretAttribsCount, &hNew) );
+	CPPUNIT_ASSERT(rv == CKR_ATTRIBUTE_READ_ONLY);
+
+	// Invalid padding: the plaintext block is all zeros
+	const CK_BYTE badPadding[] = { 0x30, 0x32, 0x92, 0x53, 0xbd, 0x29, 0x65, 0x40 };
+	rv = CRYPTOKI_F_PTR( C_UnwrapKey(hSession, &cbcPadMechanism, hDes3, const_cast<CK_BYTE_PTR>(badPadding), sizeof(badPadding), des2Attribs, sizeof(des2Attribs)/sizeof(CK_ATTRIBUTE), &hNew) );
+	CPPUNIT_ASSERT(rv == CKR_WRAPPED_KEY_INVALID);
+
+	// ECB and CBC can not wrap or unwrap private keys
+	CK_OBJECT_HANDLE hPrk = CK_INVALID_HANDLE;
+	rv = generateRsaPrivateKey(hSession, CK_TRUE, CK_TRUE, hPrk);
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	for (auto mechanism : { ecbMechanism, cbcMechanism })
+	{
+		wrappedLen = sizeof(wrapped);
+		rv = CRYPTOKI_F_PTR( C_WrapKey(hSession, &mechanism, hDes3, hPrk, wrapped, &wrappedLen) );
+		CPPUNIT_ASSERT(rv == CKR_KEY_NOT_WRAPPABLE);
+		rv = CRYPTOKI_F_PTR( C_UnwrapKey(hSession, &mechanism, hDes3, wrapped, 24, rsaAttribs, sizeof(rsaAttribs)/sizeof(CK_ATTRIBUTE), &hNew) );
+		CPPUNIT_ASSERT(rv == CKR_TEMPLATE_INCONSISTENT);
+	}
+	rv = CRYPTOKI_F_PTR( C_DestroyObject(hSession, hPrk) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+	rv = CRYPTOKI_F_PTR( C_DestroyObject(hSession, hSecret) );
+	CPPUNIT_ASSERT(rv == CKR_OK);
+
+	// Keys wrapped by another PKCS#11 token
+	for ( auto &material : desCBCWrappedKeys )
+	{
+		unwrapKnownKey(hSession, material);
+	}
 }
 
 void SymmetricAlgorithmTests::testNullTemplate()

@@ -47,6 +47,7 @@ class SymmetricAlgorithmTests : public TestsBase
 #ifdef HAVE_AES_KEY_WRAP
 	CPPUNIT_TEST(testAesWrapUnwrap);
 #endif
+	CPPUNIT_TEST(testDesWrapUnwrap);
 	CPPUNIT_TEST(testNullTemplate);
 	CPPUNIT_TEST(testNonModifiableDesKeyGeneration);
 	// TODO: check CKA_CHECK_VALUE error
@@ -91,6 +92,13 @@ protected:
 	void aesWrapUnwrapNonModifiableGeneric(CK_MECHANISM_TYPE mechanismType, CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hKey);
 	void aesWrapUnwrapRsa(CK_MECHANISM_TYPE mechanismType, CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hKey);
 	void desWrapUnwrapRsa(CK_MECHANISM_TYPE mechanismType, CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hKey);
+	void des3WrapUnwrapSecret(CK_MECHANISM_TYPE mechanismType,
+				  CK_SESSION_HANDLE hSession,
+				  CK_OBJECT_HANDLE hKey,
+				  CK_KEY_TYPE keyType,
+				  const Bytes &keyValue,
+				  const Bytes &expectedWrapped,
+				  const Bytes &expectedUnwrapped);
 	CK_RV generateRsaPrivateKey(CK_SESSION_HANDLE hSession, CK_BBOOL bToken, CK_BBOOL bPrivate, CK_OBJECT_HANDLE &hKey);
 #ifdef WITH_GOST
 	void aesWrapUnwrapGost(CK_MECHANISM_TYPE mechanismType, CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hKey);
