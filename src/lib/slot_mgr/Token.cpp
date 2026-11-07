@@ -32,6 +32,7 @@
 #include "ByteString.h"
 #include "SecureDataManager.h"
 #include <cstdio>
+#include <ctime>
 
 #ifndef _WIN32
 #include <sys/time.h>
